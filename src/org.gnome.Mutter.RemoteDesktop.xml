@@ -1,0 +1,25 @@
+<!DOCTYPE node PUBLIC
+'-//freedesktop//DTD D-BUS Object Introspection 1.0//EN'
+'http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd'>
+<node>
+
+  <!--
+      org.gnome.Mutter.RemoteDesktop:
+      @short_description: Remote desktop interface
+  -->
+  <interface name="org.gnome.Mutter.RemoteDesktop">
+
+    <!--
+        Start:
+    -->
+    <method name="Start">
+    </method>
+
+    <!--
+        Stop:
+    -->
+    <method name="Stop">
+    </method>
+
+  </interface>
+</node>
