@@ -26,8 +26,11 @@
 
 #include <gio/gio.h>
 
+#include "grd-context.h"
 #include "grd-dbus-remote-desktop.h"
 #include "grd-private.h"
+#include "grd-session.h"
+#include "grd-session-dummy.h"
 
 struct _GrdDaemon
 {
@@ -36,7 +39,9 @@ struct _GrdDaemon
   GCancellable *cancellable;
   guint watch_name_id;
 
-  GrdDBusRemoteDesktop *proxy;
+  GrdContext *context;
+
+  GrdSessionDummy *dummy_session;
 };
 
 static void grd_daemon_async_initable_init (GAsyncInitableIface *iface);
@@ -61,7 +66,7 @@ on_proxy_acquired (GObject      *object,
   if (!proxy)
     return g_task_return_error (task, error);
 
-  daemon->proxy = proxy;
+  grd_context_set_dbus_proxy (daemon->context, proxy);
 
   g_task_return_boolean (task, TRUE);
 }
@@ -141,6 +146,8 @@ grd_daemon_startup (GApplication *app)
 {
   GrdDaemon *daemon = GRD_DAEMON (app);
 
+  daemon->context = g_object_new (GRD_TYPE_CONTEXT, NULL);
+
   daemon->cancellable = g_cancellable_new ();
   g_async_initable_init_async (G_ASYNC_INITABLE (daemon),
                                G_PRIORITY_DEFAULT,
@@ -177,19 +184,22 @@ activate_toggle_record (GAction   *action,
 
   if (!b)
     {
-      g_print ("Start remote desktop\n");
-      grd_dbus_remote_desktop_call_start (daemon->proxy,
-                                          NULL,
-                                          NULL,
-                                          NULL);
+      g_assert (!daemon->dummy_session);
+
+      g_print ("Start dummy remote desktop\n");
+
+      daemon->dummy_session = g_object_new (GRD_TYPE_SESSION_DUMMY,
+                                            "context", daemon->context,
+                                            NULL);
     }
   else
     {
-      g_print ("Stop remote desktop\n");
-      grd_dbus_remote_desktop_call_stop (daemon->proxy,
-                                         NULL,
-                                         NULL,
-                                         NULL);
+      g_assert (daemon->dummy_session);
+
+      g_print ("Stop dummy remote desktop\n");
+
+      grd_session_stop (GRD_SESSION (daemon->dummy_session));
+      g_clear_object (&daemon->dummy_session);
     }
 }
 

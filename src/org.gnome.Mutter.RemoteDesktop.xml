@@ -11,15 +11,35 @@
 
     <!--
         Start:
+        @session: Path to the new session object
     -->
     <method name="Start">
-    </method>
-
-    <!--
-        Stop:
-    -->
-    <method name="Stop">
+      <arg type="o" direction="out" name="session_path"/>
     </method>
 
   </interface>
+
+  <!--
+       org.gnome.Mutter.RemoteDesktop.Session:
+       @short_description: Remote desktop session
+  -->
+  <interface name="org.gnome.Mutter.RemoteDesktop.Session">
+
+    <!--
+        PinosStreamId:
+
+        An identification string used for identifying a pinos stream with
+        a remote desktop session. The associated pinos stream property key
+        'gnome.remote_desktop.stream_id' will have the given string.
+    -->
+    <property type="s" access="read" name="PinosStreamId"/>
+
+    <!--
+        Stop:
+        @short_description: Stop the remote desktop session
+    -->
+    <method name="Stop"/>
+
+  </interface>
+
 </node>

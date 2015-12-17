@@ -20,18 +20,40 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_DAEMON_H
-#define GRD_DAEMON_H
+#include "config.h"
 
-#include <gio/gio.h>
+#include "grd-context.h"
 
 #include "grd-dbus-remote-desktop.h"
 
-typedef struct _GrdDaemon GrdDaemon;
+struct _GrdContext
+{
+  GObject parent;
 
-#define GRD_TYPE_DAEMON (grd_daemon_get_type ())
-G_DECLARE_FINAL_TYPE (GrdDaemon, grd_daemon, GRD, DAEMON, GApplication);
+  GrdDBusRemoteDesktop *proxy;
+};
 
-GrdDBusRemoteDesktop *grd_daemon_get_dbus_proxy (GrdDaemon *daemon);
+G_DEFINE_TYPE (GrdContext, grd_context, G_TYPE_OBJECT);
 
-#endif /* GRD_DAEMON_H */
+GrdDBusRemoteDesktop *
+grd_context_get_dbus_proxy (GrdContext *context)
+{
+  return context->proxy;
+}
+
+void
+grd_context_set_dbus_proxy (GrdContext           *context,
+                            GrdDBusRemoteDesktop *proxy)
+{
+  context->proxy = proxy;
+}
+
+static void
+grd_context_init (GrdContext *context)
+{
+}
+
+static void
+grd_context_class_init (GrdContextClass *klass)
+{
+}

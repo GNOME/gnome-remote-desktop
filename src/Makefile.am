@@ -20,9 +20,16 @@ BUILT_SOURCES += $(dbus_remote_desktop_built_sources)
 dbusservice_DATA = org.gnome.RemoteDesktop.service
 
 gnome_remote_desktop_daemon_SOURCES = \
+	grd-context.c \
+	grd-context.h \
 	grd-daemon.c \
 	grd-daemon.h \
 	grd-private.h \
+	grd-session.c \
+	grd-session.h \
+	grd-session-dummy.c \
+	grd-session-dummy.h \
+	grd-types.h \
 	$(NULL)
 
 gnome_remote_desktop_daemon_SOURCES : $(BUILT_SOURCES)

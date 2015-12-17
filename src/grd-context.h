@@ -20,18 +20,20 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_DAEMON_H
-#define GRD_DAEMON_H
+#ifndef GRD_CONTEXT_H
+#define GRD_CONTEXT_H
 
-#include <gio/gio.h>
+#include <glib-object.h>
 
 #include "grd-dbus-remote-desktop.h"
+#include "grd-types.h"
 
-typedef struct _GrdDaemon GrdDaemon;
+#define GRD_TYPE_CONTEXT (grd_context_get_type ())
+G_DECLARE_FINAL_TYPE (GrdContext, grd_context, GRD, CONTEXT, GObject);
 
-#define GRD_TYPE_DAEMON (grd_daemon_get_type ())
-G_DECLARE_FINAL_TYPE (GrdDaemon, grd_daemon, GRD, DAEMON, GApplication);
+GrdDBusRemoteDesktop *grd_context_get_dbus_proxy (GrdContext *context);
 
-GrdDBusRemoteDesktop *grd_daemon_get_dbus_proxy (GrdDaemon *daemon);
+void grd_context_set_dbus_proxy (GrdContext           *context,
+                                 GrdDBusRemoteDesktop *proxy);
 
-#endif /* GRD_DAEMON_H */
+#endif /* GRD_CONTEXT_H */

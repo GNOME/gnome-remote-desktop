@@ -20,18 +20,23 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_DAEMON_H
-#define GRD_DAEMON_H
+#include "config.h"
 
-#include <gio/gio.h>
+#include "grd-session-dummy.h"
 
-#include "grd-dbus-remote-desktop.h"
+struct _GrdSessionDummy
+{
+  GrdSession parent;
+};
 
-typedef struct _GrdDaemon GrdDaemon;
+G_DEFINE_TYPE (GrdSessionDummy, grd_session_dummy, GRD_TYPE_SESSION);
 
-#define GRD_TYPE_DAEMON (grd_daemon_get_type ())
-G_DECLARE_FINAL_TYPE (GrdDaemon, grd_daemon, GRD, DAEMON, GApplication);
+static void
+grd_session_dummy_init (GrdSessionDummy *session_dummy)
+{
+}
 
-GrdDBusRemoteDesktop *grd_daemon_get_dbus_proxy (GrdDaemon *daemon);
-
-#endif /* GRD_DAEMON_H */
+static void
+grd_session_dummy_class_init (GrdSessionDummyClass *klass)
+{
+}
