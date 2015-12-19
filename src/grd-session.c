@@ -134,12 +134,23 @@ grd_session_constructed (GObject *object)
 }
 
 static void
+grd_session_dispose (GObject *object)
+{
+  GrdSession *session = GRD_SESSION (object);
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  g_clear_object (&priv->stream);
+
+  G_OBJECT_CLASS (grd_session_parent_class)->dispose (object);
+}
+
+static void
 grd_session_finalize (GObject *object)
 {
   GrdSession *session = GRD_SESSION (object);
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
-  grd_session_stop (session);
+  g_assert (!priv->session_proxy);
 
   if (priv->cancellable)
     g_cancellable_cancel (priv->cancellable);
