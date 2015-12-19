@@ -29,6 +29,10 @@ gnome_remote_desktop_daemon_SOURCES = \
 	grd-session.h \
 	grd-session-dummy.c \
 	grd-session-dummy.h \
+	grd-stream.c \
+	grd-stream.h \
+	grd-stream-monitor.c \
+	grd-stream-monitor.h \
 	grd-types.h \
 	$(NULL)
 

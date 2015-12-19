@@ -22,61 +22,57 @@
 
 #include "config.h"
 
+#include "grd-stream.h"
+
 #include "grd-context.h"
-
-#include <gst/gst.h>
-
-#include "grd-dbus-remote-desktop.h"
 #include "grd-stream-monitor.h"
 
-struct _GrdContext
+struct _GrdStream
 {
   GObject parent;
 
-  GrdStreamMonitor *stream_monitor;
+  char *source_path;
 
-  GrdDBusRemoteDesktop *proxy;
+  GrdContext *context;
 };
 
-G_DEFINE_TYPE (GrdContext, grd_context, G_TYPE_OBJECT);
+G_DEFINE_TYPE (GrdStream, grd_stream, G_TYPE_OBJECT);
 
-GrdDBusRemoteDesktop *
-grd_context_get_dbus_proxy (GrdContext *context)
+const char *
+grd_stream_get_pinos_source_path (GrdStream *stream)
 {
-  return context->proxy;
+  return stream->source_path;
 }
 
-void
-grd_context_set_dbus_proxy (GrdContext           *context,
-                            GrdDBusRemoteDesktop *proxy)
+GrdStream *grd_stream_new (GrdContext *context,
+                           const char *source_path)
 {
-  context->proxy = proxy;
-}
+  GrdStream *stream;
+ 
+  stream = g_object_new (GRD_TYPE_STREAM, NULL);
+  stream->source_path = g_strdup (source_path);
+  stream->context = context;
 
-GrdStreamMonitor *
-grd_context_get_stream_monitor (GrdContext *context)
-{
-  return context->stream_monitor;
-}
-
-static void
-grd_context_constructed (GObject *object)
-{
-  GrdContext *context = GRD_CONTEXT (object);
-
-  context->stream_monitor = grd_stream_monitor_new (context);
+  return stream;
 }
 
 static void
-grd_context_init (GrdContext *context)
+grd_stream_finalize (GObject *object)
 {
-  gst_init (NULL, NULL);
+  GrdStream *stream = GRD_STREAM (object);
+
+  g_free (stream->source_path);
 }
 
 static void
-grd_context_class_init (GrdContextClass *klass)
+grd_stream_init (GrdStream *stream)
+{
+}
+
+static void
+grd_stream_class_init (GrdStreamClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->constructed = grd_context_constructed;
+  object_class->finalize = grd_stream_finalize;
 }

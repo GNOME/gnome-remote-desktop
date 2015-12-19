@@ -25,5 +25,7 @@
 
 typedef struct _GrdContext GrdContext;
 typedef struct _GrdSession GrdSession;
+typedef struct _GrdStream GrdStream;
+typedef struct _GrdStreamMonitor GrdStreamMonitor;
 
 #endif /* GRD_TYPES_H */

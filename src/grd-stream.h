@@ -20,25 +20,19 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_SESSION_H
-#define GRD_SESSION_H
+#ifndef GRD_STREAM_H
+#define GRD_STREAM_H
 
 #include <glib-object.h>
 
 #include "grd-types.h"
 
-#define GRD_TYPE_SESSION (grd_session_get_type ())
-G_DECLARE_DERIVABLE_TYPE (GrdSession, grd_session, GRD, SESSION, GObject);
+#define GRD_TYPE_STREAM (grd_stream_get_type ())
+G_DECLARE_FINAL_TYPE (GrdStream, grd_stream, GRD, STREAM, GObject);
 
-struct _GrdSessionClass
-{
-  GObjectClass parent_class;
+const char *grd_stream_get_pinos_source_path (GrdStream *stream);
 
-  void (*stream_added) (GrdSession *session,
-                        GrdStream  *stream);
-  void (*stop) (GrdSession *session);
-};
+GrdStream *grd_stream_new (GrdContext *context,
+                           const char *source_path);
 
-void grd_session_stop (GrdSession *session);
-
-#endif /* GRD_SESSION_H */
+#endif /* GRD_STREAM_H */

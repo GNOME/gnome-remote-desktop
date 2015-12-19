@@ -36,4 +36,6 @@ GrdDBusRemoteDesktop *grd_context_get_dbus_proxy (GrdContext *context);
 void grd_context_set_dbus_proxy (GrdContext           *context,
                                  GrdDBusRemoteDesktop *proxy);
 
+GrdStreamMonitor *grd_context_get_stream_monitor (GrdContext *context);
+
 #endif /* GRD_CONTEXT_H */

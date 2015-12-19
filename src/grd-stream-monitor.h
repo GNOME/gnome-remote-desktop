@@ -20,25 +20,23 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_SESSION_H
-#define GRD_SESSION_H
+#ifndef GRD_STREAM_MONITOR_H
+#define GRD_STREAM_MONITOR_H
 
 #include <glib-object.h>
+#include <pinos/client/context.h>
 
 #include "grd-types.h"
 
-#define GRD_TYPE_SESSION (grd_session_get_type ())
-G_DECLARE_DERIVABLE_TYPE (GrdSession, grd_session, GRD, SESSION, GObject);
+#define GRD_TYPE_STREAM_MONITOR (grd_stream_monitor_get_type ())
+G_DECLARE_FINAL_TYPE (GrdStreamMonitor, grd_stream_monitor,
+                      GRD, STREAM_MONITOR, GObject);
 
-struct _GrdSessionClass
-{
-  GObjectClass parent_class;
+PinosContext *grd_stream_monitor_get_pinos_context (GrdStreamMonitor *monitor);
 
-  void (*stream_added) (GrdSession *session,
-                        GrdStream  *stream);
-  void (*stop) (GrdSession *session);
-};
+GrdStream *grd_stream_monitor_get_stream (GrdStreamMonitor *monitor,
+                                          const char       *stream_id);
 
-void grd_session_stop (GrdSession *session);
+GrdStreamMonitor *grd_stream_monitor_new (GrdContext *context);
 
-#endif /* GRD_SESSION_H */
+#endif /* GRD_STREAM_MONITOR_H */

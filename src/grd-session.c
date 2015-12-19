@@ -24,9 +24,12 @@
 
 #include "grd-session.h"
 
+#include <glib-object.h>
+
 #include "grd-dbus-remote-desktop.h"
 #include "grd-context.h"
 #include "grd-private.h"
+#include "grd-stream-monitor.h"
 
 enum
 {
@@ -41,6 +44,9 @@ typedef struct _GrdSessionPrivate
 
   GrdDBusRemoteDesktopSession *session_proxy;
 
+  GrdStream *stream;
+  guint stream_added_handler_id;
+
   GCancellable *cancellable;
 } GrdSessionPrivate;
 
@@ -51,6 +57,8 @@ grd_session_stop (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GError *error = NULL;
+
+  GRD_SESSION_GET_CLASS (session)->stop (session);
 
   if (!priv->session_proxy)
     return;
@@ -65,6 +73,29 @@ grd_session_stop (GrdSession *session)
 }
 
 static void
+grd_session_set_stream (GrdSession *session,
+                        GrdStream  *stream)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  priv->stream = g_object_ref (stream);
+
+  GRD_SESSION_GET_CLASS (session)->stream_added (session, stream);
+}
+
+static void
+on_stream_added (GrdStreamMonitor *monitor,
+                 GrdStream        *stream,
+                 GrdSession       *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  grd_session_set_stream (session, stream);
+
+  g_signal_handler_disconnect (monitor, priv->stream_added_handler_id);
+}
+
+static void
 on_session_proxy_acquired (GObject      *object,
                            GAsyncResult *result,
                            gpointer      user_data)
@@ -73,6 +104,9 @@ on_session_proxy_acquired (GObject      *object,
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdDBusRemoteDesktopSession *session_proxy;
   GError *error = NULL;
+  const char *pinos_stream_id;
+  GrdStreamMonitor *monitor;
+  GrdStream *stream;
 
   session_proxy =
     grd_dbus_remote_desktop_session_proxy_new_finish (result, &error);
@@ -83,6 +117,24 @@ on_session_proxy_acquired (GObject      *object,
     }
 
   priv->session_proxy = session_proxy;
+
+  pinos_stream_id =
+    grd_dbus_remote_desktop_session_get_pinos_stream_id (session_proxy);
+  monitor = grd_context_get_stream_monitor (priv->context);
+  stream = grd_stream_monitor_get_stream (monitor, pinos_stream_id);
+
+  if (stream)
+    {
+      grd_session_set_stream (session, stream);
+    }
+  else
+    {
+      priv->stream_added_handler_id =
+        g_signal_connect_object (monitor, "stream-added",
+                                 G_CALLBACK (on_stream_added),
+                                 session,
+                                 0);
+    }
 }
 
 static void
@@ -209,6 +261,7 @@ grd_session_class_init (GrdSessionClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->constructed = grd_session_constructed;
+  object_class->dispose = grd_session_dispose;
   object_class->finalize = grd_session_finalize;
   object_class->set_property = grd_session_set_property;
   object_class->get_property = grd_session_get_property;
