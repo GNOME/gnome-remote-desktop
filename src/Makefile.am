@@ -29,11 +29,15 @@ gnome_remote_desktop_daemon_SOURCES = \
 	grd-session.h \
 	grd-session-dummy.c \
 	grd-session-dummy.h \
+	grd-session-vnc.c \
+	grd-session-vnc.h \
 	grd-stream.c \
 	grd-stream.h \
 	grd-stream-monitor.c \
 	grd-stream-monitor.h \
 	grd-types.h \
+	grd-vnc-server.c \
+	grd-vnc-server.h \
 	$(NULL)
 
 gnome_remote_desktop_daemon_SOURCES : $(BUILT_SOURCES)

@@ -31,6 +31,7 @@
 #include "grd-private.h"
 #include "grd-session.h"
 #include "grd-session-dummy.h"
+#include "grd-vnc-server.h"
 
 struct _GrdDaemon
 {
@@ -41,6 +42,7 @@ struct _GrdDaemon
 
   GrdContext *context;
 
+  GrdVncServer *vnc_server;
   GrdSessionDummy *dummy_session;
 };
 
@@ -129,11 +131,22 @@ grd_daemon_async_initable_ready (GObject *source_object,
                                  GAsyncResult *result,
                                  gpointer user_data)
 {
+  GrdDaemon *daemon = user_data;
   GError *error = NULL;
 
-  g_async_initable_new_finish (G_ASYNC_INITABLE (source_object),
-                               result,
-                               &error);
+  if (!g_async_initable_new_finish (G_ASYNC_INITABLE (source_object),
+                                    result,
+                                    &error))
+    {
+      g_warning ("Failed to initialize remote desktop daemon: %s\n", error->message);
+      return;
+    }
+
+  daemon->vnc_server = grd_vnc_server_new (daemon->context);
+  if (!grd_vnc_server_start (daemon->vnc_server, &error))
+    {
+      g_warning ("Failed to initialize VNC server: %s\n", error->message);
+    }
 }
 
 static void

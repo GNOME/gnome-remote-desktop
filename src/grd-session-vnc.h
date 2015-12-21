@@ -20,14 +20,22 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_TYPES_H
-#define GRD_TYPES_H
+#ifndef GRD_SESSION_VNC_H
+#define GRD_SESSION_VNC_H
 
-typedef struct _GrdContext GrdContext;
-typedef struct _GrdSession GrdSession;
-typedef struct _GrdSessionVnc GrdSessionVnc;
-typedef struct _GrdStream GrdStream;
-typedef struct _GrdStreamMonitor GrdStreamMonitor;
-typedef struct _GrdVncServer GrdVncServer;
+#include <gio/gio.h>
+#include <glib-object.h>
 
-#endif /* GRD_TYPES_H */
+#include "grd-session.h"
+#include "grd-types.h"
+
+#define GRD_TYPE_SESSION_VNC (grd_session_vnc_get_type ())
+G_DECLARE_FINAL_TYPE (GrdSessionVnc,
+                      grd_session_vnc,
+                      GRD, SESSION_VNC,
+                      GrdSession);
+
+GrdSessionVnc *grd_session_vnc_new (GrdVncServer      *vnc_server,
+                                    GSocketConnection *connection);
+
+#endif /* GRD_SESSION_VNC_H */

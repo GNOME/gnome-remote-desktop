@@ -38,6 +38,15 @@ enum
   PROP_CONTEXT,
 };
 
+enum
+{
+  STOPPED,
+
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL];
+
 typedef struct _GrdSessionPrivate
 {
   GrdContext *context;
@@ -70,6 +79,8 @@ grd_session_stop (GrdSession *session)
       g_warning ("Failed to stop: %s\n", error->message);
     }
   g_clear_object (&priv->session_proxy);
+
+  g_signal_emit (session, signals[STOPPED], 0);
 }
 
 static void
@@ -275,4 +286,11 @@ grd_session_class_init (GrdSessionClass *klass)
                                                         G_PARAM_READWRITE |
                                                         G_PARAM_CONSTRUCT_ONLY |
                                                         G_PARAM_STATIC_STRINGS));
+
+  signals[STOPPED] = g_signal_new ("stopped",
+                                   G_TYPE_FROM_CLASS (klass),
+                                   G_SIGNAL_RUN_LAST,
+                                   0,
+                                   NULL, NULL, NULL,
+                                   G_TYPE_NONE, 0);
 }
