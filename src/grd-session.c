@@ -58,6 +58,8 @@ typedef struct _GrdSessionPrivate
   guint stream_added_handler_id;
 
   GCancellable *cancellable;
+
+  gboolean stopped;
 } GrdSessionPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdSession, grd_session, G_TYPE_OBJECT);
@@ -67,6 +69,10 @@ grd_session_stop (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GError *error = NULL;
+
+  if (priv->stopped)
+    return;
+  priv->stopped = TRUE;
 
   if (priv->stream_removed_handler_id)
     {
