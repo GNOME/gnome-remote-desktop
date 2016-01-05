@@ -32,6 +32,8 @@ G_DECLARE_FINAL_TYPE (GrdStream, grd_stream, GRD, STREAM, GObject);
 
 const char *grd_stream_get_pinos_source_path (GrdStream *stream);
 
+void grd_stream_removed (GrdStream *stream);
+
 GrdStream *grd_stream_new (GrdContext *context,
                            const char *source_path);
 

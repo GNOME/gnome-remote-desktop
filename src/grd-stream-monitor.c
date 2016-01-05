@@ -81,6 +81,11 @@ grd_stream_monitor_remove_stream (GrdStreamMonitor *monitor,
   stream_id = g_hash_table_lookup (monitor->stream_ids, id);
   if (stream_id)
     {
+      GrdStream *stream;
+
+      stream = grd_stream_monitor_get_stream (monitor, stream_id);
+      grd_stream_removed (stream);
+
       g_hash_table_remove (monitor->streams, stream_id);
       g_hash_table_remove (monitor->stream_ids, id);
     }

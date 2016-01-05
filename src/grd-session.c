@@ -54,6 +54,7 @@ typedef struct _GrdSessionPrivate
   GrdDBusRemoteDesktopSession *session_proxy;
 
   GrdStream *stream;
+  guint stream_removed_handler_id;
   guint stream_added_handler_id;
 
   GCancellable *cancellable;
@@ -66,6 +67,12 @@ grd_session_stop (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GError *error = NULL;
+
+  if (priv->stream_removed_handler_id)
+    {
+      g_signal_handler_disconnect (priv->stream, priv->stream_removed_handler_id);
+      priv->stream_removed_handler_id = 0;
+    }
 
   GRD_SESSION_GET_CLASS (session)->stop (session);
 
@@ -84,12 +91,24 @@ grd_session_stop (GrdSession *session)
 }
 
 static void
+on_stream_removed (GrdStream  *stream,
+                   GrdSession *session)
+{
+  grd_session_stop (session);
+}
+
+static void
 grd_session_set_stream (GrdSession *session,
                         GrdStream  *stream)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
   priv->stream = g_object_ref (stream);
+
+  priv->stream_removed_handler_id =
+    g_signal_connect (stream, "removed",
+                      G_CALLBACK (on_stream_removed),
+                      session);
 
   GRD_SESSION_GET_CLASS (session)->stream_added (session, stream);
 }
@@ -214,6 +233,7 @@ grd_session_finalize (GObject *object)
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
   g_assert (!priv->session_proxy);
+  g_assert (!priv->stream_removed_handler_id);
 
   if (priv->cancellable)
     g_cancellable_cancel (priv->cancellable);

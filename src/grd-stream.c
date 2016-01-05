@@ -27,6 +27,15 @@
 #include "grd-context.h"
 #include "grd-stream-monitor.h"
 
+enum
+{
+  REMOVED,
+
+  LAST_SIGNAL
+};
+
+guint signals[LAST_SIGNAL];
+
 struct _GrdStream
 {
   GObject parent;
@@ -56,6 +65,12 @@ GrdStream *grd_stream_new (GrdContext *context,
   return stream;
 }
 
+void
+grd_stream_removed (GrdStream *stream)
+{
+  g_signal_emit (stream, signals[REMOVED], 0);
+}
+
 static void
 grd_stream_finalize (GObject *object)
 {
@@ -75,4 +90,11 @@ grd_stream_class_init (GrdStreamClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = grd_stream_finalize;
+
+  signals[REMOVED] = g_signal_new ("removed",
+                                   G_TYPE_FROM_CLASS (klass),
+                                   G_SIGNAL_RUN_LAST,
+                                   0,
+                                   NULL, NULL, NULL,
+                                   G_TYPE_NONE, 0);
 }
