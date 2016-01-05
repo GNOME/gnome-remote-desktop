@@ -82,16 +82,14 @@ grd_session_stop (GrdSession *session)
 
   GRD_SESSION_GET_CLASS (session)->stop (session);
 
-  if (!priv->session_proxy)
-    return;
-
-  if (!grd_dbus_remote_desktop_session_call_stop_sync (priv->session_proxy,
-                                                       NULL,
-                                                       &error))
+  if (priv->session_proxy)
     {
-      g_warning ("Failed to stop: %s\n", error->message);
+      if (!grd_dbus_remote_desktop_session_call_stop_sync (priv->session_proxy,
+                                                           NULL,
+                                                           &error))
+        g_warning ("Failed to stop: %s\n", error->message);
+      g_clear_object (&priv->session_proxy);
     }
-  g_clear_object (&priv->session_proxy);
 
   g_signal_emit (session, signals[STOPPED], 0);
 }
