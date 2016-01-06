@@ -162,6 +162,12 @@ on_session_proxy_acquired (GObject      *object,
 
   pinos_stream_id =
     grd_dbus_remote_desktop_session_get_pinos_stream_id (session_proxy);
+  if (!pinos_stream_id)
+    {
+      g_warning ("Failed to acquire pinos stream id\n");
+      return;
+    }
+
   monitor = grd_context_get_stream_monitor (priv->context);
   stream = grd_stream_monitor_get_stream (monitor, pinos_stream_id);
 
