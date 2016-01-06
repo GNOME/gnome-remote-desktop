@@ -25,9 +25,16 @@
 #include "grd-session-vnc.h"
 
 #include <gio/gio.h>
+#include <gst/gst.h>
+#include <pinos/client/stream.h>
 #include <rfb/rfb.h>
 
+#include "grd-stream.h"
 #include "grd-vnc-server.h"
+#include "grd-vnc-sink.h"
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GstElement, gst_object_unref);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GstPad, gst_object_unref);
 
 struct _GrdSessionVnc
 {
@@ -36,9 +43,71 @@ struct _GrdSessionVnc
   GSocketConnection *connection;
   GSource *source;
   rfbScreenInfoPtr rfb_screen;
+  GstElement *pipeline;
+  GstElement *vnc_sink;
+  GstElement *pinos_src;
 };
 
 G_DEFINE_TYPE (GrdSessionVnc, grd_session_vnc, GRD_TYPE_SESSION);
+
+void
+grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
+                                    int            width,
+                                    int            height)
+{
+  rfbScreenInfoPtr rfb_screen = session_vnc->rfb_screen;
+  uint8_t *framebuffer;
+
+  if (rfb_screen->width == width && rfb_screen->height == height)
+    return;
+
+  g_free (session_vnc->rfb_screen->frameBuffer);
+  framebuffer = g_malloc0 (width * height * 4);
+  rfbNewFramebuffer (session_vnc->rfb_screen,
+                     (char *) framebuffer,
+                     width, height,
+                     8, 3, 4);
+}
+
+static size_t
+grd_session_vnc_get_framebuffer_size (GrdSessionVnc *session_vnc)
+{
+  return session_vnc->rfb_screen->width * session_vnc->rfb_screen->height * 4;
+}
+
+void
+grd_session_vnc_draw_buffer (GrdSessionVnc *session_vnc,
+                             GstBuffer     *buffer)
+{
+  GstMapInfo map_info = { 0 };
+  size_t framebuffer_size = grd_session_vnc_get_framebuffer_size (session_vnc);
+
+  if (gst_buffer_get_size (buffer) != framebuffer_size)
+    {
+      g_warning ("VNC sink buffer size %lu differs from VNC framebuffer size\n",
+                 gst_buffer_get_size (buffer));
+      return;
+    }
+
+  if (!gst_buffer_map (buffer, &map_info, GST_MAP_READ))
+    {
+      g_warning ("Failed to map VNC sink buffer\n");
+      return;
+    }
+
+  g_assert (map_info.size == framebuffer_size);
+
+  memcpy (session_vnc->rfb_screen->frameBuffer,
+          map_info.data,
+          framebuffer_size);
+
+  gst_buffer_unmap (buffer, &map_info);
+
+  rfbMarkRectAsModified (session_vnc->rfb_screen, 0, 0,
+                         session_vnc->rfb_screen->width,
+                         session_vnc->rfb_screen->height);
+  rfbProcessEvents (session_vnc->rfb_screen, 0);
+}
 
 static void
 handle_client_gone (rfbClientPtr rfb_client)
@@ -148,6 +217,16 @@ grd_session_vnc_stop (GrdSession *session)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
 
+  if (session_vnc->pipeline)
+    {
+      PinosStream *pinos_stream;
+
+      g_object_get (session_vnc->pinos_src, "stream", &pinos_stream, NULL);
+      pinos_stream_disconnect (pinos_stream);
+      gst_element_set_state (session_vnc->pipeline, GST_STATE_NULL);
+      g_clear_pointer (&session_vnc->pipeline, gst_object_unref);
+    }
+
   g_clear_object (&session_vnc->connection);
   g_clear_pointer (&session_vnc->source, g_source_destroy);
   g_clear_pointer (&session_vnc->rfb_screen->frameBuffer, g_free);
@@ -158,6 +237,49 @@ static void
 grd_session_vnc_stream_added (GrdSession *session,
                               GrdStream  *stream)
 {
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
+  const char *source_path;
+  g_autofree char *pipeline_str = NULL;
+  GError *error = NULL;
+  g_autoptr(GstElement) pipeline = NULL;
+  g_autoptr(GstElement) vnc_sink = NULL;
+  g_autoptr(GstPad) sink_pad = NULL;
+  g_autoptr(GstPad) src_pad = NULL;
+
+  source_path = grd_stream_get_pinos_source_path (stream);
+  pipeline_str =
+    g_strdup_printf ("pinossrc name=pinossrc path=%s ! videoconvert",
+                     source_path);
+
+  pipeline = gst_parse_launch (pipeline_str, &error);
+  if (!pipeline)
+    {
+      g_warning ("Failed to start VNC pipeline: %s\n", error->message);
+      return;
+    }
+
+  vnc_sink = grd_vnc_sink_new (session_vnc);
+  if (!vnc_sink)
+    {
+      g_warning ("Failed to create VNC sink\n");
+      return;
+    }
+  gst_bin_add (GST_BIN (pipeline), vnc_sink);
+
+  sink_pad = gst_element_get_static_pad (vnc_sink, "sink");
+  src_pad = gst_bin_find_unlinked_pad (GST_BIN (pipeline), GST_PAD_SRC);
+
+  if (gst_pad_link (src_pad, sink_pad) != GST_PAD_LINK_OK)
+    {
+      g_warning ("Failed to link VNC sink to pipeline\n");
+      return;
+    }
+
+  gst_element_set_state (pipeline, GST_STATE_PLAYING);
+
+  session_vnc->pinos_src = gst_bin_get_by_name (GST_BIN (pipeline), "pinossrc");
+  session_vnc->vnc_sink = g_steal_pointer (&vnc_sink);
+  session_vnc->pipeline = g_steal_pointer (&pipeline);
 }
 
 static void

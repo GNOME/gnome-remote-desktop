@@ -38,6 +38,8 @@ gnome_remote_desktop_daemon_SOURCES = \
 	grd-types.h \
 	grd-vnc-server.c \
 	grd-vnc-server.h \
+	grd-vnc-sink.c \
+	grd-vnc-sink.h \
 	$(NULL)
 
 gnome_remote_desktop_daemon_SOURCES : $(BUILT_SOURCES)

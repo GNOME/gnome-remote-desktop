@@ -25,7 +25,16 @@ AC_ARG_WITH([dbus-service-dir],
 	    [dbusservicedir='${datadir}/dbus-1/services'])
 AC_SUBST([dbusservicedir])
 
-PKG_CHECK_MODULES(BASE_DEPS, glib-2.0 gio-unix-2.0 libpinos-0.1 gstreamer-1.0 >= 1.6 libvncserver)
+PC_MODULES="
+	glib-2.0
+	gio-unix-2.0
+	libpinos-0.1
+	gstreamer-1.0 >= 1.6
+	gstreamer-video-1.0 >= 1.6
+	libvncserver
+"
+
+PKG_CHECK_MODULES(BASE_DEPS, $PC_MODULES)
 
 AX_APPEND_COMPILE_FLAGS([-Wall -Wstrict-prototypes -Werror=missing-prototypes \
 			 -Werror=implicit-function-declaration \

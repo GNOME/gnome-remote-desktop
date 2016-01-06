@@ -20,30 +20,19 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_SESSION_VNC_H
-#define GRD_SESSION_VNC_H
+#ifndef GRD_VNC_SINK_H
+#define GRD_VNC_SINK_H
 
-#include <gio/gio.h>
-#include <glib-object.h>
-#include <gst/gst.h>
+#include <glib.h>
+#include <gst/base/gstbasesink.h>
 
-#include "grd-session.h"
 #include "grd-types.h"
 
-#define GRD_TYPE_SESSION_VNC (grd_session_vnc_get_type ())
-G_DECLARE_FINAL_TYPE (GrdSessionVnc,
-                      grd_session_vnc,
-                      GRD, SESSION_VNC,
-                      GrdSession);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GstBaseSink, gst_object_unref);
 
-GrdSessionVnc *grd_session_vnc_new (GrdVncServer      *vnc_server,
-                                    GSocketConnection *connection);
+#define GRD_TYPE_VNC_SINK (grd_vnc_sink_get_type ())
+G_DECLARE_FINAL_TYPE (GrdVncSink, grd_vnc_sink, GRD, VNC_SINK, GstBaseSink);
 
-void grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
-                                         int            width,
-                                         int            height);
+GstElement *grd_vnc_sink_new (GrdSessionVnc *session_vnc);
 
-void grd_session_vnc_draw_buffer (GrdSessionVnc *session_vnc,
-                                  GstBuffer     *buffer);
-
-#endif /* GRD_SESSION_VNC_H */
+#endif /* GRD_VNC_SINK_H */

@@ -28,6 +28,7 @@
 #include <pinos/client/context.h>
 #include <pinos/client/introspect.h>
 #include <pinos/client/properties.h>
+#include <pinos/client/stream.h>
 #include <pinos/client/subscribe.h>
 
 #include "grd-context.h"
