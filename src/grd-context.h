@@ -38,4 +38,6 @@ void grd_context_set_dbus_proxy (GrdContext           *context,
 
 GrdStreamMonitor *grd_context_get_stream_monitor (GrdContext *context);
 
+GMainContext *grd_context_get_main_context (GrdContext *context);
+
 #endif /* GRD_CONTEXT_H */

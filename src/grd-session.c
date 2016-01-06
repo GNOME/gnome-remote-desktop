@@ -64,6 +64,14 @@ typedef struct _GrdSessionPrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdSession, grd_session, G_TYPE_OBJECT);
 
+GrdContext *
+grd_session_get_context (GrdSession *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  return priv->context;
+}
+
 void
 grd_session_stop (GrdSession *session)
 {

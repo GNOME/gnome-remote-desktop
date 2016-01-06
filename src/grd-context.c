@@ -33,6 +33,7 @@ struct _GrdContext
 {
   GObject parent;
 
+  GMainContext *main_context;
   GrdStreamMonitor *stream_monitor;
 
   GrdDBusRemoteDesktop *proxy;
@@ -59,6 +60,12 @@ grd_context_get_stream_monitor (GrdContext *context)
   return context->stream_monitor;
 }
 
+GMainContext *
+grd_context_get_main_context (GrdContext *context)
+{
+  return context->main_context;
+}
+
 static void
 grd_context_constructed (GObject *object)
 {
@@ -71,6 +78,7 @@ static void
 grd_context_init (GrdContext *context)
 {
   gst_init (NULL, NULL);
+  context->main_context = g_main_context_default ();
 }
 
 static void

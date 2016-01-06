@@ -39,6 +39,8 @@ struct _GrdSessionClass
   void (*stop) (GrdSession *session);
 };
 
+GrdContext *grd_session_get_context (GrdSession *session);
+
 void grd_session_stop (GrdSession *session);
 
 #endif /* GRD_SESSION_H */
