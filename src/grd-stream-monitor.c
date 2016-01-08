@@ -92,7 +92,7 @@ grd_stream_monitor_remove_stream (GrdStreamMonitor *monitor,
     }
 }
 
-static gboolean
+static void
 handle_source_output_info (PinosContext                *pinos_context,
                            const PinosSourceOutputInfo *info,
                            gpointer                     user_data)
@@ -100,20 +100,15 @@ handle_source_output_info (PinosContext                *pinos_context,
   GrdStreamMonitor *monitor = user_data;
   const char *stream_id;
 
-  if (!info)
-    return TRUE;
-
   stream_id = pinos_properties_get (info->properties,
                                     "gnome.remote_desktop.stream_id");
   if (!stream_id)
-    return TRUE;
+    return;
 
   grd_stream_monitor_add_stream (monitor,
                                  info->id,
                                  stream_id,
                                  info->source_path);
-
-  return TRUE;
 }
 
 static void
@@ -134,6 +129,7 @@ on_subscription_event (PinosContext           *pinos_context,
                                                   id,
                                                   PINOS_SOURCE_OUTPUT_INFO_FLAGS_NONE,
                                                   handle_source_output_info,
+                                                  NULL,
                                                   NULL,
                                                   monitor);
       break;
