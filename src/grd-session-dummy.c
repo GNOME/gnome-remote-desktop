@@ -68,13 +68,7 @@ static void
 grd_session_dummy_stop (GrdSession *session)
 {
   GrdSessionDummy *session_dummy = GRD_SESSION_DUMMY (session);
-  GstElement *pinossrc;
-  PinosStream *pinos_stream;
 
-  pinossrc = gst_bin_get_by_name (GST_BIN (session_dummy->pipeline),
-                                  "pinossrc");
-  g_object_get (pinossrc, "stream", &pinos_stream, NULL);
-  pinos_stream_disconnect (pinos_stream);
   gst_element_set_state (session_dummy->pipeline, GST_STATE_NULL);
   g_clear_pointer (&session_dummy->pipeline, gst_object_unref);
 }

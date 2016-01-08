@@ -219,10 +219,6 @@ grd_session_vnc_stop (GrdSession *session)
 
   if (session_vnc->pipeline)
     {
-      PinosStream *pinos_stream;
-
-      g_object_get (session_vnc->pinos_src, "stream", &pinos_stream, NULL);
-      pinos_stream_disconnect (pinos_stream);
       gst_element_set_state (session_vnc->pipeline, GST_STATE_NULL);
       g_clear_pointer (&session_vnc->pipeline, gst_object_unref);
     }
