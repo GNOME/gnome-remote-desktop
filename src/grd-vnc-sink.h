@@ -28,8 +28,6 @@
 
 #include "grd-types.h"
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (GstBaseSink, gst_object_unref);
-
 #define GRD_TYPE_VNC_SINK (grd_vnc_sink_get_type ())
 G_DECLARE_FINAL_TYPE (GrdVncSink, grd_vnc_sink, GRD, VNC_SINK, GstBaseSink);
 

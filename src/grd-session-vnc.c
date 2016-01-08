@@ -33,9 +33,6 @@
 #include "grd-vnc-server.h"
 #include "grd-vnc-sink.h"
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (GstElement, gst_object_unref);
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (GstPad, gst_object_unref);
-
 struct _GrdSessionVnc
 {
   GrdSession parent;
