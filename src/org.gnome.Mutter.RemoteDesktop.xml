@@ -40,6 +40,42 @@
     -->
     <method name="Stop"/>
 
+    <!--
+        NotifyKeyboardKeysym:
+        @short_description: A key identified by a keysym was pressed or released
+     -->
+    <method name="NotifyKeyboardKeysym">
+      <arg type="u" direction="in" name="keysym"/>
+      <arg type="b" direction="in" name="state"/>
+    </method>
+
+    <!--
+        NotifyPointerButton:
+        @short_description: A pointer button was pressed or released
+     -->
+    <method name="NotifyPointerButton">
+      <arg type="i" direction="in" name="button"/>
+      <arg type="b" direction="in" name="state"/>
+    </method>
+
+    <!--
+        NotifyPointerAxisDiscrete:
+        @short_description: A discrete pointer axis event notification
+     -->
+    <method name="NotifyPointerAxisDiscrete">
+      <arg type="u" direction="in" name="axis"/>
+      <arg type="i" direction="in" name="steps"/>
+    </method>
+
+    <!--
+        NotifyPointerMotionAbsolute:
+        @short_description: A absolute pointer motion event notification
+     -->
+    <method name="NotifyPointerMotionAbsolute">
+      <arg type="d" direction="in" name="x"/>
+      <arg type="d" direction="in" name="y"/>
+    </method>
+
   </interface>
 
 </node>

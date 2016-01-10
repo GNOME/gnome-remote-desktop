@@ -102,6 +102,61 @@ grd_session_stop (GrdSession *session)
   g_signal_emit (session, signals[STOPPED], 0);
 }
 
+void
+grd_session_notify_keyboard_keysym (GrdSession *session,
+                                    uint32_t    keysym,
+                                    GrdKeyState state)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  GrdDBusRemoteDesktopSession *session_proxy = priv->session_proxy;
+
+  grd_dbus_remote_desktop_session_call_notify_keyboard_keysym (session_proxy,
+                                                               keysym,
+                                                               state,
+                                                               NULL,
+                                                               NULL,
+                                                               NULL);
+}
+
+void
+grd_session_notify_pointer_button (GrdSession *session,
+                                   int32_t        button,
+                                   GrdButtonState state)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  GrdDBusRemoteDesktopSession *session_proxy = priv->session_proxy;
+
+  grd_dbus_remote_desktop_session_call_notify_pointer_button (session_proxy,
+                                                              button,
+                                                              state,
+                                                              NULL,
+                                                              NULL,
+                                                              NULL);
+}
+
+void
+grd_session_notify_pointer_axis_discrete (GrdSession    *session,
+                                          GrdPointerAxis axis,
+                                          int            steps)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  GrdDBusRemoteDesktopSession *session_proxy = priv->session_proxy;
+
+  grd_dbus_remote_desktop_session_call_notify_pointer_axis_discrete (
+    session_proxy, axis, steps, NULL, NULL, NULL);
+}
+
+void
+grd_session_notify_pointer_motion_absolute (GrdSession *session,
+                                            double      x,
+                                            double      y)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  grd_dbus_remote_desktop_session_call_notify_pointer_motion_absolute (
+    priv->session_proxy, x, y, NULL, NULL, NULL);
+}
+
 static void
 on_stream_removed (GrdStream  *stream,
                    GrdSession *session)

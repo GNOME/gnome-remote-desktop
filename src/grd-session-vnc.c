@@ -26,6 +26,7 @@
 
 #include <gio/gio.h>
 #include <gst/gst.h>
+#include <linux/input.h>
 #include <pinos/client/stream.h>
 #include <rfb/rfb.h>
 
@@ -43,6 +44,11 @@ struct _GrdSessionVnc
   GstElement *pipeline;
   GstElement *vnc_sink;
   GstElement *pinos_src;
+
+  int prev_x;
+  int prev_y;
+  int prev_button_mask;
+  GHashTable *pressed_keys;
 };
 
 G_DEFINE_TYPE (GrdSessionVnc, grd_session_vnc, GRD_TYPE_SESSION);
@@ -123,6 +129,152 @@ handle_new_client (rfbClientPtr rfb_client)
 }
 
 static void
+handle_key_event (rfbBool      down,
+                  rfbKeySym    keysym,
+                  rfbClientPtr rfb_client)
+{
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (rfb_client->screen->screenData);
+  GrdSession *session = GRD_SESSION (session_vnc);
+
+  if (down)
+    {
+      if (g_hash_table_add (session_vnc->pressed_keys,
+                            GUINT_TO_POINTER (keysym)))
+        {
+          grd_session_notify_keyboard_keysym (session, keysym,
+                                              GRD_KEY_STATE_PRESSED);
+        }
+    }
+  else
+    {
+      if (g_hash_table_remove (session_vnc->pressed_keys,
+                               GUINT_TO_POINTER (keysym)))
+        {
+          grd_session_notify_keyboard_keysym (session, keysym,
+                                              GRD_KEY_STATE_RELEASED);
+        }
+    }
+}
+
+static gboolean
+notify_keyboard_key_released (gpointer key,
+                              gpointer value,
+                              gpointer user_data)
+{
+  GrdSession *session = user_data;
+  uint32_t keysym = GPOINTER_TO_UINT (key);
+
+  grd_session_notify_keyboard_keysym (session, keysym,
+                                      GRD_KEY_STATE_RELEASED);
+
+  return TRUE;
+}
+
+static void
+handle_release_all_keys (rfbClientPtr rfb_client)
+{
+  GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
+
+  g_hash_table_foreach_remove (session_vnc->pressed_keys,
+                               notify_keyboard_key_released,
+                               session_vnc);
+}
+
+static void
+grd_session_vnc_notify_axis (GrdSessionVnc *session_vnc,
+                             int            button_mask_bit_index)
+{
+  GrdSession *session = GRD_SESSION (session_vnc);
+  GrdPointerAxis axis;
+  int steps;
+
+  switch (button_mask_bit_index)
+    {
+    case 4:
+      axis = GRD_POINTER_AXIS_VERTICAL;
+      steps = -1;
+      break;
+
+    case 5:
+      axis = GRD_POINTER_AXIS_VERTICAL;
+      steps = 1;
+      break;
+
+    case 6:
+      axis = GRD_POINTER_AXIS_HORIZONTAL;
+      steps = -1;
+      break;
+
+    case 7:
+      axis = GRD_POINTER_AXIS_HORIZONTAL;
+      steps = 1;
+      break;
+
+    default:
+      return;
+    }
+
+  grd_session_notify_pointer_axis_discrete (session, axis, steps);
+}
+
+static void
+handle_pointer_event (int          button_mask,
+                      int          x,
+                      int          y,
+                      rfbClientPtr rfb_client)
+{
+  GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
+  GrdSession *session = GRD_SESSION (session_vnc);
+
+  if (x != session_vnc->prev_x || y != session_vnc->prev_y)
+    {
+      grd_session_notify_pointer_motion_absolute (session, x, y);
+
+      session_vnc->prev_x = x;
+      session_vnc->prev_y = y;
+    }
+
+  if (button_mask != session_vnc->prev_button_mask)
+    {
+      unsigned int i;
+      int buttons[] = {
+        BTN_LEFT,   /* 1 */
+        BTN_MIDDLE, /* 2 */
+        BTN_RIGHT,  /* 3 */
+        0,          /* 4 - vertical scroll: up */
+        0,          /* 5 - vertical scroll: down */
+        0,          /* 6 - horizontal scroll: left */
+        0,          /* 7 - horizontal scroll: right */
+        BTN_SIDE,   /* 8 */
+        BTN_EXTRA,  /* 9 */
+      };
+
+      for (i = 0; i < G_N_ELEMENTS (buttons); i++)
+        {
+          int button = buttons[i];
+          int prev_button_state = (session_vnc->prev_button_mask >> i) & 0x01;
+          int cur_button_state = (button_mask >> i) & 0x01;
+
+          if (prev_button_state != cur_button_state)
+            {
+              if (button)
+                {
+                  grd_session_notify_pointer_button (session,
+                                                     button,
+                                                     cur_button_state);
+                }
+              else
+                {
+                  grd_session_vnc_notify_axis (session_vnc, i);
+                }
+            }
+        }
+
+      session_vnc->prev_button_mask = button_mask;
+    }
+}
+
+static void
 init_vnc_session (GrdSessionVnc *session_vnc)
 {
   GSocket *socket;
@@ -143,6 +295,10 @@ init_vnc_session (GrdSessionVnc *session_vnc)
   rfb_screen->neverShared = TRUE;
   rfb_screen->newClientHook = handle_new_client;
   rfb_screen->screenData = session_vnc;
+
+  rfb_screen->kbdAddEvent = handle_key_event;
+  rfb_screen->kbdReleaseAllKeys = handle_release_all_keys;
+  rfb_screen->ptrAddEvent = handle_pointer_event;
 
   rfb_screen->frameBuffer = g_malloc0 (screen_width * screen_height * 4);
   memset (rfb_screen->frameBuffer, 0x1f, screen_width * screen_height * 4);
@@ -204,7 +360,11 @@ grd_session_vnc_new (GrdVncServer      *vnc_server,
 static void
 grd_session_vnc_dispose (GObject *object)
 {
-  g_assert (!GRD_SESSION_VNC (object)->rfb_screen);
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (object);
+
+  g_assert (!session_vnc->rfb_screen);
+
+  g_clear_pointer (&session_vnc->pressed_keys, g_hash_table_unref);
 
   G_OBJECT_CLASS (grd_session_vnc_parent_class)->dispose (object);
 }
@@ -276,8 +436,9 @@ grd_session_vnc_stream_added (GrdSession *session,
 }
 
 static void
-grd_session_vnc_init (GrdSessionVnc *vnc)
+grd_session_vnc_init (GrdSessionVnc *session_vnc)
 {
+  session_vnc->pressed_keys = g_hash_table_new (NULL, NULL);
 }
 
 static void
