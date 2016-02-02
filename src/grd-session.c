@@ -238,6 +238,8 @@ on_session_proxy_acquired (GObject      *object,
                                  session,
                                  0);
     }
+
+  GRD_SESSION_GET_CLASS (session)->proxy_ready (session);
 }
 
 static void

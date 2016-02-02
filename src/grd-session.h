@@ -55,6 +55,7 @@ struct _GrdSessionClass
 
   void (*stream_added) (GrdSession *session,
                         GrdStream  *stream);
+  void (*proxy_ready) (GrdSession *session);
   void (*stop) (GrdSession *session);
 };
 

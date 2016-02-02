@@ -41,6 +41,10 @@ struct _GrdSessionVnc
   GSocketConnection *connection;
   GSource *source;
   rfbScreenInfoPtr rfb_screen;
+  rfbClientPtr rfb_client;
+
+  gboolean proxy_ready;
+
   GstElement *pipeline;
   GstElement *vnc_sink;
   GstElement *pinos_src;
@@ -52,6 +56,9 @@ struct _GrdSessionVnc
 };
 
 G_DEFINE_TYPE (GrdSessionVnc, grd_session_vnc, GRD_TYPE_SESSION);
+
+static void
+grd_session_vnc_detach_source (GrdSessionVnc *session_vnc);
 
 void
 grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
@@ -123,7 +130,13 @@ handle_client_gone (rfbClientPtr rfb_client)
 static enum rfbNewClientAction
 handle_new_client (rfbClientPtr rfb_client)
 {
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (rfb_client->screen->screenData);
+
+  session_vnc->rfb_client = rfb_client;
   rfb_client->clientGoneHook = handle_client_gone;
+
+  if (!session_vnc->proxy_ready)
+    grd_session_vnc_detach_source (session_vnc);
 
   return RFB_CLIENT_ACCEPT;
 }
@@ -316,17 +329,38 @@ handle_socket_data (GSocket *socket,
 {
   GrdSessionVnc *session_vnc = user_data;
 
-  switch (condition)
+  if (condition & G_IO_IN)
     {
-    case G_IO_IN:
       if (rfbIsActive (session_vnc->rfb_screen))
         rfbProcessEvents (session_vnc->rfb_screen, 0);
-      break;
-    default:
+    }
+  else
+    {
       g_warning ("Unhandled socket condition %d\n", condition);
     }
 
   return TRUE;
+}
+
+static void
+grd_session_vnc_attach_source (GrdSessionVnc *session_vnc)
+{
+  GSocket *socket;
+
+  socket = g_socket_connection_get_socket (session_vnc->connection);
+  session_vnc->source = g_socket_create_source (socket,
+                                                G_IO_IN | G_IO_PRI,
+                                                NULL);
+  g_source_set_callback (session_vnc->source,
+                         (GSourceFunc) handle_socket_data,
+                         session_vnc, NULL);
+  g_source_attach (session_vnc->source, NULL);
+}
+
+static void
+grd_session_vnc_detach_source (GrdSessionVnc *session_vnc)
+{
+  g_clear_pointer (&session_vnc->source, g_source_destroy);
 }
 
 GrdSessionVnc *
@@ -335,22 +369,15 @@ grd_session_vnc_new (GrdVncServer      *vnc_server,
 {
   GrdSessionVnc *session_vnc;
   GrdContext *context;
-  GSocket *socket;
 
   context = grd_vnc_server_get_context (vnc_server);
   session_vnc = g_object_new (GRD_TYPE_SESSION_VNC,
                               "context", context,
                               NULL);
 
-  socket = g_socket_connection_get_socket (connection);
   session_vnc->connection = g_object_ref (connection);
-  session_vnc->source = g_socket_create_source (socket,
-                                                G_IO_IN | G_IO_PRI,
-                                                NULL);
-  g_source_set_callback (session_vnc->source,
-                         (GSourceFunc) handle_socket_data,
-                         session_vnc, NULL);
-  g_source_attach (session_vnc->source, NULL);
+
+  grd_session_vnc_attach_source (session_vnc);
 
   init_vnc_session (session_vnc);
 
@@ -370,6 +397,17 @@ grd_session_vnc_dispose (GObject *object)
 }
 
 static void
+grd_session_vnc_proxy_ready (GrdSession *session)
+{
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
+
+  session_vnc->proxy_ready = TRUE;
+
+  if (session_vnc->rfb_client)
+    grd_session_vnc_attach_source (session_vnc);
+}
+
+static void
 grd_session_vnc_stop (GrdSession *session)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
@@ -380,8 +418,9 @@ grd_session_vnc_stop (GrdSession *session)
       g_clear_pointer (&session_vnc->pipeline, gst_object_unref);
     }
 
+  grd_session_vnc_detach_source (session_vnc);
+
   g_clear_object (&session_vnc->connection);
-  g_clear_pointer (&session_vnc->source, g_source_destroy);
   g_clear_pointer (&session_vnc->rfb_screen->frameBuffer, g_free);
   g_clear_pointer (&session_vnc->rfb_screen, (GDestroyNotify) rfbScreenCleanup);
 }
@@ -449,6 +488,7 @@ grd_session_vnc_class_init (GrdSessionVncClass *klass)
 
   object_class->dispose = grd_session_vnc_dispose;
 
+  session_class->proxy_ready = grd_session_vnc_proxy_ready;
   session_class->stop = grd_session_vnc_stop;
   session_class->stream_added = grd_session_vnc_stream_added;
 }

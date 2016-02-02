@@ -40,6 +40,11 @@ struct _GrdSessionDummy
 G_DEFINE_TYPE (GrdSessionDummy, grd_session_dummy, GRD_TYPE_SESSION);
 
 static void
+grd_session_dummy_proxy_ready (GrdSession *session)
+{
+}
+
+static void
 grd_session_dummy_stream_added (GrdSession *session,
                                 GrdStream  *stream)
 {
@@ -83,6 +88,7 @@ grd_session_dummy_class_init (GrdSessionDummyClass *klass)
 {
   GrdSessionClass *session_class = GRD_SESSION_CLASS (klass);
 
+  session_class->proxy_ready = grd_session_dummy_proxy_ready;
   session_class->stream_added = grd_session_dummy_stream_added;
   session_class->stop = grd_session_dummy_stop;
 }
