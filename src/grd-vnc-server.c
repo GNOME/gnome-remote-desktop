@@ -93,6 +93,13 @@ on_incoming (GSocketService    *service,
   GrdVncServer *vnc_server = GRD_VNC_SERVER (service);
   GrdSessionVnc *session_vnc;
 
+  if (vnc_server->sessions)
+    {
+      /* TODO: Add the rfbScreen instance to GrdVncServer to support multiple
+       * sessions. */
+      return TRUE;
+    }
+
   session_vnc = grd_session_vnc_new (vnc_server, connection);
   vnc_server->sessions = g_list_append (vnc_server->sessions, session_vnc);
 
