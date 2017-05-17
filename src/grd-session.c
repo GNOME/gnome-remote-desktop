@@ -29,6 +29,7 @@
 #include "grd-dbus-remote-desktop.h"
 #include "grd-context.h"
 #include "grd-private.h"
+#include "grd-stream.h"
 #include "grd-stream-monitor.h"
 
 enum
@@ -53,6 +54,7 @@ typedef struct _GrdSessionPrivate
 
   GrdDBusRemoteDesktopSession *session_proxy;
 
+  char *stream_id;
   GrdStream *stream;
   guint stream_removed_handler_id;
   guint stream_added_handler_id;
@@ -187,6 +189,9 @@ on_stream_added (GrdStreamMonitor *monitor,
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
+  if (!g_str_equal (grd_stream_get_stream_id (stream), priv->stream_id))
+    return;
+
   grd_session_set_stream (session, stream);
 
   g_signal_handler_disconnect (monitor, priv->stream_added_handler_id);
@@ -222,6 +227,8 @@ on_session_proxy_acquired (GObject      *object,
       g_warning ("Failed to acquire pinos stream id\n");
       return;
     }
+
+  priv->stream_id = g_strdup (pinos_stream_id);
 
   monitor = grd_context_get_stream_monitor (priv->context);
   stream = grd_stream_monitor_get_stream (monitor, pinos_stream_id);
@@ -313,6 +320,7 @@ grd_session_finalize (GObject *object)
   if (priv->cancellable)
     g_cancellable_cancel (priv->cancellable);
   g_clear_object (&priv->cancellable);
+  g_free (priv->stream_id);
 
   G_OBJECT_CLASS (grd_session_parent_class)->finalize (object);
 }
