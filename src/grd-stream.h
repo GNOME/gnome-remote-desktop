@@ -33,9 +33,12 @@ G_DECLARE_FINAL_TYPE (GrdStream, grd_stream, GRD, STREAM, GObject);
 
 uint32_t grd_stream_get_pinos_node_id (GrdStream *stream);
 
+const char *grd_stream_get_stream_id (GrdStream *stream);
+
 void grd_stream_removed (GrdStream *stream);
 
 GrdStream *grd_stream_new (GrdContext *context,
+                           const char *stream_id,
                            uint32_t    pinos_node_id);
 
 #endif /* GRD_STREAM_H */

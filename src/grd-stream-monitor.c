@@ -87,7 +87,7 @@ grd_stream_monitor_add_stream (GrdStreamMonitor *monitor,
 {
   GrdStream *stream;
 
-  stream = grd_stream_new (monitor->context, pinos_node_id);
+  stream = grd_stream_new (monitor->context, stream_id, pinos_node_id);
   g_hash_table_insert (monitor->streams, g_strdup (stream_id), stream);
   g_hash_table_insert (monitor->stream_ids, GUINT_TO_POINTER (pinos_node_id),
                        g_strdup (stream_id));
