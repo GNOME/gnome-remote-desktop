@@ -49,14 +49,14 @@ grd_session_dummy_stream_added (GrdSession *session,
                                 GrdStream  *stream)
 {
   GrdSessionDummy *session_dummy = GRD_SESSION_DUMMY (session);
-  const char *source_path;
+  uint32_t pinos_node_id;
   char *pipeline_str;
   GError *error = NULL;
 
-  source_path = grd_stream_get_pinos_source_path (stream);
+  pinos_node_id = grd_stream_get_pinos_node_id (stream);
   pipeline_str =
-    g_strdup_printf ("pinossrc name=pinossrc path=%s ! videoconvert ! ximagesink",
-                     source_path);
+    g_strdup_printf ("pinossrc name=pinossrc path=%u ! videoconvert ! ximagesink",
+                     pinos_node_id);
 
   session_dummy->pipeline = gst_parse_launch (pipeline_str, &error);
   if (!session_dummy->pipeline)

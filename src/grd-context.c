@@ -25,6 +25,7 @@
 #include "grd-context.h"
 
 #include <gst/gst.h>
+#include <pinos/client/pinos.h>
 
 #include "grd-dbus-remote-desktop.h"
 #include "grd-stream-monitor.h"
@@ -78,6 +79,8 @@ static void
 grd_context_init (GrdContext *context)
 {
   gst_init (NULL, NULL);
+  pinos_init (NULL, NULL);
+
   context->main_context = g_main_context_default ();
 }
 

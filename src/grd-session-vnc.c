@@ -430,7 +430,7 @@ grd_session_vnc_stream_added (GrdSession *session,
                               GrdStream  *stream)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
-  const char *source_path;
+  uint32_t pinos_node_id;
   g_autofree char *pipeline_str = NULL;
   GError *error = NULL;
   g_autoptr(GstElement) pipeline = NULL;
@@ -438,10 +438,10 @@ grd_session_vnc_stream_added (GrdSession *session,
   g_autoptr(GstPad) sink_pad = NULL;
   g_autoptr(GstPad) src_pad = NULL;
 
-  source_path = grd_stream_get_pinos_source_path (stream);
+  pinos_node_id = grd_stream_get_pinos_node_id (stream);
   pipeline_str =
-    g_strdup_printf ("pinossrc name=pinossrc path=%s ! videoconvert",
-                     source_path);
+    g_strdup_printf ("pinossrc name=pinossrc path=%d ! videoconvert",
+                     pinos_node_id);
 
   pipeline = gst_parse_launch (pipeline_str, &error);
   if (!pipeline)

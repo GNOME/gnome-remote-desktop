@@ -24,15 +24,25 @@
 
 #include "grd-stream-monitor.h"
 
+#include <errno.h>
 #include <glib-object.h>
 #include <pinos/client/context.h>
 #include <pinos/client/introspect.h>
 #include <pinos/client/properties.h>
+#include <pinos/client/sig.h>
 #include <pinos/client/stream.h>
 #include <pinos/client/subscribe.h>
+#include <spa/defs.h>
 
 #include "grd-context.h"
 #include "grd-stream.h"
+
+enum
+{
+  PROP_0,
+
+  PROP_CONTEXT,
+};
 
 enum
 {
@@ -45,41 +55,54 @@ static guint signals[LAST_SIGNAL];
 
 #define GRD_PINOS_CLIENT_NAME "gnome-remote-desktop"
 
+typedef struct _GrdPinosSource
+{
+  GSource base;
+
+  PinosLoop *pinos_loop;
+} GrdPinosSource;
+
 struct _GrdStreamMonitor
 {
   GObject parent;
 
+  GrdContext *context;
+
   GHashTable *streams;
   GHashTable *stream_ids;
 
-  GrdContext *context;
   PinosContext *pinos_context;
+  GrdPinosSource *pinos_source;
+
+  PinosListener state_changed_listener;
+  PinosListener subscription_listener;
 };
 
 G_DEFINE_TYPE (GrdStreamMonitor, grd_stream_monitor, G_TYPE_OBJECT);
 
 static void
 grd_stream_monitor_add_stream (GrdStreamMonitor *monitor,
-                               gpointer          id,
-                               const char       *stream_id,
-                               const char       *source_path)
+                               uint32_t          pinos_node_id,
+                               const char       *stream_id)
 {
   GrdStream *stream;
 
-  stream = grd_stream_new (monitor->context, source_path);
+  stream = grd_stream_new (monitor->context, pinos_node_id);
   g_hash_table_insert (monitor->streams, g_strdup (stream_id), stream);
-  g_hash_table_insert (monitor->stream_ids, id, g_strdup (stream_id));
+  g_hash_table_insert (monitor->stream_ids, GUINT_TO_POINTER (pinos_node_id),
+                       g_strdup (stream_id));
 
   g_signal_emit (monitor, signals[STREAM_ADDED], 0, stream);
 }
 
 static void
 grd_stream_monitor_remove_stream (GrdStreamMonitor *monitor,
-                                  gpointer          id)
+                                  uint32_t          pinos_node_id)
 {
   char *stream_id;
 
-  stream_id = g_hash_table_lookup (monitor->stream_ids, id);
+  stream_id = g_hash_table_lookup (monitor->stream_ids,
+                                   GUINT_TO_POINTER (pinos_node_id));
   if (stream_id)
     {
       GrdStream *stream;
@@ -88,50 +111,51 @@ grd_stream_monitor_remove_stream (GrdStreamMonitor *monitor,
       grd_stream_removed (stream);
 
       g_hash_table_remove (monitor->streams, stream_id);
-      g_hash_table_remove (monitor->stream_ids, id);
+      g_hash_table_remove (monitor->stream_ids,
+                           GUINT_TO_POINTER (pinos_node_id));
     }
 }
 
 static void
-handle_source_output_info (PinosContext                *pinos_context,
-                           const PinosSourceOutputInfo *info,
-                           gpointer                     user_data)
+handle_node_info (PinosContext        *context,
+                  SpaResult            result,
+                  const PinosNodeInfo *info,
+                  void                *user_data)
 {
   GrdStreamMonitor *monitor = user_data;
   const char *stream_id;
 
-  stream_id = pinos_properties_get (info->properties,
-                                    "gnome.remote_desktop.stream_id");
+  if (!info)
+    return;
+
+  stream_id = spa_dict_lookup (info->props, "gnome.remote_desktop.stream_id");
   if (!stream_id)
     return;
 
-  grd_stream_monitor_add_stream (monitor,
-                                 info->id,
-                                 stream_id,
-                                 info->source_path);
+  grd_stream_monitor_add_stream (monitor, info->id, stream_id);
 }
 
 static void
-on_subscription_event (PinosContext           *pinos_context,
-                       PinosSubscriptionEvent  type,
-                       PinosSubscriptionFlags  flags,
-                       gpointer                id,
-                       gpointer                user_data)
+on_subscription (PinosListener         *listener,
+                 PinosContext          *context,
+                 PinosSubscriptionEvent event,
+                 uint32_t               type,
+                 uint32_t               id)
 {
-  GrdStreamMonitor *monitor = user_data;
+  GrdStreamMonitor *monitor = SPA_CONTAINER_OF (listener,
+                                                GrdStreamMonitor,
+                                                subscription_listener);
 
-  g_assert (flags & PINOS_SUBSCRIPTION_FLAG_SOURCE_OUTPUT);
+  if (type != context->type.node)
+    return;
 
-  switch (type)
+  switch (event)
     {
     case PINOS_SUBSCRIPTION_EVENT_NEW:
-      pinos_context_get_source_output_info_by_id (pinos_context,
-                                                  id,
-                                                  PINOS_SOURCE_OUTPUT_INFO_FLAGS_NONE,
-                                                  handle_source_output_info,
-                                                  NULL,
-                                                  NULL,
-                                                  monitor);
+      pinos_context_get_node_info_by_id (context,
+                                         id,
+                                         handle_node_info,
+                                         monitor);
       break;
     case PINOS_SUBSCRIPTION_EVENT_CHANGE:
       break;
@@ -140,6 +164,69 @@ on_subscription_event (PinosContext           *pinos_context,
       break;
     }
 }
+
+static void
+on_state_changed (PinosListener *listener,
+                  PinosContext  *context)
+{
+  switch (context->state)
+    {
+    case PINOS_CONTEXT_STATE_ERROR:
+      g_warning ("Pinos context error: %s", context->error);
+      break;
+
+    default:
+      g_info ("Pinos context state: \"%s\"\n",
+              pinos_context_state_as_string (context->state));
+      break;
+    }
+}
+
+static gboolean
+pinos_loop_source_prepare (GSource *base,
+                           int     *timeout)
+{
+  *timeout = -1;
+  return FALSE;
+}
+
+
+static gboolean
+pinos_loop_source_dispatch (GSource    *source,
+                            GSourceFunc callback,
+                            gpointer    user_data)
+{
+  GrdPinosSource *pinos_source = (GrdPinosSource *) source;
+  SpaResult result;
+
+  result = pinos_loop_iterate (pinos_source->pinos_loop, 0);
+  if (result == SPA_RESULT_ERRNO)
+    {
+      g_warning ("pinos_loop_iterate failed: %s", strerror (errno));
+    }
+  else if (result != SPA_RESULT_OK)
+    {
+      g_warning ("pinos_loop_iterate failed: %d", result);
+    }
+
+  return TRUE;
+}
+
+static void
+pinos_loop_source_finalize (GSource *source)
+{
+  GrdPinosSource *pinos_source = (GrdPinosSource *) source;
+
+  pinos_loop_destroy (pinos_source->pinos_loop);
+}
+
+static GSourceFuncs pinos_source_funcs =
+{
+  pinos_loop_source_prepare,
+  NULL,
+  pinos_loop_source_dispatch,
+  pinos_loop_source_finalize
+};
 
 PinosContext *
 grd_stream_monitor_get_pinos_context (GrdStreamMonitor *monitor)
@@ -159,8 +246,9 @@ grd_stream_monitor_new (GrdContext *context)
 {
   GrdStreamMonitor *monitor;
 
-  monitor = g_object_new (GRD_TYPE_STREAM_MONITOR, NULL);
-  monitor->context = context;
+  monitor = g_object_new (GRD_TYPE_STREAM_MONITOR,
+                          "context", context,
+                          NULL);
 
   return monitor;
 }
@@ -171,11 +259,76 @@ grd_stream_monitor_finalize (GObject *object)
   GrdStreamMonitor *monitor = GRD_STREAM_MONITOR (object);
 
   g_hash_table_destroy (monitor->streams);
+
+  pinos_loop_leave (monitor->pinos_source->pinos_loop);
+
+  pinos_context_destroy (monitor->pinos_context);
+
+  g_source_destroy ((GSource *) monitor->pinos_source);
 }
 
 static void
-grd_stream_monitor_init (GrdStreamMonitor *monitor)
+grd_stream_monitor_set_property (GObject      *object,
+                                 guint         prop_id,
+                                 const GValue *value,
+                                 GParamSpec   *pspec)
 {
+  GrdStreamMonitor *monitor = GRD_STREAM_MONITOR (object);
+
+  switch (prop_id)
+    {
+    case PROP_CONTEXT:
+      monitor->context = g_value_get_object (value);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    }
+}
+
+static void
+grd_stream_monitor_get_property (GObject    *object,
+                                 guint       prop_id,
+                                 GValue     *value,
+                                 GParamSpec *pspec)
+{
+  GrdStreamMonitor *monitor = GRD_STREAM_MONITOR (object);
+
+  switch (prop_id)
+    {
+    case PROP_CONTEXT:
+      g_value_set_object (value, monitor->context);
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    }
+}
+
+static GrdPinosSource *
+create_pinos_source (GMainContext *main_context)
+{
+  GrdPinosSource *pinos_source;
+
+  pinos_source =
+    (GrdPinosSource *) g_source_new (&pinos_source_funcs,
+                                     sizeof (GrdPinosSource));
+  pinos_source->pinos_loop = pinos_loop_new ();
+  g_source_add_unix_fd (&pinos_source->base,
+                        pinos_loop_get_fd (pinos_source->pinos_loop),
+                        G_IO_IN | G_IO_ERR);
+
+  pinos_loop_enter (pinos_source->pinos_loop);
+  g_source_attach (&pinos_source->base, main_context);
+
+  return pinos_source;
+}
+
+static void
+grd_stream_monitor_constructed (GObject *object)
+{
+  GrdStreamMonitor *monitor = GRD_STREAM_MONITOR (object);
+  GMainContext *main_context;
+
   monitor->streams = g_hash_table_new_full (g_str_hash,
                                             g_str_equal,
                                             g_free,
@@ -185,19 +338,25 @@ grd_stream_monitor_init (GrdStreamMonitor *monitor)
                                                NULL,
                                                g_free);
 
-  monitor->pinos_context = pinos_context_new (NULL,
+  main_context = grd_context_get_main_context (monitor->context);
+  monitor->pinos_source = create_pinos_source (main_context);
+  monitor->pinos_context = pinos_context_new (monitor->pinos_source->pinos_loop,
                                               GRD_PINOS_CLIENT_NAME,
                                               NULL);
-  g_object_set (monitor->pinos_context,
-                "subscription-mask",
-                PINOS_SUBSCRIPTION_FLAG_SOURCE_OUTPUT,
-                NULL);
-  g_signal_connect (monitor->pinos_context,
-                    "subscription-event",
-                    G_CALLBACK (on_subscription_event),
-                    monitor);
 
-  pinos_context_connect (monitor->pinos_context, PINOS_CONTEXT_FLAGS_NONE);
+  pinos_signal_add (&monitor->pinos_context->state_changed,
+                    &monitor->state_changed_listener,
+                    on_state_changed);
+  pinos_signal_add (&monitor->pinos_context->subscription,
+                    &monitor->subscription_listener,
+                    on_subscription);
+
+  pinos_context_connect (monitor->pinos_context, PINOS_CONTEXT_FLAG_NONE);
+}
+
+static void
+grd_stream_monitor_init (GrdStreamMonitor *monitor)
+{
 }
 
 static void
@@ -206,6 +365,19 @@ grd_stream_monitor_class_init (GrdStreamMonitorClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = grd_stream_monitor_finalize;
+  object_class->set_property = grd_stream_monitor_set_property;
+  object_class->get_property = grd_stream_monitor_get_property;
+  object_class->constructed = grd_stream_monitor_constructed;
+
+  g_object_class_install_property (object_class,
+                                   PROP_CONTEXT,
+                                   g_param_spec_object ("context",
+                                                        "GrdContext",
+                                                        "The GrdContext instance",
+                                                        GRD_TYPE_CONTEXT,
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_STATIC_STRINGS));
 
   signals[STREAM_ADDED] = g_signal_new ("stream-added",
                                         G_TYPE_FROM_CLASS (klass),

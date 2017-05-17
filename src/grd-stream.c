@@ -40,26 +40,26 @@ struct _GrdStream
 {
   GObject parent;
 
-  char *source_path;
+  uint32_t pinos_node_id;
 
   GrdContext *context;
 };
 
 G_DEFINE_TYPE (GrdStream, grd_stream, G_TYPE_OBJECT);
 
-const char *
-grd_stream_get_pinos_source_path (GrdStream *stream)
+uint32_t
+grd_stream_get_pinos_node_id (GrdStream *stream)
 {
-  return stream->source_path;
+  return stream->pinos_node_id;
 }
 
 GrdStream *grd_stream_new (GrdContext *context,
-                           const char *source_path)
+                           uint32_t    pinos_node_id)
 {
   GrdStream *stream;
  
   stream = g_object_new (GRD_TYPE_STREAM, NULL);
-  stream->source_path = g_strdup (source_path);
+  stream->pinos_node_id = pinos_node_id;
   stream->context = context;
 
   return stream;
@@ -72,14 +72,6 @@ grd_stream_removed (GrdStream *stream)
 }
 
 static void
-grd_stream_finalize (GObject *object)
-{
-  GrdStream *stream = GRD_STREAM (object);
-
-  g_free (stream->source_path);
-}
-
-static void
 grd_stream_init (GrdStream *stream)
 {
 }
@@ -87,10 +79,6 @@ grd_stream_init (GrdStream *stream)
 static void
 grd_stream_class_init (GrdStreamClass *klass)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = grd_stream_finalize;
-
   signals[REMOVED] = g_signal_new ("removed",
                                    G_TYPE_FROM_CLASS (klass),
                                    G_SIGNAL_RUN_LAST,
