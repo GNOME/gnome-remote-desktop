@@ -227,7 +227,8 @@ grd_vnc_sink_init (GrdVncSink *vnc_sink)
                          "format", G_TYPE_STRING, video_format_string,
                          "width", GST_TYPE_INT_RANGE, 1, G_MAXINT,
                          "height", GST_TYPE_INT_RANGE, 1, G_MAXINT,
-                         "framerate", GST_TYPE_FRACTION_RANGE, 0, 1, G_MAXINT, 1,
+                         "framerate", GST_TYPE_FRACTION, 0, 1,
+                         "max-framerate", GST_TYPE_FRACTION_RANGE, 1, 1, 60, 1,
                          NULL);
 }
 

@@ -1,0 +1,100 @@
+<!DOCTYPE node PUBLIC
+'-//freedesktop//DTD D-BUS Object Introspection 1.0//EN'
+'http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd'>
+<node>
+
+  <!--
+      org.gnome.Mutter.ScreenCast:
+      @short_description: Screen cast interface
+
+      Available @properties (see RecordMonitor and RecordWindow)
+  -->
+  <interface name="org.gnome.Mutter.ScreenCast">
+
+    <!--
+	CreateSession:
+	@properties: Properties
+	@session: Path to the new session object
+
+	* "remote-desktop-session-id" (s): The ID of a remote desktop session.
+					   Remote desktop driven screen casts
+					   are started and stopped by the remote
+					   desktop session.
+    -->
+    <method name="CreateSession">
+      <arg name="properties" type="a{sv}" direction="in" />
+      <arg name="session_path" type="o" direction="out" />
+    </method>
+
+  </interface>
+
+  <interface name="org.gnome.Mutter.ScreenCast.Session">
+
+    <!--
+	Start:
+	
+	Start the screen cast session
+    -->
+    <method name="Start" />
+
+    <!--
+	Stop:
+	
+	Stop the screen cast session
+    -->
+    <method name="Stop" />
+
+    <!--
+	Closed:
+
+	The session has closed.
+    -->
+    <signal name="Closed" />
+
+    <!--
+	RecordMonitor:
+	@connector: Connector of the monitor to record
+	@properties: Properties
+	@session: Path to the new session object
+
+	Record a single monitor.
+
+	Available @properties include: (none)
+    -->
+    <method name="RecordMonitor">
+      <arg name="connector" type="s" direction="in" />
+      <arg name="properties" type="a{sv}" direction="in" />
+      <arg name="stream_path" type="o" direction="out" />
+    </method>
+
+    <!--
+	RecordWindow:
+	@properties: Properties
+	@session: Path to the new session object
+
+	Record a single monitor.
+
+	Available @properties include: (none)
+    -->
+    <method name="RecordWindow">
+      <arg name="properties" type="a{sv}" direction="in" />
+      <arg name="stream_path" type="o" direction="out" />
+    </method>
+  </interface>
+
+  <!--
+       org.gnome.Mutter.ScreenCast.Session:
+       @short_description: Screen cast session
+  -->
+  <interface name="org.gnome.Mutter.ScreenCast.Stream">
+
+    <!--
+	PinosStreamAdded:
+    -->
+    <signal name="PinosStreamAdded">
+      <arg name="stream_id" type="s" direction="out" />
+    </signal>
+
+  </interface>
+
+</node>

@@ -17,6 +17,17 @@ $(dbus_remote_desktop_built_sources) : Makefile.am org.gnome.Mutter.RemoteDeskto
 
 BUILT_SOURCES += $(dbus_remote_desktop_built_sources)
 
+dbus_screen_cast_built_sources = grd-dbus-screen-cast.c grd-dbus-screen-cast.h
+
+$(dbus_screen_cast_built_sources) : Makefile.am org.gnome.Mutter.ScreenCast.xml
+	$(AM_V_GEN)gdbus-codegen							\
+		--interface-prefix org.gnome.Mutter					\
+		--c-namespace GrdDBus							\
+		--generate-c-code grd-dbus-screen-cast					\
+		$(srcdir)/org.gnome.Mutter.ScreenCast.xml
+
+BUILT_SOURCES += $(dbus_screen_cast_built_sources)
+
 dbusservice_DATA = org.gnome.RemoteDesktop.service
 
 gnome_remote_desktop_daemon_SOURCES = \
@@ -24,6 +35,10 @@ gnome_remote_desktop_daemon_SOURCES = \
 	grd-context.h \
 	grd-daemon.c \
 	grd-daemon.h \
+	grd-pinos-stream.c \
+	grd-pinos-stream.h \
+	grd-pinos-stream-monitor.c \
+	grd-pinos-stream-monitor.h \
 	grd-private.h \
 	grd-session.c \
 	grd-session.h \
@@ -33,8 +48,6 @@ gnome_remote_desktop_daemon_SOURCES = \
 	grd-session-vnc.h \
 	grd-stream.c \
 	grd-stream.h \
-	grd-stream-monitor.c \
-	grd-stream-monitor.h \
 	grd-types.h \
 	grd-vnc-server.c \
 	grd-vnc-server.h \
@@ -45,7 +58,7 @@ gnome_remote_desktop_daemon_SOURCES = \
 gnome_remote_desktop_daemon_SOURCES : $(BUILT_SOURCES)
 
 nodist_gnome_remote_desktop_daemon_SOURCES = \
-	$(dbus_remote_desktop_built_sources) \
+	$(BUILT_SOURCES) \
 	$(NULL)
 
 gnome_remote_desktop_daemon_CFLAGS = \

@@ -20,23 +20,27 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_STREAM_MONITOR_H
-#define GRD_STREAM_MONITOR_H
+#ifndef GRD_PINOS_STREAM_H
+#define GRD_PINOS_STREAM_H
 
 #include <glib-object.h>
-#include <pinos/client/context.h>
+#include <stdint.h>
 
 #include "grd-types.h"
 
-#define GRD_TYPE_STREAM_MONITOR (grd_stream_monitor_get_type ())
-G_DECLARE_FINAL_TYPE (GrdStreamMonitor, grd_stream_monitor,
-                      GRD, STREAM_MONITOR, GObject);
+#define GRD_TYPE_PINOS_STREAM (grd_pinos_stream_get_type ())
+G_DECLARE_FINAL_TYPE (GrdPinosStream, grd_pinos_stream,
+                      GRD, PINOS_STREAM,
+                      GObject)
 
-PinosContext *grd_stream_monitor_get_pinos_context (GrdStreamMonitor *monitor);
+uint32_t grd_pinos_stream_get_node_id (GrdPinosStream *stream);
 
-GrdStream *grd_stream_monitor_get_stream (GrdStreamMonitor *monitor,
-                                          const char       *stream_id);
+const char *grd_pinos_stream_get_stream_id (GrdPinosStream *stream);
 
-GrdStreamMonitor *grd_stream_monitor_new (GrdContext *context);
+void grd_pinos_stream_removed (GrdPinosStream *stream);
 
-#endif /* GRD_STREAM_MONITOR_H */
+GrdPinosStream *grd_pinos_stream_new (GrdContext *context,
+                                      const char *stream_id,
+                                      uint32_t    pinos_node_id);
+
+#endif /* GRD_PINOS_STREAM_H */

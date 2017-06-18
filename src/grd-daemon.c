@@ -25,6 +25,7 @@
 #include "grd-daemon.h"
 
 #include <gio/gio.h>
+#include <stdio.h>
 
 #include "grd-context.h"
 #include "grd-dbus-remote-desktop.h"
@@ -38,7 +39,8 @@ struct _GrdDaemon
   GApplication parent;
 
   GCancellable *cancellable;
-  guint watch_name_id;
+  guint remote_desktop_watch_name_id;
+  guint screen_cast_watch_name_id;
 
   GrdContext *context;
 
@@ -55,29 +57,62 @@ G_DEFINE_TYPE_WITH_CODE (GrdDaemon,
                                                 grd_daemon_async_initable_init));
 
 static void
-on_proxy_acquired (GObject      *object,
-                   GAsyncResult *result,
-                   gpointer      user_data)
+on_remote_desktop_proxy_acquired (GObject      *object,
+                                  GAsyncResult *result,
+                                  gpointer      user_data)
 {
   GTask *task = user_data;
   GrdDaemon *daemon = g_task_get_source_object (task);
   GrdDBusRemoteDesktop *proxy;
   GError *error = NULL;
 
+  if (g_task_had_error (task))
+    return;
+
   proxy = grd_dbus_remote_desktop_proxy_new_for_bus_finish (result, &error);
   if (!proxy)
-    return g_task_return_error (task, error);
+    {
+      g_task_return_error (task, error);
+      return;
+    }
 
-  grd_context_set_dbus_proxy (daemon->context, proxy);
+  grd_context_set_remote_desktop_proxy (daemon->context, proxy);
 
-  g_task_return_boolean (task, TRUE);
+  if (grd_context_get_screen_cast_proxy (daemon->context))
+    g_task_return_boolean (task, TRUE);
 }
 
 static void
-on_name_appeared (GDBusConnection *connection,
-                  const char      *name,
-                  const char      *name_owner,
-                  gpointer         user_data)
+on_screen_cast_proxy_acquired (GObject      *object,
+                               GAsyncResult *result,
+                               gpointer      user_data)
+{
+  GTask *task = user_data;
+  GrdDaemon *daemon = g_task_get_source_object (task);
+  GrdDBusScreenCast *proxy;
+  GError *error = NULL;
+
+  if (g_task_had_error (task))
+    return;
+
+  proxy = grd_dbus_screen_cast_proxy_new_for_bus_finish (result, &error);
+  if (!proxy)
+    {
+      g_task_return_error (task, error);
+      return;
+    }
+
+  grd_context_set_screen_cast_proxy (daemon->context, proxy);
+
+  if (grd_context_get_remote_desktop_proxy (daemon->context))
+    g_task_return_boolean (task, TRUE);
+}
+
+static void
+on_remote_desktop_name_appeared (GDBusConnection *connection,
+                                 const char      *name,
+                                 const char      *name_owner,
+                                 gpointer         user_data)
 {
   GTask *task = user_data;
   GrdDaemon *daemon = g_task_get_source_object (task);
@@ -87,9 +122,30 @@ on_name_appeared (GDBusConnection *connection,
                                              MUTTER_REMOTE_DESKTOP_BUS_NAME,
                                              MUTTER_REMOTE_DESKTOP_OBJECT_PATH,
                                              g_task_get_cancellable (task),
-                                             on_proxy_acquired, g_object_ref (task));
-  g_bus_unwatch_name (daemon->watch_name_id);
-  daemon->watch_name_id = 0;
+                                             on_remote_desktop_proxy_acquired,
+                                             g_object_ref (task));
+  g_bus_unwatch_name (daemon->remote_desktop_watch_name_id);
+  daemon->remote_desktop_watch_name_id = 0;
+}
+
+static void
+on_screen_cast_name_appeared (GDBusConnection *connection,
+                              const char      *name,
+                              const char      *name_owner,
+                              gpointer         user_data)
+{
+  GTask *task = user_data;
+  GrdDaemon *daemon = g_task_get_source_object (task);
+
+  grd_dbus_screen_cast_proxy_new_for_bus (G_BUS_TYPE_SESSION,
+                                          G_DBUS_PROXY_FLAGS_NONE,
+                                          MUTTER_SCREEN_CAST_BUS_NAME,
+                                          MUTTER_SCREEN_CAST_OBJECT_PATH,
+                                          g_task_get_cancellable (task),
+                                          on_screen_cast_proxy_acquired,
+                                          g_object_ref (task));
+  g_bus_unwatch_name (daemon->screen_cast_watch_name_id);
+  daemon->screen_cast_watch_name_id = 0;
 }
 
 static void
@@ -103,12 +159,22 @@ grd_daemon_async_initable_init_async (GAsyncInitable      *initable,
   GTask *task;
 
   task = g_task_new (daemon, cancellable, callback, user_data);
-  daemon->watch_name_id = g_bus_watch_name (G_BUS_TYPE_SESSION,
-                                            MUTTER_REMOTE_DESKTOP_BUS_NAME,
-                                            G_BUS_NAME_WATCHER_FLAGS_NONE,
-                                            on_name_appeared,
-                                            NULL,
-                                            task, g_object_unref);
+
+  daemon->remote_desktop_watch_name_id =
+    g_bus_watch_name (G_BUS_TYPE_SESSION,
+                      MUTTER_REMOTE_DESKTOP_BUS_NAME,
+                      G_BUS_NAME_WATCHER_FLAGS_NONE,
+                      on_remote_desktop_name_appeared,
+                      NULL,
+                      g_object_ref (task), g_object_unref);
+
+  daemon->screen_cast_watch_name_id =
+    g_bus_watch_name (G_BUS_TYPE_SESSION,
+                      MUTTER_SCREEN_CAST_BUS_NAME,
+                      G_BUS_NAME_WATCHER_FLAGS_NONE,
+                      on_screen_cast_name_appeared,
+                      NULL,
+                      g_object_ref (task), g_object_unref);
 }
 
 static gboolean

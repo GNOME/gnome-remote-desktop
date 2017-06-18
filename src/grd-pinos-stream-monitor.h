@@ -20,30 +20,23 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_CONTEXT_H
-#define GRD_CONTEXT_H
+#ifndef GRD_PINOS_STREAM_MONITOR_H
+#define GRD_PINOS_STREAM_MONITOR_H
 
 #include <glib-object.h>
+#include <pinos/client/context.h>
 
-#include "grd-dbus-remote-desktop.h"
-#include "grd-dbus-screen-cast.h"
 #include "grd-types.h"
 
-#define GRD_TYPE_CONTEXT (grd_context_get_type ())
-G_DECLARE_FINAL_TYPE (GrdContext, grd_context, GRD, CONTEXT, GObject);
+#define GRD_TYPE_PINOS_STREAM_MONITOR (grd_pinos_stream_monitor_get_type ())
+G_DECLARE_FINAL_TYPE (GrdPinosStreamMonitor, grd_pinos_stream_monitor,
+                      GRD, PINOS_STREAM_MONITOR, GObject);
 
-GrdDBusRemoteDesktop * grd_context_get_remote_desktop_proxy (GrdContext *context);
+PinosContext *grd_pinos_stream_monitor_get_pinos_context (GrdPinosStreamMonitor *monitor);
 
-GrdDBusScreenCast * grd_context_get_screen_cast_proxy (GrdContext *context);
+GrdPinosStream *grd_pinos_stream_monitor_get_stream (GrdPinosStreamMonitor *monitor,
+                                                     const char            *stream_id);
 
-void grd_context_set_remote_desktop_proxy (GrdContext           *context,
-                                           GrdDBusRemoteDesktop *proxy);
+GrdPinosStreamMonitor *grd_pinos_stream_monitor_new (GrdContext *context);
 
-void grd_context_set_screen_cast_proxy (GrdContext        *context,
-                                        GrdDBusScreenCast *proxy);
-
-GrdPinosStreamMonitor *grd_context_get_pinos_stream_monitor (GrdContext *context);
-
-GMainContext *grd_context_get_main_context (GrdContext *context);
-
-#endif /* GRD_CONTEXT_H */
+#endif /* GRD_PINOS_STREAM_MONITOR_H */

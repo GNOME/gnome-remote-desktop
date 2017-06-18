@@ -30,6 +30,7 @@
 #include <pinos/client/stream.h>
 #include <rfb/rfb.h>
 
+#include "grd-pinos-stream.h"
 #include "grd-stream.h"
 #include "grd-vnc-server.h"
 #include "grd-vnc-sink.h"
@@ -42,8 +43,6 @@ struct _GrdSessionVnc
   GSource *source;
   rfbScreenInfoPtr rfb_screen;
   rfbClientPtr rfb_client;
-
-  gboolean proxy_ready;
 
   GstElement *pipeline;
   GstElement *vnc_sink;
@@ -124,7 +123,17 @@ handle_client_gone (rfbClientPtr rfb_client)
 {
   GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
 
+  /* Avoid re-entry when stopping. */
+  if (!session_vnc->rfb_screen)
+    return;
+
   grd_session_stop (GRD_SESSION (session_vnc));
+}
+
+static gboolean
+is_session_ready (GrdSessionVnc *session_vnc)
+{
+  return session_vnc->pipeline != NULL;
 }
 
 static enum rfbNewClientAction
@@ -135,7 +144,7 @@ handle_new_client (rfbClientPtr rfb_client)
   session_vnc->rfb_client = rfb_client;
   rfb_client->clientGoneHook = handle_client_gone;
 
-  if (!session_vnc->proxy_ready)
+  if (!is_session_ready (session_vnc))
     grd_session_vnc_detach_source (session_vnc);
 
   return RFB_CLIENT_ACCEPT;
@@ -397,17 +406,6 @@ grd_session_vnc_dispose (GObject *object)
 }
 
 static void
-grd_session_vnc_proxy_ready (GrdSession *session)
-{
-  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
-
-  session_vnc->proxy_ready = TRUE;
-
-  if (session_vnc->rfb_client)
-    grd_session_vnc_attach_source (session_vnc);
-}
-
-static void
 grd_session_vnc_stop (GrdSession *session)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
@@ -426,10 +424,11 @@ grd_session_vnc_stop (GrdSession *session)
 }
 
 static void
-grd_session_vnc_stream_added (GrdSession *session,
+grd_session_vnc_stream_ready (GrdSession *session,
                               GrdStream  *stream)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
+  GrdPinosStream *pinos_stream;
   uint32_t pinos_node_id;
   g_autofree char *pipeline_str = NULL;
   GError *error = NULL;
@@ -438,7 +437,8 @@ grd_session_vnc_stream_added (GrdSession *session,
   g_autoptr(GstPad) sink_pad = NULL;
   g_autoptr(GstPad) src_pad = NULL;
 
-  pinos_node_id = grd_stream_get_pinos_node_id (stream);
+  pinos_stream = grd_stream_get_pinos_stream (stream);
+  pinos_node_id = grd_pinos_stream_get_node_id (pinos_stream);
   pipeline_str =
     g_strdup_printf ("pinossrc name=pinossrc path=%d ! videoconvert",
                      pinos_node_id);
@@ -472,6 +472,9 @@ grd_session_vnc_stream_added (GrdSession *session,
   session_vnc->pinos_src = gst_bin_get_by_name (GST_BIN (pipeline), "pinossrc");
   session_vnc->vnc_sink = g_steal_pointer (&vnc_sink);
   session_vnc->pipeline = g_steal_pointer (&pipeline);
+
+  if (!session_vnc->source)
+    grd_session_vnc_attach_source (session_vnc);
 }
 
 static void
@@ -488,7 +491,6 @@ grd_session_vnc_class_init (GrdSessionVncClass *klass)
 
   object_class->dispose = grd_session_vnc_dispose;
 
-  session_class->proxy_ready = grd_session_vnc_proxy_ready;
   session_class->stop = grd_session_vnc_stop;
-  session_class->stream_added = grd_session_vnc_stream_added;
+  session_class->stream_ready = grd_session_vnc_stream_ready;
 }

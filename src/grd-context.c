@@ -28,37 +28,52 @@
 #include <pinos/client/pinos.h>
 
 #include "grd-dbus-remote-desktop.h"
-#include "grd-stream-monitor.h"
+#include "grd-dbus-screen-cast.h"
+#include "grd-pinos-stream-monitor.h"
 
 struct _GrdContext
 {
   GObject parent;
 
   GMainContext *main_context;
-  GrdStreamMonitor *stream_monitor;
+  GrdPinosStreamMonitor *pinos_stream_monitor;
 
-  GrdDBusRemoteDesktop *proxy;
+  GrdDBusRemoteDesktop *remote_desktop_proxy;
+  GrdDBusScreenCast *screen_cast_proxy;
 };
 
 G_DEFINE_TYPE (GrdContext, grd_context, G_TYPE_OBJECT);
 
 GrdDBusRemoteDesktop *
-grd_context_get_dbus_proxy (GrdContext *context)
+grd_context_get_remote_desktop_proxy (GrdContext *context)
 {
-  return context->proxy;
+  return context->remote_desktop_proxy;
+}
+
+GrdDBusScreenCast *
+grd_context_get_screen_cast_proxy (GrdContext *context)
+{
+  return context->screen_cast_proxy;
 }
 
 void
-grd_context_set_dbus_proxy (GrdContext           *context,
-                            GrdDBusRemoteDesktop *proxy)
+grd_context_set_remote_desktop_proxy (GrdContext           *context,
+                                      GrdDBusRemoteDesktop *proxy)
 {
-  context->proxy = proxy;
+  context->remote_desktop_proxy = proxy;
 }
 
-GrdStreamMonitor *
-grd_context_get_stream_monitor (GrdContext *context)
+void
+grd_context_set_screen_cast_proxy (GrdContext        *context,
+                                   GrdDBusScreenCast *proxy)
 {
-  return context->stream_monitor;
+  context->screen_cast_proxy = proxy;
+}
+
+GrdPinosStreamMonitor *
+grd_context_get_pinos_stream_monitor (GrdContext *context)
+{
+  return context->pinos_stream_monitor;
 }
 
 GMainContext *
@@ -72,7 +87,7 @@ grd_context_constructed (GObject *object)
 {
   GrdContext *context = GRD_CONTEXT (object);
 
-  context->stream_monitor = grd_stream_monitor_new (context);
+  context->pinos_stream_monitor = grd_pinos_stream_monitor_new (context);
 }
 
 static void

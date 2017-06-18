@@ -29,6 +29,7 @@
 #include <gst/gst.h>
 
 #include "grd-stream.h"
+#include "grd-pinos-stream.h"
 
 struct _GrdSessionDummy
 {
@@ -40,20 +41,17 @@ struct _GrdSessionDummy
 G_DEFINE_TYPE (GrdSessionDummy, grd_session_dummy, GRD_TYPE_SESSION);
 
 static void
-grd_session_dummy_proxy_ready (GrdSession *session)
-{
-}
-
-static void
-grd_session_dummy_stream_added (GrdSession *session,
+grd_session_dummy_stream_ready (GrdSession *session,
                                 GrdStream  *stream)
 {
   GrdSessionDummy *session_dummy = GRD_SESSION_DUMMY (session);
+  GrdPinosStream *pinos_stream;
   uint32_t pinos_node_id;
   char *pipeline_str;
   GError *error = NULL;
 
-  pinos_node_id = grd_stream_get_pinos_node_id (stream);
+  pinos_stream = grd_stream_get_pinos_stream (stream);
+  pinos_node_id = grd_pinos_stream_get_node_id (pinos_stream);
   pipeline_str =
     g_strdup_printf ("pinossrc name=pinossrc path=%u ! videoconvert ! ximagesink",
                      pinos_node_id);
@@ -88,7 +86,6 @@ grd_session_dummy_class_init (GrdSessionDummyClass *klass)
 {
   GrdSessionClass *session_class = GRD_SESSION_CLASS (klass);
 
-  session_class->proxy_ready = grd_session_dummy_proxy_ready;
-  session_class->stream_added = grd_session_dummy_stream_added;
+  session_class->stream_ready = grd_session_dummy_stream_ready;
   session_class->stop = grd_session_dummy_stop;
 }

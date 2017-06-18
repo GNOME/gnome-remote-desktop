@@ -10,11 +10,11 @@
   <interface name="org.gnome.Mutter.RemoteDesktop">
 
     <!--
-        Start:
-        @session: Path to the new session object
+	CreateSession:
+	@session: Path to the new session object
     -->
-    <method name="Start">
-      <arg type="o" direction="out" name="session_path"/>
+    <method name="CreateSession">
+      <arg name="session_path" type="o" direction="out" />
     </method>
 
   </interface>
@@ -26,54 +26,76 @@
   <interface name="org.gnome.Mutter.RemoteDesktop.Session">
 
     <!--
-        PinosStreamId:
+	SessionId:
 
-        An identification string used for identifying a pinos stream with
-        a remote desktop session. The associated pinos stream property key
-        'gnome.remote_desktop.stream_id' will have the given string.
+	An identification string used for identifying a remote desktop session.
+	It can be used to associate screen cast sessions with a remote desktop session.
     -->
-    <property type="s" access="read" name="PinosStreamId"/>
+    <property name="SessionId" type="s" access="read" />
 
     <!--
-        Stop:
-        @short_description: Stop the remote desktop session
+	Start:
+
+	Start the remote desktop session
     -->
-    <method name="Stop"/>
+    <method name="Start" />
 
     <!--
-        NotifyKeyboardKeysym:
-        @short_description: A key identified by a keysym was pressed or released
+	Stop:
+
+	Stop the remote desktop session
+    -->
+    <method name="Stop" />
+
+    <!--
+	Closed:
+
+	The session has closed.
+
+	A session doesn't have to have been started before it may be closed.
+	After it being closed, it can no longer be used.
+    -->
+    <signal name="Closed" />
+
+    <!--
+	NotifyKeyboardKeysym:
+
+	A key identified by a keysym was pressed or released
      -->
     <method name="NotifyKeyboardKeysym">
-      <arg type="u" direction="in" name="keysym"/>
-      <arg type="b" direction="in" name="state"/>
+      <arg name="keysym" type="u" direction="in" />
+      <arg name="state" type="b" direction="in" />
     </method>
 
     <!--
-        NotifyPointerButton:
-        @short_description: A pointer button was pressed or released
+	NotifyPointerButton:
+
+	A pointer button was pressed or released
      -->
     <method name="NotifyPointerButton">
-      <arg type="i" direction="in" name="button"/>
-      <arg type="b" direction="in" name="state"/>
+      <arg name="button" type="i" direction="in" />
+      <arg name="state" type="b" direction="in" />
     </method>
 
     <!--
-        NotifyPointerAxisDiscrete:
-        @short_description: A discrete pointer axis event notification
+	NotifyPointerAxisDiscrete:
+
+	A discrete pointer axis event notification
      -->
     <method name="NotifyPointerAxisDiscrete">
-      <arg type="u" direction="in" name="axis"/>
-      <arg type="i" direction="in" name="steps"/>
+      <arg name="axis" type="u" direction="in" />
+      <arg name="steps" type="i" direction="in" />
     </method>
 
     <!--
-        NotifyPointerMotionAbsolute:
-        @short_description: A absolute pointer motion event notification
+	NotifyPointerMotionAbsolute:
+
+	A absolute pointer motion event notification
      -->
     <method name="NotifyPointerMotionAbsolute">
-      <arg type="d" direction="in" name="x"/>
-      <arg type="d" direction="in" name="y"/>
+      <arg name="stream" type="s" direction="in" />
+      <arg name="x" type="d" direction="in" />
+      <arg name="y" type="d" direction="in" />
     </method>
 
   </interface>

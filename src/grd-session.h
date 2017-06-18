@@ -53,9 +53,8 @@ struct _GrdSessionClass
 {
   GObjectClass parent_class;
 
-  void (*stream_added) (GrdSession *session,
+  void (*stream_ready) (GrdSession *session,
                         GrdStream  *stream);
-  void (*proxy_ready) (GrdSession *session);
   void (*stop) (GrdSession *session);
 };
 
