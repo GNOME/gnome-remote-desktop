@@ -62,11 +62,17 @@ grd_vnc_server_new (GrdContext *context)
   return vnc_server;
 }
 
-static gboolean
-cleanup_stopped_sessions_idle (GrdVncServer *vnc_server)
+static void
+grd_vnc_server_cleanup_stopped_sessions (GrdVncServer *vnc_server)
 {
   g_list_free_full (vnc_server->stopped_sessions, g_object_unref);
   vnc_server->stopped_sessions = NULL;
+}
+
+static gboolean
+cleanup_stopped_sessions_idle (GrdVncServer *vnc_server)
+{
+  grd_vnc_server_cleanup_stopped_sessions (vnc_server);
   vnc_server->idle_task = 0;
 
   return G_SOURCE_REMOVE;
@@ -102,6 +108,7 @@ on_incoming (GSocketService    *service,
 
   session_vnc = grd_session_vnc_new (vnc_server, connection);
   vnc_server->sessions = g_list_append (vnc_server->sessions, session_vnc);
+  grd_context_add_session (vnc_server->context, GRD_SESSION (session_vnc));
 
   g_signal_connect (session_vnc, "stopped",
                     G_CALLBACK (on_session_stopped),
@@ -144,8 +151,7 @@ grd_vnc_server_dispose (GObject *object)
 
   if (vnc_server->stopped_sessions)
     {
-      g_list_free_full (vnc_server->stopped_sessions, g_object_unref);
-      vnc_server->stopped_sessions = NULL;
+      grd_vnc_server_cleanup_stopped_sessions (vnc_server);
     }
   if (vnc_server->sessions)
     {

@@ -40,6 +40,8 @@ struct _GrdContext
 
   GrdDBusRemoteDesktop *remote_desktop_proxy;
   GrdDBusScreenCast *screen_cast_proxy;
+
+  GList *sessions;
 };
 
 G_DEFINE_TYPE (GrdContext, grd_context, G_TYPE_OBJECT);
@@ -80,6 +82,28 @@ GMainContext *
 grd_context_get_main_context (GrdContext *context)
 {
   return context->main_context;
+}
+
+static void
+on_session_stopped (GrdSession *session,
+                    GrdContext *context)
+{
+  context->sessions = g_list_remove (context->sessions, session);
+}
+
+void
+grd_context_add_session (GrdContext *context,
+                         GrdSession *session)
+{
+  context->sessions = g_list_append (context->sessions, session);
+  g_signal_connect (session, "stopped",
+                    G_CALLBACK (on_session_stopped), context);
+}
+
+GList *
+grd_context_get_sessions (GrdContext *context)
+{
+  return context->sessions;
 }
 
 static void

@@ -48,38 +48,72 @@ struct _GrdDaemon
   GrdSessionDummy *dummy_session;
 };
 
-static void grd_daemon_async_initable_init (GAsyncInitableIface *iface);
+G_DEFINE_TYPE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
 
-G_DEFINE_TYPE_WITH_CODE (GrdDaemon,
-                         grd_daemon,
-                         G_TYPE_APPLICATION,
-                         G_IMPLEMENT_INTERFACE (G_TYPE_ASYNC_INITABLE,
-                                                grd_daemon_async_initable_init));
+static gboolean
+is_daemon_ready (GrdDaemon *daemon)
+{
+  if (!grd_context_get_remote_desktop_proxy (daemon->context) ||
+      !grd_context_get_screen_cast_proxy (daemon->context))
+    return FALSE;
+
+  return TRUE;
+}
+
+static void
+maybe_enable_services (GrdDaemon *daemon)
+{
+  GError *error = NULL;
+
+  if (!is_daemon_ready (daemon))
+    return;
+
+  daemon->vnc_server = grd_vnc_server_new (daemon->context);
+  if (!grd_vnc_server_start (daemon->vnc_server, &error))
+    {
+      g_warning ("Failed to initialize VNC server: %s\n", error->message);
+    }
+}
+
+static void
+close_all_sessions (GrdDaemon *daemon)
+{
+  GList *l;
+
+  while ((l = grd_context_get_sessions (daemon->context)))
+    {
+      GrdSession *session = l->data;
+
+      grd_session_stop (session);
+    }
+}
+
+static void
+disable_services (GrdDaemon *daemon)
+{
+  close_all_sessions (daemon);
+  g_clear_object (&daemon->vnc_server);
+}
 
 static void
 on_remote_desktop_proxy_acquired (GObject      *object,
                                   GAsyncResult *result,
                                   gpointer      user_data)
 {
-  GTask *task = user_data;
-  GrdDaemon *daemon = g_task_get_source_object (task);
+  GrdDaemon *daemon = user_data;
   GrdDBusRemoteDesktop *proxy;
   GError *error = NULL;
-
-  if (g_task_had_error (task))
-    return;
 
   proxy = grd_dbus_remote_desktop_proxy_new_for_bus_finish (result, &error);
   if (!proxy)
     {
-      g_task_return_error (task, error);
+      g_warning ("Failed to create remote desktop proxy: %s", error->message);
       return;
     }
 
   grd_context_set_remote_desktop_proxy (daemon->context, proxy);
 
-  if (grd_context_get_screen_cast_proxy (daemon->context))
-    g_task_return_boolean (task, TRUE);
+  maybe_enable_services (daemon);
 }
 
 static void
@@ -87,25 +121,20 @@ on_screen_cast_proxy_acquired (GObject      *object,
                                GAsyncResult *result,
                                gpointer      user_data)
 {
-  GTask *task = user_data;
-  GrdDaemon *daemon = g_task_get_source_object (task);
+  GrdDaemon *daemon = user_data;
   GrdDBusScreenCast *proxy;
   GError *error = NULL;
-
-  if (g_task_had_error (task))
-    return;
 
   proxy = grd_dbus_screen_cast_proxy_new_for_bus_finish (result, &error);
   if (!proxy)
     {
-      g_task_return_error (task, error);
+      g_warning ("Failed to create screen cast proxy: %s", error->message);
       return;
     }
 
   grd_context_set_screen_cast_proxy (daemon->context, proxy);
 
-  if (grd_context_get_remote_desktop_proxy (daemon->context))
-    g_task_return_boolean (task, TRUE);
+  maybe_enable_services (daemon);
 }
 
 static void
@@ -114,18 +143,26 @@ on_remote_desktop_name_appeared (GDBusConnection *connection,
                                  const char      *name_owner,
                                  gpointer         user_data)
 {
-  GTask *task = user_data;
-  GrdDaemon *daemon = g_task_get_source_object (task);
+  GrdDaemon *daemon = user_data;
 
   grd_dbus_remote_desktop_proxy_new_for_bus (G_BUS_TYPE_SESSION,
                                              G_DBUS_PROXY_FLAGS_NONE,
                                              MUTTER_REMOTE_DESKTOP_BUS_NAME,
                                              MUTTER_REMOTE_DESKTOP_OBJECT_PATH,
-                                             g_task_get_cancellable (task),
+                                             daemon->cancellable,
                                              on_remote_desktop_proxy_acquired,
-                                             g_object_ref (task));
-  g_bus_unwatch_name (daemon->remote_desktop_watch_name_id);
-  daemon->remote_desktop_watch_name_id = 0;
+                                             daemon);
+}
+
+static void
+on_remote_desktop_name_vanished (GDBusConnection *connection,
+                                 const char      *name,
+                                 gpointer         user_data)
+{
+  GrdDaemon *daemon = user_data;
+
+  disable_services (daemon);
+  grd_context_set_remote_desktop_proxy (daemon->context, NULL);
 }
 
 static void
@@ -134,85 +171,26 @@ on_screen_cast_name_appeared (GDBusConnection *connection,
                               const char      *name_owner,
                               gpointer         user_data)
 {
-  GTask *task = user_data;
-  GrdDaemon *daemon = g_task_get_source_object (task);
+  GrdDaemon *daemon = user_data;
 
   grd_dbus_screen_cast_proxy_new_for_bus (G_BUS_TYPE_SESSION,
                                           G_DBUS_PROXY_FLAGS_NONE,
                                           MUTTER_SCREEN_CAST_BUS_NAME,
                                           MUTTER_SCREEN_CAST_OBJECT_PATH,
-                                          g_task_get_cancellable (task),
+                                          daemon->cancellable,
                                           on_screen_cast_proxy_acquired,
-                                          g_object_ref (task));
-  g_bus_unwatch_name (daemon->screen_cast_watch_name_id);
-  daemon->screen_cast_watch_name_id = 0;
+                                          daemon);
 }
 
 static void
-grd_daemon_async_initable_init_async (GAsyncInitable      *initable,
-                                      int                  io_priority,
-                                      GCancellable        *cancellable,
-                                      GAsyncReadyCallback  callback,
-                                      gpointer             user_data)
-{
-  GrdDaemon *daemon = (GRD_DAEMON (initable));
-  GTask *task;
-
-  task = g_task_new (daemon, cancellable, callback, user_data);
-
-  daemon->remote_desktop_watch_name_id =
-    g_bus_watch_name (G_BUS_TYPE_SESSION,
-                      MUTTER_REMOTE_DESKTOP_BUS_NAME,
-                      G_BUS_NAME_WATCHER_FLAGS_NONE,
-                      on_remote_desktop_name_appeared,
-                      NULL,
-                      g_object_ref (task), g_object_unref);
-
-  daemon->screen_cast_watch_name_id =
-    g_bus_watch_name (G_BUS_TYPE_SESSION,
-                      MUTTER_SCREEN_CAST_BUS_NAME,
-                      G_BUS_NAME_WATCHER_FLAGS_NONE,
-                      on_screen_cast_name_appeared,
-                      NULL,
-                      g_object_ref (task), g_object_unref);
-}
-
-static gboolean
-grd_daemon_async_initable_init_finish (GAsyncInitable    *initable,
-                                       GAsyncResult      *result,
-                                       GError           **error)
-{
-  return g_task_propagate_boolean (G_TASK (result), error);
-}
-
-static void
-grd_daemon_async_initable_init (GAsyncInitableIface *iface)
-{
-  iface->init_async = grd_daemon_async_initable_init_async;
-  iface->init_finish = grd_daemon_async_initable_init_finish;
-}
-
-static void
-grd_daemon_async_initable_ready (GObject *source_object,
-                                 GAsyncResult *result,
-                                 gpointer user_data)
+on_screen_cast_name_vanished (GDBusConnection *connection,
+                              const char      *name,
+                              gpointer         user_data)
 {
   GrdDaemon *daemon = user_data;
-  GError *error = NULL;
 
-  if (!g_async_initable_new_finish (G_ASYNC_INITABLE (source_object),
-                                    result,
-                                    &error))
-    {
-      g_warning ("Failed to initialize remote desktop daemon: %s\n", error->message);
-      return;
-    }
-
-  daemon->vnc_server = grd_vnc_server_new (daemon->context);
-  if (!grd_vnc_server_start (daemon->vnc_server, &error))
-    {
-      g_warning ("Failed to initialize VNC server: %s\n", error->message);
-    }
+  disable_services (daemon);
+  grd_context_set_screen_cast_proxy (daemon->context, NULL);
 }
 
 static void
@@ -227,12 +205,23 @@ grd_daemon_startup (GApplication *app)
 
   daemon->context = g_object_new (GRD_TYPE_CONTEXT, NULL);
 
+  daemon->remote_desktop_watch_name_id =
+    g_bus_watch_name (G_BUS_TYPE_SESSION,
+                      MUTTER_REMOTE_DESKTOP_BUS_NAME,
+                      G_BUS_NAME_WATCHER_FLAGS_NONE,
+                      on_remote_desktop_name_appeared,
+                      on_remote_desktop_name_vanished,
+                      daemon, NULL);
+
+  daemon->screen_cast_watch_name_id =
+    g_bus_watch_name (G_BUS_TYPE_SESSION,
+                      MUTTER_SCREEN_CAST_BUS_NAME,
+                      G_BUS_NAME_WATCHER_FLAGS_NONE,
+                      on_screen_cast_name_appeared,
+                      on_screen_cast_name_vanished,
+                      daemon, NULL);
+
   daemon->cancellable = g_cancellable_new ();
-  g_async_initable_init_async (G_ASYNC_INITABLE (daemon),
-                               G_PRIORITY_DEFAULT,
-                               daemon->cancellable,
-                               grd_daemon_async_initable_ready,
-                               daemon);
 
   /* Run indefinitely, until told to exit. */
   g_application_hold (app);
@@ -241,11 +230,41 @@ grd_daemon_startup (GApplication *app)
 }
 
 static void
+grd_daemon_shutdown (GApplication *app)
+{
+  GrdDaemon *daemon = GRD_DAEMON (app);
+
+  g_cancellable_cancel (daemon->cancellable);
+  g_clear_object (&daemon->cancellable);
+
+  disable_services (daemon);
+
+  grd_context_set_remote_desktop_proxy (daemon->context, NULL);
+  g_bus_unwatch_name (daemon->remote_desktop_watch_name_id);
+  daemon->remote_desktop_watch_name_id = 0;
+
+  grd_context_set_screen_cast_proxy (daemon->context, NULL);
+  g_bus_unwatch_name (daemon->screen_cast_watch_name_id);
+  daemon->screen_cast_watch_name_id = 0;
+
+  G_APPLICATION_CLASS (grd_daemon_parent_class)->shutdown (app);
+}
+
+static void
 grd_daemon_class_init (GrdDaemonClass *klass)
 {
   GApplicationClass *g_application_class = G_APPLICATION_CLASS (klass);
 
   g_application_class->startup = grd_daemon_startup;
+  g_application_class->shutdown = grd_daemon_shutdown;
+}
+
+static void
+on_dummy_session_stopped (GrdSession *session,
+                          GrdDaemon  *daemon)
+{
+  g_print ("Dummy remote desktop stopped\n");
+  g_clear_object (&daemon->dummy_session);
 }
 
 static void
@@ -253,33 +272,44 @@ activate_toggle_record (GAction   *action,
                         GVariant  *parameter,
                         GrdDaemon *daemon)
 {
-  GVariant *state;
-  gboolean b;
-
-  state = g_action_get_state (action);
-  b = g_variant_get_boolean (state);
-  g_variant_unref (state);
-  g_action_change_state (action, g_variant_new_boolean (!b));
-
-  if (!b)
+  if (!daemon->dummy_session)
     {
-      g_assert (!daemon->dummy_session);
+      if (!is_daemon_ready (daemon))
+        {
+          g_print ("Can't start dummy remote desktop, not ready.\n");
+          return;
+        }
 
       g_print ("Start dummy remote desktop\n");
 
       daemon->dummy_session = g_object_new (GRD_TYPE_SESSION_DUMMY,
                                             "context", daemon->context,
                                             NULL);
+      g_signal_connect (daemon->dummy_session, "stopped",
+                        G_CALLBACK (on_dummy_session_stopped),
+                        daemon);
+      grd_context_add_session (daemon->context,
+                               GRD_SESSION (daemon->dummy_session));
     }
   else
     {
-      g_assert (daemon->dummy_session);
 
-      g_print ("Stop dummy remote desktop\n");
+      if (daemon->dummy_session)
+        {
+          g_print ("Stop dummy remote desktop\n");
+          grd_session_stop (GRD_SESSION (daemon->dummy_session));
+        }
 
-      grd_session_stop (GRD_SESSION (daemon->dummy_session));
-      g_clear_object (&daemon->dummy_session);
+      g_assert (!daemon->dummy_session);
     }
+}
+
+static void
+activate_terminate (GAction   *action,
+                    GVariant  *parameter,
+                    GrdDaemon *daemon)
+{
+  g_application_release (G_APPLICATION (daemon));
 }
 
 static void
@@ -287,9 +317,12 @@ add_actions (GApplication *app)
 {
   g_autoptr(GSimpleAction) action;
 
-  action = g_simple_action_new_stateful ("toggle-record", NULL,
-                                         g_variant_new_boolean (FALSE));
+  action = g_simple_action_new ("toggle-record", NULL);
   g_signal_connect (action, "activate", G_CALLBACK (activate_toggle_record), app);
+  g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (action));
+
+  action = g_simple_action_new ("terminate", NULL);
+  g_signal_connect (action, "activate", G_CALLBACK (activate_terminate), app);
   g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (action));
 }
 

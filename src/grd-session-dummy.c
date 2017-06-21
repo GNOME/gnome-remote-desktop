@@ -72,8 +72,11 @@ grd_session_dummy_stop (GrdSession *session)
 {
   GrdSessionDummy *session_dummy = GRD_SESSION_DUMMY (session);
 
-  gst_element_set_state (session_dummy->pipeline, GST_STATE_NULL);
-  g_clear_pointer (&session_dummy->pipeline, gst_object_unref);
+  if (session_dummy->pipeline)
+    {
+      gst_element_set_state (session_dummy->pipeline, GST_STATE_NULL);
+      g_clear_pointer (&session_dummy->pipeline, gst_object_unref);
+    }
 }
 
 static void

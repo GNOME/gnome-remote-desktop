@@ -46,4 +46,9 @@ GrdPinosStreamMonitor *grd_context_get_pinos_stream_monitor (GrdContext *context
 
 GMainContext *grd_context_get_main_context (GrdContext *context);
 
+void grd_context_add_session (GrdContext *context,
+                              GrdSession *session);
+
+GList * grd_context_get_sessions (GrdContext *context);
+
 #endif /* GRD_CONTEXT_H */

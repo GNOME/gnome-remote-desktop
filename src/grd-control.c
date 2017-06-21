@@ -32,27 +32,58 @@ int
 main (int argc, char **argv)
 {
   g_autoptr(GApplication) app = NULL;
+  gboolean toggle_record = FALSE;
+  gboolean terminate = FALSE;
+  GOptionEntry entries[] = {
+    { "toggle-record", 0, 0, G_OPTION_ARG_NONE, &toggle_record,
+      "Start/stop dummy session", NULL },
+    { "terminate", 0, 0, G_OPTION_ARG_NONE, &terminate,
+      "Terminate the daemon", NULL },
+    { NULL }
+  };
+  GError *error = NULL;
+  GOptionContext *context;
 
-  if (argc != 2 || strcmp (argv[1], "--toggle-record") != 0)
+  context = g_option_context_new ("- control gnome-remote-desktop");
+  g_option_context_add_main_entries (context, entries, NULL);
+  if (!g_option_context_parse (context, &argc, &argv, &error))
     {
-      fprintf (stderr, "Usage %s --toggle-record\n", argv[0]);
-      return -1;
+      g_printerr ("Invalid option: %s\n", error->message);
+      g_error_free (error);
+      return 1;
+    }
+
+  if (!(toggle_record ^ terminate))
+    {
+      g_printerr (g_option_context_get_help (context, TRUE, NULL));
+      return 1;
     }
 
   app = g_application_new (GRD_DAEMON_APPLICATION_ID, 0);
   if (!g_application_register (app, NULL, NULL))
     {
-      g_error ("Failed to register with application\n");
+      g_warning ("Failed to register with application\n");
+      return 1;
     }
   if (!g_application_get_is_registered (app))
     {
-      g_error ("Not registered\n");
+      g_warning ("Not registered\n");
+      return 1;
     }
   if (!g_application_get_is_remote (app))
     {
-      g_error ("Failed to connect to application\n");
+      g_warning ("Failed to connect to application\n");
+      return 1;
     }
-  g_action_group_activate_action (G_ACTION_GROUP (app), "toggle-record", NULL);
+
+  if (toggle_record)
+    g_action_group_activate_action (G_ACTION_GROUP (app),
+                                    "toggle-record", NULL);
+  else if (terminate)
+    g_action_group_activate_action (G_ACTION_GROUP (app),
+                                    "terminate", NULL);
+  else
+    g_assert_not_reached ();
 
   return 0;
 }
