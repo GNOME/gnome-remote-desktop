@@ -294,6 +294,8 @@ handle_pointer_event (int          button_mask,
 
       session_vnc->prev_button_mask = button_mask;
     }
+
+  rfbDefaultPtrAddEvent (button_mask, x, y, rfb_client);
 }
 
 static void
