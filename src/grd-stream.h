@@ -34,7 +34,7 @@ struct _GrdStreamClass
   GObjectClass parent_class;
 };
 
-GrdPinosStream * grd_stream_get_pinos_stream (GrdStream *stream);
+GrdPipeWireStream * grd_stream_get_pipewire_stream (GrdStream *stream);
 
 const char * grd_stream_get_object_path (GrdStream *stream);
 

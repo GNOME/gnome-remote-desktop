@@ -29,7 +29,6 @@
 #include "grd-dbus-remote-desktop.h"
 #include "grd-context.h"
 #include "grd-private.h"
-#include "grd-pinos-stream-monitor.h"
 #include "grd-stream.h"
 
 enum

@@ -28,7 +28,7 @@ AC_SUBST([dbusservicedir])
 PC_MODULES="
 	glib-2.0
 	gio-unix-2.0
-	libpinos-0.1
+	libpipewire-0.1
 	gstreamer-1.0 >= 1.6
 	gstreamer-video-1.0 >= 1.6
 	libvncserver

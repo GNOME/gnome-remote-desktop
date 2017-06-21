@@ -20,27 +20,23 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_PINOS_STREAM_H
-#define GRD_PINOS_STREAM_H
+#ifndef GRD_PIPEWIRE_STREAM_MONITOR_H
+#define GRD_PIPEWIRE_STREAM_MONITOR_H
 
 #include <glib-object.h>
-#include <stdint.h>
+#include <pipewire/client/context.h>
 
 #include "grd-types.h"
 
-#define GRD_TYPE_PINOS_STREAM (grd_pinos_stream_get_type ())
-G_DECLARE_FINAL_TYPE (GrdPinosStream, grd_pinos_stream,
-                      GRD, PINOS_STREAM,
-                      GObject)
+#define GRD_TYPE_PIPEWIRE_STREAM_MONITOR (grd_pipewire_stream_monitor_get_type ())
+G_DECLARE_FINAL_TYPE (GrdPipeWireStreamMonitor, grd_pipewire_stream_monitor,
+                      GRD, PIPEWIRE_STREAM_MONITOR, GObject);
 
-uint32_t grd_pinos_stream_get_node_id (GrdPinosStream *stream);
+struct pw_context * grd_pipewire_stream_monitor_get_pipewire_context (GrdPipeWireStreamMonitor *monitor);
 
-const char *grd_pinos_stream_get_stream_id (GrdPinosStream *stream);
+GrdPipeWireStream *grd_pipewire_stream_monitor_get_stream (GrdPipeWireStreamMonitor *monitor,
+                                                           const char               *stream_id);
 
-void grd_pinos_stream_removed (GrdPinosStream *stream);
+GrdPipeWireStreamMonitor * grd_pipewire_stream_monitor_new (GrdContext *context);
 
-GrdPinosStream *grd_pinos_stream_new (GrdContext *context,
-                                      const char *stream_id,
-                                      uint32_t    pinos_node_id);
-
-#endif /* GRD_PINOS_STREAM_H */
+#endif /* GRD_PIPEWIRE_STREAM_MONITOR_H */

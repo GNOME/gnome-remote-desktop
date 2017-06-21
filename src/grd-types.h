@@ -27,8 +27,8 @@ typedef struct _GrdContext GrdContext;
 typedef struct _GrdSession GrdSession;
 typedef struct _GrdSessionVnc GrdSessionVnc;
 typedef struct _GrdStream GrdStream;
-typedef struct _GrdPinosStream GrdPinosStream;
-typedef struct _GrdPinosStreamMonitor GrdPinosStreamMonitor;
+typedef struct _GrdPipeWireStream GrdPipeWireStream;
+typedef struct _GrdPipeWireStreamMonitor GrdPipeWireStreamMonitor;
 typedef struct _GrdVncServer GrdVncServer;
 
 #endif /* GRD_TYPES_H */

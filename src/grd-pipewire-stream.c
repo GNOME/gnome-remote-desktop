@@ -22,10 +22,10 @@
 
 #include "config.h"
 
-#include "grd-pinos-stream.h"
+#include "grd-pipewire-stream.h"
 
 #include "grd-context.h"
-#include "grd-pinos-stream-monitor.h"
+#include "grd-pipewire-stream-monitor.h"
 
 enum
 {
@@ -36,71 +36,71 @@ enum
 
 guint signals[LAST_SIGNAL];
 
-struct _GrdPinosStream
+struct _GrdPipeWireStream
 {
   GObject parent;
 
   char *stream_id;
-  uint32_t pinos_node_id;
+  uint32_t pipewire_node_id;
 
   GrdContext *context;
 };
 
-G_DEFINE_TYPE (GrdPinosStream, grd_pinos_stream, G_TYPE_OBJECT);
+G_DEFINE_TYPE (GrdPipeWireStream, grd_pipewire_stream, G_TYPE_OBJECT);
 
 uint32_t
-grd_pinos_stream_get_node_id (GrdPinosStream *stream)
+grd_pipewire_stream_get_node_id (GrdPipeWireStream *stream)
 {
-  return stream->pinos_node_id;
+  return stream->pipewire_node_id;
 }
 
 const char *
-grd_pinos_stream_get_stream_id (GrdPinosStream *stream)
+grd_pipewire_stream_get_stream_id (GrdPipeWireStream *stream)
 {
   return stream->stream_id;
 }
 
-GrdPinosStream *grd_pinos_stream_new (GrdContext *context,
-				      const char *stream_id,
-				      uint32_t    pinos_node_id)
+GrdPipeWireStream *grd_pipewire_stream_new (GrdContext *context,
+                                            const char *stream_id,
+                                            uint32_t    pipewire_node_id)
 {
-  GrdPinosStream *stream;
+  GrdPipeWireStream *stream;
  
-  stream = g_object_new (GRD_TYPE_PINOS_STREAM, NULL);
+  stream = g_object_new (GRD_TYPE_PIPEWIRE_STREAM, NULL);
   stream->stream_id = g_strdup (stream_id);
-  stream->pinos_node_id = pinos_node_id;
+  stream->pipewire_node_id = pipewire_node_id;
   stream->context = context;
 
   return stream;
 }
 
 void
-grd_pinos_stream_removed (GrdPinosStream *stream)
+grd_pipewire_stream_removed (GrdPipeWireStream *stream)
 {
   g_signal_emit (stream, signals[REMOVED], 0);
 }
 
 static void
-grd_pinos_stream_finalize (GObject *object)
+grd_pipewire_stream_finalize (GObject *object)
 {
-  GrdPinosStream *stream = GRD_PINOS_STREAM (object);
+  GrdPipeWireStream *stream = GRD_PIPEWIRE_STREAM (object);
 
   g_free (stream->stream_id);
 
-  G_OBJECT_CLASS (grd_pinos_stream_parent_class)->finalize (object);
+  G_OBJECT_CLASS (grd_pipewire_stream_parent_class)->finalize (object);
 }
 
 static void
-grd_pinos_stream_init (GrdPinosStream *stream)
+grd_pipewire_stream_init (GrdPipeWireStream *stream)
 {
 }
 
 static void
-grd_pinos_stream_class_init (GrdPinosStreamClass *klass)
+grd_pipewire_stream_class_init (GrdPipeWireStreamClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = grd_pinos_stream_finalize;
+  object_class->finalize = grd_pipewire_stream_finalize;
 
   signals[REMOVED] = g_signal_new ("removed",
                                    G_TYPE_FROM_CLASS (klass),

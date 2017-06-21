@@ -35,10 +35,10 @@ gnome_remote_desktop_daemon_SOURCES = \
 	grd-context.h \
 	grd-daemon.c \
 	grd-daemon.h \
-	grd-pinos-stream.c \
-	grd-pinos-stream.h \
-	grd-pinos-stream-monitor.c \
-	grd-pinos-stream-monitor.h \
+	grd-pipewire-stream.c \
+	grd-pipewire-stream.h \
+	grd-pipewire-stream-monitor.c \
+	grd-pipewire-stream-monitor.h \
 	grd-private.h \
 	grd-session.c \
 	grd-session.h \

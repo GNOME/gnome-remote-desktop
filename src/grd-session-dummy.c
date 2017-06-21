@@ -24,12 +24,12 @@
 
 #include "grd-session-dummy.h"
 
-#include <pinos/client/stream.h>
+#include <pipewire/client/stream.h>
 #include <glib.h>
 #include <gst/gst.h>
 
 #include "grd-stream.h"
-#include "grd-pinos-stream.h"
+#include "grd-pipewire-stream.h"
 
 struct _GrdSessionDummy
 {
@@ -45,16 +45,16 @@ grd_session_dummy_stream_ready (GrdSession *session,
                                 GrdStream  *stream)
 {
   GrdSessionDummy *session_dummy = GRD_SESSION_DUMMY (session);
-  GrdPinosStream *pinos_stream;
-  uint32_t pinos_node_id;
+  GrdPipeWireStream *pipewire_stream;
+  uint32_t pipewire_node_id;
   char *pipeline_str;
   GError *error = NULL;
 
-  pinos_stream = grd_stream_get_pinos_stream (stream);
-  pinos_node_id = grd_pinos_stream_get_node_id (pinos_stream);
+  pipewire_stream = grd_stream_get_pipewire_stream (stream);
+  pipewire_node_id = grd_pipewire_stream_get_node_id (pipewire_stream);
   pipeline_str =
-    g_strdup_printf ("pinossrc name=pinossrc path=%u ! videoconvert ! ximagesink",
-                     pinos_node_id);
+    g_strdup_printf ("pipewiresrc name=pipewiresrc path=%u ! videoconvert ! ximagesink",
+                     pipewire_node_id);
 
   session_dummy->pipeline = gst_parse_launch (pipeline_str, &error);
   if (!session_dummy->pipeline)

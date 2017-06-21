@@ -42,7 +42,7 @@ void grd_context_set_remote_desktop_proxy (GrdContext           *context,
 void grd_context_set_screen_cast_proxy (GrdContext        *context,
                                         GrdDBusScreenCast *proxy);
 
-GrdPinosStreamMonitor *grd_context_get_pinos_stream_monitor (GrdContext *context);
+GrdPipeWireStreamMonitor *grd_context_get_pipewire_stream_monitor (GrdContext *context);
 
 GMainContext *grd_context_get_main_context (GrdContext *context);
 

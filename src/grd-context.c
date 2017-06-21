@@ -25,18 +25,18 @@
 #include "grd-context.h"
 
 #include <gst/gst.h>
-#include <pinos/client/pinos.h>
+#include <pipewire/client/pipewire.h>
 
 #include "grd-dbus-remote-desktop.h"
 #include "grd-dbus-screen-cast.h"
-#include "grd-pinos-stream-monitor.h"
+#include "grd-pipewire-stream-monitor.h"
 
 struct _GrdContext
 {
   GObject parent;
 
   GMainContext *main_context;
-  GrdPinosStreamMonitor *pinos_stream_monitor;
+  GrdPipeWireStreamMonitor *pipewire_stream_monitor;
 
   GrdDBusRemoteDesktop *remote_desktop_proxy;
   GrdDBusScreenCast *screen_cast_proxy;
@@ -72,10 +72,10 @@ grd_context_set_screen_cast_proxy (GrdContext        *context,
   context->screen_cast_proxy = proxy;
 }
 
-GrdPinosStreamMonitor *
-grd_context_get_pinos_stream_monitor (GrdContext *context)
+GrdPipeWireStreamMonitor *
+grd_context_get_pipewire_stream_monitor (GrdContext *context)
 {
-  return context->pinos_stream_monitor;
+  return context->pipewire_stream_monitor;
 }
 
 GMainContext *
@@ -111,14 +111,14 @@ grd_context_constructed (GObject *object)
 {
   GrdContext *context = GRD_CONTEXT (object);
 
-  context->pinos_stream_monitor = grd_pinos_stream_monitor_new (context);
+  context->pipewire_stream_monitor = grd_pipewire_stream_monitor_new (context);
 }
 
 static void
 grd_context_init (GrdContext *context)
 {
   gst_init (NULL, NULL);
-  pinos_init (NULL, NULL);
+  pw_init (NULL, NULL);
 
   context->main_context = g_main_context_default ();
 }

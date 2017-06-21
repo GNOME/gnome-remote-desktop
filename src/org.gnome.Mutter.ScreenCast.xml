@@ -32,14 +32,14 @@
 
     <!--
 	Start:
-	
+
 	Start the screen cast session
     -->
     <method name="Start" />
 
     <!--
 	Stop:
-	
+
 	Stop the screen cast session
     -->
     <method name="Stop" />
@@ -89,9 +89,10 @@
   <interface name="org.gnome.Mutter.ScreenCast.Stream">
 
     <!--
-	PinosStreamAdded:
+	PipeWireStreamAdded:
     -->
-    <signal name="PinosStreamAdded">
+    <signal name="PipeWireStreamAdded">
+      <annotation name="org.gtk.GDBus.C.Name" value="pipewire-stream-added"/>
       <arg name="stream_id" type="s" direction="out" />
     </signal>
 
