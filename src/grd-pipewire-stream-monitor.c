@@ -175,6 +175,7 @@ on_state_changed (struct pw_listener *listener,
     {
     case PW_CONTEXT_STATE_ERROR:
       g_warning ("PipeWire context error: %s", context->error);
+      exit (1);
       break;
 
     default:
@@ -205,6 +206,7 @@ pipewire_loop_source_dispatch (GSource    *source,
   if (result == SPA_RESULT_ERRNO)
     {
       g_warning ("pw_loop_iterate failed: %s", strerror (errno));
+      exit (1);
     }
   else if (result != SPA_RESULT_OK)
     {
