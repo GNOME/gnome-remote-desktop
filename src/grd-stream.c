@@ -125,9 +125,9 @@ on_pipewire_stream_added (GrdDBusScreenCastStream *proxy,
   if (!pipewire_stream)
     {
       priv->stream_added_handler_id =
-        g_signal_connect_object (pipewire_stream_monitor, "stream-added",
-                                 G_CALLBACK (on_stream_added),
-                                 stream, 0);
+        g_signal_connect (pipewire_stream_monitor, "stream-added",
+                          G_CALLBACK (on_stream_added),
+                          stream);
     }
   else
     {
@@ -167,10 +167,11 @@ grd_stream_finalize (GObject *object)
   if (priv->stream_added_handler_id)
     {
       GrdContext *context = priv->context;
-      GrdPipeWireStreamMonitor *monitor =
+      GrdPipeWireStreamMonitor *pipewire_stream_monitor =
         grd_context_get_pipewire_stream_monitor (context);
 
-      g_signal_handler_disconnect (monitor, priv->stream_added_handler_id);
+      g_signal_handler_disconnect (pipewire_stream_monitor,
+                                   priv->stream_added_handler_id);
     }
 
   g_clear_object (&priv->proxy);
