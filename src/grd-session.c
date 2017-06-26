@@ -186,6 +186,8 @@ on_session_start_finished (GObject      *object,
 
       return;
     }
+
+  priv->started = TRUE;
 }
 
 static void
