@@ -29,14 +29,12 @@
 
 #include "grd-dbus-remote-desktop.h"
 #include "grd-dbus-screen-cast.h"
-#include "grd-pipewire-stream-monitor.h"
 
 struct _GrdContext
 {
   GObject parent;
 
   GMainContext *main_context;
-  GrdPipeWireStreamMonitor *pipewire_stream_monitor;
 
   GrdDBusRemoteDesktop *remote_desktop_proxy;
   GrdDBusScreenCast *screen_cast_proxy;
@@ -72,12 +70,6 @@ grd_context_set_screen_cast_proxy (GrdContext        *context,
   context->screen_cast_proxy = proxy;
 }
 
-GrdPipeWireStreamMonitor *
-grd_context_get_pipewire_stream_monitor (GrdContext *context)
-{
-  return context->pipewire_stream_monitor;
-}
-
 GMainContext *
 grd_context_get_main_context (GrdContext *context)
 {
@@ -107,14 +99,6 @@ grd_context_get_sessions (GrdContext *context)
 }
 
 static void
-grd_context_constructed (GObject *object)
-{
-  GrdContext *context = GRD_CONTEXT (object);
-
-  context->pipewire_stream_monitor = grd_pipewire_stream_monitor_new (context);
-}
-
-static void
 grd_context_init (GrdContext *context)
 {
   gst_init (NULL, NULL);
@@ -126,7 +110,4 @@ grd_context_init (GrdContext *context)
 static void
 grd_context_class_init (GrdContextClass *klass)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  object_class->constructed = grd_context_constructed;
 }

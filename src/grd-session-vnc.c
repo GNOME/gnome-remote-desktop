@@ -30,7 +30,6 @@
 #include <pipewire/client/stream.h>
 #include <rfb/rfb.h>
 
-#include "grd-pipewire-stream.h"
 #include "grd-stream.h"
 #include "grd-vnc-server.h"
 #include "grd-vnc-sink.h"
@@ -430,7 +429,6 @@ grd_session_vnc_stream_ready (GrdSession *session,
                               GrdStream  *stream)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
-  GrdPipeWireStream *pipewire_stream;
   uint32_t pipewire_node_id;
   g_autofree char *pipeline_str = NULL;
   GError *error = NULL;
@@ -439,8 +437,7 @@ grd_session_vnc_stream_ready (GrdSession *session,
   g_autoptr(GstPad) sink_pad = NULL;
   g_autoptr(GstPad) src_pad = NULL;
 
-  pipewire_stream = grd_stream_get_pipewire_stream (stream);
-  pipewire_node_id = grd_pipewire_stream_get_node_id (pipewire_stream);
+  pipewire_node_id = grd_stream_get_pipewire_node_id (stream);
   pipeline_str =
     g_strdup_printf ("pipewiresrc name=pipewiresrc path=%d ! videoconvert",
                      pipewire_node_id);

@@ -22,6 +22,7 @@
 #define GRD_STREAM_H
 
 #include <glib-object.h>
+#include <stdint.h>
 
 #include "grd-dbus-screen-cast.h"
 #include "grd-types.h"
@@ -34,7 +35,7 @@ struct _GrdStreamClass
   GObjectClass parent_class;
 };
 
-GrdPipeWireStream * grd_stream_get_pipewire_stream (GrdStream *stream);
+uint32_t grd_stream_get_pipewire_node_id (GrdStream *stream);
 
 const char * grd_stream_get_object_path (GrdStream *stream);
 

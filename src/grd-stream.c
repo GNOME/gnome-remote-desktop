@@ -23,8 +23,6 @@
 #include "grd-stream.h"
 
 #include "grd-context.h"
-#include "grd-pipewire-stream.h"
-#include "grd-pipewire-stream-monitor.h"
 
 enum
 {
@@ -40,29 +38,19 @@ typedef struct _GrdStreamPrivate
 {
   GrdContext *context;
 
-  GrdDBusScreenCastStream *proxy;
-  char *stream_id;
-  GrdPipeWireStream *pipewire_stream;
+  uint32_t pipewire_node_id;
 
-  guint stream_removed_handler_id;
-  guint stream_added_handler_id;
+  GrdDBusScreenCastStream *proxy;
 } GrdStreamPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdStream, grd_stream, G_TYPE_OBJECT)
 
-static void
-on_stream_removed (GrdPipeWireStream *pipewire_stream,
-                   GrdStream         *stream)
-{
-  g_signal_emit (stream, signals[CLOSED], 0);
-}
-
-GrdPipeWireStream *
-grd_stream_get_pipewire_stream (GrdStream *stream)
+uint32_t
+grd_stream_get_pipewire_node_id (GrdStream *stream)
 {
   GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
 
-  return priv->pipewire_stream;
+  return priv->pipewire_node_id;
 }
 
 const char *
@@ -74,65 +62,15 @@ grd_stream_get_object_path (GrdStream *stream)
 }
 
 static void
-grd_stream_set_pipewire_stream (GrdStream         *stream,
-                                GrdPipeWireStream *pipewire_stream)
-{
-  GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
-
-  priv->pipewire_stream = g_object_ref (pipewire_stream);
-
-  priv->stream_removed_handler_id =
-    g_signal_connect (pipewire_stream, "removed",
-                      G_CALLBACK (on_stream_removed),
-                      stream);
-
-  g_signal_emit (stream, signals[READY], 0);
-}
-
-static void
-on_stream_added (GrdPipeWireStreamMonitor *monitor,
-                 GrdPipeWireStream        *pipewire_stream,
-                 GrdStream                *stream)
-{
-  GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
-
-  if (!g_str_equal (grd_pipewire_stream_get_stream_id (pipewire_stream),
-                    priv->stream_id))
-    return;
-
-  grd_stream_set_pipewire_stream (stream, pipewire_stream);
-
-  g_signal_handler_disconnect (monitor, priv->stream_added_handler_id);
-  priv->stream_added_handler_id = 0;
-}
-
-static void
 on_pipewire_stream_added (GrdDBusScreenCastStream *proxy,
-                          const char              *stream_id,
+                          unsigned int             node_id,
                           GrdStream               *stream)
 {
   GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
-  GrdContext *context = priv->context;
-  GrdPipeWireStreamMonitor *pipewire_stream_monitor =
-    grd_context_get_pipewire_stream_monitor (context);
-  GrdPipeWireStream *pipewire_stream;
 
-  priv->stream_id = g_strdup (stream_id);
+  priv->pipewire_node_id = (uint32_t) node_id;
 
-  pipewire_stream =
-    grd_pipewire_stream_monitor_get_stream (pipewire_stream_monitor,
-                                            stream_id);
-  if (!pipewire_stream)
-    {
-      priv->stream_added_handler_id =
-        g_signal_connect (pipewire_stream_monitor, "stream-added",
-                          G_CALLBACK (on_stream_added),
-                          stream);
-    }
-  else
-    {
-      grd_stream_set_pipewire_stream (stream, pipewire_stream);
-    }
+  g_signal_emit (stream, signals[READY], 0);
 }
 
 GrdStream *
@@ -160,22 +98,7 @@ grd_stream_finalize (GObject *object)
   GrdStream *stream = GRD_STREAM (object);
   GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
 
-  if (priv->stream_removed_handler_id)
-    g_signal_handler_disconnect (priv->pipewire_stream,
-                                 priv->stream_removed_handler_id);
-
-  if (priv->stream_added_handler_id)
-    {
-      GrdContext *context = priv->context;
-      GrdPipeWireStreamMonitor *pipewire_stream_monitor =
-        grd_context_get_pipewire_stream_monitor (context);
-
-      g_signal_handler_disconnect (pipewire_stream_monitor,
-                                   priv->stream_added_handler_id);
-    }
-
   g_clear_object (&priv->proxy);
-  g_clear_pointer (&priv->stream_id, g_free);
 
   G_OBJECT_CLASS (grd_stream_parent_class)->finalize (object);
 }

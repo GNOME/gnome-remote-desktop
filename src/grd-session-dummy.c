@@ -29,7 +29,6 @@
 #include <gst/gst.h>
 
 #include "grd-stream.h"
-#include "grd-pipewire-stream.h"
 
 struct _GrdSessionDummy
 {
@@ -45,13 +44,11 @@ grd_session_dummy_stream_ready (GrdSession *session,
                                 GrdStream  *stream)
 {
   GrdSessionDummy *session_dummy = GRD_SESSION_DUMMY (session);
-  GrdPipeWireStream *pipewire_stream;
   uint32_t pipewire_node_id;
   char *pipeline_str;
   GError *error = NULL;
 
-  pipewire_stream = grd_stream_get_pipewire_stream (stream);
-  pipewire_node_id = grd_pipewire_stream_get_node_id (pipewire_stream);
+  pipewire_node_id = grd_stream_get_pipewire_node_id (stream);
   pipeline_str =
     g_strdup_printf ("pipewiresrc name=pipewiresrc path=%u ! videoconvert ! ximagesink",
                      pipewire_node_id);
