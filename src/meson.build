@@ -36,6 +36,8 @@ control_sources = ([
   'grd-control.c'
 ])
 
+libexecdir = '@0@/@1@'.format(get_option('prefix'), get_option('libexecdir'))
+
 executable('gnome-remote-desktop-daemon',
            daemon_sources,
            dependencies: [glib_dep,
@@ -45,7 +47,8 @@ executable('gnome-remote-desktop-daemon',
                           gstreamer_dep,
                           libvncserver_dep],
            include_directories: [configinc],
-           install : true)
+           install: true,
+           install_dir: libexecdir)
 
 executable('gnome-remote-desktop-control',
            control_sources,
