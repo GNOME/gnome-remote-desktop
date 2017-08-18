@@ -1,0 +1,8 @@
+[Unit]
+Description=GNOME Remote Desktop
+
+[Service]
+Type=dbus
+BusName=org.gnome.RemoteDesktop
+ExecStart=@libexecdir@/gnome-remote-desktop-daemon
+Restart=on-failure

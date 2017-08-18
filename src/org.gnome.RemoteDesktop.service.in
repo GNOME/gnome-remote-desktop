@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=org.gnome.RemoteDesktop
-Exec=$(libexecdir}/gnome-remote-desktop-daemon
