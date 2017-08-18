@@ -24,7 +24,6 @@
 
 #include "grd-session-dummy.h"
 
-#include <pipewire/client/stream.h>
 #include <glib.h>
 #include <gst/gst.h>
 

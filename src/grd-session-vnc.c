@@ -27,7 +27,6 @@
 #include <gio/gio.h>
 #include <gst/gst.h>
 #include <linux/input.h>
-#include <pipewire/client/stream.h>
 #include <rfb/rfb.h>
 
 #include "grd-stream.h"
