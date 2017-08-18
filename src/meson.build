@@ -36,7 +36,8 @@ control_sources = ([
   'grd-control.c'
 ])
 
-libexecdir = '@0@/@1@'.format(get_option('prefix'), get_option('libexecdir'))
+prefix = get_option('prefix')
+libexecdir = join_paths(prefix, get_option('libexecdir'))
 
 executable('gnome-remote-desktop-daemon',
            daemon_sources,
@@ -65,3 +66,8 @@ configure_file(input: 'gnome-remote-desktop.service.in',
                output: 'gnome-remote-desktop.service',
                configuration: service_config,
                install_dir: service_dir)
+
+datadir = join_paths(prefix, get_option('datadir'))
+schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
+install_data(['org.gnome.desktop.remote-desktop.gschema.xml'],
+             install_dir: schemadir)

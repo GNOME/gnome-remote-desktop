@@ -1,0 +1,4 @@
+<schemalist>
+  <schema id='org.gnome.desktop.remote-desktop' path='/org/gnome/desktop/remote-desktop/'>
+  </schema>
+</schemalist>
