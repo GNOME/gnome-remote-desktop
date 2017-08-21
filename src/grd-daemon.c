@@ -26,6 +26,7 @@
 
 #include <gio/gio.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "grd-context.h"
 #include "grd-dbus-remote-desktop.h"
@@ -329,7 +330,30 @@ add_actions (GApplication *app)
 int
 main (int argc, char **argv)
 {
+  gboolean print_version = FALSE;
+  GOptionEntry entries[] = {
+    { "version", 0, 0, G_OPTION_ARG_NONE, &print_version,
+      "Print version", NULL },
+    { NULL }
+  };
+  g_autoptr(GOptionContext) context;
   g_autoptr(GApplication) app = NULL;
+  GError *error = NULL;
+
+  context = g_option_context_new (NULL);
+  g_option_context_add_main_entries (context, entries, GETTEXT_PACKAGE);
+  if (!g_option_context_parse (context, &argc, &argv, &error))
+    {
+      g_printerr ("Invalid option: %s\n", error->message);
+      g_error_free (error);
+      return EXIT_FAILURE;
+    }
+
+  if (print_version)
+    {
+      g_print ("GNOME Remote Desktop %s\n", VERSION);
+      return EXIT_SUCCESS;
+    }
 
   app = g_object_new (GRD_TYPE_DAEMON,
                       "application-id", GRD_DAEMON_APPLICATION_ID,

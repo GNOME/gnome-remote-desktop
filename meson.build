@@ -16,6 +16,7 @@ libvncserver_dep = dependency('libvncserver')
 
 cdata = configuration_data()
 cdata.set_quoted('GETTEXT_PACKAGE', 'gnome-remote-desktop')
+cdata.set_quoted('VERSION', meson.project_version())
 
 configure_file(input: 'config.h.meson',
                output: 'config.h',
