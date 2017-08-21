@@ -55,7 +55,7 @@ main (int argc, char **argv)
 
   if (!(toggle_record ^ terminate))
     {
-      g_printerr (g_option_context_get_help (context, TRUE, NULL));
+      g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
       return 1;
     }
 
