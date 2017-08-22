@@ -1,0 +1,4 @@
+option('systemd-user-unit-dir',
+       type: 'string',
+       default: '',
+       description: 'systemd user service directory')

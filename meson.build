@@ -12,6 +12,7 @@ gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')
 gstreamer_dep = [dependency('gstreamer-1.0'),
                  dependency('gstreamer-video-1.0')]
+systemd_dep = dependency('systemd')
 libvncserver_dep = dependency('libvncserver')
 
 cdata = configuration_data()
@@ -23,5 +24,14 @@ configure_file(input: 'config.h.meson',
                configuration: cdata)
 
 configinc = include_directories('.')
+
+servicedir = get_option('systemd-user-unit-dir')
+if servicedir == ''
+  servicedir = systemd_dep.get_pkgconfig_variable('systemduserunitdir')
+endif
+
+if servicedir == ''
+  error('Couldn\'t determine systemd user unit service directory')
+endif
 
 subdir('src')

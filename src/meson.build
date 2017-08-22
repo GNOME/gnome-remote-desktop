@@ -59,12 +59,10 @@ executable('gnome-remote-desktop-control',
 service_config = configuration_data()
 service_config.set('libexecdir', libexecdir)
 
-service_dir = '@0@/systemd/user/'.format(get_option('libdir'))
-
 configure_file(input: 'gnome-remote-desktop.service.in',
                output: 'gnome-remote-desktop.service',
                configuration: service_config,
-               install_dir: service_dir)
+               install_dir: servicedir)
 
 datadir = join_paths(prefix, get_option('datadir'))
 schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
