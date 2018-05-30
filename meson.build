@@ -25,7 +25,7 @@ configure_file(input: 'config.h.meson',
 
 configinc = include_directories('.')
 
-servicedir = get_option('systemd-user-unit-dir')
+servicedir = get_option('systemd_user_unit_dir')
 if servicedir == ''
   servicedir = systemd_dep.get_pkgconfig_variable('systemduserunitdir')
 endif
