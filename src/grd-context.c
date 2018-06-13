@@ -40,6 +40,8 @@ struct _GrdContext
   GrdDBusRemoteDesktop *remote_desktop_proxy;
   GrdDBusScreenCast *screen_cast_proxy;
 
+  GrdSettings *settings;
+
   GList *sessions;
 
   GrdDebugFlags debug_flags;
@@ -101,6 +103,12 @@ grd_context_get_sessions (GrdContext *context)
   return context->sessions;
 }
 
+GrdSettings *
+grd_context_get_settings (GrdContext *context)
+{
+  return context->settings;
+}
+
 GrdDebugFlags
 grd_context_get_debug_flags (GrdContext *context)
 {
@@ -123,14 +131,29 @@ init_debug_flags (GrdContext *context)
 }
 
 static void
+grd_context_finalize (GObject *object)
+{
+  GrdContext *context = GRD_CONTEXT (object);
+
+  g_clear_object (&context->settings);
+
+  G_OBJECT_CLASS (grd_context_parent_class)->finalize (object);
+}
+
+static void
 grd_context_init (GrdContext *context)
 {
   context->main_context = g_main_context_default ();
 
   init_debug_flags (context);
+
+  context->settings = g_object_new (GRD_TYPE_SETTINGS, NULL);
 }
 
 static void
 grd_context_class_init (GrdContextClass *klass)
 {
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = grd_context_finalize;
 }

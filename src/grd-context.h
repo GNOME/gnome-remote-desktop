@@ -27,6 +27,7 @@
 
 #include "grd-dbus-remote-desktop.h"
 #include "grd-dbus-screen-cast.h"
+#include "grd-settings.h"
 #include "grd-types.h"
 
 typedef enum _GrdDebugFlags
@@ -56,6 +57,8 @@ void grd_context_add_session (GrdContext *context,
                               GrdSession *session);
 
 GList * grd_context_get_sessions (GrdContext *context);
+
+GrdSettings * grd_context_get_settings (GrdContext *context);
 
 GrdDebugFlags grd_context_get_debug_flags (GrdContext *context);
 

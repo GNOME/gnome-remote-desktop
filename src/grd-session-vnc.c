@@ -28,6 +28,8 @@
 #include <linux/input.h>
 #include <rfb/rfb.h>
 
+#include "grd-context.h"
+#include "grd-settings.h"
 #include "grd-stream.h"
 #include "grd-vnc-server.h"
 #include "grd-vnc-pipewire-stream.h"
@@ -137,6 +139,15 @@ handle_new_client (rfbClientPtr rfb_client)
   return RFB_CLIENT_ACCEPT;
 }
 
+static gboolean
+is_view_only (GrdSessionVnc *session_vnc)
+{
+  GrdContext *context = grd_session_get_context (GRD_SESSION (session_vnc));
+  GrdSettings *settings = grd_context_get_settings (context);
+
+  return grd_settings_get_vnc_view_only (settings);
+}
+
 static void
 handle_key_event (rfbBool      down,
                   rfbKeySym    keysym,
@@ -144,6 +155,9 @@ handle_key_event (rfbBool      down,
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (rfb_client->screen->screenData);
   GrdSession *session = GRD_SESSION (session_vnc);
+
+  if (is_view_only (session_vnc))
+    return;
 
   if (down)
     {
@@ -234,6 +248,9 @@ handle_pointer_event (int          button_mask,
 {
   GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
   GrdSession *session = GRD_SESSION (session_vnc);
+
+  if (is_view_only (session_vnc))
+    return;
 
   if (x != session_vnc->prev_x || y != session_vnc->prev_y)
     {
