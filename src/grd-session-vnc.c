@@ -110,6 +110,8 @@ handle_client_gone (rfbClientPtr rfb_client)
   if (!session_vnc->rfb_screen)
     return;
 
+  g_debug ("VNC client gone");
+
   grd_session_stop (GRD_SESSION (session_vnc));
 }
 
@@ -123,6 +125,8 @@ static enum rfbNewClientAction
 handle_new_client (rfbClientPtr rfb_client)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (rfb_client->screen->screenData);
+
+  g_debug ("New VNC client");
 
   session_vnc->rfb_client = rfb_client;
   rfb_client->clientGoneHook = handle_client_gone;
@@ -400,6 +404,8 @@ static void
 grd_session_vnc_stop (GrdSession *session)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
+
+  g_debug ("Stopping VNC session");
 
   if (session_vnc->close_session_idle_id)
     {

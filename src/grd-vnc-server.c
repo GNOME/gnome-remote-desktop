@@ -90,6 +90,8 @@ cleanup_stopped_sessions_idle (GrdVncServer *vnc_server)
 static void
 on_session_stopped (GrdSession *session, GrdVncServer *vnc_server)
 {
+  g_debug ("VNC session stopped");
+
   vnc_server->stopped_sessions = g_list_append (vnc_server->stopped_sessions,
                                                 session);
   vnc_server->sessions = g_list_remove (vnc_server->sessions, session);
@@ -108,10 +110,13 @@ on_incoming (GSocketService    *service,
   GrdVncServer *vnc_server = GRD_VNC_SERVER (service);
   GrdSessionVnc *session_vnc;
 
+  g_debug ("New incoming VNC connection");
+
   if (vnc_server->sessions)
     {
       /* TODO: Add the rfbScreen instance to GrdVncServer to support multiple
        * sessions. */
+      g_debug ("Refusing new VNC connection: already an active session");
       return TRUE;
     }
 
