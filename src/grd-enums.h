@@ -18,26 +18,13 @@
  *
  */
 
-#ifndef GRD_SETTINGS_H
-#define GRD_SETTINGS_H
+#ifndef GRD_ENUMS_H
+#define GRD_ENUMS_H
 
-#include <glib-object.h>
-#include <libsecret/secret.h>
+typedef enum
+{
+  GRD_VNC_AUTH_METHOD_PROMPT,
+  GRD_VNC_AUTH_METHOD_PASSWORD
+} GrdVncAuthMethod;
 
-#include "grd-enums.h"
-
-#define GRD_TYPE_SETTINGS (grd_settings_get_type ())
-G_DECLARE_FINAL_TYPE (GrdSettings, grd_settings,
-                      GRD, SETTINGS, GObject)
-
-const SecretSchema * cc_grd_vnc_password_get_schema (void);
-#define GRD_VNC_PASSWORD_SCHEMA grd_vnc_password_get_schema ()
-
-char * grd_settings_get_vnc_password (GrdSettings  *settings,
-                                      GError      **error);
-
-gboolean grd_settings_get_vnc_view_only (GrdSettings *settings);
-
-GrdVncAuthMethod grd_settings_get_vnc_auth_method (GrdSettings *settings);
-
-#endif /* GRD_SETTINGS_H */
+#endif /* GRD_ENUMS_H */

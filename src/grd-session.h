@@ -76,6 +76,8 @@ void grd_session_notify_pointer_motion_absolute (GrdSession *session,
                                                  double      x,
                                                  double      y);
 
+void grd_session_start (GrdSession *session);
+
 void grd_session_stop (GrdSession *session);
 
 #endif /* GRD_SESSION_H */

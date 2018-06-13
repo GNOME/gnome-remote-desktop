@@ -440,10 +440,9 @@ on_remote_desktop_session_created (GObject      *source_object,
                                              session);
 }
 
-static void
-grd_session_constructed (GObject *object)
+void
+grd_session_start (GrdSession *session)
 {
-  GrdSession *session = GRD_SESSION (object);
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdDBusRemoteDesktop *remote_desktop_proxy;
 
@@ -531,7 +530,6 @@ grd_session_class_init (GrdSessionClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->constructed = grd_session_constructed;
   object_class->dispose = grd_session_dispose;
   object_class->finalize = grd_session_finalize;
   object_class->set_property = grd_session_set_property;

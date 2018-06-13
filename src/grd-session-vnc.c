@@ -29,6 +29,7 @@
 #include <rfb/rfb.h>
 
 #include "grd-context.h"
+#include "grd-prompt.h"
 #include "grd-settings.h"
 #include "grd-stream.h"
 #include "grd-vnc-server.h"
@@ -50,6 +51,11 @@ struct _GrdSessionVnc
 
   guint close_session_idle_id;
 
+  GrdVncAuthMethod auth_method;
+
+  GrdPrompt *prompt;
+  GCancellable *prompt_cancellable;
+
   GrdVncPipeWireStream *pipewire_stream;
 
   int prev_x;
@@ -62,6 +68,11 @@ G_DEFINE_TYPE (GrdSessionVnc, grd_session_vnc, GRD_TYPE_SESSION);
 
 static void
 grd_session_vnc_detach_source (GrdSessionVnc *session_vnc);
+
+static rfbBool
+check_rfb_password (rfbClientPtr  rfb_client,
+                    const char   *response_encrypted,
+                    int           len);
 
 void
 grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
@@ -117,26 +128,86 @@ handle_client_gone (rfbClientPtr rfb_client)
   grd_session_stop (GRD_SESSION (session_vnc));
 }
 
-static gboolean
-is_session_ready (GrdSessionVnc *session_vnc)
+static void
+prompt_response_callback (GObject      *source_object,
+                          GAsyncResult *async_result,
+                          gpointer      user_data)
 {
-  return session_vnc->pipewire_stream != NULL;
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (user_data);
+  g_autoptr(GError) error = NULL;
+  GrdPromptResponse response;
+
+  if (!grd_prompt_query_finish (session_vnc->prompt,
+                                async_result,
+                                &response,
+                                &error))
+    {
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        {
+          g_warning ("Failed to query user about session: %s", error->message);
+          rfbRefuseOnHoldClient (session_vnc->rfb_client);
+          return;
+        }
+      else
+        {
+          return;
+        }
+    }
+
+  switch (response)
+    {
+    case GRD_PROMPT_RESPONSE_ACCEPT:
+      grd_session_start (GRD_SESSION (session_vnc));
+      rfbStartOnHoldClient (session_vnc->rfb_client);
+      return;
+    case GRD_PROMPT_RESPONSE_REFUSE:
+      rfbRefuseOnHoldClient (session_vnc->rfb_client);
+      return;
+    }
+
+  g_assert_not_reached ();
 }
 
 static enum rfbNewClientAction
 handle_new_client (rfbClientPtr rfb_client)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (rfb_client->screen->screenData);
+  GrdContext *context = grd_session_get_context (GRD_SESSION (session_vnc));
+  GrdSettings *settings = grd_context_get_settings (context);
 
   g_debug ("New VNC client");
+
+  session_vnc->auth_method = grd_settings_get_vnc_auth_method (settings);
 
   session_vnc->rfb_client = rfb_client;
   rfb_client->clientGoneHook = handle_client_gone;
 
-  if (!is_session_ready (session_vnc))
-    grd_session_vnc_detach_source (session_vnc);
+  switch (session_vnc->auth_method)
+    {
+    case GRD_VNC_AUTH_METHOD_PROMPT:
+      session_vnc->prompt = g_object_new (GRD_TYPE_PROMPT, NULL);
+      session_vnc->prompt_cancellable = g_cancellable_new ();
+      grd_prompt_query_async (session_vnc->prompt,
+                              rfb_client->host,
+                              session_vnc->prompt_cancellable,
+                              prompt_response_callback,
+                              session_vnc);
+      grd_session_vnc_detach_source (session_vnc);
+      return RFB_CLIENT_ON_HOLD;
+    case GRD_VNC_AUTH_METHOD_PASSWORD:
+      session_vnc->rfb_screen->passwordCheck = check_rfb_password;
+      /*
+       * authPasswdData needs to be non NULL in libvncserver to trigger
+       * password authentication.
+       */
+      session_vnc->rfb_screen->authPasswdData = (gpointer) 1;
 
-  return RFB_CLIENT_ACCEPT;
+      grd_session_vnc_detach_source (session_vnc);
+
+      return RFB_CLIENT_ACCEPT;
+    }
+
+  g_assert_not_reached ();
 }
 
 static gboolean
@@ -302,6 +373,54 @@ handle_pointer_event (int          button_mask,
   rfbDefaultPtrAddEvent (button_mask, x, y, rfb_client);
 }
 
+static rfbBool
+check_rfb_password (rfbClientPtr  rfb_client,
+                    const char   *response_encrypted,
+                    int           len)
+{
+  GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
+  GrdContext *context = grd_session_get_context (GRD_SESSION (session_vnc));
+  GrdSettings *settings = grd_context_get_settings (context);
+  g_autofree char *password = NULL;
+  g_autoptr(GError) error = NULL;
+  uint8_t challenge_encrypted[CHALLENGESIZE];
+
+  switch (session_vnc->auth_method)
+    {
+    case GRD_VNC_AUTH_METHOD_PROMPT:
+      return TRUE;
+    case GRD_VNC_AUTH_METHOD_PASSWORD:
+      break;
+    }
+
+  password = grd_settings_get_vnc_password (settings, &error);
+  if (!password)
+    {
+      g_warning ("Couldn't retrieve VNC password: %s", error->message);
+      return FALSE;
+    }
+
+  if (strlen (password) == 0)
+    {
+      g_warning ("VNC password was empty, denying");
+      return FALSE;
+    }
+
+  memcpy(challenge_encrypted, rfb_client->authChallenge, CHALLENGESIZE);
+  rfbEncryptBytes(challenge_encrypted, password);
+
+  if (memcmp (challenge_encrypted, response_encrypted, len) == 0)
+    {
+      grd_session_start (GRD_SESSION (session_vnc));
+      grd_session_vnc_detach_source (session_vnc);
+      return TRUE;
+    }
+  else
+    {
+      return FALSE;
+    }
+}
+
 int
 grd_session_vnc_get_framebuffer_stride (GrdSessionVnc *session_vnc)
 {
@@ -340,10 +459,10 @@ init_vnc_session (GrdSessionVnc *session_vnc)
   rfb_screen->frameBuffer = g_malloc0 (screen_width * screen_height * 4);
   memset (rfb_screen->frameBuffer, 0x1f, screen_width * screen_height * 4);
 
+  session_vnc->rfb_screen = rfb_screen;
+
   rfbInitServer (rfb_screen);
   rfbProcessEvents (rfb_screen, 0);
-
-  session_vnc->rfb_screen = rfb_screen;
 }
 
 static gboolean

@@ -13,6 +13,8 @@ gio_unix_dep = dependency('gio-unix-2.0')
 pipewire_dep = dependency('libpipewire-0.1')
 systemd_dep = dependency('systemd')
 libvncserver_dep = dependency('libvncserver')
+libsecret_dep = dependency('libsecret-1')
+libnotify_dep = dependency('libnotify')
 
 cdata = configuration_data()
 cdata.set_quoted('GETTEXT_PACKAGE', 'gnome-remote-desktop')

@@ -30,6 +30,8 @@
 enum
 {
   VNC_VIEW_ONLY_CHANGED,
+  VNC_AUTH_METHOD_CHANGED,
+  VNC_ENCRYPTION_CHANGED,
 
   N_SIGNALS
 };
@@ -43,10 +45,35 @@ struct _GrdSettings
   struct {
     GSettings *settings;
     gboolean view_only;
+    GrdVncAuthMethod auth_method;
   } vnc;
 };
 
 G_DEFINE_TYPE (GrdSettings, grd_settings, G_TYPE_OBJECT)
+
+const SecretSchema *
+grd_vnc_password_get_schema (void)
+{
+  static const SecretSchema grd_vnc_password_schema = {
+    .name = "org.gnome.RemoteDesktop.VncPassword",
+    .flags = SECRET_SCHEMA_NONE,
+    .attributes = {
+      { "password", SECRET_SCHEMA_ATTRIBUTE_STRING },
+      { "NULL", 0 },
+    },
+  };
+
+  return &grd_vnc_password_schema;
+}
+
+char *
+grd_settings_get_vnc_password (GrdSettings  *settings,
+                               GError      **error)
+{
+  return secret_password_lookup_sync (GRD_VNC_PASSWORD_SCHEMA,
+                                      NULL, error,
+                                      NULL);
+}
 
 gboolean
 grd_settings_get_vnc_view_only (GrdSettings *settings)
@@ -54,11 +81,24 @@ grd_settings_get_vnc_view_only (GrdSettings *settings)
   return settings->vnc.view_only;
 }
 
+GrdVncAuthMethod
+grd_settings_get_vnc_auth_method (GrdSettings *settings)
+{
+  return settings->vnc.auth_method;
+}
+
 static void
 update_vnc_view_only (GrdSettings *settings)
 {
   settings->vnc.view_only = g_settings_get_boolean (settings->vnc.settings,
                                                     "view-only");
+}
+
+static void
+update_vnc_auth_method (GrdSettings *settings)
+{
+  settings->vnc.auth_method = g_settings_get_enum (settings->vnc.settings,
+                                                   "auth-method");
 }
 
 static void
@@ -70,6 +110,11 @@ on_vnc_settings_changed (GSettings   *vnc_settings,
     {
       update_vnc_view_only (settings);
       g_signal_emit (settings, signals[VNC_VIEW_ONLY_CHANGED], 0);
+    }
+  else if (strcmp (key, "auth-method") == 0)
+    {
+      update_vnc_auth_method (settings);
+      g_signal_emit (settings, signals[VNC_AUTH_METHOD_CHANGED], 0);
     }
 }
 
@@ -91,6 +136,7 @@ grd_settings_init (GrdSettings *settings)
                     G_CALLBACK (on_vnc_settings_changed), settings);
 
   update_vnc_view_only (settings);
+  update_vnc_auth_method (settings);
 }
 
 static void
@@ -102,6 +148,13 @@ grd_settings_class_init (GrdSettingsClass *klass)
 
   signals[VNC_VIEW_ONLY_CHANGED] =
     g_signal_new ("vnc-view-only-changed",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL, NULL,
+                  G_TYPE_NONE, 0);
+  signals[VNC_AUTH_METHOD_CHANGED] =
+    g_signal_new ("vnc-auth-method-changed",
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_LAST,
                   0,
