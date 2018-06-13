@@ -132,7 +132,8 @@ on_incoming (GSocketService    *service,
 }
 
 gboolean
-grd_vnc_server_start (GrdVncServer *vnc_server, GError **error)
+grd_vnc_server_start (GrdVncServer  *vnc_server,
+                      GError       **error)
 {
   if (!g_socket_listener_add_inet_port (G_SOCKET_LISTENER (vnc_server),
                                         GRD_VNC_SERVER_PORT,
