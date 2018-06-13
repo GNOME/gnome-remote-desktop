@@ -86,3 +86,4 @@ custom_target('gsettings-enums',
                 '@INPUT@'])
 install_data(['org.gnome.desktop.remote-desktop.gschema.xml'],
              install_dir: schemadir)
+gnome.compile_schemas()
