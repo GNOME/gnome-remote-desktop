@@ -25,7 +25,6 @@
 
 #include <gio/gio.h>
 #include <glib-object.h>
-#include <gst/gst.h>
 
 #include "grd-session.h"
 #include "grd-types.h"
@@ -44,6 +43,8 @@ void grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
                                          int            height);
 
 void grd_session_vnc_draw_buffer (GrdSessionVnc *session_vnc,
-                                  GstBuffer     *buffer);
+                                  void          *data);
+
+int grd_session_vnc_get_framebuffer_stride (GrdSessionVnc *session_vnc);
 
 #endif /* GRD_SESSION_VNC_H */

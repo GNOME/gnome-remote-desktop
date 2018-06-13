@@ -11,10 +11,10 @@ daemon_sources = files([
   'grd-stream.c',
   'grd-stream.h',
   'grd-types.h',
+  'grd-vnc-pipewire-stream.c',
+  'grd-vnc-pipewire-stream.h',
   'grd-vnc-server.c',
   'grd-vnc-server.h',
-  'grd-vnc-sink.c',
-  'grd-vnc-sink.h',
 ])
 
 gen_daemon_sources = []
@@ -42,7 +42,7 @@ executable('gnome-remote-desktop-daemon',
            dependencies: [glib_dep,
                           gio_dep,
                           gio_unix_dep,
-                          gstreamer_dep,
+                          pipewire_dep,
                           libvncserver_dep],
            include_directories: [configinc],
            install: true,

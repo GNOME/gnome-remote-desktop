@@ -24,8 +24,6 @@
 
 #include "grd-context.h"
 
-#include <gst/gst.h>
-
 #include "grd-dbus-remote-desktop.h"
 #include "grd-dbus-screen-cast.h"
 
@@ -100,8 +98,6 @@ grd_context_get_sessions (GrdContext *context)
 static void
 grd_context_init (GrdContext *context)
 {
-  gst_init (NULL, NULL);
-
   context->main_context = g_main_context_default ();
 }
 

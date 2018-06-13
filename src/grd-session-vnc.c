@@ -25,13 +25,17 @@
 #include "grd-session-vnc.h"
 
 #include <gio/gio.h>
-#include <gst/gst.h>
 #include <linux/input.h>
 #include <rfb/rfb.h>
 
 #include "grd-stream.h"
 #include "grd-vnc-server.h"
-#include "grd-vnc-sink.h"
+#include "grd-vnc-pipewire-stream.h"
+
+/* BGRx */
+#define BGRX_BITS_PER_SAMPLE 8
+#define BGRX_SAMPLES_PER_PIXEL 3
+#define BGRX_BYTES_PER_PIXEL 4
 
 struct _GrdSessionVnc
 {
@@ -42,9 +46,9 @@ struct _GrdSessionVnc
   rfbScreenInfoPtr rfb_screen;
   rfbClientPtr rfb_client;
 
-  GstElement *pipeline;
-  GstElement *vnc_sink;
-  GstElement *pipewire_src;
+  guint close_session_idle_id;
+
+  GrdVncPipeWireStream *pipewire_stream;
 
   int prev_x;
   int prev_y;
@@ -69,46 +73,27 @@ grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
     return;
 
   g_free (session_vnc->rfb_screen->frameBuffer);
-  framebuffer = g_malloc0 (width * height * 4);
+  framebuffer = g_malloc0 (width * height * BGRX_BYTES_PER_PIXEL);
   rfbNewFramebuffer (session_vnc->rfb_screen,
                      (char *) framebuffer,
                      width, height,
-                     8, 3, 4);
-}
-
-static size_t
-grd_session_vnc_get_framebuffer_size (GrdSessionVnc *session_vnc)
-{
-  return session_vnc->rfb_screen->width * session_vnc->rfb_screen->height * 4;
+                     BGRX_BITS_PER_SAMPLE,
+                     BGRX_SAMPLES_PER_PIXEL,
+                     BGRX_BYTES_PER_PIXEL);
 }
 
 void
 grd_session_vnc_draw_buffer (GrdSessionVnc *session_vnc,
-                             GstBuffer     *buffer)
+                             void          *data)
 {
-  GstMapInfo map_info = { 0 };
-  size_t framebuffer_size = grd_session_vnc_get_framebuffer_size (session_vnc);
+  size_t size;
 
-  if (gst_buffer_get_size (buffer) != framebuffer_size)
-    {
-      g_warning ("VNC sink buffer size %lu differs from VNC framebuffer size\n",
-                 gst_buffer_get_size (buffer));
-      return;
-    }
-
-  if (!gst_buffer_map (buffer, &map_info, GST_MAP_READ))
-    {
-      g_warning ("Failed to map VNC sink buffer\n");
-      return;
-    }
-
-  g_assert (map_info.size == framebuffer_size);
+  size = (session_vnc->rfb_screen->height *
+          grd_session_vnc_get_framebuffer_stride (session_vnc));
 
   memcpy (session_vnc->rfb_screen->frameBuffer,
-          map_info.data,
-          framebuffer_size);
-
-  gst_buffer_unmap (buffer, &map_info);
+          data,
+          size);
 
   rfbMarkRectAsModified (session_vnc->rfb_screen, 0, 0,
                          session_vnc->rfb_screen->width,
@@ -131,7 +116,7 @@ handle_client_gone (rfbClientPtr rfb_client)
 static gboolean
 is_session_ready (GrdSessionVnc *session_vnc)
 {
-  return session_vnc->pipeline != NULL;
+  return session_vnc->pipewire_stream != NULL;
 }
 
 static enum rfbNewClientAction
@@ -296,6 +281,12 @@ handle_pointer_event (int          button_mask,
   rfbDefaultPtrAddEvent (button_mask, x, y, rfb_client);
 }
 
+int
+grd_session_vnc_get_framebuffer_stride (GrdSessionVnc *session_vnc)
+{
+  return session_vnc->rfb_screen->paddedWidthInBytes;
+}
+
 static void
 init_vnc_session (GrdSessionVnc *session_vnc)
 {
@@ -410,11 +401,13 @@ grd_session_vnc_stop (GrdSession *session)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
 
-  if (session_vnc->pipeline)
+  if (session_vnc->close_session_idle_id)
     {
-      gst_element_set_state (session_vnc->pipeline, GST_STATE_NULL);
-      g_clear_pointer (&session_vnc->pipeline, gst_object_unref);
+      g_source_remove (session_vnc->close_session_idle_id);
+      session_vnc->close_session_idle_id = 0;
     }
+
+  g_clear_object (&session_vnc->pipewire_stream);
 
   grd_session_vnc_detach_source (session_vnc);
 
@@ -423,54 +416,49 @@ grd_session_vnc_stop (GrdSession *session)
   g_clear_pointer (&session_vnc->rfb_screen, (GDestroyNotify) rfbScreenCleanup);
 }
 
+static gboolean
+close_session_idle (gpointer user_data)
+{
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (user_data);
+
+  grd_session_stop (GRD_SESSION (session_vnc));
+
+  session_vnc->close_session_idle_id = 0;
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+on_pipwire_stream_closed (GrdVncPipeWireStream *stream,
+                          GrdSessionVnc        *session_vnc)
+{
+  g_warning ("PipeWire stream closed, closing client");
+
+  session_vnc->close_session_idle_id =
+    g_idle_add (close_session_idle, session_vnc);
+}
+
 static void
 grd_session_vnc_stream_ready (GrdSession *session,
                               GrdStream  *stream)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
   uint32_t pipewire_node_id;
-  g_autofree char *pipeline_str = NULL;
-  GError *error = NULL;
-  g_autoptr(GstElement) pipeline = NULL;
-  g_autoptr(GstElement) vnc_sink = NULL;
-  g_autoptr(GstPad) sink_pad = NULL;
-  g_autoptr(GstPad) src_pad = NULL;
+  g_autoptr (GError) error = NULL;
 
   pipewire_node_id = grd_stream_get_pipewire_node_id (stream);
-  pipeline_str =
-    g_strdup_printf ("pipewiresrc name=pipewiresrc path=%d ! videoconvert",
-                     pipewire_node_id);
-
-  pipeline = gst_parse_launch (pipeline_str, &error);
-  if (!pipeline)
+  session_vnc->pipewire_stream = grd_vnc_pipewire_stream_new (session_vnc,
+                                                              pipewire_node_id,
+                                                              &error);
+  if (!session_vnc->pipewire_stream)
     {
-      g_warning ("Failed to start VNC pipeline: %s\n", error->message);
+      g_warning ("Failed to establish PipeWire stream: %s", error->message);
       return;
     }
 
-  vnc_sink = grd_vnc_sink_new (session_vnc);
-  if (!vnc_sink)
-    {
-      g_warning ("Failed to create VNC sink\n");
-      return;
-    }
-  gst_bin_add (GST_BIN (pipeline), vnc_sink);
-
-  sink_pad = gst_element_get_static_pad (vnc_sink, "sink");
-  src_pad = gst_bin_find_unlinked_pad (GST_BIN (pipeline), GST_PAD_SRC);
-
-  if (gst_pad_link (src_pad, sink_pad) != GST_PAD_LINK_OK)
-    {
-      g_warning ("Failed to link VNC sink to pipeline\n");
-      return;
-    }
-
-  gst_element_set_state (pipeline, GST_STATE_PLAYING);
-
-  session_vnc->pipewire_src = gst_bin_get_by_name (GST_BIN (pipeline),
-                                                   "pipewiresrc");
-  session_vnc->vnc_sink = g_steal_pointer (&vnc_sink);
-  session_vnc->pipeline = g_steal_pointer (&pipeline);
+  g_signal_connect (session_vnc->pipewire_stream, "closed",
+                    G_CALLBACK (on_pipwire_stream_closed),
+                    session_vnc);
 
   if (!session_vnc->source)
     grd_session_vnc_attach_source (session_vnc);

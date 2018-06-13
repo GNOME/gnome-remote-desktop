@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Red Hat Inc.
+ * Copyright (C) 2018 Red Hat Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -16,21 +16,23 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
  *
- * Written by:
- *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_VNC_SINK_H
-#define GRD_VNC_SINK_H
+#ifndef GRD_VNC_PIPEWIRE_STREAM_H
+#define GRD_VNC_PIPEWIRE_STREAM_H
 
-#include <glib.h>
-#include <gst/base/gstbasesink.h>
+#include <glib-object.h>
+#include <stdint.h>
 
-#include "grd-types.h"
+#include "grd-session-vnc.h"
 
-#define GRD_TYPE_VNC_SINK (grd_vnc_sink_get_type ())
-G_DECLARE_FINAL_TYPE (GrdVncSink, grd_vnc_sink, GRD, VNC_SINK, GstBaseSink);
+#define GRD_TYPE_VNC_PIPEWIRE_STREAM grd_vnc_pipewire_stream_get_type ()
+G_DECLARE_FINAL_TYPE (GrdVncPipeWireStream, grd_vnc_pipewire_stream,
+                      GRD, VNC_PIPEWIRE_STREAM,
+                      GObject)
 
-GstElement *grd_vnc_sink_new (GrdSessionVnc *session_vnc);
+GrdVncPipeWireStream * grd_vnc_pipewire_stream_new (GrdSessionVnc  *session_vnc,
+                                                    uint32_t        src_node_id,
+                                                    GError        **error);
 
-#endif /* GRD_VNC_SINK_H */
+#endif /* GRD_VNC_PIPEWIRE_STREAM_H */
