@@ -25,6 +25,7 @@
 #include "grd-daemon.h"
 
 #include <gio/gio.h>
+#include <glib/gi18n.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -288,6 +289,8 @@ main (int argc, char **argv)
   g_autoptr(GOptionContext) context;
   g_autoptr(GApplication) app = NULL;
   GError *error = NULL;
+
+  g_set_application_name (_("GNOME Remote Desktop"));
 
   context = g_option_context_new (NULL);
   g_option_context_add_main_entries (context, entries, GETTEXT_PACKAGE);
