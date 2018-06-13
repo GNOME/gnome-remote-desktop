@@ -313,6 +313,9 @@ init_vnc_session (GrdSessionVnc *session_vnc)
   rfb_screen->newClientHook = handle_new_client;
   rfb_screen->screenData = session_vnc;
 
+  /* Amount of milliseconds to wait before sending an update */
+  rfb_screen->deferUpdateTime = 0;
+
   rfb_screen->kbdAddEvent = handle_key_event;
   rfb_screen->kbdReleaseAllKeys = handle_release_all_keys;
   rfb_screen->ptrAddEvent = handle_pointer_event;
