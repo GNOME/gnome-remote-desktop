@@ -29,6 +29,12 @@
 #include "grd-dbus-screen-cast.h"
 #include "grd-types.h"
 
+typedef enum _GrdDebugFlags
+{
+  GRD_DEBUG_NONE = 0,
+  GRD_DEBUG_VNC = 1 << 0,
+} GrdDebugFlags;
+
 #define GRD_TYPE_CONTEXT (grd_context_get_type ())
 G_DECLARE_FINAL_TYPE (GrdContext, grd_context, GRD, CONTEXT, GObject);
 
@@ -50,5 +56,7 @@ void grd_context_add_session (GrdContext *context,
                               GrdSession *session);
 
 GList * grd_context_get_sessions (GrdContext *context);
+
+GrdDebugFlags grd_context_get_debug_flags (GrdContext *context);
 
 #endif /* GRD_CONTEXT_H */

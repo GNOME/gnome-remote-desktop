@@ -25,11 +25,19 @@
 #include "grd-vnc-server.h"
 
 #include <gio/gio.h>
+#include <rfb/rfb.h>
 
 #include "grd-context.h"
 #include "grd-session-vnc.h"
 
 #define GRD_VNC_SERVER_PORT 5900
+
+enum
+{
+  PROP_0,
+
+  PROP_CONTEXT,
+};
 
 struct _GrdVncServer
 {
@@ -56,8 +64,9 @@ grd_vnc_server_new (GrdContext *context)
 {
   GrdVncServer *vnc_server;
 
-  vnc_server = g_object_new (GRD_TYPE_VNC_SERVER, NULL);
-  vnc_server->context = context;
+  vnc_server = g_object_new (GRD_TYPE_VNC_SERVER,
+                             "context", context,
+                             NULL);
 
   return vnc_server;
 }
@@ -139,6 +148,43 @@ stop_and_unref_session (GrdSession *session)
 }
 
 static void
+grd_vnc_server_set_property (GObject      *object,
+                             guint         prop_id,
+                             const GValue *value,
+                             GParamSpec   *pspec)
+{
+  GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
+
+  switch (prop_id)
+    {
+    case PROP_CONTEXT:
+      vnc_server->context = g_value_get_object (value);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    }
+}
+
+static void
+grd_vnc_server_get_property (GObject    *object,
+                             guint       prop_id,
+                             GValue     *value,
+                             GParamSpec *pspec)
+{
+  GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
+
+  switch (prop_id)
+    {
+    case PROP_CONTEXT:
+      g_value_set_object (value, vnc_server->context);
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    }
+}
+
+static void
 grd_vnc_server_dispose (GObject *object)
 {
   GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
@@ -162,6 +208,19 @@ grd_vnc_server_dispose (GObject *object)
 }
 
 static void
+grd_vnc_server_constructed (GObject *object)
+{
+  GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
+
+  if (grd_context_get_debug_flags (vnc_server->context) & GRD_DEBUG_VNC)
+    rfbLogEnable (1);
+  else
+    rfbLogEnable (0);
+
+  G_OBJECT_CLASS (grd_vnc_server_parent_class)->constructed (object);
+}
+
+static void
 grd_vnc_server_init (GrdVncServer *vnc_server)
 {
 }
@@ -171,5 +230,18 @@ grd_vnc_server_class_init (GrdVncServerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+  object_class->set_property = grd_vnc_server_set_property;
+  object_class->get_property = grd_vnc_server_get_property;
   object_class->dispose = grd_vnc_server_dispose;
+  object_class->constructed = grd_vnc_server_constructed;
+
+  g_object_class_install_property (object_class,
+                                   PROP_CONTEXT,
+                                   g_param_spec_object ("context",
+                                                        "GrdContext",
+                                                        "The GrdContext instance",
+                                                        GRD_TYPE_CONTEXT,
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_STATIC_STRINGS));
 }

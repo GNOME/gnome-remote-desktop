@@ -27,6 +27,10 @@
 #include "grd-dbus-remote-desktop.h"
 #include "grd-dbus-screen-cast.h"
 
+static const GDebugKey grd_debug_keys[] = {
+  { "vnc", GRD_DEBUG_VNC },
+};
+
 struct _GrdContext
 {
   GObject parent;
@@ -37,6 +41,8 @@ struct _GrdContext
   GrdDBusScreenCast *screen_cast_proxy;
 
   GList *sessions;
+
+  GrdDebugFlags debug_flags;
 };
 
 G_DEFINE_TYPE (GrdContext, grd_context, G_TYPE_OBJECT);
@@ -95,10 +101,33 @@ grd_context_get_sessions (GrdContext *context)
   return context->sessions;
 }
 
+GrdDebugFlags
+grd_context_get_debug_flags (GrdContext *context)
+{
+  return context->debug_flags;
+}
+
+static void
+init_debug_flags (GrdContext *context)
+{
+  const char *debug_env;
+
+  debug_env = g_getenv ("GNOME_REMOTE_DESKTOP_DEBUG");
+  if (debug_env)
+    {
+      context->debug_flags =
+        g_parse_debug_string (debug_env,
+                              grd_debug_keys,
+                              G_N_ELEMENTS (grd_debug_keys));
+    }
+}
+
 static void
 grd_context_init (GrdContext *context)
 {
   context->main_context = g_main_context_default ();
+
+  init_debug_flags (context);
 }
 
 static void
