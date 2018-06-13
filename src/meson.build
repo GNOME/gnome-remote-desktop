@@ -6,8 +6,6 @@ daemon_sources = files([
   'grd-private.h',
   'grd-session.c',
   'grd-session.h',
-  'grd-session-dummy.c',
-  'grd-session-dummy.h',
   'grd-session-vnc.c',
   'grd-session-vnc.h',
   'grd-stream.c',

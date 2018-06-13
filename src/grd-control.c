@@ -32,11 +32,8 @@ int
 main (int argc, char **argv)
 {
   g_autoptr(GApplication) app = NULL;
-  gboolean toggle_record = FALSE;
   gboolean terminate = FALSE;
   GOptionEntry entries[] = {
-    { "toggle-record", 0, 0, G_OPTION_ARG_NONE, &toggle_record,
-      "Start/stop dummy session", NULL },
     { "terminate", 0, 0, G_OPTION_ARG_NONE, &terminate,
       "Terminate the daemon", NULL },
     { NULL }
@@ -53,7 +50,7 @@ main (int argc, char **argv)
       return 1;
     }
 
-  if (!(toggle_record ^ terminate))
+  if (!terminate)
     {
       g_printerr ("%s", g_option_context_get_help (context, TRUE, NULL));
       return 1;
@@ -76,10 +73,7 @@ main (int argc, char **argv)
       return 1;
     }
 
-  if (toggle_record)
-    g_action_group_activate_action (G_ACTION_GROUP (app),
-                                    "toggle-record", NULL);
-  else if (terminate)
+  if (terminate)
     g_action_group_activate_action (G_ACTION_GROUP (app),
                                     "terminate", NULL);
   else

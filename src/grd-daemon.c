@@ -32,7 +32,6 @@
 #include "grd-dbus-remote-desktop.h"
 #include "grd-private.h"
 #include "grd-session.h"
-#include "grd-session-dummy.h"
 #include "grd-vnc-server.h"
 
 struct _GrdDaemon
@@ -46,7 +45,6 @@ struct _GrdDaemon
   GrdContext *context;
 
   GrdVncServer *vnc_server;
-  GrdSessionDummy *dummy_session;
 };
 
 G_DEFINE_TYPE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
@@ -261,51 +259,6 @@ grd_daemon_class_init (GrdDaemonClass *klass)
 }
 
 static void
-on_dummy_session_stopped (GrdSession *session,
-                          GrdDaemon  *daemon)
-{
-  g_print ("Dummy remote desktop stopped\n");
-  g_clear_object (&daemon->dummy_session);
-}
-
-static void
-activate_toggle_record (GAction   *action,
-                        GVariant  *parameter,
-                        GrdDaemon *daemon)
-{
-  if (!daemon->dummy_session)
-    {
-      if (!is_daemon_ready (daemon))
-        {
-          g_print ("Can't start dummy remote desktop, not ready.\n");
-          return;
-        }
-
-      g_print ("Start dummy remote desktop\n");
-
-      daemon->dummy_session = g_object_new (GRD_TYPE_SESSION_DUMMY,
-                                            "context", daemon->context,
-                                            NULL);
-      g_signal_connect (daemon->dummy_session, "stopped",
-                        G_CALLBACK (on_dummy_session_stopped),
-                        daemon);
-      grd_context_add_session (daemon->context,
-                               GRD_SESSION (daemon->dummy_session));
-    }
-  else
-    {
-
-      if (daemon->dummy_session)
-        {
-          g_print ("Stop dummy remote desktop\n");
-          grd_session_stop (GRD_SESSION (daemon->dummy_session));
-        }
-
-      g_assert (!daemon->dummy_session);
-    }
-}
-
-static void
 activate_terminate (GAction   *action,
                     GVariant  *parameter,
                     GrdDaemon *daemon)
@@ -317,10 +270,6 @@ static void
 add_actions (GApplication *app)
 {
   g_autoptr(GSimpleAction) action;
-
-  action = g_simple_action_new ("toggle-record", NULL);
-  g_signal_connect (action, "activate", G_CALLBACK (activate_toggle_record), app);
-  g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (action));
 
   action = g_simple_action_new ("terminate", NULL);
   g_signal_connect (action, "activate", G_CALLBACK (activate_terminate), app);
