@@ -48,6 +48,7 @@ struct _GrdSettings
     gboolean view_only;
     GrdVncAuthMethod auth_method;
     int port;
+    GrdVncEncryption encryption;
   } vnc;
 };
 
@@ -120,6 +121,12 @@ grd_settings_get_vnc_auth_method (GrdSettings *settings)
     return settings->vnc.auth_method;
 }
 
+GrdVncEncryption
+grd_settings_get_vnc_encryption (GrdSettings *settings)
+{
+  return settings->vnc.encryption;
+}
+
 static void
 update_vnc_view_only (GrdSettings *settings)
 {
@@ -132,6 +139,13 @@ update_vnc_auth_method (GrdSettings *settings)
 {
   settings->vnc.auth_method = g_settings_get_enum (settings->vnc.settings,
                                                    "auth-method");
+}
+
+static void
+update_vnc_encryption (GrdSettings *settings)
+{
+  settings->vnc.encryption = g_settings_get_flags (settings->vnc.settings,
+                                                   "encryption");
 }
 
 static void
@@ -148,6 +162,11 @@ on_vnc_settings_changed (GSettings   *vnc_settings,
     {
       update_vnc_auth_method (settings);
       g_signal_emit (settings, signals[VNC_AUTH_METHOD_CHANGED], 0);
+    }
+  else if (strcmp (key, "encryption") == 0)
+    {
+      update_vnc_encryption (settings);
+      g_signal_emit (settings, signals[VNC_ENCRYPTION_CHANGED], 0);
     }
 }
 
@@ -172,6 +191,8 @@ grd_settings_init (GrdSettings *settings)
   update_vnc_auth_method (settings);
 
   settings->vnc.port = GRD_VNC_SERVER_PORT;
+
+  update_vnc_encryption (settings);
 }
 
 static void
@@ -190,6 +211,13 @@ grd_settings_class_init (GrdSettingsClass *klass)
                   G_TYPE_NONE, 0);
   signals[VNC_AUTH_METHOD_CHANGED] =
     g_signal_new ("vnc-auth-method-changed",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL, NULL,
+                  G_TYPE_NONE, 0);
+  signals[VNC_ENCRYPTION_CHANGED] =
+    g_signal_new ("vnc-encryption-changed",
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_LAST,
                   0,

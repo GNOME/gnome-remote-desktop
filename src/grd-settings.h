@@ -45,4 +45,6 @@ gboolean grd_settings_get_vnc_view_only (GrdSettings *settings);
 
 GrdVncAuthMethod grd_settings_get_vnc_auth_method (GrdSettings *settings);
 
+GrdVncEncryption grd_settings_get_vnc_encryption (GrdSettings *settings);
+
 #endif /* GRD_SETTINGS_H */

@@ -18,19 +18,11 @@
  *
  */
 
-#ifndef GRD_ENUMS_H
-#define GRD_ENUMS_H
+#ifndef GRD_VNC_TLS_H
+#define GRD_VNC_TLS_H
 
-typedef enum
-{
-  GRD_VNC_AUTH_METHOD_PROMPT,
-  GRD_VNC_AUTH_METHOD_PASSWORD
-} GrdVncAuthMethod;
+#include <rfb/rfb.h>
 
-typedef enum
-{
-  GRD_VNC_ENCRYPTION_NONE = 1 << 0,
-  GRD_VNC_ENCRYPTION_TLS_ANON = 1 << 1,
-} GrdVncEncryption;
+rfbSecurityHandler * grd_vnc_tls_get_security_handler (void);
 
-#endif /* GRD_ENUMS_H */
+#endif /* GRD_VNC_TLS_H */

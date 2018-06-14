@@ -36,6 +36,9 @@ G_DECLARE_FINAL_TYPE (GrdSessionVnc,
                       GRD, SESSION_VNC,
                       GrdSession);
 
+typedef gboolean (* GrdVncSocketGrabFunc) (GrdSessionVnc  *session_vnc,
+                                           GError        **error);
+
 GrdSessionVnc *grd_session_vnc_new (GrdVncServer      *vnc_server,
                                     GSocketConnection *connection);
 
@@ -53,6 +56,18 @@ void grd_session_vnc_move_cursor (GrdSessionVnc *session_vnc,
                                   int            x,
                                   int            y);
 
+int grd_session_vnc_get_fd (GrdSessionVnc *session_vnc);
+
 int grd_session_vnc_get_framebuffer_stride (GrdSessionVnc *session_vnc);
+
+rfbClientPtr grd_session_vnc_get_rfb_client (GrdSessionVnc *session_vnc);
+
+void grd_session_vnc_grab_socket (GrdSessionVnc        *session_vnc,
+                                  GrdVncSocketGrabFunc  grab_func);
+
+void grd_session_vnc_ungrab_socket (GrdSessionVnc        *session_vnc,
+                                    GrdVncSocketGrabFunc  grab_func);
+
+GrdVncServer * grd_session_vnc_get_vnc_server (GrdSessionVnc *session_vnc);
 
 #endif /* GRD_SESSION_VNC_H */

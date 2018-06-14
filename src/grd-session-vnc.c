@@ -44,7 +44,9 @@ struct _GrdSessionVnc
 {
   GrdSession parent;
 
+  GrdVncServer *vnc_server;
   GSocketConnection *connection;
+  GList *socket_grabs;
   GSource *source;
   rfbScreenInfoPtr rfb_screen;
   rfbClientPtr rfb_client;
@@ -506,9 +508,27 @@ check_rfb_password (rfbClientPtr  rfb_client,
 }
 
 int
+grd_session_vnc_get_fd (GrdSessionVnc *session_vnc)
+{
+  return session_vnc->rfb_screen->inetdSock;
+}
+
+int
 grd_session_vnc_get_framebuffer_stride (GrdSessionVnc *session_vnc)
 {
   return session_vnc->rfb_screen->paddedWidthInBytes;
+}
+
+rfbClientPtr
+grd_session_vnc_get_rfb_client (GrdSessionVnc *session_vnc)
+{
+  return session_vnc->rfb_client;
+}
+
+GrdVncServer *
+grd_session_vnc_get_vnc_server (GrdSessionVnc *session_vnc)
+{
+  return session_vnc->vnc_server;
 }
 
 static void
@@ -551,33 +571,74 @@ init_vnc_session (GrdSessionVnc *session_vnc)
   rfbProcessEvents (rfb_screen, 0);
 }
 
+void
+grd_session_vnc_grab_socket (GrdSessionVnc        *session_vnc,
+                             GrdVncSocketGrabFunc  grab_func)
+{
+  session_vnc->socket_grabs = g_list_prepend (session_vnc->socket_grabs,
+                                              grab_func);
+}
+
+void
+grd_session_vnc_ungrab_socket (GrdSessionVnc        *session_vnc,
+                               GrdVncSocketGrabFunc  grab_func)
+{
+  session_vnc->socket_grabs = g_list_remove (session_vnc->socket_grabs,
+                                             grab_func);
+}
+
+static gboolean
+vnc_socket_grab_func (GrdSessionVnc  *session_vnc,
+                      GError        **error)
+{
+  if (rfbIsActive (session_vnc->rfb_screen))
+    {
+      rfbProcessEvents (session_vnc->rfb_screen, 0);
+
+      if (session_vnc->pending_framebuffer_resize &&
+          session_vnc->rfb_client->preferredEncoding != -1)
+        {
+          resize_vnc_framebuffer (session_vnc,
+                                  session_vnc->pending_framebuffer_width,
+                                  session_vnc->pending_framebuffer_height);
+          session_vnc->pending_framebuffer_resize = FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
 static gboolean
 handle_socket_data (GSocket *socket,
                     GIOCondition condition,
                     gpointer user_data)
 {
-  GrdSessionVnc *session_vnc = user_data;
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (user_data);
+  GrdSession *session = GRD_SESSION (session_vnc);
 
-  if (condition & G_IO_IN)
+  if (condition & (G_IO_ERR | G_IO_HUP))
     {
-      if (rfbIsActive (session_vnc->rfb_screen))
-        {
-          rfbProcessEvents (session_vnc->rfb_screen, 0);
+      g_warning ("Client disconnected");
 
-          if (session_vnc->pending_framebuffer_resize &&
-              session_vnc->rfb_client->preferredEncoding != -1)
-            {
-              resize_vnc_framebuffer (session_vnc,
-                                      session_vnc->pending_framebuffer_width,
-                                      session_vnc->pending_framebuffer_height);
-              session_vnc->pending_framebuffer_resize = FALSE;
-            }
+      grd_session_stop (session);
+    }
+  else if (condition & G_IO_IN)
+    {
+      GrdVncSocketGrabFunc grab_func;
+      g_autoptr (GError) error = NULL;
+
+      grab_func = g_list_first (session_vnc->socket_grabs)->data;
+      if (!grab_func (session_vnc, &error))
+        {
+          g_warning ("Error when reading socket: %s", error->message);
+
+          grd_session_stop (session);
         }
     }
   else
     {
-      g_debug ("Unhandled socket condition %d\n", condition);
-      return G_SOURCE_REMOVE;
+      g_warning ("Unhandled socket condition %d\n", condition);
+      g_assert_not_reached ();
     }
 
   return G_SOURCE_CONTINUE;
@@ -590,7 +651,10 @@ grd_session_vnc_attach_source (GrdSessionVnc *session_vnc)
 
   socket = g_socket_connection_get_socket (session_vnc->connection);
   session_vnc->source = g_socket_create_source (socket,
-                                                G_IO_IN | G_IO_PRI,
+                                                (G_IO_IN |
+                                                 G_IO_PRI |
+                                                 G_IO_ERR |
+                                                 G_IO_HUP),
                                                 NULL);
   g_source_set_callback (session_vnc->source,
                          (GSourceFunc) handle_socket_data,
@@ -616,8 +680,10 @@ grd_session_vnc_new (GrdVncServer      *vnc_server,
                               "context", context,
                               NULL);
 
+  session_vnc->vnc_server = vnc_server;
   session_vnc->connection = g_object_ref (connection);
 
+  grd_session_vnc_grab_socket (session_vnc, vnc_socket_grab_func);
   grd_session_vnc_attach_source (session_vnc);
 
   init_vnc_session (session_vnc);
@@ -631,6 +697,8 @@ grd_session_vnc_dispose (GObject *object)
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (object);
 
   g_assert (!session_vnc->rfb_screen);
+
+  g_clear_pointer (&session_vnc->socket_grabs, g_list_free);
 
   g_clear_pointer (&session_vnc->pressed_keys, g_hash_table_unref);
 

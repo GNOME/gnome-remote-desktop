@@ -15,6 +15,7 @@ libvncserver_dep = dependency('libvncserver')
 libvncclient_dep = dependency('libvncclient')
 libsecret_dep = dependency('libsecret-1')
 libnotify_dep = dependency('libnotify')
+gnutls_dep = dependency('gnutls')
 
 cdata = configuration_data()
 cdata.set_quoted('GETTEXT_PACKAGE', 'gnome-remote-desktop')

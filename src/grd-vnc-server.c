@@ -24,11 +24,13 @@
 
 #include "grd-vnc-server.h"
 
+#include <rfb/rfb.h>
 #include <gio/gio.h>
 #include <rfb/rfb.h>
 
 #include "grd-context.h"
 #include "grd-session-vnc.h"
+#include "grd-vnc-tls.h"
 
 
 enum
@@ -130,6 +132,43 @@ on_incoming (GSocketService    *service,
   return TRUE;
 }
 
+static void
+sync_encryption_settings (GrdVncServer *vnc_server)
+{
+  GrdSettings *settings = grd_context_get_settings (vnc_server->context);
+  rfbSecurityHandler *tls_security_handler;
+  GrdVncEncryption encryption;
+
+  tls_security_handler = grd_vnc_tls_get_security_handler ();
+  encryption = grd_settings_get_vnc_encryption (settings);
+
+  if (encryption == (GRD_VNC_ENCRYPTION_NONE | GRD_VNC_ENCRYPTION_TLS_ANON))
+    {
+      rfbRegisterSecurityHandler (tls_security_handler);
+      rfbUnregisterChannelSecurityHandler (tls_security_handler);
+    }
+  else if (encryption == GRD_VNC_ENCRYPTION_NONE)
+    {
+      rfbUnregisterSecurityHandler (tls_security_handler);
+      rfbUnregisterChannelSecurityHandler (tls_security_handler);
+    }
+  else
+    {
+      if (encryption != GRD_VNC_ENCRYPTION_TLS_ANON)
+        g_warning ("Invalid VNC encryption setting, falling back to TLS-ANON");
+
+      rfbRegisterChannelSecurityHandler (tls_security_handler);
+      rfbUnregisterSecurityHandler (tls_security_handler);
+    }
+}
+
+static void
+on_vnc_encryption_changed (GrdSettings  *settings,
+                           GrdVncServer *vnc_server)
+{
+  sync_encryption_settings (vnc_server);
+}
+
 gboolean
 grd_vnc_server_start (GrdVncServer  *vnc_server,
                       GError       **error)
@@ -220,11 +259,17 @@ static void
 grd_vnc_server_constructed (GObject *object)
 {
   GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
+  GrdSettings *settings = grd_context_get_settings (vnc_server->context);
 
   if (grd_context_get_debug_flags (vnc_server->context) & GRD_DEBUG_VNC)
     rfbLogEnable (1);
   else
     rfbLogEnable (0);
+
+  g_signal_connect (settings, "vnc-encryption-changed",
+                    G_CALLBACK (on_vnc_encryption_changed),
+                    vnc_server);
+  sync_encryption_settings (vnc_server);
 
   G_OBJECT_CLASS (grd_vnc_server_parent_class)->constructed (object);
 }

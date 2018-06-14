@@ -23,5 +23,15 @@
 	 * password - by requiring the remote client to provide a known password
       </description>
     </key>
+    <key name='encryption' flags='org.gnome.desktop.remote-desktop.GrdVncEncryption'>
+      <default>['tls-anon']</default>
+      <summary>Allowed encryption method to use</summary>
+      <description>
+	Allowed encryption methods. Includes the following:
+
+	 * none     - no encryption
+	 * tls-anon - anonymous (unauthenticated) TLS
+      </description>
+    </key>
   </schema>
 </schemalist>

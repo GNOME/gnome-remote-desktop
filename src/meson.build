@@ -21,6 +21,8 @@ daemon_sources = files([
   'grd-vnc-pipewire-stream.h',
   'grd-vnc-server.c',
   'grd-vnc-server.h',
+  'grd-vnc-tls.c',
+  'grd-vnc-tls.h',
 ])
 
 gen_daemon_sources = []
@@ -51,7 +53,8 @@ executable('gnome-remote-desktop-daemon',
                           pipewire_dep,
                           libvncserver_dep,
                           libsecret_dep,
-                          libnotify_dep],
+                          libnotify_dep,
+                          gnutls_dep],
            include_directories: [configinc],
            install: true,
            install_dir: libexecdir)
