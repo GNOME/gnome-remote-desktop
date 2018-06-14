@@ -211,6 +211,8 @@ grd_vnc_server_dispose (GObject *object)
                         (GDestroyNotify) stop_and_unref_session);
       vnc_server->sessions = NULL;
     }
+
+  G_OBJECT_CLASS (grd_vnc_server_parent_class)->dispose (object);
 }
 
 static void
