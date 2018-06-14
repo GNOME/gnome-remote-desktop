@@ -74,6 +74,17 @@ check_rfb_password (rfbClientPtr  rfb_client,
                     const char   *response_encrypted,
                     int           len);
 
+static void
+swap_uint8 (uint8_t *a,
+            uint8_t *b)
+{
+  uint8_t tmp;
+
+  tmp = *a;
+  *a = *b;
+  *b = tmp;
+}
+
 void
 grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
                                     int            width,
@@ -93,6 +104,13 @@ grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
                      BGRX_BITS_PER_SAMPLE,
                      BGRX_SAMPLES_PER_PIXEL,
                      BGRX_BYTES_PER_PIXEL);
+
+  /*
+   * Our format is hard coded to BGRX but LibVNCServer asusumes it's RGBX;
+   * lets override that.
+   */
+  swap_uint8 (&session_vnc->rfb_screen->serverFormat.redShift,
+              &session_vnc->rfb_screen->serverFormat.blueShift);
 }
 
 void
