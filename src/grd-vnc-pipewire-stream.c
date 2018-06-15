@@ -328,8 +328,8 @@ connect_to_stream (GrdVncPipeWireStream  *stream,
 
   min_rect = SPA_RECTANGLE (1, 1);
   max_rect = SPA_RECTANGLE (INT32_MAX, INT32_MAX);
-  min_framerate = SPA_FRACTION (0, 1);
-  max_framerate = SPA_FRACTION (UINT32_MAX, 1);
+  min_framerate = SPA_FRACTION (1, 1);
+  max_framerate = SPA_FRACTION (30, 1);
 
   spa_pod_builder_pop (&pod_builder);
   spa_pod_builder_add (
@@ -337,9 +337,10 @@ connect_to_stream (GrdVncPipeWireStream  *stream,
     ":", spa_type->format_video.size, "Rru", &min_rect,
                                              SPA_POD_PROP_MIN_MAX (&min_rect,
                                                                    &max_rect),
-    ":", spa_type->format_video.framerate, "Fru", &max_framerate,
-                                                  SPA_POD_PROP_MIN_MAX (&min_framerate,
-                                                                        &max_framerate),
+    ":", spa_type->format_video.framerate, "F", &SPA_FRACTION (0, 1),
+    ":", spa_type->format_video.max_framerate, "Fru", &max_framerate,
+                                                      SPA_POD_PROP_MIN_MAX (&min_framerate,
+                                                                            &max_framerate),
     NULL);
   params[0] = spa_pod_builder_pop (&pod_builder);
 
