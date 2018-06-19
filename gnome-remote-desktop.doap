@@ -4,8 +4,8 @@
          xmlns:gnome="http://api.gnome.org/doap-extensions#"
          xmlns="http://usefulinc.com/ns/doap#">
 
-  <name xml:lang="en">GNOME Shell</name>
-  <shortdesc xml:lang="en">Next generation GNOME desktop shell</shortdesc>
+  <name xml:lang="en">GNOME Remote Desktop</name>
+  <shortdesc xml:lang="en">Remote desktop service for GNOME</shortdesc>
   <description>GNOME Remote Desktop implements remote desktop functionality for
 the GNOME platform.</description>
 
