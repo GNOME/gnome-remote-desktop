@@ -69,6 +69,9 @@ G_DEFINE_TYPE (GrdSessionVnc, grd_session_vnc, GRD_TYPE_SESSION);
 static void
 grd_session_vnc_detach_source (GrdSessionVnc *session_vnc);
 
+static gboolean
+close_session_idle (gpointer user_data);
+
 static rfbBool
 check_rfb_password (rfbClientPtr  rfb_client,
                     const char   *response_encrypted,
@@ -137,13 +140,10 @@ handle_client_gone (rfbClientPtr rfb_client)
 {
   GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
 
-  /* Avoid re-entry when stopping. */
-  if (!session_vnc->rfb_screen)
-    return;
-
   g_debug ("VNC client gone");
 
-  grd_session_stop (GRD_SESSION (session_vnc));
+  session_vnc->close_session_idle_id =
+    g_idle_add (close_session_idle, session_vnc);
 }
 
 static void
@@ -497,10 +497,11 @@ handle_socket_data (GSocket *socket,
     }
   else
     {
-      g_warning ("Unhandled socket condition %d\n", condition);
+      g_debug ("Unhandled socket condition %d\n", condition);
+      return G_SOURCE_REMOVE;
     }
 
-  return TRUE;
+  return G_SOURCE_CONTINUE;
 }
 
 static void
