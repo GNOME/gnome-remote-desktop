@@ -471,8 +471,14 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (object);
 
   g_clear_pointer (&stream->src_node_id_string, g_free);
-  g_clear_pointer (&stream->pipewire_stream,
-                   (GDestroyNotify) pw_stream_destroy);
+
+  /*
+   * We can't clear stream->pipewire_stream before destroying it, as the data
+   * thread in PipeWire might access the variable during destruction.
+   */
+  if (stream->pipewire_stream)
+    pw_stream_destroy (stream->pipewire_stream);
+
   g_clear_pointer (&stream->pipewire_remote,
                    (GDestroyNotify) pw_remote_destroy);
   g_clear_pointer (&stream->pipewire_core,
