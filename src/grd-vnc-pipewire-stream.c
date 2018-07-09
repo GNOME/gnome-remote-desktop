@@ -184,8 +184,8 @@ on_stream_state_changed (void                 *user_data,
 }
 
 static void
-on_stream_format_changed (void           *user_data,
-                          struct spa_pod *format)
+on_stream_format_changed (void                 *user_data,
+                          const struct spa_pod *format)
 {
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
   struct pw_type *pipewire_type = stream->pipewire_type;
@@ -196,7 +196,7 @@ on_stream_format_changed (void           *user_data,
   int height;
   int stride;
   int size;
-  struct spa_pod *params[2];
+  const struct spa_pod *params[2];
 
   if (!format)
     {
@@ -223,7 +223,7 @@ on_stream_format_changed (void           *user_data,
     pipewire_type->param.idBuffers, param_buffers->Buffers,
     ":", param_buffers->size, "i", size,
     ":", param_buffers->stride, "i", stride,
-    ":", param_buffers->buffers, "iru", 2, SPA_POD_PROP_MIN_MAX(1, 8));
+    ":", param_buffers->buffers, "iru", 8, SPA_POD_PROP_MIN_MAX(1, 8));
 
   params[1] = spa_pod_builder_object (
     &pod_builder,
@@ -273,26 +273,25 @@ do_render (struct spa_loop *loop,
 }
 
 static void
-on_stream_new_buffer (void     *user_data,
-                      uint32_t  id)
+on_stream_process (void *user_data)
 {
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
-  struct spa_buffer *buffer;
+  struct pw_buffer *buffer;
 
-  buffer = pw_stream_peek_buffer (stream->pipewire_stream, id);
+  buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
 
   pw_loop_invoke (stream->pipewire_source->pipewire_loop, do_render,
-                  SPA_ID_INVALID, &buffer, sizeof (struct spa_buffer *),
-                  true, stream);
+                  SPA_ID_INVALID, &buffer->buffer, sizeof (struct spa_buffer *),
+                  false, stream);
 
-  pw_stream_recycle_buffer (stream->pipewire_stream, id);
+  pw_stream_queue_buffer (stream->pipewire_stream, buffer);
 }
 
 static const struct pw_stream_events stream_events = {
   PW_VERSION_STREAM_EVENTS,
   .state_changed = on_stream_state_changed,
   .format_changed = on_stream_format_changed,
-  .new_buffer = on_stream_new_buffer,
+  .process = on_stream_process,
 };
 
 static gboolean
