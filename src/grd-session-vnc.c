@@ -300,22 +300,22 @@ grd_session_vnc_notify_axis (GrdSessionVnc *session_vnc,
 
   switch (button_mask_bit_index)
     {
-    case 4:
+    case 3:
       axis = GRD_POINTER_AXIS_VERTICAL;
       steps = -1;
       break;
 
-    case 5:
+    case 4:
       axis = GRD_POINTER_AXIS_VERTICAL;
       steps = 1;
       break;
 
-    case 6:
+    case 5:
       axis = GRD_POINTER_AXIS_HORIZONTAL;
       steps = -1;
       break;
 
-    case 7:
+    case 6:
       axis = GRD_POINTER_AXIS_HORIZONTAL;
       steps = 1;
       break;
@@ -351,15 +351,15 @@ handle_pointer_event (int          button_mask,
     {
       unsigned int i;
       int buttons[] = {
-        BTN_LEFT,   /* 1 */
-        BTN_MIDDLE, /* 2 */
-        BTN_RIGHT,  /* 3 */
-        0,          /* 4 - vertical scroll: up */
-        0,          /* 5 - vertical scroll: down */
-        0,          /* 6 - horizontal scroll: left */
-        0,          /* 7 - horizontal scroll: right */
-        BTN_SIDE,   /* 8 */
-        BTN_EXTRA,  /* 9 */
+        BTN_LEFT,   /* 0 */
+        BTN_MIDDLE, /* 1 */
+        BTN_RIGHT,  /* 2 */
+        0,          /* 3 - vertical scroll: up */
+        0,          /* 4 - vertical scroll: down */
+        0,          /* 5 - horizontal scroll: left */
+        0,          /* 6 - horizontal scroll: right */
+        BTN_SIDE,   /* 7 */
+        BTN_EXTRA,  /* 8 */
       };
 
       for (i = 0; i < G_N_ELEMENTS (buttons); i++)
