@@ -220,8 +220,6 @@ handle_new_client (rfbClientPtr rfb_client)
        */
       session_vnc->rfb_screen->authPasswdData = (gpointer) 1;
 
-      grd_session_vnc_detach_source (session_vnc);
-
       return RFB_CLIENT_ACCEPT;
     }
 
