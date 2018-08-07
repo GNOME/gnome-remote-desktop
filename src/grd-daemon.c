@@ -270,7 +270,7 @@ activate_terminate (GAction   *action,
 static void
 add_actions (GApplication *app)
 {
-  g_autoptr(GSimpleAction) action;
+  g_autoptr(GSimpleAction) action = NULL;
 
   action = g_simple_action_new ("terminate", NULL);
   g_signal_connect (action, "activate", G_CALLBACK (activate_terminate), app);
@@ -286,7 +286,7 @@ main (int argc, char **argv)
       "Print version", NULL },
     { NULL }
   };
-  g_autoptr(GOptionContext) context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GApplication) app = NULL;
   GError *error = NULL;
 
