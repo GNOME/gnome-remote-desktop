@@ -357,8 +357,8 @@ connect_to_stream (GrdVncPipeWireStream  *stream,
                            params, 1);
   if (ret < 0)
     {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (-ret),
-                   strerror (-ret));
+      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (-ret),
+                           strerror (-ret));
       return FALSE;
     }
 
