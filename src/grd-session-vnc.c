@@ -49,6 +49,10 @@ struct _GrdSessionVnc
   rfbScreenInfoPtr rfb_screen;
   rfbClientPtr rfb_client;
 
+  gboolean pending_framebuffer_resize;
+  int pending_framebuffer_width;
+  int pending_framebuffer_height;
+
   guint close_session_idle_id;
 
   GrdVncAuthMethod auth_method;
@@ -88,20 +92,20 @@ swap_uint8 (uint8_t *a,
   *b = tmp;
 }
 
-void
-grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
-                                    int            width,
-                                    int            height)
+static void
+resize_vnc_framebuffer (GrdSessionVnc *session_vnc,
+                        int            width,
+                        int            height)
 {
   rfbScreenInfoPtr rfb_screen = session_vnc->rfb_screen;
   uint8_t *framebuffer;
 
-  if (rfb_screen->width == width && rfb_screen->height == height)
-    return;
+  if (!session_vnc->rfb_client->useNewFBSize)
+    g_warning ("Client does not support NewFBSize");
 
-  g_free (session_vnc->rfb_screen->frameBuffer);
+  g_free (rfb_screen->frameBuffer);
   framebuffer = g_malloc0 (width * height * BGRX_BYTES_PER_PIXEL);
-  rfbNewFramebuffer (session_vnc->rfb_screen,
+  rfbNewFramebuffer (rfb_screen,
                      (char *) framebuffer,
                      width, height,
                      BGRX_BITS_PER_SAMPLE,
@@ -117,10 +121,34 @@ grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
 }
 
 void
+grd_session_vnc_queue_resize_framebuffer (GrdSessionVnc *session_vnc,
+                                          int            width,
+                                          int            height)
+{
+  rfbScreenInfoPtr rfb_screen = session_vnc->rfb_screen;
+
+  if (rfb_screen->width == width && rfb_screen->height == height)
+    return;
+
+  if (session_vnc->rfb_client->preferredEncoding == -1)
+    {
+      session_vnc->pending_framebuffer_resize = TRUE;
+      session_vnc->pending_framebuffer_width = width;
+      session_vnc->pending_framebuffer_height = height;
+      return;
+    }
+
+  resize_vnc_framebuffer (session_vnc, width, height);
+}
+
+void
 grd_session_vnc_draw_buffer (GrdSessionVnc *session_vnc,
                              void          *data)
 {
   size_t size;
+
+  if (session_vnc->pending_framebuffer_resize)
+    return;
 
   size = (session_vnc->rfb_screen->height *
           grd_session_vnc_get_framebuffer_stride (session_vnc));
@@ -491,7 +519,18 @@ handle_socket_data (GSocket *socket,
   if (condition & G_IO_IN)
     {
       if (rfbIsActive (session_vnc->rfb_screen))
-        rfbProcessEvents (session_vnc->rfb_screen, 0);
+        {
+          rfbProcessEvents (session_vnc->rfb_screen, 0);
+
+          if (session_vnc->pending_framebuffer_resize &&
+              session_vnc->rfb_client->preferredEncoding != -1)
+            {
+              resize_vnc_framebuffer (session_vnc,
+                                      session_vnc->pending_framebuffer_width,
+                                      session_vnc->pending_framebuffer_height);
+              session_vnc->pending_framebuffer_resize = FALSE;
+            }
+        }
     }
   else
     {

@@ -213,7 +213,7 @@ on_stream_format_changed (void                 *user_data,
   width = stream->spa_format.size.width;
   height = stream->spa_format.size.height;
 
-  grd_session_vnc_resize_framebuffer (stream->session, width, height);
+  grd_session_vnc_queue_resize_framebuffer (stream->session, width, height);
 
   stride = grd_session_vnc_get_framebuffer_stride (stream->session);
   size = stride * height;

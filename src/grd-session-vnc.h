@@ -38,9 +38,9 @@ G_DECLARE_FINAL_TYPE (GrdSessionVnc,
 GrdSessionVnc *grd_session_vnc_new (GrdVncServer      *vnc_server,
                                     GSocketConnection *connection);
 
-void grd_session_vnc_resize_framebuffer (GrdSessionVnc *session_vnc,
-                                         int            width,
-                                         int            height);
+void grd_session_vnc_queue_resize_framebuffer (GrdSessionVnc *session_vnc,
+                                               int            width,
+                                               int            height);
 
 void grd_session_vnc_draw_buffer (GrdSessionVnc *session_vnc,
                                   void          *data);
