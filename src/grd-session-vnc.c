@@ -164,14 +164,23 @@ grd_session_vnc_draw_buffer (GrdSessionVnc *session_vnc,
 }
 
 static void
+maybe_queue_close_session_idle (GrdSessionVnc *session_vnc)
+{
+  if (session_vnc->close_session_idle_id)
+    return;
+
+  session_vnc->close_session_idle_id =
+    g_idle_add (close_session_idle, session_vnc);
+}
+
+static void
 handle_client_gone (rfbClientPtr rfb_client)
 {
   GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
 
   g_debug ("VNC client gone");
 
-  session_vnc->close_session_idle_id =
-    g_idle_add (close_session_idle, session_vnc);
+  maybe_queue_close_session_idle (session_vnc);
 }
 
 static void
@@ -602,12 +611,6 @@ grd_session_vnc_stop (GrdSession *session)
 
   g_debug ("Stopping VNC session");
 
-  if (session_vnc->close_session_idle_id)
-    {
-      g_source_remove (session_vnc->close_session_idle_id);
-      session_vnc->close_session_idle_id = 0;
-    }
-
   g_clear_object (&session_vnc->pipewire_stream);
 
   grd_session_vnc_detach_source (session_vnc);
@@ -615,6 +618,12 @@ grd_session_vnc_stop (GrdSession *session)
   g_clear_object (&session_vnc->connection);
   g_clear_pointer (&session_vnc->rfb_screen->frameBuffer, g_free);
   g_clear_pointer (&session_vnc->rfb_screen, rfbScreenCleanup);
+
+  if (session_vnc->close_session_idle_id)
+    {
+      g_source_remove (session_vnc->close_session_idle_id);
+      session_vnc->close_session_idle_id = 0;
+    }
 }
 
 static gboolean
@@ -635,8 +644,7 @@ on_pipwire_stream_closed (GrdVncPipeWireStream *stream,
 {
   g_warning ("PipeWire stream closed, closing client");
 
-  session_vnc->close_session_idle_id =
-    g_idle_add (close_session_idle, session_vnc);
+  maybe_queue_close_session_idle (session_vnc);
 }
 
 static void
