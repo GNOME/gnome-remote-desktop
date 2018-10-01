@@ -394,6 +394,9 @@ on_state_changed (void                 *user_data,
         }
       break;
     case PW_REMOTE_STATE_UNCONNECTED:
+      if (stream->pipewire_stream)
+        g_signal_emit (stream, signals[CLOSED], 0);
+      break;
     case PW_REMOTE_STATE_CONNECTING:
       break;
     }
