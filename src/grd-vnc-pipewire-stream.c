@@ -58,7 +58,7 @@ struct _GrdVncPipeWireStream
 
   GrdSessionVnc *session;
 
-  GrdPipeWireSource *pipewire_source;
+  GSource *pipewire_source;
   struct pw_core *pipewire_core;
   struct pw_type *pipewire_type;
 
@@ -276,11 +276,13 @@ static void
 on_stream_process (void *user_data)
 {
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
+  GrdPipeWireSource *pipewire_source =
+    (GrdPipeWireSource *) stream->pipewire_source;
   struct pw_buffer *buffer;
 
   buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
 
-  pw_loop_invoke (stream->pipewire_source->pipewire_loop, do_render,
+  pw_loop_invoke (pipewire_source->pipewire_loop, do_render,
                   SPA_ID_INVALID, &buffer->buffer, sizeof (struct spa_buffer *),
                   false, stream);
 
@@ -408,6 +410,7 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc  *session_vnc,
                              GError        **error)
 {
   GrdVncPipeWireStream *stream;
+  GrdPipeWireSource *pipewire_source;
   static gboolean is_pipewire_initialized = FALSE;
 
   if (!is_pipewire_initialized)
@@ -421,15 +424,16 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc  *session_vnc,
   stream->src_node_id = src_node_id;
   stream->src_node_id_string = g_strdup_printf ("%u", src_node_id);
 
-  stream->pipewire_source = create_pipewire_source ();
-  if (!stream->pipewire_source)
+  pipewire_source = create_pipewire_source ();
+  if (!pipewire_source)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Failed to create PipeWire source");
       return NULL;
     }
+  stream->pipewire_source = (GSource *) pipewire_source;
 
-  stream->pipewire_core = pw_core_new (stream->pipewire_source->pipewire_loop,
+  stream->pipewire_core = pw_core_new (pipewire_source->pipewire_loop,
                                        NULL);
   if (!stream->pipewire_core)
     {
@@ -478,12 +482,9 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
   if (stream->pipewire_stream)
     pw_stream_destroy (stream->pipewire_stream);
 
-  g_clear_pointer (&stream->pipewire_remote,
-                   (GDestroyNotify) pw_remote_destroy);
-  g_clear_pointer (&stream->pipewire_core,
-                   (GDestroyNotify) pw_core_destroy);
-  g_clear_pointer (&stream->pipewire_source,
-                   (GDestroyNotify) g_source_destroy);
+  g_clear_pointer (&stream->pipewire_remote, pw_remote_destroy);
+  g_clear_pointer (&stream->pipewire_core, pw_core_destroy);
+  g_clear_pointer (&stream->pipewire_source, g_source_destroy);
 
   G_OBJECT_CLASS (grd_vnc_pipewire_stream_parent_class)->finalize (object);
 }

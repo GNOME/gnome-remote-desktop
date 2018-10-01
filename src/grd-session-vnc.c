@@ -614,7 +614,7 @@ grd_session_vnc_stop (GrdSession *session)
 
   g_clear_object (&session_vnc->connection);
   g_clear_pointer (&session_vnc->rfb_screen->frameBuffer, g_free);
-  g_clear_pointer (&session_vnc->rfb_screen, (GDestroyNotify) rfbScreenCleanup);
+  g_clear_pointer (&session_vnc->rfb_screen, rfbScreenCleanup);
 }
 
 static gboolean
