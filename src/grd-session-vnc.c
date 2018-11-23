@@ -180,6 +180,7 @@ handle_client_gone (rfbClientPtr rfb_client)
 
   g_debug ("VNC client gone");
 
+  grd_session_vnc_detach_source (session_vnc);
   maybe_queue_close_session_idle (session_vnc);
 }
 
