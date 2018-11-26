@@ -113,11 +113,13 @@ resize_vnc_framebuffer (GrdSessionVnc *session_vnc,
                      BGRX_BYTES_PER_PIXEL);
 
   /*
-   * Our format is hard coded to BGRX but LibVNCServer asusumes it's RGBX;
+   * Our format is hard coded to BGRX but LibVNCServer assumes it's RGBX;
    * lets override that.
    */
+
   swap_uint8 (&session_vnc->rfb_screen->serverFormat.redShift,
               &session_vnc->rfb_screen->serverFormat.blueShift);
+  rfb_screen->setTranslateFunction (session_vnc->rfb_client);
 }
 
 void
