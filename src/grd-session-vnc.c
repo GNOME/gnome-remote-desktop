@@ -93,6 +93,19 @@ swap_uint8 (uint8_t *a,
 }
 
 static void
+update_server_format (GrdSessionVnc *session_vnc)
+{
+  rfbScreenInfoPtr rfb_screen = session_vnc->rfb_screen;
+
+  /*
+   * Our format is hard coded to BGRX but LibVNCServer assumes it's RGBX;
+   * lets override that.
+   */
+  swap_uint8 (&rfb_screen->serverFormat.redShift,
+              &rfb_screen->serverFormat.blueShift);
+}
+
+static void
 resize_vnc_framebuffer (GrdSessionVnc *session_vnc,
                         int            width,
                         int            height)
@@ -112,13 +125,7 @@ resize_vnc_framebuffer (GrdSessionVnc *session_vnc,
                      BGRX_SAMPLES_PER_PIXEL,
                      BGRX_BYTES_PER_PIXEL);
 
-  /*
-   * Our format is hard coded to BGRX but LibVNCServer assumes it's RGBX;
-   * lets override that.
-   */
-
-  swap_uint8 (&session_vnc->rfb_screen->serverFormat.redShift,
-              &session_vnc->rfb_screen->serverFormat.blueShift);
+  update_server_format (session_vnc);
   rfb_screen->setTranslateFunction (session_vnc->rfb_client);
 }
 
@@ -497,6 +504,7 @@ init_vnc_session (GrdSessionVnc *session_vnc)
   rfb_screen = rfbGetScreen (0, NULL,
                              screen_width, screen_height,
                              8, 3, 4);
+  update_server_format (session_vnc);
 
   socket = g_socket_connection_get_socket (session_vnc->connection);
   rfb_screen->inetdSock = g_socket_get_fd (socket);
