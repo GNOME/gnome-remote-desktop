@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Red Hat Inc.
+ * Copyright (C) 2018 Red Hat Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -16,24 +16,22 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
  *
- * Written by:
- *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_TYPES_H
-#define GRD_TYPES_H
+#ifndef GRD_VNC_CURSOR_H
+#define GRD_VNC_CURSOR_H
 
-typedef struct _GrdContext GrdContext;
-typedef struct _GrdSession GrdSession;
-typedef struct _GrdSessionVnc GrdSessionVnc;
-typedef struct _GrdStream GrdStream;
-typedef struct _GrdPipeWireStream GrdPipeWireStream;
-typedef struct _GrdPipeWireStreamMonitor GrdPipeWireStreamMonitor;
-typedef struct _GrdVncServer GrdVncServer;
+#include <rfb/rfb.h>
 
-typedef enum _GrdPixelFormat
-{
-  GRD_PIXEL_FORMAT_RGBA8888,
-} GrdPixelFormat;
+#include "grd-types.h"
 
-#endif /* GRD_TYPES_H */
+rfbCursorPtr grd_vnc_create_cursor (int             width,
+                                    int             height,
+                                    int             stride,
+                                    GrdPixelFormat  format,
+                                    uint8_t        *buf);
+
+rfbCursorPtr grd_vnc_create_empty_cursor (int width,
+                                          int height);
+
+#endif /* GRD_VNC_CURSOR_H */

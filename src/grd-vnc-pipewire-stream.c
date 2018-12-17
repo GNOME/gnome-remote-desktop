@@ -28,6 +28,8 @@
 #include <spa/param/video/format-utils.h>
 #include <sys/mman.h>
 
+#include "grd-vnc-cursor.h"
+
 enum
 {
   CLOSED,
@@ -43,6 +45,7 @@ typedef struct _GrdSpaType
   struct spa_type_media_subtype media_subtype;
   struct spa_type_format_video format_video;
   struct spa_type_video_format video_format;
+  uint32_t meta_cursor;
 } GrdSpaType;
 
 typedef struct _GrdPipeWireSource
@@ -79,6 +82,11 @@ struct _GrdVncPipeWireStream
 G_DEFINE_TYPE (GrdVncPipeWireStream, grd_vnc_pipewire_stream,
                G_TYPE_OBJECT)
 
+#define CURSOR_META_SIZE(width, height) \
+ (sizeof(struct spa_meta_cursor) + \
+  sizeof(struct spa_meta_bitmap) + width * height * 4)
+
+
 static void
 init_spa_type (GrdSpaType          *type,
                struct spa_type_map *map)
@@ -87,6 +95,7 @@ init_spa_type (GrdSpaType          *type,
   spa_type_media_subtype_map (map, &type->media_subtype);
   spa_type_format_video_map (map, &type->format_video);
   spa_type_video_format_map (map, &type->video_format);
+  type->meta_cursor = spa_type_map_get_id (map, SPA_TYPE_META__Cursor);
 }
 
 static gboolean
@@ -196,7 +205,7 @@ on_stream_format_changed (void                 *user_data,
   int height;
   int stride;
   int size;
-  const struct spa_pod *params[2];
+  const struct spa_pod *params[3];
 
   if (!format)
     {
@@ -231,7 +240,29 @@ on_stream_format_changed (void                 *user_data,
     ":", pipewire_type->param_meta.type, "I", pipewire_type->meta.Header,
     ":", pipewire_type->param_meta.size, "i", sizeof(struct spa_meta_header));
 
-  pw_stream_finish_format (stream->pipewire_stream, 0, params, 2);
+  params[2] = spa_pod_builder_object(
+    &pod_builder,
+    pipewire_type->param.idMeta, pipewire_type->param_meta.Meta,
+    ":", pipewire_type->param_meta.type, "I", stream->spa_type.meta_cursor,
+    ":", pipewire_type->param_meta.size, "iru", CURSOR_META_SIZE (64,64),
+      SPA_POD_PROP_MIN_MAX (CURSOR_META_SIZE (1,1),
+                            CURSOR_META_SIZE (256,256)));
+
+  pw_stream_finish_format (stream->pipewire_stream, 0,
+                           params, G_N_ELEMENTS (params));
+}
+
+static gboolean
+spa_pixel_format_to_grd_pixel_format (GrdSpaType     *spa_type,
+                                      uint32_t        spa_format,
+                                      GrdPixelFormat *out_format)
+{
+  if (spa_format == spa_type->video_format.RGBA)
+    *out_format = GRD_PIXEL_FORMAT_RGBA8888;
+  else
+    return FALSE;
+
+  return TRUE;
 }
 
 static int
@@ -243,12 +274,19 @@ do_render (struct spa_loop *loop,
            void            *user_data)
 {
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
+  GrdSpaType *spa_type = &stream->spa_type;
   struct spa_buffer *buffer = ((struct spa_buffer **) data)[0];
   uint8_t *map;
   void *src_data;
+  struct spa_meta_cursor *spa_meta_cursor;
 
-  if (buffer->datas[0].type == stream->pipewire_type->data.MemFd ||
-      buffer->datas[0].type == stream->pipewire_type->data.DmaBuf)
+  if (buffer->datas[0].chunk->size == 0)
+    {
+      map = NULL;
+      src_data = NULL;
+    }
+  else if (buffer->datas[0].type == stream->pipewire_type->data.MemFd ||
+           buffer->datas[0].type == stream->pipewire_type->data.DmaBuf)
     {
       map = mmap (NULL, buffer->datas[0].maxsize + buffer->datas[0].mapoffset,
                   PROT_READ, MAP_PRIVATE, buffer->datas[0].fd, 0);
@@ -264,7 +302,51 @@ do_render (struct spa_loop *loop,
       return -EINVAL;
     }
 
-  grd_session_vnc_draw_buffer (stream->session, src_data);
+  spa_meta_cursor = spa_buffer_find_meta (buffer, spa_type->meta_cursor);
+  if (spa_meta_cursor && spa_meta_cursor_is_valid (spa_meta_cursor))
+    {
+      struct spa_meta_bitmap *spa_meta_bitmap;
+      GrdPixelFormat format;
+
+      spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
+                                    spa_meta_cursor->bitmap_offset,
+                                    struct spa_meta_bitmap);
+
+      if (spa_meta_bitmap->size.width > 0 &&
+          spa_meta_bitmap->size.height > 0 &&
+          spa_pixel_format_to_grd_pixel_format (spa_type,
+                                                spa_meta_bitmap->format,
+                                                &format))
+        {
+          uint8_t *buf;
+          rfbCursorPtr rfb_cursor;
+
+          buf = SPA_MEMBER (spa_meta_bitmap, spa_meta_bitmap->offset, uint8_t);
+          rfb_cursor = grd_vnc_create_cursor (spa_meta_bitmap->size.width,
+                                              spa_meta_bitmap->size.height,
+                                              spa_meta_bitmap->stride,
+                                              format,
+                                              buf);
+          rfb_cursor->xhot = spa_meta_cursor->hotspot.x;
+          rfb_cursor->yhot = spa_meta_cursor->hotspot.y;
+
+          grd_session_vnc_set_cursor (stream->session, rfb_cursor);
+        }
+      else
+        {
+          rfbCursorPtr empty_cursor;
+
+          empty_cursor = grd_vnc_create_empty_cursor (1, 1);
+          grd_session_vnc_set_cursor (stream->session, empty_cursor);
+        }
+
+      grd_session_vnc_move_cursor (stream->session,
+                                   spa_meta_cursor->position.x,
+                                   spa_meta_cursor->position.y);
+    }
+
+  if (src_data)
+    grd_session_vnc_draw_buffer (stream->session, src_data);
 
   if (map)
     munmap (map, buffer->datas[0].maxsize + buffer->datas[0].mapoffset);
@@ -308,7 +390,7 @@ connect_to_stream (GrdVncPipeWireStream  *stream,
   struct spa_rectangle max_rect;
   struct spa_fraction min_framerate;
   struct spa_fraction max_framerate;
-  const struct spa_pod *params[1];
+  const struct spa_pod *params[2];
   int ret;
 
   pipewire_stream = pw_stream_new (stream->pipewire_remote,

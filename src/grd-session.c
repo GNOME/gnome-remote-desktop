@@ -47,6 +47,13 @@ enum
 
 static guint signals[LAST_SIGNAL];
 
+typedef enum _GrdScreenCastCursorMode
+{
+  GRD_SCREEN_CAST_CURSOR_MODE_HIDDEN = 0,
+  GRD_SCREEN_CAST_CURSOR_MODE_EMBEDDED = 1,
+  GRD_SCREEN_CAST_CURSOR_MODE_METADATA = 2,
+} GrdScreenCastCursorMode;
+
 typedef struct _GrdSessionPrivate
 {
   GrdContext *context;
@@ -296,6 +303,9 @@ on_screen_cast_session_proxy_acquired (GObject      *object,
   priv->screen_cast_session = session_proxy;
 
   g_variant_builder_init (&properties_builder, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&properties_builder, "{sv}",
+                         "cursor-mode",
+                         g_variant_new_uint32 (GRD_SCREEN_CAST_CURSOR_MODE_METADATA));
 
   /* TODO: Support something other than primary monitor */
   grd_dbus_screen_cast_session_call_record_monitor (session_proxy,

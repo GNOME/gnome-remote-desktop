@@ -15,6 +15,8 @@ daemon_sources = files([
   'grd-stream.c',
   'grd-stream.h',
   'grd-types.h',
+  'grd-vnc-cursor.c',
+  'grd-vnc-cursor.h',
   'grd-vnc-pipewire-stream.c',
   'grd-vnc-pipewire-stream.h',
   'grd-vnc-server.c',

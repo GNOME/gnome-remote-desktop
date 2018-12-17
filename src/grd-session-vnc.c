@@ -172,6 +172,30 @@ grd_session_vnc_draw_buffer (GrdSessionVnc *session_vnc,
   rfbProcessEvents (session_vnc->rfb_screen, 0);
 }
 
+void
+grd_session_vnc_set_cursor (GrdSessionVnc *session_vnc,
+                            rfbCursorPtr   rfb_cursor)
+{
+  rfbSetCursor (session_vnc->rfb_screen, rfb_cursor);
+}
+
+void
+grd_session_vnc_move_cursor (GrdSessionVnc *session_vnc,
+                             int            x,
+                             int            y)
+{
+  if (session_vnc->rfb_screen->cursorX == x ||
+      session_vnc->rfb_screen->cursorY == y)
+    return;
+
+  LOCK (session_vnc->rfb_screen->cursorMutex);
+  session_vnc->rfb_screen->cursorX = x;
+  session_vnc->rfb_screen->cursorY = y;
+  UNLOCK (session_vnc->rfb_screen->cursorMutex);
+
+  session_vnc->rfb_client->cursorWasMoved = TRUE;
+}
+
 static void
 maybe_queue_close_session_idle (GrdSessionVnc *session_vnc)
 {
