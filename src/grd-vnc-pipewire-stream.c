@@ -308,11 +308,19 @@ do_render (struct spa_loop *loop,
       struct spa_meta_bitmap *spa_meta_bitmap;
       GrdPixelFormat format;
 
-      spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
-                                    spa_meta_cursor->bitmap_offset,
-                                    struct spa_meta_bitmap);
+      if (spa_meta_cursor->bitmap_offset)
+        {
+          spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
+                                        spa_meta_cursor->bitmap_offset,
+                                        struct spa_meta_bitmap);
+        }
+      else
+        {
+          spa_meta_bitmap = NULL;
+        }
 
-      if (spa_meta_bitmap->size.width > 0 &&
+      if (spa_meta_bitmap &&
+          spa_meta_bitmap->size.width > 0 &&
           spa_meta_bitmap->size.height > 0 &&
           spa_pixel_format_to_grd_pixel_format (spa_type,
                                                 spa_meta_bitmap->format,
@@ -332,7 +340,7 @@ do_render (struct spa_loop *loop,
 
           grd_session_vnc_set_cursor (stream->session, rfb_cursor);
         }
-      else
+      else if (spa_meta_bitmap)
         {
           rfbCursorPtr empty_cursor;
 
