@@ -528,6 +528,8 @@ init_vnc_session (GrdSessionVnc *session_vnc)
   rfb_screen = rfbGetScreen (0, NULL,
                              screen_width, screen_height,
                              8, 3, 4);
+  session_vnc->rfb_screen = rfb_screen;
+
   update_server_format (session_vnc);
 
   socket = g_socket_connection_get_socket (session_vnc->connection);
@@ -546,8 +548,6 @@ init_vnc_session (GrdSessionVnc *session_vnc)
 
   rfb_screen->frameBuffer = g_malloc0 (screen_width * screen_height * 4);
   memset (rfb_screen->frameBuffer, 0x1f, screen_width * screen_height * 4);
-
-  session_vnc->rfb_screen = rfb_screen;
 
   rfbInitServer (rfb_screen);
   rfbProcessEvents (rfb_screen, 0);
