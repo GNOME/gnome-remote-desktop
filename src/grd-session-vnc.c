@@ -534,7 +534,8 @@ init_vnc_session (GrdSessionVnc *session_vnc)
 
   socket = g_socket_connection_get_socket (session_vnc->connection);
   rfb_screen->inetdSock = g_socket_get_fd (socket);
-  rfb_screen->desktopName = "GNOME Remote Desktop (VNC)";
+  rfb_screen->desktopName = "GNOME";
+  rfb_screen->versionString = "GNOME Remote Desktop (VNC)";
   rfb_screen->neverShared = TRUE;
   rfb_screen->newClientHook = handle_new_client;
   rfb_screen->screenData = session_vnc;
