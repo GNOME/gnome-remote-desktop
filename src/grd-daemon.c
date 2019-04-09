@@ -196,14 +196,13 @@ on_screen_cast_name_vanished (GDBusConnection *connection,
 static void
 grd_daemon_init (GrdDaemon *daemon)
 {
+  daemon->context = g_object_new (GRD_TYPE_CONTEXT, NULL);
 }
 
 static void
 grd_daemon_startup (GApplication *app)
 {
   GrdDaemon *daemon = GRD_DAEMON (app);
-
-  daemon->context = g_object_new (GRD_TYPE_CONTEXT, NULL);
 
   daemon->remote_desktop_watch_name_id =
     g_bus_watch_name (G_BUS_TYPE_SESSION,
@@ -281,9 +280,13 @@ int
 main (int argc, char **argv)
 {
   gboolean print_version = FALSE;
+  int vnc_port = -1;
+
   GOptionEntry entries[] = {
     { "version", 0, 0, G_OPTION_ARG_NONE, &print_version,
       "Print version", NULL },
+    { "vnc-port", 0, 0, G_OPTION_ARG_INT, &vnc_port,
+      "VNC port", NULL },
     { NULL }
   };
   g_autoptr(GOptionContext) context = NULL;
@@ -313,6 +316,14 @@ main (int argc, char **argv)
                       NULL);
 
   add_actions (app);
+
+  if (vnc_port != -1)
+    {
+      GrdSettings *settings;
+
+      settings = grd_context_get_settings (GRD_DAEMON (app)->context);
+      grd_settings_override_vnc_port (settings, vnc_port);
+    }
 
   return g_application_run (app, argc, argv);
 }

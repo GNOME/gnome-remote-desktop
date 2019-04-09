@@ -30,7 +30,6 @@
 #include "grd-context.h"
 #include "grd-session-vnc.h"
 
-#define GRD_VNC_SERVER_PORT 5900
 
 enum
 {
@@ -135,8 +134,10 @@ gboolean
 grd_vnc_server_start (GrdVncServer  *vnc_server,
                       GError       **error)
 {
+  GrdSettings *settings = grd_context_get_settings (vnc_server->context);
+
   if (!g_socket_listener_add_inet_port (G_SOCKET_LISTENER (vnc_server),
-                                        GRD_VNC_SERVER_PORT,
+                                        grd_settings_get_vnc_port (settings),
                                         NULL,
                                         error))
     return FALSE;

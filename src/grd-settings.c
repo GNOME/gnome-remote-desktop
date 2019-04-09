@@ -26,6 +26,7 @@
 #include <string.h>
 
 #define GRD_VNC_SCHEMA_ID "org.gnome.desktop.remote-desktop.vnc"
+#define GRD_VNC_SERVER_PORT 5900
 
 enum
 {
@@ -46,6 +47,7 @@ struct _GrdSettings
     GSettings *settings;
     gboolean view_only;
     GrdVncAuthMethod auth_method;
+    int port;
   } vnc;
 };
 
@@ -64,6 +66,19 @@ grd_vnc_password_get_schema (void)
   };
 
   return &grd_vnc_password_schema;
+}
+
+int
+grd_settings_get_vnc_port (GrdSettings *settings)
+{
+  return settings->vnc.port;
+}
+
+void
+grd_settings_override_vnc_port (GrdSettings *settings,
+                                int          port)
+{
+  settings->vnc.port = port;
 }
 
 char *
@@ -146,6 +161,8 @@ grd_settings_init (GrdSettings *settings)
 
   update_vnc_view_only (settings);
   update_vnc_auth_method (settings);
+
+  settings->vnc.port = GRD_VNC_SERVER_PORT;
 }
 
 static void

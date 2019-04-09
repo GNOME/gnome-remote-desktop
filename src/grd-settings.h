@@ -33,6 +33,11 @@ G_DECLARE_FINAL_TYPE (GrdSettings, grd_settings,
 const SecretSchema * cc_grd_vnc_password_get_schema (void);
 #define GRD_VNC_PASSWORD_SCHEMA grd_vnc_password_get_schema ()
 
+int grd_settings_get_vnc_port (GrdSettings *settings);
+
+void grd_settings_override_vnc_port (GrdSettings *settings,
+                                     int          port);
+
 char * grd_settings_get_vnc_password (GrdSettings  *settings,
                                       GError      **error);
 
