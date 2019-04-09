@@ -12,6 +12,7 @@ gio_unix_dep = dependency('gio-unix-2.0')
 pipewire_dep = dependency('libpipewire-0.2', version: '>= 0.2.5')
 systemd_dep = dependency('systemd')
 libvncserver_dep = dependency('libvncserver')
+libvncclient_dep = dependency('libvncclient')
 libsecret_dep = dependency('libsecret-1')
 libnotify_dep = dependency('libnotify')
 
@@ -34,6 +35,10 @@ if servicedir == ''
   error('Couldn\'t determine systemd user unit service directory')
 endif
 
+top_srcdir = meson.current_source_dir()
+builddir = meson.current_build_dir()
+
 subdir('src')
+subdir('tests')
 
 meson.add_install_script('meson_post_install.py')
