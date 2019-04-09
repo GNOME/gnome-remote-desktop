@@ -1,0 +1,31 @@
+image: registry.gitlab.gnome.org/jadahl/gnome-remote-desktop/master:v1
+
+stages:
+  - build
+  - test
+
+build-gnome-remote-desktop:
+  stage: build
+  script:
+    - meson . build -Ddebugtype=debugoptimized --werror
+    - ninja -C build
+    - ninja -C build install
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - build
+
+test-gnome-remote-desktop:
+  stage: test
+  dependencies:
+    - build-gnome-remote-desktop
+  variables:
+    XDG_RUNTIME_DIR: "$CI_PROJECT_DIR/runtime-dir"
+    GSETTINGS_SCHEMA_DIR: "$CI_PROJECT_DIR/build/src"
+  script:
+    - mkdir -m 700 $XDG_RUNTIME_DIR
+    - glib-compile-schemas $GSETTINGS_SCHEMA_DIR
+    - sed -i 's/.*module-rtkit.*/# &/' /etc/pipewire/pipewire.conf
+    - sed -i 's/.*module-flatpak.*/# &/' /etc/pipewire/pipewire.conf
+    - pipewire &
+    - meson test -C build --no-rebuild --verbose --no-stdsplit -t 10
