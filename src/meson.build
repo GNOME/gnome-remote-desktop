@@ -86,6 +86,10 @@ custom_target('gsettings-enums',
                 '--vtail', '  </@type@>',
                 '--ftail', '</schemalist>',
                 '@INPUT@'])
-install_data(['org.gnome.desktop.remote-desktop.gschema.xml'],
+schema = 'org.gnome.desktop.remote-desktop.gschema.xml'
+generated_schema = configure_file(output: schema,
+                                  input: schema + '.in',
+                                  copy: true)
+install_data(generated_schema,
              install_dir: schemadir)
 gnome.compile_schemas()
