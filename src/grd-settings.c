@@ -70,6 +70,12 @@ char *
 grd_settings_get_vnc_password (GrdSettings  *settings,
                                GError      **error)
 {
+  const char *test_password_override;
+
+  test_password_override = g_getenv ("GNOME_REMOTE_DESKTOP_TEST_VNC_PASSWORD");
+  if (test_password_override)
+    return g_strdup (test_password_override);
+
   return secret_password_lookup_sync (GRD_VNC_PASSWORD_SCHEMA,
                                       NULL, error,
                                       NULL);
@@ -84,7 +90,10 @@ grd_settings_get_vnc_view_only (GrdSettings *settings)
 GrdVncAuthMethod
 grd_settings_get_vnc_auth_method (GrdSettings *settings)
 {
-  return settings->vnc.auth_method;
+  if (g_getenv ("GNOME_REMOTE_DESKTOP_TEST_VNC_PASSWORD"))
+    return GRD_VNC_AUTH_METHOD_PASSWORD;
+  else
+    return settings->vnc.auth_method;
 }
 
 static void
