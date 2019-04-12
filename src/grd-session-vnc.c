@@ -522,7 +522,7 @@ init_vnc_session (GrdSessionVnc *session_vnc)
   int screen_height;
   rfbScreenInfoPtr rfb_screen;
 
-  /* Arbitrary framebuffer size, will get the porper size from the stream. */
+  /* Arbitrary framebuffer size, will get the proper size from the stream. */
   screen_width = 800;
   screen_height = 600;
   rfb_screen = rfbGetScreen (0, NULL,
