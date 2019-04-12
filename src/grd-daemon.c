@@ -108,6 +108,7 @@ on_remote_desktop_proxy_acquired (GObject      *object,
   if (!proxy)
     {
       g_warning ("Failed to create remote desktop proxy: %s", error->message);
+      g_error_free (error);
       return;
     }
 
