@@ -378,6 +378,7 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
   GError *error = NULL;
   const char *remote_desktop_session_id;
   GrdDBusScreenCast *screen_cast_proxy;
+  int screen_cast_api_version;
   GVariantBuilder properties_builder;
   GVariant *properties_variant;
 
@@ -400,16 +401,24 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
 
   priv->remote_desktop_session = session_proxy;
 
+  g_variant_builder_init (&properties_builder, G_VARIANT_TYPE ("a{sv}"));
+
   remote_desktop_session_id =
     grd_dbus_remote_desktop_session_get_session_id (session_proxy);
-
-  g_variant_builder_init (&properties_builder, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&properties_builder, "{sv}",
                          "remote-desktop-session-id",
                          g_variant_new_string (remote_desktop_session_id));
-  properties_variant = g_variant_builder_end (&properties_builder);
 
   screen_cast_proxy = grd_context_get_screen_cast_proxy (priv->context);
+  screen_cast_api_version =
+    grd_dbus_screen_cast_get_version (screen_cast_proxy);
+  if (screen_cast_api_version >= 3)
+    g_variant_builder_add (&properties_builder, "{sv}",
+                           "disable-animations",
+                           g_variant_new_boolean (TRUE));
+
+  properties_variant = g_variant_builder_end (&properties_builder);
+
   grd_dbus_screen_cast_call_create_session (screen_cast_proxy,
                                             properties_variant,
                                             priv->cancellable,
