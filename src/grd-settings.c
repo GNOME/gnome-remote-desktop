@@ -86,14 +86,23 @@ grd_settings_get_vnc_password (GrdSettings  *settings,
                                GError      **error)
 {
   const char *test_password_override;
+  char *password;
 
   test_password_override = g_getenv ("GNOME_REMOTE_DESKTOP_TEST_VNC_PASSWORD");
   if (test_password_override)
     return g_strdup (test_password_override);
 
-  return secret_password_lookup_sync (GRD_VNC_PASSWORD_SCHEMA,
-                                      NULL, error,
-                                      NULL);
+  password = secret_password_lookup_sync (GRD_VNC_PASSWORD_SCHEMA,
+                                          NULL, error,
+                                          NULL);
+  if (!password)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Password not set");
+      return NULL;
+    }
+
+  return password;
 }
 
 gboolean
