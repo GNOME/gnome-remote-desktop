@@ -67,6 +67,7 @@ grd_vnc_tls_context_new (void)
 
   tls_context = g_new0 (GrdVncTlsContext, 1);
 
+  rfbLog ("TLS: Initializing gnutls context\n");
   gnutls_global_init ();
 
   gnutls_anon_allocate_server_credentials (&tls_context->anon_credentials);
@@ -127,6 +128,7 @@ perform_anon_tls_handshake (GrdVncTlsSession  *tls_session,
   ret = gnutls_handshake (tls_session->tls_session);
   if (ret != GNUTLS_E_SUCCESS && !gnutls_error_is_fatal (ret))
     {
+      rfbLog ("TLS: More handshake pending\n");
       tls_session->handshake_state = GRD_TLS_HANDSHAKE_STATE_DURING;
       return TRUE;
     }
@@ -139,6 +141,8 @@ perform_anon_tls_handshake (GrdVncTlsSession  *tls_session,
       tls_session->tls_session = NULL;
       return FALSE;
     }
+
+  rfbLog ("TLS: Handshake finished");
 
   tls_session->handshake_state = GRD_TLS_HANDSHAKE_STATE_FINISHED;
   return TRUE;
@@ -373,6 +377,7 @@ perform_handshake (GrdSessionVnc  *session_vnc,
       break;
     case GRD_TLS_HANDSHAKE_STATE_FINISHED:
       grd_session_vnc_ungrab_socket (session_vnc, tls_handshake_grab_func);
+      rfbLog ("TLS: Sending post-channel security security list\n");
       rfbSendSecurityTypeList (grd_session_vnc_get_rfb_client (session_vnc),
                                RFB_SECURITY_TAG_CHANNEL);
       break;
@@ -387,6 +392,7 @@ tls_handshake_grab_func (GrdSessionVnc  *session_vnc,
 {
   g_autoptr (GError) handshake_error = NULL;
 
+  rfbLog ("TLS: Continuing handshake\n");
   if (!perform_handshake (session_vnc, &handshake_error))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -403,6 +409,8 @@ rfb_tls_security_handler (rfbClientPtr rfb_client)
   GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
   GrdVncTlsSession *tls_session;
   g_autoptr(GError) error = NULL;
+
+  rfbLog ("TLS: Setting up rfbClient for gnutls encrypted traffic\n");
 
   tls_session = grd_vnc_tls_session_from_vnc_session (session_vnc);
   if (!tls_session)
@@ -424,6 +432,7 @@ rfb_tls_security_handler (rfbClientPtr rfb_client)
       grd_session_vnc_grab_socket (session_vnc, tls_handshake_grab_func);
     }
 
+  rfbLog ("TLS: Performing handshake\n");
   if (!perform_handshake (session_vnc, &error))
     {
       g_warning ("TLS handshake failed: %s", error->message);
