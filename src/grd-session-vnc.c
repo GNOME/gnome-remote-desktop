@@ -622,6 +622,21 @@ vnc_socket_grab_func (GrdSessionVnc  *session_vnc,
   return TRUE;
 }
 
+void
+grd_session_vnc_dispatch (GrdSessionVnc *session_vnc)
+{
+  GrdVncSocketGrabFunc grab_func;
+  g_autoptr (GError) error = NULL;
+
+  grab_func = g_list_first (session_vnc->socket_grabs)->data;
+  if (!grab_func (session_vnc, &error))
+    {
+      g_warning ("Error when reading socket: %s", error->message);
+
+      grd_session_stop (GRD_SESSION (session_vnc));
+    }
+}
+
 static gboolean
 handle_socket_data (GSocket *socket,
                     GIOCondition condition,
@@ -638,16 +653,7 @@ handle_socket_data (GSocket *socket,
     }
   else if (condition & G_IO_IN)
     {
-      GrdVncSocketGrabFunc grab_func;
-      g_autoptr (GError) error = NULL;
-
-      grab_func = g_list_first (session_vnc->socket_grabs)->data;
-      if (!grab_func (session_vnc, &error))
-        {
-          g_warning ("Error when reading socket: %s", error->message);
-
-          grd_session_stop (session);
-        }
+      grd_session_vnc_dispatch (session_vnc);
     }
   else
     {
