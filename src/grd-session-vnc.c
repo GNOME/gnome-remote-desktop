@@ -555,6 +555,12 @@ init_vnc_session (GrdSessionVnc *session_vnc)
                              8, 3, 4);
   session_vnc->rfb_screen = rfb_screen;
 
+  /*
+   * Unregister whatever security handler was used the last time; we'll set
+   * up new ones when authorizing the new client anyway.
+   */
+  rfbUnregisterPrimarySecurityHandlers ();
+
   update_server_format (session_vnc);
 
   socket = g_socket_connection_get_socket (session_vnc->connection);
