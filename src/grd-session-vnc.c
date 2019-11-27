@@ -91,11 +91,6 @@ grd_session_vnc_pause (GrdSessionVnc *session_vnc);
 static gboolean
 close_session_idle (gpointer user_data);
 
-static rfbBool
-check_rfb_password (rfbClientPtr  rfb_client,
-                    const char   *response_encrypted,
-                    int           len);
-
 static void
 swap_uint8 (uint8_t *a,
             uint8_t *b)
@@ -297,7 +292,6 @@ handle_new_client (rfbClientPtr rfb_client)
       grd_session_vnc_pause (session_vnc);
       return RFB_CLIENT_ON_HOLD;
     case GRD_VNC_AUTH_METHOD_PASSWORD:
-      session_vnc->rfb_screen->passwordCheck = check_rfb_password;
       /*
        * authPasswdData needs to be non NULL in libvncserver to trigger
        * password authentication.
@@ -580,6 +574,8 @@ init_vnc_session (GrdSessionVnc *session_vnc)
 
   rfb_screen->frameBuffer = g_malloc0 (screen_width * screen_height * 4);
   memset (rfb_screen->frameBuffer, 0x1f, screen_width * screen_height * 4);
+
+  rfb_screen->passwordCheck = check_rfb_password;
 
   rfbInitServer (rfb_screen);
   rfbProcessEvents (rfb_screen, 0);
