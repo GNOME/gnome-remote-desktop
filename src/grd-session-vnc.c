@@ -40,14 +40,27 @@
 #define BGRX_SAMPLES_PER_PIXEL 3
 #define BGRX_BYTES_PER_PIXEL 4
 
+enum
+{
+  PAUSED,
+  RESUMED,
+
+  N_SIGNALS
+};
+
+static guint signals[N_SIGNALS];
+
 struct _GrdSessionVnc
 {
   GrdSession parent;
 
   GrdVncServer *vnc_server;
   GSocketConnection *connection;
+
   GList *socket_grabs;
   GSource *source;
+  gboolean is_paused;
+
   rfbScreenInfoPtr rfb_screen;
   rfbClientPtr rfb_client;
 
@@ -73,7 +86,7 @@ struct _GrdSessionVnc
 G_DEFINE_TYPE (GrdSessionVnc, grd_session_vnc, GRD_TYPE_SESSION);
 
 static void
-grd_session_vnc_detach_source (GrdSessionVnc *session_vnc);
+grd_session_vnc_pause (GrdSessionVnc *session_vnc);
 
 static gboolean
 close_session_idle (gpointer user_data);
@@ -212,7 +225,8 @@ handle_client_gone (rfbClientPtr rfb_client)
 
   g_debug ("VNC client gone");
 
-  grd_session_vnc_detach_source (session_vnc);
+  grd_session_vnc_pause (session_vnc);
+
   maybe_queue_close_session_idle (session_vnc);
 }
 
@@ -280,7 +294,7 @@ handle_new_client (rfbClientPtr rfb_client)
                               session_vnc->prompt_cancellable,
                               prompt_response_callback,
                               session_vnc);
-      grd_session_vnc_detach_source (session_vnc);
+      grd_session_vnc_pause (session_vnc);
       return RFB_CLIENT_ON_HOLD;
     case GRD_VNC_AUTH_METHOD_PASSWORD:
       session_vnc->rfb_screen->passwordCheck = check_rfb_password;
@@ -498,7 +512,7 @@ check_rfb_password (rfbClientPtr  rfb_client,
   if (memcmp (challenge_encrypted, response_encrypted, len) == 0)
     {
       grd_session_start (GRD_SESSION (session_vnc));
-      grd_session_vnc_detach_source (session_vnc);
+      grd_session_vnc_pause (session_vnc);
       return TRUE;
     }
   else
@@ -668,6 +682,36 @@ grd_session_vnc_detach_source (GrdSessionVnc *session_vnc)
   g_clear_pointer (&session_vnc->source, g_source_destroy);
 }
 
+gboolean
+grd_session_vnc_is_paused (GrdSessionVnc *session_vnc)
+{
+  return session_vnc->is_paused;
+}
+
+static void
+grd_session_vnc_pause (GrdSessionVnc *session_vnc)
+{
+  if (grd_session_vnc_is_paused (session_vnc))
+    return;
+
+  session_vnc->is_paused = TRUE;
+
+  grd_session_vnc_detach_source (session_vnc);
+  g_signal_emit (session_vnc, signals[PAUSED], 0);
+}
+
+static void
+grd_session_vnc_resume (GrdSessionVnc *session_vnc)
+{
+  if (!grd_session_vnc_is_paused (session_vnc))
+    return;
+
+  session_vnc->is_paused = FALSE;
+
+  grd_session_vnc_attach_source (session_vnc);
+  g_signal_emit (session_vnc, signals[RESUMED], 0);
+}
+
 GrdSessionVnc *
 grd_session_vnc_new (GrdVncServer      *vnc_server,
                      GSocketConnection *connection)
@@ -685,6 +729,7 @@ grd_session_vnc_new (GrdVncServer      *vnc_server,
 
   grd_session_vnc_grab_socket (session_vnc, vnc_socket_grab_func);
   grd_session_vnc_attach_source (session_vnc);
+  session_vnc->is_paused = FALSE;
 
   init_vnc_session (session_vnc);
 
@@ -714,7 +759,7 @@ grd_session_vnc_stop (GrdSession *session)
 
   g_clear_object (&session_vnc->pipewire_stream);
 
-  grd_session_vnc_detach_source (session_vnc);
+  grd_session_vnc_pause (session_vnc);
 
   g_clear_object (&session_vnc->connection);
   g_clear_pointer (&session_vnc->rfb_screen->frameBuffer, g_free);
@@ -770,8 +815,8 @@ grd_session_vnc_stream_ready (GrdSession *session,
                     G_CALLBACK (on_pipwire_stream_closed),
                     session_vnc);
 
-  if (!session_vnc->source)
-    grd_session_vnc_attach_source (session_vnc);
+  if (grd_session_vnc_is_paused (session_vnc))
+    grd_session_vnc_resume (session_vnc);
 }
 
 static void
@@ -790,4 +835,17 @@ grd_session_vnc_class_init (GrdSessionVncClass *klass)
 
   session_class->stop = grd_session_vnc_stop;
   session_class->stream_ready = grd_session_vnc_stream_ready;
+
+  signals[PAUSED] = g_signal_new ("paused",
+                                  G_TYPE_FROM_CLASS (klass),
+                                  G_SIGNAL_RUN_LAST,
+                                  0,
+                                  NULL, NULL, NULL,
+                                  G_TYPE_NONE, 0);
+  signals[RESUMED] = g_signal_new ("resumed",
+                                   G_TYPE_FROM_CLASS (klass),
+                                   G_SIGNAL_RUN_LAST,
+                                   0,
+                                   NULL, NULL, NULL,
+                                   G_TYPE_NONE, 0);
 }
