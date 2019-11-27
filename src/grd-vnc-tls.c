@@ -41,6 +41,12 @@ typedef enum _GrdTlsHandshakeState
   GRD_TLS_HANDSHAKE_STATE_FINISHED
 } GrdTlsHandshakeState;
 
+typedef struct _PeekBufferSource
+{
+  GSource parent;
+  GrdSessionVnc *session_vnc;
+} PeekBufferSource;
+
 typedef struct _GrdVncTlsSession
 {
   GrdVncTlsContext *tls_context;
@@ -53,6 +59,8 @@ typedef struct _GrdVncTlsSession
   char *peek_buffer;
   int peek_buffer_size;
   int peek_buffer_len;
+
+  GSource *peek_buffer_source;
 } GrdVncTlsSession;
 
 static gboolean
@@ -299,13 +307,9 @@ grd_vnc_tls_peek_at_socket (rfbClientPtr  rfb_client,
   return peekable_len;
 }
 
-static rfbBool
-grd_vnc_tls_has_pending_on_socket (rfbClientPtr rfb_client)
+static gboolean
+grd_vnc_tls_session_has_pending_data (GrdVncTlsSession *tls_session)
 {
-  GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
-  GrdVncTlsSession *tls_session =
-    grd_vnc_tls_session_from_vnc_session (session_vnc);
-
   if (tls_session->peek_buffer_len > 0)
     return TRUE;
 
@@ -313,6 +317,16 @@ grd_vnc_tls_has_pending_on_socket (rfbClientPtr rfb_client)
     return TRUE;
 
   return FALSE;
+}
+
+static rfbBool
+grd_vnc_tls_has_pending_on_socket (rfbClientPtr rfb_client)
+{
+  GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
+  GrdVncTlsSession *tls_session =
+    grd_vnc_tls_session_from_vnc_session (session_vnc);
+
+  return grd_vnc_tls_session_has_pending_data (tls_session);
 }
 
 static int
@@ -403,6 +417,62 @@ tls_handshake_grab_func (GrdSessionVnc  *session_vnc,
   return TRUE;
 }
 
+static gboolean
+peek_buffer_source_prepare (GSource *source,
+                            int     *timeout)
+{
+  PeekBufferSource *psource = (PeekBufferSource *) source;
+  GrdSessionVnc *session_vnc = psource->session_vnc;
+  GrdVncTlsSession *tls_session =
+    grd_vnc_tls_session_from_vnc_session (session_vnc);
+
+  return grd_vnc_tls_session_has_pending_data (tls_session);
+}
+
+static gboolean
+peek_buffer_source_dispatch (GSource     *source,
+                             GSourceFunc  callback,
+                             gpointer     user_data)
+{
+  PeekBufferSource *psource = (PeekBufferSource *) source;
+  GrdSessionVnc *session_vnc = psource->session_vnc;
+
+  grd_session_vnc_dispatch (session_vnc);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static GSourceFuncs peek_buffer_source_funcs = {
+  .prepare = peek_buffer_source_prepare,
+  .dispatch = peek_buffer_source_dispatch,
+};
+
+static void
+attach_peek_buffer_source (GrdSessionVnc *session_vnc)
+{
+  GrdVncTlsSession *tls_session;
+
+  tls_session = grd_vnc_tls_session_from_vnc_session (session_vnc);
+  tls_session->peek_buffer_source = g_source_new (&peek_buffer_source_funcs,
+                                                  sizeof (PeekBufferSource));
+  ((PeekBufferSource *) tls_session->peek_buffer_source)->session_vnc =
+    session_vnc;
+  g_source_set_priority (tls_session->peek_buffer_source,
+                         G_PRIORITY_DEFAULT + 1);
+
+  g_source_attach (tls_session->peek_buffer_source, NULL);
+}
+
+static void
+detach_peek_buffer_source (GrdSessionVnc *session_vnc)
+{
+  GrdVncTlsSession *tls_session;
+
+  tls_session = grd_vnc_tls_session_from_vnc_session (session_vnc);
+
+  g_clear_pointer (&tls_session->peek_buffer_source, g_source_destroy);
+}
+
 static void
 rfb_tls_security_handler (rfbClientPtr rfb_client)
 {
@@ -428,6 +498,14 @@ rfb_tls_security_handler (rfbClientPtr rfb_client)
       rfb_client->peekAtSocket = grd_vnc_tls_peek_at_socket;
       rfb_client->hasPendingOnSocket = grd_vnc_tls_has_pending_on_socket;
       rfb_client->writeToSocket = grd_vnc_tls_write_to_socket;
+
+      if (!grd_session_vnc_is_paused (session_vnc))
+        attach_peek_buffer_source (session_vnc);
+
+      g_signal_connect (session_vnc, "paused",
+                        G_CALLBACK (detach_peek_buffer_source), NULL);
+      g_signal_connect (session_vnc, "resumed",
+                        G_CALLBACK (attach_peek_buffer_source), NULL);
 
       grd_session_vnc_grab_socket (session_vnc, tls_handshake_grab_func);
     }

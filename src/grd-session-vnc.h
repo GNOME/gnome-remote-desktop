@@ -68,6 +68,8 @@ void grd_session_vnc_grab_socket (GrdSessionVnc        *session_vnc,
 void grd_session_vnc_ungrab_socket (GrdSessionVnc        *session_vnc,
                                     GrdVncSocketGrabFunc  grab_func);
 
+gboolean grd_session_vnc_is_paused (GrdSessionVnc *session_vnc);
+
 void grd_session_vnc_dispatch (GrdSessionVnc *session_vnc);
 
 GrdVncServer * grd_session_vnc_get_vnc_server (GrdSessionVnc *session_vnc);
