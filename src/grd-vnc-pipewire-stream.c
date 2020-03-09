@@ -22,11 +22,14 @@
 
 #include "grd-vnc-pipewire-stream.h"
 
+#include <linux/dma-buf.h>
 #include <pipewire/pipewire.h>
 #include <spa/param/props.h>
 #include <spa/param/format-utils.h>
 #include <spa/param/video/format-utils.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
 
 #include "grd-vnc-cursor.h"
 
@@ -265,6 +268,36 @@ spa_pixel_format_to_grd_pixel_format (GrdSpaType     *spa_type,
   return TRUE;
 }
 
+static void
+sync_dma_buf (int      fd,
+              uint64_t start_or_end)
+{
+  struct dma_buf_sync sync = { 0 };
+
+  sync.flags = start_or_end | DMA_BUF_SYNC_READ;
+
+  while (TRUE)
+    {
+      int ret;
+
+      ret = ioctl (fd, DMA_BUF_IOCTL_SYNC, &sync);
+      if (ret == -1 && errno == EINTR)
+        {
+          continue;
+        }
+      else if (ret == -1)
+        {
+          g_warning ("Failed to synchronize DMA buffer: %s",
+                     g_strerror (errno));
+          break;
+        }
+      else
+        {
+          break;
+        }
+    }
+}
+
 static int
 do_render (struct spa_loop *loop,
            bool             async,
@@ -285,11 +318,22 @@ do_render (struct spa_loop *loop,
       map = NULL;
       src_data = NULL;
     }
-  else if (buffer->datas[0].type == stream->pipewire_type->data.MemFd ||
-           buffer->datas[0].type == stream->pipewire_type->data.DmaBuf)
+  else if (buffer->datas[0].type == stream->pipewire_type->data.MemFd)
     {
       map = mmap (NULL, buffer->datas[0].maxsize + buffer->datas[0].mapoffset,
                   PROT_READ, MAP_PRIVATE, buffer->datas[0].fd, 0);
+      src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
+    }
+  else if (buffer->datas[0].type == stream->pipewire_type->data.DmaBuf)
+    {
+      int fd;
+
+      fd = buffer->datas[0].fd;
+
+      map = mmap (NULL, buffer->datas[0].maxsize + buffer->datas[0].mapoffset,
+                  PROT_READ, MAP_PRIVATE, fd, 0);
+      sync_dma_buf (fd, DMA_BUF_SYNC_START);
+
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
     }
   else if (buffer->datas[0].type == stream->pipewire_type->data.MemPtr)
@@ -357,7 +401,11 @@ do_render (struct spa_loop *loop,
     grd_session_vnc_draw_buffer (stream->session, src_data);
 
   if (map)
-    munmap (map, buffer->datas[0].maxsize + buffer->datas[0].mapoffset);
+    {
+      if (buffer->datas[0].type == stream->pipewire_type->data.DmaBuf)
+        sync_dma_buf (buffer->datas[0].fd, DMA_BUF_SYNC_END);
+      munmap (map, buffer->datas[0].maxsize + buffer->datas[0].mapoffset);
+    }
 
   return 0;
 }
