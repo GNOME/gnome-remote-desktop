@@ -416,9 +416,18 @@ on_stream_process (void *user_data)
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
   GrdPipeWireSource *pipewire_source =
     (GrdPipeWireSource *) stream->pipewire_source;
+  struct pw_buffer *next_buffer;
   struct pw_buffer *buffer;
 
-  buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
+  next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
+  while (next_buffer)
+    {
+      buffer = next_buffer;
+      next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
+
+      if (next_buffer)
+        pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+    }
 
   pw_loop_invoke (pipewire_source->pipewire_loop, do_render,
                   SPA_ID_INVALID, &buffer->buffer, sizeof (struct spa_buffer *),
