@@ -417,7 +417,7 @@ on_stream_process (void *user_data)
   GrdPipeWireSource *pipewire_source =
     (GrdPipeWireSource *) stream->pipewire_source;
   struct pw_buffer *next_buffer;
-  struct pw_buffer *buffer;
+  struct pw_buffer *buffer = NULL;
 
   next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
   while (next_buffer)
