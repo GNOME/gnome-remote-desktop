@@ -359,7 +359,7 @@ process_buffer (GrdVncPipeWireStream *stream,
       return NULL;
     }
 
-  frame->data = g_memdup (src_data, size);
+  frame->data = g_memdup (src_data, buffer->datas[0].maxsize);
 
   if (map)
     {
