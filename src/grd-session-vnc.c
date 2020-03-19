@@ -151,20 +151,17 @@ grd_session_vnc_queue_resize_framebuffer (GrdSessionVnc *session_vnc,
 }
 
 void
-grd_session_vnc_draw_buffer (GrdSessionVnc *session_vnc,
+grd_session_vnc_take_buffer (GrdSessionVnc *session_vnc,
                              void          *data)
 {
-  size_t size;
-
   if (session_vnc->pending_framebuffer_resize)
-    return;
+    {
+      free (data);
+      return;
+    }
 
-  size = (session_vnc->rfb_screen->height *
-          grd_session_vnc_get_framebuffer_stride (session_vnc));
-
-  memcpy (session_vnc->rfb_screen->frameBuffer,
-          data,
-          size);
+  free (session_vnc->rfb_screen->frameBuffer);
+  session_vnc->rfb_screen->frameBuffer = data;
 
   rfbMarkRectAsModified (session_vnc->rfb_screen, 0, 0,
                          session_vnc->rfb_screen->width,

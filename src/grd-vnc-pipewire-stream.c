@@ -58,6 +58,15 @@ typedef struct _GrdPipeWireSource
   struct pw_loop *pipewire_loop;
 } GrdPipeWireSource;
 
+typedef struct _GrdVncFrame
+{
+  void *data;
+  rfbCursorPtr rfb_cursor;
+  gboolean cursor_moved;
+  int cursor_x;
+  int cursor_y;
+} GrdVncFrame;
+
 struct _GrdVncPipeWireStream
 {
   GObject parent;
@@ -70,6 +79,9 @@ struct _GrdVncPipeWireStream
 
   struct pw_remote *pipewire_remote;
   struct spa_hook pipewire_remote_listener;
+
+  GMutex frame_mutex;
+  GrdVncFrame *pending_frame;
 
   GrdSpaType spa_type;
 
@@ -307,21 +319,56 @@ do_render (struct spa_loop *loop,
            void            *user_data)
 {
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
+  GrdVncFrame *frame;
+
+  g_mutex_lock (&stream->frame_mutex);
+  frame = g_steal_pointer (&stream->pending_frame);
+  g_mutex_unlock (&stream->frame_mutex);
+
+  if (!frame)
+    return 0;
+
+  if (frame->rfb_cursor)
+    grd_session_vnc_set_cursor (stream->session, frame->rfb_cursor);
+
+  if (frame->cursor_moved)
+    {
+      grd_session_vnc_move_cursor (stream->session,
+                                   frame->cursor_x,
+                                   frame->cursor_y);
+    }
+
+  if (frame->data)
+    grd_session_vnc_take_buffer (stream->session, frame->data);
+
+  g_free (frame);
+
+  return 0;
+}
+
+static GrdVncFrame *
+process_buffer (GrdVncPipeWireStream *stream,
+                struct spa_buffer    *buffer)
+{
   GrdSpaType *spa_type = &stream->spa_type;
-  struct spa_buffer *buffer = ((struct spa_buffer **) data)[0];
+  size_t size;
   uint8_t *map;
   void *src_data;
   struct spa_meta_cursor *spa_meta_cursor;
+  g_autofree GrdVncFrame *frame = NULL;
+
+  frame = g_new0 (GrdVncFrame, 1);
 
   if (buffer->datas[0].chunk->size == 0)
     {
+      size = 0;
       map = NULL;
       src_data = NULL;
     }
   else if (buffer->datas[0].type == stream->pipewire_type->data.MemFd)
     {
-      map = mmap (NULL, buffer->datas[0].maxsize + buffer->datas[0].mapoffset,
-                  PROT_READ, MAP_PRIVATE, buffer->datas[0].fd, 0);
+      size = buffer->datas[0].maxsize + buffer->datas[0].mapoffset;
+      map = mmap (NULL, size, PROT_READ, MAP_PRIVATE, buffer->datas[0].fd, 0);
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
     }
   else if (buffer->datas[0].type == stream->pipewire_type->data.DmaBuf)
@@ -329,21 +376,31 @@ do_render (struct spa_loop *loop,
       int fd;
 
       fd = buffer->datas[0].fd;
+      size = buffer->datas[0].maxsize + buffer->datas[0].mapoffset;
 
-      map = mmap (NULL, buffer->datas[0].maxsize + buffer->datas[0].mapoffset,
-                  PROT_READ, MAP_PRIVATE, fd, 0);
+      map = mmap (NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
       sync_dma_buf (fd, DMA_BUF_SYNC_START);
 
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
     }
   else if (buffer->datas[0].type == stream->pipewire_type->data.MemPtr)
     {
+      size = buffer->datas[0].maxsize + buffer->datas[0].mapoffset;
       map = NULL;
       src_data = buffer->datas[0].data;
     }
   else
     {
-      return -EINVAL;
+      return NULL;
+    }
+
+  frame->data = g_memdup (src_data, size);
+
+  if (map)
+    {
+      if (buffer->datas[0].type == stream->pipewire_type->data.DmaBuf)
+        sync_dma_buf (buffer->datas[0].fd, DMA_BUF_SYNC_END);
+      munmap (map, size);
     }
 
   spa_meta_cursor = spa_buffer_find_meta (buffer, spa_type->meta_cursor);
@@ -382,32 +439,19 @@ do_render (struct spa_loop *loop,
           rfb_cursor->xhot = spa_meta_cursor->hotspot.x;
           rfb_cursor->yhot = spa_meta_cursor->hotspot.y;
 
-          grd_session_vnc_set_cursor (stream->session, rfb_cursor);
+          frame->rfb_cursor = rfb_cursor;
         }
       else if (spa_meta_bitmap)
         {
-          rfbCursorPtr empty_cursor;
-
-          empty_cursor = grd_vnc_create_empty_cursor (1, 1);
-          grd_session_vnc_set_cursor (stream->session, empty_cursor);
+          frame->rfb_cursor = grd_vnc_create_empty_cursor (1, 1);
         }
 
-      grd_session_vnc_move_cursor (stream->session,
-                                   spa_meta_cursor->position.x,
-                                   spa_meta_cursor->position.y);
+      frame->cursor_moved = TRUE;
+      frame->cursor_x = spa_meta_cursor->position.x;
+      frame->cursor_y = spa_meta_cursor->position.y;
     }
 
-  if (src_data)
-    grd_session_vnc_draw_buffer (stream->session, src_data);
-
-  if (map)
-    {
-      if (buffer->datas[0].type == stream->pipewire_type->data.DmaBuf)
-        sync_dma_buf (buffer->datas[0].fd, DMA_BUF_SYNC_END);
-      munmap (map, buffer->datas[0].maxsize + buffer->datas[0].mapoffset);
-    }
-
-  return 0;
+  return g_steal_pointer (&frame);
 }
 
 static void
@@ -418,6 +462,7 @@ on_stream_process (void *user_data)
     (GrdPipeWireSource *) stream->pipewire_source;
   struct pw_buffer *next_buffer;
   struct pw_buffer *buffer = NULL;
+  GrdVncFrame *frame;
 
   next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
   while (next_buffer)
@@ -431,11 +476,23 @@ on_stream_process (void *user_data)
   if (!buffer)
     return;
 
-  pw_loop_invoke (pipewire_source->pipewire_loop, do_render,
-                  SPA_ID_INVALID, &buffer->buffer, sizeof (struct spa_buffer *),
-                  true, stream);
+  frame = process_buffer (stream, buffer->buffer);
+
+  g_assert (frame);
+  g_mutex_lock (&stream->frame_mutex);
+  if (stream->pending_frame)
+    {
+      g_free (stream->pending_frame->data);
+      g_clear_pointer (&stream->pending_frame, g_free);
+    }
+  stream->pending_frame = frame;
+  g_mutex_unlock (&stream->frame_mutex);
 
   pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+
+  pw_loop_invoke (pipewire_source->pipewire_loop, do_render,
+                  SPA_ID_INVALID, NULL, 0,
+                  false, stream);
 }
 
 static const struct pw_stream_events stream_events = {
@@ -504,7 +561,9 @@ connect_to_stream (GrdVncPipeWireStream  *stream,
   ret = pw_stream_connect (stream->pipewire_stream,
                            PW_DIRECTION_INPUT,
                            stream->src_node_id_string,
-                           PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_INACTIVE,
+                           (PW_STREAM_FLAG_RT_PROCESS |
+                            PW_STREAM_FLAG_AUTOCONNECT |
+                            PW_STREAM_FLAG_INACTIVE),
                            params, 1);
   if (ret < 0)
     {
@@ -644,6 +703,7 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
 static void
 grd_vnc_pipewire_stream_init (GrdVncPipeWireStream *stream)
 {
+  g_mutex_init (&stream->frame_mutex);
 }
 
 static void
