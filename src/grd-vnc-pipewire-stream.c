@@ -428,6 +428,8 @@ on_stream_process (void *user_data)
       if (next_buffer)
         pw_stream_queue_buffer (stream->pipewire_stream, buffer);
     }
+  if (!buffer)
+    return;
 
   pw_loop_invoke (pipewire_source->pipewire_loop, do_render,
                   SPA_ID_INVALID, &buffer->buffer, sizeof (struct spa_buffer *),
