@@ -26,12 +26,14 @@
 
 #include <gio/gio.h>
 #include <glib/gi18n.h>
+#include <glib/gstdio.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "grd-context.h"
 #include "grd-dbus-remote-desktop.h"
 #include "grd-private.h"
+#include "grd-rdp-server.h"
 #include "grd-session.h"
 #include "grd-vnc-server.h"
 
@@ -45,6 +47,7 @@ struct _GrdDaemon
 
   GrdContext *context;
 
+  GrdRdpServer *rdp_server;
   GrdVncServer *vnc_server;
 };
 
@@ -63,11 +66,27 @@ is_daemon_ready (GrdDaemon *daemon)
 static void
 maybe_enable_services (GrdDaemon *daemon)
 {
+  GrdSettings *settings = grd_context_get_settings (daemon->context);
   GError *error = NULL;
 
   if (!is_daemon_ready (daemon))
     return;
 
+  daemon->rdp_server = NULL;
+  if (!g_access (grd_settings_get_rdp_server_cert (settings), F_OK) &&
+      !g_access (grd_settings_get_rdp_server_key (settings), F_OK))
+    {
+      daemon->rdp_server = grd_rdp_server_new (daemon->context);
+      if (!grd_rdp_server_start (daemon->rdp_server, &error))
+        {
+          g_warning ("Failed to initialize RDP server: %s\n", error->message);
+        }
+    }
+  else
+    {
+      g_warning ("Failed to initialize RDP server: Couldn't find the server "
+                 "certificate or private keyfile");
+    }
   daemon->vnc_server = grd_vnc_server_new (daemon->context);
   if (!grd_vnc_server_start (daemon->vnc_server, &error))
     {
@@ -92,6 +111,7 @@ static void
 disable_services (GrdDaemon *daemon)
 {
   close_all_sessions (daemon);
+  g_clear_object (&daemon->rdp_server);
   g_clear_object (&daemon->vnc_server);
 }
 
@@ -280,12 +300,16 @@ add_actions (GApplication *app)
 int
 main (int argc, char **argv)
 {
+  GrdSettings *settings;
   gboolean print_version = FALSE;
+  int rdp_port = -1;
   int vnc_port = -1;
 
   GOptionEntry entries[] = {
     { "version", 0, 0, G_OPTION_ARG_NONE, &print_version,
       "Print version", NULL },
+    { "rdp-port", 0, 0, G_OPTION_ARG_INT, &rdp_port,
+      "RDP port", NULL },
     { "vnc-port", 0, 0, G_OPTION_ARG_INT, &vnc_port,
       "VNC port", NULL },
     { NULL }
@@ -318,13 +342,11 @@ main (int argc, char **argv)
 
   add_actions (app);
 
+  settings = grd_context_get_settings (GRD_DAEMON (app)->context);
+  if (rdp_port != -1)
+    grd_settings_override_rdp_port (settings, rdp_port);
   if (vnc_port != -1)
-    {
-      GrdSettings *settings;
-
-      settings = grd_context_get_settings (GRD_DAEMON (app)->context);
-      grd_settings_override_vnc_port (settings, vnc_port);
-    }
+    grd_settings_override_vnc_port (settings, vnc_port);
 
   return g_application_run (app, argc, argv);
 }
