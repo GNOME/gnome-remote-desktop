@@ -672,8 +672,8 @@ close_session_idle (gpointer user_data)
 }
 
 static void
-on_pipwire_stream_closed (GrdVncPipeWireStream *stream,
-                          GrdSessionVnc        *session_vnc)
+on_pipewire_stream_closed (GrdVncPipeWireStream *stream,
+                           GrdSessionVnc        *session_vnc)
 {
   g_warning ("PipeWire stream closed, closing client");
 
@@ -699,7 +699,7 @@ grd_session_vnc_stream_ready (GrdSession *session,
     }
 
   g_signal_connect (session_vnc->pipewire_stream, "closed",
-                    G_CALLBACK (on_pipwire_stream_closed),
+                    G_CALLBACK (on_pipewire_stream_closed),
                     session_vnc);
 
   if (!session_vnc->source)
