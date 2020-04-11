@@ -30,15 +30,32 @@
 G_DECLARE_FINAL_TYPE (GrdSettings, grd_settings,
                       GRD, SETTINGS, GObject)
 
+const SecretSchema * cc_grd_rdp_credentials_get_schema (void);
 const SecretSchema * cc_grd_vnc_password_get_schema (void);
+#define GRD_RDP_CREDENTIALS_SCHEMA grd_rdp_credentials_get_schema ()
 #define GRD_VNC_PASSWORD_SCHEMA grd_vnc_password_get_schema ()
 
+int grd_settings_get_rdp_port (GrdSettings *settings);
+
 int grd_settings_get_vnc_port (GrdSettings *settings);
+
+void grd_settings_override_rdp_port (GrdSettings *settings,
+                                     int          port);
 
 void grd_settings_override_vnc_port (GrdSettings *settings,
                                      int          port);
 
+char * grd_settings_get_rdp_server_cert (GrdSettings *settings);
+
+char * grd_settings_get_rdp_server_key (GrdSettings *settings);
+
+char * grd_settings_get_rdp_password (GrdSettings  *settings,
+                                      GError      **error);
+
 char * grd_settings_get_vnc_password (GrdSettings  *settings,
+                                      GError      **error);
+
+char * grd_settings_get_rdp_username (GrdSettings  *settings,
                                       GError      **error);
 
 gboolean grd_settings_get_vnc_view_only (GrdSettings *settings);

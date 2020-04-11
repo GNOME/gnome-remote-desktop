@@ -1,6 +1,24 @@
 <schemalist>
   <schema id='org.gnome.desktop.remote-desktop' path='/org/gnome/desktop/remote-desktop/'>
   </schema>
+  <schema id='org.gnome.desktop.remote-desktop.rdp' path='/org/gnome/desktop/remote-desktop/rdp/'>
+    <key name='tls-cert' type='s'>
+      <default>''</default>
+      <summary>Path to the certificate file</summary>
+      <description>
+        In Order to be able to use RDP with TLS Security, both the private key
+        file and the certificate file need to be provided to the RDP server.
+      </description>
+    </key>
+    <key name='tls-key' type='s'>
+      <default>''</default>
+      <summary>Path to the private key file</summary>
+      <description>
+        In Order to be able to use RDP with TLS Security, both the private key
+        file and the certificate file need to be provided to the RDP server.
+      </description>
+    </key>
+  </schema>
   <schema id='org.gnome.desktop.remote-desktop.vnc' path='/org/gnome/desktop/remote-desktop/vnc/'>
     <key name='view-only' type='b'>
       <default>true</default>
