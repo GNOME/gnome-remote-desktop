@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Red Hat Inc.
+ * Copyright (C) 2020 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -15,28 +15,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
- *
- * Written by:
- *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_TYPES_H
-#define GRD_TYPES_H
+#ifndef GRD_RDP_SERVER_H
+#define GRD_RDP_SERVER_H
 
-typedef struct _GrdContext GrdContext;
-typedef struct _GrdRdpSAMFile GrdRdpSAMFile;
-typedef struct _GrdRdpServer GrdRdpServer;
-typedef struct _GrdSession GrdSession;
-typedef struct _GrdSessionRdp GrdSessionRdp;
-typedef struct _GrdSessionVnc GrdSessionVnc;
-typedef struct _GrdStream GrdStream;
-typedef struct _GrdPipeWireStream GrdPipeWireStream;
-typedef struct _GrdPipeWireStreamMonitor GrdPipeWireStreamMonitor;
-typedef struct _GrdVncServer GrdVncServer;
+#include <gio/gio.h>
+#include <glib-object.h>
 
-typedef enum _GrdPixelFormat
-{
-  GRD_PIXEL_FORMAT_RGBA8888,
-} GrdPixelFormat;
+#include "grd-types.h"
 
-#endif /* GRD_TYPES_H */
+#define GRD_TYPE_RDP_SERVER (grd_rdp_server_get_type ())
+G_DECLARE_FINAL_TYPE (GrdRdpServer,
+                      grd_rdp_server,
+                      GRD, RDP_SERVER,
+                      GSocketService);
+
+GrdContext *grd_rdp_server_get_context (GrdRdpServer *rdp_server);
+
+gboolean grd_rdp_server_start (GrdRdpServer  *rdp_server,
+                               GError       **error);
+
+GrdRdpServer *grd_rdp_server_new (GrdContext *context);
+
+#endif /* GRD_RDP_SERVER_H */
