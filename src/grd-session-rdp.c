@@ -24,6 +24,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
 #include <gio/gio.h>
+#include <linux/input-event-codes.h>
 
 #include "grd-context.h"
 #include "grd-damage-utils.h"
@@ -431,10 +432,40 @@ rdp_input_mouse_event (rdpInput *rdp_input,
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
+  GrdSession *session = GRD_SESSION (session_rdp);
+  GrdButtonState button_state;
+  int32_t button = 0;
+  int axis_step;
 
   if (!(rdp_peer_context->flags & RDP_PEER_ACTIVATED) ||
       is_view_only (session_rdp))
     return TRUE;
+
+  if (flags & PTR_FLAGS_MOVE)
+    grd_session_notify_pointer_motion_absolute (session, x, y);
+
+  button_state = flags & PTR_FLAGS_DOWN ? GRD_BUTTON_STATE_PRESSED
+                                        : GRD_BUTTON_STATE_RELEASED;
+
+  if (flags & PTR_FLAGS_BUTTON1)
+    button = BTN_LEFT;
+  else if (flags & PTR_FLAGS_BUTTON2)
+    button = BTN_RIGHT;
+  else if (flags & PTR_FLAGS_BUTTON3)
+    button = BTN_MIDDLE;
+
+  if (button)
+    grd_session_notify_pointer_button (session, button, button_state);
+
+  axis_step = flags & PTR_FLAGS_WHEEL_NEGATIVE ? -1 : 1;
+  if (flags & PTR_FLAGS_WHEEL)
+    grd_session_notify_pointer_axis_discrete (session,
+                                              GRD_POINTER_AXIS_VERTICAL,
+                                              -axis_step);
+  if (flags & PTR_FLAGS_HWHEEL)
+    grd_session_notify_pointer_axis_discrete (session,
+                                              GRD_POINTER_AXIS_HORIZONTAL,
+                                              axis_step);
 
   return TRUE;
 }
@@ -649,6 +680,7 @@ init_rdp_session (GrdSessionRdp *session_rdp,
   rdp_settings->OsMajorType = OSMAJORTYPE_UNIX;
   rdp_settings->OsMajorType = OSMINORTYPE_PSEUDO_XSERVER;
   rdp_settings->ColorDepth = 32;
+  rdp_settings->HasHorizontalWheel = TRUE;
   rdp_settings->RefreshRect = TRUE;
   rdp_settings->RemoteFxCodec = TRUE;
   rdp_settings->NSCodec = TRUE;
