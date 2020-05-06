@@ -171,7 +171,10 @@ handle_client_gone (GrdSessionRdp *session_rdp)
 static gboolean
 is_view_only (GrdSessionRdp *session_rdp)
 {
-  return TRUE;
+  GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
+  GrdSettings *settings = grd_context_get_settings (context);
+
+  return grd_settings_get_rdp_view_only (settings);
 }
 
 static void
