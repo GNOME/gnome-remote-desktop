@@ -478,10 +478,27 @@ rdp_input_extended_mouse_event (rdpInput *rdp_input,
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
+  GrdSession *session = GRD_SESSION (session_rdp);
+  GrdButtonState button_state;
+  int32_t button = 0;
 
   if (!(rdp_peer_context->flags & RDP_PEER_ACTIVATED) ||
       is_view_only (session_rdp))
     return TRUE;
+
+  if (flags & PTR_FLAGS_MOVE)
+    rdp_input_mouse_event (rdp_input, PTR_FLAGS_MOVE, x, y);
+
+  button_state = flags & PTR_XFLAGS_DOWN ? GRD_BUTTON_STATE_PRESSED
+                                         : GRD_BUTTON_STATE_RELEASED;
+
+  if (flags & PTR_XFLAGS_BUTTON1)
+    button = BTN_SIDE;
+  else if (flags & PTR_XFLAGS_BUTTON2)
+    button = BTN_EXTRA;
+
+  if (button)
+    grd_session_notify_pointer_button (session, button, button_state);
 
   return TRUE;
 }
@@ -680,6 +697,7 @@ init_rdp_session (GrdSessionRdp *session_rdp,
   rdp_settings->OsMajorType = OSMAJORTYPE_UNIX;
   rdp_settings->OsMajorType = OSMINORTYPE_PSEUDO_XSERVER;
   rdp_settings->ColorDepth = 32;
+  rdp_settings->HasExtendedMouseEvent = TRUE;
   rdp_settings->HasHorizontalWheel = TRUE;
   rdp_settings->RefreshRect = TRUE;
   rdp_settings->RemoteFxCodec = TRUE;
