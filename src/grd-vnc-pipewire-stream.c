@@ -187,8 +187,6 @@ on_stream_param_changed (void                 *user_data,
   struct spa_pod_builder pod_builder;
   int width;
   int height;
-  int stride;
-  int size;
   const struct spa_pod *params[3];
 
   if (!format || id != SPA_PARAM_Format)
@@ -203,14 +201,9 @@ on_stream_param_changed (void                 *user_data,
 
   grd_session_vnc_queue_resize_framebuffer (stream->session, width, height);
 
-  stride = grd_session_vnc_get_framebuffer_stride (stream->session);
-  size = stride * height;
-
   params[0] = spa_pod_builder_add_object (
     &pod_builder,
     SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers,
-    SPA_PARAM_BUFFERS_size, SPA_POD_Int (size),
-    SPA_PARAM_BUFFERS_stride, SPA_POD_Int (stride),
     SPA_PARAM_BUFFERS_buffers, SPA_POD_CHOICE_RANGE_Int (8, 1, 8),
     0);
 
@@ -319,6 +312,10 @@ process_buffer (GrdVncPipeWireStream *stream,
   size_t size;
   uint8_t *map;
   void *src_data;
+  int src_stride;
+  int dst_stride;
+  int height;
+  int y;
   struct spa_meta_cursor *spa_meta_cursor;
   g_autofree GrdVncFrame *frame = NULL;
 
@@ -359,7 +356,17 @@ process_buffer (GrdVncPipeWireStream *stream,
       return NULL;
     }
 
-  frame->data = g_memdup (src_data, buffer->datas[0].maxsize);
+  src_stride = buffer->datas[0].chunk->stride;
+  dst_stride = grd_session_vnc_get_framebuffer_stride (stream->session);
+  height = stream->spa_format.size.height;
+
+  frame->data = g_malloc (height * dst_stride);
+  for (y = 0; y < height; y++)
+    {
+      memcpy (((uint8_t *) frame->data) + y * dst_stride,
+              ((uint8_t *) src_data) + y * src_stride,
+              dst_stride);
+    }
 
   if (map)
     {
