@@ -51,4 +51,8 @@ void grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
                                      uint16_t       height,
                                      uint8_t       *data);
 
+void grd_session_rdp_move_pointer (GrdSessionRdp *session_rdp,
+                                   uint16_t       x,
+                                   uint16_t       y);
+
 #endif /* GRD_SESSION_RDP_H */

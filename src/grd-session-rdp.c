@@ -64,6 +64,10 @@ struct _GrdSessionRdp
   Pointer *last_pointer;
   GHashTable *pointer_cache;
 
+  GMutex pointer_mutex;
+  uint16_t pointer_x;
+  uint16_t pointer_y;
+
   GThreadPool *thread_pool;
   GCond pending_jobs_cond;
   GMutex pending_jobs_mutex;
@@ -374,6 +378,33 @@ grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
   session_rdp->last_pointer = new_pointer;
 
   g_free (xor_mask);
+}
+
+void
+grd_session_rdp_move_pointer (GrdSessionRdp *session_rdp,
+                              uint16_t       x,
+                              uint16_t       y)
+{
+  freerdp_peer *peer = session_rdp->peer;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+  rdpUpdate *rdp_update = peer->update;
+  POINTER_POSITION_UPDATE pointer_position = {0};
+
+  if (!(rdp_peer_context->flags & RDP_PEER_ACTIVATED))
+    return;
+
+  g_mutex_lock (&session_rdp->pointer_mutex);
+  if (session_rdp->pointer_x == x && session_rdp->pointer_y == y)
+    {
+      g_mutex_unlock (&session_rdp->pointer_mutex);
+      return;
+    }
+
+  pointer_position.xPos = session_rdp->pointer_x = x;
+  pointer_position.yPos = session_rdp->pointer_y = y;
+  g_mutex_unlock (&session_rdp->pointer_mutex);
+
+  rdp_update->pointer->PointerPosition (peer->context, &pointer_position);
 }
 
 static void
@@ -946,7 +977,14 @@ rdp_input_mouse_event (rdpInput *rdp_input,
     return TRUE;
 
   if (flags & PTR_FLAGS_MOVE)
-    grd_session_notify_pointer_motion_absolute (session, x, y);
+    {
+      g_mutex_lock (&session_rdp->pointer_mutex);
+      session_rdp->pointer_x = x;
+      session_rdp->pointer_y = y;
+      g_mutex_unlock (&session_rdp->pointer_mutex);
+
+      grd_session_notify_pointer_motion_absolute (session, x, y);
+    }
 
   button_state = flags & PTR_FLAGS_DOWN ? GRD_BUTTON_STATE_PRESSED
                                         : GRD_BUTTON_STATE_RELEASED;
@@ -1482,6 +1520,7 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
 
   g_cond_init (&session_rdp->pending_jobs_cond);
   g_mutex_init (&session_rdp->pending_jobs_mutex);
+  g_mutex_init (&session_rdp->pointer_mutex);
 }
 
 static void
