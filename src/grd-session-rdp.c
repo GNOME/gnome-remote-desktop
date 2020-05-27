@@ -76,6 +76,17 @@ typedef struct _NSCEncodeContext
   wStream *stream;
 } NSCEncodeContext;
 
+typedef struct _RawThreadPoolContext
+{
+  uint32_t pending_job_count;
+  GCond *pending_jobs_cond;
+  GMutex *pending_jobs_mutex;
+
+  uint16_t planar_flags;
+  uint32_t src_stride;
+  uint8_t *src_data;
+} RawThreadPoolContext;
+
 typedef struct _RdpPeerContext
 {
   rdpContext rdp_context;
@@ -90,6 +101,9 @@ typedef struct _RdpPeerContext
   wStream *encode_stream;
 
   NSCThreadPoolContext nsc_thread_pool_context;
+  RawThreadPoolContext raw_thread_pool_context;
+
+  uint16_t planar_flags;
 } RdpPeerContext;
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION);
@@ -418,6 +432,271 @@ rdp_peer_refresh_nsc (freerdp_peer   *peer,
 }
 
 static void
+rdp_peer_compress_raw_tile (gpointer data,
+                            gpointer user_data)
+{
+  RawThreadPoolContext *thread_pool_context = (RawThreadPoolContext *) user_data;
+  BITMAP_DATA *dst_bitmap = (BITMAP_DATA *) data;
+  uint16_t planar_flags = thread_pool_context->planar_flags;
+  uint32_t dst_bpp = dst_bitmap->bitsPerPixel;
+  uint32_t dst_Bpp = (dst_bpp + 7) / 8;
+  BITMAP_PLANAR_CONTEXT *planar_context;
+  BITMAP_INTERLEAVED_CONTEXT *interleaved_context;
+  uint32_t src_stride;
+  uint32_t src_data_pos;
+  uint8_t *src_data;
+  uint8_t *src_data_at_pos;
+
+  dst_bitmap->bitmapLength = 64 * 64 * 4 * sizeof (uint8_t);
+  dst_bitmap->bitmapDataStream = g_malloc0 (dst_bitmap->bitmapLength);
+
+  src_stride = thread_pool_context->src_stride;
+  src_data_pos = dst_bitmap->destTop * src_stride + dst_bitmap->destLeft * dst_Bpp;
+  src_data = thread_pool_context->src_data;
+  src_data_at_pos = &src_data[src_data_pos];
+
+  switch (dst_bpp)
+    {
+    case 32:
+      planar_context = freerdp_bitmap_planar_context_new (planar_flags, 64, 64);
+      freerdp_bitmap_planar_context_reset (planar_context, 64, 64);
+
+      dst_bitmap->bitmapDataStream =
+        freerdp_bitmap_compress_planar (planar_context,
+                                        src_data_at_pos,
+                                        PIXEL_FORMAT_BGRX32,
+                                        dst_bitmap->width,
+                                        dst_bitmap->height,
+                                        src_stride,
+                                        dst_bitmap->bitmapDataStream,
+                                        &dst_bitmap->bitmapLength);
+
+      freerdp_bitmap_planar_context_free (planar_context);
+      break;
+    case 24:
+    case 16:
+    case 15:
+      interleaved_context = bitmap_interleaved_context_new (TRUE);
+      bitmap_interleaved_context_reset (interleaved_context);
+
+      interleaved_compress (interleaved_context,
+                            dst_bitmap->bitmapDataStream,
+                            &dst_bitmap->bitmapLength,
+                            dst_bitmap->width,
+                            dst_bitmap->height,
+                            src_data,
+                            PIXEL_FORMAT_BGRX32,
+                            src_stride,
+                            dst_bitmap->destLeft,
+                            dst_bitmap->destTop,
+                            NULL,
+                            dst_bpp);
+
+      bitmap_interleaved_context_free (interleaved_context);
+      break;
+    }
+
+  dst_bitmap->cbScanWidth = dst_bitmap->width * dst_Bpp;
+  dst_bitmap->cbUncompressedSize = dst_bitmap->width * dst_bitmap->height * dst_Bpp;
+  dst_bitmap->cbCompFirstRowSize = 0;
+  dst_bitmap->cbCompMainBodySize = dst_bitmap->bitmapLength;
+  dst_bitmap->compressed = TRUE;
+  dst_bitmap->flags = 0;
+
+  g_mutex_lock (thread_pool_context->pending_jobs_mutex);
+  --thread_pool_context->pending_job_count;
+  g_cond_signal (thread_pool_context->pending_jobs_cond);
+  g_mutex_unlock (thread_pool_context->pending_jobs_mutex);
+}
+
+static void
+rdp_peer_refresh_raw_rect (freerdp_peer          *peer,
+                           GThreadPool           *thread_pool,
+                           uint32_t              *pending_job_count,
+                           BITMAP_DATA           *bitmap_data,
+                           uint32_t              *n_bitmaps,
+                           cairo_rectangle_int_t *cairo_rect,
+                           uint8_t               *data)
+{
+  rdpSettings *rdp_settings = peer->settings;
+  uint32_t dst_bits_per_pixel = rdp_settings->ColorDepth;
+  uint32_t cols, rows;
+  uint32_t x, y;
+  BITMAP_DATA *bitmap;
+
+  cols = cairo_rect->width / 64 + (cairo_rect->width % 64 ? 1 : 0);
+  rows = cairo_rect->height / 64 + (cairo_rect->height % 64 ? 1 : 0);
+
+  /* Both x- and y-position of each bitmap need to be a multiple of 4 */
+  if (cairo_rect->x % 4)
+    {
+      cairo_rect->width += cairo_rect->x % 4;
+      cairo_rect->x -= cairo_rect->x % 4;
+    }
+  if (cairo_rect->y % 4)
+    {
+      cairo_rect->height += cairo_rect->y % 4;
+      cairo_rect->y -= cairo_rect->y % 4;
+    }
+
+  /* Both width and height of each bitmap need to be a multiple of 4 */
+  if (cairo_rect->width % 4)
+    cairo_rect->width += 4 - cairo_rect->width % 4;
+  if (cairo_rect->height % 4)
+    cairo_rect->height += 4 - cairo_rect->height % 4;
+
+  for (y = 0; y < rows; ++y)
+    {
+      for (x = 0; x < cols; ++x)
+        {
+          bitmap = &bitmap_data[(*n_bitmaps)++];
+          bitmap->width = 64;
+          bitmap->height = 64;
+          bitmap->destLeft = cairo_rect->x + x * 64;
+          bitmap->destTop = cairo_rect->y + y * 64;
+
+          if (bitmap->destLeft + bitmap->width > cairo_rect->x + cairo_rect->width)
+            bitmap->width = cairo_rect->x + cairo_rect->width - bitmap->destLeft;
+          if (bitmap->destTop + bitmap->height > cairo_rect->y + cairo_rect->height)
+            bitmap->height = cairo_rect->y + cairo_rect->height - bitmap->destTop;
+
+          bitmap->destRight = bitmap->destLeft + bitmap->width - 1;
+          bitmap->destBottom = bitmap->destTop + bitmap->height - 1;
+          bitmap->bitsPerPixel = dst_bits_per_pixel;
+
+          /* Both width and height of each bitmap need to be a multiple of 4 */
+          if (bitmap->width < 4 || bitmap->height < 4)
+            continue;
+
+          ++*pending_job_count;
+          g_thread_pool_push (thread_pool, bitmap, NULL);
+        }
+    }
+}
+
+static void
+rdp_peer_refresh_raw (freerdp_peer   *peer,
+                      cairo_region_t *region,
+                      uint8_t        *data)
+{
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+  GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
+  rdpSettings *rdp_settings = peer->settings;
+  rdpUpdate *rdp_update = peer->update;
+  uint32_t src_stride = grd_session_rdp_get_framebuffer_stride (session_rdp);
+  RawThreadPoolContext *thread_pool_context =
+    &rdp_peer_context->raw_thread_pool_context;
+  g_autoptr (GError) error = NULL;
+  uint32_t bitmap_data_count = 0;
+  uint32_t n_bitmaps = 0;
+  uint32_t update_size = 0;
+  cairo_rectangle_int_t cairo_rect;
+  int n_rects;
+  BITMAP_DATA *bitmap_data;
+  uint32_t cols, rows;
+  SURFACE_FRAME_MARKER marker;
+  BITMAP_UPDATE bitmap_update = {0};
+  uint32_t max_update_size;
+  uint32_t next_size;
+  int i;
+
+  n_rects = cairo_region_num_rectangles (region);
+  for (i = 0; i < n_rects; ++i)
+    {
+      cairo_region_get_rectangle (region, i, &cairo_rect);
+      cols = cairo_rect.width / 64 + (cairo_rect.width % 64 ? 1 : 0);
+      rows = cairo_rect.height / 64 + (cairo_rect.height % 64 ? 1 : 0);
+      bitmap_data_count += cols * rows;
+    }
+
+  bitmap_data = g_malloc0 (bitmap_data_count * sizeof (BITMAP_DATA));
+
+  thread_pool_context->pending_job_count = 0;
+  thread_pool_context->pending_jobs_cond = &session_rdp->pending_jobs_cond;
+  thread_pool_context->pending_jobs_mutex = &session_rdp->pending_jobs_mutex;
+  thread_pool_context->planar_flags = rdp_peer_context->planar_flags;
+  thread_pool_context->src_stride = src_stride;
+  thread_pool_context->src_data = data;
+
+  if (!session_rdp->thread_pool)
+    session_rdp->thread_pool = g_thread_pool_new (rdp_peer_compress_raw_tile,
+                                                  thread_pool_context,
+                                                  g_get_num_processors (),
+                                                  TRUE,
+                                                  &error);
+  if (!session_rdp->thread_pool)
+    {
+      g_free (bitmap_data);
+      g_error ("Couldn't create thread pool: %s", error->message);
+    }
+
+  g_mutex_lock (&session_rdp->pending_jobs_mutex);
+  for (i = 0; i < n_rects; ++i)
+    {
+      cairo_region_get_rectangle (region, i, &cairo_rect);
+      rdp_peer_refresh_raw_rect (peer,
+                                 session_rdp->thread_pool,
+                                 &thread_pool_context->pending_job_count,
+                                 bitmap_data,
+                                 &n_bitmaps,
+                                 &cairo_rect,
+                                 data);
+    }
+
+  while (thread_pool_context->pending_job_count)
+    {
+      g_cond_wait (&session_rdp->pending_jobs_cond,
+                   &session_rdp->pending_jobs_mutex);
+    }
+  g_mutex_unlock (&session_rdp->pending_jobs_mutex);
+
+  /* We send 2 additional Bytes for the update header
+   * (See also update_write_bitmap_update () in FreeRDP)
+   */
+  max_update_size = rdp_settings->MultifragMaxRequestSize - 2;
+
+  bitmap_update.count = bitmap_update.number = 0;
+  bitmap_update.rectangles = bitmap_data;
+  bitmap_update.skipCompression = FALSE;
+
+  marker.frameId = rdp_peer_context->frame_id;
+  marker.frameAction = SURFACECMD_FRAMEACTION_BEGIN;
+  if (rdp_settings->SurfaceFrameMarkerEnabled)
+    rdp_update->SurfaceFrameMarker (peer->context, &marker);
+
+  for (i = 0; i < n_bitmaps; ++i)
+    {
+      /* We send 26 additional Bytes for each bitmap
+       * (See also update_write_bitmap_data () in FreeRDP)
+       */
+      update_size += bitmap_data[i].bitmapLength + 26;
+
+      ++bitmap_update.count;
+      ++bitmap_update.number;
+
+      next_size = i + 1 < n_bitmaps ? bitmap_data[i + 1].bitmapLength + 26
+                                    : 0;
+      if (!next_size || update_size + next_size > max_update_size)
+        {
+          rdp_update->BitmapUpdate (peer->context, &bitmap_update);
+
+          bitmap_update.rectangles += bitmap_update.count;
+          bitmap_update.count = bitmap_update.number = 0;
+          update_size = 0;
+        }
+    }
+
+  marker.frameAction = SURFACECMD_FRAMEACTION_END;
+  if (rdp_settings->SurfaceFrameMarkerEnabled)
+    rdp_update->SurfaceFrameMarker (peer->context, &marker);
+
+  for (i = 0; i < n_bitmaps; ++i)
+    g_free (bitmap_data[i].bitmapDataStream);
+
+  g_free (bitmap_data);
+}
+
+static void
 rdp_peer_refresh_region (freerdp_peer   *peer,
                          cairo_region_t *region,
                          uint8_t        *data)
@@ -426,19 +705,11 @@ rdp_peer_refresh_region (freerdp_peer   *peer,
   rdpSettings *rdp_settings = peer->settings;
 
   if (rdp_settings->RemoteFxCodec)
-    {
-      rdp_peer_refresh_rfx (peer, region, data);
-    }
+    rdp_peer_refresh_rfx (peer, region, data);
   else if (rdp_settings->NSCodec)
-    {
-      rdp_peer_refresh_nsc (peer, region, data);
-    }
+    rdp_peer_refresh_nsc (peer, region, data);
   else
-    {
-      g_warning ("Neither NSCodec or RemoteFxCodec are available, closing connection");
-      rdp_peer_context->flags &= ~RDP_PEER_ACTIVATED;
-      handle_client_gone (rdp_peer_context->session_rdp);
-    }
+    rdp_peer_refresh_raw (peer, region, data);
 
   ++rdp_peer_context->frame_id;
 }
@@ -589,11 +860,15 @@ rdp_peer_capabilities (freerdp_peer *peer)
     case 32:
       break;
     case 24:
+      /* Using the interleaved codec with a colour depth of 24
+       * leads to bitmaps with artifacts.
+       */
+      g_message ("Downgrading colour depth from 24 to 16 due to issues with "
+                 "the interleaved codec");
+      rdp_settings->ColorDepth = 16;
     case 16:
     case 15:
-      /* We currently don't support sending raw bitmaps */
-      g_warning ("Sending raw bitmaps ist not supported, closing connection");
-      return FALSE;
+      break;
     default:
       g_warning ("Invalid colour depth, closing connection");
       return FALSE;
@@ -652,6 +927,8 @@ static BOOL
 rdp_peer_context_new (freerdp_peer   *peer,
                       RdpPeerContext *rdp_peer_context)
 {
+  rdpSettings *rdp_settings = peer->settings;
+
   rdp_peer_context->frame_id = 0;
 
   rdp_peer_context->rfx_context = rfx_context_new (TRUE);
@@ -660,6 +937,11 @@ rdp_peer_context_new (freerdp_peer   *peer,
                                 PIXEL_FORMAT_BGRX32);
 
   rdp_peer_context->encode_stream = Stream_New (NULL, 64 * 64 * 4);
+
+  rdp_peer_context->planar_flags = 0;
+  if (rdp_settings->DrawAllowSkipAlpha)
+    rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_NA;
+  rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_RLE;
 
   rdp_peer_context->flags = RDP_PEER_OUTPUT_ENABLED;
 
