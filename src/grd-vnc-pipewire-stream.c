@@ -28,10 +28,10 @@
 #include <spa/param/format-utils.h>
 #include <spa/param/video/format-utils.h>
 #include <spa/utils/result.h>
-#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
 
+#include "grd-pipewire-utils.h"
 #include "grd-vnc-cursor.h"
 
 enum
@@ -42,13 +42,6 @@ enum
 };
 
 static guint signals[N_SIGNALS];
-
-typedef struct _GrdPipeWireSource
-{
-  GSource base;
-
-  struct pw_loop *pipewire_loop;
-} GrdPipeWireSource;
 
 typedef struct _GrdVncFrame
 {
@@ -84,10 +77,6 @@ struct _GrdVncPipeWireStream
 
 G_DEFINE_TYPE (GrdVncPipeWireStream, grd_vnc_pipewire_stream,
                G_TYPE_OBJECT)
-
-#define CURSOR_META_SIZE(width, height) \
- (sizeof(struct spa_meta_cursor) + \
-  sizeof(struct spa_meta_bitmap) + width * height * 4)
 
 static gboolean
 pipewire_loop_source_prepare (GSource *base,
@@ -239,36 +228,6 @@ spa_pixel_format_to_grd_pixel_format (uint32_t        spa_format,
   return TRUE;
 }
 
-static void
-sync_dma_buf (int      fd,
-              uint64_t start_or_end)
-{
-  struct dma_buf_sync sync = { 0 };
-
-  sync.flags = start_or_end | DMA_BUF_SYNC_READ;
-
-  while (TRUE)
-    {
-      int ret;
-
-      ret = ioctl (fd, DMA_BUF_IOCTL_SYNC, &sync);
-      if (ret == -1 && errno == EINTR)
-        {
-          continue;
-        }
-      else if (ret == -1)
-        {
-          g_warning ("Failed to synchronize DMA buffer: %s",
-                     g_strerror (errno));
-          break;
-        }
-      else
-        {
-          break;
-        }
-    }
-}
-
 static int
 do_render (struct spa_loop *loop,
            bool             async,
@@ -350,7 +309,7 @@ process_buffer (GrdVncPipeWireStream *stream,
           g_warning ("Failed to mmap DMA buffer: %s", g_strerror (errno));
           return NULL;
         }
-      sync_dma_buf (fd, DMA_BUF_SYNC_START);
+      grd_sync_dma_buf (fd, DMA_BUF_SYNC_START);
 
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
     }
@@ -380,7 +339,7 @@ process_buffer (GrdVncPipeWireStream *stream,
   if (map)
     {
       if (buffer->datas[0].type == SPA_DATA_DmaBuf)
-        sync_dma_buf (buffer->datas[0].fd, DMA_BUF_SYNC_END);
+        grd_sync_dma_buf (buffer->datas[0].fd, DMA_BUF_SYNC_END);
       munmap (map, size);
     }
 
@@ -572,13 +531,8 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc  *session_vnc,
 {
   g_autoptr (GrdVncPipeWireStream) stream = NULL;
   GrdPipeWireSource *pipewire_source;
-  static gboolean is_pipewire_initialized = FALSE;
 
-  if (!is_pipewire_initialized)
-    {
-      pw_init (NULL, NULL);
-      is_pipewire_initialized = TRUE;
-    }
+  grd_maybe_initialize_pipewire ();
 
   stream = g_object_new (GRD_TYPE_VNC_PIPEWIRE_STREAM, NULL);
   stream->session = session_vnc;
