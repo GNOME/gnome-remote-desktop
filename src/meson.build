@@ -3,6 +3,8 @@ daemon_sources = files([
   'grd-context.h',
   'grd-daemon.c',
   'grd-daemon.h',
+  'grd-pipewire-utils.c',
+  'grd-pipewire-utils.h',
   'grd-private.h',
   'grd-prompt.c',
   'grd-prompt.h',
