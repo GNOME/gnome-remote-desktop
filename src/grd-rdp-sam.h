@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Red Hat Inc.
+ * Copyright (C) 2020 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -15,26 +15,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
- *
- * Written by:
- *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_TYPES_H
-#define GRD_TYPES_H
+#ifndef GRD_RDP_SAM_H
+#define GRD_RDP_SAM_H
 
-typedef struct _GrdContext GrdContext;
-typedef struct _GrdRdpSAMFile GrdRdpSAMFile;
-typedef struct _GrdSession GrdSession;
-typedef struct _GrdSessionVnc GrdSessionVnc;
-typedef struct _GrdStream GrdStream;
-typedef struct _GrdPipeWireStream GrdPipeWireStream;
-typedef struct _GrdPipeWireStreamMonitor GrdPipeWireStreamMonitor;
-typedef struct _GrdVncServer GrdVncServer;
+#include "grd-types.h"
 
-typedef enum _GrdPixelFormat
+struct _GrdRdpSAMFile
 {
-  GRD_PIXEL_FORMAT_RGBA8888,
-} GrdPixelFormat;
+  int fd;
+  char *filename;
+};
 
-#endif /* GRD_TYPES_H */
+GrdRdpSAMFile *grd_rdp_sam_create_sam_file (const char *username,
+                                            const char *password);
+
+void grd_rdp_sam_maybe_close_and_free_sam_file (GrdRdpSAMFile *rdp_sam_file);
+
+#endif /* GRD_RDP_SAM_H */
