@@ -323,14 +323,18 @@ process_buffer (GrdVncPipeWireStream *stream,
 
   if (buffer->datas[0].chunk->size == 0)
     {
-      size = 0;
-      map = NULL;
-      src_data = NULL;
+      g_warning ("Received empty buffer");
+      return NULL;
     }
   else if (buffer->datas[0].type == SPA_DATA_MemFd)
     {
       size = buffer->datas[0].maxsize + buffer->datas[0].mapoffset;
       map = mmap (NULL, size, PROT_READ, MAP_PRIVATE, buffer->datas[0].fd, 0);
+      if (map == MAP_FAILED)
+        {
+          g_warning ("Failed to mmap buffer: %s", g_strerror (errno));
+          return NULL;
+	}
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
     }
   else if (buffer->datas[0].type == SPA_DATA_DmaBuf)
@@ -341,6 +345,11 @@ process_buffer (GrdVncPipeWireStream *stream,
       size = buffer->datas[0].maxsize + buffer->datas[0].mapoffset;
 
       map = mmap (NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+      if (map == MAP_FAILED)
+        {
+          g_warning ("Failed to mmap DMA buffer: %s", g_strerror (errno));
+          return NULL;
+	}
       sync_dma_buf (fd, DMA_BUF_SYNC_START);
 
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
