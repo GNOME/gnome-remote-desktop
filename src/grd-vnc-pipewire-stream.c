@@ -334,7 +334,7 @@ process_buffer (GrdVncPipeWireStream *stream,
         {
           g_warning ("Failed to mmap buffer: %s", g_strerror (errno));
           return NULL;
-	}
+        }
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
     }
   else if (buffer->datas[0].type == SPA_DATA_DmaBuf)
@@ -349,7 +349,7 @@ process_buffer (GrdVncPipeWireStream *stream,
         {
           g_warning ("Failed to mmap DMA buffer: %s", g_strerror (errno));
           return NULL;
-	}
+        }
       sync_dma_buf (fd, DMA_BUF_SYNC_START);
 
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
