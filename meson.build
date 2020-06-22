@@ -6,6 +6,7 @@ project('gnome-remote-desktop', 'c',
 
 gnome = import('gnome')
 
+cairo_dep = dependency('cairo')
 glib_dep = dependency('glib-2.0')
 gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')

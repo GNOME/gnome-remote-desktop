@@ -9,6 +9,7 @@ FROM fedora:32
 
 RUN dnf -y update && dnf -y upgrade && \
     dnf install -y 'dnf-command(builddep)' && \
+    dnf install -y 'pkgconfig(cairo)' && \
     dnf builddep -y gnome-remote-desktop && \
     dnf install -y 'pkgconfig(libvncclient)' && \
     dnf remove -y pipewire0.2-devel pipewire0.2-libs && \

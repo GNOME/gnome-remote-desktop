@@ -3,6 +3,8 @@ daemon_sources = files([
   'grd-context.h',
   'grd-daemon.c',
   'grd-daemon.h',
+  'grd-damage-utils.c',
+  'grd-damage-utils.h',
   'grd-pipewire-utils.c',
   'grd-pipewire-utils.h',
   'grd-private.h',
@@ -47,7 +49,8 @@ libexecdir = join_paths(prefix, get_option('libexecdir'))
 
 executable('gnome-remote-desktop-daemon',
            daemon_sources,
-           dependencies: [glib_dep,
+           dependencies: [cairo_dep,
+                          glib_dep,
                           gio_dep,
                           gio_unix_dep,
                           pipewire_dep,
