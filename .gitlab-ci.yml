@@ -26,4 +26,5 @@ test-gnome-remote-desktop:
     - mkdir -m 700 $XDG_RUNTIME_DIR
     - glib-compile-schemas $GSETTINGS_SCHEMA_DIR
     - sed -i 's/.*module-rtkit.*/# &/' /etc/pipewire/pipewire.conf
+    - sed -i 's/exec pipewire-media-session .*/exec pipewire-media-session -d bluez5,alsa-seq,alsa-pcm/' /etc/pipewire/pipewire.conf
     - dbus-run-session -- ./.gitlab-ci/run-tests.sh
