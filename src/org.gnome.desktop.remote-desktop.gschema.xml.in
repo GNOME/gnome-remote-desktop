@@ -18,6 +18,14 @@
         file and the certificate file need to be provided to the RDP server.
       </description>
     </key>
+    <key name='view-only' type='b'>
+      <default>true</default>
+      <summary>Only allow remote connections to view the screen content</summary>
+      <description>
+        When view-only is true, remote RDP connections cannot manipulate input
+        devices (e.g. mouse and keyboard).
+      </description>
+    </key>
   </schema>
   <schema id='org.gnome.desktop.remote-desktop.vnc' path='/org/gnome/desktop/remote-desktop/vnc/'>
     <key name='view-only' type='b'>

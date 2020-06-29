@@ -34,6 +34,7 @@ enum
 {
   RDP_SERVER_CERT_CHANGED,
   RDP_SERVER_KEY_CHANGED,
+  RDP_VIEW_ONLY_CHANGED,
   VNC_VIEW_ONLY_CHANGED,
   VNC_AUTH_METHOD_CHANGED,
   VNC_ENCRYPTION_CHANGED,
@@ -51,6 +52,7 @@ struct _GrdSettings
     GSettings *settings;
     char *server_cert;
     char *server_key;
+    gboolean view_only;
     int port;
   } rdp;
   struct {
@@ -210,6 +212,12 @@ grd_settings_get_vnc_password (GrdSettings  *settings,
 }
 
 gboolean
+grd_settings_get_rdp_view_only (GrdSettings *settings)
+{
+  return settings->rdp.view_only;
+}
+
+gboolean
 grd_settings_get_vnc_view_only (GrdSettings *settings)
 {
   return settings->vnc.view_only;
@@ -236,6 +244,13 @@ update_rdp_tls_key (GrdSettings *settings)
 {
   settings->rdp.server_key = g_settings_get_string (settings->rdp.settings,
                                                     "tls-key");
+}
+
+static void
+update_rdp_view_only (GrdSettings *settings)
+{
+  settings->rdp.view_only = g_settings_get_boolean (settings->rdp.settings,
+                                                    "view-only");
 }
 
 static void
@@ -266,6 +281,11 @@ on_rdp_settings_changed (GSettings   *rdp_settings,
     {
       update_rdp_tls_key (settings);
       g_signal_emit (settings, signals[RDP_SERVER_KEY_CHANGED], 0);
+    }
+  else if (strcmp (key, "view-only") == 0)
+    {
+      update_rdp_view_only (settings);
+      g_signal_emit (settings, signals[RDP_VIEW_ONLY_CHANGED], 0);
     }
 }
 
@@ -309,6 +329,7 @@ grd_settings_init (GrdSettings *settings)
 
   update_rdp_tls_cert (settings);
   update_rdp_tls_key (settings);
+  update_rdp_view_only (settings);
   update_vnc_view_only (settings);
   update_vnc_auth_method (settings);
 
@@ -332,6 +353,13 @@ grd_settings_class_init (GrdSettingsClass *klass)
                   G_TYPE_NONE, 0);
   signals[RDP_SERVER_KEY_CHANGED] =
     g_signal_new ("rdp-tls-key-changed",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL, NULL,
+                  G_TYPE_NONE, 0);
+  signals[RDP_VIEW_ONLY_CHANGED] =
+    g_signal_new ("rdp-view-only-changed",
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_LAST,
                   0,

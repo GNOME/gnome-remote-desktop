@@ -58,6 +58,8 @@ char * grd_settings_get_vnc_password (GrdSettings  *settings,
 char * grd_settings_get_rdp_username (GrdSettings  *settings,
                                       GError      **error);
 
+gboolean grd_settings_get_rdp_view_only (GrdSettings *settings);
+
 gboolean grd_settings_get_vnc_view_only (GrdSettings *settings);
 
 GrdVncAuthMethod grd_settings_get_vnc_auth_method (GrdSettings *settings);
