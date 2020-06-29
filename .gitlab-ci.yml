@@ -26,6 +26,4 @@ test-gnome-remote-desktop:
     - mkdir -m 700 $XDG_RUNTIME_DIR
     - glib-compile-schemas $GSETTINGS_SCHEMA_DIR
     - sed -i 's/.*module-rtkit.*/# &/' /etc/pipewire/pipewire.conf
-    - sed -i 's/.*module-flatpak.*/# &/' /etc/pipewire/pipewire.conf
-    - pipewire &
-    - meson test -C build --no-rebuild --verbose --no-stdsplit -t 10
+    - dbus-run-session -- ./.gitlab-ci/run-tests.sh
