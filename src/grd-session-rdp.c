@@ -27,11 +27,11 @@
 
 #include "grd-context.h"
 #include "grd-damage-utils.h"
-#include "grd-settings.h"
-#include "grd-stream.h"
 #include "grd-rdp-sam.h"
 #include "grd-rdp-server.h"
 #include "grd-rdp-pipewire-stream.h"
+#include "grd-settings.h"
+#include "grd-stream.h"
 
 typedef enum _RdpPeerFlag
 {
@@ -236,14 +236,14 @@ rdp_peer_refresh_rfx (freerdp_peer   *peer,
       if (!rfx_write_message (rdp_peer_context->rfx_context,
                               rdp_peer_context->encode_stream,
                               &rfx_messages[i]))
-      {
-        g_warning ("rfx_write_message failed");
+        {
+          g_warning ("rfx_write_message failed");
 
-        for (; i < n_messages; ++i)
-          rfx_message_free (rdp_peer_context->rfx_context, &rfx_messages[i]);
+          for (; i < n_messages; ++i)
+            rfx_message_free (rdp_peer_context->rfx_context, &rfx_messages[i]);
 
-        break;
-      }
+          break;
+        }
 
       rfx_message_free (rdp_peer_context->rfx_context, &rfx_messages[i]);
       cmd.bmp.bitmapDataLength = Stream_GetPosition (rdp_peer_context->encode_stream);
@@ -613,7 +613,7 @@ init_rdp_session (GrdSessionRdp *session_rdp,
 {
   GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
   GrdSettings *settings = grd_context_get_settings (context);
-  GSocket *socket  = g_socket_connection_get_socket (session_rdp->connection);
+  GSocket *socket = g_socket_connection_get_socket (session_rdp->connection);
   freerdp_peer *peer;
   rdpInput *rdp_input;
   RdpPeerContext *rdp_peer_context;
@@ -809,7 +809,7 @@ close_session_idle (gpointer user_data)
 
 static void
 on_pipewire_stream_closed (GrdRdpPipeWireStream *stream,
-                          GrdSessionRdp         *session_rdp)
+                           GrdSessionRdp        *session_rdp)
 {
   g_warning ("PipeWire stream closed, closing client");
 
