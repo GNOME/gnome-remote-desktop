@@ -243,18 +243,14 @@ process_buffer (GrdRdpPipeWireStream *stream,
   size_t size;
   uint8_t *map;
   void *src_data;
-  int src_stride;
-  int dst_stride;
-  int height;
-  int y;
   g_autofree GrdRdpFrame *frame = NULL;
 
   frame = g_new0 (GrdRdpFrame, 1);
 
   if (buffer->datas[0].chunk->size == 0)
     {
-      g_warning ("Received empty buffer");
-      return NULL;
+      map = NULL;
+      src_data = NULL;
     }
   else if (buffer->datas[0].type == SPA_DATA_MemFd)
     {
@@ -295,16 +291,24 @@ process_buffer (GrdRdpPipeWireStream *stream,
       return NULL;
     }
 
-  src_stride = buffer->datas[0].chunk->stride;
-  dst_stride = grd_session_rdp_get_framebuffer_stride (stream->session_rdp);
-  height = stream->spa_format.size.height;
-
-  frame->data = g_malloc (height * dst_stride);
-  for (y = 0; y < height; ++y)
+  if (src_data)
     {
-      memcpy (((uint8_t *) frame->data) + y * dst_stride,
-              ((uint8_t *) src_data) + y * src_stride,
-              dst_stride);
+      int src_stride;
+      int dst_stride;
+      int height;
+      int y;
+
+      src_stride = buffer->datas[0].chunk->stride;
+      dst_stride = grd_session_rdp_get_framebuffer_stride (stream->session_rdp);
+      height = stream->spa_format.size.height;
+
+      frame->data = g_malloc (height * dst_stride);
+      for (y = 0; y < height; ++y)
+        {
+          memcpy (((uint8_t *) frame->data) + y * dst_stride,
+                  ((uint8_t *) src_data) + y * src_stride,
+                  dst_stride);
+        }
     }
 
   if (map)
