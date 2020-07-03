@@ -170,6 +170,12 @@ grd_session_vnc_take_buffer (GrdSessionVnc *session_vnc,
 }
 
 void
+grd_session_vnc_flush (GrdSessionVnc *session_vnc)
+{
+  rfbProcessEvents (session_vnc->rfb_screen, 0);
+}
+
+void
 grd_session_vnc_set_cursor (GrdSessionVnc *session_vnc,
                             rfbCursorPtr   rfb_cursor)
 {

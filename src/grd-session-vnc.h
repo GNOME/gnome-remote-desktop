@@ -46,6 +46,8 @@ void grd_session_vnc_queue_resize_framebuffer (GrdSessionVnc *session_vnc,
 void grd_session_vnc_take_buffer (GrdSessionVnc *session_vnc,
                                   void          *data);
 
+void grd_session_vnc_flush (GrdSessionVnc *session_vnc);
+
 void grd_session_vnc_set_cursor (GrdSessionVnc *session_vnc,
                                  rfbCursorPtr   rfb_cursor);
 
