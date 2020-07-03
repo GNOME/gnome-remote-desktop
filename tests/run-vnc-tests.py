@@ -44,7 +44,7 @@ def start_vnc_server():
   vnc_server_path = os.path.join(builddir, 'src', 'gnome-remote-desktop-daemon')
   vnc_server = subprocess.Popen([vnc_server_path, '--vnc-port', '5912'],
                                 stderr=subprocess.STDOUT)
-  time.sleep(1)
+  time.sleep(5)
 
 def stop_vnc_server():
   print("Stopping VNC server")
