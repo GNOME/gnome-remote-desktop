@@ -258,6 +258,8 @@ do_render (struct spa_loop *loop,
 
   if (frame->data)
     grd_session_vnc_take_buffer (stream->session, frame->data);
+  else
+    grd_session_vnc_flush (stream->session);
 
   g_free (frame);
 
