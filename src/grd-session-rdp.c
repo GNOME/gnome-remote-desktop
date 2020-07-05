@@ -40,6 +40,18 @@ typedef enum _RdpPeerFlag
   RDP_PEER_OUTPUT_ENABLED = 1 << 1,
 } RdpPeerFlag;
 
+typedef struct _Pointer
+{
+  uint8_t *bitmap;
+  uint16_t hotspot_x;
+  uint16_t hotspot_y;
+  uint16_t width;
+  uint16_t height;
+
+  uint16_t cache_index;
+  int64_t last_used;
+} Pointer;
+
 struct _GrdSessionRdp
 {
   GrdSession parent;
@@ -49,6 +61,8 @@ struct _GrdSessionRdp
   freerdp_peer *peer;
 
   uint8_t *last_frame;
+  Pointer *last_pointer;
+  GHashTable *pointer_cache;
 
   GThreadPool *thread_pool;
   GCond pending_jobs_cond;
@@ -119,6 +133,10 @@ rdp_peer_refresh_region (freerdp_peer   *peer,
                          cairo_region_t *region,
                          uint8_t        *data);
 
+static gboolean
+are_pointer_bitmaps_equal (gconstpointer a,
+                           gconstpointer b);
+
 void
 grd_session_rdp_resize_framebuffer (GrdSessionRdp *session_rdp,
                                     uint32_t       width,
@@ -172,6 +190,190 @@ grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
     }
 
   g_free (data);
+}
+
+static gboolean
+find_equal_pointer_bitmap (gpointer key,
+                           gpointer value,
+                           gpointer user_data)
+{
+  return are_pointer_bitmaps_equal (value, user_data);
+}
+
+void
+grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
+                                uint16_t       hotspot_x,
+                                uint16_t       hotspot_y,
+                                uint16_t       width,
+                                uint16_t       height,
+                                uint8_t       *data)
+{
+  freerdp_peer *peer = session_rdp->peer;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+  rdpSettings *rdp_settings = peer->settings;
+  rdpUpdate *rdp_update = peer->update;
+  POINTER_NEW_UPDATE pointer_new = {0};
+  POINTER_LARGE_UPDATE pointer_large = {0};
+  POINTER_CACHED_UPDATE pointer_cached = {0};
+  POINTER_COLOR_UPDATE *pointer_color;
+  cairo_rectangle_int_t cairo_rect;
+  Pointer *new_pointer;
+  void *key, *value;
+  uint32_t stride;
+  uint32_t xor_mask_length;
+  uint8_t *xor_mask;
+  uint8_t *src_data, *dst_data;
+  uint8_t r, g, b, a;
+  uint32_t x, y;
+
+  if (!(rdp_peer_context->flags & RDP_PEER_ACTIVATED))
+    {
+      g_free (data);
+      return;
+    }
+
+  /* RDP only handles pointer bitmaps up to 384x384 pixels */
+  if (width > 384 || height > 384)
+    {
+      g_free (data);
+      return;
+    }
+
+  stride = width * 4;
+  if (session_rdp->last_pointer &&
+      session_rdp->last_pointer->hotspot_x == hotspot_x &&
+      session_rdp->last_pointer->hotspot_y == hotspot_y &&
+      session_rdp->last_pointer->width == width &&
+      session_rdp->last_pointer->height == height)
+    {
+      cairo_rect.x = cairo_rect.y = 0;
+      cairo_rect.width = width;
+      cairo_rect.height = height;
+
+      if (!grd_is_tile_dirty (&cairo_rect,
+                              data,
+                              session_rdp->last_pointer->bitmap,
+                              stride, 4))
+        {
+          session_rdp->last_pointer->last_used = g_get_monotonic_time ();
+          g_free (data);
+          return;
+        }
+    }
+
+  new_pointer = g_malloc0 (sizeof (Pointer));
+  new_pointer->bitmap = data;
+  new_pointer->hotspot_x = hotspot_x;
+  new_pointer->hotspot_y = hotspot_y;
+  new_pointer->width = width;
+  new_pointer->height = height;
+  if ((value = g_hash_table_find (session_rdp->pointer_cache,
+                                  find_equal_pointer_bitmap,
+                                  new_pointer)))
+    {
+      session_rdp->last_pointer = (Pointer *) value;
+      session_rdp->last_pointer->last_used = g_get_monotonic_time ();
+      pointer_cached.cacheIndex = session_rdp->last_pointer->cache_index;
+
+      rdp_update->pointer->PointerCached (peer->context, &pointer_cached);
+
+      g_free (new_pointer);
+      g_free (data);
+
+      return;
+    }
+
+  xor_mask_length = height * stride;
+  xor_mask = g_malloc0 (xor_mask_length * sizeof (uint8_t));
+
+  for (y = 0; y < height; ++y)
+    {
+      src_data = &data[stride * (height - 1 - y)];
+      dst_data = &xor_mask[stride * y];
+
+      for (x = 0; x < width; ++x)
+        {
+          r = *src_data++;
+          g = *src_data++;
+          b = *src_data++;
+          a = *src_data++;
+
+          *dst_data++ = b;
+          *dst_data++ = g;
+          *dst_data++ = r;
+          *dst_data++ = a;
+        }
+    }
+
+  new_pointer->cache_index = g_hash_table_size (session_rdp->pointer_cache);
+  if (g_hash_table_size (session_rdp->pointer_cache) >= rdp_settings->PointerCacheSize)
+    {
+      /* Least recently used pointer */
+      Pointer *lru_pointer = NULL;
+      GHashTableIter iter;
+
+      g_hash_table_iter_init (&iter, session_rdp->pointer_cache);
+      while (g_hash_table_iter_next (&iter, &key, &value))
+        {
+          if (!lru_pointer || lru_pointer->last_used > ((Pointer *) key)->last_used)
+            lru_pointer = (Pointer *) key;
+        }
+
+      g_hash_table_steal (session_rdp->pointer_cache, lru_pointer);
+      new_pointer->cache_index = lru_pointer->cache_index;
+
+      g_free (lru_pointer->bitmap);
+      g_free (lru_pointer);
+    }
+
+  new_pointer->last_used = g_get_monotonic_time ();
+
+  if (width <= 96 && height <= 96)
+    {
+      pointer_new.xorBpp = 32;
+      pointer_color = &pointer_new.colorPtrAttr;
+      pointer_color->cacheIndex = new_pointer->cache_index;
+      /* xPos and yPos actually represent the hotspot coordinates of the pointer
+       * instead of the actual pointer position.
+       * FreeRDP just uses a confusing naming convention here.
+       * See also 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
+       * for reference
+       */
+      pointer_color->xPos = hotspot_x;
+      pointer_color->yPos = hotspot_y;
+      pointer_color->width = width;
+      pointer_color->height = height;
+      pointer_color->lengthAndMask = 0;
+      pointer_color->lengthXorMask = xor_mask_length;
+      pointer_color->andMaskData = NULL;
+      pointer_color->xorMaskData = xor_mask;
+      pointer_cached.cacheIndex = pointer_color->cacheIndex;
+
+      rdp_update->pointer->PointerNew (peer->context, &pointer_new);
+    }
+  else
+    {
+      pointer_large.xorBpp = 32;
+      pointer_large.cacheIndex = new_pointer->cache_index;
+      pointer_large.hotSpotX = hotspot_x;
+      pointer_large.hotSpotY = hotspot_y;
+      pointer_large.width = width;
+      pointer_large.height = height;
+      pointer_large.lengthAndMask = 0;
+      pointer_large.lengthXorMask = xor_mask_length;
+      pointer_large.andMaskData = NULL;
+      pointer_large.xorMaskData = xor_mask;
+      pointer_cached.cacheIndex = pointer_large.cacheIndex;
+
+      rdp_update->pointer->PointerLarge (peer->context, &pointer_large);
+    }
+
+  rdp_update->pointer->PointerCached (peer->context, &pointer_cached);
+
+  g_hash_table_add (session_rdp->pointer_cache, new_pointer);
+  session_rdp->last_pointer = new_pointer;
+
+  g_free (xor_mask);
 }
 
 static void
@@ -880,6 +1082,12 @@ rdp_peer_capabilities (freerdp_peer *peer)
       return FALSE;
     }
 
+  if (rdp_settings->PointerCacheSize <= 0)
+    {
+      g_warning ("Client doesn't have a pointer cache, closing connection");
+      return FALSE;
+    }
+
   return TRUE;
 }
 
@@ -898,6 +1106,8 @@ rdp_peer_post_connect (freerdp_peer *peer)
       g_message ("Disabling NSCodec since it does not support fragmentation");
       rdp_settings->NSCodec = FALSE;
     }
+
+  rdp_settings->PointerCacheSize = MIN (rdp_settings->PointerCacheSize, 100);
 
   grd_session_start (GRD_SESSION (session_rdp));
   grd_session_rdp_detach_source (session_rdp);
@@ -1035,6 +1245,7 @@ init_rdp_session (GrdSessionRdp *session_rdp,
 
   session_rdp->peer = peer;
   session_rdp->last_frame = NULL;
+  session_rdp->last_pointer = NULL;
   session_rdp->thread_pool = NULL;
 }
 
@@ -1131,6 +1342,19 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   return session_rdp;
 }
 
+static gboolean
+clear_pointer_bitmap (gpointer key,
+                      gpointer value,
+                      gpointer user_data)
+{
+  Pointer *pointer = (Pointer *) key;
+
+  g_free (pointer->bitmap);
+  g_free (pointer);
+
+  return TRUE;
+}
+
 static void
 grd_session_rdp_stop (GrdSession *session)
 {
@@ -1157,6 +1381,9 @@ grd_session_rdp_stop (GrdSession *session)
   freerdp_peer_free (peer);
 
   g_clear_pointer (&session_rdp->last_frame, g_free);
+  g_hash_table_foreach_remove (session_rdp->pointer_cache,
+                               clear_pointer_bitmap,
+                               NULL);
 
   if (session_rdp->close_session_idle_id)
     {
@@ -1213,8 +1440,46 @@ grd_session_rdp_stream_ready (GrdSession *session,
 }
 
 static void
+grd_session_rdp_dispose (GObject *object)
+{
+  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
+
+  g_clear_pointer (&session_rdp->pointer_cache, g_hash_table_unref);
+
+  G_OBJECT_CLASS (grd_session_rdp_parent_class)->dispose (object);
+}
+
+static gboolean
+are_pointer_bitmaps_equal (gconstpointer a,
+                           gconstpointer b)
+{
+  Pointer *first = (Pointer *) a;
+  Pointer *second = (Pointer *) b;
+  cairo_rectangle_int_t cairo_rect;
+
+  if (first->hotspot_x != second->hotspot_x ||
+      first->hotspot_y != second->hotspot_y ||
+      first->width != second->width ||
+      first->height != second->height)
+    return FALSE;
+
+  cairo_rect.x = cairo_rect.y = 0;
+  cairo_rect.width = first->width;
+  cairo_rect.height = first->height;
+  if (grd_is_tile_dirty (&cairo_rect,
+                         first->bitmap,
+                         second->bitmap,
+                         first->width * 4, 4))
+    return FALSE;
+
+  return TRUE;
+}
+
+static void
 grd_session_rdp_init (GrdSessionRdp *session_rdp)
 {
+  session_rdp->pointer_cache = g_hash_table_new (NULL, are_pointer_bitmaps_equal);
+
   g_cond_init (&session_rdp->pending_jobs_cond);
   g_mutex_init (&session_rdp->pending_jobs_mutex);
 }
@@ -1222,7 +1487,10 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
 static void
 grd_session_rdp_class_init (GrdSessionRdpClass *klass)
 {
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GrdSessionClass *session_class = GRD_SESSION_CLASS (klass);
+
+  object_class->dispose = grd_session_rdp_dispose;
 
   session_class->stop = grd_session_rdp_stop;
   session_class->stream_ready = grd_session_rdp_stream_ready;

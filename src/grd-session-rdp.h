@@ -44,4 +44,11 @@ void grd_session_rdp_resize_framebuffer (GrdSessionRdp *session_rdp,
 void grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
                                   void          *data);
 
+void grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
+                                     uint16_t       hotspot_x,
+                                     uint16_t       hotspot_y,
+                                     uint16_t       width,
+                                     uint16_t       height,
+                                     uint8_t       *data);
+
 #endif /* GRD_SESSION_RDP_H */
