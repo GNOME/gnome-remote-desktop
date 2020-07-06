@@ -44,6 +44,14 @@ static guint signals[N_SIGNALS];
 typedef struct _GrdRdpFrame
 {
   void *data;
+  uint8_t *pointer_bitmap;
+  uint16_t pointer_hotspot_x;
+  uint16_t pointer_hotspot_y;
+  uint16_t pointer_width;
+  uint16_t pointer_height;
+  bool pointer_moved;
+  uint16_t pointer_x;
+  uint16_t pointer_y;
 } GrdRdpFrame;
 
 struct _GrdRdpPipeWireStream
@@ -231,6 +239,19 @@ do_render (struct spa_loop *loop,
   if (frame->data)
     grd_session_rdp_take_buffer (stream->session_rdp, frame->data);
 
+  if (frame->pointer_bitmap)
+    grd_session_rdp_update_pointer (stream->session_rdp,
+                                    frame->pointer_hotspot_x,
+                                    frame->pointer_hotspot_y,
+                                    frame->pointer_width,
+                                    frame->pointer_height,
+                                    frame->pointer_bitmap);
+
+  if (frame->pointer_moved)
+    grd_session_rdp_move_pointer (stream->session_rdp,
+                                  frame->pointer_x,
+                                  frame->pointer_y);
+
   g_free (frame);
 
   return 0;
@@ -243,6 +264,7 @@ process_buffer (GrdRdpPipeWireStream *stream,
   size_t size;
   uint8_t *map;
   void *src_data;
+  struct spa_meta_cursor *spa_meta_cursor;
   g_autofree GrdRdpFrame *frame = NULL;
 
   frame = g_new0 (GrdRdpFrame, 1);
@@ -316,6 +338,42 @@ process_buffer (GrdRdpPipeWireStream *stream,
       if (buffer->datas[0].type == SPA_DATA_DmaBuf)
         grd_sync_dma_buf (buffer->datas[0].fd, DMA_BUF_SYNC_END);
       munmap (map, size);
+    }
+
+  spa_meta_cursor = spa_buffer_find_meta_data (buffer, SPA_META_Cursor,
+                                               sizeof *spa_meta_cursor);
+  if (spa_meta_cursor && spa_meta_cursor_is_valid (spa_meta_cursor))
+    {
+      struct spa_meta_bitmap *spa_meta_bitmap = NULL;
+      GrdPixelFormat format;
+
+      if (spa_meta_cursor->bitmap_offset)
+        {
+          spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
+                                        spa_meta_cursor->bitmap_offset,
+                                        struct spa_meta_bitmap);
+        }
+
+      if (spa_meta_bitmap &&
+          spa_meta_bitmap->size.width > 0 &&
+          spa_meta_bitmap->size.height > 0 &&
+          grd_spa_pixel_format_to_grd_pixel_format (spa_meta_bitmap->format,
+                                                    &format))
+        {
+          uint8_t *buf;
+
+          buf = SPA_MEMBER (spa_meta_bitmap, spa_meta_bitmap->offset, uint8_t);
+          frame->pointer_bitmap = g_memdup (buf, spa_meta_bitmap->size.height *
+                                                 spa_meta_bitmap->stride);
+          frame->pointer_hotspot_x = spa_meta_cursor->hotspot.x;
+          frame->pointer_hotspot_y = spa_meta_cursor->hotspot.y;
+          frame->pointer_width = spa_meta_bitmap->size.width;
+          frame->pointer_height = spa_meta_bitmap->size.height;
+        }
+
+      frame->pointer_moved = true;
+      frame->pointer_x = spa_meta_cursor->position.x;
+      frame->pointer_y = spa_meta_cursor->position.y;
     }
 
   return g_steal_pointer (&frame);
