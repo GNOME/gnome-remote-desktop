@@ -23,6 +23,8 @@
 #include <gio/gio.h>
 #include <stdint.h>
 
+#include "grd-types.h"
+
 #define CURSOR_META_SIZE(width, height) \
  (sizeof(struct spa_meta_cursor) + \
   sizeof(struct spa_meta_bitmap) + width * height * 4)
@@ -35,6 +37,9 @@ typedef struct _GrdPipeWireSource
 } GrdPipeWireSource;
 
 void grd_maybe_initialize_pipewire (void);
+
+gboolean grd_spa_pixel_format_to_grd_pixel_format (uint32_t        spa_format,
+                                                   GrdPixelFormat *out_format);
 
 void grd_sync_dma_buf (int      fd,
                        uint64_t start_or_end);

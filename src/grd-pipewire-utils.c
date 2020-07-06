@@ -24,6 +24,7 @@
 
 #include <linux/dma-buf.h>
 #include <pipewire/pipewire.h>
+#include <spa/param/video/raw.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 
@@ -37,6 +38,18 @@ grd_maybe_initialize_pipewire (void)
       pw_init (NULL, NULL);
       is_pipewire_initialized = TRUE;
     }
+}
+
+gboolean
+grd_spa_pixel_format_to_grd_pixel_format (uint32_t        spa_format,
+                                          GrdPixelFormat *out_format)
+{
+  if (spa_format == SPA_VIDEO_FORMAT_RGBA)
+    *out_format = GRD_PIXEL_FORMAT_RGBA8888;
+  else
+    return FALSE;
+
+  return TRUE;
 }
 
 void

@@ -216,18 +216,6 @@ on_stream_param_changed (void                 *user_data,
                            params, G_N_ELEMENTS (params));
 }
 
-static gboolean
-spa_pixel_format_to_grd_pixel_format (uint32_t        spa_format,
-                                      GrdPixelFormat *out_format)
-{
-  if (spa_format == SPA_VIDEO_FORMAT_RGBA)
-    *out_format = GRD_PIXEL_FORMAT_RGBA8888;
-  else
-    return FALSE;
-
-  return TRUE;
-}
-
 static int
 do_render (struct spa_loop *loop,
            bool             async,
@@ -370,8 +358,8 @@ process_buffer (GrdVncPipeWireStream *stream,
       if (spa_meta_bitmap &&
           spa_meta_bitmap->size.width > 0 &&
           spa_meta_bitmap->size.height > 0 &&
-          spa_pixel_format_to_grd_pixel_format (spa_meta_bitmap->format,
-                                                &format))
+          grd_spa_pixel_format_to_grd_pixel_format (spa_meta_bitmap->format,
+                                                    &format))
         {
           uint8_t *buf;
           rfbCursorPtr rfb_cursor;
