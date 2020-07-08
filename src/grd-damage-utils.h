@@ -21,6 +21,7 @@
 #define GRD_DAMAGE_UTILS_H
 
 #include <cairo/cairo.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 cairo_region_t *grd_get_damage_region (uint8_t  *current_data,
@@ -31,5 +32,11 @@ cairo_region_t *grd_get_damage_region (uint8_t  *current_data,
                                        uint32_t  tile_height,
                                        uint32_t  stride,
                                        uint32_t  bytes_per_pixel);
+
+bool grd_is_tile_dirty (cairo_rectangle_int_t *tile,
+                        uint8_t               *current_data,
+                        uint8_t               *prev_data,
+                        uint32_t               stride,
+                        uint32_t               bytes_per_pixel);
 
 #endif /* GRD_DAMAGE_UTILS_H */

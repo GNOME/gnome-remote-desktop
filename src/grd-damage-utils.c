@@ -21,15 +21,14 @@
 
 #include "grd-damage-utils.h"
 
-#include <stdbool.h>
 #include <string.h>
 
-static bool
-is_tile_dirty (cairo_rectangle_int_t *tile,
-               uint8_t               *current_data,
-               uint8_t               *prev_data,
-               uint32_t               stride,
-               uint32_t               bytes_per_pixel)
+bool
+grd_is_tile_dirty (cairo_rectangle_int_t *tile,
+                   uint8_t               *current_data,
+                   uint8_t               *prev_data,
+                   uint32_t               stride,
+                   uint32_t               bytes_per_pixel)
 {
   uint32_t y;
 
@@ -84,7 +83,7 @@ grd_get_damage_region (uint8_t  *current_data,
           tile.height = desktop_height - tile.y < tile_height ? desktop_height - tile.y
                                                               : tile_height;
 
-          if (is_tile_dirty (&tile, current_data, prev_data, stride, bytes_per_pixel))
+          if (grd_is_tile_dirty (&tile, current_data, prev_data, stride, bytes_per_pixel))
             cairo_region_union_rectangle (damage_region, &tile);
         }
     }
