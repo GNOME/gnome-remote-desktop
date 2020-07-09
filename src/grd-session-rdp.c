@@ -50,10 +50,31 @@ struct _GrdSessionRdp
 
   uint8_t *last_frame;
 
+  GThreadPool *thread_pool;
+  GCond pending_jobs_cond;
+  GMutex pending_jobs_mutex;
+
   unsigned int close_session_idle_id;
 
   GrdRdpPipeWireStream *pipewire_stream;
 };
+
+typedef struct _NSCThreadPoolContext
+{
+  uint32_t pending_job_count;
+  GCond *pending_jobs_cond;
+  GMutex *pending_jobs_mutex;
+
+  uint32_t src_stride;
+  uint8_t *src_data;
+  rdpSettings *rdp_settings;
+} NSCThreadPoolContext;
+
+typedef struct _NSCEncodeContext
+{
+  cairo_rectangle_int_t cairo_rect;
+  wStream *stream;
+} NSCEncodeContext;
 
 typedef struct _RdpPeerContext
 {
@@ -67,20 +88,9 @@ typedef struct _RdpPeerContext
 
   RFX_CONTEXT *rfx_context;
   wStream *encode_stream;
+
+  NSCThreadPoolContext nsc_thread_pool_context;
 } RdpPeerContext;
-
-typedef struct _NSCThreadPoolContext
-{
-  uint32_t src_stride;
-  uint8_t *src_data;
-  rdpSettings *rdp_settings;
-} NSCThreadPoolContext;
-
-typedef struct _NSCEncodeContext
-{
-  cairo_rectangle_int_t cairo_rect;
-  wStream *stream;
-} NSCEncodeContext;
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION);
 
@@ -308,6 +318,11 @@ rdp_peer_encode_nsc_rect (gpointer data,
                        src_stride);
 
   nsc_context_free (nsc_context);
+
+  g_mutex_lock (thread_pool_context->pending_jobs_mutex);
+  --thread_pool_context->pending_job_count;
+  g_cond_signal (thread_pool_context->pending_jobs_cond);
+  g_mutex_unlock (thread_pool_context->pending_jobs_mutex);
 }
 
 static void
@@ -320,10 +335,11 @@ rdp_peer_refresh_nsc (freerdp_peer   *peer,
   rdpSettings *rdp_settings = peer->settings;
   rdpUpdate *rdp_update = peer->update;
   uint32_t src_stride = grd_session_rdp_get_framebuffer_stride (session_rdp);
+  NSCThreadPoolContext *thread_pool_context =
+    &rdp_peer_context->nsc_thread_pool_context;
+  g_autoptr (GError) error = NULL;
   cairo_rectangle_int_t *cairo_rect;
   int n_rects;
-  GThreadPool *thread_pool;
-  NSCThreadPoolContext thread_pool_context;
   NSCEncodeContext *encode_contexts;
   NSCEncodeContext *encode_context;
   SURFACE_BITS_COMMAND cmd = {0};
@@ -331,28 +347,43 @@ rdp_peer_refresh_nsc (freerdp_peer   *peer,
   int i;
 
   n_rects = cairo_region_num_rectangles (region);
-  if (!(encode_contexts = g_malloc0 (n_rects * sizeof (NSCEncodeContext))))
-    return;
+  encode_contexts = g_malloc0 (n_rects * sizeof (NSCEncodeContext));
 
-  thread_pool_context.src_stride = src_stride;
-  thread_pool_context.src_data = data;
-  thread_pool_context.rdp_settings = rdp_settings;
+  thread_pool_context->pending_job_count = 0;
+  thread_pool_context->pending_jobs_cond = &session_rdp->pending_jobs_cond;
+  thread_pool_context->pending_jobs_mutex = &session_rdp->pending_jobs_mutex;
+  thread_pool_context->src_stride = src_stride;
+  thread_pool_context->src_data = data;
+  thread_pool_context->rdp_settings = rdp_settings;
 
-  thread_pool = g_thread_pool_new (rdp_peer_encode_nsc_rect,
-                                   &thread_pool_context,
-                                   g_get_num_processors (),
-                                   TRUE,
-                                   NULL);
+  if (!session_rdp->thread_pool)
+    session_rdp->thread_pool = g_thread_pool_new (rdp_peer_encode_nsc_rect,
+                                                  thread_pool_context,
+                                                  g_get_num_processors (),
+                                                  TRUE,
+                                                  &error);
+  if (!session_rdp->thread_pool)
+    {
+      g_free (encode_contexts);
+      g_error ("Couldn't create thread pool: %s", error->message);
+    }
 
+  g_mutex_lock (&session_rdp->pending_jobs_mutex);
   for (i = 0; i < n_rects; ++i)
     {
       encode_context = &encode_contexts[i];
       cairo_region_get_rectangle (region, i, &encode_context->cairo_rect);
 
-      g_thread_pool_push (thread_pool, encode_context, NULL);
+      ++thread_pool_context->pending_job_count;
+      g_thread_pool_push (session_rdp->thread_pool, encode_context, NULL);
     }
 
-  g_thread_pool_free (thread_pool, FALSE, TRUE);
+  while (thread_pool_context->pending_job_count)
+    {
+      g_cond_wait (&session_rdp->pending_jobs_cond,
+                   &session_rdp->pending_jobs_mutex);
+    }
+  g_mutex_unlock (&session_rdp->pending_jobs_mutex);
 
   cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
   cmd.bmp.bpp = 32;
@@ -722,6 +753,7 @@ init_rdp_session (GrdSessionRdp *session_rdp,
 
   session_rdp->peer = peer;
   session_rdp->last_frame = NULL;
+  session_rdp->thread_pool = NULL;
 }
 
 static gboolean
@@ -835,6 +867,9 @@ grd_session_rdp_stop (GrdSession *session)
   if (rdp_peer_context->sam_file)
     grd_rdp_sam_maybe_close_and_free_sam_file (rdp_peer_context->sam_file);
 
+  if (session_rdp->thread_pool)
+    g_thread_pool_free (session_rdp->thread_pool, FALSE, TRUE);
+
   peer->Disconnect (peer);
   freerdp_peer_context_free (peer);
   freerdp_peer_free (peer);
@@ -898,6 +933,8 @@ grd_session_rdp_stream_ready (GrdSession *session,
 static void
 grd_session_rdp_init (GrdSessionRdp *session_rdp)
 {
+  g_cond_init (&session_rdp->pending_jobs_cond);
+  g_mutex_init (&session_rdp->pending_jobs_mutex);
 }
 
 static void
