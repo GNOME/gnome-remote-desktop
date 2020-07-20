@@ -287,8 +287,8 @@ grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
       return;
     }
 
-  xor_mask_length = height * stride;
-  xor_mask = g_malloc0 (xor_mask_length * sizeof (uint8_t));
+  xor_mask_length = height * stride * sizeof (uint8_t);
+  xor_mask = g_malloc0 (xor_mask_length);
 
   for (y = 0; y < height; ++y)
     {
