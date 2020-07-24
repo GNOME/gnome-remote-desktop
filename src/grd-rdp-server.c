@@ -21,6 +21,7 @@
 
 #include "grd-rdp-server.h"
 
+#include <freerdp/channels/channels.h>
 #include <freerdp/freerdp.h>
 #include <gio/gio.h>
 #include <winpr/ssl.h>
@@ -218,6 +219,7 @@ static void
 grd_rdp_server_init (GrdRdpServer *rdp_server)
 {
   winpr_InitializeSSL (WINPR_SSL_INIT_DEFAULT);
+  WTSRegisterWtsApiFunctionTable (FreeRDP_InitWtsApi ());
 }
 
 static void
