@@ -21,6 +21,7 @@
 
 #include "grd-session-rdp.h"
 
+#include <freerdp/channels/wtsvc.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
 #include <gio/gio.h>
@@ -139,6 +140,9 @@ typedef struct _RdpPeerContext
   RawThreadPoolContext raw_thread_pool_context;
 
   uint16_t planar_flags;
+
+  /* Virtual Channel Manager */
+  HANDLE vcm;
 } RdpPeerContext;
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION);
@@ -1349,6 +1353,8 @@ rdp_peer_context_new (freerdp_peer   *peer,
     rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_NA;
   rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_RLE;
 
+  rdp_peer_context->vcm = WTSOpenServerA ((LPSTR) peer->context);
+
   rdp_peer_context->flags = RDP_PEER_OUTPUT_ENABLED;
 
   return TRUE;
@@ -1360,6 +1366,8 @@ rdp_peer_context_free (freerdp_peer   *peer,
 {
   if (!rdp_peer_context)
     return;
+
+  g_clear_pointer (&rdp_peer_context->vcm, WTSCloseServer);
 
   if (rdp_peer_context->encode_stream)
     Stream_Free (rdp_peer_context->encode_stream, TRUE);
@@ -1458,9 +1466,10 @@ handle_socket_data (GSocket      *socket,
 
   if (condition & G_IO_IN)
     {
-      if (!peer->CheckFileDescriptor (peer))
+      if (!peer->CheckFileDescriptor (peer) ||
+          !WTSVirtualChannelManagerCheckFileDescriptor (rdp_peer_context->vcm))
         {
-          g_message ("Unable to check file descriptor, closing connection");
+          g_message ("Unable to check (VCM) file descriptor, closing connection");
           rdp_peer_context->flags &= ~RDP_PEER_ACTIVATED;
           handle_client_gone (session_rdp);
 
