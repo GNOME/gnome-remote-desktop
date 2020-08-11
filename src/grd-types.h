@@ -24,6 +24,7 @@
 #define GRD_TYPES_H
 
 typedef struct _GrdContext GrdContext;
+typedef struct _GrdClipboard GrdClipboard;
 typedef struct _GrdRdpSAMFile GrdRdpSAMFile;
 typedef struct _GrdRdpServer GrdRdpServer;
 typedef struct _GrdSession GrdSession;

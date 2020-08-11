@@ -1,4 +1,6 @@
 daemon_sources = files([
+  'grd-clipboard.c',
+  'grd-clipboard.h',
   'grd-context.c',
   'grd-context.h',
   'grd-daemon.c',
