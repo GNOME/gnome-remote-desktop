@@ -11,6 +11,8 @@ gnome = import('gnome')
 
 cairo_dep = dependency('cairo')
 freerdp_dep = dependency('freerdp2', version: freerdp_req)
+freerdp_client_dep = dependency('freerdp-client2', version: freerdp_req)
+freerdp_server_dep = dependency('freerdp-server2', version: freerdp_req)
 glib_dep = dependency('glib-2.0')
 gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')
