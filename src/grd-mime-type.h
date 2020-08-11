@@ -20,6 +20,8 @@
 #ifndef GRD_MIME_TYPE_H
 #define GRD_MIME_TYPE_H
 
+#include <stdint.h>
+
 typedef enum _GrdMimeType
 {
   GRD_MIME_TYPE_NONE,
@@ -39,6 +41,11 @@ typedef enum _GrdMimeType
 typedef struct _GrdMimeTypeTable
 {
   GrdMimeType mime_type;
+
+  struct
+  {
+    uint32_t format_id;
+  } rdp;
 } GrdMimeTypeTable;
 
 const char *grd_mime_type_to_string (GrdMimeType mime_type);
