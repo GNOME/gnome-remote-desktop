@@ -3,6 +3,8 @@ daemon_sources = files([
   'grd-clipboard.h',
   'grd-clipboard-rdp.c',
   'grd-clipboard-rdp.h',
+  'grd-clipboard-vnc.c',
+  'grd-clipboard-vnc.h',
   'grd-context.c',
   'grd-context.h',
   'grd-daemon.c',

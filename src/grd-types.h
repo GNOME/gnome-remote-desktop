@@ -26,6 +26,7 @@
 typedef struct _GrdContext GrdContext;
 typedef struct _GrdClipboard GrdClipboard;
 typedef struct _GrdClipboardRdp GrdClipboardRdp;
+typedef struct _GrdClipboardVnc GrdClipboardVnc;
 typedef struct _GrdRdpEventQueue GrdRdpEventQueue;
 typedef struct _GrdRdpSAMFile GrdRdpSAMFile;
 typedef struct _GrdRdpServer GrdRdpServer;
