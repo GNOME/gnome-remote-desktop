@@ -30,6 +30,7 @@
 #include <xkbcommon/xkbcommon.h>
 #endif
 
+#include "grd-clipboard-rdp.h"
 #include "grd-context.h"
 #include "grd-damage-utils.h"
 #include "grd-rdp-event-queue.h"
@@ -150,6 +151,8 @@ typedef struct _RdpPeerContext
 
   /* Virtual Channel Manager */
   HANDLE vcm;
+
+  GrdClipboardRdp *clipboard_rdp;
 } RdpPeerContext;
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION);
@@ -1661,6 +1664,8 @@ grd_session_rdp_stop (GrdSession *session)
 
   g_clear_object (&session_rdp->pipewire_stream);
 
+  g_clear_object (&rdp_peer_context->clipboard_rdp);
+
   peer->Close (peer);
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
   g_clear_object (&session_rdp->connection);
@@ -1712,6 +1717,18 @@ on_pipewire_stream_closed (GrdRdpPipeWireStream *stream,
   g_warning ("PipeWire stream closed, closing client");
 
   maybe_queue_close_session_idle (session_rdp);
+}
+
+static void
+grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
+{
+  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
+  freerdp_peer *peer = session_rdp->peer;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+
+  rdp_peer_context->clipboard_rdp = grd_clipboard_rdp_new (session_rdp,
+                                                           rdp_peer_context->vcm,
+                                                           session_rdp->stop_event);
 }
 
 static void
@@ -1799,6 +1816,8 @@ grd_session_rdp_class_init (GrdSessionRdpClass *klass)
 
   object_class->dispose = grd_session_rdp_dispose;
 
+  session_class->remote_desktop_session_ready =
+    grd_session_rdp_remote_desktop_session_ready;
   session_class->stop = grd_session_rdp_stop;
   session_class->stream_ready = grd_session_rdp_stream_ready;
 }
