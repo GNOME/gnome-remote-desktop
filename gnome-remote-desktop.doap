@@ -4,17 +4,22 @@
          xmlns:gnome="http://api.gnome.org/doap-extensions#"
          xmlns="http://usefulinc.com/ns/doap#">
 
-  <name xml:lang="en">GNOME Remote Desktop</name>
-  <shortdesc xml:lang="en">Remote desktop service for GNOME</shortdesc>
-  <description>GNOME Remote Desktop implements remote desktop functionality for
-the GNOME platform.</description>
+  <name xml:lang="en">gnome-remote-desktop</name>
+  <shortdesc xml:lang="en">GNOME Remote Desktop</shortdesc>
+  <description>Remote desktop daemon for GNOME using pipewire.</description>
+  <!--
+  <homepage rdf:resource="http://www.gnome.org/" />
+  -->
+  <download-page rdf:resource="http://download.gnome.org/sources/gnome-remote-desktop/" />
+  <bug-database rdf:resource="https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues/" />
 
+  <category rdf:resource="http://api.gnome.org/doap-extensions#core" />
   <programming-language>C</programming-language>
 
   <maintainer>
     <foaf:Person>
       <foaf:name>Jonas Ådahl</foaf:name>
-      <foaf:mbox rdf:resource="mailto:jadahl@redhat.com" />
+      <foaf:mbox rdf:resource="mailto:jadahl@gmail.com" />
       <gnome:userid>jadahl</gnome:userid>
     </foaf:Person>
   </maintainer>
