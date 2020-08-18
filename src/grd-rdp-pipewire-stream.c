@@ -408,6 +408,7 @@ on_stream_process (void *user_data)
   if (stream->pending_frame)
     {
       g_free (stream->pending_frame->data);
+      g_free (stream->pending_frame->pointer_bitmap);
       g_clear_pointer (&stream->pending_frame, g_free);
     }
   stream->pending_frame = frame;
