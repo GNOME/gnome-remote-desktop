@@ -209,9 +209,9 @@ on_stream_param_changed (void                 *user_data,
     &pod_builder,
     SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
     SPA_PARAM_META_type, SPA_POD_Id (SPA_META_Cursor),
-    SPA_PARAM_META_size, SPA_POD_CHOICE_RANGE_Int (CURSOR_META_SIZE (64, 64),
+    SPA_PARAM_META_size, SPA_POD_CHOICE_RANGE_Int (CURSOR_META_SIZE (384, 384),
                                                    CURSOR_META_SIZE (1, 1),
-                                                   CURSOR_META_SIZE (256, 256)),
+                                                   CURSOR_META_SIZE (384, 384)),
     0);
 
   pw_stream_update_params (stream->pipewire_stream,
