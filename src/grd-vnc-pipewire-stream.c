@@ -234,6 +234,14 @@ do_render (struct spa_loop *loop,
   if (!frame)
     return 0;
 
+  if (grd_session_vnc_is_client_gone (stream->session))
+    {
+      g_free (frame->data);
+      g_clear_pointer (&frame->rfb_cursor, rfbFreeCursor);
+      g_free (frame);
+      return 0;
+    }
+
   if (frame->rfb_cursor)
     grd_session_vnc_set_cursor (stream->session, frame->rfb_cursor);
 

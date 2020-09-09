@@ -57,4 +57,6 @@ void grd_session_vnc_move_cursor (GrdSessionVnc *session_vnc,
 
 int grd_session_vnc_get_framebuffer_stride (GrdSessionVnc *session_vnc);
 
+gboolean grd_session_vnc_is_client_gone (GrdSessionVnc *session_vnc);
+
 #endif /* GRD_SESSION_VNC_H */

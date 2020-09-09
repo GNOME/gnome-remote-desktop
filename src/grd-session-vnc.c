@@ -209,6 +209,12 @@ maybe_queue_close_session_idle (GrdSessionVnc *session_vnc)
     g_idle_add (close_session_idle, session_vnc);
 }
 
+gboolean
+grd_session_vnc_is_client_gone (GrdSessionVnc *session_vnc)
+{
+  return !session_vnc->rfb_client;
+}
+
 static void
 handle_client_gone (rfbClientPtr rfb_client)
 {
@@ -218,6 +224,7 @@ handle_client_gone (rfbClientPtr rfb_client)
 
   grd_session_vnc_detach_source (session_vnc);
   maybe_queue_close_session_idle (session_vnc);
+  session_vnc->rfb_client = NULL;
 }
 
 static void
