@@ -41,14 +41,14 @@ create_sam_string (const char *username,
   username_length = strlen (username);
   password_length = strlen (password);
 
-  sam_string = g_malloc0 ((username_length + 3 + 32 + 3 + 1) * sizeof (char));
+  sam_string = g_malloc0 ((username_length + 3 + 32 + 3 + 1 + 1) * sizeof (char));
 
   NTOWFv1A ((LPSTR) password, password_length, nt_hash);
 
   sprintf (sam_string, "%s:::", username);
   for (i = 0; i < 16; ++i)
     sprintf (sam_string + strlen (sam_string), "%02" PRIx8 "", nt_hash[i]);
-  sprintf (sam_string + strlen (sam_string), ":::");
+  sprintf (sam_string + strlen (sam_string), ":::\n");
 
   return sam_string;
 }
