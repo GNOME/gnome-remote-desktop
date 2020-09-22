@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Red Hat Inc.
+ * Copyright (C) 2020 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -26,6 +27,7 @@
 #include <glib-object.h>
 #include <stdint.h>
 
+#include "grd-mime-type.h"
 #include "grd-types.h"
 
 #define GRD_TYPE_SESSION (grd_session_get_type ())
@@ -88,6 +90,19 @@ void grd_session_notify_pointer_axis_discrete (GrdSession     *session,
 void grd_session_notify_pointer_motion_absolute (GrdSession *session,
                                                  double      x,
                                                  double      y);
+
+gboolean grd_session_enable_clipboard (GrdSession   *session,
+                                       GrdClipboard *clipboard,
+                                       GList        *mime_type_tables);
+
+void grd_session_disable_clipboard (GrdSession *session);
+
+void grd_session_set_selection (GrdSession *session,
+                                GList      *mime_type_tables);
+
+uint8_t *grd_session_selection_read (GrdSession  *session,
+                                     GrdMimeType  mime_type,
+                                     uint32_t    *size);
 
 void grd_session_start (GrdSession *session);
 
