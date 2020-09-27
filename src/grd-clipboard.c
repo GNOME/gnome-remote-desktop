@@ -21,14 +21,98 @@
 
 #include "grd-clipboard.h"
 
+#include "grd-session.h"
+
 typedef struct _GrdClipboardPrivate
 {
   GrdSession *session;
+
+  gboolean enabled;
 
   GHashTable *client_mime_type_tables;
 } GrdClipboardPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdClipboard, grd_clipboard, G_TYPE_OBJECT);
+
+void
+grd_clipboard_update_server_mime_type_list (GrdClipboard *clipboard,
+                                            GList        *mime_type_tables)
+{
+  GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
+  GList *l;
+
+  for (l = mime_type_tables; l; l = l->next)
+    {
+      GrdMimeTypeTable *mime_type_table = l->data;
+      GrdMimeType mime_type;
+
+      mime_type = mime_type_table->mime_type;
+      g_hash_table_insert (priv->client_mime_type_tables,
+                           GUINT_TO_POINTER (mime_type), mime_type_table);
+    }
+
+  if (!priv->enabled)
+    {
+      priv->enabled = grd_session_enable_clipboard (priv->session,
+                                                    clipboard, mime_type_tables);
+    }
+  else
+    {
+      if (mime_type_tables)
+        grd_session_set_selection (priv->session, mime_type_tables);
+    }
+
+  g_list_free (mime_type_tables);
+}
+
+uint8_t *
+grd_clipboard_request_server_content_for_mime_type (GrdClipboard *clipboard,
+                                                    GrdMimeType   mime_type,
+                                                    uint32_t     *size)
+{
+  GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
+  uint8_t *data;
+
+  *size = 0;
+  if (!priv->enabled)
+    return NULL;
+
+  data = grd_session_selection_read (priv->session, mime_type, size);
+
+  return data;
+}
+
+void
+grd_clipboard_initialize (GrdClipboard *clipboard,
+                          GrdSession   *session)
+{
+  GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
+
+  priv->session = session;
+}
+
+void
+grd_clipboard_maybe_enable_clipboard (GrdClipboard *clipboard)
+{
+  GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
+
+  if (priv->enabled)
+    return;
+
+  priv->enabled = grd_session_enable_clipboard (priv->session, clipboard, NULL);
+}
+
+void
+grd_clipboard_disable_clipboard (GrdClipboard *clipboard)
+{
+  GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
+
+  if (!priv->enabled)
+    return;
+
+  grd_session_disable_clipboard (priv->session);
+  priv->enabled = FALSE;
+}
 
 void
 grd_clipboard_update_client_mime_type_list (GrdClipboard *clipboard,

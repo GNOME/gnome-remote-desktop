@@ -40,6 +40,20 @@ struct _GrdClipboardClass
                                                     uint32_t         *size);
 };
 
+void grd_clipboard_update_server_mime_type_list (GrdClipboard *clipboard,
+                                                 GList        *mime_type_tables);
+
+uint8_t *grd_clipboard_request_server_content_for_mime_type (GrdClipboard *clipboard,
+                                                             GrdMimeType   mime_type,
+                                                             uint32_t     *size);
+
+void grd_clipboard_initialize (GrdClipboard *clipboard,
+                               GrdSession   *session);
+
+void grd_clipboard_maybe_enable_clipboard (GrdClipboard *clipboard);
+
+void grd_clipboard_disable_clipboard (GrdClipboard *clipboard);
+
 void grd_clipboard_update_client_mime_type_list (GrdClipboard *clipboard,
                                                  GList        *mime_type_list);
 
