@@ -26,6 +26,8 @@ if not have_rdp and not have_vnc
 endif
 
 if have_rdp
+  add_global_arguments('-D_GNU_SOURCE', language : 'c')
+
   freerdp_dep = dependency('freerdp2', version: freerdp_req)
   freerdp_client_dep = dependency('freerdp-client2', version: freerdp_req)
   freerdp_server_dep = dependency('freerdp-server2', version: freerdp_req)
