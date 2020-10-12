@@ -519,9 +519,10 @@ check_rfb_password (rfbClientPtr  rfb_client,
 }
 
 int
-grd_session_vnc_get_framebuffer_stride (GrdSessionVnc *session_vnc)
+grd_session_vnc_get_stride_for_width (GrdSessionVnc *session_vnc,
+                                      int            width)
 {
-  return session_vnc->rfb_screen->paddedWidthInBytes;
+  return width * BGRX_BYTES_PER_PIXEL;
 }
 
 static void

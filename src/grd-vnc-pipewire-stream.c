@@ -326,10 +326,11 @@ process_buffer (GrdVncPipeWireStream *stream,
       int height;
       int y;
 
-      src_stride = buffer->datas[0].chunk->stride;
-      dst_stride = grd_session_vnc_get_framebuffer_stride (stream->session);
       height = stream->spa_format.size.height;
       width = stream->spa_format.size.width;
+      src_stride = buffer->datas[0].chunk->stride;
+      dst_stride = grd_session_vnc_get_stride_for_width (stream->session,
+                                                         width);
 
       frame->data = g_malloc (height * dst_stride);
       for (y = 0; y < height; y++)
