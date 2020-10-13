@@ -165,6 +165,15 @@ grd_session_rdp_resize_framebuffer (GrdSessionRdp *session_rdp,
                      rdp_settings->DesktopHeight);
 }
 
+static int
+grd_session_rdp_get_framebuffer_stride (GrdSessionRdp *session_rdp)
+{
+  rdpSettings *rdp_settings = session_rdp->peer->settings;
+
+  return grd_session_rdp_get_stride_for_width (session_rdp,
+                                               rdp_settings->DesktopWidth);
+}
+
 void
 grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
                              void          *data)
@@ -1211,11 +1220,10 @@ rdp_peer_context_free (freerdp_peer   *peer,
 }
 
 int
-grd_session_rdp_get_framebuffer_stride (GrdSessionRdp *session_rdp)
+grd_session_rdp_get_stride_for_width (GrdSessionRdp *session_rdp,
+                                      int            width)
 {
-  rdpSettings *rdp_settings = session_rdp->peer->settings;
-
-  return rdp_settings->DesktopWidth * 4;
+  return width * 4;
 }
 
 static void
