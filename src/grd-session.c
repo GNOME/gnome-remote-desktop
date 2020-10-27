@@ -685,6 +685,7 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
 {
   GrdSession *session = user_data;
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  GrdSessionClass *klass = GRD_SESSION_GET_CLASS (session);
   GrdDBusRemoteDesktopSession *session_proxy;
   GError *error = NULL;
   const char *remote_desktop_session_id;
@@ -735,6 +736,9 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
                                             priv->cancellable,
                                             on_screen_cast_session_created,
                                             session);
+
+  if (klass->remote_desktop_session_ready)
+    klass->remote_desktop_session_ready (session);
 }
 
 static void
