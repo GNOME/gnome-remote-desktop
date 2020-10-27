@@ -28,9 +28,9 @@
 
 #include "grd-context.h"
 #include "grd-damage-utils.h"
+#include "grd-rdp-pipewire-stream.h"
 #include "grd-rdp-sam.h"
 #include "grd-rdp-server.h"
-#include "grd-rdp-pipewire-stream.h"
 #include "grd-settings.h"
 #include "grd-stream.h"
 
