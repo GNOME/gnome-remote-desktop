@@ -41,26 +41,36 @@ grd_clipboard_update_server_mime_type_list (GrdClipboard *clipboard,
   GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
   GList *l;
 
+  g_debug ("Clipboard[SetSelection]: Updating servers clipboard");
   for (l = mime_type_tables; l; l = l->next)
     {
       GrdMimeTypeTable *mime_type_table = l->data;
       GrdMimeType mime_type;
 
       mime_type = mime_type_table->mime_type;
+      g_debug ("Clipboard[SetSelection]: Update contains mime type %s",
+               grd_mime_type_to_string (mime_type));
+
       g_hash_table_insert (priv->client_mime_type_tables,
                            GUINT_TO_POINTER (mime_type), mime_type_table);
     }
 
   if (!priv->enabled)
     {
+      g_debug ("Clipboard[EnableClipboard]: Enabling clipboard");
       priv->enabled = grd_session_enable_clipboard (priv->session,
                                                     clipboard, mime_type_tables);
+      if (priv->enabled)
+        g_debug ("Clipboard[EnableClipboard]: Clipboard enabled");
+      else
+        g_debug ("Clipboard[EnableClipboard]: Clipboard could not be enabled");
     }
   else
     {
       if (mime_type_tables)
         grd_session_set_selection (priv->session, mime_type_tables);
     }
+  g_debug ("Clipboard[SetSelection]: Update complete");
 
   g_list_free (mime_type_tables);
 }
@@ -77,7 +87,13 @@ grd_clipboard_request_server_content_for_mime_type (GrdClipboard *clipboard,
   if (!priv->enabled)
     return NULL;
 
+  g_debug ("Clipboard[SelectionRead]: Requesting data from servers clipboard"
+           " (mime type: %s)", grd_mime_type_to_string (mime_type));
   data = grd_session_selection_read (priv->session, mime_type, size);
+  if (data)
+    g_debug ("Clipboard[SelectionRead]: Request successful");
+  else
+    g_debug ("Clipboard[SelectionRead]: Request failed");
 
   return data;
 }
@@ -96,10 +112,18 @@ grd_clipboard_maybe_enable_clipboard (GrdClipboard *clipboard)
 {
   GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
 
+  g_debug ("Clipboard[EnableClipboard]: Enabling clipboard");
   if (priv->enabled)
-    return;
+    {
+      g_debug ("Clipboard[EnableClipboard]: Clipboard already enabled");
+      return;
+    }
 
   priv->enabled = grd_session_enable_clipboard (priv->session, clipboard, NULL);
+  if (priv->enabled)
+    g_debug ("Clipboard[EnableClipboard]: Clipboard enabled");
+  else
+    g_debug ("Clipboard[EnableClipboard]: Clipboard could not be enabled");
 }
 
 void
@@ -110,6 +134,7 @@ grd_clipboard_disable_clipboard (GrdClipboard *clipboard)
   if (!priv->enabled)
     return;
 
+  g_debug ("Clipboard[DisableClipboard]: Disabling clipboard");
   grd_session_disable_clipboard (priv->session);
   priv->enabled = FALSE;
 }
@@ -128,7 +153,9 @@ grd_clipboard_update_client_mime_type_list (GrdClipboard *clipboard,
   for (l = mime_type_list; l; l = l->next)
     g_hash_table_remove (priv->client_mime_type_tables, l->data);
 
+  g_debug ("Clipboard[SelectionOwnerChanged]: Updating clients clipboard");
   klass->update_client_mime_type_list (clipboard, mime_type_list);
+  g_debug ("Clipboard[SelectionOwnerChanged]: Update complete");
 }
 
 uint8_t *
@@ -146,6 +173,8 @@ grd_clipboard_request_client_content_for_mime_type (GrdClipboard *clipboard,
   if (!klass->request_client_content_for_mime_type)
     return NULL;
 
+  g_debug ("Clipboard[SelectionTransfer]: Requesting data from clients clipboard"
+           " (mime type: %s)", grd_mime_type_to_string (mime_type));
   mime_type_table = g_hash_table_lookup (priv->client_mime_type_tables,
                                          GUINT_TO_POINTER (mime_type));
   if (mime_type_table)
@@ -153,6 +182,10 @@ grd_clipboard_request_client_content_for_mime_type (GrdClipboard *clipboard,
       mime_type_content = klass->request_client_content_for_mime_type (
                             clipboard, mime_type_table, size);
     }
+  if (mime_type_content)
+    g_debug ("Clipboard[SelectionTransfer]: Request successful");
+  else
+    g_debug ("Clipboard[SelectionTransfer]: Request failed");
 
   return mime_type_content;
 }
