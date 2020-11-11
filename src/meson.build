@@ -39,6 +39,8 @@ if have_rdp
     'grd-clipboard-rdp.h',
     'grd-rdp-event-queue.c',
     'grd-rdp-event-queue.h',
+    'grd-rdp-fuse-clipboard.c',
+    'grd-rdp-fuse-clipboard.h',
     'grd-rdp-pipewire-stream.c',
     'grd-rdp-pipewire-stream.h',
     'grd-rdp-sam.c',
@@ -52,6 +54,7 @@ if have_rdp
     freerdp_dep,
     freerdp_client_dep,
     freerdp_server_dep,
+    fuse_dep,
     winpr_dep,
     xkbcommon_dep,
   ]

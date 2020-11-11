@@ -5,6 +5,7 @@ project('gnome-remote-desktop', 'c',
                           'buildtype=debugoptimized'])
 
 freerdp_req = '>= 2.2.0'
+fuse_req = '>= 3.9.1'
 xkbcommon_req = '>= 1.0.0'
 
 gnome = import('gnome')
@@ -31,6 +32,7 @@ if have_rdp
   freerdp_dep = dependency('freerdp2', version: freerdp_req)
   freerdp_client_dep = dependency('freerdp-client2', version: freerdp_req)
   freerdp_server_dep = dependency('freerdp-server2', version: freerdp_req)
+  fuse_dep = dependency('fuse3', version: fuse_req)
   winpr_dep = dependency('winpr2', version: freerdp_req)
   xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
 endif

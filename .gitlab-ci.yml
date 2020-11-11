@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora:33@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 33
-    BASE_TAG: '2021-02-04.0'
+    BASE_TAG: '2021-02-05.0'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -24,6 +24,7 @@ stages:
       dnf install -y 'pkgconfig(libvncclient)' &&
       dnf remove -y pipewire0.2-devel pipewire0.2-libs &&
       dnf install -y 'pkgconfig(libpipewire-0.3)' &&
+      dnf install -y 'pkgconfig(fuse3)' &&
       dnf install -y dbus-daemon xorg-x11-server-Xvfb python3-dbus \
                      python3-gobject gnome-settings-daemon mesa-dri-drivers \
                      xorg-x11-server-Xwayland mutter &&
