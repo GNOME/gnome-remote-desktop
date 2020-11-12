@@ -34,4 +34,14 @@ GrdClipboardRdp *grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
                                         HANDLE         vcm,
                                         HANDLE         stop_event);
 
+void grd_clipboard_rdp_request_remote_file_size_async (GrdClipboardRdp *clipboard_rdp,
+                                                       uint32_t         stream_id,
+                                                       uint32_t         list_index);
+
+void grd_clipboard_rdp_request_remote_file_range_async (GrdClipboardRdp *clipboard_rdp,
+                                                        uint32_t         stream_id,
+                                                        uint32_t         list_index,
+                                                        uint64_t         offset,
+                                                        uint32_t         requested_size);
+
 #endif /* GRD_CLIPBOARD_RDP_H */

@@ -464,6 +464,24 @@ request_remote_file_size (GrdClipboardRdp *clipboard_rdp,
   return FALSE;
 }
 
+void
+grd_clipboard_rdp_request_remote_file_size_async (GrdClipboardRdp *clipboard_rdp,
+                                                  uint32_t         stream_id,
+                                                  uint32_t         list_index)
+{
+  CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
+  CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = {0};
+
+  file_contents_request.msgType = CB_FILECONTENTS_REQUEST;
+  file_contents_request.streamId = stream_id;
+  file_contents_request.listIndex = list_index;
+  file_contents_request.dwFlags = FILECONTENTS_SIZE;
+  file_contents_request.cbRequested = 0x8;
+
+  cliprdr_context->ServerFileContentsRequest (cliprdr_context,
+                                              &file_contents_request);
+}
+
 static uint8_t *
 request_remote_file_data (GrdClipboardRdp *clipboard_rdp,
                           uint32_t         stream_id,
@@ -508,6 +526,29 @@ request_remote_file_data (GrdClipboardRdp *clipboard_rdp,
     }
 
   return requested_data;
+}
+
+void
+grd_clipboard_rdp_request_remote_file_range_async (GrdClipboardRdp *clipboard_rdp,
+                                                   uint32_t         stream_id,
+                                                   uint32_t         list_index,
+                                                   uint64_t         offset,
+                                                   uint32_t         requested_size)
+{
+  CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
+  CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = {0};
+
+  file_contents_request.msgType = CB_FILECONTENTS_REQUEST;
+  file_contents_request.streamId = stream_id;
+  file_contents_request.listIndex = list_index;
+  file_contents_request.dwFlags = FILECONTENTS_RANGE;
+  file_contents_request.nPositionLow = offset & 0xFFFFFFFF;
+  file_contents_request.nPositionHigh = offset >> 32 & 0xFFFFFFFF;
+  file_contents_request.cbRequested = requested_size;
+  file_contents_request.haveClipDataId = FALSE;
+
+  cliprdr_context->ServerFileContentsRequest (cliprdr_context,
+                                              &file_contents_request);
 }
 
 static uint8_t *
