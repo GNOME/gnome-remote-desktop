@@ -290,6 +290,15 @@ grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
   /* RDP only handles pointer bitmaps up to 384x384 pixels */
   if (width > 384 || height > 384)
     {
+      if (session_rdp->pointer_type != POINTER_TYPE_DEFAULT)
+        {
+          session_rdp->last_pointer = NULL;
+          session_rdp->pointer_type = POINTER_TYPE_DEFAULT;
+          pointer_system.type = SYSPTR_DEFAULT;
+
+          rdp_update->pointer->PointerSystem (peer->context, &pointer_system);
+        }
+
       g_free (data);
       return;
     }
