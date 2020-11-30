@@ -70,6 +70,7 @@ struct _GrdSessionRdp
   uint8_t *last_frame;
   Pointer *last_pointer;
   GHashTable *pointer_cache;
+  PointerType pointer_type;
 
   GMutex pointer_mutex;
   uint16_t pointer_x;
@@ -213,6 +214,24 @@ grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
 }
 
 static gboolean
+is_mouse_pointer_hidden (uint32_t  width,
+                         uint32_t  height,
+                         uint8_t  *data)
+{
+  uint8_t *src_data;
+  uint32_t i;
+
+  for (i = 0, src_data = data; i < height * width; ++i, ++src_data)
+    {
+      src_data += 3;
+      if (*src_data)
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
 find_equal_pointer_bitmap (gpointer key,
                            gpointer value,
                            gpointer user_data)
@@ -232,6 +251,7 @@ grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   rdpSettings *rdp_settings = peer->settings;
   rdpUpdate *rdp_update = peer->update;
+  POINTER_SYSTEM_UPDATE pointer_system = {0};
   POINTER_NEW_UPDATE pointer_new = {0};
   POINTER_LARGE_UPDATE pointer_large = {0};
   POINTER_CACHED_UPDATE pointer_cached = {0};
@@ -252,12 +272,29 @@ grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
       return;
     }
 
+  if (is_mouse_pointer_hidden (width, height, data))
+    {
+      if (session_rdp->pointer_type != POINTER_TYPE_HIDDEN)
+        {
+          session_rdp->last_pointer = NULL;
+          session_rdp->pointer_type = POINTER_TYPE_HIDDEN;
+          pointer_system.type = SYSPTR_NULL;
+
+          rdp_update->pointer->PointerSystem (peer->context, &pointer_system);
+        }
+
+      g_free (data);
+      return;
+    }
+
   /* RDP only handles pointer bitmaps up to 384x384 pixels */
   if (width > 384 || height > 384)
     {
       g_free (data);
       return;
     }
+
+  session_rdp->pointer_type = POINTER_TYPE_NORMAL;
 
   stride = width * 4;
   if (session_rdp->last_pointer &&
