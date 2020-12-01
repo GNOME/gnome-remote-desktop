@@ -40,6 +40,13 @@ typedef enum _RdpPeerFlag
   RDP_PEER_OUTPUT_ENABLED = 1 << 1,
 } RdpPeerFlag;
 
+typedef enum _PointerType
+{
+  POINTER_TYPE_DEFAULT = 0,
+  POINTER_TYPE_HIDDEN  = 1 << 0,
+  POINTER_TYPE_NORMAL  = 1 << 1,
+} PointerType;
+
 typedef struct _Pointer
 {
   uint8_t *bitmap;
