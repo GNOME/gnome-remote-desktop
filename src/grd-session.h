@@ -60,17 +60,17 @@ struct _GrdSessionClass
 
 GrdContext *grd_session_get_context (GrdSession *session);
 
-void grd_session_notify_keyboard_keysym (GrdSession *session,
-                                         uint32_t    keysym,
-                                         GrdKeyState state);
+void grd_session_notify_keyboard_keysym (GrdSession  *session,
+                                         uint32_t     keysym,
+                                         GrdKeyState  state);
 
-void grd_session_notify_pointer_button (GrdSession    *session,
-                                        int32_t        button,
-                                        GrdButtonState state);
+void grd_session_notify_pointer_button (GrdSession     *session,
+                                        int32_t         button,
+                                        GrdButtonState  state);
 
-void grd_session_notify_pointer_axis_discrete (GrdSession    *session,
-                                               GrdPointerAxis axis,
-                                               int            steps);
+void grd_session_notify_pointer_axis_discrete (GrdSession     *session,
+                                               GrdPointerAxis  axis,
+                                               int             steps);
 
 void grd_session_notify_pointer_motion_absolute (GrdSession *session,
                                                  double      x,
