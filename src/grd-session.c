@@ -136,6 +136,19 @@ grd_session_notify_pointer_button (GrdSession *session,
 }
 
 void
+grd_session_notify_pointer_axis (GrdSession          *session,
+                                 double               dx,
+                                 double               dy,
+                                 GrdPointerAxisFlags  flags)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  GrdDBusRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
+
+  grd_dbus_remote_desktop_session_call_notify_pointer_axis (
+    session_proxy, dx, dy, flags, NULL, NULL, NULL);
+}
+
+void
 grd_session_notify_pointer_axis_discrete (GrdSession    *session,
                                           GrdPointerAxis axis,
                                           int            steps)

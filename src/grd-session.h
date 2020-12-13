@@ -43,6 +43,14 @@ typedef enum _GrdButtonState
   GRD_BUTTON_STATE_PRESSED
 } GrdButtonState;
 
+typedef enum _GrdPointerAxisFlags
+{
+  GRD_POINTER_AXIS_FLAGS_FINISH = 1 << 0,
+  GRD_POINTER_AXIS_FLAGS_SOURCE_WHEEL = 1 << 1,
+  GRD_POINTER_AXIS_FLAGS_SOURCE_FINGER = 1 << 2,
+  GRD_POINTER_AXIS_FLAGS_SOURCE_CONTINUOUS = 1 << 3,
+} GrdPointerAxisFlags;
+
 typedef enum _GrdPointerAxis
 {
   GRD_POINTER_AXIS_VERTICAL,
@@ -67,6 +75,11 @@ void grd_session_notify_keyboard_keysym (GrdSession  *session,
 void grd_session_notify_pointer_button (GrdSession     *session,
                                         int32_t         button,
                                         GrdButtonState  state);
+
+void grd_session_notify_pointer_axis (GrdSession          *session,
+                                      double               dx,
+                                      double               dy,
+                                      GrdPointerAxisFlags  flags);
 
 void grd_session_notify_pointer_axis_discrete (GrdSession     *session,
                                                GrdPointerAxis  axis,
