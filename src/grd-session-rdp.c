@@ -34,6 +34,8 @@
 #include "grd-settings.h"
 #include "grd-stream.h"
 
+#define SCROLL_STEP 12
+
 typedef enum _RdpPeerFlag
 {
   RDP_PEER_ACTIVATED      = 1 << 0,
@@ -1032,7 +1034,7 @@ rdp_input_mouse_event (rdpInput *rdp_input,
   GrdSession *session = GRD_SESSION (session_rdp);
   GrdButtonState button_state;
   int32_t button = 0;
-  int axis_step;
+  double axis_step;
 
   if (!(rdp_peer_context->flags & RDP_PEER_ACTIVATED) ||
       is_view_only (session_rdp))
@@ -1061,15 +1063,23 @@ rdp_input_mouse_event (rdpInput *rdp_input,
   if (button)
     grd_session_notify_pointer_button (session, button, button_state);
 
-  axis_step = flags & PTR_FLAGS_WHEEL_NEGATIVE ? -1 : 1;
+  if (!(flags & PTR_FLAGS_WHEEL) && !(flags & PTR_FLAGS_HWHEEL))
+    return TRUE;
+
+  axis_step = -(flags & 0xFF) / 120.0;
+  if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+    axis_step = -axis_step;
+
   if (flags & PTR_FLAGS_WHEEL)
-    grd_session_notify_pointer_axis_discrete (session,
-                                              GRD_POINTER_AXIS_VERTICAL,
-                                              -axis_step);
+    {
+      grd_session_notify_pointer_axis (session, 0, axis_step * SCROLL_STEP,
+                                       GRD_POINTER_AXIS_FLAGS_SOURCE_WHEEL);
+    }
   if (flags & PTR_FLAGS_HWHEEL)
-    grd_session_notify_pointer_axis_discrete (session,
-                                              GRD_POINTER_AXIS_HORIZONTAL,
-                                              axis_step);
+    {
+      grd_session_notify_pointer_axis (session, -axis_step * SCROLL_STEP, 0,
+                                       GRD_POINTER_AXIS_FLAGS_SOURCE_WHEEL);
+    }
 
   return TRUE;
 }
