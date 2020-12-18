@@ -5,6 +5,7 @@ project('gnome-remote-desktop', 'c',
                           'buildtype=debugoptimized'])
 
 freerdp_req = '>= 2.2.0'
+xkbcommon_req = '>= 1.0.0'
 
 gnome = import('gnome')
 
@@ -20,6 +21,7 @@ libvncclient_dep = dependency('libvncclient')
 libsecret_dep = dependency('libsecret-1')
 libnotify_dep = dependency('libnotify')
 winpr_dep = dependency('winpr2', version: freerdp_req)
+xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
 
 cdata = configuration_data()
 cdata.set_quoted('GETTEXT_PACKAGE', 'gnome-remote-desktop')

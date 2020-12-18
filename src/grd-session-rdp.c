@@ -25,6 +25,7 @@
 #include <freerdp/peer.h>
 #include <gio/gio.h>
 #include <linux/input-event-codes.h>
+#include <xkbcommon/xkbcommon.h>
 
 #include "grd-context.h"
 #include "grd-damage-utils.h"
@@ -77,6 +78,8 @@ struct _GrdSessionRdp
   GMutex pointer_mutex;
   uint16_t pointer_x;
   uint16_t pointer_y;
+
+  GHashTable *pressed_unicode_keys;
 
   GThreadPool *thread_pool;
   GCond pending_jobs_cond;
@@ -1011,14 +1014,33 @@ rdp_peer_refresh_region (freerdp_peer   *peer,
   ++rdp_peer_context->frame_id;
 }
 
+static gboolean
+notify_keysym_released (gpointer key,
+                        gpointer value,
+                        gpointer user_data)
+{
+  GrdSession *session = (GrdSession *) user_data;
+  xkb_keysym_t keysym = GPOINTER_TO_UINT (key);
+
+  grd_session_notify_keyboard_keysym (session, keysym, GRD_KEY_STATE_RELEASED);
+
+  return TRUE;
+}
+
 static BOOL
 rdp_input_synchronize_event (rdpInput *rdp_input,
                              uint32_t  flags)
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
+  GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
+  GrdSession *session = GRD_SESSION (session_rdp);
 
   if (!(rdp_peer_context->flags & RDP_PEER_ACTIVATED))
     return TRUE;
+
+  g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
+                               notify_keysym_released,
+                               session);
 
   return TRUE;
 }
@@ -1135,14 +1157,43 @@ rdp_input_keyboard_event (rdpInput *rdp_input,
 static BOOL
 rdp_input_unicode_keyboard_event (rdpInput *rdp_input,
                                   uint16_t  flags,
-                                  uint16_t  code)
+                                  uint16_t  code_utf16)
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
+  GrdSession *session = GRD_SESSION (session_rdp);
+  uint32_t *code_utf32;
+  xkb_keysym_t keysym;
+  GrdKeyState key_state;
 
   if (!(rdp_peer_context->flags & RDP_PEER_ACTIVATED) ||
       is_view_only (session_rdp))
     return TRUE;
+
+  code_utf32 = g_utf16_to_ucs4 (&code_utf16, 1, NULL, NULL, NULL);
+  if (!code_utf32)
+    return TRUE;
+
+  keysym = xkb_utf32_to_keysym (*code_utf32);
+  g_free (code_utf32);
+
+  key_state = flags & KBD_FLAGS_DOWN ? GRD_KEY_STATE_PRESSED
+                                     : GRD_KEY_STATE_RELEASED;
+
+  if (flags & KBD_FLAGS_DOWN)
+    {
+      if (!g_hash_table_add (session_rdp->pressed_unicode_keys,
+                             GUINT_TO_POINTER (keysym)))
+        return TRUE;
+    }
+  else
+    {
+      if (!g_hash_table_remove (session_rdp->pressed_unicode_keys,
+                                GUINT_TO_POINTER (keysym)))
+        return TRUE;
+    }
+
+  grd_session_notify_keyboard_keysym (session, keysym, key_state);
 
   return TRUE;
 }
@@ -1336,6 +1387,7 @@ init_rdp_session (GrdSessionRdp *session_rdp,
   rdp_settings->NSCodec = TRUE;
   rdp_settings->FrameMarkerCommandEnabled = TRUE;
   rdp_settings->SurfaceFrameMarkerEnabled = TRUE;
+  rdp_settings->UnicodeInput = TRUE;
 
   peer->Capabilities = rdp_peer_capabilities;
   peer->PostConnect = rdp_peer_post_connect;
@@ -1489,6 +1541,10 @@ grd_session_rdp_stop (GrdSession *session)
   freerdp_peer_context_free (peer);
   freerdp_peer_free (peer);
 
+  g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
+                               notify_keysym_released,
+                               session);
+
   g_clear_pointer (&session_rdp->last_frame, g_free);
   g_hash_table_foreach_remove (session_rdp->pointer_cache,
                                clear_pointer_bitmap,
@@ -1549,6 +1605,7 @@ grd_session_rdp_dispose (GObject *object)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
 
+  g_clear_pointer (&session_rdp->pressed_unicode_keys, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pointer_cache, g_hash_table_unref);
 
   G_OBJECT_CLASS (grd_session_rdp_parent_class)->dispose (object);
@@ -1584,6 +1641,7 @@ static void
 grd_session_rdp_init (GrdSessionRdp *session_rdp)
 {
   session_rdp->pointer_cache = g_hash_table_new (NULL, are_pointer_bitmaps_equal);
+  session_rdp->pressed_unicode_keys = g_hash_table_new (NULL, NULL);
 
   g_cond_init (&session_rdp->pending_jobs_cond);
   g_mutex_init (&session_rdp->pending_jobs_mutex);
