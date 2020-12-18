@@ -1,8 +1,39 @@
-image: registry.gitlab.gnome.org/gnome/gnome-remote-desktop/master:v2
+include:
+  - remote: 'https://gitlab.freedesktop.org/freedesktop/ci-templates/-/raw/8445ff7af2a68795afb98f486251f2ef8f90621c/templates/fedora.yml'
 
 stages:
+  - prepare
   - build
   - test
+
+.gnome-remote-desktop.fedora:33@common:
+  variables:
+    FDO_DISTRIBUTION_VERSION: 33
+    BASE_TAG: '2020-12-18.0'
+    FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
+    FDO_DISTRIBUTION_EXEC: |
+      dnf -y update && dnf -y upgrade &&
+
+      dnf install -y 'dnf-command(builddep)' &&
+
+      # To build
+      dnf install -y meson &&
+      dnf builddep -y gnome-remote-desktop &&
+
+      # To test
+      dnf install -y 'pkgconfig(libvncclient)' &&
+      dnf remove -y pipewire0.2-devel pipewire0.2-libs &&
+      dnf install -y 'pkgconfig(libpipewire-0.3)' &&
+      dnf install -y dbus-daemon xorg-x11-server-Xvfb python3-dbus \
+                     python3-gobject gnome-settings-daemon mesa-dri-drivers \
+                     xorg-x11-server-Xwayland mutter &&
+
+      dnf clean all
+
+.gnome-remote-desktop.fedora:33@x86_64:
+  extends: .gnome-remote-desktop.fedora:33@common
+  variables:
+    FDO_DISTRIBUTION_TAG: "x86_64-${BASE_TAG}"
 
 default:
   # Cancel jobs if newer commits are pushed to the branch
@@ -16,18 +47,34 @@ default:
       - 'scheduler_failure'
       - 'api_failure'
 
+build-fedora-container@x86_64:
+  extends:
+    - .fdo.container-build@fedora@x86_64
+    - .gnome-remote-desktop.fedora:33@x86_64
+  stage: prepare
+  variables:
+    GIT_STRATEGY: none
+
 build-gnome-remote-desktop:
+  extends:
+    - .fdo.distribution-image@fedora
+    - .gnome-remote-desktop.fedora:33@x86_64
   stage: build
   script:
     - meson . build -Ddebugtype=debugoptimized --werror
     - ninja -C build
     - ninja -C build install
+  needs:
+    - build-fedora-container@x86_64
   artifacts:
     expire_in: 1 day
     paths:
       - build
 
 test-gnome-remote-desktop:
+  extends:
+    - .fdo.distribution-image@fedora
+    - .gnome-remote-desktop.fedora:33@x86_64
   stage: test
   dependencies:
     - build-gnome-remote-desktop
