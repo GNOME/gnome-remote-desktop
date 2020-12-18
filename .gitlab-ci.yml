@@ -40,3 +40,5 @@ test-gnome-remote-desktop:
     - sed -i 's/.*module-rtkit.*/# &/' /etc/pipewire/pipewire.conf
     - sed -i 's/exec pipewire-media-session .*/exec pipewire-media-session -d bluez5,alsa-seq,alsa-pcm/' /etc/pipewire/pipewire.conf
     - dbus-run-session -- ./.gitlab-ci/run-tests.sh
+  needs:
+    - build-gnome-remote-desktop
