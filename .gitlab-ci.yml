@@ -4,6 +4,18 @@ stages:
   - build
   - test
 
+default:
+  # Cancel jobs if newer commits are pushed to the branch
+  interruptible: true
+  # Auto-retry jobs in case of infra failures
+  retry:
+    max: 1
+    when:
+      - 'runner_system_failure'
+      - 'stuck_or_timeout_failure'
+      - 'scheduler_failure'
+      - 'api_failure'
+
 build-gnome-remote-desktop:
   stage: build
   script:
