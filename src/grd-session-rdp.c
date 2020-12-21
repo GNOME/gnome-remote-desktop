@@ -225,15 +225,6 @@ grd_session_rdp_resize_framebuffer (GrdSessionRdp *session_rdp,
   set_rdp_peer_flag (rdp_peer_context, RDP_PEER_ALL_SURFACES_INVALID);
 }
 
-static int
-grd_session_rdp_get_framebuffer_stride (GrdSessionRdp *session_rdp)
-{
-  rdpSettings *rdp_settings = session_rdp->peer->settings;
-
-  return grd_session_rdp_get_stride_for_width (session_rdp,
-                                               rdp_settings->DesktopWidth);
-}
-
 void
 grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
                              void          *data,
