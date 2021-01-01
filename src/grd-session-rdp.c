@@ -1494,11 +1494,7 @@ grd_session_rdp_stop (GrdSession *session)
                                clear_pointer_bitmap,
                                NULL);
 
-  if (session_rdp->close_session_idle_id)
-    {
-      g_source_remove (session_rdp->close_session_idle_id);
-      session_rdp->close_session_idle_id = 0;
-    }
+  g_clear_handle_id (&session_rdp->close_session_idle_id, g_source_remove);
 }
 
 static gboolean
