@@ -666,11 +666,7 @@ grd_session_vnc_stop (GrdSession *session)
   g_clear_pointer (&session_vnc->rfb_screen->frameBuffer, g_free);
   g_clear_pointer (&session_vnc->rfb_screen, rfbScreenCleanup);
 
-  if (session_vnc->close_session_idle_id)
-    {
-      g_source_remove (session_vnc->close_session_idle_id);
-      session_vnc->close_session_idle_id = 0;
-    }
+  g_clear_handle_id (&session_vnc->close_session_idle_id, g_source_remove);
 }
 
 static gboolean
