@@ -1651,10 +1651,17 @@ grd_session_rdp_stop (GrdSession *session)
 
   g_debug ("Stopping RDP session");
 
-  SetEvent (session_rdp->stop_event);
+  if (WaitForSingleObject (session_rdp->stop_event, 0) == WAIT_TIMEOUT)
+    {
+      freerdp_set_error_info (peer->context->rdp,
+                              ERRINFO_RPC_INITIATED_DISCONNECT);
+
+      SetEvent (session_rdp->stop_event);
+    }
 
   g_clear_object (&session_rdp->pipewire_stream);
 
+  peer->Close (peer);
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
   g_clear_object (&session_rdp->connection);
 
