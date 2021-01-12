@@ -21,11 +21,17 @@ libvncclient_dep = dependency('libvncclient')
 libsecret_dep = dependency('libsecret-1')
 libnotify_dep = dependency('libnotify')
 winpr_dep = dependency('winpr2', version: freerdp_req)
-xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
 
 cdata = configuration_data()
 cdata.set_quoted('GETTEXT_PACKAGE', 'gnome-remote-desktop')
 cdata.set_quoted('VERSION', meson.project_version())
+
+has_rdp_unicode_input = get_option('rdp_unicode_input')
+if has_rdp_unicode_input
+  xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
+endif
+
+cdata.set('HAS_RDP_UNICODE_INPUT', has_rdp_unicode_input)
 
 configure_file(input: 'config.h.meson',
                output: 'config.h',

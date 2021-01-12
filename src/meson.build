@@ -35,6 +35,14 @@ daemon_sources = files([
   'grd-vnc-server.h',
 ])
 
+optional_deps = []
+
+if has_rdp_unicode_input
+  optional_deps += [
+    xkbcommon_dep,
+  ]
+endif
+
 gen_daemon_sources = []
 
 gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-screen-cast',
@@ -66,8 +74,8 @@ executable('gnome-remote-desktop-daemon',
                           libvncserver_dep,
                           libsecret_dep,
                           libnotify_dep,
-                          winpr_dep,
-                          xkbcommon_dep],
+                          optional_deps,
+                          winpr_dep],
            include_directories: [configinc],
            install: true,
            install_dir: libexecdir)

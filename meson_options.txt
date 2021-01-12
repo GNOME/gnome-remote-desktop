@@ -1,3 +1,8 @@
+option('rdp_unicode_input',
+       type: 'boolean',
+       value: true,
+       description: 'Unicode input for the RDP backend')
+
 option('systemd_user_unit_dir',
        type: 'string',
        value: '',
