@@ -55,6 +55,10 @@ void grd_session_vnc_move_cursor (GrdSessionVnc *session_vnc,
                                   int            x,
                                   int            y);
 
+void grd_session_vnc_set_client_clipboard_text (GrdSessionVnc *session_vnc,
+                                                char          *text,
+                                                int            text_length);
+
 int grd_session_vnc_get_stride_for_width (GrdSessionVnc *session_vnc,
                                           int            width);
 

@@ -199,6 +199,14 @@ grd_session_vnc_move_cursor (GrdSessionVnc *session_vnc,
   session_vnc->rfb_client->cursorWasMoved = TRUE;
 }
 
+void
+grd_session_vnc_set_client_clipboard_text (GrdSessionVnc *session_vnc,
+                                           char          *text,
+                                           int            text_length)
+{
+  rfbSendServerCutText(session_vnc->rfb_screen, text, text_length);
+}
+
 static void
 maybe_queue_close_session_idle (GrdSessionVnc *session_vnc)
 {
