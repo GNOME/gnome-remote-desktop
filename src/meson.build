@@ -14,6 +14,8 @@ daemon_sources = files([
   'grd-private.h',
   'grd-prompt.c',
   'grd-prompt.h',
+  'grd-rdp-event-queue.c',
+  'grd-rdp-event-queue.h',
   'grd-rdp-pipewire-stream.c',
   'grd-rdp-pipewire-stream.h',
   'grd-rdp-sam.c',
