@@ -49,6 +49,7 @@ typedef struct _GrdRdpFrame
   uint16_t pointer_hotspot_y;
   uint16_t pointer_width;
   uint16_t pointer_height;
+  gboolean pointer_is_hidden;
   bool pointer_moved;
   uint16_t pointer_x;
   uint16_t pointer_y;
@@ -240,12 +241,18 @@ do_render (struct spa_loop *loop,
     grd_session_rdp_take_buffer (stream->session_rdp, frame->data);
 
   if (frame->pointer_bitmap)
-    grd_session_rdp_update_pointer (stream->session_rdp,
-                                    frame->pointer_hotspot_x,
-                                    frame->pointer_hotspot_y,
-                                    frame->pointer_width,
-                                    frame->pointer_height,
-                                    frame->pointer_bitmap);
+    {
+      grd_session_rdp_update_pointer (stream->session_rdp,
+                                      frame->pointer_hotspot_x,
+                                      frame->pointer_hotspot_y,
+                                      frame->pointer_width,
+                                      frame->pointer_height,
+                                      frame->pointer_bitmap);
+    }
+  else if (frame->pointer_is_hidden)
+    {
+      grd_session_rdp_hide_pointer (stream->session_rdp);
+    }
 
   if (frame->pointer_moved)
     grd_session_rdp_move_pointer (stream->session_rdp,
@@ -372,6 +379,10 @@ process_buffer (GrdRdpPipeWireStream *stream,
           frame->pointer_hotspot_y = spa_meta_cursor->hotspot.y;
           frame->pointer_width = spa_meta_bitmap->size.width;
           frame->pointer_height = spa_meta_bitmap->size.height;
+        }
+      else if (spa_meta_bitmap)
+        {
+          frame->pointer_is_hidden = TRUE;
         }
 
       frame->pointer_moved = true;
