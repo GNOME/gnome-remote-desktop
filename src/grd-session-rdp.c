@@ -452,6 +452,27 @@ grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
 }
 
 void
+grd_session_rdp_hide_pointer (GrdSessionRdp *session_rdp)
+{
+  freerdp_peer *peer = session_rdp->peer;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+  rdpUpdate *rdp_update = peer->update;
+  POINTER_SYSTEM_UPDATE pointer_system = {0};
+
+  if (!(rdp_peer_context->flags & RDP_PEER_ACTIVATED))
+    return;
+
+  if (session_rdp->pointer_type == POINTER_TYPE_HIDDEN)
+    return;
+
+  session_rdp->last_pointer = NULL;
+  session_rdp->pointer_type = POINTER_TYPE_HIDDEN;
+  pointer_system.type = SYSPTR_NULL;
+
+  rdp_update->pointer->PointerSystem (peer->context, &pointer_system);
+}
+
+void
 grd_session_rdp_move_pointer (GrdSessionRdp *session_rdp,
                               uint16_t       x,
                               uint16_t       y)
