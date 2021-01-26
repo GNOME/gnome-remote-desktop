@@ -59,6 +59,8 @@ if have_rdp
     'grd-rdp-damage-detector-cuda.h',
     'grd-rdp-damage-detector-memcmp.c',
     'grd-rdp-damage-detector-memcmp.h',
+    'grd-rdp-display-control.c',
+    'grd-rdp-display-control.h',
     'grd-rdp-event-queue.c',
     'grd-rdp-event-queue.h',
     'grd-rdp-frame-info.h',
