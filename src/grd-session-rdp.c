@@ -34,6 +34,7 @@
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-damage-detector.h"
+#include "grd-rdp-display-control.h"
 #include "grd-rdp-event-queue.h"
 #include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-network-autodetection.h"
@@ -1992,6 +1993,7 @@ socket_thread_func (gpointer data)
       if (WTSVirtualChannelManagerIsChannelJoined (vcm, "drdynvc"))
         {
           GrdRdpGraphicsPipeline *graphics_pipeline;
+          GrdRdpDisplayControl *display_control;
 
           switch (WTSVirtualChannelManagerGetDrdynvcState (vcm))
             {
@@ -2004,9 +2006,12 @@ socket_thread_func (gpointer data)
               break;
             case DRDYNVC_STATE_READY:
               graphics_pipeline = rdp_peer_context->graphics_pipeline;
+              display_control = rdp_peer_context->display_control;
 
               if (rdp_settings->SupportGraphicsPipeline)
                 grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
+
+              grd_rdp_display_control_maybe_init (display_control);
               break;
             }
 
@@ -2151,6 +2156,7 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_object (&session_rdp->pipewire_stream);
 
   g_clear_object (&rdp_peer_context->clipboard_rdp);
+  g_clear_object (&rdp_peer_context->display_control);
   g_clear_object (&rdp_peer_context->graphics_pipeline);
 
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
@@ -2286,6 +2292,21 @@ grd_session_rdp_stream_ready (GrdSession *session,
   g_signal_connect (session_rdp->pipewire_stream, "closed",
                     G_CALLBACK (on_pipewire_stream_closed),
                     session_rdp);
+
+  if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND)
+    {
+      freerdp_peer *peer = session_rdp->peer;
+      RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+
+      if (!rdp_peer_context->display_control)
+        {
+          rdp_peer_context->display_control =
+            grd_rdp_display_control_new (session_rdp,
+                                         rdp_peer_context->vcm,
+                                         session_rdp->stop_event,
+                                         MAX_MONITOR_COUNT);
+        }
+    }
 }
 
 static void

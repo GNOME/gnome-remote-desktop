@@ -42,6 +42,7 @@ typedef struct _RdpPeerContext
   HANDLE vcm;
 
   GrdClipboardRdp *clipboard_rdp;
+  GrdRdpDisplayControl *display_control;
   GrdRdpGraphicsPipeline *graphics_pipeline;
 } RdpPeerContext;
 
