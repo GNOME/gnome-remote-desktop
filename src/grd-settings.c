@@ -137,9 +137,14 @@ char *
 grd_settings_get_rdp_username (GrdSettings  *settings,
                                GError      **error)
 {
+  const char *test_password_override;
   GVariant *credentials;
   char *credentials_string;
   char *username = NULL;
+
+  test_password_override = g_getenv ("GNOME_REMOTE_DESKTOP_TEST_RDP_PASSWORD");
+  if (test_password_override)
+    return g_strdup ("TEST");
 
   credentials_string = secret_password_lookup_sync (GRD_RDP_CREDENTIALS_SCHEMA,
                                                     NULL, error,
@@ -164,9 +169,14 @@ char *
 grd_settings_get_rdp_password (GrdSettings  *settings,
                                GError      **error)
 {
+  const char *test_password_override;
   GVariant *credentials;
   char *credentials_string;
   char *password = NULL;
+
+  test_password_override = g_getenv ("GNOME_REMOTE_DESKTOP_TEST_RDP_PASSWORD");
+  if (test_password_override)
+    return g_strdup (test_password_override);
 
   credentials_string = secret_password_lookup_sync (GRD_RDP_CREDENTIALS_SCHEMA,
                                                     NULL, error,
