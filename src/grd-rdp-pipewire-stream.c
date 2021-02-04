@@ -366,8 +366,8 @@ process_buffer (GrdRdpPipeWireStream *stream,
           uint8_t *buf;
 
           buf = SPA_MEMBER (spa_meta_bitmap, spa_meta_bitmap->offset, uint8_t);
-          frame->pointer_bitmap = g_memdup (buf, spa_meta_bitmap->size.height *
-                                                 spa_meta_bitmap->stride);
+          frame->pointer_bitmap = g_memdup2 (buf, spa_meta_bitmap->size.height *
+                                                  spa_meta_bitmap->stride);
           frame->pointer_hotspot_x = spa_meta_cursor->hotspot.x;
           frame->pointer_hotspot_y = spa_meta_cursor->hotspot.y;
           frame->pointer_width = spa_meta_bitmap->size.width;

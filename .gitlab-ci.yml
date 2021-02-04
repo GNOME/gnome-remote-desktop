@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora:33@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 33
-    BASE_TAG: '2020-12-18.0'
+    BASE_TAG: '2021-02-04.0'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -27,6 +27,13 @@ stages:
       dnf install -y dbus-daemon xorg-x11-server-Xvfb python3-dbus \
                      python3-gobject gnome-settings-daemon mesa-dri-drivers \
                      xorg-x11-server-Xwayland mutter &&
+
+      # To build glib
+      dnf builddep -y glib2 --setopt=install_weak_deps=False &&
+
+      ./.gitlab-ci/install-meson-project.sh \
+          https://gitlab.gnome.org/GNOME/glib.git \
+          2.67.3 . &&
 
       dnf clean all
 
@@ -84,8 +91,6 @@ test-gnome-remote-desktop:
   script:
     - mkdir -m 700 $XDG_RUNTIME_DIR
     - glib-compile-schemas $GSETTINGS_SCHEMA_DIR
-    - sed -i 's/.*module-rtkit.*/# &/' /etc/pipewire/pipewire.conf
-    - sed -i 's/exec pipewire-media-session .*/exec pipewire-media-session -d bluez5,alsa-seq,alsa-pcm/' /etc/pipewire/pipewire.conf
     - dbus-run-session -- ./.gitlab-ci/run-tests.sh
   needs:
     - build-gnome-remote-desktop
