@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora:35@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 36
-    BASE_TAG: '2022-05-10.0'
+    BASE_TAG: '2022-07-28.2'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -21,6 +21,8 @@ stages:
       dnf builddep -y gnome-remote-desktop &&
       dnf install -y 'pkgconfig(epoxy)' 'pkgconfig(libdrm)' 'pkgconfig(gbm)' \
                      'pkgconfig(gudev-1.0)' &&
+      dnf install -y 'pkgconfig(ffnvcodec)' &&
+      dnf install -y 'pkgconfig(fuse3)' &&
       dnf install -y asciidoc &&
 
       # To test
@@ -28,11 +30,21 @@ stages:
       dnf install -y 'pkgconfig(libvncclient)' &&
       dnf remove -y pipewire0.2-devel pipewire0.2-libs &&
       dnf install -y 'pkgconfig(libpipewire-0.3)' &&
-      dnf install -y 'pkgconfig(fuse3)' &&
-      dnf install -y 'pkgconfig(ffnvcodec)' &&
-      dnf install -y dbus-daemon xorg-x11-server-Xvfb python3-dbus \
-                     python3-gobject gnome-settings-daemon mesa-dri-drivers \
-                     xorg-x11-server-Xwayland mutter &&
+      dnf install -y dbus-daemon python3-dbus python3-gobject \
+                     gnome-settings-daemon mesa-dri-drivers mutter &&
+
+      dnf install -y git cmake gcc-c++ libusb1-devel &&
+      ./.gitlab-ci/install-cmake-project.sh \
+          -DCMAKE_BUILD_TYPE='None' \
+          -DWITH_ICU=ON \
+          -DWITH_SERVER=ON \
+          -DWITH_SHADOW=OFF \
+          -DWITH_PROXY=OFF \
+          -DWITH_CHANNELS=ON \
+          -DWITH_CLIENT_CHANNELS=ON \
+          -DWITH_SERVER_CHANNELS=ON \
+          https://github.com/FreeRDP/FreeRDP \
+          master . e3fc97feb512053189e276b2ca79762990bb8c4c &&
 
       dnf clean all
 
