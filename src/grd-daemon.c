@@ -78,20 +78,20 @@ maybe_enable_services (GrdDaemon *daemon)
     {
       daemon->rdp_server = grd_rdp_server_new (daemon->context);
       if (!grd_rdp_server_start (daemon->rdp_server, &error))
-        {
-          g_warning ("Failed to initialize RDP server: %s\n", error->message);
-        }
+        g_warning ("Failed to initialize RDP server: %s\n", error->message);
+      else
+        g_message ("Initialized RDP server");
     }
   else
     {
-      g_warning ("Failed to initialize RDP server: Couldn't find the server "
-                 "certificate or private keyfile");
+      g_message ("Didn't initialize RDP server: not configured");
     }
+
   daemon->vnc_server = grd_vnc_server_new (daemon->context);
   if (!grd_vnc_server_start (daemon->vnc_server, &error))
-    {
-      g_warning ("Failed to initialize VNC server: %s\n", error->message);
-    }
+    g_warning ("Failed to initialize VNC server: %s\n", error->message);
+  else
+    g_message ("Initialized VNC server");
 }
 
 static void
