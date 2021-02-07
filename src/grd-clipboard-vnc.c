@@ -75,7 +75,7 @@ grd_clipboard_vnc_update_client_mime_type_list (GrdClipboard *clipboard,
 
   for (l = mime_type_list; l && !found_utf8_string; l = l->next)
     {
-      mime_type = GPOINTER_TO_INT (l->data);
+      mime_type = GPOINTER_TO_UINT (l->data);
       switch (mime_type)
         {
         case GRD_MIME_TYPE_TEXT_PLAIN:
