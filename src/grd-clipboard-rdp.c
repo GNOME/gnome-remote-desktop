@@ -127,7 +127,7 @@ update_allowed_server_formats (GrdClipboardRdp *clipboard_rdp,
     {
       for (l = clipboard_rdp->pending_server_formats; l; l = l->next)
         {
-          if (GPOINTER_TO_INT (l->data) == GRD_MIME_TYPE_TEXT_URILIST)
+          if (GPOINTER_TO_UINT (l->data) == GRD_MIME_TYPE_TEXT_URILIST)
             clipboard_rdp->server_file_contents_requests_allowed = TRUE;
 
           g_hash_table_add (clipboard_rdp->allowed_server_formats, l->data);
@@ -258,7 +258,7 @@ grd_clipboard_rdp_update_client_mime_type_list (GrdClipboard *clipboard,
   cliprdr_formats = g_malloc0 (n_formats * sizeof (CLIPRDR_FORMAT));
   for (i = 0, l = mime_type_list; i < n_formats; ++i, l = l->next)
     {
-      mime_type = GPOINTER_TO_INT (l->data);
+      mime_type = GPOINTER_TO_UINT (l->data);
       switch (mime_type)
         {
         case GRD_MIME_TYPE_TEXT_PLAIN:
