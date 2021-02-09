@@ -46,6 +46,19 @@ typedef struct _ServerFormatDataRequestContext
   gboolean needs_conversion;
 } ServerFormatDataRequestContext;
 
+typedef struct _ClipDataEntry
+{
+  uint32_t id;
+
+  wClipboard *system;
+  wClipboardDelegate *delegate;
+  uint64_t serial;
+
+  gboolean is_independent;
+  gboolean has_file_list;
+  gboolean requests_allowed;
+} ClipDataEntry;
+
 typedef struct _FormatData
 {
   uint8_t *data;
@@ -61,12 +74,27 @@ struct _GrdClipboardRdp
 
   wClipboard *system;
   wClipboardDelegate *delegate;
+  gboolean has_file_list;
+  uint64_t serial;
 
   GHashTable *allowed_server_formats;
   GList *pending_server_formats;
   GList *queued_server_formats;
   gboolean server_file_contents_requests_allowed;
   uint16_t format_list_response_msg_flags;
+
+  GHashTable *serial_entry_table;
+  GHashTable *clip_data_table;
+  struct
+  {
+    ClipDataEntry *entry;
+    ClipDataEntry *entry_to_replace;
+    gboolean serial_already_in_use;
+  } clipboard_retrieval_context;
+  struct
+  {
+    ClipDataEntry *entry;
+  } clipboard_destruction_context;
 
   char *fuse_mount_path;
   GrdRdpFuseClipboard *rdp_fuse_clipboard;
@@ -76,18 +104,31 @@ struct _GrdClipboardRdp
   HANDLE format_data_received_event;
   CLIPRDR_FORMAT_DATA_RESPONSE *format_data_response;
 
+  HANDLE clip_data_entry_event;
+  HANDLE completed_clip_data_entry_event;
   HANDLE completed_format_list_event;
   HANDLE completed_format_data_request_event;
   HANDLE format_list_received_event;
   HANDLE format_list_response_received_event;
   HANDLE format_data_request_received_event;
   unsigned int pending_server_formats_drop_id;
+  unsigned int clipboard_retrieval_id;
+  unsigned int clipboard_destruction_id;
   unsigned int server_format_list_update_id;
   unsigned int server_format_data_request_id;
   unsigned int client_format_list_response_id;
 };
 
 G_DEFINE_TYPE (GrdClipboardRdp, grd_clipboard_rdp, GRD_TYPE_CLIPBOARD);
+
+static gboolean
+retrieve_current_clipboard (gpointer user_data);
+
+static gboolean
+handle_clip_data_entry_destruction (gpointer user_data);
+
+static void
+create_new_winpr_clipboard (GrdClipboardRdp *clipboard_rdp);
 
 static void
 update_allowed_server_formats (GrdClipboardRdp *clipboard_rdp,
@@ -104,7 +145,16 @@ update_allowed_server_formats (GrdClipboardRdp *clipboard_rdp,
       for (l = clipboard_rdp->pending_server_formats; l; l = l->next)
         {
           if (GPOINTER_TO_UINT (l->data) == GRD_MIME_TYPE_TEXT_URILIST)
-            clipboard_rdp->server_file_contents_requests_allowed = TRUE;
+            {
+              ClipDataEntry *entry;
+
+              if (g_hash_table_lookup_extended (clipboard_rdp->serial_entry_table,
+                                                GUINT_TO_POINTER (clipboard_rdp->serial),
+                                                NULL, (gpointer *) &entry))
+                entry->requests_allowed = TRUE;
+
+              clipboard_rdp->server_file_contents_requests_allowed = TRUE;
+            }
 
           g_hash_table_add (clipboard_rdp->allowed_server_formats, l->data);
         }
@@ -175,6 +225,17 @@ remove_duplicated_clipboard_mime_types (GrdClipboardRdp  *clipboard_rdp,
 }
 
 static void
+update_clipboard_serial (GrdClipboardRdp *clipboard_rdp)
+{
+  ++clipboard_rdp->serial;
+  while (g_hash_table_contains (clipboard_rdp->serial_entry_table,
+                                GUINT_TO_POINTER (clipboard_rdp->serial)))
+    ++clipboard_rdp->serial;
+
+  g_debug ("[RDP.CLIPRDR] Updated clipboard serial to %lu", clipboard_rdp->serial);
+}
+
+static void
 send_mime_type_list (GrdClipboardRdp *clipboard_rdp,
                      GList           *mime_type_list)
 {
@@ -182,10 +243,23 @@ send_mime_type_list (GrdClipboardRdp *clipboard_rdp,
   CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
   CLIPRDR_FORMAT_LIST format_list = {0};
   CLIPRDR_FORMAT *cliprdr_formats;
+  ClipDataEntry *entry;
   GrdMimeType mime_type;
   uint32_t n_formats;
   uint32_t i;
   GList *l;
+
+  if (g_hash_table_lookup_extended (clipboard_rdp->serial_entry_table,
+                                    GUINT_TO_POINTER (clipboard_rdp->serial),
+                                    NULL, (gpointer *) &entry))
+    {
+      g_debug ("[RDP.CLIPRDR] ClipDataEntry with id %u and serial %lu is now "
+               "independent", entry->id, entry->serial);
+      entry->is_independent = TRUE;
+
+      create_new_winpr_clipboard (clipboard_rdp);
+    }
+  update_clipboard_serial (clipboard_rdp);
 
   n_formats = g_list_length (mime_type_list);
   cliprdr_formats = g_malloc0 (n_formats * sizeof (CLIPRDR_FORMAT));
@@ -315,7 +389,7 @@ get_format_data_response (GrdClipboardRdp             *clipboard_rdp,
   CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
   CLIPRDR_FORMAT_DATA_RESPONSE *format_data_response = NULL;
   HANDLE format_data_received_event = clipboard_rdp->format_data_received_event;
-  HANDLE events[3];
+  HANDLE events[4];
   uint32_t error;
 
   ResetEvent (format_data_received_event);
@@ -327,10 +401,31 @@ get_format_data_response (GrdClipboardRdp             *clipboard_rdp,
   events[0] = clipboard_rdp->stop_event;
   events[1] = format_data_received_event;
   events[2] = clipboard_rdp->format_list_received_event;
-  if (WaitForMultipleObjects (3, events, FALSE, MAX_WAIT_TIME) == WAIT_TIMEOUT)
+  events[3] = clipboard_rdp->clip_data_entry_event;
+  while (TRUE)
     {
-      g_warning ("[RDP.CLIPRDR] Possible protocol violation: Client did not "
-                 "send format data response (Timeout reached)");
+      if (WaitForMultipleObjects (4, events, FALSE, MAX_WAIT_TIME) == WAIT_TIMEOUT)
+        {
+          g_warning ("[RDP.CLIPRDR] Possible protocol violation: Client did not "
+                     "send format data response (Timeout reached)");
+          break;
+        }
+
+      if (WaitForSingleObject (clipboard_rdp->clip_data_entry_event, 0) == WAIT_TIMEOUT)
+        break;
+
+      if (clipboard_rdp->clipboard_retrieval_id)
+        {
+          g_clear_handle_id (&clipboard_rdp->clipboard_retrieval_id,
+                             g_source_remove);
+          retrieve_current_clipboard (clipboard_rdp);
+        }
+      if (clipboard_rdp->clipboard_destruction_id)
+        {
+          g_clear_handle_id (&clipboard_rdp->clipboard_destruction_id,
+                             g_source_remove);
+          handle_clip_data_entry_destruction (clipboard_rdp);
+        }
     }
 
   if (WaitForSingleObject (format_data_received_event, 0) == WAIT_OBJECT_0)
@@ -1014,6 +1109,198 @@ cliprdr_client_format_list_response (CliprdrServerContext               *cliprdr
   return CHANNEL_RC_OK;
 }
 
+static gboolean
+retrieve_current_clipboard (gpointer user_data)
+{
+  GrdClipboardRdp *clipboard_rdp = user_data;
+  ClipDataEntry *entry = clipboard_rdp->clipboard_retrieval_context.entry;
+  ClipDataEntry *entry_to_replace;
+  uint64_t serial = clipboard_rdp->serial;
+  gboolean serial_already_in_use;
+
+  g_debug ("[RDP.CLIPRDR] Tracking serial %lu for ClipDataEntry",
+           clipboard_rdp->serial);
+
+  entry_to_replace = clipboard_rdp->clipboard_retrieval_context.entry_to_replace;
+  if (entry_to_replace)
+    {
+      g_hash_table_remove (clipboard_rdp->serial_entry_table,
+                           GUINT_TO_POINTER (entry_to_replace->serial));
+    }
+
+  serial_already_in_use = g_hash_table_contains (clipboard_rdp->serial_entry_table,
+                                                 GUINT_TO_POINTER (serial));
+  if (!serial_already_in_use)
+    {
+      g_hash_table_insert (clipboard_rdp->serial_entry_table,
+                           GUINT_TO_POINTER (serial), entry);
+    }
+  clipboard_rdp->clipboard_retrieval_context.serial_already_in_use =
+    serial_already_in_use;
+
+  entry->serial = serial;
+  entry->has_file_list = clipboard_rdp->has_file_list;
+  entry->requests_allowed = clipboard_rdp->server_file_contents_requests_allowed;
+
+  entry->system = clipboard_rdp->system;
+  entry->delegate = clipboard_rdp->delegate;
+
+  WaitForSingleObject (clipboard_rdp->clip_data_entry_event, INFINITE);
+  clipboard_rdp->clipboard_retrieval_id = 0;
+  ResetEvent (clipboard_rdp->clip_data_entry_event);
+  SetEvent (clipboard_rdp->completed_clip_data_entry_event);
+
+  return G_SOURCE_REMOVE;
+}
+
+static gboolean
+is_clip_data_entry_user_of_serial (gpointer key,
+                                   gpointer value,
+                                   gpointer user_data)
+{
+  ClipDataEntry *entry = value;
+  uint64_t serial = GPOINTER_TO_UINT (user_data);
+
+  return entry->serial == serial;
+}
+
+/**
+ * Client requests us to retain all file stream data on the clipboard
+ */
+static uint32_t
+cliprdr_client_lock_clipboard_data (CliprdrServerContext              *cliprdr_context,
+                                    const CLIPRDR_LOCK_CLIPBOARD_DATA *lock_clipboard_data)
+{
+  GrdClipboardRdp *clipboard_rdp = cliprdr_context->custom;
+  uint32_t clip_data_id = lock_clipboard_data->clipDataId;
+  ClipDataEntry *entry;
+  HANDLE events[2];
+
+  if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
+    return CHANNEL_RC_OK;
+
+  g_debug ("[RDP.CLIPRDR] Client requested a lock with clipDataId: %u",
+           clip_data_id);
+
+  clipboard_rdp->clipboard_retrieval_context.entry_to_replace = NULL;
+  if (g_hash_table_lookup_extended (clipboard_rdp->clip_data_table,
+                                    GUINT_TO_POINTER (clip_data_id),
+                                    NULL, (gpointer *) &entry))
+    {
+      g_warning ("[RDP.CLIPRDR] Protocol violation: Client requested a lock with"
+                 " an existing clipDataId %u. Replacing existing ClipDataEntry",
+                 clip_data_id);
+
+      clipboard_rdp->clipboard_retrieval_context.entry_to_replace = entry;
+    }
+
+  ResetEvent (clipboard_rdp->completed_clip_data_entry_event);
+  entry = g_malloc0 (sizeof (ClipDataEntry));
+  clipboard_rdp->clipboard_retrieval_context.entry = entry;
+
+  clipboard_rdp->clipboard_retrieval_id =
+    g_idle_add (retrieve_current_clipboard, clipboard_rdp);
+  SetEvent (clipboard_rdp->clip_data_entry_event);
+
+  events[0] = clipboard_rdp->stop_event;
+  events[1] = clipboard_rdp->completed_clip_data_entry_event;
+  WaitForMultipleObjects (2, events, FALSE, INFINITE);
+
+  if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
+    return CHANNEL_RC_OK;
+
+  if (clipboard_rdp->clipboard_retrieval_context.serial_already_in_use)
+    {
+      uint64_t serial = entry->serial;
+
+      g_warning ("[RDP.CLIPRDR] Protocol violation: Double lock detected ("
+                 "Clipboard serial already in use). Replacing the clipDataId.");
+
+      g_free (entry);
+      entry = g_hash_table_find (clipboard_rdp->clip_data_table,
+                                 is_clip_data_entry_user_of_serial,
+                                 GUINT_TO_POINTER (serial));
+      g_hash_table_steal (clipboard_rdp->clip_data_table,
+                          GUINT_TO_POINTER (entry->id));
+    }
+
+  entry->id = clip_data_id;
+
+  g_debug ("[RDP.CLIPRDR] Tracking lock with clipDataId %u", clip_data_id);
+  g_hash_table_insert (clipboard_rdp->clip_data_table,
+                       GUINT_TO_POINTER (clip_data_id),
+                       entry);
+
+  return CHANNEL_RC_OK;
+}
+
+static gboolean
+handle_clip_data_entry_destruction (gpointer user_data)
+{
+  GrdClipboardRdp *clipboard_rdp = user_data;
+  ClipDataEntry *entry;
+
+  entry = g_steal_pointer (&clipboard_rdp->clipboard_destruction_context.entry);
+
+  g_debug ("[RDP.CLIPRDR] Deleting ClipDataEntry with serial %lu", entry->serial);
+  g_hash_table_remove (clipboard_rdp->serial_entry_table,
+                       GUINT_TO_POINTER (entry->serial));
+
+  WaitForSingleObject (clipboard_rdp->clip_data_entry_event, INFINITE);
+  clipboard_rdp->clipboard_destruction_id = 0;
+  ResetEvent (clipboard_rdp->clip_data_entry_event);
+  SetEvent (clipboard_rdp->completed_clip_data_entry_event);
+
+  return G_SOURCE_REMOVE;
+}
+
+/**
+ * Client informs us that the file stream data for a specific clip data id can
+ * now be released
+ */
+static uint32_t
+cliprdr_client_unlock_clipboard_data (CliprdrServerContext                *cliprdr_context,
+                                      const CLIPRDR_UNLOCK_CLIPBOARD_DATA *unlock_clipboard_data)
+{
+  GrdClipboardRdp *clipboard_rdp = cliprdr_context->custom;
+  uint32_t clip_data_id = unlock_clipboard_data->clipDataId;
+  ClipDataEntry *entry;
+  HANDLE events[2];
+
+  if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
+    return CHANNEL_RC_OK;
+
+  g_debug ("[RDP.CLIPRDR] Client requested an unlock with clipDataId: %u",
+           clip_data_id);
+  if (!g_hash_table_lookup_extended (clipboard_rdp->clip_data_table,
+                                     GUINT_TO_POINTER (clip_data_id),
+                                     NULL, (gpointer *) &entry))
+    {
+      g_warning ("[RDP.CLIPRDR] Protocol violation: ClipDataEntry with id %u "
+                 "does not exist", clip_data_id);
+      return CHANNEL_RC_OK;
+    }
+
+  g_debug ("[RDP.CLIPRDR] Removing lock with clipDataId: %u", clip_data_id);
+
+  ResetEvent (clipboard_rdp->completed_clip_data_entry_event);
+  clipboard_rdp->clipboard_destruction_context.entry = entry;
+
+  clipboard_rdp->clipboard_destruction_id =
+    g_idle_add (handle_clip_data_entry_destruction, clipboard_rdp);
+  SetEvent (clipboard_rdp->clip_data_entry_event);
+
+  events[0] = clipboard_rdp->stop_event;
+  events[1] = clipboard_rdp->completed_clip_data_entry_event;
+  WaitForMultipleObjects (2, events, FALSE, INFINITE);
+
+  g_debug ("[RDP.CLIPRDR] Untracking lock with clipDataId %u", clip_data_id);
+  g_hash_table_remove (clipboard_rdp->clip_data_table,
+                       GUINT_TO_POINTER (clip_data_id));
+
+  return CHANNEL_RC_OK;
+}
+
 static void
 #ifdef HAVE_FREERDP_2_3
 serialize_file_list (FILEDESCRIPTORW  *files,
@@ -1117,6 +1404,8 @@ request_server_format_data (gpointer user_data)
 
               if (dst_data && mime_type == GRD_MIME_TYPE_TEXT_URILIST)
                 {
+                  uint64_t serial = clipboard_rdp->serial;
+                  ClipDataEntry *entry;
 #ifdef HAVE_FREERDP_2_3
                   FILEDESCRIPTORW *files;
                   uint32_t n_files;
@@ -1136,6 +1425,12 @@ request_server_format_data (gpointer user_data)
                   serialize_file_list (files, n_files, &dst_data, &dst_size);
 
                   g_free (files);
+
+                  clipboard_rdp->has_file_list = TRUE;
+                  if (g_hash_table_lookup_extended (clipboard_rdp->serial_entry_table,
+                                                    GUINT_TO_POINTER (serial),
+                                                    NULL, (gpointer *) &entry))
+                    entry->has_file_list = TRUE;
                 }
             }
           if (!success || !dst_data)
@@ -1355,13 +1650,39 @@ cliprdr_client_file_contents_request (CliprdrServerContext                *clipr
                                       const CLIPRDR_FILE_CONTENTS_REQUEST *file_contents_request)
 {
   GrdClipboardRdp *clipboard_rdp = cliprdr_context->custom;
+  wClipboardDelegate *delegate = clipboard_rdp->delegate;
+  gboolean has_file_list = clipboard_rdp->has_file_list;
+  gboolean requests_allowed = clipboard_rdp->server_file_contents_requests_allowed;
+  uint32_t clip_data_id = file_contents_request->clipDataId;
+  uint32_t stream_id = file_contents_request->streamId;
+  ClipDataEntry *entry = NULL;
   uint32_t error = NO_ERROR;
 
-  if (!clipboard_rdp->server_file_contents_requests_allowed)
+  if (file_contents_request->haveClipDataId)
+    g_debug ("[RDP.CLIPRDR] FileContentsRequest has clipDataId %u", clip_data_id);
+  else
+    g_debug ("[RDP.CLIPRDR] FileContentsRequest does not have a clipDataId");
+
+  if (file_contents_request->haveClipDataId)
     {
-      return send_file_contents_response_failure (cliprdr_context,
-                                                  file_contents_request->streamId);
+      if (!g_hash_table_lookup_extended (clipboard_rdp->clip_data_table,
+                                         GUINT_TO_POINTER (clip_data_id),
+                                         NULL, (gpointer *) &entry))
+        return send_file_contents_response_failure (cliprdr_context, stream_id);
+
+      if (!entry->requests_allowed)
+        {
+          g_debug ("[RDP.CLIPRDR] ClipDataEntry with id %u is not eligible of "
+                   "requesting file contents.", clip_data_id);
+        }
+
+      delegate = entry->delegate;
+      has_file_list = entry->has_file_list;
+      requests_allowed = entry->requests_allowed;
     }
+
+  if (!requests_allowed || !has_file_list)
+    return send_file_contents_response_failure (cliprdr_context, stream_id);
 
   if (file_contents_request->dwFlags & FILECONTENTS_SIZE &&
       file_contents_request->dwFlags & FILECONTENTS_RANGE)
@@ -1370,18 +1691,17 @@ cliprdr_client_file_contents_request (CliprdrServerContext                *clipr
        * FILECONTENTS_SIZE and FILECONTENTS_RANGE are not allowed
        * to be set at the same time
        */
-      return send_file_contents_response_failure (cliprdr_context,
-                                                  file_contents_request->streamId);
+      return send_file_contents_response_failure (cliprdr_context, stream_id);
     }
 
   if (file_contents_request->dwFlags & FILECONTENTS_SIZE)
     {
-      error = delegate_request_file_contents_size (clipboard_rdp->delegate,
+      error = delegate_request_file_contents_size (delegate,
                                                    file_contents_request);
     }
   else if (file_contents_request->dwFlags & FILECONTENTS_RANGE)
     {
-      error = delegate_request_file_contents_range (clipboard_rdp->delegate,
+      error = delegate_request_file_contents_range (delegate,
                                                     file_contents_request);
     }
   else
@@ -1390,10 +1710,7 @@ cliprdr_client_file_contents_request (CliprdrServerContext                *clipr
     }
 
   if (error)
-    {
-      return send_file_contents_response_failure (cliprdr_context,
-                                                  file_contents_request->streamId);
-    }
+    return send_file_contents_response_failure (cliprdr_context, stream_id);
 
   return CHANNEL_RC_OK;
 }
@@ -1478,6 +1795,23 @@ cliprdr_file_range_failure (wClipboardDelegate               *delegate,
                                               file_range_request->streamId);
 }
 
+static void
+create_new_winpr_clipboard (GrdClipboardRdp *clipboard_rdp)
+{
+  g_debug ("[RDP.CLIPRDR] Creating new WinPR clipboard");
+
+  clipboard_rdp->system = ClipboardCreate ();
+  clipboard_rdp->delegate = ClipboardGetDelegate (clipboard_rdp->system);
+  clipboard_rdp->delegate->ClipboardFileSizeSuccess = cliprdr_file_size_success;
+  clipboard_rdp->delegate->ClipboardFileSizeFailure = cliprdr_file_size_failure;
+  clipboard_rdp->delegate->ClipboardFileRangeSuccess = cliprdr_file_range_success;
+  clipboard_rdp->delegate->ClipboardFileRangeFailure = cliprdr_file_range_failure;
+  clipboard_rdp->delegate->basePath = NULL;
+  clipboard_rdp->delegate->custom = clipboard_rdp;
+
+  clipboard_rdp->has_file_list = FALSE;
+}
+
 GrdClipboardRdp *
 grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
                        HANDLE         vcm,
@@ -1514,6 +1848,8 @@ grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
   cliprdr_context->ClientCapabilities = cliprdr_client_capabilities;
   cliprdr_context->ClientFormatList = cliprdr_client_format_list;
   cliprdr_context->ClientFormatListResponse = cliprdr_client_format_list_response;
+  cliprdr_context->ClientLockClipboardData = cliprdr_client_lock_clipboard_data;
+  cliprdr_context->ClientUnlockClipboardData = cliprdr_client_unlock_clipboard_data;
   cliprdr_context->ClientFormatDataRequest = cliprdr_client_format_data_request;
   cliprdr_context->ClientFormatDataResponse = cliprdr_client_format_data_response;
   cliprdr_context->ClientFileContentsRequest = cliprdr_client_file_contents_request;
@@ -1562,6 +1898,9 @@ grd_clipboard_rdp_dispose (GObject *object)
     g_free ((uint8_t *) clipboard_rdp->format_data_response->requestedFormatData);
   g_clear_pointer (&clipboard_rdp->format_data_response, g_free);
 
+  if (clipboard_rdp->clipboard_retrieval_id)
+    g_clear_pointer (&clipboard_rdp->clipboard_retrieval_context.entry, g_free);
+
   g_clear_pointer (&clipboard_rdp->queued_server_formats, g_list_free);
   g_clear_pointer (&clipboard_rdp->pending_server_formats, g_list_free);
   grd_rdp_fuse_clipboard_clear_selection (clipboard_rdp->rdp_fuse_clipboard);
@@ -1573,6 +1912,8 @@ grd_clipboard_rdp_dispose (GObject *object)
   rmdir (clipboard_rdp->fuse_mount_path);
   g_clear_pointer (&clipboard_rdp->fuse_mount_path, g_free);
   g_clear_pointer (&clipboard_rdp->format_data_cache, g_hash_table_unref);
+  g_clear_pointer (&clipboard_rdp->clip_data_table, g_hash_table_destroy);
+  g_clear_pointer (&clipboard_rdp->serial_entry_table, g_hash_table_destroy);
   g_clear_pointer (&clipboard_rdp->allowed_server_formats, g_hash_table_destroy);
   g_clear_pointer (&clipboard_rdp->format_data_request_received_event,
                    CloseHandle);
@@ -1582,16 +1923,36 @@ grd_clipboard_rdp_dispose (GObject *object)
   g_clear_pointer (&clipboard_rdp->completed_format_data_request_event,
                    CloseHandle);
   g_clear_pointer (&clipboard_rdp->completed_format_list_event, CloseHandle);
+  g_clear_pointer (&clipboard_rdp->completed_clip_data_entry_event,
+                   CloseHandle);
+  g_clear_pointer (&clipboard_rdp->clip_data_entry_event, CloseHandle);
   g_clear_pointer (&clipboard_rdp->format_data_received_event, CloseHandle);
   g_clear_pointer (&clipboard_rdp->system, ClipboardDestroy);
   g_clear_pointer (&clipboard_rdp->cliprdr_context, cliprdr_server_context_free);
 
   g_clear_handle_id (&clipboard_rdp->pending_server_formats_drop_id, g_source_remove);
+  g_clear_handle_id (&clipboard_rdp->clipboard_retrieval_id, g_source_remove);
+  g_clear_handle_id (&clipboard_rdp->clipboard_destruction_id, g_source_remove);
   g_clear_handle_id (&clipboard_rdp->server_format_list_update_id, g_source_remove);
   g_clear_handle_id (&clipboard_rdp->server_format_data_request_id, g_source_remove);
   g_clear_handle_id (&clipboard_rdp->client_format_list_response_id, g_source_remove);
 
   G_OBJECT_CLASS (grd_clipboard_rdp_parent_class)->dispose (object);
+}
+
+static void
+clip_data_entry_free (gpointer data)
+{
+  ClipDataEntry *entry = data;
+
+  g_debug ("[RDP.CLIPRDR] Freeing ClipDataEntry with id %u and serial %lu. "
+           "ClipDataEntry is independent: %s", entry->id, entry->serial,
+           entry->is_independent ? "true" : "false");
+
+  if (entry->is_independent)
+    g_clear_pointer (&entry->system, ClipboardDestroy);
+
+  g_free (entry);
 }
 
 static void
@@ -1630,6 +1991,10 @@ grd_clipboard_rdp_init (GrdClipboardRdp *clipboard_rdp)
 
   clipboard_rdp->format_data_received_event =
     CreateEvent (NULL, TRUE, FALSE, NULL);
+  clipboard_rdp->clip_data_entry_event =
+    CreateEvent (NULL, TRUE, FALSE, NULL);
+  clipboard_rdp->completed_clip_data_entry_event =
+    CreateEvent (NULL, TRUE, TRUE, NULL);
   clipboard_rdp->completed_format_list_event =
     CreateEvent (NULL, TRUE, TRUE, NULL);
   clipboard_rdp->completed_format_data_request_event =
@@ -1642,6 +2007,9 @@ grd_clipboard_rdp_init (GrdClipboardRdp *clipboard_rdp)
     CreateEvent (NULL, TRUE, FALSE, NULL);
 
   clipboard_rdp->allowed_server_formats = g_hash_table_new (NULL, NULL);
+  clipboard_rdp->serial_entry_table = g_hash_table_new_full (NULL, NULL, NULL,
+                                                             clip_data_entry_free);
+  clipboard_rdp->clip_data_table = g_hash_table_new (NULL, NULL);
   clipboard_rdp->format_data_cache = g_hash_table_new (NULL, NULL);
 
   clipboard_rdp->fuse_mount_path = g_steal_pointer (&template_path);
