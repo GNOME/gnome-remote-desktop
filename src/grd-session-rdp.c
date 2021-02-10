@@ -1138,6 +1138,7 @@ rdp_input_mouse_event (rdpInput *rdp_input,
   GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
   GrdButtonState button_state;
   int32_t button = 0;
+  uint16_t axis_value;
   double axis_step;
 
   if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED) ||
@@ -1174,7 +1175,14 @@ rdp_input_mouse_event (rdpInput *rdp_input,
   if (!(flags & PTR_FLAGS_WHEEL) && !(flags & PTR_FLAGS_HWHEEL))
     return TRUE;
 
-  axis_step = -(flags & 0xFF) / 120.0;
+  axis_value = flags & WheelRotationMask;
+  if (axis_value & PTR_FLAGS_WHEEL_NEGATIVE)
+    {
+      axis_value = ~axis_value & WheelRotationMask;
+      ++axis_value;
+    }
+
+  axis_step = -axis_value / 120.0;
   if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
     axis_step = -axis_step;
 
