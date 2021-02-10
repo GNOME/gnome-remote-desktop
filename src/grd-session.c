@@ -175,6 +175,9 @@ grd_session_notify_pointer_motion_absolute (GrdSession *session,
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   const char *stream_path;
 
+  if (!priv->stream)
+    return;
+
   stream_path = grd_stream_get_object_path (priv->stream);
 
   grd_dbus_remote_desktop_session_call_notify_pointer_motion_absolute (
