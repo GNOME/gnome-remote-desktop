@@ -40,7 +40,7 @@
 #include "grd-settings.h"
 #include "grd-stream.h"
 
-#define SCROLL_STEP 12
+#define DISCRETE_SCROLL_STEP 10.0
 
 typedef enum _RdpPeerFlag
 {
@@ -1189,13 +1189,13 @@ rdp_input_mouse_event (rdpInput *rdp_input,
   if (flags & PTR_FLAGS_WHEEL)
     {
       grd_rdp_event_queue_add_input_event_pointer_axis (
-        rdp_event_queue, 0, axis_step * SCROLL_STEP,
+        rdp_event_queue, 0, axis_step * DISCRETE_SCROLL_STEP,
         GRD_POINTER_AXIS_FLAGS_SOURCE_WHEEL);
     }
   if (flags & PTR_FLAGS_HWHEEL)
     {
       grd_rdp_event_queue_add_input_event_pointer_axis (
-        rdp_event_queue, -axis_step * SCROLL_STEP, 0,
+        rdp_event_queue, -axis_step * DISCRETE_SCROLL_STEP, 0,
         GRD_POINTER_AXIS_FLAGS_SOURCE_WHEEL);
     }
 
