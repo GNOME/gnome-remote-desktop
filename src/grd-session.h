@@ -71,6 +71,10 @@ struct _GrdSessionClass
 
 GrdContext *grd_session_get_context (GrdSession *session);
 
+void grd_session_notify_keyboard_keycode (GrdSession  *session,
+                                          uint32_t     keycode,
+                                          GrdKeyState  state);
+
 void grd_session_notify_keyboard_keysym (GrdSession  *session,
                                          uint32_t     keysym,
                                          GrdKeyState  state);

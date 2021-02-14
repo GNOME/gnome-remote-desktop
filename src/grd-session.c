@@ -111,6 +111,22 @@ grd_session_stop (GrdSession *session)
 }
 
 void
+grd_session_notify_keyboard_keycode (GrdSession  *session,
+                                     uint32_t     keycode,
+                                     GrdKeyState  state)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  GrdDBusRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
+
+  grd_dbus_remote_desktop_session_call_notify_keyboard_keycode (session_proxy,
+                                                                keycode,
+                                                                state,
+                                                                NULL,
+                                                                NULL,
+                                                                NULL);
+}
+
+void
 grd_session_notify_keyboard_keysym (GrdSession *session,
                                     uint32_t    keysym,
                                     GrdKeyState state)
