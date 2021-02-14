@@ -24,6 +24,7 @@
 typedef enum _RdpEventType
 {
   RDP_EVENT_TYPE_NONE,
+  RDP_EVENT_TYPE_INPUT_KBD_KEYCODE,
   RDP_EVENT_TYPE_INPUT_KBD_KEYSYM,
   RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS,
   RDP_EVENT_TYPE_INPUT_PTR_BUTTON,
@@ -33,6 +34,13 @@ typedef enum _RdpEventType
 typedef struct _RdpEvent
 {
   RdpEventType type;
+
+  /* RDP_EVENT_TYPE_INPUT_KBD_KEYCODE */
+  struct
+  {
+    uint32_t keycode;
+    GrdKeyState state;
+  } input_kbd_keycode;
 
   /* RDP_EVENT_TYPE_INPUT_KBD_KEYSYM */
   struct
@@ -86,6 +94,21 @@ queue_rdp_event (GrdRdpEventQueue *rdp_event_queue,
   g_mutex_unlock (&rdp_event_queue->queue_mutex);
 
   g_source_set_ready_time (rdp_event_queue->flush_source, 0);
+}
+
+void
+grd_rdp_event_queue_add_input_event_keyboard_keycode (GrdRdpEventQueue *rdp_event_queue,
+                                                      uint32_t          keycode,
+                                                      GrdKeyState       state)
+{
+  RdpEvent *rdp_event;
+
+  rdp_event = g_malloc0 (sizeof (RdpEvent));
+  rdp_event->type = RDP_EVENT_TYPE_INPUT_KBD_KEYCODE;
+  rdp_event->input_kbd_keycode.keycode = keycode;
+  rdp_event->input_kbd_keycode.state = state;
+
+  queue_rdp_event (rdp_event_queue, rdp_event);
 }
 
 void
@@ -161,6 +184,11 @@ process_rdp_events (GrdRdpEventQueue *rdp_event_queue)
       switch (rdp_event->type)
         {
         case RDP_EVENT_TYPE_NONE:
+          break;
+        case RDP_EVENT_TYPE_INPUT_KBD_KEYCODE:
+          grd_session_notify_keyboard_keycode (
+            session, rdp_event->input_kbd_keycode.keycode,
+            rdp_event->input_kbd_keycode.state);
           break;
         case RDP_EVENT_TYPE_INPUT_KBD_KEYSYM:
           grd_session_notify_keyboard_keysym (session,
