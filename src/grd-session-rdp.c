@@ -85,6 +85,7 @@ struct _GrdSessionRdp
   uint16_t pointer_x;
   uint16_t pointer_y;
 
+  GHashTable *pressed_keys;
   GHashTable *pressed_unicode_keys;
 
   GrdRdpEventQueue *rdp_event_queue;
@@ -1083,6 +1084,22 @@ rdp_peer_refresh_region (freerdp_peer   *peer,
 }
 
 static gboolean
+notify_keycode_released (gpointer key,
+                         gpointer value,
+                         gpointer user_data)
+{
+  GrdSessionRdp *session_rdp = user_data;
+  GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
+  uint32_t keycode = GPOINTER_TO_UINT (key);
+
+  grd_rdp_event_queue_add_input_event_keyboard_keycode (rdp_event_queue,
+                                                        keycode,
+                                                        GRD_KEY_STATE_RELEASED);
+
+  return TRUE;
+}
+
+static gboolean
 notify_keysym_released (gpointer key,
                         gpointer value,
                         gpointer user_data)
@@ -1109,6 +1126,10 @@ rdp_input_synchronize_event (rdpInput *rdp_input,
 
   if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED))
     return TRUE;
+
+  g_hash_table_foreach_remove (session_rdp->pressed_keys,
+                               notify_keycode_released,
+                               session_rdp);
 
   g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
                                notify_keysym_released,
@@ -1235,10 +1256,43 @@ rdp_input_keyboard_event (rdpInput *rdp_input,
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
+  GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
+  GrdKeyState key_state;
+  uint16_t fullcode;
+  uint16_t vkcode;
+  uint16_t keycode;
 
   if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED) ||
       is_view_only (session_rdp))
     return TRUE;
+
+  fullcode = flags & KBD_FLAGS_EXTENDED ? code | KBDEXT : code;
+  vkcode = GetVirtualKeyCodeFromVirtualScanCode (fullcode, 4);
+  vkcode = flags & KBD_FLAGS_EXTENDED ? vkcode | KBDEXT : vkcode;
+  /**
+   * Although the type is declared as an evdev keycode, FreeRDP actually returns
+   * a XKB keycode
+   */
+  keycode = GetKeycodeFromVirtualKeyCode (vkcode, KEYCODE_TYPE_EVDEV) - 8;
+
+  key_state = flags & KBD_FLAGS_DOWN ? GRD_KEY_STATE_PRESSED
+                                     : GRD_KEY_STATE_RELEASED;
+
+  if (flags & KBD_FLAGS_DOWN)
+    {
+      if (!g_hash_table_add (session_rdp->pressed_keys,
+                             GUINT_TO_POINTER (keycode)))
+        return TRUE;
+    }
+  else
+    {
+      if (!g_hash_table_remove (session_rdp->pressed_keys,
+                                GUINT_TO_POINTER (keycode)))
+        return TRUE;
+    }
+
+  grd_rdp_event_queue_add_input_event_keyboard_keycode (rdp_event_queue,
+                                                        keycode, key_state);
 
   return TRUE;
 }
@@ -1672,6 +1726,9 @@ grd_session_rdp_stop (GrdSession *session)
   freerdp_peer_context_free (peer);
   freerdp_peer_free (peer);
 
+  g_hash_table_foreach_remove (session_rdp->pressed_keys,
+                               notify_keycode_released,
+                               session_rdp);
   g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
                                notify_keysym_released,
                                session);
@@ -1750,6 +1807,7 @@ grd_session_rdp_dispose (GObject *object)
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
 
   g_clear_pointer (&session_rdp->pressed_unicode_keys, g_hash_table_unref);
+  g_clear_pointer (&session_rdp->pressed_keys, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pointer_cache, g_hash_table_unref);
 
   G_OBJECT_CLASS (grd_session_rdp_parent_class)->dispose (object);
@@ -1785,6 +1843,7 @@ static void
 grd_session_rdp_init (GrdSessionRdp *session_rdp)
 {
   session_rdp->pointer_cache = g_hash_table_new (NULL, are_pointer_bitmaps_equal);
+  session_rdp->pressed_keys = g_hash_table_new (NULL, NULL);
   session_rdp->pressed_unicode_keys = g_hash_table_new (NULL, NULL);
 
   g_cond_init (&session_rdp->pending_jobs_cond);
