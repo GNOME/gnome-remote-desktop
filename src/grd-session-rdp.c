@@ -1113,8 +1113,7 @@ notify_keysym_released (gpointer key,
                         gpointer value,
                         gpointer user_data)
 {
-  GrdSession *session = (GrdSession *) user_data;
-  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
+  GrdSessionRdp *session_rdp = user_data;
   GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
   xkb_keysym_t keysym = GPOINTER_TO_UINT (key);
 
@@ -1131,7 +1130,6 @@ rdp_input_synchronize_event (rdpInput *rdp_input,
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
-  GrdSession *session = GRD_SESSION (session_rdp);
 
   if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED))
     return TRUE;
@@ -1142,7 +1140,7 @@ rdp_input_synchronize_event (rdpInput *rdp_input,
 
   g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
                                notify_keysym_released,
-                               session);
+                               session_rdp);
 
   return TRUE;
 }
@@ -1799,7 +1797,7 @@ grd_session_rdp_stop (GrdSession *session)
                                session_rdp);
   g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
                                notify_keysym_released,
-                               session);
+                               session_rdp);
   g_clear_object (&session_rdp->rdp_event_queue);
 
   g_clear_pointer (&session_rdp->last_frame, g_free);
