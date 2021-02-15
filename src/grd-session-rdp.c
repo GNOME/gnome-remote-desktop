@@ -53,6 +53,14 @@ typedef enum _PointerType
   POINTER_TYPE_NORMAL  = 1 << 1,
 } PointerType;
 
+typedef enum _PauseKeyState
+{
+  PAUSE_KEY_STATE_NONE,
+  PAUSE_KEY_STATE_CTRL_DOWN,
+  PAUSE_KEY_STATE_NUMLOCK_DOWN,
+  PAUSE_KEY_STATE_CTRL_UP,
+} PauseKeyState;
+
 typedef struct _Pointer
 {
   uint8_t *bitmap;
@@ -87,6 +95,7 @@ struct _GrdSessionRdp
 
   GHashTable *pressed_keys;
   GHashTable *pressed_unicode_keys;
+  PauseKeyState pause_key_state;
 
   GrdRdpEventQueue *rdp_event_queue;
 
@@ -1249,6 +1258,62 @@ rdp_input_extended_mouse_event (rdpInput *rdp_input,
   return TRUE;
 }
 
+static gboolean
+is_pause_key_sequence (GrdSessionRdp *session_rdp,
+                       uint16_t       vkcode,
+                       uint16_t       flags)
+{
+  GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
+
+  switch (session_rdp->pause_key_state)
+    {
+    case PAUSE_KEY_STATE_NONE:
+      if (vkcode == VK_LCONTROL &&
+          flags & KBD_FLAGS_DOWN &&
+          flags & KBD_FLAGS_EXTENDED1)
+        {
+          session_rdp->pause_key_state = PAUSE_KEY_STATE_CTRL_DOWN;
+          return TRUE;
+        }
+      return FALSE;
+    case PAUSE_KEY_STATE_CTRL_DOWN:
+      if (vkcode == VK_NUMLOCK &&
+          flags & KBD_FLAGS_DOWN)
+        {
+          session_rdp->pause_key_state = PAUSE_KEY_STATE_NUMLOCK_DOWN;
+          return TRUE;
+        }
+      break;
+    case PAUSE_KEY_STATE_NUMLOCK_DOWN:
+      if (vkcode == VK_LCONTROL &&
+          !(flags & KBD_FLAGS_DOWN) &&
+          flags & KBD_FLAGS_EXTENDED1)
+        {
+          session_rdp->pause_key_state = PAUSE_KEY_STATE_CTRL_UP;
+          return TRUE;
+        }
+      break;
+    case PAUSE_KEY_STATE_CTRL_UP:
+      if (vkcode == VK_NUMLOCK &&
+          !(flags & KBD_FLAGS_DOWN))
+        {
+          session_rdp->pause_key_state = PAUSE_KEY_STATE_NONE;
+          grd_rdp_event_queue_add_input_event_keyboard_keysym (
+            rdp_event_queue, XKB_KEY_Pause, GRD_KEY_STATE_PRESSED);
+          grd_rdp_event_queue_add_input_event_keyboard_keysym (
+            rdp_event_queue, XKB_KEY_Pause, GRD_KEY_STATE_RELEASED);
+
+          return TRUE;
+        }
+      break;
+    }
+
+  g_warning ("Received invalid pause key sequence");
+  session_rdp->pause_key_state = PAUSE_KEY_STATE_NONE;
+
+  return FALSE;
+}
+
 static BOOL
 rdp_input_keyboard_event (rdpInput *rdp_input,
                           uint16_t  flags,
@@ -1277,6 +1342,9 @@ rdp_input_keyboard_event (rdpInput *rdp_input,
 
   key_state = flags & KBD_FLAGS_DOWN ? GRD_KEY_STATE_PRESSED
                                      : GRD_KEY_STATE_RELEASED;
+
+  if (is_pause_key_sequence (session_rdp, vkcode, flags))
+    return TRUE;
 
   if (flags & KBD_FLAGS_DOWN)
     {
