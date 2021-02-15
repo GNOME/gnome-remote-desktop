@@ -62,6 +62,8 @@ update_vnc_clipboard (GrdClipboardVnc *clipboard_vnc,
 
   grd_session_vnc_set_client_clipboard_text (clipboard_vnc->session_vnc,
                                              dst_data, strlen (dst_data));
+
+  g_free (dst_data);
 }
 
 static void
