@@ -47,8 +47,12 @@ struct _GrdDaemon
 
   GrdContext *context;
 
+#ifdef HAVE_RDP
   GrdRdpServer *rdp_server;
+#endif
+#ifdef HAVE_VNC
   GrdVncServer *vnc_server;
+#endif
 };
 
 G_DEFINE_TYPE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
@@ -63,14 +67,12 @@ is_daemon_ready (GrdDaemon *daemon)
   return TRUE;
 }
 
+#ifdef HAVE_RDP
 static void
-maybe_enable_services (GrdDaemon *daemon)
+init_rdp_server (GrdDaemon *daemon)
 {
   GrdSettings *settings = grd_context_get_settings (daemon->context);
-  GError *error = NULL;
-
-  if (!is_daemon_ready (daemon))
-    return;
+  g_autoptr (GError) error = NULL;
 
   daemon->rdp_server = NULL;
   if (!g_access (grd_settings_get_rdp_server_cert (settings), F_OK) &&
@@ -86,12 +88,36 @@ maybe_enable_services (GrdDaemon *daemon)
     {
       g_message ("Didn't initialize RDP server: not configured");
     }
+}
+#endif /* HAVE_RDP */
+
+#ifdef HAVE_VNC
+static void
+init_vnc_server (GrdDaemon *daemon)
+{
+  g_autoptr (GError) error = NULL;
 
   daemon->vnc_server = grd_vnc_server_new (daemon->context);
   if (!grd_vnc_server_start (daemon->vnc_server, &error))
     g_warning ("Failed to initialize VNC server: %s\n", error->message);
   else
     g_message ("Initialized VNC server");
+}
+#endif /* HAVE_VNC */
+
+static void
+maybe_enable_services (GrdDaemon *daemon)
+{
+  if (!is_daemon_ready (daemon))
+    return;
+
+#ifdef HAVE_RDP
+  init_rdp_server (daemon);
+#endif
+
+#ifdef HAVE_VNC
+  init_vnc_server (daemon);
+#endif
 }
 
 static void
@@ -111,8 +137,12 @@ static void
 disable_services (GrdDaemon *daemon)
 {
   close_all_sessions (daemon);
+#ifdef HAVE_RDP
   g_clear_object (&daemon->rdp_server);
+#endif
+#ifdef HAVE_VNC
   g_clear_object (&daemon->vnc_server);
+#endif
 }
 
 static void

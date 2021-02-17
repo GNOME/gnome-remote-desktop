@@ -26,9 +26,7 @@
 #include <freerdp/peer.h>
 #include <gio/gio.h>
 #include <linux/input-event-codes.h>
-#ifdef HAS_RDP_UNICODE_INPUT
 #include <xkbcommon/xkbcommon.h>
-#endif
 
 #include "grd-clipboard-rdp.h"
 #include "grd-context.h"
@@ -87,9 +85,7 @@ struct _GrdSessionRdp
   uint16_t pointer_x;
   uint16_t pointer_y;
 
-#ifdef HAS_RDP_UNICODE_INPUT
   GHashTable *pressed_unicode_keys;
-#endif
 
   GrdRdpEventQueue *rdp_event_queue;
 
@@ -1086,7 +1082,6 @@ rdp_peer_refresh_region (freerdp_peer   *peer,
   ++rdp_peer_context->frame_id;
 }
 
-#ifdef HAS_RDP_UNICODE_INPUT
 static gboolean
 notify_keysym_released (gpointer key,
                         gpointer value,
@@ -1103,26 +1098,21 @@ notify_keysym_released (gpointer key,
 
   return TRUE;
 }
-#endif
 
 static BOOL
 rdp_input_synchronize_event (rdpInput *rdp_input,
                              uint32_t  flags)
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
-#ifdef HAS_RDP_UNICODE_INPUT
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   GrdSession *session = GRD_SESSION (session_rdp);
-#endif
 
   if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED))
     return TRUE;
 
-#ifdef HAS_RDP_UNICODE_INPUT
   g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
                                notify_keysym_released,
                                session);
-#endif
 
   return TRUE;
 }
@@ -1260,18 +1250,15 @@ rdp_input_unicode_keyboard_event (rdpInput *rdp_input,
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
-#ifdef HAS_RDP_UNICODE_INPUT
   GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
   uint32_t *code_utf32;
   xkb_keysym_t keysym;
   GrdKeyState key_state;
-#endif
 
   if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED) ||
       is_view_only (session_rdp))
     return TRUE;
 
-#ifdef HAS_RDP_UNICODE_INPUT
   code_utf32 = g_utf16_to_ucs4 (&code_utf16, 1, NULL, NULL, NULL);
   if (!code_utf32)
     return TRUE;
@@ -1297,7 +1284,6 @@ rdp_input_unicode_keyboard_event (rdpInput *rdp_input,
 
   grd_rdp_event_queue_add_input_event_keyboard_keysym (rdp_event_queue,
                                                        keysym, key_state);
-#endif
 
   return TRUE;
 }
@@ -1495,9 +1481,7 @@ init_rdp_session (GrdSessionRdp *session_rdp,
   rdp_settings->NSCodec = TRUE;
   rdp_settings->FrameMarkerCommandEnabled = TRUE;
   rdp_settings->SurfaceFrameMarkerEnabled = TRUE;
-#ifdef HAS_RDP_UNICODE_INPUT
   rdp_settings->UnicodeInput = TRUE;
-#endif
 
   peer->Capabilities = rdp_peer_capabilities;
   peer->PostConnect = rdp_peer_post_connect;
@@ -1688,11 +1672,9 @@ grd_session_rdp_stop (GrdSession *session)
   freerdp_peer_context_free (peer);
   freerdp_peer_free (peer);
 
-#ifdef HAS_RDP_UNICODE_INPUT
   g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
                                notify_keysym_released,
                                session);
-#endif
   g_clear_object (&session_rdp->rdp_event_queue);
 
   g_clear_pointer (&session_rdp->last_frame, g_free);
@@ -1767,9 +1749,7 @@ grd_session_rdp_dispose (GObject *object)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
 
-#ifdef HAS_RDP_UNICODE_INPUT
   g_clear_pointer (&session_rdp->pressed_unicode_keys, g_hash_table_unref);
-#endif
   g_clear_pointer (&session_rdp->pointer_cache, g_hash_table_unref);
 
   G_OBJECT_CLASS (grd_session_rdp_parent_class)->dispose (object);
@@ -1805,9 +1785,7 @@ static void
 grd_session_rdp_init (GrdSessionRdp *session_rdp)
 {
   session_rdp->pointer_cache = g_hash_table_new (NULL, are_pointer_bitmaps_equal);
-#ifdef HAS_RDP_UNICODE_INPUT
   session_rdp->pressed_unicode_keys = g_hash_table_new (NULL, NULL);
-#endif
 
   g_cond_init (&session_rdp->pending_jobs_cond);
   g_mutex_init (&session_rdp->pending_jobs_mutex);

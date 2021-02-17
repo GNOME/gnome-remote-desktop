@@ -6,5 +6,8 @@
 /* The prefix for our gettext translation domains. */
 #mesondefine GETTEXT_PACKAGE
 
-/* Defined if RDP unicode input is enabled */
-#mesondefine HAS_RDP_UNICODE_INPUT
+/* Defined if RDP backend enabled */
+#mesondefine HAVE_RDP
+
+/* Defined if VNC backend is enabled */
+#mesondefine HAVE_VNC
