@@ -1532,7 +1532,6 @@ grd_clipboard_rdp_dispose (GObject *object)
                    CloseHandle);
   g_clear_pointer (&clipboard_rdp->completed_format_list_event, CloseHandle);
   g_clear_pointer (&clipboard_rdp->format_data_received_event, CloseHandle);
-  g_clear_pointer (&clipboard_rdp->delegate->basePath, g_free);
   g_clear_pointer (&clipboard_rdp->system, ClipboardDestroy);
   g_clear_pointer (&clipboard_rdp->cliprdr_context, cliprdr_server_context_free);
 
@@ -1547,7 +1546,6 @@ grd_clipboard_rdp_dispose (GObject *object)
 static void
 grd_clipboard_rdp_init (GrdClipboardRdp *clipboard_rdp)
 {
-  const char *prefix = "file://";
   const char *grd_path = "/gnome-remote-desktop";
   const char *cliprdr_template = "/cliprdr-XXXXXX";
   g_autofree char *base_path = NULL;
@@ -1576,7 +1574,7 @@ grd_clipboard_rdp_init (GrdClipboardRdp *clipboard_rdp)
   clipboard_rdp->delegate->ClipboardFileSizeFailure = cliprdr_file_size_failure;
   clipboard_rdp->delegate->ClipboardFileRangeSuccess = cliprdr_file_range_success;
   clipboard_rdp->delegate->ClipboardFileRangeFailure = cliprdr_file_range_failure;
-  clipboard_rdp->delegate->basePath = g_strdup_printf ("%s%s", prefix, template_path);
+  clipboard_rdp->delegate->basePath = NULL;
   clipboard_rdp->delegate->custom = clipboard_rdp;
 
   clipboard_rdp->format_data_received_event =
