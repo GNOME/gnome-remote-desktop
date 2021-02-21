@@ -1258,24 +1258,21 @@ cliprdr_client_format_data_response (CliprdrServerContext               *cliprdr
 }
 
 static uint32_t
-delegate_request_file_contents_size (CliprdrServerContext                *cliprdr_context,
+delegate_request_file_contents_size (wClipboardDelegate                  *delegate,
                                      const CLIPRDR_FILE_CONTENTS_REQUEST *file_contents_request)
 {
-  GrdClipboardRdp *clipboard_rdp = cliprdr_context->custom;
   wClipboardFileSizeRequest file_size_request = {0};
 
   file_size_request.streamId = file_contents_request->streamId;
   file_size_request.listIndex = file_contents_request->listIndex;
 
-  return clipboard_rdp->delegate->ClientRequestFileSize (clipboard_rdp->delegate,
-                                                         &file_size_request);
+  return delegate->ClientRequestFileSize (delegate, &file_size_request);
 }
 
 static uint32_t
-delegate_request_file_contents_range (CliprdrServerContext                *cliprdr_context,
+delegate_request_file_contents_range (wClipboardDelegate                  *delegate,
                                       const CLIPRDR_FILE_CONTENTS_REQUEST *file_contents_request)
 {
-  GrdClipboardRdp *clipboard_rdp = cliprdr_context->custom;
   wClipboardFileRangeRequest file_range_request = {0};
 
   file_range_request.streamId = file_contents_request->streamId;
@@ -1284,8 +1281,7 @@ delegate_request_file_contents_range (CliprdrServerContext                *clipr
   file_range_request.nPositionHigh = file_contents_request->nPositionHigh;
   file_range_request.cbRequested = file_contents_request->cbRequested;
 
-  return clipboard_rdp->delegate->ClientRequestFileRange (clipboard_rdp->delegate,
-                                                          &file_range_request);
+  return delegate->ClientRequestFileRange (delegate, &file_range_request);
 }
 
 static uint32_t
@@ -1332,12 +1328,12 @@ cliprdr_client_file_contents_request (CliprdrServerContext                *clipr
 
   if (file_contents_request->dwFlags & FILECONTENTS_SIZE)
     {
-      error = delegate_request_file_contents_size (cliprdr_context,
+      error = delegate_request_file_contents_size (clipboard_rdp->delegate,
                                                    file_contents_request);
     }
   else if (file_contents_request->dwFlags & FILECONTENTS_RANGE)
     {
-      error = delegate_request_file_contents_range (cliprdr_context,
+      error = delegate_request_file_contents_range (clipboard_rdp->delegate,
                                                     file_contents_request);
     }
   else
