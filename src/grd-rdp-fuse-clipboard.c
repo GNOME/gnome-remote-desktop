@@ -272,6 +272,7 @@ grd_rdp_fuse_clipboard_set_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
         {
           g_warning ("[RDP.CLIPRDR] Failed to convert filename. Aborting "
                      "SelectionTransfer");
+          clear_selection (rdp_fuse_clipboard);
           g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
           g_mutex_unlock (&rdp_fuse_clipboard->selection_mutex);
 
