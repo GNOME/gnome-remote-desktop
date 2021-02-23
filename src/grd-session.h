@@ -67,6 +67,11 @@ struct _GrdSessionClass
   void (*stream_ready) (GrdSession *session,
                         GrdStream  *stream);
   void (*stop) (GrdSession *session);
+
+  void (*on_caps_lock_state_changed) (GrdSession *session,
+                                      gboolean    state);
+  void (*on_num_lock_state_changed) (GrdSession *session,
+                                     gboolean    state);
 };
 
 GrdContext *grd_session_get_context (GrdSession *session);

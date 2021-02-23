@@ -698,6 +698,36 @@ on_remote_desktop_session_selection_transfer (GrdDBusRemoteDesktopSession *sessi
 }
 
 static void
+on_caps_lock_state_changed (GrdDBusRemoteDesktopSession *session_proxy,
+                            GParamSpec                  *param_spec,
+                            GrdSession                  *session)
+{
+  GrdSessionClass *klass = GRD_SESSION_GET_CLASS (session);
+  gboolean state;
+
+  state = grd_dbus_remote_desktop_session_get_caps_lock_state (session_proxy);
+  g_debug ("Caps lock state: %s", state ? "locked" : "unlocked");
+
+  if (klass->on_caps_lock_state_changed)
+    klass->on_caps_lock_state_changed (session, state);
+}
+
+static void
+on_num_lock_state_changed (GrdDBusRemoteDesktopSession *session_proxy,
+                           GParamSpec                  *param_spec,
+                           GrdSession                  *session)
+{
+  GrdSessionClass *klass = GRD_SESSION_GET_CLASS (session);
+  gboolean state;
+
+  state = grd_dbus_remote_desktop_session_get_num_lock_state (session_proxy);
+  g_debug ("Num lock state: %s", state ? "locked" : "unlocked");
+
+  if (klass->on_num_lock_state_changed)
+    klass->on_num_lock_state_changed (session, state);
+}
+
+static void
 on_remote_desktop_session_proxy_acquired (GObject      *object,
                                           GAsyncResult *result,
                                           gpointer      user_data)
@@ -756,8 +786,18 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
                                             on_screen_cast_session_created,
                                             session);
 
+  g_signal_connect (session_proxy, "notify::caps-lock-state",
+                    G_CALLBACK (on_caps_lock_state_changed),
+                    session);
+  g_signal_connect (session_proxy, "notify::num-lock-state",
+                    G_CALLBACK (on_num_lock_state_changed),
+                    session);
+
   if (klass->remote_desktop_session_ready)
     klass->remote_desktop_session_ready (session);
+
+  on_caps_lock_state_changed (session_proxy, NULL, session);
+  on_num_lock_state_changed (session_proxy, NULL, session);
 }
 
 static void
