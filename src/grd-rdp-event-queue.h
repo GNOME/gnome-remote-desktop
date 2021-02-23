@@ -53,4 +53,14 @@ void grd_rdp_event_queue_add_input_event_pointer_axis (GrdRdpEventQueue    *rdp_
                                                        double               dy,
                                                        GrdPointerAxisFlags  flags);
 
+void grd_rdp_event_queue_update_caps_lock_state (GrdRdpEventQueue *rdp_event_queue,
+                                                 gboolean          caps_lock_state);
+
+void grd_rdp_event_queue_update_num_lock_state (GrdRdpEventQueue *rdp_event_queue,
+                                                gboolean          num_lock_state);
+
+void grd_rdp_event_queue_add_synchronization_event (GrdRdpEventQueue *rdp_event_queue,
+                                                    gboolean          caps_lock_state,
+                                                    gboolean          num_lock_state);
+
 #endif /* GRD_RDP_EVENT_QUEUE_H */

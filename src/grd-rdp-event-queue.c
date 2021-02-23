@@ -21,6 +21,8 @@
 
 #include "grd-rdp-event-queue.h"
 
+#include <xkbcommon/xkbcommon-keysyms.h>
+
 typedef enum _RdpEventType
 {
   RDP_EVENT_TYPE_NONE,
@@ -72,6 +74,12 @@ typedef struct _RdpEvent
   } input_ptr_axis;
 } RdpEvent;
 
+typedef struct _RdpSynchronizationEvent
+{
+  gboolean caps_lock_state;
+  gboolean num_lock_state;
+} RdpSynchronizationEvent;
+
 struct _GrdRdpEventQueue
 {
   GObject parent;
@@ -79,8 +87,14 @@ struct _GrdRdpEventQueue
   GrdSessionRdp *session_rdp;
   GSource *flush_source;
 
-  GMutex queue_mutex;
+  GMutex event_mutex;
   GQueue *queue;
+  RdpSynchronizationEvent *rdp_sync_event;
+
+  gboolean pending_sync_caps_lock;
+  gboolean pending_sync_num_lock;
+  gboolean caps_lock_state;
+  gboolean num_lock_state;
 };
 
 G_DEFINE_TYPE (GrdRdpEventQueue, grd_rdp_event_queue, G_TYPE_OBJECT);
@@ -89,9 +103,9 @@ static void
 queue_rdp_event (GrdRdpEventQueue *rdp_event_queue,
                  RdpEvent         *rdp_event)
 {
-  g_mutex_lock (&rdp_event_queue->queue_mutex);
+  g_mutex_lock (&rdp_event_queue->event_mutex);
   g_queue_push_tail (rdp_event_queue->queue, rdp_event);
-  g_mutex_unlock (&rdp_event_queue->queue_mutex);
+  g_mutex_unlock (&rdp_event_queue->event_mutex);
 
   g_source_set_ready_time (rdp_event_queue->flush_source, 0);
 }
@@ -173,11 +187,97 @@ grd_rdp_event_queue_add_input_event_pointer_axis (GrdRdpEventQueue    *rdp_event
   queue_rdp_event (rdp_event_queue, rdp_event);
 }
 
+void
+grd_rdp_event_queue_update_caps_lock_state (GrdRdpEventQueue *rdp_event_queue,
+                                            gboolean          caps_lock_state)
+{
+  rdp_event_queue->caps_lock_state = caps_lock_state;
+  rdp_event_queue->pending_sync_caps_lock = FALSE;
+
+  if (rdp_event_queue->pending_sync_num_lock)
+    return;
+
+  g_source_set_ready_time (rdp_event_queue->flush_source, 0);
+}
+
+void
+grd_rdp_event_queue_update_num_lock_state (GrdRdpEventQueue *rdp_event_queue,
+                                           gboolean          num_lock_state)
+{
+  rdp_event_queue->num_lock_state = num_lock_state;
+  rdp_event_queue->pending_sync_num_lock = FALSE;
+
+  if (rdp_event_queue->pending_sync_caps_lock)
+    return;
+
+  g_source_set_ready_time (rdp_event_queue->flush_source, 0);
+}
+
+void
+grd_rdp_event_queue_add_synchronization_event (GrdRdpEventQueue *rdp_event_queue,
+                                               gboolean          caps_lock_state,
+                                               gboolean          num_lock_state)
+{
+  RdpSynchronizationEvent *rdp_sync_event;
+
+  rdp_sync_event = g_malloc0 (sizeof (RdpSynchronizationEvent));
+  rdp_sync_event->caps_lock_state = caps_lock_state;
+  rdp_sync_event->num_lock_state = num_lock_state;
+
+  g_mutex_lock (&rdp_event_queue->event_mutex);
+  g_clear_pointer (&rdp_event_queue->rdp_sync_event, g_free);
+  rdp_event_queue->rdp_sync_event = rdp_sync_event;
+  g_mutex_unlock (&rdp_event_queue->event_mutex);
+
+  g_source_set_ready_time (rdp_event_queue->flush_source, 0);
+}
+
+static void
+handle_synchronization_event (GrdRdpEventQueue *rdp_event_queue)
+{
+  GrdSession *session = GRD_SESSION (rdp_event_queue->session_rdp);
+  RdpSynchronizationEvent *rdp_sync_event;
+
+  rdp_sync_event = g_steal_pointer (&rdp_event_queue->rdp_sync_event);
+
+  if (rdp_sync_event->caps_lock_state != rdp_event_queue->caps_lock_state)
+    {
+      g_debug ("Synchronizing caps lock state to be %s",
+               rdp_sync_event->caps_lock_state ? "locked": "unlocked");
+
+      grd_session_notify_keyboard_keysym (session, XKB_KEY_Caps_Lock,
+                                          GRD_KEY_STATE_PRESSED);
+      grd_session_notify_keyboard_keysym (session, XKB_KEY_Caps_Lock,
+                                          GRD_KEY_STATE_RELEASED);
+
+      rdp_event_queue->pending_sync_caps_lock = TRUE;
+    }
+  if (rdp_sync_event->num_lock_state != rdp_event_queue->num_lock_state)
+    {
+      g_debug ("Synchronizing num lock state to be %s",
+               rdp_sync_event->num_lock_state ? "locked": "unlocked");
+
+      grd_session_notify_keyboard_keysym (session, XKB_KEY_Num_Lock,
+                                          GRD_KEY_STATE_PRESSED);
+      grd_session_notify_keyboard_keysym (session, XKB_KEY_Num_Lock,
+                                          GRD_KEY_STATE_RELEASED);
+
+      rdp_event_queue->pending_sync_num_lock = TRUE;
+    }
+
+  g_free (rdp_sync_event);
+}
+
 static void
 process_rdp_events (GrdRdpEventQueue *rdp_event_queue)
 {
   GrdSession *session = GRD_SESSION (rdp_event_queue->session_rdp);
   RdpEvent *rdp_event;
+
+  if (rdp_event_queue->rdp_sync_event &&
+      !rdp_event_queue->pending_sync_caps_lock &&
+      !rdp_event_queue->pending_sync_num_lock)
+    handle_synchronization_event (rdp_event_queue);
 
   while ((rdp_event = g_queue_pop_head (rdp_event_queue->queue)))
     {
@@ -222,9 +322,9 @@ flush_rdp_events (gpointer user_data)
 {
   GrdRdpEventQueue *rdp_event_queue = user_data;
 
-  g_mutex_lock (&rdp_event_queue->queue_mutex);
+  g_mutex_lock (&rdp_event_queue->event_mutex);
   process_rdp_events (rdp_event_queue);
-  g_mutex_unlock (&rdp_event_queue->queue_mutex);
+  g_mutex_unlock (&rdp_event_queue->event_mutex);
 
   return G_SOURCE_CONTINUE;
 }
@@ -279,6 +379,8 @@ grd_rdp_event_queue_dispose (GObject *object)
    * Process all events to ensure that remaining keysym-released events are sent
    */
   process_rdp_events (rdp_event_queue);
+
+  g_clear_pointer (&rdp_event_queue->rdp_sync_event, g_free);
   g_queue_free_full (rdp_event_queue->queue, free_rdp_event);
 
   g_source_destroy (rdp_event_queue->flush_source);
@@ -292,7 +394,10 @@ grd_rdp_event_queue_init (GrdRdpEventQueue *rdp_event_queue)
 {
   rdp_event_queue->queue = g_queue_new ();
 
-  g_mutex_init (&rdp_event_queue->queue_mutex);
+  g_mutex_init (&rdp_event_queue->event_mutex);
+
+  rdp_event_queue->pending_sync_caps_lock = TRUE;
+  rdp_event_queue->pending_sync_num_lock = TRUE;
 }
 
 static void
