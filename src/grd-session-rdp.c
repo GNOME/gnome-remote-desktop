@@ -1130,8 +1130,10 @@ rdp_input_synchronize_event (rdpInput *rdp_input,
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
+  GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
 
-  if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED))
+  if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED) ||
+      is_view_only (session_rdp))
     return TRUE;
 
   g_hash_table_foreach_remove (session_rdp->pressed_keys,
@@ -1141,6 +1143,10 @@ rdp_input_synchronize_event (rdpInput *rdp_input,
   g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
                                notify_keysym_released,
                                session_rdp);
+
+  grd_rdp_event_queue_add_synchronization_event (rdp_event_queue,
+                                                 !!(flags & KBD_SYNC_CAPS_LOCK),
+                                                 !!(flags & KBD_SYNC_NUM_LOCK));
 
   return TRUE;
 }
@@ -1868,6 +1874,26 @@ grd_session_rdp_stream_ready (GrdSession *session,
 }
 
 static void
+grd_session_rdp_on_caps_lock_state_changed (GrdSession *session,
+                                            gboolean    state)
+{
+  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
+  GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
+
+  grd_rdp_event_queue_update_caps_lock_state (rdp_event_queue, state);
+}
+
+static void
+grd_session_rdp_on_num_lock_state_changed (GrdSession *session,
+                                           gboolean    state)
+{
+  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
+  GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
+
+  grd_rdp_event_queue_update_num_lock_state (rdp_event_queue, state);
+}
+
+static void
 grd_session_rdp_dispose (GObject *object)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
@@ -1931,4 +1957,8 @@ grd_session_rdp_class_init (GrdSessionRdpClass *klass)
     grd_session_rdp_remote_desktop_session_ready;
   session_class->stop = grd_session_rdp_stop;
   session_class->stream_ready = grd_session_rdp_stream_ready;
+  session_class->on_caps_lock_state_changed =
+    grd_session_rdp_on_caps_lock_state_changed;
+  session_class->on_num_lock_state_changed =
+    grd_session_rdp_on_num_lock_state_changed;
 }
