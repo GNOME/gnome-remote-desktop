@@ -64,6 +64,7 @@ struct _GrdClipboardRdp
 
   GHashTable *allowed_server_formats;
   GList *pending_server_formats;
+  GList *queued_server_formats;
   gboolean server_file_contents_requests_allowed;
   uint16_t format_list_response_msg_flags;
 
@@ -79,6 +80,7 @@ struct _GrdClipboardRdp
   HANDLE completed_format_data_request_event;
   HANDLE format_list_received_event;
   HANDLE format_list_response_received_event;
+  unsigned int pending_server_formats_drop_id;
   unsigned int server_format_list_update_id;
   unsigned int server_format_data_request_id;
   unsigned int client_format_list_response_id;
@@ -172,10 +174,9 @@ remove_duplicated_clipboard_mime_types (GrdClipboardRdp  *clipboard_rdp,
 }
 
 static void
-grd_clipboard_rdp_update_client_mime_type_list (GrdClipboard *clipboard,
-                                                GList        *mime_type_list)
+send_mime_type_list (GrdClipboardRdp *clipboard_rdp,
+                     GList           *mime_type_list)
 {
-  GrdClipboardRdp *clipboard_rdp = GRD_CLIPBOARD_RDP (clipboard);
   GrdRdpFuseClipboard *rdp_fuse_clipboard = clipboard_rdp->rdp_fuse_clipboard;
   CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
   CLIPRDR_FORMAT_LIST format_list = {0};
@@ -185,50 +186,7 @@ grd_clipboard_rdp_update_client_mime_type_list (GrdClipboard *clipboard,
   uint32_t i;
   GList *l;
 
-  if (clipboard_rdp->pending_server_formats)
-    {
-      HANDLE format_list_response_received_event;
-      HANDLE events[2];
-
-      format_list_response_received_event =
-        clipboard_rdp->format_list_response_received_event;
-
-      events[0] = clipboard_rdp->stop_event;
-      events[1] = format_list_response_received_event;
-      WaitForMultipleObjects (2, events, FALSE, MAX_WAIT_TIME);
-
-      if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
-        {
-          g_list_free (mime_type_list);
-          return;
-        }
-
-      if (WaitForSingleObject (format_list_response_received_event, 0) == WAIT_OBJECT_0)
-        {
-          update_allowed_server_formats (clipboard_rdp, TRUE);
-
-          g_clear_handle_id (&clipboard_rdp->client_format_list_response_id,
-                             g_source_remove);
-          ResetEvent (format_list_response_received_event);
-        }
-      else
-        {
-          g_warning ("[RDP.CLIPRDR] Possible protocol violation: Client did not "
-                     "send format list response (Timeout reached)");
-
-          update_allowed_server_formats (clipboard_rdp, FALSE);
-        }
-    }
-
-  remove_duplicated_clipboard_mime_types (clipboard_rdp, &mime_type_list);
-
   n_formats = g_list_length (mime_type_list);
-  if (!n_formats)
-    {
-      g_list_free (mime_type_list);
-      return;
-    }
-
   cliprdr_formats = g_malloc0 (n_formats * sizeof (CLIPRDR_FORMAT));
   for (i = 0, l = mime_type_list; i < n_formats; ++i, l = l->next)
     {
@@ -292,10 +250,61 @@ grd_clipboard_rdp_update_client_mime_type_list (GrdClipboard *clipboard,
   format_list.formats = cliprdr_formats;
   format_list.numFormats = n_formats;
 
+  g_debug ("[RDP.CLIPRDR] Sending FormatList");
   cliprdr_context->ServerFormatList (cliprdr_context, &format_list);
 
   g_free (cliprdr_formats);
   g_list_free (mime_type_list);
+}
+
+static gboolean
+drop_pending_server_formats (gpointer user_data)
+{
+  GrdClipboardRdp *clipboard_rdp = user_data;
+  GList *queued_server_formats;
+
+  g_warning ("[RDP.CLIPRDR] Possible protocol violation: Client did not send "
+             "format list response (Timeout reached)");
+  update_allowed_server_formats (clipboard_rdp, FALSE);
+
+  queued_server_formats = g_steal_pointer (&clipboard_rdp->queued_server_formats);
+  if (queued_server_formats)
+    send_mime_type_list (clipboard_rdp, queued_server_formats);
+
+  clipboard_rdp->pending_server_formats_drop_id = 0;
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+grd_clipboard_rdp_update_client_mime_type_list (GrdClipboard *clipboard,
+                                                GList        *mime_type_list)
+{
+  GrdClipboardRdp *clipboard_rdp = GRD_CLIPBOARD_RDP (clipboard);
+
+  remove_duplicated_clipboard_mime_types (clipboard_rdp, &mime_type_list);
+  if (!mime_type_list)
+    return;
+
+  if (clipboard_rdp->pending_server_formats)
+    {
+      if (clipboard_rdp->queued_server_formats)
+        g_debug ("[RDP.CLIPRDR] Replacing queued server FormatList");
+      g_clear_pointer (&clipboard_rdp->queued_server_formats, g_list_free);
+
+      g_debug ("[RDP.CLIPRDR] Queueing new FormatList");
+      clipboard_rdp->queued_server_formats = mime_type_list;
+
+      if (!clipboard_rdp->pending_server_formats_drop_id)
+        {
+          clipboard_rdp->pending_server_formats_drop_id =
+            g_timeout_add (MAX_WAIT_TIME, drop_pending_server_formats, clipboard_rdp);
+        }
+
+      return;
+    }
+
+  send_mime_type_list (clipboard_rdp, mime_type_list);
 }
 
 static CLIPRDR_FORMAT_DATA_RESPONSE *
@@ -924,11 +933,20 @@ static gboolean
 handle_format_list_response (gpointer user_data)
 {
   GrdClipboardRdp *clipboard_rdp = user_data;
+  GList *queued_server_formats;
 
-  update_allowed_server_formats (clipboard_rdp, TRUE);
+  if (clipboard_rdp->pending_server_formats)
+    update_allowed_server_formats (clipboard_rdp, TRUE);
+
+  g_clear_handle_id (&clipboard_rdp->pending_server_formats_drop_id,
+                     g_source_remove);
 
   clipboard_rdp->client_format_list_response_id = 0;
   ResetEvent (clipboard_rdp->format_list_response_received_event);
+
+  queued_server_formats = g_steal_pointer (&clipboard_rdp->queued_server_formats);
+  if (queued_server_formats)
+    send_mime_type_list (clipboard_rdp, queued_server_formats);
 
   return G_SOURCE_REMOVE;
 }
@@ -1489,6 +1507,7 @@ grd_clipboard_rdp_dispose (GObject *object)
     g_free ((uint8_t *) clipboard_rdp->format_data_response->requestedFormatData);
   g_clear_pointer (&clipboard_rdp->format_data_response, g_free);
 
+  g_clear_pointer (&clipboard_rdp->queued_server_formats, g_list_free);
   g_clear_pointer (&clipboard_rdp->pending_server_formats, g_list_free);
   grd_rdp_fuse_clipboard_clear_selection (clipboard_rdp->rdp_fuse_clipboard);
   g_hash_table_foreach_remove (clipboard_rdp->format_data_cache,
@@ -1511,6 +1530,7 @@ grd_clipboard_rdp_dispose (GObject *object)
   g_clear_pointer (&clipboard_rdp->system, ClipboardDestroy);
   g_clear_pointer (&clipboard_rdp->cliprdr_context, cliprdr_server_context_free);
 
+  g_clear_handle_id (&clipboard_rdp->pending_server_formats_drop_id, g_source_remove);
   g_clear_handle_id (&clipboard_rdp->server_format_list_update_id, g_source_remove);
   g_clear_handle_id (&clipboard_rdp->server_format_data_request_id, g_source_remove);
   g_clear_handle_id (&clipboard_rdp->client_format_list_response_id, g_source_remove);
