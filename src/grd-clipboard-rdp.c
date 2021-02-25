@@ -80,6 +80,7 @@ struct _GrdClipboardRdp
   HANDLE completed_format_data_request_event;
   HANDLE format_list_received_event;
   HANDLE format_list_response_received_event;
+  HANDLE format_data_request_received_event;
   unsigned int pending_server_formats_drop_id;
   unsigned int server_format_list_update_id;
   unsigned int server_format_data_request_id;
@@ -775,9 +776,10 @@ update_server_format_list (gpointer user_data)
 
   g_free (update_context);
 
+  WaitForSingleObject (clipboard_rdp->format_list_received_event, INFINITE);
   clipboard_rdp->server_format_list_update_id = 0;
-  SetEvent (clipboard_rdp->completed_format_list_event);
   ResetEvent (clipboard_rdp->format_list_received_event);
+  SetEvent (clipboard_rdp->completed_format_list_event);
 
   return G_SOURCE_REMOVE;
 }
@@ -917,7 +919,6 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
   if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
     return CHANNEL_RC_OK;
 
-  SetEvent (clipboard_rdp->format_list_received_event);
   ResetEvent (clipboard_rdp->completed_format_list_event);
   update_context = g_malloc0 (sizeof (ServerFormatListUpdateContext));
   update_context->clipboard_rdp = clipboard_rdp;
@@ -925,6 +926,7 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
 
   clipboard_rdp->server_format_list_update_id =
     g_timeout_add (0, update_server_format_list, update_context);
+  SetEvent (clipboard_rdp->format_list_received_event);
 
   return CHANNEL_RC_OK;
 }
@@ -941,6 +943,8 @@ handle_format_list_response (gpointer user_data)
   g_clear_handle_id (&clipboard_rdp->pending_server_formats_drop_id,
                      g_source_remove);
 
+  WaitForSingleObject (clipboard_rdp->format_list_response_received_event,
+                       INFINITE);
   clipboard_rdp->client_format_list_response_id = 0;
   ResetEvent (clipboard_rdp->format_list_response_received_event);
 
@@ -1108,7 +1112,10 @@ request_server_format_data (gpointer user_data)
   g_free (dst_data);
   g_free (request_context);
 
+  WaitForSingleObject (clipboard_rdp->format_data_request_received_event,
+                       INFINITE);
   clipboard_rdp->server_format_data_request_id = 0;
+  ResetEvent (clipboard_rdp->format_data_request_received_event);
   SetEvent (clipboard_rdp->completed_format_data_request_event);
 
   return G_SOURCE_REMOVE;
@@ -1212,6 +1219,7 @@ cliprdr_client_format_data_request (CliprdrServerContext              *cliprdr_c
 
       clipboard_rdp->server_format_data_request_id =
         g_timeout_add (0, request_server_format_data, request_context);
+      SetEvent (clipboard_rdp->format_data_request_received_event);
 
       return CHANNEL_RC_OK;
     }
@@ -1519,6 +1527,8 @@ grd_clipboard_rdp_dispose (GObject *object)
   g_clear_pointer (&clipboard_rdp->fuse_mount_path, g_free);
   g_clear_pointer (&clipboard_rdp->format_data_cache, g_hash_table_unref);
   g_clear_pointer (&clipboard_rdp->allowed_server_formats, g_hash_table_destroy);
+  g_clear_pointer (&clipboard_rdp->format_data_request_received_event,
+                   CloseHandle);
   g_clear_pointer (&clipboard_rdp->format_list_response_received_event,
                    CloseHandle);
   g_clear_pointer (&clipboard_rdp->format_list_received_event, CloseHandle);
@@ -1582,6 +1592,8 @@ grd_clipboard_rdp_init (GrdClipboardRdp *clipboard_rdp)
   clipboard_rdp->format_list_received_event =
     CreateEvent (NULL, TRUE, FALSE, NULL);
   clipboard_rdp->format_list_response_received_event =
+    CreateEvent (NULL, TRUE, FALSE, NULL);
+  clipboard_rdp->format_data_request_received_event =
     CreateEvent (NULL, TRUE, FALSE, NULL);
 
   clipboard_rdp->allowed_server_formats = g_hash_table_new (NULL, NULL);
