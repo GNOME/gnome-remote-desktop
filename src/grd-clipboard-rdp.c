@@ -870,7 +870,7 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
                   mime_type = GRD_MIME_TYPE_TEXT_UTF8_STRING;
                   already_has_text_format = TRUE;
                   g_debug ("[RDP.CLIPRDR] Client advertised data for UTF8_STRING"
-                           " (external format: id: %i, name: %s)",
+                           " (external format: id: %u, name: %s)",
                            format_list->formats[i].formatId,
                            format_list->formats[i].formatName);
                 }
@@ -891,7 +891,7 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
               mime_type = GRD_MIME_TYPE_IMAGE_PNG;
               break;
             default:
-              g_debug ("[RDP.CLIPRDR] Client advertised unknown format: id: %i, "
+              g_debug ("[RDP.CLIPRDR] Client advertised unknown format: id: %u, "
                        "name: %s", format_list->formats[i].formatId,
                        format_list->formats[i].formatName);
             }
