@@ -566,9 +566,15 @@ rdp_peer_refresh_rfx (freerdp_peer   *peer,
   RFX_RECT *rfx_rects, *rfx_rect;
   int n_rects;
   RFX_MESSAGE *rfx_messages;
+#ifdef HAVE_FREERDP_2_3
+  size_t n_messages;
+  BOOL first, last;
+  size_t i;
+#else
   int n_messages;
   BOOL first, last;
   int i;
+#endif /* HAVE_FREERDP_2_3 */
 
   n_rects = cairo_region_num_rectangles (region);
   rfx_rects = g_malloc0 (n_rects * sizeof (RFX_RECT));
@@ -583,6 +589,17 @@ rdp_peer_refresh_rfx (freerdp_peer   *peer,
       rfx_rect->height = cairo_rect.height;
     }
 
+#ifdef HAVE_FREERDP_2_3
+  rfx_messages = rfx_encode_messages_ex (rdp_peer_context->rfx_context,
+                                         rfx_rects,
+                                         n_rects,
+                                         data,
+                                         desktop_width,
+                                         desktop_height,
+                                         src_stride,
+                                         &n_messages,
+                                         rdp_settings->MultifragMaxRequestSize);
+#else
   rfx_messages = rfx_encode_messages (rdp_peer_context->rfx_context,
                                       rfx_rects,
                                       n_rects,
@@ -592,6 +609,7 @@ rdp_peer_refresh_rfx (freerdp_peer   *peer,
                                       src_stride,
                                       &n_messages,
                                       rdp_settings->MultifragMaxRequestSize);
+#endif /* HAVE_FREERDP_2_3 */
 
   cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
   cmd.bmp.codecID = rdp_settings->RemoteFxCodecId;

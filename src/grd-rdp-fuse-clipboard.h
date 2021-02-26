@@ -36,9 +36,15 @@ void grd_rdp_fuse_clipboard_dismiss_all_requests (GrdRdpFuseClipboard *rdp_fuse_
 
 void grd_rdp_fuse_clipboard_clear_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard);
 
+#ifdef HAVE_FREERDP_2_3
+gboolean grd_rdp_fuse_clipboard_set_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
+                                               FILEDESCRIPTORW     *files,
+                                               uint32_t             n_files);
+#else
 gboolean grd_rdp_fuse_clipboard_set_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
                                                FILEDESCRIPTOR      *files,
                                                uint32_t             n_files);
+#endif /* HAVE_FREERDP_2_3 */
 
 void grd_rdp_fuse_clipboard_submit_file_contents_response (GrdRdpFuseClipboard *rdp_fuse_clipboard,
                                                            uint32_t             stream_id,

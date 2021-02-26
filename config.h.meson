@@ -11,3 +11,6 @@
 
 /* Defined if VNC backend is enabled */
 #mesondefine HAVE_VNC
+
+/* Defined if FreeRDP >= 2.3.x is available */
+#mesondefine HAVE_FREERDP_2_3

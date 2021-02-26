@@ -422,8 +422,13 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
                                     uint32_t         src_size,
                                     uint32_t        *dst_size)
 {
+#ifdef HAVE_FREERDP_2_3
+  FILEDESCRIPTORW *files = NULL;
+  FILEDESCRIPTORW *file;
+#else
   FILEDESCRIPTOR *files = NULL;
   FILEDESCRIPTOR *file;
+#endif /* HAVE_FREERDP_2_3 */
   uint32_t n_files = 0;
   char *filename = NULL;
   char *escaped_name;
@@ -550,8 +555,13 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
   if (mime_type == GRD_MIME_TYPE_TEXT_URILIST ||
       mime_type == GRD_MIME_TYPE_XS_GNOME_COPIED_FILES)
     {
+#ifdef HAVE_FREERDP_2_3
+      FILEDESCRIPTORW *files = NULL;
+      FILEDESCRIPTORW *file;
+#else
       FILEDESCRIPTOR *files = NULL;
       FILEDESCRIPTOR *file;
+#endif /* HAVE_FREERDP_2_3 */
       uint32_t n_files = 0;
       char *filename = NULL;
       char *escaped_name;
@@ -1005,12 +1015,21 @@ cliprdr_client_format_list_response (CliprdrServerContext               *cliprdr
 }
 
 static void
-serialize_file_list (FILEDESCRIPTOR  *files,
+#ifdef HAVE_FREERDP_2_3
+serialize_file_list (FILEDESCRIPTORW  *files,
+                     uint32_t          n_files,
+                     uint8_t         **dst_data,
+                     uint32_t         *dst_size)
+{
+  FILEDESCRIPTORW *file;
+#else
+serialize_file_list (FILEDESCRIPTOR *files,
                      uint32_t         n_files,
                      uint8_t        **dst_data,
                      uint32_t        *dst_size)
 {
   FILEDESCRIPTOR *file;
+#endif /* HAVE_FREERDP_2_3 */
   wStream* s = NULL;
   uint64_t last_write_time;
   uint32_t i, j;
@@ -1098,11 +1117,19 @@ request_server_format_data (gpointer user_data)
 
               if (dst_data && mime_type == GRD_MIME_TYPE_TEXT_URILIST)
                 {
+#ifdef HAVE_FREERDP_2_3
+                  FILEDESCRIPTORW *files;
+                  uint32_t n_files;
+
+                  files = (FILEDESCRIPTORW *) dst_data;
+                  n_files = dst_size / sizeof (FILEDESCRIPTORW);
+#else
                   FILEDESCRIPTOR *files;
                   uint32_t n_files;
 
                   files = (FILEDESCRIPTOR *) dst_data;
                   n_files = dst_size / sizeof (FILEDESCRIPTOR);
+#endif /* HAVE_FREERDP_2_3 */
 
                   dst_data = NULL;
                   dst_size = 0;

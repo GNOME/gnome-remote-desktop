@@ -242,10 +242,17 @@ get_parent_directory (GrdRdpFuseClipboard *rdp_fuse_clipboard,
   return parent;
 }
 
+#ifdef HAVE_FREERDP_2_3
+gboolean
+grd_rdp_fuse_clipboard_set_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
+                                      FILEDESCRIPTORW     *files,
+                                      uint32_t             n_files)
+#else
 gboolean
 grd_rdp_fuse_clipboard_set_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
                                       FILEDESCRIPTOR      *files,
                                       uint32_t             n_files)
+#endif /* HAVE_FREERDP_2_3 */
 {
   uint32_t i;
 
@@ -256,7 +263,11 @@ grd_rdp_fuse_clipboard_set_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
 
   for (i = 0; i < n_files; ++i)
     {
+#ifdef HAVE_FREERDP_2_3
+      FILEDESCRIPTORW *file;
+#else
       FILEDESCRIPTOR *file;
+#endif /* HAVE_FREERDP_2_3 */
       FuseFile *fuse_file, *parent;
       char *filename = NULL;
       uint32_t j;
@@ -307,7 +318,11 @@ grd_rdp_fuse_clipboard_set_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
                             file->nFileSizeLow;
           fuse_file->has_size = TRUE;
         }
+#ifdef HAVE_FREERDP_2_3
+      if (file->dwFlags & FD_WRITETIME)
+#else
       if (file->dwFlags & FD_WRITESTIME)
+#endif /* HAVE_FREERDP_2_3 */
         {
           uint64_t filetime;
 
