@@ -473,7 +473,9 @@ get_remote_format_data (GrdClipboardRdp *clipboard_rdp,
 void
 grd_clipboard_rdp_request_remote_file_size_async (GrdClipboardRdp *clipboard_rdp,
                                                   uint32_t         stream_id,
-                                                  uint32_t         list_index)
+                                                  uint32_t         list_index,
+                                                  gboolean         has_clip_data_id,
+                                                  uint32_t         clip_data_id)
 {
   CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
   CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = {0};
@@ -483,6 +485,8 @@ grd_clipboard_rdp_request_remote_file_size_async (GrdClipboardRdp *clipboard_rdp
   file_contents_request.listIndex = list_index;
   file_contents_request.dwFlags = FILECONTENTS_SIZE;
   file_contents_request.cbRequested = 0x8;
+  file_contents_request.haveClipDataId = has_clip_data_id;
+  file_contents_request.clipDataId = clip_data_id;
 
   cliprdr_context->ServerFileContentsRequest (cliprdr_context,
                                               &file_contents_request);
@@ -493,7 +497,9 @@ grd_clipboard_rdp_request_remote_file_range_async (GrdClipboardRdp *clipboard_rd
                                                    uint32_t         stream_id,
                                                    uint32_t         list_index,
                                                    uint64_t         offset,
-                                                   uint32_t         requested_size)
+                                                   uint32_t         requested_size,
+                                                   gboolean         has_clip_data_id,
+                                                   uint32_t         clip_data_id)
 {
   CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
   CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = {0};
@@ -505,7 +511,8 @@ grd_clipboard_rdp_request_remote_file_range_async (GrdClipboardRdp *clipboard_rd
   file_contents_request.nPositionLow = offset & 0xFFFFFFFF;
   file_contents_request.nPositionHigh = offset >> 32 & 0xFFFFFFFF;
   file_contents_request.cbRequested = requested_size;
-  file_contents_request.haveClipDataId = FALSE;
+  file_contents_request.haveClipDataId = has_clip_data_id;
+  file_contents_request.clipDataId = clip_data_id;
 
   cliprdr_context->ServerFileContentsRequest (cliprdr_context,
                                               &file_contents_request);

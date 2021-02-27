@@ -489,7 +489,8 @@ request_file_size_async (GrdRdpFuseClipboard       *rdp_fuse_clipboard,
            " %u", fuse_file->filename, rdp_fuse_request->stream_id);
   grd_clipboard_rdp_request_remote_file_size_async (clipboard_rdp,
                                                     rdp_fuse_request->stream_id,
-                                                    fuse_file->list_idx);
+                                                    fuse_file->list_idx,
+                                                    FALSE, 0);
 }
 
 static void
@@ -517,7 +518,8 @@ request_file_range_async (GrdRdpFuseClipboard *rdp_fuse_clipboard,
   grd_clipboard_rdp_request_remote_file_range_async (clipboard_rdp,
                                                      rdp_fuse_request->stream_id,
                                                      fuse_file->list_idx,
-                                                     offset, requested_size);
+                                                     offset, requested_size,
+                                                     FALSE, 0);
 }
 
 static FuseFile *
