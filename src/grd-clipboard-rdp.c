@@ -917,7 +917,10 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
   WaitForMultipleObjects (2, events, FALSE, INFINITE);
 
   if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
-    return CHANNEL_RC_OK;
+    {
+      g_list_free_full (mime_type_tables, g_free);
+      return CHANNEL_RC_OK;
+    }
 
   ResetEvent (clipboard_rdp->completed_format_list_event);
   update_context = g_malloc0 (sizeof (ServerFormatListUpdateContext));
