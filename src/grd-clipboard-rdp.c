@@ -471,6 +471,40 @@ get_remote_format_data (GrdClipboardRdp *clipboard_rdp,
 }
 
 void
+grd_clipboard_rdp_lock_remote_clipboard_data (GrdClipboardRdp *clipboard_rdp,
+                                              uint32_t         clip_data_id)
+{
+  CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
+  CLIPRDR_LOCK_CLIPBOARD_DATA lock_clipboard_data = {0};
+
+  g_debug ("[RDP.CLIPRDR] Locking clients clipboard data with clipDataId %u",
+           clip_data_id);
+
+  lock_clipboard_data.msgType = CB_LOCK_CLIPDATA;
+  lock_clipboard_data.clipDataId = clip_data_id;
+
+  cliprdr_context->ServerLockClipboardData (cliprdr_context,
+                                            &lock_clipboard_data);
+}
+
+void
+grd_clipboard_rdp_unlock_remote_clipboard_data (GrdClipboardRdp *clipboard_rdp,
+                                                uint32_t         clip_data_id)
+{
+  CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
+  CLIPRDR_UNLOCK_CLIPBOARD_DATA unlock_clipboard_data = {0};
+
+  g_debug ("[RDP.CLIPRDR] Unlocking clients clipboard data associated to "
+           "clipDataId %u", clip_data_id);
+
+  unlock_clipboard_data.msgType = CB_UNLOCK_CLIPDATA;
+  unlock_clipboard_data.clipDataId = clip_data_id;
+
+  cliprdr_context->ServerUnlockClipboardData (cliprdr_context,
+                                              &unlock_clipboard_data);
+}
+
+void
 grd_clipboard_rdp_request_remote_file_size_async (GrdClipboardRdp *clipboard_rdp,
                                                   uint32_t         stream_id,
                                                   uint32_t         list_index,
