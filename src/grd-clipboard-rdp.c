@@ -308,7 +308,8 @@ send_mime_type_list (GrdClipboardRdp *clipboard_rdp,
           cliprdr_formats[i].formatId = CB_FORMAT_TEXTURILIST;
           cliprdr_formats[i].formatName = "FileGroupDescriptorW";
           clipboard_rdp->server_file_contents_requests_allowed = FALSE;
-          grd_rdp_fuse_clipboard_clear_selection (rdp_fuse_clipboard);
+          grd_rdp_fuse_clipboard_clear_no_cdi_selection (rdp_fuse_clipboard);
+          grd_rdp_fuse_clipboard_lazily_clear_all_cdi_selections (rdp_fuse_clipboard);
           break;
         default:
           g_assert_not_reached ();
@@ -556,7 +557,8 @@ static uint8_t *
 get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
                                     uint8_t         *src_data,
                                     uint32_t         src_size,
-                                    uint32_t        *dst_size)
+                                    uint32_t        *dst_size,
+                                    uint32_t         clip_data_id)
 {
 #ifdef HAVE_FREERDP_2_3
   FILEDESCRIPTORW *files = NULL;
@@ -566,11 +568,16 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
   FILEDESCRIPTOR *file;
 #endif /* HAVE_FREERDP_2_3 */
   uint32_t n_files = 0;
+  char *clip_data_dir_name;
   char *filename = NULL;
   char *escaped_name;
   char *file_uri;
   GArray *dst_data;
   uint32_t i;
+
+  clip_data_dir_name = clipboard_rdp->cliprdr_context->canLockClipData ?
+    g_strdup_printf ("%u", clip_data_id) :
+    g_strdup_printf ("%lu", GRD_RDP_FUSE_CLIPBOARD_NO_CLIP_DATA_ID);
 
   dst_data = g_array_new (TRUE, TRUE, sizeof (char));
 
@@ -590,11 +597,9 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
       escaped_name = g_uri_escape_string (filename,
                                           G_URI_RESERVED_CHARS_ALLOWED_IN_PATH,
                                           TRUE);
-      file_uri = g_malloc0 (strlen ("file://") +
-                            strlen (clipboard_rdp->fuse_mount_path) + 1 +
-                            strlen (escaped_name) + 2 + 1);
-      sprintf (file_uri, "file://%s/%s\r\n", clipboard_rdp->fuse_mount_path,
-               escaped_name);
+      file_uri = g_strdup_printf ("file://%s/%s/%s\r\n",
+                                  clipboard_rdp->fuse_mount_path,
+                                  clip_data_dir_name, escaped_name);
       g_array_append_vals (dst_data, file_uri, strlen (file_uri));
 
       g_free (file_uri);
@@ -605,6 +610,7 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
   *dst_size = dst_data->len;
 
   g_free (files);
+  g_free (clip_data_dir_name);
 
   return (uint8_t *) g_array_free (dst_data, FALSE);
 }
@@ -615,7 +621,8 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
                                    uint32_t         src_size,
                                    GrdMimeType      mime_type,
                                    uint32_t         src_format_id,
-                                   uint32_t        *dst_size)
+                                   uint32_t        *dst_size,
+                                   uint32_t         clip_data_id)
 {
   GrdRdpFuseClipboard *rdp_fuse_clipboard = clipboard_rdp->rdp_fuse_clipboard;
   uint32_t dst_format_id;
@@ -668,7 +675,7 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
     {
       dst_data = get_uri_list_from_packet_file_list (clipboard_rdp,
                                                      src_data, src_size,
-                                                     dst_size);
+                                                     dst_size, clip_data_id);
     }
   else
     {
@@ -699,6 +706,8 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
       FILEDESCRIPTOR *file;
 #endif /* HAVE_FREERDP_2_3 */
       uint32_t n_files = 0;
+      gboolean result;
+      char *clip_data_dir_name;
       char *filename = NULL;
       char *escaped_name;
       char *full_filepath;
@@ -711,12 +720,27 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
       uint32_t i;
 
       cliprdr_parse_file_list (src_data, src_size, &files, &n_files);
-      if (!grd_rdp_fuse_clipboard_set_selection (rdp_fuse_clipboard, files, n_files))
+      if (clipboard_rdp->cliprdr_context->canLockClipData)
+        {
+          result = grd_rdp_fuse_clipboard_set_cdi_selection (rdp_fuse_clipboard,
+                                                             files, n_files,
+                                                             clip_data_id);
+        }
+      else
+        {
+          result = grd_rdp_fuse_clipboard_set_no_cdi_selection (rdp_fuse_clipboard,
+                                                                files, n_files);
+        }
+      if (!result)
         {
           g_free (files);
           g_free (dst_data);
           return NULL;
         }
+
+      clip_data_dir_name = clipboard_rdp->cliprdr_context->canLockClipData ?
+        g_strdup_printf ("%u", clip_data_id) :
+        g_strdup_printf ("%lu", GRD_RDP_FUSE_CLIPBOARD_NO_CLIP_DATA_ID);
 
       data_nautilus = g_array_new (TRUE, TRUE, sizeof (char));
       nautilus_header = "copy";
@@ -736,11 +760,9 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
 
           escaped_name = g_uri_escape_string (filename,
                            G_URI_RESERVED_CHARS_ALLOWED_IN_PATH, TRUE);
-          full_filepath = g_malloc0 (strlen ("\nfile://") +
-                                     strlen (clipboard_rdp->fuse_mount_path) + 1 +
-                                     strlen (escaped_name) + 1);
-          sprintf (full_filepath, "\nfile://%s/%s",
-                    clipboard_rdp->fuse_mount_path, escaped_name);
+          full_filepath = g_strdup_printf ("\nfile://%s/%s/%s",
+                                           clipboard_rdp->fuse_mount_path,
+                                           clip_data_dir_name, escaped_name);
           g_array_append_vals (data_nautilus, full_filepath,
                                strlen (full_filepath));
 
@@ -784,6 +806,7 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
                            GUINT_TO_POINTER (second_mime_type),
                            format_data);
 
+      g_free (clip_data_dir_name);
       g_free (files);
     }
 
@@ -799,11 +822,13 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
                                                         uint32_t         *size)
 {
   GrdClipboardRdp *clipboard_rdp = GRD_CLIPBOARD_RDP (clipboard);
+  GrdRdpFuseClipboard *rdp_fuse_clipboard = clipboard_rdp->rdp_fuse_clipboard;
   GrdMimeType mime_type = mime_type_table->mime_type;
   HANDLE completed_format_list_event = clipboard_rdp->completed_format_list_event;
   uint32_t src_format_id;
   uint8_t *src_data, *dst_data;
   uint32_t src_size, dst_size;
+  uint32_t clip_data_id = 0;
 
   *size = 0;
   if (mime_type == GRD_MIME_TYPE_NONE)
@@ -824,10 +849,22 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
   if (WaitForSingleObject (completed_format_list_event, 0) == WAIT_TIMEOUT)
     return NULL;
 
+  if (clipboard_rdp->cliprdr_context->canLockClipData &&
+      (mime_type == GRD_MIME_TYPE_TEXT_URILIST ||
+       mime_type == GRD_MIME_TYPE_XS_GNOME_COPIED_FILES))
+    clip_data_id = grd_rdp_fuse_clipboard_clip_data_id_new (rdp_fuse_clipboard);
+
   src_format_id = mime_type_table->rdp.format_id;
   src_data = get_remote_format_data (clipboard_rdp, src_format_id, &src_size);
   if (!src_data)
-    return NULL;
+    {
+      if (clipboard_rdp->cliprdr_context->canLockClipData &&
+          (mime_type == GRD_MIME_TYPE_TEXT_URILIST ||
+           mime_type == GRD_MIME_TYPE_XS_GNOME_COPIED_FILES))
+        grd_rdp_fuse_clipboard_clip_data_id_free (rdp_fuse_clipboard, clip_data_id);
+
+      return NULL;
+    }
 
   dst_data = NULL;
   dst_size = 0;
@@ -843,12 +880,17 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
       dst_data = convert_client_content_for_server (clipboard_rdp,
                                                     src_data, src_size,
                                                     mime_type, src_format_id,
-                                                    &dst_size);
+                                                    &dst_size, clip_data_id);
       break;
     default:
       dst_data = g_steal_pointer (&src_data);
       dst_size = src_size;
     }
+
+  if (!dst_data && clipboard_rdp->cliprdr_context->canLockClipData &&
+      (mime_type == GRD_MIME_TYPE_TEXT_URILIST ||
+       mime_type == GRD_MIME_TYPE_XS_GNOME_COPIED_FILES))
+    grd_rdp_fuse_clipboard_clip_data_id_free (rdp_fuse_clipboard, clip_data_id);
 
   if (dst_data)
     {
@@ -899,7 +941,9 @@ update_server_format_list (gpointer user_data)
       if (mime_type_table->mime_type == GRD_MIME_TYPE_TEXT_URILIST)
         {
           clipboard_rdp->server_file_contents_requests_allowed = FALSE;
-          grd_rdp_fuse_clipboard_clear_selection (rdp_fuse_clipboard);
+
+          grd_rdp_fuse_clipboard_clear_no_cdi_selection (rdp_fuse_clipboard);
+          grd_rdp_fuse_clipboard_lazily_clear_all_cdi_selections (rdp_fuse_clipboard);
         }
 
       remove_clipboard_format_data_for_mime_type (clipboard_rdp,
@@ -918,9 +962,11 @@ update_server_format_list (gpointer user_data)
 
   /**
    * Any FileContentsRequest that is still waiting for a FileContentsResponse
-   * won't get a response any more. So, drop all requests here.
+   * won't get a response any more, when the client does not support clipboard
+   * data locking. So, drop all requests without clipDataId here.
    */
-  grd_rdp_fuse_clipboard_dismiss_all_requests (rdp_fuse_clipboard);
+  if (!cliprdr_context->canLockClipData)
+    grd_rdp_fuse_clipboard_dismiss_all_no_cdi_requests (rdp_fuse_clipboard);
 
   g_free (update_context);
 
@@ -1944,7 +1990,6 @@ grd_clipboard_rdp_dispose (GObject *object)
 
   g_clear_pointer (&clipboard_rdp->queued_server_formats, g_list_free);
   g_clear_pointer (&clipboard_rdp->pending_server_formats, g_list_free);
-  grd_rdp_fuse_clipboard_clear_selection (clipboard_rdp->rdp_fuse_clipboard);
   g_hash_table_foreach_remove (clipboard_rdp->format_data_cache,
                                clear_format_data,
                                NULL);
