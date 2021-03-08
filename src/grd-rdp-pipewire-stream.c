@@ -50,9 +50,6 @@ typedef struct _GrdRdpFrame
   uint16_t pointer_width;
   uint16_t pointer_height;
   gboolean pointer_is_hidden;
-  bool pointer_moved;
-  uint16_t pointer_x;
-  uint16_t pointer_y;
 } GrdRdpFrame;
 
 struct _GrdRdpPipeWireStream
@@ -254,11 +251,6 @@ do_render (struct spa_loop *loop,
       grd_session_rdp_hide_pointer (stream->session_rdp);
     }
 
-  if (frame->pointer_moved)
-    grd_session_rdp_move_pointer (stream->session_rdp,
-                                  frame->pointer_x,
-                                  frame->pointer_y);
-
   g_free (frame);
 
   return 0;
@@ -384,10 +376,6 @@ process_buffer (GrdRdpPipeWireStream *stream,
         {
           frame->pointer_is_hidden = TRUE;
         }
-
-      frame->pointer_moved = true;
-      frame->pointer_x = spa_meta_cursor->position.x;
-      frame->pointer_y = spa_meta_cursor->position.y;
     }
 
   return g_steal_pointer (&frame);
