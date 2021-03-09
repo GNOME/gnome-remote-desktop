@@ -89,10 +89,6 @@ struct _GrdSessionRdp
   GHashTable *pointer_cache;
   PointerType pointer_type;
 
-  GMutex pointer_mutex;
-  uint16_t pointer_x;
-  uint16_t pointer_y;
-
   GHashTable *pressed_keys;
   GHashTable *pressed_unicode_keys;
   PauseKeyState pause_key_state;
@@ -518,33 +514,6 @@ grd_session_rdp_hide_pointer (GrdSessionRdp *session_rdp)
   pointer_system.type = SYSPTR_NULL;
 
   rdp_update->pointer->PointerSystem (peer->context, &pointer_system);
-}
-
-void
-grd_session_rdp_move_pointer (GrdSessionRdp *session_rdp,
-                              uint16_t       x,
-                              uint16_t       y)
-{
-  freerdp_peer *peer = session_rdp->peer;
-  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
-  rdpUpdate *rdp_update = peer->update;
-  POINTER_POSITION_UPDATE pointer_position = {0};
-
-  if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED))
-    return;
-
-  g_mutex_lock (&session_rdp->pointer_mutex);
-  if (session_rdp->pointer_x == x && session_rdp->pointer_y == y)
-    {
-      g_mutex_unlock (&session_rdp->pointer_mutex);
-      return;
-    }
-
-  pointer_position.xPos = session_rdp->pointer_x = x;
-  pointer_position.yPos = session_rdp->pointer_y = y;
-  g_mutex_unlock (&session_rdp->pointer_mutex);
-
-  rdp_update->pointer->PointerPosition (peer->context, &pointer_position);
 }
 
 static void
@@ -1171,11 +1140,6 @@ rdp_input_mouse_event (rdpInput *rdp_input,
 
   if (flags & PTR_FLAGS_MOVE)
     {
-      g_mutex_lock (&session_rdp->pointer_mutex);
-      session_rdp->pointer_x = x;
-      session_rdp->pointer_y = y;
-      g_mutex_unlock (&session_rdp->pointer_mutex);
-
       grd_rdp_event_queue_add_input_event_pointer_motion_abs (rdp_event_queue,
                                                               x, y);
     }
@@ -1940,7 +1904,6 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
 
   g_cond_init (&session_rdp->pending_jobs_cond);
   g_mutex_init (&session_rdp->pending_jobs_mutex);
-  g_mutex_init (&session_rdp->pointer_mutex);
 
   session_rdp->rdp_event_queue = grd_rdp_event_queue_new (session_rdp);
 }
