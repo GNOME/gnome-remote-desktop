@@ -151,6 +151,10 @@ grd_clipboard_vnc_set_clipboard_text (GrdClipboardVnc *clipboard_vnc,
     }
 
   mime_type_table = g_malloc0 (sizeof (GrdMimeTypeTable));
+  mime_type_table->mime_type = GRD_MIME_TYPE_TEXT_PLAIN_UTF8;
+  mime_type_tables = g_list_append (mime_type_tables, mime_type_table);
+
+  mime_type_table = g_malloc0 (sizeof (GrdMimeTypeTable));
   mime_type_table->mime_type = GRD_MIME_TYPE_TEXT_UTF8_STRING;
   mime_type_tables = g_list_append (mime_type_tables, mime_type_table);
 
