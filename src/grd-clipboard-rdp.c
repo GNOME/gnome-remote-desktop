@@ -486,6 +486,7 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
 
   switch (mime_type)
     {
+    case GRD_MIME_TYPE_TEXT_PLAIN_UTF8:
     case GRD_MIME_TYPE_TEXT_UTF8_STRING:
       is_null_terminated = TRUE;
       dst_format_id = ClipboardGetFormatId (clipboard_rdp->system,
@@ -687,6 +688,7 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
 
   switch (mime_type)
     {
+    case GRD_MIME_TYPE_TEXT_PLAIN_UTF8:
     case GRD_MIME_TYPE_TEXT_UTF8_STRING:
     case GRD_MIME_TYPE_TEXT_HTML:
     case GRD_MIME_TYPE_IMAGE_BMP:
@@ -811,6 +813,13 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
     {
       if (format_list->formats[i].formatId == CF_UNICODETEXT)
         {
+          mime_type = GRD_MIME_TYPE_TEXT_PLAIN_UTF8;
+
+          mime_type_table = g_malloc0 (sizeof (GrdMimeTypeTable));
+          mime_type_table->mime_type = mime_type;
+          mime_type_table->rdp.format_id = format_list->formats[i].formatId;
+          mime_type_tables = g_list_append (mime_type_tables, mime_type_table);
+
           mime_type = GRD_MIME_TYPE_TEXT_UTF8_STRING;
 
           mime_type_table = g_malloc0 (sizeof (GrdMimeTypeTable));
@@ -820,7 +829,7 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
 
           already_has_text_format = TRUE;
           g_debug ("[RDP.CLIPRDR] Force using CF_UNICODETEXT over CF_TEXT as "
-                   "external format for UTF8_STRING");
+                   "external format for text/plain;charset=utf-8 and UTF8_STRING");
           break;
         }
     }
@@ -867,10 +876,19 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
             case CF_OEMTEXT:
               if (!already_has_text_format)
                 {
+                  mime_type = GRD_MIME_TYPE_TEXT_PLAIN_UTF8;
+
+                  mime_type_table = g_malloc0 (sizeof (GrdMimeTypeTable));
+                  mime_type_table->mime_type = mime_type;
+                  mime_type_table->rdp.format_id = format_list->formats[i].formatId;
+                  mime_type_tables = g_list_append (mime_type_tables,
+                                                    mime_type_table);
+
                   mime_type = GRD_MIME_TYPE_TEXT_UTF8_STRING;
                   already_has_text_format = TRUE;
-                  g_debug ("[RDP.CLIPRDR] Client advertised data for UTF8_STRING"
-                           " (external format: id: %u, name: %s)",
+                  g_debug ("[RDP.CLIPRDR] Client advertised data for "
+                           "text/plain;charset=utf-8 and UTF8_STRING "
+                           "(external format: id: %u, name: %s)",
                            format_list->formats[i].formatId,
                            format_list->formats[i].formatName);
                 }
