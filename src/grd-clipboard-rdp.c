@@ -1507,6 +1507,9 @@ grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
   cliprdr_context->streamFileClipEnabled = TRUE;
   cliprdr_context->fileClipNoFilePaths = TRUE;
   cliprdr_context->canLockClipData = FALSE;
+#ifdef HAVE_FREERDP_2_3
+  cliprdr_context->hasHugeFileSupport = TRUE;
+#endif /* HAVE_FREERDP_2_3 */
 
   cliprdr_context->ClientCapabilities = cliprdr_client_capabilities;
   cliprdr_context->ClientFormatList = cliprdr_client_format_list;
