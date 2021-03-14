@@ -44,6 +44,9 @@ static guint signals[N_SIGNALS];
 typedef struct _GrdRdpFrame
 {
   void *data;
+  uint16_t width;
+  uint16_t height;
+
   uint8_t *pointer_bitmap;
   uint16_t pointer_hotspot_x;
   uint16_t pointer_hotspot_y;
@@ -235,7 +238,10 @@ do_render (struct spa_loop *loop,
     return 0;
 
   if (frame->data)
-    grd_session_rdp_take_buffer (stream->session_rdp, frame->data);
+    {
+      grd_session_rdp_take_buffer (stream->session_rdp, frame->data,
+                                   frame->width, frame->height);
+    }
 
   if (frame->pointer_bitmap)
     {
@@ -333,6 +339,8 @@ process_buffer (GrdRdpPipeWireStream *stream,
                   ((uint8_t *) src_data) + y * src_stride,
                   width * 4);
         }
+      frame->width = width;
+      frame->height = height;
     }
 
   if (map)
