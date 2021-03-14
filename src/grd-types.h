@@ -30,6 +30,7 @@ typedef struct _GrdClipboardVnc GrdClipboardVnc;
 typedef struct _GrdRdpEventQueue GrdRdpEventQueue;
 typedef struct _GrdRdpSAMFile GrdRdpSAMFile;
 typedef struct _GrdRdpServer GrdRdpServer;
+typedef struct _GrdRdpSurface GrdRdpSurface;
 typedef struct _GrdSession GrdSession;
 typedef struct _GrdSessionRdp GrdSessionRdp;
 typedef struct _GrdSessionVnc GrdSessionVnc;

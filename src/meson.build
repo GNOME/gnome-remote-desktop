@@ -47,6 +47,8 @@ if have_rdp
     'grd-rdp-sam.h',
     'grd-rdp-server.c',
     'grd-rdp-server.h',
+    'grd-rdp-surface.c',
+    'grd-rdp-surface.h',
     'grd-session-rdp.c',
     'grd-session-rdp.h',
   ])
