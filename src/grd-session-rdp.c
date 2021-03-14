@@ -583,6 +583,7 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
   BOOL first, last;
   size_t i;
 
+  rdp_peer_context->rfx_context->mode = RLGR3;
   if (!rdp_surface->valid)
     {
       rfx_context_reset (rdp_peer_context->rfx_context,
@@ -1513,7 +1514,6 @@ rdp_peer_context_new (freerdp_peer   *peer,
   rdp_peer_context->frame_id = 0;
 
   rdp_peer_context->rfx_context = rfx_context_new (TRUE);
-  rdp_peer_context->rfx_context->mode = RLGR3;
   rfx_context_set_pixel_format (rdp_peer_context->rfx_context,
                                 PIXEL_FORMAT_BGRX32);
 
