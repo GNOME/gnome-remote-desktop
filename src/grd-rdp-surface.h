@@ -31,6 +31,7 @@ struct _GrdRdpSurface
   uint16_t height;
 
   uint8_t *last_frame;
+  uint8_t *pending_frame;
 
   gboolean valid;
 };

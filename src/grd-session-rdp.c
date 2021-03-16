@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Pascal Nowack
+ * Copyright (C) 2020-2021 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -100,6 +100,8 @@ struct _GrdSessionRdp
   GThreadPool *thread_pool;
   GCond pending_jobs_cond;
   GMutex pending_jobs_mutex;
+
+  GSource *pending_encode_source;
 
   unsigned int close_session_idle_id;
 
@@ -237,6 +239,8 @@ grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
   uint32_t stride;
   cairo_region_t *region;
 
+  g_clear_pointer (&rdp_surface->pending_frame, g_free);
+
   if (is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ALL_SURFACES_INVALID))
     {
       rdp_surface->valid = FALSE;
@@ -271,12 +275,14 @@ grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
         rdp_peer_refresh_region (session_rdp, rdp_surface, region, (uint8_t *) data);
 
       g_clear_pointer (&rdp_surface->last_frame, g_free);
-      rdp_surface->last_frame = g_steal_pointer (&data);
+      rdp_surface->last_frame = data;
 
       cairo_region_destroy (region);
     }
-
-  g_free (data);
+  else
+    {
+      rdp_surface->pending_frame = data;
+    }
 }
 
 static gboolean
@@ -1895,6 +1901,12 @@ grd_session_rdp_dispose (GObject *object)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
 
+  if (session_rdp->pending_encode_source)
+    {
+      g_source_destroy (session_rdp->pending_encode_source);
+      g_clear_pointer (&session_rdp->pending_encode_source, g_source_unref);
+    }
+
   g_clear_pointer (&session_rdp->pressed_unicode_keys, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pressed_keys, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pointer_cache, g_hash_table_unref);
@@ -1928,6 +1940,47 @@ are_pointer_bitmaps_equal (gconstpointer a,
   return TRUE;
 }
 
+static gboolean
+encode_pending_frames (gpointer user_data)
+{
+  GrdSessionRdp *session_rdp = user_data;
+  RdpPeerContext *rdp_peer_context;
+  GrdRdpSurface *rdp_surface;
+
+  g_assert (session_rdp->peer);
+  g_assert (session_rdp->peer->context);
+
+  rdp_peer_context = (RdpPeerContext *) session_rdp->peer->context;
+  if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED) ||
+      !is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_OUTPUT_ENABLED))
+    return G_SOURCE_CONTINUE;
+
+  rdp_surface = session_rdp->rdp_surface;
+  if (!rdp_surface->pending_frame)
+    return G_SOURCE_CONTINUE;
+
+  grd_session_rdp_take_buffer (session_rdp,
+                               g_steal_pointer (&rdp_surface->pending_frame),
+                               rdp_surface->width, rdp_surface->height);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean
+pending_encode_source_dispatch (GSource     *source,
+                                GSourceFunc  callback,
+                                gpointer     user_data)
+{
+  g_source_set_ready_time (source, -1);
+
+  return callback (user_data);
+}
+
+static GSourceFuncs pending_encode_source_funcs =
+{
+  .dispatch = pending_encode_source_dispatch,
+};
+
 static void
 grd_session_rdp_init (GrdSessionRdp *session_rdp)
 {
@@ -1939,6 +1992,13 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
   g_mutex_init (&session_rdp->pending_jobs_mutex);
 
   session_rdp->rdp_event_queue = grd_rdp_event_queue_new (session_rdp);
+
+  session_rdp->pending_encode_source = g_source_new (&pending_encode_source_funcs,
+                                                     sizeof (GSource));
+  g_source_set_callback (session_rdp->pending_encode_source,
+                         encode_pending_frames, session_rdp, NULL);
+  g_source_set_ready_time (session_rdp->pending_encode_source, -1);
+  g_source_attach (session_rdp->pending_encode_source, NULL);
 }
 
 static void
