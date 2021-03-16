@@ -1423,11 +1423,15 @@ rdp_suppress_output (rdpContext         *rdp_context,
                      const RECTANGLE_16 *area)
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
+  GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
 
   if (allow)
     set_rdp_peer_flag (rdp_peer_context, RDP_PEER_OUTPUT_ENABLED);
   else
     unset_rdp_peer_flag (rdp_peer_context, RDP_PEER_OUTPUT_ENABLED);
+
+  if (allow)
+    g_source_set_ready_time (session_rdp->pending_encode_source, 0);
 
   return TRUE;
 }
