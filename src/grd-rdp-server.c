@@ -23,6 +23,7 @@
 
 #include <freerdp/channels/channels.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/primitives.h>
 #include <gio/gio.h>
 #include <winpr/ssl.h>
 
@@ -220,6 +221,11 @@ grd_rdp_server_init (GrdRdpServer *rdp_server)
 {
   winpr_InitializeSSL (WINPR_SSL_INIT_DEFAULT);
   WTSRegisterWtsApiFunctionTable (FreeRDP_InitWtsApi ());
+
+  /*
+   * Run the primitives benchmark here to save time, when initializing a session
+   */
+  primitives_get ();
 }
 
 static void
