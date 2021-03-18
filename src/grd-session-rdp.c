@@ -43,9 +43,11 @@
 
 typedef enum _RdpPeerFlag
 {
-  RDP_PEER_ACTIVATED            = 1 << 0,
-  RDP_PEER_OUTPUT_ENABLED       = 1 << 1,
-  RDP_PEER_ALL_SURFACES_INVALID = 1 << 2,
+  RDP_PEER_ACTIVATED                  = 1 << 0,
+  RDP_PEER_OUTPUT_ENABLED             = 1 << 1,
+  RDP_PEER_ALL_SURFACES_INVALID       = 1 << 2,
+  RDP_PEER_PENDING_GFX_INIT           = 1 << 3,
+  RDP_PEER_PENDING_GFX_GRAPHICS_RESET = 1 << 4,
 } RdpPeerFlag;
 
 typedef enum _PointerType
