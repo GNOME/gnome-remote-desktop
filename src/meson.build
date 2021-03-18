@@ -41,6 +41,8 @@ if have_rdp
     'grd-rdp-event-queue.h',
     'grd-rdp-fuse-clipboard.c',
     'grd-rdp-fuse-clipboard.h',
+    'grd-rdp-gfx-surface.c',
+    'grd-rdp-gfx-surface.h',
     'grd-rdp-pipewire-stream.c',
     'grd-rdp-pipewire-stream.h',
     'grd-rdp-sam.c',
