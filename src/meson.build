@@ -50,6 +50,7 @@ if have_rdp
     'grd-session-rdp.c',
     'grd-session-rdp.h',
   ])
+
   deps += [
     freerdp_dep,
     freerdp_client_dep,
