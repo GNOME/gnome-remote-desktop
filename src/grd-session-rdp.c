@@ -1748,8 +1748,9 @@ grd_session_rdp_stop (GrdSession *session)
 
   g_clear_object (&rdp_peer_context->clipboard_rdp);
 
-  peer->Close (peer);
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
+
+  peer->Close (peer);
   g_clear_object (&session_rdp->connection);
 
   if (rdp_peer_context->sam_file)
