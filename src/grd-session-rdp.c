@@ -1736,6 +1736,7 @@ grd_session_rdp_stop (GrdSession *session)
 
   g_debug ("Stopping RDP session");
 
+  unset_rdp_peer_flag (rdp_peer_context, RDP_PEER_ACTIVATED);
   if (WaitForSingleObject (session_rdp->stop_event, 0) == WAIT_TIMEOUT)
     {
       freerdp_set_error_info (peer->context->rdp,
