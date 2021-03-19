@@ -287,6 +287,28 @@ grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
     }
 }
 
+void
+grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
+                                            GrdRdpSurface *rdp_surface)
+{
+  RdpPeerContext *rdp_peer_context;
+
+  g_assert (session_rdp->peer);
+  g_assert (session_rdp->peer->context);
+
+  rdp_peer_context = (RdpPeerContext *) session_rdp->peer->context;
+  if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED) ||
+      !is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_OUTPUT_ENABLED))
+    return;
+
+  if (!rdp_surface->pending_frame)
+    return;
+
+  grd_session_rdp_take_buffer (session_rdp,
+                               g_steal_pointer (&rdp_surface->pending_frame),
+                               rdp_surface->width, rdp_surface->height);
+}
+
 static gboolean
 is_mouse_pointer_hidden (uint32_t  width,
                          uint32_t  height,
@@ -1950,24 +1972,10 @@ static gboolean
 encode_pending_frames (gpointer user_data)
 {
   GrdSessionRdp *session_rdp = user_data;
-  RdpPeerContext *rdp_peer_context;
   GrdRdpSurface *rdp_surface;
 
-  g_assert (session_rdp->peer);
-  g_assert (session_rdp->peer->context);
-
-  rdp_peer_context = (RdpPeerContext *) session_rdp->peer->context;
-  if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED) ||
-      !is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_OUTPUT_ENABLED))
-    return G_SOURCE_CONTINUE;
-
   rdp_surface = session_rdp->rdp_surface;
-  if (!rdp_surface->pending_frame)
-    return G_SOURCE_CONTINUE;
-
-  grd_session_rdp_take_buffer (session_rdp,
-                               g_steal_pointer (&rdp_surface->pending_frame),
-                               rdp_surface->width, rdp_surface->height);
+  grd_session_rdp_maybe_encode_pending_frame (session_rdp, rdp_surface);
 
   return G_SOURCE_CONTINUE;
 }

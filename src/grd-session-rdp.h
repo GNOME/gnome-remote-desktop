@@ -47,6 +47,9 @@ void grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
                                   uint16_t       width,
                                   uint16_t       height);
 
+void grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
+                                                 GrdRdpSurface *rdp_surface);
+
 void grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
                                      uint16_t       hotspot_x,
                                      uint16_t       hotspot_y,
