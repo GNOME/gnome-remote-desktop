@@ -34,6 +34,8 @@ struct _GrdRdpSurface
   uint8_t *pending_frame;
 
   gboolean valid;
+
+  gboolean encoding_suspended;
 };
 
 void grd_rdp_surface_free (GrdRdpSurface *rdp_surface);
