@@ -211,6 +211,19 @@ unset_rdp_peer_flag (RdpPeerContext *rdp_peer_context,
 }
 
 void
+grd_session_rdp_notify_graphics_pipeline_ready (GrdSessionRdp *session_rdp)
+{
+  freerdp_peer *peer = session_rdp->peer;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+
+  set_rdp_peer_flag (rdp_peer_context, RDP_PEER_ALL_SURFACES_INVALID);
+  set_rdp_peer_flag (rdp_peer_context, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
+  unset_rdp_peer_flag (rdp_peer_context, RDP_PEER_PENDING_GFX_INIT);
+
+  g_source_set_ready_time (session_rdp->pending_encode_source, 0);
+}
+
+void
 grd_session_rdp_resize_framebuffer (GrdSessionRdp *session_rdp,
                                     uint32_t       width,
                                     uint32_t       height)
