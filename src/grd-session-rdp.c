@@ -83,6 +83,7 @@ struct _GrdSessionRdp
 
   GSocketConnection *connection;
   freerdp_peer *peer;
+  uint32_t rdp_error_info;
 
   GThread *socket_thread;
   HANDLE start_event;
@@ -569,6 +570,16 @@ maybe_queue_close_session_idle (GrdSessionRdp *session_rdp)
     g_idle_add (close_session_idle, session_rdp);
 
   SetEvent (session_rdp->stop_event);
+}
+
+void
+grd_session_rdp_notify_error (GrdSessionRdp *session_rdp,
+                              uint32_t       error_info)
+{
+  session_rdp->rdp_error_info = error_info;
+
+  unset_rdp_peer_flag (session_rdp, RDP_PEER_ACTIVATED);
+  maybe_queue_close_session_idle (session_rdp);
 }
 
 static void
