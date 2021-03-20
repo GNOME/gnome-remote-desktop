@@ -46,6 +46,8 @@ if have_rdp
     'grd-rdp-gfx-frame-log.h',
     'grd-rdp-gfx-surface.c',
     'grd-rdp-gfx-surface.h',
+    'grd-rdp-graphics-pipeline.c',
+    'grd-rdp-graphics-pipeline.h',
     'grd-rdp-pipewire-stream.c',
     'grd-rdp-pipewire-stream.h',
     'grd-rdp-sam.c',

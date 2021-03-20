@@ -21,11 +21,40 @@
 #define GRD_RDP_GFX_SURFACE_H
 
 #include <glib-object.h>
+#include <stdint.h>
 
 #include "grd-types.h"
 
 #define GRD_TYPE_RDP_GFX_SURFACE (grd_rdp_gfx_surface_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpGfxSurface, grd_rdp_gfx_surface,
                       GRD, RDP_GFX_SURFACE, GObject);
+
+GrdRdpGfxSurface *grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                           GrdSessionRdp          *session_rdp,
+                                           GrdRdpSurface          *rdp_surface,
+                                           uint16_t                surface_id,
+                                           uint32_t                serial);
+
+uint16_t grd_rdp_gfx_surface_get_surface_id (GrdRdpGfxSurface *gfx_surface);
+
+uint32_t grd_rdp_gfx_surface_get_codec_context_id (GrdRdpGfxSurface *gfx_surface);
+
+uint32_t grd_rdp_gfx_surface_get_serial (GrdRdpGfxSurface *gfx_surface);
+
+GrdRdpSurface *grd_rdp_gfx_surface_get_rdp_surface (GrdRdpGfxSurface *gfx_surface);
+
+void grd_rdp_gfx_surface_unack_frame (GrdRdpGfxSurface *gfx_surface,
+                                      uint32_t          frame_id,
+                                      int64_t           enc_time_us);
+
+void grd_rdp_gfx_surface_ack_frame (GrdRdpGfxSurface *gfx_surface,
+                                    uint32_t          frame_id,
+                                    int64_t           ack_time_us);
+
+void grd_rdp_gfx_surface_unack_last_acked_frame (GrdRdpGfxSurface *gfx_surface,
+                                                 uint32_t          frame_id,
+                                                 int64_t           enc_ack_time_us);
+
+void grd_rdp_gfx_surface_clear_all_unacked_frames (GrdRdpGfxSurface *gfx_surface);
 
 #endif /* GRD_RDP_GFX_SURFACE_H */
