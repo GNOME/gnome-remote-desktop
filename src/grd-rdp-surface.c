@@ -24,6 +24,7 @@
 void
 grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
 {
+  g_assert (!rdp_surface->gfx_surface);
   g_clear_pointer (&rdp_surface->last_frame, g_free);
   g_clear_pointer (&rdp_surface->pending_frame, g_free);
 

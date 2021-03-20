@@ -23,6 +23,8 @@
 #include <gio/gio.h>
 #include <stdint.h>
 
+#include "grd-types.h"
+
 struct _GrdRdpSurface
 {
   uint16_t output_origin_x;
@@ -35,6 +37,7 @@ struct _GrdRdpSurface
 
   gboolean valid;
 
+  GrdRdpGfxSurface *gfx_surface;
   gboolean encoding_suspended;
 };
 
