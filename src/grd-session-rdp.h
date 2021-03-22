@@ -38,6 +38,8 @@ GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
 void grd_session_rdp_notify_error (GrdSessionRdp *session_rdp,
                                    uint32_t       error_info);
 
+void grd_session_rdp_notify_graphics_pipeline_reset (GrdSessionRdp *session_rdp);
+
 void grd_session_rdp_notify_graphics_pipeline_ready (GrdSessionRdp *session_rdp);
 
 int grd_session_rdp_get_stride_for_width (GrdSessionRdp *session_rdp,

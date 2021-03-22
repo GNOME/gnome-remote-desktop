@@ -211,6 +211,15 @@ unset_rdp_peer_flag (RdpPeerContext *rdp_peer_context,
 }
 
 void
+grd_session_rdp_notify_graphics_pipeline_reset (GrdSessionRdp *session_rdp)
+{
+  freerdp_peer *peer = session_rdp->peer;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+
+  set_rdp_peer_flag (rdp_peer_context, RDP_PEER_PENDING_GFX_INIT);
+}
+
+void
 grd_session_rdp_notify_graphics_pipeline_ready (GrdSessionRdp *session_rdp)
 {
   freerdp_peer *peer = session_rdp->peer;
