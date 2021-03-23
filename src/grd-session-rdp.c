@@ -32,6 +32,7 @@
 #include "grd-context.h"
 #include "grd-damage-utils.h"
 #include "grd-rdp-event-queue.h"
+#include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-pipewire-stream.h"
 #include "grd-rdp-sam.h"
 #include "grd-rdp-server.h"
@@ -162,6 +163,7 @@ typedef struct _RdpPeerContext
   HANDLE vcm;
 
   GrdClipboardRdp *clipboard_rdp;
+  GrdRdpGraphicsPipeline *graphics_pipeline;
 } RdpPeerContext;
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION);
@@ -247,7 +249,10 @@ grd_session_rdp_resize_framebuffer (GrdSessionRdp *session_rdp,
 
   rdp_settings->DesktopWidth = width;
   rdp_settings->DesktopHeight = height;
-  peer->update->DesktopResize (peer->context);
+  if (rdp_settings->SupportGraphicsPipeline)
+    set_rdp_peer_flag (rdp_peer_context, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
+  else
+    peer->update->DesktopResize (peer->context);
 
   set_rdp_peer_flag (rdp_peer_context, RDP_PEER_ALL_SURFACES_INVALID);
 }
@@ -286,7 +291,9 @@ grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
     g_clear_pointer (&rdp_surface->last_frame, g_free);
 
   if (is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED) &&
-      is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_OUTPUT_ENABLED))
+      is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_OUTPUT_ENABLED) &&
+      !is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_PENDING_GFX_INIT) &&
+      !rdp_surface->encoding_suspended)
     {
       stride = grd_session_rdp_get_stride_for_width (session_rdp,
                                                      rdp_surface->width);
@@ -321,7 +328,8 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
 
   rdp_peer_context = (RdpPeerContext *) session_rdp->peer->context;
   if (!is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_ACTIVATED) ||
-      !is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_OUTPUT_ENABLED))
+      !is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_OUTPUT_ENABLED) ||
+      is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_PENDING_GFX_INIT))
     return;
 
   if (!rdp_surface->pending_frame)
@@ -623,6 +631,52 @@ is_view_only (GrdSessionRdp *session_rdp)
   GrdSettings *settings = grd_context_get_settings (context);
 
   return grd_settings_get_rdp_view_only (settings);
+}
+
+static void
+get_current_monitor_config (GrdSessionRdp  *session_rdp,
+                            MONITOR_DEF   **monitors,
+                            uint32_t       *n_monitors)
+{
+  GrdRdpSurface *rdp_surface = session_rdp->rdp_surface;
+
+  *n_monitors = 1;
+  *monitors = g_new0 (MONITOR_DEF, *n_monitors);
+  (*monitors)[0].left = rdp_surface->output_origin_x;
+  (*monitors)[0].top = rdp_surface->output_origin_y;
+  (*monitors)[0].right = rdp_surface->output_origin_x + rdp_surface->width - 1;
+  (*monitors)[0].bottom = rdp_surface->output_origin_y + rdp_surface->height - 1;
+  (*monitors)[0].flags = MONITOR_PRIMARY;
+}
+
+static void
+rdp_peer_refresh_gfx (GrdSessionRdp  *session_rdp,
+                      GrdRdpSurface  *rdp_surface,
+                      cairo_region_t *region,
+                      uint8_t        *data)
+{
+  freerdp_peer *peer = session_rdp->peer;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+  rdpSettings *rdp_settings = peer->settings;
+  GrdRdpGraphicsPipeline *graphics_pipeline = rdp_peer_context->graphics_pipeline;
+
+  if (is_rdp_peer_flag_set (rdp_peer_context, RDP_PEER_PENDING_GFX_GRAPHICS_RESET))
+    {
+      MONITOR_DEF *monitors;
+      uint32_t n_monitors;
+
+      get_current_monitor_config (session_rdp, &monitors, &n_monitors);
+      grd_rdp_graphics_pipeline_reset_graphics (graphics_pipeline,
+                                                rdp_settings->DesktopWidth,
+                                                rdp_settings->DesktopHeight,
+                                                monitors, n_monitors);
+      g_free (monitors);
+
+      unset_rdp_peer_flag (rdp_peer_context, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
+    }
+
+  grd_rdp_graphics_pipeline_refresh_gfx (graphics_pipeline,
+                                         rdp_surface, region, data);
 }
 
 static void
@@ -1147,7 +1201,9 @@ rdp_peer_refresh_region (GrdSessionRdp  *session_rdp,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   rdpSettings *rdp_settings = peer->settings;
 
-  if (rdp_settings->RemoteFxCodec)
+  if (rdp_settings->SupportGraphicsPipeline)
+    rdp_peer_refresh_gfx (session_rdp, rdp_surface, region, data);
+  else if (rdp_settings->RemoteFxCodec)
     rdp_peer_refresh_rfx (session_rdp, rdp_surface, region, data);
   else if (rdp_settings->NSCodec)
     rdp_peer_refresh_nsc (session_rdp, rdp_surface, region, data);
@@ -1542,15 +1598,38 @@ rdp_peer_post_connect (freerdp_peer *peer)
 
   g_debug ("New RDP client");
 
-  if (rdp_settings->MultifragMaxRequestSize < 0x3F0000)
+  if (!rdp_settings->SupportGraphicsPipeline &&
+      !rdp_settings->RemoteFxCodec &&
+      rdp_settings->MultifragMaxRequestSize < 0x3F0000)
     {
       g_message ("Disabling NSCodec since it does not support fragmentation");
       rdp_settings->NSCodec = FALSE;
     }
 
+  if (!rdp_settings->SupportGraphicsPipeline &&
+      !rdp_settings->RemoteFxCodec)
+    {
+      g_warning ("[RDP] Client does neither support RFX nor GFX. This is will "
+                 "result in heavy performance and heavy bandwidth usage "
+                 "regressions. The legacy path is deprecated!");
+    }
+
   rdp_settings->PointerCacheSize = MIN (rdp_settings->PointerCacheSize, 100);
 
   session_rdp->rdp_surface = g_malloc0 (sizeof (GrdRdpSurface));
+
+  if (rdp_settings->SupportGraphicsPipeline)
+    {
+      set_rdp_peer_flag (rdp_peer_context, RDP_PEER_PENDING_GFX_INIT);
+
+      rdp_peer_context->graphics_pipeline =
+        grd_rdp_graphics_pipeline_new (session_rdp,
+                                       rdp_peer_context->vcm,
+                                       session_rdp->stop_event,
+                                       peer->context,
+                                       rdp_peer_context->encode_stream,
+                                       rdp_peer_context->rfx_context);
+    }
 
   grd_session_start (GRD_SESSION (session_rdp));
 
@@ -1566,6 +1645,18 @@ static BOOL
 rdp_peer_activate (freerdp_peer *peer)
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+  rdpSettings *rdp_settings = peer->settings;
+
+  g_debug ("Activating client");
+
+  if (rdp_peer_context->graphics_pipeline &&
+      !rdp_settings->SupportGraphicsPipeline)
+    {
+      g_warning ("Client disabled support for the graphics pipeline during the "
+                 "Deactivation-Reactivation sequence. This is not supported. "
+                 "Closing connection");
+      return FALSE;
+    }
 
   set_rdp_peer_flag (rdp_peer_context, RDP_PEER_ALL_SURFACES_INVALID);
 
@@ -1662,10 +1753,15 @@ init_rdp_session (GrdSessionRdp *session_rdp,
   rdp_settings->OsMajorType = OSMAJORTYPE_UNIX;
   rdp_settings->OsMinorType = OSMINORTYPE_PSEUDO_XSERVER;
   rdp_settings->ColorDepth = 32;
+  rdp_settings->GfxAVC444v2 = rdp_settings->GfxAVC444 = FALSE;
+  rdp_settings->GfxH264 = FALSE;
+  rdp_settings->GfxSmallCache = FALSE;
+  rdp_settings->GfxThinClient = FALSE;
   rdp_settings->HasExtendedMouseEvent = TRUE;
   rdp_settings->HasHorizontalWheel = TRUE;
   rdp_settings->RefreshRect = TRUE;
   rdp_settings->RemoteFxCodec = TRUE;
+  rdp_settings->SupportGraphicsPipeline = TRUE;
   rdp_settings->NSCodec = TRUE;
   rdp_settings->FrameMarkerCommandEnabled = TRUE;
   rdp_settings->SurfaceFrameMarkerEnabled = TRUE;
@@ -1699,6 +1795,8 @@ socket_thread_func (gpointer data)
   GrdSessionRdp *session_rdp = data;
   freerdp_peer *peer;
   RdpPeerContext *rdp_peer_context;
+  rdpSettings *rdp_settings;
+  HANDLE vcm;
   HANDLE channel_event;
   HANDLE events[32];
   uint32_t n_events;
@@ -1708,7 +1806,9 @@ socket_thread_func (gpointer data)
 
   peer = session_rdp->peer;
   rdp_peer_context = (RdpPeerContext *) peer->context;
-  channel_event = WTSVirtualChannelManagerGetEventHandle (rdp_peer_context->vcm);
+  rdp_settings = peer->settings;
+  vcm = rdp_peer_context->vcm;
+  channel_event = WTSVirtualChannelManagerGetEventHandle (vcm);
 
   while (TRUE)
     {
@@ -1740,8 +1840,33 @@ socket_thread_func (gpointer data)
           break;
         }
 
+      if (WTSVirtualChannelManagerIsChannelJoined (vcm, "drdynvc"))
+        {
+          GrdRdpGraphicsPipeline *graphics_pipeline;
+
+          switch (WTSVirtualChannelManagerGetDrdynvcState (vcm))
+            {
+            case DRDYNVC_STATE_NONE:
+              /*
+               * This ensures that WTSVirtualChannelManagerCheckFileDescriptor()
+               * will be called, which initializes the drdynvc channel
+               */
+              SetEvent (channel_event);
+              break;
+            case DRDYNVC_STATE_READY:
+              graphics_pipeline = rdp_peer_context->graphics_pipeline;
+
+              if (rdp_settings->SupportGraphicsPipeline)
+                grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
+              break;
+            }
+
+          if (WaitForSingleObject (session_rdp->stop_event, 0) == WAIT_OBJECT_0)
+            break;
+        }
+
       if (WaitForSingleObject (channel_event, 0) == WAIT_OBJECT_0 &&
-          !WTSVirtualChannelManagerCheckFileDescriptor (rdp_peer_context->vcm))
+          !WTSVirtualChannelManagerCheckFileDescriptor (vcm))
         {
           g_message ("Unable to check VCM file descriptor, closing connection");
           handle_client_gone (session_rdp);
@@ -1841,10 +1966,15 @@ grd_session_rdp_stop (GrdSession *session)
 
       SetEvent (session_rdp->stop_event);
     }
+  else if (session_rdp->rdp_error_info)
+    {
+      freerdp_set_error_info (peer->context->rdp, session_rdp->rdp_error_info);
+    }
 
   g_clear_object (&session_rdp->pipewire_stream);
 
   g_clear_object (&rdp_peer_context->clipboard_rdp);
+  g_clear_object (&rdp_peer_context->graphics_pipeline);
 
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
 
