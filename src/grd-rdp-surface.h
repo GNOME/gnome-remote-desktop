@@ -38,6 +38,7 @@ struct _GrdRdpSurface
   gboolean valid;
 
   GrdRdpGfxSurface *gfx_surface;
+  uint16_t refresh_rate;
   gboolean encoding_suspended;
 };
 
