@@ -11,7 +11,7 @@ xkbcommon_req = '>= 1.0.0'
 gnome = import('gnome')
 
 cairo_dep = dependency('cairo')
-glib_dep = dependency('glib-2.0')
+glib_dep = dependency('glib-2.0', version: '>= 2.68')
 gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')
 pipewire_dep = dependency('libpipewire-0.3', version: '>= 0.3.0')
