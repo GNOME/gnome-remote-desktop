@@ -511,8 +511,9 @@ request_file_range_async (GrdRdpFuseClipboard *rdp_fuse_clipboard,
                        GUINT_TO_POINTER (rdp_fuse_request->stream_id),
                        rdp_fuse_request);
 
-  g_debug ("[FUSE Clipboard] Requesting file range for file \"%s\" with stream "
-           "id %u", fuse_file->filename, rdp_fuse_request->stream_id);
+  g_debug ("[FUSE Clipboard] Requesting file range (%u Bytes at offset %lu) for "
+           "file \"%s\" with stream id %u", requested_size, offset,
+           fuse_file->filename, rdp_fuse_request->stream_id);
   grd_clipboard_rdp_request_remote_file_range_async (clipboard_rdp,
                                                      rdp_fuse_request->stream_id,
                                                      fuse_file->list_idx,
