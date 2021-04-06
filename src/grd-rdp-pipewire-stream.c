@@ -577,7 +577,11 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
 
   g_clear_pointer (&stream->pipewire_core, pw_core_disconnect);
   g_clear_pointer (&stream->pipewire_context, pw_context_destroy);
-  g_clear_pointer (&stream->pipewire_source, g_source_destroy);
+  if (stream->pipewire_source)
+    {
+      g_source_destroy (stream->pipewire_source);
+      g_clear_pointer (&stream->pipewire_source, g_source_unref);
+    }
 
   G_OBJECT_CLASS (grd_rdp_pipewire_stream_parent_class)->finalize (object);
 }
