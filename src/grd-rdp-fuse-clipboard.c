@@ -703,7 +703,9 @@ fuse_ll_read (fuse_req_t             fuse_req,
       return;
     }
 
-  size = MIN (MIN (size, 8 * 1024 * 1024), fuse_file->size - offset);
+  size = MIN (size, 8 * 1024 * 1024);
+  g_assert (size > 0);
+
   request_file_range_async (rdp_fuse_clipboard, fuse_file, fuse_req,
                             offset, size);
   g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
