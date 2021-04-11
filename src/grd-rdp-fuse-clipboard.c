@@ -127,9 +127,9 @@ invalidate_inode (gpointer data,
     {
       child = l->data;
 
-      fuse_lowlevel_notify_inval_entry (rdp_fuse_clipboard->fuse_handle,
-                                        fuse_file->ino, child->filename,
-                                        strlen (child->filename));
+      fuse_lowlevel_notify_delete (rdp_fuse_clipboard->fuse_handle,
+                                   fuse_file->ino, child->ino,
+                                   child->filename, strlen (child->filename));
     }
   g_debug ("[FUSE Clipboard] Invalidating inode %lu for file \"%s\"",
            fuse_file->ino, fuse_file->filename);
