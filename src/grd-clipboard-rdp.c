@@ -920,6 +920,20 @@ cliprdr_client_capabilities (CliprdrServerContext       *cliprdr_context,
   return CHANNEL_RC_OK;
 }
 
+/**
+ * Client sent us a Temporary Directory PDU.
+ * We don't handle the CF_HDROP format however. It's a relict of the past.
+ */
+static uint32_t
+cliprdr_temp_directory (CliprdrServerContext         *cliprdr_context,
+                        const CLIPRDR_TEMP_DIRECTORY *temp_directory)
+{
+  g_debug ("[RDP.CLIPRDR] Client sent a Temporary Directory PDU with path \"%s\"",
+           temp_directory->szTempDir);
+
+  return CHANNEL_RC_OK;
+}
+
 static gboolean
 update_server_format_list (gpointer user_data)
 {
@@ -1933,6 +1947,7 @@ grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
 #endif /* HAVE_FREERDP_2_3 */
 
   cliprdr_context->ClientCapabilities = cliprdr_client_capabilities;
+  cliprdr_context->TempDirectory = cliprdr_temp_directory;
   cliprdr_context->ClientFormatList = cliprdr_client_format_list;
   cliprdr_context->ClientFormatListResponse = cliprdr_client_format_list_response;
   cliprdr_context->ClientLockClipboardData = cliprdr_client_lock_clipboard_data;
