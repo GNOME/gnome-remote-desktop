@@ -767,197 +767,6 @@ grd_rdp_fuse_clipboard_set_no_cdi_selection (GrdRdpFuseClipboard *rdp_fuse_clipb
   return result;
 }
 
-static gboolean
-clear_rdp_fuse_request (gpointer key,
-                        gpointer value,
-                        gpointer user_data)
-{
-  GrdRdpFuseClipboard *rdp_fuse_clipboard = user_data;
-  RdpFuseFileContentsRequest *rdp_fuse_request = value;
-
-  if (rdp_fuse_clipboard->fuse_handle)
-    fuse_reply_err (rdp_fuse_request->fuse_req, EIO);
-  g_free (rdp_fuse_request);
-
-  return TRUE;
-}
-
-void
-grd_rdp_fuse_clipboard_dismiss_all_requests (GrdRdpFuseClipboard *rdp_fuse_clipboard)
-{
-  g_mutex_lock (&rdp_fuse_clipboard->filesystem_mutex);
-  g_hash_table_foreach_remove (rdp_fuse_clipboard->request_table,
-                               clear_rdp_fuse_request,
-                               rdp_fuse_clipboard);
-  g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
-}
-
-static FuseFile *
-fuse_file_new_root (void)
-{
-  FuseFile *root_dir;
-
-  root_dir = g_malloc0 (sizeof (FuseFile));
-  root_dir->filename_with_root = strdup ("/");
-  root_dir->filename = root_dir->filename_with_root;
-  root_dir->ino = FUSE_ROOT_ID;
-  root_dir->is_directory = TRUE;
-  root_dir->is_readonly = TRUE;
-
-  return root_dir;
-}
-
-static void
-clear_selection_ex (GrdRdpFuseClipboard *rdp_fuse_clipboard)
-{
-  GList *fuse_files;
-
-  g_assert (!g_mutex_trylock (&rdp_fuse_clipboard->selection_mutex));
-  g_assert (!g_mutex_trylock (&rdp_fuse_clipboard->filesystem_mutex));
-
-  g_debug ("[FUSE Clipboard] Clearing selection");
-  g_hash_table_foreach_remove (rdp_fuse_clipboard->request_table,
-                               clear_rdp_fuse_request, rdp_fuse_clipboard);
-
-  fuse_files = g_hash_table_get_values (rdp_fuse_clipboard->inode_table);
-  g_hash_table_steal_all (rdp_fuse_clipboard->inode_table);
-  g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
-
-  /**
-   * fuse_lowlevel_notify_inval_inode() is a blocking operation. If we receive
-   * a FUSE request (e.g. read()), then FUSE would block in read() since
-   * filesystem_mutex would still be locked, if we wouldn't unlock it here.
-   * fuse_lowlevel_notify_inval_inode() will block, since it waits on the FUSE
-   * operation to finish.
-   * So, to avoid a deadlock here, unlock the mutex and reply all incoming
-   * operations with -ENOENT until the invalidation process is complete.
-   */
-  g_list_foreach (fuse_files, invalidate_inode, rdp_fuse_clipboard);
-  g_list_free_full (fuse_files, fuse_file_free);
-
-  g_mutex_lock (&rdp_fuse_clipboard->filesystem_mutex);
-  rdp_fuse_clipboard->root_dir = fuse_file_new_root ();
-  g_hash_table_insert (rdp_fuse_clipboard->inode_table,
-                       GUINT_TO_POINTER (rdp_fuse_clipboard->root_dir->ino),
-                       rdp_fuse_clipboard->root_dir);
-
-  g_debug ("[FUSE Clipboard] Selection cleared");
-}
-
-void
-grd_rdp_fuse_clipboard_clear_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard)
-{
-  g_mutex_lock (&rdp_fuse_clipboard->selection_mutex);
-  g_mutex_lock (&rdp_fuse_clipboard->filesystem_mutex);
-
-  clear_selection_ex (rdp_fuse_clipboard);
-
-  g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
-  g_mutex_unlock (&rdp_fuse_clipboard->selection_mutex);
-}
-
-#ifdef HAVE_FREERDP_2_3
-gboolean
-grd_rdp_fuse_clipboard_set_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
-                                      FILEDESCRIPTORW     *files,
-                                      uint32_t             n_files)
-#else
-gboolean
-grd_rdp_fuse_clipboard_set_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
-                                      FILEDESCRIPTOR      *files,
-                                      uint32_t             n_files)
-#endif /* HAVE_FREERDP_2_3 */
-{
-  uint32_t i;
-
-  g_mutex_lock (&rdp_fuse_clipboard->selection_mutex);
-  g_mutex_lock (&rdp_fuse_clipboard->filesystem_mutex);
-  clear_selection_ex (rdp_fuse_clipboard);
-  g_debug ("[FUSE Clipboard] Setting selection");
-
-  for (i = 0; i < n_files; ++i)
-    {
-#ifdef HAVE_FREERDP_2_3
-      FILEDESCRIPTORW *file;
-#else
-      FILEDESCRIPTOR *file;
-#endif /* HAVE_FREERDP_2_3 */
-      FuseFile *fuse_file, *parent;
-      char *filename = NULL;
-      uint32_t j;
-
-      file = &files[i];
-
-      fuse_file = g_malloc0 (sizeof (FuseFile));
-      if (!(file->dwFlags & FD_ATTRIBUTES))
-        g_warning ("[RDP.CLIPRDR] Client did not set the FD_ATTRIBUTES flag");
-
-      if (ConvertFromUnicode (CP_UTF8, 0, file->cFileName, -1, &filename,
-                              0, NULL, NULL) <= 0)
-        {
-          g_warning ("[RDP.CLIPRDR] Failed to convert filename. Aborting "
-                     "SelectionTransfer");
-          clear_selection_ex (rdp_fuse_clipboard);
-          g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
-          g_mutex_unlock (&rdp_fuse_clipboard->selection_mutex);
-
-          g_free (fuse_file);
-
-          return FALSE;
-        }
-
-      for (j = 0; filename[j]; ++j)
-        {
-          if (filename[j] == '\\')
-            filename[j] = '/';
-        }
-      fuse_file->filename_with_root = g_strdup_printf ("/%s", filename);
-      fuse_file->filename = strrchr (fuse_file->filename_with_root, '/') + 1;
-      g_free (filename);
-
-      parent = get_parent_directory (rdp_fuse_clipboard,
-                                     fuse_file->filename_with_root);
-      parent->children = g_list_append (parent->children, fuse_file);
-      fuse_file->parent = parent;
-
-      fuse_file->list_idx = i;
-      fuse_file->ino = i + 2;
-      if (file->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        fuse_file->is_directory = TRUE;
-      if (file->dwFileAttributes & FILE_ATTRIBUTE_READONLY)
-        fuse_file->is_readonly = TRUE;
-      if (file->dwFlags & FD_FILESIZE)
-        {
-          fuse_file->size = ((uint64_t) file->nFileSizeHigh << 32) +
-                            file->nFileSizeLow;
-          fuse_file->has_size = TRUE;
-        }
-#ifdef HAVE_FREERDP_2_3
-      if (file->dwFlags & FD_WRITETIME)
-#else
-      if (file->dwFlags & FD_WRITESTIME)
-#endif /* HAVE_FREERDP_2_3 */
-        {
-          uint64_t filetime;
-
-          filetime = file->ftLastWriteTime.dwHighDateTime;
-          filetime <<= 32;
-          filetime += file->ftLastWriteTime.dwLowDateTime;
-
-          fuse_file->last_write_time_unix = filetime / (10 * G_USEC_PER_SEC) -
-                                            WIN32_FILETIME_TO_UNIX_EPOCH;
-          fuse_file->has_last_write_time = TRUE;
-        }
-      g_hash_table_insert (rdp_fuse_clipboard->inode_table,
-                           GUINT_TO_POINTER (fuse_file->ino), fuse_file);
-    }
-  g_debug ("[FUSE Clipboard] Selection set");
-  g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
-  g_mutex_unlock (&rdp_fuse_clipboard->selection_mutex);
-
-  return TRUE;
-}
-
 static void
 write_file_attributes (FuseFile    *fuse_file,
                        struct stat *attr)
@@ -990,16 +799,12 @@ static void
 maybe_queue_clip_data_entry_timeout_reset (GrdRdpFuseClipboard *rdp_fuse_clipboard,
                                            ClipDataEntry       *entry)
 {
-  int64_t drop_id_timeout_set_us;
+  int64_t drop_id_timeout_set_us = entry->drop_context.drop_id_timeout_set_us;
   int64_t now_us;
-
-  if (!entry)
-    return;
 
   if (!entry->drop_context.drop_id)
     return;
 
-  drop_id_timeout_set_us = entry->drop_context.drop_id_timeout_set_us;
   now_us = g_get_monotonic_time ();
   if (now_us - drop_id_timeout_set_us < CLIP_DATA_ENTRY_DROP_TIMEOUT_DELTA_US)
     return;
@@ -1095,8 +900,7 @@ rdp_fuse_file_contents_request_new (GrdRdpFuseClipboard *rdp_fuse_clipboard,
   RdpFuseFileContentsRequest *rdp_fuse_request;
   uint32_t stream_id = rdp_fuse_clipboard->next_stream_id;
 
-  if (fuse_file->entry)
-    fuse_file->entry->had_file_contents_request = TRUE;
+  fuse_file->entry->had_file_contents_request = TRUE;
   maybe_queue_clip_data_entry_timeout_reset (rdp_fuse_clipboard,
                                              fuse_file->entry);
 
@@ -1553,6 +1357,20 @@ grd_rdp_fuse_clipboard_new (GrdClipboardRdp *clipboard_rdp,
 }
 
 static void
+dismiss_all_requests (GrdRdpFuseClipboard *rdp_fuse_clipboard)
+{
+  ClearRdpFuseRequestContext clear_context = {0};
+
+  clear_context.rdp_fuse_clipboard = rdp_fuse_clipboard;
+  clear_context.all_files = TRUE;
+
+  g_mutex_lock (&rdp_fuse_clipboard->filesystem_mutex);
+  g_hash_table_foreach_remove (rdp_fuse_clipboard->request_table,
+                               maybe_clear_rdp_fuse_request, &clear_context);
+  g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
+}
+
+static void
 grd_rdp_fuse_clipboard_dispose (GObject *object)
 {
   GrdRdpFuseClipboard *rdp_fuse_clipboard = GRD_RDP_FUSE_CLIPBOARD (object);
@@ -1567,7 +1385,7 @@ grd_rdp_fuse_clipboard_dispose (GObject *object)
 
       g_debug ("[FUSE Clipboard] Stopping FUSE thread");
       fuse_session_exit (rdp_fuse_clipboard->fuse_handle);
-      grd_rdp_fuse_clipboard_dismiss_all_requests (rdp_fuse_clipboard);
+      dismiss_all_requests (rdp_fuse_clipboard);
       g_debug ("[FUSE Clipboard] Unmounting FUSE filesystem");
       fuse_session_unmount (rdp_fuse_clipboard->fuse_handle);
 
@@ -1579,8 +1397,7 @@ grd_rdp_fuse_clipboard_dispose (GObject *object)
 
   if (rdp_fuse_clipboard->request_table)
     {
-      g_hash_table_foreach_remove (rdp_fuse_clipboard->request_table,
-                                   clear_rdp_fuse_request, rdp_fuse_clipboard);
+      dismiss_all_requests (rdp_fuse_clipboard);
       g_clear_pointer (&rdp_fuse_clipboard->request_table, g_hash_table_unref);
     }
   g_clear_pointer (&rdp_fuse_clipboard->no_cdi_entry, g_free);
@@ -1602,6 +1419,21 @@ clip_data_entry_free (gpointer data)
   g_clear_handle_id (&entry->drop_context.drop_id, g_source_remove);
 
   g_free (entry);
+}
+
+static FuseFile *
+fuse_file_new_root (void)
+{
+  FuseFile *root_dir;
+
+  root_dir = g_malloc0 (sizeof (FuseFile));
+  root_dir->filename_with_root = strdup ("/");
+  root_dir->filename = root_dir->filename_with_root;
+  root_dir->ino = FUSE_ROOT_ID;
+  root_dir->is_directory = TRUE;
+  root_dir->is_readonly = TRUE;
+
+  return root_dir;
 }
 
 static gboolean
