@@ -917,6 +917,31 @@ static uint32_t
 cliprdr_client_capabilities (CliprdrServerContext       *cliprdr_context,
                              const CLIPRDR_CAPABILITIES *capabilities)
 {
+  g_autoptr (GStrvBuilder) client_capabilities = NULL;
+  char **client_caps_strings;
+  g_autofree char *caps_string = NULL;
+
+  client_capabilities = g_strv_builder_new ();
+
+  if (cliprdr_context->useLongFormatNames)
+    g_strv_builder_add (client_capabilities, "long format names");
+  if (cliprdr_context->streamFileClipEnabled)
+    g_strv_builder_add (client_capabilities, "stream file clipping");
+  if (cliprdr_context->fileClipNoFilePaths)
+    g_strv_builder_add (client_capabilities, "file clip no file paths");
+  if (cliprdr_context->canLockClipData)
+    g_strv_builder_add (client_capabilities, "can lock clip data");
+#ifdef HAVE_FREERDP_2_3
+  if (cliprdr_context->hasHugeFileSupport)
+    g_strv_builder_add (client_capabilities, "huge file support");
+#endif /* HAVE_FREERDP_2_3 */
+
+  client_caps_strings = g_strv_builder_end (client_capabilities);
+  caps_string = g_strjoinv (", ", client_caps_strings);
+  g_message ("[RDP.CLIPRDR] Client capabilities: %s", caps_string);
+
+  g_strfreev (client_caps_strings);
+
   return CHANNEL_RC_OK;
 }
 
