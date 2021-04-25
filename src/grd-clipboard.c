@@ -21,6 +21,8 @@
 
 #include "grd-clipboard.h"
 
+#include <glib-unix.h>
+
 #include "grd-session.h"
 
 typedef struct _GrdClipboardPrivate
@@ -75,24 +77,73 @@ grd_clipboard_update_server_mime_type_list (GrdClipboard *clipboard,
   g_list_free (mime_type_tables);
 }
 
+static uint8_t *
+read_mime_type_content_sync (int       fd,
+                             uint32_t *size)
+{
+  GArray *data;
+
+  *size = 0;
+  if (fd == -1)
+    return NULL;
+
+  data = g_array_new (FALSE, TRUE, sizeof (uint8_t));
+  while (TRUE)
+    {
+      int len;
+      uint8_t buffer[1024];
+
+      len = read (fd, buffer, G_N_ELEMENTS (buffer));
+      if (len < 0)
+        {
+          if (errno == EAGAIN)
+            continue;
+
+          g_warning ("read() failed: %s", g_strerror (errno));
+          break;
+        }
+      else if (len == 0)
+        {
+          break;
+        }
+      else
+        {
+          g_array_append_vals (data, buffer, len);
+        }
+    }
+  close (fd);
+
+  if (data->len <= 0)
+    {
+      g_array_free (data, TRUE);
+      return NULL;
+    }
+
+  *size = data->len;
+
+  return (uint8_t *) g_array_free (data, FALSE);
+}
+
 void
 grd_clipboard_request_server_content_for_mime_type_async (GrdClipboard *clipboard,
                                                           GrdMimeType   mime_type)
 {
   GrdClipboardClass *klass = GRD_CLIPBOARD_GET_CLASS (clipboard);
   GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
+  int fd;
   uint8_t *data;
   uint32_t size;
 
-  if (!klass->submit_requested_server_content)
-    return;
+  g_return_if_fail (klass->submit_requested_server_content);
 
   if (!priv->enabled)
     return;
 
   g_debug ("Clipboard[SelectionRead]: Requesting data from servers clipboard"
            " (mime type: %s)", grd_mime_type_to_string (mime_type));
-  data = grd_session_selection_read (priv->session, mime_type, &size);
+  fd = grd_session_selection_read (priv->session, mime_type);
+
+  data = read_mime_type_content_sync (fd, &size);
   if (data)
     g_debug ("Clipboard[SelectionRead]: Request successful");
   else

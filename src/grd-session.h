@@ -110,9 +110,8 @@ void grd_session_disable_clipboard (GrdSession *session);
 void grd_session_set_selection (GrdSession *session,
                                 GList      *mime_type_tables);
 
-uint8_t *grd_session_selection_read (GrdSession  *session,
-                                     GrdMimeType  mime_type,
-                                     uint32_t    *size);
+int grd_session_selection_read (GrdSession  *session,
+                                GrdMimeType  mime_type);
 
 void grd_session_start (GrdSession *session);
 
