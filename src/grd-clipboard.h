@@ -38,14 +38,16 @@ struct _GrdClipboardClass
   uint8_t *(*request_client_content_for_mime_type) (GrdClipboard     *clipboard,
                                                     GrdMimeTypeTable *mime_type_table,
                                                     uint32_t         *size);
+  void (*submit_requested_server_content) (GrdClipboard *clipboard,
+                                           uint8_t      *data,
+                                           uint32_t      size);
 };
 
 void grd_clipboard_update_server_mime_type_list (GrdClipboard *clipboard,
                                                  GList        *mime_type_tables);
 
-uint8_t *grd_clipboard_request_server_content_for_mime_type (GrdClipboard *clipboard,
-                                                             GrdMimeType   mime_type,
-                                                             uint32_t     *size);
+void grd_clipboard_request_server_content_for_mime_type_async (GrdClipboard *clipboard,
+                                                               GrdMimeType   mime_type);
 
 void grd_clipboard_initialize (GrdClipboard *clipboard,
                                GrdSession   *session);

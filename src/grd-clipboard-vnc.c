@@ -35,38 +35,6 @@ struct _GrdClipboardVnc
 G_DEFINE_TYPE (GrdClipboardVnc, grd_clipboard_vnc, GRD_TYPE_CLIPBOARD);
 
 static void
-update_vnc_clipboard (GrdClipboardVnc *clipboard_vnc,
-                      GrdMimeType      text_mime_type)
-{
-  GrdClipboard *clipboard = GRD_CLIPBOARD (clipboard_vnc);
-  g_autoptr (GError) error = NULL;
-  uint8_t *src_data;
-  uint32_t src_size;
-  char *dst_data;
-
-  src_data = grd_clipboard_request_server_content_for_mime_type (clipboard,
-                                                                 text_mime_type,
-                                                                 &src_size);
-  if (!src_data)
-    return;
-
-  dst_data = g_convert ((char *) src_data, src_size,
-                        "iso8859-1", "utf-8",
-                        NULL, NULL, &error);
-  if (!dst_data)
-    {
-      g_warning ("[VNC.Clipboard] Failed to convert clipboard content: %s",
-                 error->message);
-      return;
-    }
-
-  grd_session_vnc_set_client_clipboard_text (clipboard_vnc->session_vnc,
-                                             dst_data, strlen (dst_data));
-
-  g_free (dst_data);
-}
-
-static void
 grd_clipboard_vnc_update_client_mime_type_list (GrdClipboard *clipboard,
                                                 GList        *mime_type_list)
 {
@@ -104,7 +72,8 @@ grd_clipboard_vnc_update_client_mime_type_list (GrdClipboard *clipboard,
     {
       g_clear_pointer (&clipboard_vnc->clipboard_utf8_string, g_free);
 
-      update_vnc_clipboard (clipboard_vnc, mime_type);
+      grd_clipboard_request_server_content_for_mime_type_async (clipboard,
+                                                                mime_type);
     }
 
   g_list_free (mime_type_list);
@@ -120,6 +89,36 @@ grd_clipboard_vnc_request_client_content_for_mime_type (GrdClipboard     *clipbo
   *size = strlen (clipboard_vnc->clipboard_utf8_string);
 
   return g_memdup2 (clipboard_vnc->clipboard_utf8_string, *size);
+}
+
+static void
+grd_clipboard_vnc_submit_requested_server_content (GrdClipboard *clipboard,
+                                                   uint8_t      *src_data,
+                                                   uint32_t      src_size)
+{
+  GrdClipboardVnc *clipboard_vnc = GRD_CLIPBOARD_VNC (clipboard);
+  g_autoptr (GError) error = NULL;
+  char *dst_data;
+
+  if (!src_data)
+    return;
+
+  dst_data = g_convert ((char *) src_data, src_size,
+                        "iso8859-1", "utf-8",
+                        NULL, NULL, &error);
+  if (!dst_data)
+    {
+      g_warning ("[VNC.Clipboard] Failed to convert clipboard content: %s",
+                 error->message);
+      g_free (src_data);
+      return;
+    }
+
+  grd_session_vnc_set_client_clipboard_text (clipboard_vnc->session_vnc,
+                                             dst_data, strlen (dst_data));
+
+  g_free (src_data);
+  g_free (dst_data);
 }
 
 void
@@ -203,4 +202,6 @@ grd_clipboard_vnc_class_init (GrdClipboardVncClass *klass)
     grd_clipboard_vnc_update_client_mime_type_list;
   clipboard_class->request_client_content_for_mime_type =
     grd_clipboard_vnc_request_client_content_for_mime_type;
+  clipboard_class->submit_requested_server_content =
+    grd_clipboard_vnc_submit_requested_server_content;
 }

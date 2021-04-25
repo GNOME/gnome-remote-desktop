@@ -75,27 +75,30 @@ grd_clipboard_update_server_mime_type_list (GrdClipboard *clipboard,
   g_list_free (mime_type_tables);
 }
 
-uint8_t *
-grd_clipboard_request_server_content_for_mime_type (GrdClipboard *clipboard,
-                                                    GrdMimeType   mime_type,
-                                                    uint32_t     *size)
+void
+grd_clipboard_request_server_content_for_mime_type_async (GrdClipboard *clipboard,
+                                                          GrdMimeType   mime_type)
 {
+  GrdClipboardClass *klass = GRD_CLIPBOARD_GET_CLASS (clipboard);
   GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
   uint8_t *data;
+  uint32_t size;
 
-  *size = 0;
+  if (!klass->submit_requested_server_content)
+    return;
+
   if (!priv->enabled)
-    return NULL;
+    return;
 
   g_debug ("Clipboard[SelectionRead]: Requesting data from servers clipboard"
            " (mime type: %s)", grd_mime_type_to_string (mime_type));
-  data = grd_session_selection_read (priv->session, mime_type, size);
+  data = grd_session_selection_read (priv->session, mime_type, &size);
   if (data)
     g_debug ("Clipboard[SelectionRead]: Request successful");
   else
     g_debug ("Clipboard[SelectionRead]: Request failed");
 
-  return data;
+  klass->submit_requested_server_content (clipboard, data, size);
 }
 
 void
