@@ -65,7 +65,7 @@ grd_rdp_sam_create_sam_file (const char *username,
   int fd_flags;
   GrdRdpSAMFile *rdp_sam_file;
   FILE *sam_file;
-  
+
   rdp_sam_file = g_malloc0 (sizeof (GrdRdpSAMFile));
 
   path = getenv ("XDG_RUNTIME_DIR");
