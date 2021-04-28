@@ -956,7 +956,7 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
   update_context->mime_type_tables = mime_type_tables;
 
   clipboard_rdp->server_format_list_update_id =
-    g_timeout_add (0, update_server_format_list, update_context);
+    g_idle_add (update_server_format_list, update_context);
   SetEvent (clipboard_rdp->format_list_received_event);
 
   return CHANNEL_RC_OK;
@@ -1008,7 +1008,7 @@ cliprdr_client_format_list_response (CliprdrServerContext               *cliprdr
 
   clipboard_rdp->format_list_response_msg_flags = format_list_response->msgFlags;
   clipboard_rdp->client_format_list_response_id =
-    g_timeout_add (0, handle_format_list_response, clipboard_rdp);
+    g_idle_add (handle_format_list_response, clipboard_rdp);
   SetEvent (format_list_response_received_event);
 
   return CHANNEL_RC_OK;
@@ -1266,7 +1266,7 @@ cliprdr_client_format_data_request (CliprdrServerContext              *cliprdr_c
       request_context->needs_conversion = needs_conversion;
 
       clipboard_rdp->server_format_data_request_id =
-        g_timeout_add (0, request_server_format_data, request_context);
+        g_idle_add (request_server_format_data, request_context);
       SetEvent (clipboard_rdp->format_data_request_received_event);
 
       return CHANNEL_RC_OK;
