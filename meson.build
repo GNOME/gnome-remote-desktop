@@ -9,6 +9,7 @@ fuse_req = '>= 3.9.1'
 xkbcommon_req = '>= 1.0.0'
 
 gnome = import('gnome')
+i18n  = import('i18n')
 
 cairo_dep = dependency('cairo')
 glib_dep = dependency('glib-2.0', version: '>= 2.68')
@@ -81,6 +82,7 @@ schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
 
 subdir('src')
 subdir('tests')
+subdir('po')
 
 meson.add_install_script('meson_post_install.py')
 
