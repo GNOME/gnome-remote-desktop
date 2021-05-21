@@ -209,6 +209,20 @@ grd_rdp_graphics_pipeline_reset_graphics (GrdRdpGraphicsPipeline *graphics_pipel
   rdpgfx_context->ResetGraphics (rdpgfx_context, &reset_graphics);
 }
 
+void
+grd_rdp_graphics_pipeline_notify_new_round_trip_time (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                                      uint64_t                round_trip_time_us)
+{
+  GrdRdpGfxSurface *gfx_surface;
+  GHashTableIter iter;
+
+  g_mutex_lock (&graphics_pipeline->gfx_mutex);
+  g_hash_table_iter_init (&iter, graphics_pipeline->surface_table);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &gfx_surface))
+    grd_rdp_gfx_surface_notify_new_round_trip_time (gfx_surface, round_trip_time_us);
+  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
+}
+
 static uint32_t
 get_next_free_frame_id (GrdRdpGraphicsPipeline *graphics_pipeline)
 {
