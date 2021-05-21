@@ -52,6 +52,8 @@ struct _GrdRdpGfxSurface
 
   GrdRdpGfxFrameLog *frame_log;
 
+  int64_t nw_auto_last_rtt_us;
+
   ThrottlingState throttling_state;
   /* Throttling triggers on >= activate_throttling_th */
   uint32_t activate_throttling_th;
@@ -85,6 +87,23 @@ grd_rdp_gfx_surface_get_rdp_surface (GrdRdpGfxSurface *gfx_surface)
   return gfx_surface->rdp_surface;
 }
 
+static uint32_t
+get_activate_throttling_th_from_rtt (GrdRdpGfxSurface *gfx_surface,
+                                     int64_t           rtt_us)
+{
+  GrdRdpSurface *rdp_surface = gfx_surface->rdp_surface;
+  int64_t refresh_rate = rdp_surface->refresh_rate;
+  uint32_t activate_throttling_th;
+  uint32_t delayed_frames;
+
+  delayed_frames = rtt_us * refresh_rate / G_USEC_PER_SEC;
+
+  activate_throttling_th = MAX (2, MIN (delayed_frames + 2, refresh_rate));
+  g_assert (activate_throttling_th > gfx_surface->deactivate_throttling_th);
+
+  return activate_throttling_th;
+}
+
 void
 grd_rdp_gfx_surface_unack_frame (GrdRdpGfxSurface *gfx_surface,
                                  uint32_t          frame_id,
@@ -104,6 +123,9 @@ grd_rdp_gfx_surface_unack_frame (GrdRdpGfxSurface *gfx_surface,
   switch (gfx_surface->throttling_state)
     {
     case THROTTLING_STATE_INACTIVE:
+      gfx_surface->activate_throttling_th = get_activate_throttling_th_from_rtt (
+        gfx_surface, gfx_surface->nw_auto_last_rtt_us);
+
       if (n_unacked_frames >= gfx_surface->activate_throttling_th)
         {
           gfx_surface->throttling_state = THROTTLING_STATE_ACTIVE;
@@ -170,6 +192,9 @@ reevaluate_encoding_suspension_state (GrdRdpGfxSurface *gfx_surface)
   switch (gfx_surface->throttling_state)
     {
     case THROTTLING_STATE_INACTIVE:
+      gfx_surface->activate_throttling_th = get_activate_throttling_th_from_rtt (
+        gfx_surface, gfx_surface->nw_auto_last_rtt_us);
+
       if (n_unacked_frames >= gfx_surface->activate_throttling_th)
         {
           gfx_surface->throttling_state = THROTTLING_STATE_ACTIVE;
@@ -210,6 +235,13 @@ grd_rdp_gfx_surface_clear_all_unacked_frames (GrdRdpGfxSurface *gfx_surface)
 
   if (encoding_was_suspended)
     g_source_set_ready_time (gfx_surface->pending_encode_source, 0);
+}
+
+void
+grd_rdp_gfx_surface_notify_new_round_trip_time (GrdRdpGfxSurface *gfx_surface,
+                                                int64_t           round_trip_time_us)
+{
+  gfx_surface->nw_auto_last_rtt_us = round_trip_time_us;
 }
 
 static gboolean

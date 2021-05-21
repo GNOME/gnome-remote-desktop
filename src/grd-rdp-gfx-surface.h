@@ -57,4 +57,7 @@ void grd_rdp_gfx_surface_unack_last_acked_frame (GrdRdpGfxSurface *gfx_surface,
 
 void grd_rdp_gfx_surface_clear_all_unacked_frames (GrdRdpGfxSurface *gfx_surface);
 
+void grd_rdp_gfx_surface_notify_new_round_trip_time (GrdRdpGfxSurface *gfx_surface,
+                                                     int64_t           round_trip_time_us);
+
 #endif /* GRD_RDP_GFX_SURFACE_H */
