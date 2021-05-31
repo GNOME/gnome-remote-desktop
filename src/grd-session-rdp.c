@@ -33,6 +33,7 @@
 #include "grd-damage-utils.h"
 #include "grd-rdp-event-queue.h"
 #include "grd-rdp-graphics-pipeline.h"
+#include "grd-rdp-network-autodetection.h"
 #include "grd-rdp-pipewire-stream.h"
 #include "grd-rdp-private.h"
 #include "grd-rdp-sam.h"
@@ -1500,11 +1501,29 @@ rdp_suppress_output (rdpContext         *rdp_context,
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
+  rdpSettings *rdp_settings = session_rdp->peer->settings;
 
   if (allow)
     set_rdp_peer_flag (session_rdp, RDP_PEER_OUTPUT_ENABLED);
   else
     unset_rdp_peer_flag (session_rdp, RDP_PEER_OUTPUT_ENABLED);
+
+  if (rdp_settings->SupportGraphicsPipeline &&
+      rdp_peer_context->network_autodetection)
+    {
+      if (allow)
+        {
+          grd_rdp_network_autodetection_ensure_rtt_consumer (
+            rdp_peer_context->network_autodetection,
+            GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX);
+        }
+      else
+        {
+          grd_rdp_network_autodetection_remove_rtt_consumer (
+            rdp_peer_context->network_autodetection,
+            GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX);
+        }
+    }
 
   if (allow)
     g_source_set_ready_time (session_rdp->pending_encode_source, 0);
@@ -1582,6 +1601,20 @@ rdp_peer_post_connect (freerdp_peer *peer)
   session_rdp->rdp_surface = g_malloc0 (sizeof (GrdRdpSurface));
   session_rdp->rdp_surface->refresh_rate = 30;
 
+  if (rdp_settings->SupportGraphicsPipeline &&
+      !rdp_settings->NetworkAutoDetect)
+    {
+      g_warning ("Client does not support autodetecting network characteristics "
+                 "(RTT detection, Bandwidth measurement). "
+                 "High latency connections will suffer!");
+    }
+
+  if (rdp_settings->NetworkAutoDetect)
+    {
+      rdp_peer_context->network_autodetection =
+        grd_rdp_network_autodetection_new (peer->context);
+    }
+
   if (rdp_settings->SupportGraphicsPipeline)
     {
       set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
@@ -1599,6 +1632,14 @@ rdp_peer_post_connect (freerdp_peer *peer)
 
   sam_file = g_steal_pointer (&session_rdp->sam_file);
   grd_rdp_sam_maybe_close_and_free_sam_file (sam_file);
+
+  if (rdp_settings->SupportGraphicsPipeline &&
+      rdp_peer_context->network_autodetection)
+    {
+      grd_rdp_network_autodetection_ensure_rtt_consumer (
+        rdp_peer_context->network_autodetection,
+        GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX);
+    }
 
   set_rdp_peer_flag (session_rdp, RDP_PEER_OUTPUT_ENABLED);
   set_rdp_peer_flag (session_rdp, RDP_PEER_ACTIVATED);
@@ -1619,6 +1660,14 @@ rdp_peer_activate (freerdp_peer *peer)
       !rdp_settings->SupportGraphicsPipeline)
     {
       g_warning ("Client disabled support for the graphics pipeline during the "
+                 "Deactivation-Reactivation sequence. This is not supported. "
+                 "Closing connection");
+      return FALSE;
+    }
+  if (rdp_peer_context->network_autodetection &&
+      !rdp_settings->NetworkAutoDetect)
+    {
+      g_warning ("Client disabled support for network autodetection during the "
                  "Deactivation-Reactivation sequence. This is not supported. "
                  "Closing connection");
       return FALSE;
@@ -1722,6 +1771,7 @@ init_rdp_session (GrdSessionRdp *session_rdp,
   rdp_settings->GfxThinClient = FALSE;
   rdp_settings->HasExtendedMouseEvent = TRUE;
   rdp_settings->HasHorizontalWheel = TRUE;
+  rdp_settings->NetworkAutoDetect = TRUE;
   rdp_settings->RefreshRect = TRUE;
   rdp_settings->RemoteFxCodec = TRUE;
   rdp_settings->SupportGraphicsPipeline = TRUE;
@@ -1934,6 +1984,12 @@ grd_session_rdp_stop (GrdSession *session)
       freerdp_set_error_info (peer->context->rdp, session_rdp->rdp_error_info);
     }
 
+  if (rdp_peer_context->network_autodetection)
+    {
+      grd_rdp_network_autodetection_invoke_shutdown (
+        rdp_peer_context->network_autodetection);
+    }
+
   g_clear_object (&session_rdp->pipewire_stream);
 
   g_clear_object (&rdp_peer_context->clipboard_rdp);
@@ -1946,6 +2002,8 @@ grd_session_rdp_stop (GrdSession *session)
 
   if (session_rdp->sam_file)
     grd_rdp_sam_maybe_close_and_free_sam_file (session_rdp->sam_file);
+
+  g_clear_object (&rdp_peer_context->network_autodetection);
 
   if (session_rdp->thread_pool)
     g_thread_pool_free (session_rdp->thread_pool, FALSE, TRUE);
