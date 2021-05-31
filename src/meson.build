@@ -48,6 +48,8 @@ if have_rdp
     'grd-rdp-gfx-surface.h',
     'grd-rdp-graphics-pipeline.c',
     'grd-rdp-graphics-pipeline.h',
+    'grd-rdp-network-autodetection.c',
+    'grd-rdp-network-autodetection.h',
     'grd-rdp-pipewire-stream.c',
     'grd-rdp-pipewire-stream.h',
     'grd-rdp-private.h',

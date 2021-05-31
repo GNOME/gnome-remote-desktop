@@ -36,6 +36,8 @@ typedef struct _RdpPeerContext
   RFX_CONTEXT *rfx_context;
   wStream *encode_stream;
 
+  GrdRdpNetworkAutodetection *network_autodetection;
+
   /* Virtual Channel Manager */
   HANDLE vcm;
 
