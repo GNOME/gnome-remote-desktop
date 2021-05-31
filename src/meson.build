@@ -50,6 +50,7 @@ if have_rdp
     'grd-rdp-graphics-pipeline.h',
     'grd-rdp-pipewire-stream.c',
     'grd-rdp-pipewire-stream.h',
+    'grd-rdp-private.h',
     'grd-rdp-sam.c',
     'grd-rdp-sam.h',
     'grd-rdp-server.c',

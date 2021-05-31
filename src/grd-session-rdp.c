@@ -34,6 +34,7 @@
 #include "grd-rdp-event-queue.h"
 #include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-pipewire-stream.h"
+#include "grd-rdp-private.h"
 #include "grd-rdp-sam.h"
 #include "grd-rdp-server.h"
 #include "grd-rdp-surface.h"
@@ -145,26 +146,6 @@ struct _GrdSessionRdp
 
   GrdRdpPipeWireStream *pipewire_stream;
 };
-
-typedef struct _RdpPeerContext
-{
-  rdpContext rdp_context;
-
-  GrdSessionRdp *session_rdp;
-
-  uint32_t frame_id;
-
-  RFX_CONTEXT *rfx_context;
-  wStream *encode_stream;
-
-  uint16_t planar_flags;
-
-  /* Virtual Channel Manager */
-  HANDLE vcm;
-
-  GrdClipboardRdp *clipboard_rdp;
-  GrdRdpGraphicsPipeline *graphics_pipeline;
-} RdpPeerContext;
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION);
 
