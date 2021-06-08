@@ -13,6 +13,11 @@ option('nvenc',
        value: true,
        description: 'Build with support for hardware acceleration using NVENC and CUDA')
 
+option('systemd',
+       type: 'boolean',
+       value: true,
+       description: 'Enable systemd support')
+
 option('systemd_user_unit_dir',
        type: 'string',
        value: '',
