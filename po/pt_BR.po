@@ -1,0 +1,104 @@
+# Brazilian Portuguese translation for gnome-remote-desktop.
+# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Enrico Nicoletto <liverig@gmail.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-06-17 14:50+0000\n"
+"PO-Revision-Date: 2021-06-17 13:43-0300\n"
+"Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Last-Translator: Enrico Nicoletto <liverig@gmail.com>\n"
+"X-Generator: Poedit 2.4.3\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "Área de Trabalho Remota do GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Você deseja compartilhar sua área de trabalho?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Um usuário no computador “%s” está tentando remotamente visualizar ou "
+"controlar sua área de trabalho."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Recusar"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Aceitar"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Caminho para o arquivo do certificado"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In Order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"A fim de possibilitar o uso do RDP com Segurança TLS, tanto o arquivo de "
+"chave privada quanto o arquivo de certificado precisam ser fornecidos pelo "
+"servidor RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Caminho para o arquivo de chave privada"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Permitir à conexões remotas apenas visualizar o conteúdo da tela"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Quando somente-visualização for verdadeiro, as conexões remotas RDP não "
+"manipularão dispositivos de entrada (ex.: mouse e teclado)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Quando somente-visualização for verdadeiro, as conexões remotas VNC não "
+"manipularão dispositivos de entrada (ex.: mouse e teclado)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Método usado para autenticar conexões VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"O método de autenticação VNC descreve como uma conexão remota é autenticada. "
+"Atualmente isso pode ser efetuado de duas formas distintas: * prompt - ao "
+"alertar o usuário a cada nova conexão, solicitando que uma pessoa com acesso "
+"físico a estação de trabalho aprove de forma explícita a nova conexão. * "
+"password - ao solicitar que o cliente remoto forneça uma senha conhecida "
+"pelo sistema"
