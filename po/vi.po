@@ -1,0 +1,101 @@
+# Vietnamese translation for gnome-remote-desktop.
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Trần Ngọc Quân <vnwildman@gmail.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-06-17 16:48+0000\n"
+"PO-Revision-Date: 2021-06-18 13:56+0700\n"
+"Language-Team: Vietnamese <gnome-vi-list@gnome.org>\n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
+"X-Generator: Gtranslator 2.91.7\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "Điều khiển màn hình từ xa GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Bạn có thực sự muốn chia sẻ màn hình của mình?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Người dùng trên máy “%s” đang cố xem hoặc điều khiển màn hình làm việc của "
+"bạn từ xa."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Từ chối"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Chấp nhận"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Đường dẫn đến tập tin chứng thực"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In Order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Với mục đích có thể dùng RPD an toàn bằng TLS, cả tập tin khóa riêng và "
+"chứng nhận cần phải được cung cấp đến máy phục vụ RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Đường dẫn đến tập tin khóa riêng"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Chỉ cho phép các kết nối từ xa xem nội dung màn hình"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Khi chọn chỉ-xem, các kết nối RDP từ xa không thể thao tác các thiết bị nhập "
+"(như là chuột và bàn phím)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Khi chọn chỉ-xem, các kết nối VNC từ xa không thể thao tác các thiết bị nhập "
+"(như là chuột và bàn phím)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Phương thức được dùng để xác thực các kết nối VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"Phương thức xác thực VNC mô tả cách máy từ xa được các thực. Nó hiện có thể "
+"thực hiện theo hai cách khác nhau: * nhắc - bằng cách nhắc người dùng khi "
+"tạo kết nối mới, yêu cầu một người có khả năng truy cập vật lý đến máy chủ "
+"để chấp thuận kết nối một cách rõ ràng. * mật khẩu - bằng cách yêu cầu máy "
+"khách từ xa cung cấp một mật khẩu đã biết"
