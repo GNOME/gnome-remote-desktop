@@ -1,0 +1,100 @@
+# Hebrew translation for gnome-remote-desktop.
+# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Yaron Shahrabani <sh.yaron@gmail.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-06-18 11:30+0000\n"
+"PO-Revision-Date: 2021-06-21 20:33+0300\n"
+"Language-Team: Hebrew <he@li.org>\n"
+"Language: he\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : n==2 ? 1 : n>10 && n%10==0 ? "
+"2 : 3);\n"
+"Last-Translator: Yaron Shahrabani <sh.yaron@gmail.com>\n"
+"X-Generator: Poedit 3.0\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "שולחנות עבודה מרוחקים מבית GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "לשתף את המסך שלך?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr "משתמש במחשב %s מנסה לצפות או לשלוט בשולחן העבודה שלך מרחוק."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "לסרב"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "לקבל"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "נתיב לקובץ האישור"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In Order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"כדי לאפשר שימוש ב־RDP עם אבטחת TLS, יש לספק לשרת ה־RDP גם את קובץ המפתח "
+"הפרטי וגם את קובץ האישור."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "נתיב לקובץ המפתח הפרטי"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "לאפשר רק לחיבורים מרוחקים לצפות בתוכן המסך"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"כאשר הערך view-only (צפייה בלבד) הוא true (אמת), חיבורי RDP מרוחקים לא "
+"יכולים לעשות שימוש בהתקני קלט (למשל: עכבר ומקלדת)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"כאשר הערך view-only (צפייה בלבד) הוא true (אמת), חיבורי VNC מרוחקים לא "
+"יכולים לעשות שימוש בהתקני קלט (למשל: עכבר ומקלדת)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "השיטה שתשמש לאמת חיבורי VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"שיטת אימות ה־VNC מתארת איך חיבור מרוחק מאומת. אפשר לעשות זאת כיום בשתי "
+"דרכים: * בקשת קלט - לבקש מהמשתמש לאשר כל חיבור כל פעם מחדש, מה שמצריך גישה "
+"פיזית לתחנת העבודה כדי לאשר את החיבורים החדשים באופן פעיל. * ססמה - לדרוש "
+"מהלקוח המרוחק לספק ססמה ידועה מראש"
