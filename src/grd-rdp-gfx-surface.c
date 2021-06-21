@@ -33,6 +33,7 @@ typedef enum _ThrottlingState
 {
   THROTTLING_STATE_INACTIVE,
   THROTTLING_STATE_ACTIVE,
+  THROTTLING_STATE_ACTIVE_LOWERING_LATENCY,
 } ThrottlingState;
 
 struct _GrdRdpGfxSurface
@@ -111,6 +112,7 @@ grd_rdp_gfx_surface_unack_frame (GrdRdpGfxSurface *gfx_surface,
 {
   GrdRdpSurface *rdp_surface = gfx_surface->rdp_surface;
   GrdRdpGfxFrameLog *frame_log = gfx_surface->frame_log;
+  uint32_t current_activate_throttling_th;
   uint32_t n_unacked_frames;
   uint32_t enc_rate = 0;
   uint32_t ack_rate = 0;
@@ -133,7 +135,22 @@ grd_rdp_gfx_surface_unack_frame (GrdRdpGfxSurface *gfx_surface,
         }
       break;
     case THROTTLING_STATE_ACTIVE:
-      rdp_surface->encoding_suspended = enc_rate > ack_rate + 1;
+      current_activate_throttling_th = get_activate_throttling_th_from_rtt (
+        gfx_surface, gfx_surface->nw_auto_last_rtt_us);
+
+      if (current_activate_throttling_th < gfx_surface->activate_throttling_th)
+        {
+          gfx_surface->throttling_state = THROTTLING_STATE_ACTIVE_LOWERING_LATENCY;
+          rdp_surface->encoding_suspended = TRUE;
+        }
+      else
+        {
+          gfx_surface->activate_throttling_th = current_activate_throttling_th;
+          rdp_surface->encoding_suspended = enc_rate > ack_rate + 1;
+        }
+      break;
+    case THROTTLING_STATE_ACTIVE_LOWERING_LATENCY:
+      g_assert (rdp_surface->encoding_suspended);
       break;
     }
 }
@@ -146,6 +163,7 @@ grd_rdp_gfx_surface_ack_frame (GrdRdpGfxSurface *gfx_surface,
   GrdRdpSurface *rdp_surface = gfx_surface->rdp_surface;
   GrdRdpGfxFrameLog *frame_log = gfx_surface->frame_log;
   gboolean encoding_was_suspended;
+  uint32_t current_activate_throttling_th;
   uint32_t n_unacked_frames;
   uint32_t enc_rate = 0;
   uint32_t ack_rate = 0;
@@ -165,10 +183,43 @@ grd_rdp_gfx_surface_ack_frame (GrdRdpGfxSurface *gfx_surface,
         {
           gfx_surface->throttling_state = THROTTLING_STATE_INACTIVE;
           rdp_surface->encoding_suspended = FALSE;
+          break;
+        }
+
+      current_activate_throttling_th = get_activate_throttling_th_from_rtt (
+        gfx_surface, gfx_surface->nw_auto_last_rtt_us);
+      if (current_activate_throttling_th < gfx_surface->activate_throttling_th)
+        {
+          gfx_surface->throttling_state = THROTTLING_STATE_ACTIVE_LOWERING_LATENCY;
+          rdp_surface->encoding_suspended = TRUE;
         }
       else
         {
+          gfx_surface->activate_throttling_th = current_activate_throttling_th;
           rdp_surface->encoding_suspended = enc_rate > ack_rate;
+        }
+      break;
+    case THROTTLING_STATE_ACTIVE_LOWERING_LATENCY:
+      current_activate_throttling_th = get_activate_throttling_th_from_rtt (
+        gfx_surface, gfx_surface->nw_auto_last_rtt_us);
+
+      if (n_unacked_frames < current_activate_throttling_th)
+        {
+          gfx_surface->throttling_state = THROTTLING_STATE_INACTIVE;
+          rdp_surface->encoding_suspended = FALSE;
+        }
+      else if (n_unacked_frames == current_activate_throttling_th)
+        {
+          gfx_surface->throttling_state = THROTTLING_STATE_ACTIVE;
+          rdp_surface->encoding_suspended = enc_rate > ack_rate;
+        }
+      else if (n_unacked_frames > current_activate_throttling_th)
+        {
+          g_assert (rdp_surface->encoding_suspended);
+        }
+      else
+        {
+          g_assert_not_reached ();
         }
       break;
     }
@@ -206,6 +257,13 @@ reevaluate_encoding_suspension_state (GrdRdpGfxSurface *gfx_surface)
                 gfx_surface->deactivate_throttling_th);
       g_assert (n_unacked_frames > gfx_surface->deactivate_throttling_th);
       g_assert (rdp_surface->encoding_suspended);
+      break;
+    case THROTTLING_STATE_ACTIVE_LOWERING_LATENCY:
+      /*
+       * While the graphics pipeline rewrites the frame history, the RTT
+       * detection mechanism cannot submit a new round trip time.
+       */
+      g_assert_not_reached ();
       break;
     }
 }
