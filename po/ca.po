@@ -1,0 +1,98 @@
+# Catalan translation for gnome-remote-desktop.
+# Jordi Mas i Hernàndez <jmas@softcatala.org>, 2021
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues\n"
+"POT-Creation-Date: 2021-06-21 17:34+0000\n"
+"PO-Revision-Date: 2021-06-21 17:34+0000\n"
+"Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
+"Language-Team: Catalan <gnome@llistes.softcatala.org>\n"
+"Language: ca\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "Escriptori remot del GNOME"
+
+#: src/grd-prompt.c:124
+msgid "Do you want to share your desktop?"
+msgstr "Voleu compartir l'escriptori?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Un usuari de l'ordinador «%s» està intentant visualitzar o controlar "
+"remotament l'escriptori."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Rebutja"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Accepta"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Camí al fitxer del certificat"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In Order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Per a poderutilitzar RDP amb seguretat TLS, tant el fitxer de la clau "
+"privada com el fitxer del certificat s'han de proporcionar al servidor RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Camí al fitxer de clau privada"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr ""
+"Permet només a les connexions remotes per veure el contingut de la pantalla"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Quan «view-only» és cert, les connexions RDP remotes no poden manipular "
+"els dispositius d'entrada (p. ex. ratolí i teclat)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Quan «view-only» és cert, les connexions VNC remotes no poden manipular "
+"els dispositius d'entrada (p. ex. ratolí i teclat)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Mètode utilitzat per a autenticar les connexions VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by"
+" prompting the user for each new connection, requiring a person with "
+"physical access to the workstation to explicitly approve the new connection."
+" * password - by requiring the remote client to provide a known password"
+msgstr ""
+"El mètode d'autenticació VNC descriu com s'ha autentica una connexió "
+"remota. Actualment, es pot fer de dues maneres diferents: * «prompt» - demanant"
+" a l'usuari per a cada nova connexió, requerint a una persona amb accés "
+"físic a l'estació de treball que aprovi explícitament la nova connexió. * "
+"«password» - demanant al client remot que proporcioni una contrasenya "
+"coneguda"
