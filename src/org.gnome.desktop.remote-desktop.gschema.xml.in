@@ -6,7 +6,7 @@
       <default>''</default>
       <summary>Path to the certificate file</summary>
       <description>
-        In Order to be able to use RDP with TLS Security, both the private key
+        In order to be able to use RDP with TLS Security, both the private key
         file and the certificate file need to be provided to the RDP server.
       </description>
     </key>
@@ -14,7 +14,7 @@
       <default>''</default>
       <summary>Path to the private key file</summary>
       <description>
-        In Order to be able to use RDP with TLS Security, both the private key
+        In order to be able to use RDP with TLS Security, both the private key
         file and the certificate file need to be provided to the RDP server.
       </description>
     </key>
