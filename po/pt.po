@@ -1,0 +1,103 @@
+# Portuguese translation for gnome-remote-desktop.
+# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Hugo Carvalho <hugokarvalho@hotmail.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-06-25 07:32+0000\n"
+"PO-Revision-Date: 2021-06-25 18:53+0100\n"
+"Language-Team: Portuguese <pt@li.org>\n"
+"Language: pt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Last-Translator: Hugo Carvalho <hugokarvalho@hotmail.com>\n"
+"X-Generator: Poedit 3.0\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "Ambiente de trabalho remoto do GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Deseja partilhar o ambiente de trabalho?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Um utilizador no computador '%s' está a tentar visualizar ou controlar "
+"remotamente o ambiente de trabalho."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Recusar"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Aceitar"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Caminho para o ficheiro de certificado"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Para poder usar o RDP com o TLS Security, tanto o ficheiro de chave privada "
+"quanto o ficheiro de certificado precisam de ser fornecidos ao servidor RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Caminho para o ficheiro de chave privada"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Apenas permita que ligações remotas visualizem o conteúdo do ecrã"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Quando as ligações RDP remotas não podem manipular dispositivos de entrada "
+"(por exemplo, rato e teclado)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Quando o \"apenas-ver\" é verdadeiro, as ligações VNC remotas não podem "
+"manipular dispositivos de entrada (por exemplo, rato e teclado)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Método usado para autenticar ligações VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"O método de autenticação VNC descreve como uma ligação remota é autenticada. "
+"Atualmente, a mesma pode ser feita de duas maneiras diferentes: * prompt - "
+"solicitando ao utilizador a cada nova ligação, exigindo que uma pessoa com "
+"acesso físico à estação de trabalho aprove explicitamente a nova ligação. * "
+"palavra-passe - exigindo que o cliente remoto forneça uma palavra-passe "
+"conhecida"
