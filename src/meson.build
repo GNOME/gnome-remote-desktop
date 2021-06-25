@@ -39,6 +39,7 @@ if have_rdp
     'grd-clipboard-rdp.h',
     'grd-rdp-event-queue.c',
     'grd-rdp-event-queue.h',
+    'grd-rdp-frame-info.h',
     'grd-rdp-fuse-clipboard.c',
     'grd-rdp-fuse-clipboard.h',
     'grd-rdp-gfx-surface.c',
