@@ -1,0 +1,103 @@
+# Swedish translation for gnome-remote-desktop.
+# Copyright © 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Luna Jernberg <droidbittin@gmail.com>, 2021.
+# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-06-24 07:32+0000\n"
+"PO-Revision-Date: 2021-06-25 09:26+0200\n"
+"Last-Translator: Luna Jernberg <droidbittin@gmail.com>\n"
+"Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 2.4.2\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "GNOME Fjärrskrivbord"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Vill du dela ditt skrivbord?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"En användare på datorn ”%s” försöker att fjärrvisa eller styra ditt "
+"skrivbord."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Neka"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Acceptera"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Sökväg till certifikatfil"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"För att kunna använda RDP med TLS-säkerhet måste både den privata "
+"nyckelfilen och certifikatfilen tillhandahållas till RDP-servern."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Sökväg till privat nyckelfil"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Tillåt endast fjärranslutningar att visa skärminnehållet"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"När view-only är true (sant) kan fjärr-RDP-anslutningar inte manipulera "
+"inmatningsenheter (t.ex. mus och tangentbord)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"När view-only är true (sant) kan fjärr-VNC-anslutningar inte manipulera "
+"inmatningsenheter (t.ex. mus och tangentbord)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Metod som används för att autentisera VNC-anslutningar"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"VNC-autentiseringsmetoden beskriver hur en fjärranslutning autentiseras. Det "
+"kan för närvarande göras på två olika sätt: * prompt - genom att fråga "
+"användaren om varje ny anslutning, vilket kräver att en person med fysisk "
+"åtkomst till arbetsstationen uttryckligen godkänner den nya anslutningen. * "
+"password - genom att kräva att fjärrklienten anger ett känt lösenord"
