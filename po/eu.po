@@ -1,0 +1,85 @@
+# Basque translation for gnome-remote-desktop.
+# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Asier Sarasua Garmendia  <asiersarasua@ni.eus>, 2021.
+#
+msgid ""
+msgstr "Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues\n"
+"POT-Creation-Date: 2021-06-26 19:16+0000\n"
+"PO-Revision-Date: 2021-06-26 19:16+0000\n"
+"Last-Translator: Asier Sarasua Garmendia <asiersarasua@ni.eus>\n"
+"Language-Team: Basque <librezale@librezale.eus>\n"
+"Language: eu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "GNOME Urruneko Mahaigaina"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Zure mahaigaina partekatu nahi al duzu?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr "'%s' ordenagailuko erabiltzaile bat zure mahaigaina urrunetik ikusteko edo kontrolatzeko saiakera egiten ari da."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Ukatu"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Onartu"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Ziurtagiri-fitxategiaren bide-izena"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr "RDP eta TLS segurtasuna erabiltzeko, gako pribatuaren fitxategia zein ziurtagiri-fitxategia, biak eman behar ditu RDP zerbitzariak."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Gako pribatuaren fitxategiaren bide-izena"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Onartu urruneko konexioek pantailaren edukia soilik ikus dezaten soilik"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr "Soilik ikusteko aukera egia denean, urruneko RDP konexioek ezin dituzte manipulatu sarrera-gailuak (adibidez, sagua edo teklatu)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr "Soilik ikusteko aukera egia denean, urruneko VNC konexioek ezin dituzte manipulatu sarrera-gailuak (adibidez, sagua edo teklatu)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "VNC konexioak autentifikatzeko erabili den metodoa"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr "VNC autentifikazio-metodoak urruneko konexio bat nola autentifikatzen den deskribatzen du. Bi modutara egin daiteke: * prompt - konexio berri bakoitzerako, erabiltzaileak baimena eskatzea eta ordenagailura sarbide fisikoa duen pertsona bateak esplizituki konexio berria onartzea. * password - urruneko bezeroak pasahitz ezagun bat ematea"
