@@ -1,0 +1,97 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+# Matej Urbančič <mateju@svn.gnome.org>, 2021–.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-06-27 14:13+0000\n"
+"PO-Revision-Date: 2021-06-30 18:33+0200\n"
+"Language-Team: Slovenščina <gnome-si@googlegroups.com>\n"
+"Language: sl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n"
+"%100==4 ? 3 : 0);\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Generator: Poedit 2.4.2\n"
+"Last-Translator: \n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "Oddaljeno namizje GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Ali želite omogočiti souporabo namizja?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Uporabnik za računalnikom »%s« poskuša oddaljeno pregledovati oziroma "
+"upravljati namizje."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Zavrni"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Sprejmi"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Pot do datoteke potrdila"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Za uporabo RDP z varnostnim protokolom TLS Security morata biti datoteki "
+"zasebnega ključa in potrdila na voljo strežniku RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Pot do datoteke zasebnega ključa"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
