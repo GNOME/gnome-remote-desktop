@@ -10,8 +10,9 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2021-06-27 14:13+0000\n"
-"PO-Revision-Date: 2021-06-30 18:33+0200\n"
+"POT-Creation-Date: 2021-06-30 16:36+0000\n"
+"PO-Revision-Date: 2021-07-02 14:31+0200\n"
+"Last-Translator: \n"
 "Language-Team: Slovenščina <gnome-si@googlegroups.com>\n"
 "Language: sl\n"
 "MIME-Version: 1.0\n"
@@ -21,7 +22,6 @@ msgstr ""
 "%100==4 ? 3 : 0);\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: Poedit 2.4.2\n"
-"Last-Translator: \n"
 
 #: src/grd-daemon.c:351
 msgid "GNOME Remote Desktop"
@@ -69,23 +69,27 @@ msgstr "Pot do datoteke zasebnega ključa"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
 msgid "Only allow remote connections to view the screen content"
-msgstr ""
+msgstr "Oddaljenim povezavam dovoli le ogled vsebine zaslona"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
+"Če je omogočen le ogled vsebine zaslona, prek povezave RDP ni mogoče "
+"upravljati z vhodnimi napravami (npr. miško in tipkovnico)."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
+"Če je omogočen le ogled vsebine zaslona, prek povezave VNC ni mogoče "
+"upravljati z vhodnimi napravami (npr. miško in tipkovnico)."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Method used to authenticate VNC connections"
-msgstr ""
+msgstr "Način za overjanje povezav VNC"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
 msgid ""
@@ -95,3 +99,8 @@ msgid ""
 "access to the workstation to explicitly approve the new connection. * "
 "password - by requiring the remote client to provide a known password"
 msgstr ""
+"Način overjanja povezave VNC določa protokol preverjanja pristnosti "
+"povezave. Trenutno je overjanje mogoče na dva načina: * z opozorilom – "
+"uporabniku se pokaže poziv, da mora za novo povezavo odobriti dostop, to pa "
+"zahteva fizični dostop do delovne postaje in * geslo – povezavo lahko "
+"vzpostavi oddaljen uporabnik z vpisom dodeljenega gesla."
