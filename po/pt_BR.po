@@ -2,22 +2,23 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Enrico Nicoletto <liverig@gmail.com>, 2021.
+# Rafael Fontenelle <rafaelff@gnome.org>, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2021-06-17 14:50+0000\n"
-"PO-Revision-Date: 2021-06-17 13:43-0300\n"
+"POT-Creation-Date: 2021-06-24 07:32+0000\n"
+"PO-Revision-Date: 2021-07-03 14:50-0300\n"
+"Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"Last-Translator: Enrico Nicoletto <liverig@gmail.com>\n"
-"X-Generator: Poedit 2.4.3\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"X-Generator: Gtranslator 40.0\n"
 
 #: src/grd-daemon.c:351
 msgid "GNOME Remote Desktop"
@@ -51,8 +52,11 @@ msgstr "Caminho para o arquivo do certificado"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+#| msgid ""
+#| "In Order to be able to use RDP with TLS Security, both the private key "
+#| "file and the certificate file need to be provided to the RDP server."
 msgid ""
-"In Order to be able to use RDP with TLS Security, both the private key file "
+"In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
 msgstr ""
 "A fim de possibilitar o uso do RDP com Segurança TLS, tanto o arquivo de "
