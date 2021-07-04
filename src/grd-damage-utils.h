@@ -26,8 +26,8 @@
 
 cairo_region_t *grd_get_damage_region (uint8_t  *current_data,
                                        uint8_t  *prev_data,
-                                       uint32_t  desktop_width,
-                                       uint32_t  desktop_height,
+                                       uint32_t  surface_width,
+                                       uint32_t  surface_height,
                                        uint32_t  tile_width,
                                        uint32_t  tile_height,
                                        uint32_t  stride,

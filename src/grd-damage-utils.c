@@ -46,8 +46,8 @@ grd_is_tile_dirty (cairo_rectangle_int_t *tile,
 cairo_region_t *
 grd_get_damage_region (uint8_t  *current_data,
                        uint8_t  *prev_data,
-                       uint32_t  desktop_width,
-                       uint32_t  desktop_height,
+                       uint32_t  surface_width,
+                       uint32_t  surface_height,
                        uint32_t  tile_width,
                        uint32_t  tile_height,
                        uint32_t  stride,
@@ -62,15 +62,15 @@ grd_get_damage_region (uint8_t  *current_data,
   if (current_data == NULL || prev_data == NULL)
     {
       tile.x = tile.y = 0;
-      tile.width = desktop_width;
-      tile.height = desktop_height;
+      tile.width = surface_width;
+      tile.height = surface_height;
       cairo_region_union_rectangle (damage_region, &tile);
 
       return damage_region;
     }
 
-  cols = desktop_width / tile_width + (desktop_width % tile_width ? 1 : 0);
-  rows = desktop_height / tile_height + (desktop_height % tile_height ? 1 : 0);
+  cols = surface_width / tile_width + (surface_width % tile_width ? 1 : 0);
+  rows = surface_height / tile_height + (surface_height % tile_height ? 1 : 0);
 
   for (y = 0; y < rows; ++y)
     {
@@ -78,9 +78,9 @@ grd_get_damage_region (uint8_t  *current_data,
         {
           tile.x = x * tile_width;
           tile.y = y * tile_height;
-          tile.width = desktop_width - tile.x < tile_width ? desktop_width - tile.x
+          tile.width = surface_width - tile.x < tile_width ? surface_width - tile.x
                                                            : tile_width;
-          tile.height = desktop_height - tile.y < tile_height ? desktop_height - tile.y
+          tile.height = surface_height - tile.y < tile_height ? surface_height - tile.y
                                                               : tile_height;
 
           if (grd_is_tile_dirty (&tile, current_data, prev_data, stride, bytes_per_pixel))
