@@ -40,6 +40,11 @@ GrdRdpGraphicsPipeline *grd_rdp_graphics_pipeline_new (GrdSessionRdp            
 
 void grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline);
 
+#ifdef HAVE_NVENC
+void grd_rdp_graphics_pipeline_set_nvenc (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                          GrdRdpNvenc            *rdp_nvenc);
+#endif /* HAVE_NVENC */
+
 void grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                GrdRdpGfxSurface       *gfx_surface);
 

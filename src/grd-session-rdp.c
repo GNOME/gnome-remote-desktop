@@ -141,6 +141,10 @@ struct _GrdSessionRdp
   NSCThreadPoolContext nsc_thread_pool_context;
   RawThreadPoolContext raw_thread_pool_context;
 
+#ifdef HAVE_NVENC
+  GrdRdpNvenc *rdp_nvenc;
+#endif /*HAVE_NVENC*/
+
   GSource *pending_encode_source;
 
   unsigned int close_session_idle_id;
@@ -1627,6 +1631,10 @@ rdp_peer_post_connect (freerdp_peer *peer)
                                        rdp_peer_context->network_autodetection,
                                        rdp_peer_context->encode_stream,
                                        rdp_peer_context->rfx_context);
+#ifdef HAVE_NVENC
+      grd_rdp_graphics_pipeline_set_nvenc (rdp_peer_context->graphics_pipeline,
+                                           session_rdp->rdp_nvenc);
+#endif /* HAVE_NVENC */
     }
 
   grd_session_start (GRD_SESSION (session_rdp));
@@ -1893,7 +1901,11 @@ socket_thread_func (gpointer data)
 
 GrdSessionRdp *
 grd_session_rdp_new (GrdRdpServer      *rdp_server,
-                     GSocketConnection *connection)
+                     GSocketConnection *connection,
+#ifdef HAVE_NVENC
+                     GrdRdpNvenc       *rdp_nvenc,
+#endif /* HAVE_NVENC */
+                     int                reserved)
 {
   GrdSessionRdp *session_rdp;
   GrdContext *context;
@@ -1923,6 +1935,9 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
                               NULL);
 
   session_rdp->connection = g_object_ref (connection);
+#ifdef HAVE_NVENC
+  session_rdp->rdp_nvenc = rdp_nvenc;
+#endif /* HAVE_NVENC */
   session_rdp->start_event = CreateEvent (NULL, TRUE, FALSE, NULL);
   session_rdp->stop_event = CreateEvent (NULL, TRUE, FALSE, NULL);
 

@@ -33,7 +33,11 @@ G_DECLARE_FINAL_TYPE (GrdSessionRdp,
                       GrdSession);
 
 GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
-                                    GSocketConnection *connection);
+                                    GSocketConnection *connection,
+#ifdef HAVE_NVENC
+                                    GrdRdpNvenc       *rdp_nvenc,
+#endif /* HAVE_NVENC */
+                                    int                reserved);
 
 void grd_session_rdp_notify_error (GrdSessionRdp *session_rdp,
                                    uint32_t       error_info);

@@ -26,11 +26,27 @@
 #include "grd-rdp-frame-info.h"
 #include "grd-rdp-gfx-surface.h"
 #include "grd-rdp-network-autodetection.h"
+#ifdef HAVE_NVENC
+#include "grd-rdp-nvenc.h"
+#endif /* HAVE_NVENC */
 #include "grd-rdp-surface.h"
 #include "grd-session-rdp.h"
 
 #define ENC_TIMES_CHECK_INTERVAL_MS 1000
 #define MAX_TRACKED_ENC_FRAMES 1000
+
+typedef enum _HwAccelAPI
+{
+  HW_ACCEL_API_NONE  = 0,
+  HW_ACCEL_API_NVENC = 1 << 0,
+} HwAccelAPI;
+
+typedef struct _HWAccelContext
+{
+  HwAccelAPI api;
+  uint32_t encode_session_id;
+  gboolean has_first_frame;
+} HWAccelContext;
 
 typedef struct _GfxSurfaceContext
 {
@@ -80,12 +96,26 @@ struct _GrdRdpGraphicsPipeline
   GSource *rtt_pause_source;
   GQueue *enc_times;
 
+  GHashTable *surface_hwaccel_table;
+#ifdef HAVE_NVENC
+  GrdRdpNvenc *rdp_nvenc;
+#endif /* HAVE_NVENC */
+
   uint32_t next_frame_id;
   uint16_t next_surface_id;
   uint32_t next_serial;
 };
 
 G_DEFINE_TYPE (GrdRdpGraphicsPipeline, grd_rdp_graphics_pipeline, G_TYPE_OBJECT);
+
+#ifdef HAVE_NVENC
+void
+grd_rdp_graphics_pipeline_set_nvenc (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                     GrdRdpNvenc            *rdp_nvenc)
+{
+  graphics_pipeline->rdp_nvenc = rdp_nvenc;
+}
+#endif /* HAVE_NVENC */
 
 void
 grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
@@ -97,6 +127,10 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
   uint16_t surface_id = grd_rdp_gfx_surface_get_surface_id (gfx_surface);
   uint32_t surface_serial = grd_rdp_gfx_surface_get_serial (gfx_surface);
   GfxSurfaceContext *surface_context;
+#ifdef HAVE_NVENC
+  HWAccelContext *hwaccel_context;
+  uint32_t encode_session_id;
+#endif /* HAVE_NVENC */
 
   surface_context = g_malloc0 (sizeof (GfxSurfaceContext));
 
@@ -107,6 +141,28 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
   surface_context->gfx_surface = gfx_surface;
   g_hash_table_insert (graphics_pipeline->serial_surface_table,
                        GUINT_TO_POINTER (surface_serial), surface_context);
+
+#ifdef HAVE_NVENC
+  if ((rdpgfx_context->rdpcontext->settings->GfxAVC444v2 ||
+       rdpgfx_context->rdpcontext->settings->GfxAVC444 ||
+       rdpgfx_context->rdpcontext->settings->GfxH264) &&
+      graphics_pipeline->rdp_nvenc &&
+      grd_rdp_nvenc_create_encode_session (graphics_pipeline->rdp_nvenc,
+                                           &encode_session_id,
+                                           rdp_surface->width,
+                                           rdp_surface->height,
+                                           rdp_surface->refresh_rate))
+    {
+      g_debug ("[RDP.RDPGFX] Creating NVENC session for surface %u", surface_id);
+
+      hwaccel_context = g_malloc0 (sizeof (HWAccelContext));
+      hwaccel_context->api = HW_ACCEL_API_NVENC;
+      hwaccel_context->encode_session_id = encode_session_id;
+
+      g_hash_table_insert (graphics_pipeline->surface_hwaccel_table,
+                           GUINT_TO_POINTER (surface_id), hwaccel_context);
+    }
+#endif /* HAVE_NVENC */
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
   create_surface.surfaceId = surface_id;
@@ -126,6 +182,9 @@ grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipel
   RDPGFX_DELETE_SURFACE_PDU delete_surface = {0};
   gboolean needs_encoding_context_deletion = FALSE;
   GfxSurfaceContext *surface_context;
+#ifdef HAVE_NVENC
+  HWAccelContext *hwaccel_context;
+#endif /* HAVE_NVENC */
   uint16_t surface_id;
   uint32_t codec_context_id;
   uint32_t surface_serial;
@@ -149,6 +208,20 @@ grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipel
       g_hash_table_remove (graphics_pipeline->serial_surface_table,
                            GUINT_TO_POINTER (surface_serial));
     }
+
+#ifdef HAVE_NVENC
+  if (g_hash_table_steal_extended (graphics_pipeline->surface_hwaccel_table,
+                                   GUINT_TO_POINTER (surface_id),
+                                   NULL, (gpointer *) &hwaccel_context))
+    {
+      g_debug ("[RDP.RDPGFX] Destroying NVENC session for surface %u", surface_id);
+
+      g_assert (hwaccel_context->api == HW_ACCEL_API_NVENC);
+      grd_rdp_nvenc_free_encode_session (graphics_pipeline->rdp_nvenc,
+                                         hwaccel_context->encode_session_id);
+      g_free (hwaccel_context);
+    }
+#endif /* HAVE_NVENC */
 
   if (g_hash_table_steal_extended (graphics_pipeline->codec_context_table,
                                    GUINT_TO_POINTER (codec_context_id),
@@ -323,6 +396,122 @@ enqueue_tracked_frame_info (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   g_queue_push_tail (graphics_pipeline->encoded_frames, gfx_frame_info);
 }
+
+#ifdef HAVE_NVENC
+static gboolean
+refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
+                            HWAccelContext         *hwaccel_context,
+                            GrdRdpSurface          *rdp_surface,
+                            cairo_region_t         *region,
+                            uint8_t                *src_data,
+                            int64_t                *enc_time_us)
+{
+  RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
+  GrdRdpGfxSurface *gfx_surface = rdp_surface->gfx_surface;
+  RDPGFX_SURFACE_COMMAND cmd = {0};
+  RDPGFX_START_FRAME_PDU cmd_start = {0};
+  RDPGFX_END_FRAME_PDU cmd_end = {0};
+  RDPGFX_AVC420_BITMAP_STREAM avc420 = {0};
+  SYSTEMTIME system_time;
+  cairo_rectangle_int_t cairo_rect, region_extents;
+  int n_rects;
+  uint16_t surface_width = rdp_surface->width;
+  uint16_t surface_height = rdp_surface->height;
+  uint16_t aligned_width;
+  uint16_t aligned_height;
+  uint32_t surface_serial;
+  int64_t enc_ack_time_us;
+  int i;
+
+  if (!rdp_surface->valid)
+    rdp_surface->valid = TRUE;
+
+  aligned_width = surface_width + (surface_width % 16 ? 16 - surface_width % 16 : 0);
+  aligned_height = surface_height + (surface_height % 64 ? 64 - surface_height % 64 : 0);
+
+  if (!grd_rdp_nvenc_avc420_encode_bgrx_frame (graphics_pipeline->rdp_nvenc,
+                                               hwaccel_context->encode_session_id,
+                                               src_data,
+                                               surface_width, surface_height,
+                                               aligned_width, aligned_height,
+                                               &avc420.data, &avc420.length))
+    {
+      g_warning ("[RDP.RDPGFX] Failed to encode YUV420 frame");
+      return FALSE;
+    }
+
+  GetSystemTime (&system_time);
+  cmd_start.timestamp = system_time.wHour << 22 |
+                        system_time.wMinute << 16 |
+                        system_time.wSecond << 10 |
+                        system_time.wMilliseconds;
+  cmd_start.frameId = get_next_free_frame_id (graphics_pipeline);
+  cmd_end.frameId = cmd_start.frameId;
+
+  cairo_region_get_extents (region, &region_extents);
+
+  cmd.surfaceId = grd_rdp_gfx_surface_get_surface_id (gfx_surface);
+  cmd.codecId = RDPGFX_CODECID_AVC420;
+  cmd.format = PIXEL_FORMAT_BGRX32;
+  cmd.left = 0;
+  cmd.top = 0;
+  cmd.right = region_extents.x + region_extents.width;
+  cmd.bottom = region_extents.y + region_extents.height;
+  cmd.length = 0;
+  cmd.data = NULL;
+  cmd.extra = &avc420;
+
+  avc420.meta.numRegionRects = n_rects = cairo_region_num_rectangles (region);
+  avc420.meta.regionRects = g_malloc0 (n_rects * sizeof (RECTANGLE_16));
+  avc420.meta.quantQualityVals = g_malloc0 (n_rects * sizeof (RDPGFX_H264_QUANT_QUALITY));
+  for (i = 0; i < n_rects; ++i)
+    {
+      cairo_region_get_rectangle (region, i, &cairo_rect);
+
+      avc420.meta.regionRects[i].left = cairo_rect.x;
+      avc420.meta.regionRects[i].top = cairo_rect.y;
+      avc420.meta.regionRects[i].right = cairo_rect.x + cairo_rect.width;
+      avc420.meta.regionRects[i].bottom = cairo_rect.y + cairo_rect.height;
+
+      avc420.meta.quantQualityVals[i].qp = 22;
+      avc420.meta.quantQualityVals[i].p = hwaccel_context->has_first_frame ? 1 : 0;
+      avc420.meta.quantQualityVals[i].qualityVal = 100;
+    }
+  hwaccel_context->has_first_frame = TRUE;
+
+  g_mutex_lock (&graphics_pipeline->gfx_mutex);
+  enc_ack_time_us = g_get_monotonic_time ();
+  grd_rdp_gfx_surface_unack_frame (gfx_surface, cmd_start.frameId,
+                                   enc_ack_time_us);
+
+  surface_serial = grd_rdp_gfx_surface_get_serial (gfx_surface);
+  g_hash_table_insert (graphics_pipeline->frame_serial_table,
+                       GUINT_TO_POINTER (cmd_start.frameId),
+                       GUINT_TO_POINTER (surface_serial));
+  surface_serial_ref (graphics_pipeline, surface_serial);
+  ++graphics_pipeline->total_frames_encoded;
+
+  if (graphics_pipeline->frame_acks_suspended)
+    {
+      grd_rdp_gfx_surface_ack_frame (gfx_surface, cmd_start.frameId,
+                                     enc_ack_time_us);
+      enqueue_tracked_frame_info (graphics_pipeline, surface_serial,
+                                  cmd_start.frameId, enc_ack_time_us);
+    }
+  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
+
+  rdpgfx_context->SurfaceFrameCommand (rdpgfx_context, &cmd,
+                                       &cmd_start, &cmd_end);
+
+  *enc_time_us = enc_ack_time_us;
+
+  g_free (avc420.data);
+  g_free (avc420.meta.quantQualityVals);
+  g_free (avc420.meta.regionRects);
+
+  return TRUE;
+}
+#endif /* HAVE_NVENC */
 
 static gboolean
 rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
@@ -702,6 +891,10 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
   GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
+#ifdef HAVE_NVENC
+  HWAccelContext *hwaccel_context;
+  uint16_t surface_id;
+#endif /* HAVE_NVENC */
   int64_t enc_time_us;
   gboolean success;
 
@@ -723,8 +916,24 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
       map_surface_to_output (graphics_pipeline, rdp_surface->gfx_surface);
     }
 
-  success = refresh_gfx_surface_rfx_progressive (graphics_pipeline, rdp_surface,
-                                                 region, src_data, &enc_time_us);
+#ifdef HAVE_NVENC
+  surface_id = grd_rdp_gfx_surface_get_surface_id (rdp_surface->gfx_surface);
+  if (rdp_settings->GfxH264 &&
+      g_hash_table_lookup_extended (graphics_pipeline->surface_hwaccel_table,
+                                    GUINT_TO_POINTER (surface_id),
+                                    NULL, (gpointer *) &hwaccel_context))
+    {
+      g_assert (hwaccel_context->api == HW_ACCEL_API_NVENC);
+      success = refresh_gfx_surface_avc420 (graphics_pipeline, hwaccel_context,
+                                            rdp_surface, region, src_data,
+                                            &enc_time_us);
+    }
+  else
+#endif /* HAVE_NVENC */
+    {
+      success = refresh_gfx_surface_rfx_progressive (graphics_pipeline, rdp_surface,
+                                                     region, src_data, &enc_time_us);
+    }
 
   if (success)
     {
@@ -1103,6 +1312,9 @@ grd_rdp_graphics_pipeline_dispose (GObject *object)
       g_clear_pointer (&graphics_pipeline->encoded_frames, g_queue_free);
     }
 
+  g_assert (g_hash_table_size (graphics_pipeline->surface_hwaccel_table) == 0);
+  g_clear_pointer (&graphics_pipeline->surface_hwaccel_table, g_hash_table_destroy);
+
   g_clear_pointer (&graphics_pipeline->cap_sets, g_free);
 
   g_assert (g_hash_table_size (graphics_pipeline->serial_surface_table) == 0);
@@ -1281,6 +1493,7 @@ grd_rdp_graphics_pipeline_init (GrdRdpGraphicsPipeline *graphics_pipeline)
   graphics_pipeline->frame_serial_table = g_hash_table_new (NULL, NULL);
   graphics_pipeline->serial_surface_table = g_hash_table_new_full (NULL, NULL,
                                                                    NULL, g_free);
+  graphics_pipeline->surface_hwaccel_table = g_hash_table_new (NULL, NULL);
   graphics_pipeline->encoded_frames = g_queue_new ();
   graphics_pipeline->enc_times = g_queue_new ();
 

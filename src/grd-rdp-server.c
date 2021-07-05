@@ -28,6 +28,7 @@
 #include <winpr/ssl.h>
 
 #include "grd-context.h"
+#include "grd-rdp-nvenc.h"
 #include "grd-session-rdp.h"
 
 enum
@@ -47,6 +48,9 @@ struct _GrdRdpServer
   guint idle_task;
 
   GrdContext *context;
+#ifdef HAVE_NVENC
+  GrdRdpNvenc *rdp_nvenc;
+#endif /* HAVE_NVENC */
 };
 
 G_DEFINE_TYPE (GrdRdpServer, grd_rdp_server, G_TYPE_SOCKET_SERVICE);
@@ -111,7 +115,11 @@ on_incoming (GSocketService    *service,
 
   g_debug ("New incoming RDP connection");
 
-  if (!(session_rdp = grd_session_rdp_new (rdp_server, connection)))
+  if (!(session_rdp = grd_session_rdp_new (rdp_server, connection,
+#ifdef HAVE_NVENC
+                                           rdp_server->rdp_nvenc,
+#endif /* HAVE_NVENC */
+                                           0)))
     return TRUE;
 
   rdp_server->sessions = g_list_append (rdp_server->sessions, session_rdp);
@@ -190,6 +198,10 @@ grd_rdp_server_dispose (GObject *object)
 {
   GrdRdpServer *rdp_server = GRD_RDP_SERVER (object);
 
+#ifdef HAVE_NVENC
+  g_clear_object (&rdp_server->rdp_nvenc);
+#endif /* HAVE_NVENC */
+
   if (rdp_server->idle_task)
     {
       g_source_remove (rdp_server->idle_task);
@@ -226,6 +238,22 @@ grd_rdp_server_init (GrdRdpServer *rdp_server)
    * Run the primitives benchmark here to save time, when initializing a session
    */
   primitives_get ();
+
+#ifdef HAVE_NVENC
+  rdp_server->rdp_nvenc = grd_rdp_nvenc_new ();
+  if (rdp_server->rdp_nvenc)
+    {
+      g_debug ("[RDP] Initialization of NVENC was successful");
+    }
+  else
+    {
+      g_message ("[RDP] Initialization of NVENC failed. "
+                 "No hardware acceleration available");
+    }
+#else
+  g_message ("[RDP] RDP backend is built WITHOUT support for NVENC and CUDA. "
+             "No hardware acceleration available");
+#endif /* HAVE_NVENC */
 }
 
 static void
