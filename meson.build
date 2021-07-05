@@ -6,10 +6,13 @@ project('gnome-remote-desktop', 'c',
 
 freerdp_req = '>= 2.3.0'
 fuse_req = '>= 3.9.1'
+nvenc_req = '>= 11'
 xkbcommon_req = '>= 1.0.0'
 
 gnome = import('gnome')
 i18n  = import('i18n')
+
+cc = meson.get_compiler('c')
 
 cairo_dep = dependency('cairo')
 glib_dep = dependency('glib-2.0', version: '>= 2.68')
@@ -22,9 +25,14 @@ libnotify_dep = dependency('libnotify')
 
 have_rdp = get_option('rdp')
 have_vnc = get_option('vnc')
+have_nvenc = get_option('nvenc')
 
 if not have_rdp and not have_vnc
   error('Must enable at least one backend')
+endif
+
+if have_nvenc and not have_rdp
+  error('Support for hardware acceleration using NVENC requires the RDP backend')
 endif
 
 if have_rdp
@@ -36,6 +44,11 @@ if have_rdp
   fuse_dep = dependency('fuse3', version: fuse_req)
   winpr_dep = dependency('winpr2', version: freerdp_req)
   xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
+
+  if have_nvenc
+    dl_dep = cc.find_library('dl', required: true)
+    nvenc_dep = dependency('ffnvcodec', version: nvenc_req)
+  endif
 endif
 
 if have_vnc
@@ -43,12 +56,22 @@ if have_vnc
   libvncclient_dep = dependency('libvncclient')
 endif
 
+prefix = get_option('prefix')
+libexecdir = join_paths(prefix, get_option('libexecdir'))
+datadir = join_paths(prefix, get_option('datadir'))
+schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
+
+grd_datadir = join_paths(datadir, 'gnome-remote-desktop')
+
 cdata = configuration_data()
 cdata.set_quoted('GETTEXT_PACKAGE', 'gnome-remote-desktop')
 cdata.set_quoted('VERSION', meson.project_version())
 
 cdata.set('HAVE_RDP', have_rdp)
 cdata.set('HAVE_VNC', have_vnc)
+cdata.set('HAVE_NVENC', have_nvenc)
+
+cdata.set_quoted('GRD_DATA_DIR', grd_datadir)
 
 configure_file(input: 'config.h.meson',
                output: 'config.h',
@@ -68,11 +91,7 @@ endif
 top_srcdir = meson.current_source_dir()
 builddir = meson.current_build_dir()
 
-prefix = get_option('prefix')
-libexecdir = join_paths(prefix, get_option('libexecdir'))
-datadir = join_paths(prefix, get_option('datadir'))
-schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
-
+subdir('data')
 subdir('src')
 subdir('tests')
 subdir('po')
@@ -95,6 +114,10 @@ output = [
   '',
   '        RDP...................... ' + have_rdp.to_string(),
   '        VNC...................... ' + have_vnc.to_string(),
+  '',
+  '    Options for the RDP backend:',
+  '',
+  '        Support for hardware acceleration using NVENC and CUDA........' + have_nvenc.to_string(),
   '',
   '  Now type \'ninja -C ' + meson.build_root() + '\' to build ' + meson.project_name(),
   '',

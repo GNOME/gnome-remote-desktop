@@ -32,6 +32,7 @@ typedef struct _GrdRdpGfxFrameLog GrdRdpGfxFrameLog;
 typedef struct _GrdRdpGfxSurface GrdRdpGfxSurface;
 typedef struct _GrdRdpGraphicsPipeline GrdRdpGraphicsPipeline;
 typedef struct _GrdRdpNetworkAutodetection GrdRdpNetworkAutodetection;
+typedef struct _GrdRdpNvenc GrdRdpNvenc;
 typedef struct _GrdRdpSAMFile GrdRdpSAMFile;
 typedef struct _GrdRdpServer GrdRdpServer;
 typedef struct _GrdRdpSurface GrdRdpSurface;

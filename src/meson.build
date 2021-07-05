@@ -71,6 +71,18 @@ if have_rdp
     winpr_dep,
     xkbcommon_dep,
   ]
+
+  if have_nvenc
+    daemon_sources += files([
+      'grd-rdp-nvenc.c',
+      'grd-rdp-nvenc.h',
+    ])
+
+    deps += [
+      dl_dep,
+      nvenc_dep,
+    ]
+  endif
 endif
 
 if have_vnc
