@@ -1,0 +1,106 @@
+# Russian translation for gnome-remote-desktop.
+# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Alexey Rubtsov <rushills@gmail.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-07-04 16:40+0000\n"
+"PO-Revision-Date: 2021-07-05 16:51+0300\n"
+"Language-Team: Russian <gnome-cyr@gnome.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Last-Translator: Alexey Rubtsov <rushills@gmail.com>\n"
+"X-Generator: Poedit 3.0\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "Удаленный рабочий стол GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Хотите поделиться своим рабочим столом?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Пользователь компьютера «%s» пытается удаленно просматривать или "
+"контролировать ваш рабочий стол."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Отказаться"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Принять"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Путь к файлу сертификата"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Чтобы использовать RDP с TLS Security, необходимо предоставить серверу RDP "
+"файл персонального ключа и файл сертификата."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Путь к файлу персонального ключа"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr ""
+"Разрешить только удаленные подключения для просмотра содержимого экрана"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Когда значение «только для просмотра» установлено в true, удаленные RDP-"
+"подключения не могут управлять устройствами ввода (например, мышью и "
+"клавиатурой)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Когда значение «только для просмотра» равно true, удаленные соединения VNC "
+"не могут управлять устройствами ввода (например, мышью и клавиатурой)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Метод, используемый для аутентификации соединений VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"Метод аутентификации VNC описывает способ аутентификации удаленного "
+"соединения. В настоящее время это может быть сделано двумя различными "
+"способами: * запрос - запрашивая пользователя при каждом новом подключении, "
+"требуя от лица, имеющего физический доступ к рабочей станции, явного "
+"одобрения нового подключения. * пароль - требуя от удаленного клиента "
+"предоставить известный пароль"
