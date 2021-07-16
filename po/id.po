@@ -1,0 +1,102 @@
+# Indonesian translation for gnome-remote-desktop.
+# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Andika Triwidada <atriwidada@gnome.org>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-07-13 09:47+0000\n"
+"PO-Revision-Date: 2021-07-16 11:41+0700\n"
+"Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Andika Triwidada <andika@gmail.com>\n"
+"X-Generator: Poedit 2.4.3\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "GNOME Desktop Jarak Jauh"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Apakah Anda ingin berbagi desktop Anda?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Pengguna pada komputer '%s' coba melihat atau mengontrol desktop Anda dari "
+"jarak jauh."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Tolak"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Terima"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Path ke berkas sertifikat"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Agar dapat menggunakan RDP dengan Keamanan TLS, baik berkas kunci pribadi "
+"maupun berkas sertifikat perlu diberikan ke server RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Path ke berkas kunci privat"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Hanya perbolehkan sambungan jarak jauh melihat isi layar"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Jika view-only berisi true, koneksi RDP jarak jauh tidak dapat memanipulasi "
+"perangkat masukan (mis. tetikus dan papan ketik)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Jika view-only berisi true, koneksi VNC jarak jauh tidak dapat memanipulasi "
+"perangkat masukan (mis. tetikus dan papan ketik)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Metode yang digunakan untuk mengautentikasi koneksi VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"Metode autentikasi VNC menjelaskan bagaimana koneksi jarak jauh "
+"diautentikasi. Saat ini dapat dilakukan dengan dua cara yang berbeda: * "
+"prompt - dengan bertanya ke pengguna untuk setiap koneksi baru, mengharuskan "
+"seseorang dengan akses fisik ke stasiun kerja untuk secara eksplisit "
+"menyetujui koneksi baru. * kata sandi - dengan mengharuskan klien jarak jauh "
+"untuk memberikan kata sandi yang diketahui"
