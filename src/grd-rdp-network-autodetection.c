@@ -25,8 +25,15 @@
 #include "grd-rdp-private.h"
 
 #define BW_MEASURE_SEQUENCE_NUMBER 0
-#define PING_INTERVAL_MS 70
+#define PING_INTERVAL_HIGH_MS 70
+#define PING_INTERVAL_LOW_MS 700
 #define RTT_AVG_PERIOD_US (500 * 1000)
+
+typedef enum _PingInterval
+{
+  PING_INTERVAL_HIGH,
+  PING_INTERVAL_LOW,
+} PingInterval;
 
 typedef struct _PingInfo
 {
@@ -51,6 +58,7 @@ struct _GrdRdpNetworkAutodetection
 
   GMutex consumer_mutex;
   GrdRdpNwAutodetectRTTConsumer rtt_consumers;
+  GrdRdpNwAutodetectRTTConsumer rtt_high_nec_consumers;
 
   GMutex sequence_mutex;
   GHashTable *sequences;
@@ -58,6 +66,7 @@ struct _GrdRdpNetworkAutodetection
   GSource *ping_source;
   GQueue *pings;
   GQueue *round_trip_times;
+  PingInterval ping_interval;
 
   uint16_t next_sequence_number;
 };
@@ -70,6 +79,27 @@ grd_rdp_network_autodetection_invoke_shutdown (GrdRdpNetworkAutodetection *netwo
   g_mutex_lock (&network_autodetection->shutdown_mutex);
   network_autodetection->in_shutdown = TRUE;
   g_mutex_unlock (&network_autodetection->shutdown_mutex);
+}
+
+static gboolean
+has_rtt_consumer (GrdRdpNetworkAutodetection    *network_autodetection,
+                  GrdRdpNwAutodetectRTTConsumer  rtt_consumer)
+{
+  g_assert (!g_mutex_trylock (&network_autodetection->consumer_mutex));
+
+  return !!(network_autodetection->rtt_consumers & rtt_consumer);
+}
+
+static gboolean
+is_active_high_nec_rtt_consumer (GrdRdpNetworkAutodetection    *network_autodetection,
+                                 GrdRdpNwAutodetectRTTConsumer  rtt_consumer)
+{
+  if (!has_rtt_consumer (network_autodetection, rtt_consumer))
+    return FALSE;
+  if (network_autodetection->rtt_high_nec_consumers & rtt_consumer)
+    return TRUE;
+
+  return FALSE;
 }
 
 static uint16_t
@@ -111,6 +141,53 @@ emit_ping (gpointer user_data)
   return G_SOURCE_CONTINUE;
 }
 
+static void
+update_ping_source (GrdRdpNetworkAutodetection *network_autodetection)
+{
+  GrdRdpNwAutodetectRTTConsumer active_high_nec_rtt_consumers;
+  PingInterval new_ping_interval_type;
+  uint32_t ping_interval_ms;
+
+  active_high_nec_rtt_consumers = GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE;
+  if (is_active_high_nec_rtt_consumer (
+        network_autodetection, GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX))
+    active_high_nec_rtt_consumers |= GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX;
+
+  if (active_high_nec_rtt_consumers)
+    new_ping_interval_type = PING_INTERVAL_HIGH;
+  else
+    new_ping_interval_type = PING_INTERVAL_LOW;
+
+  if ((network_autodetection->rtt_consumers == GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE ||
+       network_autodetection->ping_interval != new_ping_interval_type) &&
+      network_autodetection->ping_source)
+    {
+      g_source_destroy (network_autodetection->ping_source);
+      g_clear_pointer (&network_autodetection->ping_source, g_source_unref);
+    }
+
+  if (network_autodetection->rtt_consumers == GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE)
+    return;
+
+  emit_ping (network_autodetection);
+
+  switch (new_ping_interval_type)
+    {
+    case PING_INTERVAL_HIGH:
+      ping_interval_ms = PING_INTERVAL_HIGH_MS;
+      break;
+    case PING_INTERVAL_LOW:
+      ping_interval_ms = PING_INTERVAL_LOW_MS;
+      break;
+    }
+
+  network_autodetection->ping_source = g_timeout_source_new (ping_interval_ms);
+  g_source_set_callback (network_autodetection->ping_source, emit_ping,
+                         network_autodetection, NULL);
+  g_source_attach (network_autodetection->ping_source, NULL);
+  network_autodetection->ping_interval = new_ping_interval_type;
+}
+
 void
 grd_rdp_network_autodetection_ensure_rtt_consumer (GrdRdpNetworkAutodetection    *network_autodetection,
                                                    GrdRdpNwAutodetectRTTConsumer  rtt_consumer)
@@ -118,17 +195,10 @@ grd_rdp_network_autodetection_ensure_rtt_consumer (GrdRdpNetworkAutodetection   
   g_assert (rtt_consumer != GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE);
 
   g_mutex_lock (&network_autodetection->consumer_mutex);
-  network_autodetection->rtt_consumers |= rtt_consumer;
+  if (!has_rtt_consumer (network_autodetection, rtt_consumer))
+    network_autodetection->rtt_consumers |= rtt_consumer;
 
-  if (!network_autodetection->ping_source)
-    {
-      emit_ping (network_autodetection);
-
-      network_autodetection->ping_source = g_timeout_source_new (PING_INTERVAL_MS);
-      g_source_set_callback (network_autodetection->ping_source, emit_ping,
-                             network_autodetection, NULL);
-      g_source_attach (network_autodetection->ping_source, NULL);
-    }
+  update_ping_source (network_autodetection);
   g_mutex_unlock (&network_autodetection->consumer_mutex);
 }
 
@@ -139,22 +209,46 @@ grd_rdp_network_autodetection_remove_rtt_consumer (GrdRdpNetworkAutodetection   
   g_mutex_lock (&network_autodetection->consumer_mutex);
   network_autodetection->rtt_consumers &= ~rtt_consumer;
 
-  if (network_autodetection->rtt_consumers == GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE &&
-      network_autodetection->ping_source)
-    {
-      g_source_destroy (network_autodetection->ping_source);
-      g_clear_pointer (&network_autodetection->ping_source, g_source_unref);
-    }
+  update_ping_source (network_autodetection);
   g_mutex_unlock (&network_autodetection->consumer_mutex);
 }
 
-static gboolean
-has_rtt_consumer (GrdRdpNetworkAutodetection    *network_autodetection,
-                  GrdRdpNwAutodetectRTTConsumer  rtt_consumer)
+void
+grd_rdp_network_autodetection_set_rtt_consumer_necessity (GrdRdpNetworkAutodetection     *network_autodetection,
+                                                          GrdRdpNwAutodetectRTTConsumer   rtt_consumer,
+                                                          GrdRdpNwAutodetectRTTNecessity  rtt_necessity)
 {
-  g_assert (!g_mutex_trylock (&network_autodetection->consumer_mutex));
+  GrdRdpNwAutodetectRTTNecessity current_rtt_necessity;
 
-  return !!(network_autodetection->rtt_consumers & rtt_consumer);
+  g_assert (rtt_consumer != GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE);
+  g_assert (rtt_necessity == GRD_RDP_NW_AUTODETECT_RTT_NEC_HIGH ||
+            rtt_necessity == GRD_RDP_NW_AUTODETECT_RTT_NEC_LOW);
+
+  g_mutex_lock (&network_autodetection->consumer_mutex);
+  if (network_autodetection->rtt_high_nec_consumers & rtt_consumer)
+    current_rtt_necessity = GRD_RDP_NW_AUTODETECT_RTT_NEC_HIGH;
+  else
+    current_rtt_necessity = GRD_RDP_NW_AUTODETECT_RTT_NEC_LOW;
+
+  if (current_rtt_necessity == rtt_necessity)
+    {
+      g_mutex_unlock (&network_autodetection->consumer_mutex);
+      return;
+    }
+
+  switch (rtt_necessity)
+    {
+    case GRD_RDP_NW_AUTODETECT_RTT_NEC_HIGH:
+      network_autodetection->rtt_high_nec_consumers |= rtt_consumer;
+      break;
+    case GRD_RDP_NW_AUTODETECT_RTT_NEC_LOW:
+      network_autodetection->rtt_high_nec_consumers &= ~rtt_consumer;
+      break;
+    }
+
+  if (has_rtt_consumer (network_autodetection, rtt_consumer))
+    update_ping_source (network_autodetection);
+  g_mutex_unlock (&network_autodetection->consumer_mutex);
 }
 
 static void

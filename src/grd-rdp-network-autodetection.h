@@ -33,6 +33,12 @@ typedef enum _GrdRdpNwAutodetectRTTConsumer
   GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX = 1 << 0,
 } GrdRdpNwAutodetectRTTConsumer;
 
+typedef enum _GrdRdpNwAutodetectRTTNecessity
+{
+  GRD_RDP_NW_AUTODETECT_RTT_NEC_HIGH,
+  GRD_RDP_NW_AUTODETECT_RTT_NEC_LOW,
+} GrdRdpNwAutodetectRTTNecessity;
+
 GrdRdpNetworkAutodetection *grd_rdp_network_autodetection_new (rdpContext *rdp_context);
 
 void grd_rdp_network_autodetection_invoke_shutdown (GrdRdpNetworkAutodetection *network_autodetection);
@@ -42,5 +48,9 @@ void grd_rdp_network_autodetection_ensure_rtt_consumer (GrdRdpNetworkAutodetecti
 
 void grd_rdp_network_autodetection_remove_rtt_consumer (GrdRdpNetworkAutodetection    *network_autodetection,
                                                         GrdRdpNwAutodetectRTTConsumer  rtt_consumer);
+
+void grd_rdp_network_autodetection_set_rtt_consumer_necessity (GrdRdpNetworkAutodetection     *network_autodetection,
+                                                               GrdRdpNwAutodetectRTTConsumer   rtt_consumer,
+                                                               GrdRdpNwAutodetectRTTNecessity  rtt_necessity);
 
 #endif /* GRD_RDP_NETWORK_AUTODETECTION_H */
