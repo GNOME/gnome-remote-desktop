@@ -1624,6 +1624,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
                                        rdp_peer_context->vcm,
                                        session_rdp->stop_event,
                                        peer->context,
+                                       rdp_peer_context->network_autodetection,
                                        rdp_peer_context->encode_stream,
                                        rdp_peer_context->rfx_context);
     }

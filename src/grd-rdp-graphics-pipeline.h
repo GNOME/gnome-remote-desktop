@@ -30,12 +30,13 @@
 G_DECLARE_FINAL_TYPE (GrdRdpGraphicsPipeline, grd_rdp_graphics_pipeline,
                       GRD, RDP_GRAPHICS_PIPELINE, GObject);
 
-GrdRdpGraphicsPipeline *grd_rdp_graphics_pipeline_new (GrdSessionRdp *session_rdp,
-                                                       HANDLE         vcm,
-                                                       HANDLE         stop_event,
-                                                       rdpContext    *rdp_context,
-                                                       wStream       *encode_stream,
-                                                       RFX_CONTEXT   *rfx_context);
+GrdRdpGraphicsPipeline *grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
+                                                       HANDLE                      vcm,
+                                                       HANDLE                      stop_event,
+                                                       rdpContext                 *rdp_context,
+                                                       GrdRdpNetworkAutodetection *network_autodetection,
+                                                       wStream                    *encode_stream,
+                                                       RFX_CONTEXT                *rfx_context);
 
 void grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline);
 
