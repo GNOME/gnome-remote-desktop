@@ -1,0 +1,103 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-07-25 14:14+0000\n"
+"PO-Revision-Date: 2021-07-25 23:26+0200\n"
+"Language-Team: Friulian <f.t.public@gmail.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.0\n"
+"Last-Translator: Fabio Tomat <f.t.public@gmail.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: fur\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "Scritori lontan di GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Desideristu condividi il to scritori?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Un utent sul computer '%s' al sta cirint di viodi di lontan o controlâ il to "
+"scritori."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Refude"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Acete"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Percors al file dal certificât"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Par podê rivâ a doprâ RDP cu la sigurece TLS, il servidôr RDP al à di furnî "
+"sedi il file de clâf privade sedi il file dal certificât."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Percors al file de clâf privade"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Permet aes conessions esternis dome di viodi il contignût dal schermi"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Cuant che view-only al è vêr, lis conessions esternis RDP no puedin manipolâ "
+"i dispositîfs di input (p.e. mouse e tastiere)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Cuant che view-only al è vêr, lis conessions VNC esternis no puedin manipolâ "
+"i dispositîfs di input (p.e. mouse e tastiere)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Metodi doprât par autenticâ lis conessions VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"Il metodi di autenticazion VNC al descrîf cemût che e à di vignî autenticade "
+"une conession esterne. Pal moment si pues fâ in dôs manieris: * prompt - "
+"domandant al utent par ogni gnove conession, che al domande che une persone "
+"e vedi acès fisic ae postazion di lavôr par aprovâ in maniere esplicite lis "
+"gnovis conessions. * password - domandant al client lontan di furnî une "
+"password cognossude"
