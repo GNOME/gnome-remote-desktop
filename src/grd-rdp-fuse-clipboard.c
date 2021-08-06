@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Pascal Nowack
+ * Copyright (C) 2020-2021 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -463,7 +463,7 @@ collect_instant_droppable_clip_data_entry (gpointer key,
 }
 
 static void
-clear_instant_droppable_clip_data_entry (GrdRdpFuseClipboard *rdp_fuse_clipboard)
+clear_instant_droppable_clip_data_entries (GrdRdpFuseClipboard *rdp_fuse_clipboard)
 {
   GList *droppable_clip_data_entries = NULL;
   GList *l;
@@ -514,7 +514,7 @@ grd_rdp_fuse_clipboard_lazily_clear_all_cdi_selections (GrdRdpFuseClipboard *rdp
 
   g_mutex_lock (&rdp_fuse_clipboard->selection_mutex);
   g_mutex_lock (&rdp_fuse_clipboard->filesystem_mutex);
-  clear_instant_droppable_clip_data_entry (rdp_fuse_clipboard);
+  clear_instant_droppable_clip_data_entries (rdp_fuse_clipboard);
 
   g_hash_table_foreach (rdp_fuse_clipboard->clip_data_table,
                         maybe_set_clip_data_entry_timeout,
