@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Pascal Nowack
+ * Copyright (C) 2020-2021 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -1054,7 +1054,7 @@ cliprdr_client_capabilities (CliprdrServerContext       *cliprdr_context,
   if (cliprdr_context->useLongFormatNames)
     g_strv_builder_add (client_capabilities, "long format names");
   if (cliprdr_context->streamFileClipEnabled)
-    g_strv_builder_add (client_capabilities, "stream file clipping");
+    g_strv_builder_add (client_capabilities, "stream file clip");
   if (cliprdr_context->fileClipNoFilePaths)
     g_strv_builder_add (client_capabilities, "file clip no file paths");
   if (cliprdr_context->canLockClipData)
@@ -1144,7 +1144,7 @@ update_server_format_list (gpointer user_data)
 }
 
 /**
- * Client informs us that its clipboard is updated with new clipboard data
+ * Client notifies us that its clipboard is updated with new clipboard data
  */
 static uint32_t
 cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
@@ -1507,7 +1507,7 @@ handle_clip_data_entry_destruction (gpointer user_data)
 }
 
 /**
- * Client informs us that the file stream data for a specific clip data id can
+ * Client notifies us that the file stream data for a specific clip data id MUST
  * now be released
  */
 static uint32_t
