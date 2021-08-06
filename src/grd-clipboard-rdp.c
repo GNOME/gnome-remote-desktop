@@ -32,6 +32,7 @@
 
 typedef struct _ServerFormatListUpdateContext
 {
+  GrdClipboardRdp *clipboard_rdp;
   GList *mime_type_tables;
 } ServerFormatListUpdateContext;
 
@@ -81,8 +82,6 @@ struct _GrdClipboardRdp
   GList *queued_server_formats;
   gboolean server_file_contents_requests_allowed;
   uint16_t format_list_response_msg_flags;
-
-  ServerFormatListUpdateContext *format_list_update_context;
 
   GHashTable *serial_entry_table;
   GHashTable *clip_data_table;
@@ -1089,19 +1088,17 @@ cliprdr_temp_directory (CliprdrServerContext         *cliprdr_context,
 static gboolean
 update_server_format_list (gpointer user_data)
 {
-  GrdClipboardRdp *clipboard_rdp = user_data;
-  GrdClipboard *clipboard = GRD_CLIPBOARD (clipboard_rdp);
+  ServerFormatListUpdateContext *update_context = user_data;
+  GrdClipboardRdp *clipboard_rdp = update_context->clipboard_rdp;
+  GrdClipboard *clipboard = GRD_CLIPBOARD (update_context->clipboard_rdp);
   GrdRdpFuseClipboard *rdp_fuse_clipboard = clipboard_rdp->rdp_fuse_clipboard;
   CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
-  ServerFormatListUpdateContext *update_context;
   CLIPRDR_FORMAT_LIST_RESPONSE format_list_response = {0};
   GList *mime_type_tables;
   GrdMimeTypeTable *mime_type_table;
   GList *l;
 
-  update_context = g_steal_pointer (&clipboard_rdp->format_list_update_context);
-  mime_type_tables = update_context->mime_type_tables;
-
+  mime_type_tables = g_steal_pointer (&update_context->mime_type_tables);
   for (l = mime_type_tables; l; l = l->next)
     {
       mime_type_table = l->data;
@@ -1137,14 +1134,22 @@ update_server_format_list (gpointer user_data)
   if (!cliprdr_context->canLockClipData)
     grd_rdp_fuse_clipboard_dismiss_all_no_cdi_requests (rdp_fuse_clipboard);
 
-  g_free (update_context);
-
   WaitForSingleObject (clipboard_rdp->format_list_received_event, INFINITE);
   clipboard_rdp->server_format_list_update_id = 0;
   ResetEvent (clipboard_rdp->format_list_received_event);
   SetEvent (clipboard_rdp->completed_format_list_event);
 
   return G_SOURCE_REMOVE;
+}
+
+static void
+update_context_free (gpointer data)
+{
+  ServerFormatListUpdateContext *update_context = data;
+
+  g_clear_list (&update_context->mime_type_tables, g_free);
+
+  g_free (update_context);
 }
 
 /**
@@ -1303,13 +1308,12 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
 
   ResetEvent (clipboard_rdp->completed_format_list_event);
   update_context = g_malloc0 (sizeof (ServerFormatListUpdateContext));
+  update_context->clipboard_rdp = clipboard_rdp;
   update_context->mime_type_tables = mime_type_tables;
 
-  g_assert (!clipboard_rdp->format_list_update_context);
-  clipboard_rdp->format_list_update_context = update_context;
-
   clipboard_rdp->server_format_list_update_id =
-    g_idle_add (update_server_format_list, clipboard_rdp);
+    g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, update_server_format_list,
+                     update_context, update_context_free);
   SetEvent (clipboard_rdp->format_list_received_event);
 
   return CHANNEL_RC_OK;
@@ -2044,7 +2048,6 @@ grd_clipboard_rdp_dispose (GObject *object)
     g_clear_pointer (&clipboard_rdp->clipboard_retrieval_context.entry, g_free);
 
   g_clear_pointer (&clipboard_rdp->format_data_request_context, g_free);
-  g_clear_pointer (&clipboard_rdp->format_list_update_context, g_free);
   g_clear_pointer (&clipboard_rdp->queued_server_formats, g_list_free);
   g_clear_pointer (&clipboard_rdp->pending_server_formats, g_list_free);
   g_hash_table_foreach_remove (clipboard_rdp->format_data_cache,
