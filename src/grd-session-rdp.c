@@ -1562,7 +1562,7 @@ init_rdp_session (GrdSessionRdp *session_rdp,
   rdp_settings->NlaSecurity = TRUE;
 
   rdp_settings->OsMajorType = OSMAJORTYPE_UNIX;
-  rdp_settings->OsMajorType = OSMINORTYPE_PSEUDO_XSERVER;
+  rdp_settings->OsMinorType = OSMINORTYPE_PSEUDO_XSERVER;
   rdp_settings->ColorDepth = 32;
   rdp_settings->HasExtendedMouseEvent = TRUE;
   rdp_settings->HasHorizontalWheel = TRUE;
