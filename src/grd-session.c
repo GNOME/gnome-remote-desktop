@@ -212,7 +212,7 @@ serialize_mime_type_tables (GList *mime_type_tables)
       GrdMimeTypeTable *mime_type_table = l->data;
       GrdMimeType mime_type;
       const char *mime_type_string;
-      
+
       mime_type = mime_type_table->mime_type;
       mime_type_string = grd_mime_type_to_string (mime_type);
       g_variant_builder_add (&builder, "s", mime_type_string);
@@ -280,7 +280,7 @@ grd_session_set_selection (GrdSession *session,
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GVariant *options_variant;
   g_autoptr (GError) error = NULL;
-  
+
   options_variant = serialize_clipboard_options (mime_type_tables);
 
   if (!grd_dbus_remote_desktop_session_call_set_selection_sync (
