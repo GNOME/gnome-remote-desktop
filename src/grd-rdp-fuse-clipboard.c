@@ -348,7 +348,7 @@ grd_rdp_fuse_clipboard_clip_data_id_new (GrdRdpFuseClipboard *rdp_fuse_clipboard
       GHashTableIter iter;
       ClipDataEntry *iter_value;
 
-      g_debug ("[FUSE Clipboard] All clipDataIds still used. Removing the oldest one");
+      g_debug ("[FUSE Clipboard] All clipDataIds used. Removing the oldest one");
 
       g_hash_table_iter_init (&iter, rdp_fuse_clipboard->clip_data_table);
       while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &iter_value))
