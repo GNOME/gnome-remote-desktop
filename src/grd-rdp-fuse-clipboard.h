@@ -46,20 +46,12 @@ void grd_rdp_fuse_clipboard_clear_no_cdi_selection (GrdRdpFuseClipboard *rdp_fus
 void grd_rdp_fuse_clipboard_lazily_clear_all_cdi_selections (GrdRdpFuseClipboard *rdp_fuse_clipboard);
 
 gboolean grd_rdp_fuse_clipboard_set_cdi_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
-#ifdef HAVE_FREERDP_2_3
                                                    FILEDESCRIPTORW     *files,
-#else
-                                                   FILEDESCRIPTOR      *files,
-#endif /* HAVE_FREERDP_2_3 */
                                                    uint32_t             n_files,
                                                    uint32_t             clip_data_id);
 
 gboolean grd_rdp_fuse_clipboard_set_no_cdi_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
-#ifdef HAVE_FREERDP_2_3
                                                       FILEDESCRIPTORW     *files,
-#else
-                                                      FILEDESCRIPTOR      *files,
-#endif /* HAVE_FREERDP_2_3 */
                                                       uint32_t             n_files);
 
 void grd_rdp_fuse_clipboard_submit_file_contents_response (GrdRdpFuseClipboard *rdp_fuse_clipboard,

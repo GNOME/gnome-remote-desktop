@@ -600,11 +600,7 @@ get_parent_directory (GrdRdpFuseClipboard *rdp_fuse_clipboard,
 
 static gboolean
 set_selection_for_clip_data_entry (GrdRdpFuseClipboard *rdp_fuse_clipboard,
-#ifdef HAVE_FREERDP_2_3
                                    FILEDESCRIPTORW     *files,
-#else
-                                   FILEDESCRIPTOR      *files,
-#endif /* HAVE_FREERDP_2_3 */
                                    uint32_t             n_files,
                                    ClipDataEntry       *entry)
 {
@@ -619,11 +615,7 @@ set_selection_for_clip_data_entry (GrdRdpFuseClipboard *rdp_fuse_clipboard,
 
   for (i = 0; i < n_files; ++i)
     {
-#ifdef HAVE_FREERDP_2_3
       FILEDESCRIPTORW *file;
-#else
-      FILEDESCRIPTOR *file;
-#endif /* HAVE_FREERDP_2_3 */
       FuseFile *fuse_file, *parent;
       char *filename = NULL;
       uint32_t j;
@@ -676,11 +668,7 @@ set_selection_for_clip_data_entry (GrdRdpFuseClipboard *rdp_fuse_clipboard,
                             file->nFileSizeLow;
           fuse_file->has_size = TRUE;
         }
-#ifdef HAVE_FREERDP_2_3
       if (file->dwFlags & FD_WRITETIME)
-#else
-      if (file->dwFlags & FD_WRITESTIME)
-#endif /* HAVE_FREERDP_2_3 */
         {
           uint64_t filetime;
 
@@ -705,11 +693,7 @@ set_selection_for_clip_data_entry (GrdRdpFuseClipboard *rdp_fuse_clipboard,
 
 gboolean
 grd_rdp_fuse_clipboard_set_cdi_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
-#ifdef HAVE_FREERDP_2_3
                                           FILEDESCRIPTORW     *files,
-#else
-                                          FILEDESCRIPTOR      *files,
-#endif /* HAVE_FREERDP_2_3 */
                                           uint32_t             n_files,
                                           uint32_t             clip_data_id)
 {
@@ -740,11 +724,7 @@ grd_rdp_fuse_clipboard_set_cdi_selection (GrdRdpFuseClipboard *rdp_fuse_clipboar
 
 gboolean
 grd_rdp_fuse_clipboard_set_no_cdi_selection (GrdRdpFuseClipboard *rdp_fuse_clipboard,
-#ifdef HAVE_FREERDP_2_3
                                              FILEDESCRIPTORW     *files,
-#else
-                                             FILEDESCRIPTOR      *files,
-#endif /* HAVE_FREERDP_2_3 */
                                              uint32_t             n_files)
 {
   gboolean result;

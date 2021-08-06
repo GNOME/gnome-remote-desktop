@@ -562,13 +562,8 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
                                     uint32_t        *dst_size,
                                     uint32_t         clip_data_id)
 {
-#ifdef HAVE_FREERDP_2_3
   FILEDESCRIPTORW *files = NULL;
   FILEDESCRIPTORW *file;
-#else
-  FILEDESCRIPTOR *files = NULL;
-  FILEDESCRIPTOR *file;
-#endif /* HAVE_FREERDP_2_3 */
   uint32_t n_files = 0;
   char *clip_data_dir_name;
   char *filename = NULL;
@@ -700,13 +695,8 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
   if (mime_type == GRD_MIME_TYPE_TEXT_URILIST ||
       mime_type == GRD_MIME_TYPE_XS_GNOME_COPIED_FILES)
     {
-#ifdef HAVE_FREERDP_2_3
       FILEDESCRIPTORW *files = NULL;
       FILEDESCRIPTORW *file;
-#else
-      FILEDESCRIPTOR *files = NULL;
-      FILEDESCRIPTOR *file;
-#endif /* HAVE_FREERDP_2_3 */
       uint32_t n_files = 0;
       gboolean result;
       char *clip_data_dir_name;
@@ -912,21 +902,12 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
 }
 
 static void
-#ifdef HAVE_FREERDP_2_3
 serialize_file_list (FILEDESCRIPTORW  *files,
                      uint32_t          n_files,
                      uint8_t         **dst_data,
                      uint32_t         *dst_size)
 {
   FILEDESCRIPTORW *file;
-#else
-serialize_file_list (FILEDESCRIPTOR  *files,
-                     uint32_t         n_files,
-                     uint8_t        **dst_data,
-                     uint32_t        *dst_size)
-{
-  FILEDESCRIPTOR *file;
-#endif /* HAVE_FREERDP_2_3 */
   wStream* s = NULL;
   uint64_t last_write_time;
   uint32_t i, j;
@@ -1012,19 +993,11 @@ grd_clipboard_rdp_submit_requested_server_content (GrdClipboard *clipboard,
                 {
                   uint64_t serial = clipboard_rdp->serial;
                   ClipDataEntry *entry;
-#ifdef HAVE_FREERDP_2_3
                   FILEDESCRIPTORW *files;
                   uint32_t n_files;
 
                   files = (FILEDESCRIPTORW *) dst_data;
                   n_files = dst_size / sizeof (FILEDESCRIPTORW);
-#else
-                  FILEDESCRIPTOR *files;
-                  uint32_t n_files;
-
-                  files = (FILEDESCRIPTOR *) dst_data;
-                  n_files = dst_size / sizeof (FILEDESCRIPTOR);
-#endif /* HAVE_FREERDP_2_3 */
 
                   dst_data = NULL;
                   dst_size = 0;
@@ -1086,10 +1059,8 @@ cliprdr_client_capabilities (CliprdrServerContext       *cliprdr_context,
     g_strv_builder_add (client_capabilities, "file clip no file paths");
   if (cliprdr_context->canLockClipData)
     g_strv_builder_add (client_capabilities, "can lock clip data");
-#ifdef HAVE_FREERDP_2_3
   if (cliprdr_context->hasHugeFileSupport)
     g_strv_builder_add (client_capabilities, "huge file support");
-#endif /* HAVE_FREERDP_2_3 */
 
   client_caps_strings = g_strv_builder_end (client_capabilities);
   caps_string = g_strjoinv (", ", client_caps_strings);
@@ -2007,9 +1978,7 @@ grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
   cliprdr_context->streamFileClipEnabled = TRUE;
   cliprdr_context->fileClipNoFilePaths = TRUE;
   cliprdr_context->canLockClipData = TRUE;
-#ifdef HAVE_FREERDP_2_3
   cliprdr_context->hasHugeFileSupport = TRUE;
-#endif /* HAVE_FREERDP_2_3 */
 
   cliprdr_context->ClientCapabilities = cliprdr_client_capabilities;
   cliprdr_context->TempDirectory = cliprdr_temp_directory;

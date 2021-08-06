@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora:33@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 34
-    BASE_TAG: '2021-03-26.0'
+    BASE_TAG: '2021-08-06.0'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
