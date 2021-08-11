@@ -1161,12 +1161,15 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
 {
   GrdClipboardRdp *clipboard_rdp = cliprdr_context->custom;
   ServerFormatListUpdateContext *update_context;
+  GHashTable *found_mime_types;
   GrdMimeTypeTable *mime_type_table = NULL;
   GList *mime_type_tables = NULL;
   GrdMimeType mime_type;
   gboolean already_has_text_format = FALSE;
   HANDLE events[2];
   uint32_t i;
+
+  found_mime_types = g_hash_table_new (NULL, NULL);
 
   /**
    * The text format CF_TEXT can depend on the CF_LOCALE content. In such
@@ -1186,6 +1189,7 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
           mime_type_table->rdp.format_id = format_list->formats[i].formatId;
           mime_type_tables = g_list_append (mime_type_tables, mime_type_table);
 
+          g_hash_table_add (found_mime_types, GUINT_TO_POINTER (mime_type));
           mime_type = GRD_MIME_TYPE_TEXT_UTF8_STRING;
 
           mime_type_table = g_malloc0 (sizeof (GrdMimeTypeTable));
@@ -1193,6 +1197,7 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
           mime_type_table->rdp.format_id = format_list->formats[i].formatId;
           mime_type_tables = g_list_append (mime_type_tables, mime_type_table);
 
+          g_hash_table_add (found_mime_types, GUINT_TO_POINTER (mime_type));
           already_has_text_format = TRUE;
           g_debug ("[RDP.CLIPRDR] Force using CF_UNICODETEXT over CF_TEXT as "
                    "external format for text/plain;charset=utf-8 and UTF8_STRING");
@@ -1215,16 +1220,22 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
           (strcmp (format_list->formats[i].formatName, "FileGroupDescriptorW") == 0 ||
            strcmp (format_list->formats[i].formatName, "FileGroupDescri") == 0))
         {
-          /**
-           * Advertise the "x-special/gnome-copied-files" format in addition to
-           * the "text/uri-list" format
-           */
-          mime_type = GRD_MIME_TYPE_XS_GNOME_COPIED_FILES;
+          if (!g_hash_table_contains (found_mime_types,
+                                      GUINT_TO_POINTER (GRD_MIME_TYPE_TEXT_URILIST)))
+            {
+              /**
+               * Advertise the "x-special/gnome-copied-files" format in addition to
+               * the "text/uri-list" format
+               */
+              mime_type = GRD_MIME_TYPE_XS_GNOME_COPIED_FILES;
 
-          mime_type_table = g_malloc0 (sizeof (GrdMimeTypeTable));
-          mime_type_table->mime_type = mime_type;
-          mime_type_table->rdp.format_id = format_list->formats[i].formatId;
-          mime_type_tables = g_list_append (mime_type_tables, mime_type_table);
+              mime_type_table = g_malloc0 (sizeof (GrdMimeTypeTable));
+              mime_type_table->mime_type = mime_type;
+              mime_type_table->rdp.format_id = format_list->formats[i].formatId;
+              mime_type_tables = g_list_append (mime_type_tables, mime_type_table);
+
+              g_hash_table_add (found_mime_types, GUINT_TO_POINTER (mime_type));
+            }
 
           mime_type = GRD_MIME_TYPE_TEXT_URILIST;
         }
@@ -1244,11 +1255,15 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
                 {
                   mime_type = GRD_MIME_TYPE_TEXT_PLAIN_UTF8;
 
+                  g_assert (!g_hash_table_contains (found_mime_types,
+                                                    GUINT_TO_POINTER (mime_type)));
+
                   mime_type_table = g_malloc0 (sizeof (GrdMimeTypeTable));
                   mime_type_table->mime_type = mime_type;
                   mime_type_table->rdp.format_id = format_list->formats[i].formatId;
                   mime_type_tables = g_list_append (mime_type_tables,
                                                     mime_type_table);
+                  g_hash_table_add (found_mime_types, GUINT_TO_POINTER (mime_type));
 
                   mime_type = GRD_MIME_TYPE_TEXT_UTF8_STRING;
                   already_has_text_format = TRUE;
@@ -1281,14 +1296,25 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
             }
         }
 
-      if (mime_type != GRD_MIME_TYPE_NONE)
+      if (mime_type != GRD_MIME_TYPE_NONE &&
+          !g_hash_table_contains (found_mime_types, GUINT_TO_POINTER (mime_type)))
         {
           mime_type_table = g_malloc0 (sizeof (GrdMimeTypeTable));
           mime_type_table->mime_type = mime_type;
           mime_type_table->rdp.format_id = format_list->formats[i].formatId;
           mime_type_tables = g_list_append (mime_type_tables, mime_type_table);
+
+          g_hash_table_add (found_mime_types, GUINT_TO_POINTER (mime_type));
+        }
+      else if (mime_type != GRD_MIME_TYPE_NONE)
+        {
+          g_debug ("[RDP.CLIPRDR] Ignoring duplicated format: id: %u, name: %s",
+                   format_list->formats[i].formatId,
+                   format_list->formats[i].formatName);
         }
     }
+
+  g_hash_table_destroy (found_mime_types);
 
   if (clipboard_rdp->server_format_list_update_id)
     {
