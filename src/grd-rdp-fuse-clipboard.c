@@ -119,9 +119,12 @@ struct _GrdRdpFuseClipboard
   GObject parent;
 
   GrdClipboardRdp *clipboard_rdp;
+  char *mount_path;
 
   GThread *fuse_thread;
   struct fuse_session *fuse_handle;
+  HANDLE start_event;
+  HANDLE stop_event;
 
   GSource *timeout_reset_source;
   GHashTable *timeouts_to_reset;
@@ -1292,14 +1295,40 @@ static gpointer
 fuse_thread_func (gpointer data)
 {
   GrdRdpFuseClipboard *rdp_fuse_clipboard = data;
+  struct fuse_args args = {0};
+  char *argv[1];
   int result;
 
   g_debug ("[FUSE Clipboard] FUSE thread started");
+
+  argv[0] = program_invocation_name;
+  args.argc = 1;
+  args.argv = argv;
+
+  rdp_fuse_clipboard->fuse_handle = fuse_session_new (&args, &fuse_ll_ops,
+                                                      sizeof (fuse_ll_ops),
+                                                      rdp_fuse_clipboard);
+  if (!rdp_fuse_clipboard->fuse_handle)
+    g_error ("[FUSE Clipboard] Failed to create FUSE filesystem");
+
+  if (fuse_session_mount (rdp_fuse_clipboard->fuse_handle,
+                          rdp_fuse_clipboard->mount_path))
+    g_error ("[FUSE Clipboard] Failed to mount FUSE filesystem");
+
   fuse_daemonize (1);
 
+  SetEvent (rdp_fuse_clipboard->start_event);
+
+  g_debug ("[FUSE Clipboard] Starting FUSE session");
   result = fuse_session_loop (rdp_fuse_clipboard->fuse_handle);
   if (result < 0)
     g_error ("fuse_loop() failed: %s", g_strerror (-result));
+
+  g_debug ("[FUSE Clipboard] Unmounting FUSE filesystem");
+  fuse_session_unmount (rdp_fuse_clipboard->fuse_handle);
+
+  WaitForSingleObject (rdp_fuse_clipboard->stop_event, INFINITE);
+  g_clear_pointer (&rdp_fuse_clipboard->fuse_handle, fuse_session_destroy);
 
   return NULL;
 }
@@ -1309,29 +1338,21 @@ grd_rdp_fuse_clipboard_new (GrdClipboardRdp *clipboard_rdp,
                             const char      *mount_path)
 {
   GrdRdpFuseClipboard *rdp_fuse_clipboard;
-  struct fuse_args args = {0};
-  char *argv[1];
-
-  argv[0] = program_invocation_name;
-  args.argc = 1;
-  args.argv = argv;
 
   rdp_fuse_clipboard = g_object_new (GRD_TYPE_RDP_FUSE_CLIPBOARD, NULL);
   rdp_fuse_clipboard->clipboard_rdp = clipboard_rdp;
-  rdp_fuse_clipboard->fuse_handle = fuse_session_new (&args, &fuse_ll_ops,
-                                                      sizeof (fuse_ll_ops),
-                                                      rdp_fuse_clipboard);
-  if (!rdp_fuse_clipboard->fuse_handle)
-    g_error ("[FUSE Clipboard] Failed to create FUSE filesystem");
+  rdp_fuse_clipboard->mount_path = g_strdup (mount_path);
 
-  if (fuse_session_mount (rdp_fuse_clipboard->fuse_handle, mount_path))
-    g_error ("[FUSE Clipboard] Failed to mount FUSE filesystem");
-
+  rdp_fuse_clipboard->start_event = CreateEvent (NULL, TRUE, FALSE, NULL);
+  rdp_fuse_clipboard->stop_event = CreateEvent (NULL, TRUE, FALSE, NULL);
   rdp_fuse_clipboard->fuse_thread = g_thread_new ("RDP FUSE clipboard thread",
                                                   fuse_thread_func,
                                                   rdp_fuse_clipboard);
   if (!rdp_fuse_clipboard->fuse_thread)
     g_error ("[FUSE Clipboard] Failed to create FUSE thread");
+
+  WaitForSingleObject (rdp_fuse_clipboard->start_event, INFINITE);
+  g_clear_pointer (&rdp_fuse_clipboard->start_event, CloseHandle);
 
   return rdp_fuse_clipboard;
 }
@@ -1359,21 +1380,37 @@ grd_rdp_fuse_clipboard_dispose (GObject *object)
     g_source_destroy (rdp_fuse_clipboard->timeout_reset_source);
   g_clear_pointer (&rdp_fuse_clipboard->timeout_reset_source, g_source_unref);
 
-  if (rdp_fuse_clipboard->fuse_handle)
+  if (rdp_fuse_clipboard->fuse_thread)
     {
+      struct stat attr;
+
+      g_assert (rdp_fuse_clipboard->fuse_handle);
+      g_assert (!rdp_fuse_clipboard->start_event);
+
       clear_all_selections (rdp_fuse_clipboard);
 
       g_debug ("[FUSE Clipboard] Stopping FUSE thread");
       fuse_session_exit (rdp_fuse_clipboard->fuse_handle);
       dismiss_all_requests (rdp_fuse_clipboard);
-      g_debug ("[FUSE Clipboard] Unmounting FUSE filesystem");
-      fuse_session_unmount (rdp_fuse_clipboard->fuse_handle);
+      SetEvent (rdp_fuse_clipboard->stop_event);
+
+      /**
+       * FUSE does not immediately stop the session after fuse_session_exit() has
+       * been called.
+       * Instead, it waits on a new operation. Upon retrieving this new
+       * operation, it checks the exit flag and then stops the session loop.
+       * So, trigger a FUSE operation by poking at the FUSE root dir to
+       * effectively stop the session.
+       */
+      stat (rdp_fuse_clipboard->mount_path, &attr);
 
       g_debug ("[FUSE Clipboard] Waiting on FUSE thread");
       g_clear_pointer (&rdp_fuse_clipboard->fuse_thread, g_thread_join);
       g_debug ("[FUSE Clipboard] FUSE thread stopped");
-      g_clear_pointer (&rdp_fuse_clipboard->fuse_handle, fuse_session_destroy);
+      g_clear_pointer (&rdp_fuse_clipboard->stop_event, CloseHandle);
     }
+
+  g_clear_pointer (&rdp_fuse_clipboard->mount_path, g_free);
 
   if (rdp_fuse_clipboard->request_table)
     {
