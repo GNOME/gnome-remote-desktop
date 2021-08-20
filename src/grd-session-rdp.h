@@ -43,6 +43,7 @@ typedef enum _GrdSessionRdpError
 typedef enum _GrdRdpChannel
 {
   GRD_RDP_CHANNEL_NONE,
+  GRD_RDP_CHANNEL_AUDIO_PLAYBACK,
 } GrdRdpChannel;
 
 typedef void (* GrdRdpDVCCreationStatusCallback) (gpointer user_data,
