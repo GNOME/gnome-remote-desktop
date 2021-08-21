@@ -32,6 +32,7 @@
 #include "grd-context.h"
 #include "grd-damage-utils.h"
 #include "grd-hwaccel-nvidia.h"
+#include "grd-rdp-audio-playback.h"
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-display-control.h"
@@ -789,6 +790,7 @@ grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
       g_assert_not_reached ();
       break;
     case GRD_RDP_CHANNEL_AUDIO_PLAYBACK:
+      g_clear_object (&rdp_peer_context->audio_playback);
       break;
     }
   g_mutex_unlock (&rdp_peer_context->channel_mutex);
@@ -1882,6 +1884,18 @@ rdp_peer_post_connect (freerdp_peer *peer)
                  "(RTT detection, Bandwidth measurement). "
                  "High latency connections will suffer!");
     }
+  if (rdp_settings->AudioPlayback && !rdp_settings->NetworkAutoDetect)
+    {
+      g_warning ("[RDP] Client does not support autodetecting network "
+                 "characteristics. Disabling audio output redirection");
+      rdp_settings->AudioPlayback = FALSE;
+    }
+  if (rdp_settings->AudioPlayback && !rdp_settings->SupportGraphicsPipeline)
+    {
+      g_warning ("[RDP] Client does not support graphics pipeline. Disabling "
+                 "audio output redirection");
+      rdp_settings->AudioPlayback = FALSE;
+    }
 
   if (rdp_settings->NetworkAutoDetect)
     {
@@ -2147,6 +2161,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
 
   rdp_settings->OsMajorType = OSMAJORTYPE_UNIX;
   rdp_settings->OsMinorType = OSMINORTYPE_PSEUDO_XSERVER;
+  rdp_settings->AudioPlayback = TRUE;
   rdp_settings->ColorDepth = 32;
   rdp_settings->GfxAVC444v2 = rdp_settings->GfxAVC444 = FALSE;
   rdp_settings->GfxH264 = FALSE;
@@ -2156,6 +2171,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdp_settings->HasHorizontalWheel = TRUE;
   rdp_settings->NetworkAutoDetect = TRUE;
   rdp_settings->RefreshRect = TRUE;
+  rdp_settings->RemoteConsoleAudio = TRUE;
   rdp_settings->RemoteFxCodec = TRUE;
   rdp_settings->SupportGraphicsPipeline = TRUE;
   rdp_settings->NSCodec = TRUE;
@@ -2255,6 +2271,7 @@ socket_thread_func (gpointer data)
       if (WTSVirtualChannelManagerIsChannelJoined (vcm, "drdynvc"))
         {
           GrdRdpGraphicsPipeline *graphics_pipeline;
+          GrdRdpAudioPlayback *audio_playback;
           GrdRdpDisplayControl *display_control;
 
           switch (WTSVirtualChannelManagerGetDrdynvcState (vcm))
@@ -2269,9 +2286,11 @@ socket_thread_func (gpointer data)
             case DRDYNVC_STATE_READY:
               g_mutex_lock (&rdp_peer_context->channel_mutex);
               graphics_pipeline = rdp_peer_context->graphics_pipeline;
+              audio_playback = rdp_peer_context->audio_playback;
               display_control = rdp_peer_context->display_control;
 
               grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
+              grd_rdp_audio_playback_maybe_init (audio_playback);
               grd_rdp_display_control_maybe_init (display_control);
               g_mutex_unlock (&rdp_peer_context->channel_mutex);
               break;
@@ -2450,6 +2469,7 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_object (&session_rdp->pipewire_stream);
 
   g_clear_object (&rdp_peer_context->clipboard_rdp);
+  g_clear_object (&rdp_peer_context->audio_playback);
   g_clear_object (&rdp_peer_context->display_control);
   g_clear_object (&rdp_peer_context->graphics_pipeline);
 
@@ -2506,14 +2526,20 @@ grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
   freerdp_peer *peer = session_rdp->peer;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+  rdpSettings *rdp_settings = peer->settings;
 
   if (WTSVirtualChannelManagerIsChannelJoined (rdp_peer_context->vcm,
                                                "cliprdr"))
     {
       rdp_peer_context->clipboard_rdp =
-        grd_clipboard_rdp_new (session_rdp,
-                               rdp_peer_context->vcm,
+        grd_clipboard_rdp_new (session_rdp, rdp_peer_context->vcm,
                                session_rdp->stop_event);
+    }
+  if (rdp_settings->AudioPlayback && !rdp_settings->RemoteConsoleAudio)
+    {
+      rdp_peer_context->audio_playback =
+        grd_rdp_audio_playback_new (session_rdp, rdp_peer_context->vcm,
+                                    session_rdp->stop_event, peer->context);
     }
 }
 
