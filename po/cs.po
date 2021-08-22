@@ -1,0 +1,104 @@
+# Czech translation for gnome-remote-desktop.
+# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+#
+# Marek Černocký <marek@manet.cz>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-08-19 09:29+0000\n"
+"PO-Revision-Date: 2021-08-22 11:18+0200\n"
+"Last-Translator: Marek Černocký <marek@manet.cz>\n"
+"Language-Team: Czech <gnome-cs-list@gnome.org>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2\n"
+"X-Generator: Gtranslator 3.38.0\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "Vzdálená plocha GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Přejete si sdílet svoji plochu?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Uživatel na počítači „%s“ zkouší vzdáleně zobrazit nebo ovládat vaše "
+"uživatelské prostředí."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Zamítnout"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Přijmout"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Cesta k souboru s cerifikátem"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Aby protokol RDP bylo možné použít zabezpečený pomocí TLS, musí být serveru "
+"RDP poskytnuty soubory se soukromým klíčem a certifikátem."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Cesta k souboru se soukromým klíčem"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Vzdálenému připojení umožnit pouze zobrazení obsahu obrazovky"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Když je zapnuto „pouze zobrazení“, vzdálené připojení RDP nebude mít "
+"kontrolu nad vstupními zařízeními (např. myší a klávesnicí)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Když je zapnuto „pouze zobrazení“, vzdálené připojení VNC nebude mít "
+"kontrolu nad vstupními zařízeními (např. myší a klávesnicí)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Metoda použitá k ověření spojení VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"Metoda ověření VNC určuje, jak je ověřováno vzdálené připojení. V "
+"současnosti může být provedeno dvěma různými způsoby: • prompt – výzvou "
+"uživateli při každém novém připojení, kdy je nutná uživatelova fyzická "
+"přítomnost u zařízení, aby připojení výslovně schválil. • password – "
+"požaduje po vzdáleném klientovi znalost hesla"
+
