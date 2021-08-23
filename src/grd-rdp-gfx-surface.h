@@ -31,6 +31,7 @@ G_DECLARE_FINAL_TYPE (GrdRdpGfxSurface, grd_rdp_gfx_surface,
 
 GrdRdpGfxSurface *grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline *graphics_pipeline,
                                            GrdSessionRdp          *session_rdp,
+                                           GMainContext           *pipeline_context,
                                            GrdRdpSurface          *rdp_surface,
                                            uint16_t                surface_id,
                                            uint32_t                serial);

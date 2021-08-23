@@ -1626,6 +1626,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
 
       rdp_peer_context->graphics_pipeline =
         grd_rdp_graphics_pipeline_new (session_rdp,
+                                       NULL,
                                        rdp_peer_context->vcm,
                                        session_rdp->stop_event,
                                        peer->context,

@@ -331,6 +331,7 @@ static GSourceFuncs pending_encode_source_funcs =
 GrdRdpGfxSurface *
 grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline *graphics_pipeline,
                          GrdSessionRdp          *session_rdp,
+                         GMainContext           *pipeline_context,
                          GrdRdpSurface          *rdp_surface,
                          uint16_t                surface_id,
                          uint32_t                serial)
@@ -356,7 +357,7 @@ grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline *graphics_pipeline,
   g_source_set_callback (gfx_surface->pending_encode_source,
                          maybe_encode_pending_frame, gfx_surface, NULL);
   g_source_set_ready_time (gfx_surface->pending_encode_source, -1);
-  g_source_attach (gfx_surface->pending_encode_source, NULL);
+  g_source_attach (gfx_surface->pending_encode_source, pipeline_context);
 
   return gfx_surface;
 }
