@@ -2095,6 +2095,7 @@ grd_session_rdp_stream_ready (GrdSession *session,
   pipewire_node_id = grd_stream_get_pipewire_node_id (stream);
   refresh_rate = session_rdp->rdp_surface->refresh_rate;
   session_rdp->pipewire_stream = grd_rdp_pipewire_stream_new (session_rdp,
+                                                              NULL,
                                                               pipewire_node_id,
                                                               refresh_rate,
                                                               &error);

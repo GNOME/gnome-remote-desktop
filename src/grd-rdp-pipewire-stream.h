@@ -31,6 +31,7 @@ G_DECLARE_FINAL_TYPE (GrdRdpPipeWireStream, grd_rdp_pipewire_stream,
                       GObject)
 
 GrdRdpPipeWireStream *grd_rdp_pipewire_stream_new (GrdSessionRdp  *session_rdp,
+                                                   GMainContext   *render_context,
                                                    uint32_t        src_node_id,
                                                    uint32_t        refresh_rate,
                                                    GError        **error);
