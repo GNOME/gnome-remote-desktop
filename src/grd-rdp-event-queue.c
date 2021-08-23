@@ -356,7 +356,7 @@ grd_rdp_event_queue_new (GrdSessionRdp *session_rdp)
   flush_source = g_source_new (&flush_source_funcs, sizeof (GSource));
   g_source_set_callback (flush_source, flush_rdp_events, rdp_event_queue, NULL);
   g_source_set_ready_time (flush_source, -1);
-  g_source_attach (flush_source, g_main_context_get_thread_default ());
+  g_source_attach (flush_source, NULL);
   rdp_event_queue->flush_source = flush_source;
 
   return rdp_event_queue;
