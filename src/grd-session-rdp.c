@@ -42,6 +42,10 @@
 #include "grd-settings.h"
 #include "grd-stream.h"
 
+#ifdef HAVE_NVENC
+#include "grd-rdp-nvenc.h"
+#endif /* HAVE_NVENC */
+
 #define DISCRETE_SCROLL_STEP 10.0
 
 typedef enum _RdpPeerFlag
@@ -123,6 +127,9 @@ struct _GrdSessionRdp
   GThread *socket_thread;
   HANDLE start_event;
   HANDLE stop_event;
+
+  GThread *graphics_thread;
+  GMainContext *graphics_context;
 
   GrdRdpSurface *rdp_surface;
   Pointer *last_pointer;
@@ -1632,7 +1639,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
 
       rdp_peer_context->graphics_pipeline =
         grd_rdp_graphics_pipeline_new (session_rdp,
-                                       NULL,
+                                       session_rdp->graphics_context,
                                        rdp_peer_context->vcm,
                                        session_rdp->stop_event,
                                        peer->context,
@@ -1907,6 +1914,27 @@ socket_thread_func (gpointer data)
   return NULL;
 }
 
+static gpointer
+graphics_thread_func (gpointer data)
+{
+  GrdSessionRdp *session_rdp = data;
+
+#ifdef HAVE_NVENC
+  if (session_rdp->rdp_nvenc)
+    grd_rdp_nvenc_push_cuda_context (session_rdp->rdp_nvenc);
+#endif /* HAVE_NVENC */
+
+  while (WaitForSingleObject (session_rdp->stop_event, 0) == WAIT_TIMEOUT)
+    g_main_context_iteration (session_rdp->graphics_context, TRUE);
+
+#ifdef HAVE_NVENC
+  if (session_rdp->rdp_nvenc)
+    grd_rdp_nvenc_pop_cuda_context (session_rdp->rdp_nvenc);
+#endif /* HAVE_NVENC */
+
+  return NULL;
+}
+
 GrdSessionRdp *
 grd_session_rdp_new (GrdRdpServer      *rdp_server,
                      GSocketConnection *connection,
@@ -1946,24 +1974,13 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
 #ifdef HAVE_NVENC
   session_rdp->rdp_nvenc = rdp_nvenc;
 #endif /* HAVE_NVENC */
-  session_rdp->start_event = CreateEvent (NULL, TRUE, FALSE, NULL);
-  session_rdp->stop_event = CreateEvent (NULL, TRUE, FALSE, NULL);
 
   session_rdp->socket_thread = g_thread_new ("RDP socket thread",
                                              socket_thread_func,
                                              session_rdp);
-  if (!session_rdp->socket_thread)
-    {
-      g_warning ("Failed to create socket thread");
-
-      g_clear_pointer (&session_rdp->stop_event, CloseHandle);
-      g_clear_pointer (&session_rdp->start_event, CloseHandle);
-      g_object_unref (connection);
-      g_free (password);
-      g_free (username);
-
-      return NULL;
-    }
+  session_rdp->graphics_thread = g_thread_new ("RDP graphics thread",
+                                               graphics_thread_func,
+                                               session_rdp);
 
   init_rdp_session (session_rdp, username, password);
 
@@ -2014,6 +2031,15 @@ grd_session_rdp_stop (GrdSession *session)
         rdp_peer_context->network_autodetection);
     }
 
+  if (session_rdp->graphics_thread)
+    {
+      g_assert (session_rdp->graphics_context);
+      g_assert (WaitForSingleObject (session_rdp->stop_event, 0) != WAIT_TIMEOUT);
+
+      g_main_context_wakeup (session_rdp->graphics_context);
+      g_clear_pointer (&session_rdp->graphics_thread, g_thread_join);
+    }
+
   g_clear_object (&session_rdp->pipewire_stream);
 
   g_clear_object (&rdp_peer_context->clipboard_rdp);
@@ -2049,9 +2075,6 @@ grd_session_rdp_stop (GrdSession *session)
   g_hash_table_foreach_remove (session_rdp->pointer_cache,
                                clear_pointer_bitmap,
                                NULL);
-
-  g_clear_pointer (&session_rdp->stop_event, CloseHandle);
-  g_clear_pointer (&session_rdp->start_event, CloseHandle);
 
   g_clear_handle_id (&session_rdp->close_session_idle_id, g_source_remove);
 }
@@ -2094,6 +2117,7 @@ grd_session_rdp_stream_ready (GrdSession *session,
                               GrdStream  *stream)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
+  GMainContext *graphics_context = session_rdp->graphics_context;
   uint32_t pipewire_node_id;
   uint16_t refresh_rate;
   g_autoptr (GError) error = NULL;
@@ -2101,7 +2125,7 @@ grd_session_rdp_stream_ready (GrdSession *session,
   pipewire_node_id = grd_stream_get_pipewire_node_id (stream);
   refresh_rate = session_rdp->rdp_surface->refresh_rate;
   session_rdp->pipewire_stream = grd_rdp_pipewire_stream_new (session_rdp,
-                                                              NULL,
+                                                              graphics_context,
                                                               pipewire_node_id,
                                                               refresh_rate,
                                                               &error);
@@ -2147,9 +2171,15 @@ grd_session_rdp_dispose (GObject *object)
       g_clear_pointer (&session_rdp->pending_encode_source, g_source_unref);
     }
 
+  g_assert (!session_rdp->graphics_thread);
+  g_clear_pointer (&session_rdp->graphics_context, g_main_context_unref);
+
   g_clear_pointer (&session_rdp->pressed_unicode_keys, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pressed_keys, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pointer_cache, g_hash_table_unref);
+
+  g_clear_pointer (&session_rdp->stop_event, CloseHandle);
+  g_clear_pointer (&session_rdp->start_event, CloseHandle);
 
   G_OBJECT_CLASS (grd_session_rdp_parent_class)->dispose (object);
 }
@@ -2210,6 +2240,9 @@ static GSourceFuncs pending_encode_source_funcs =
 static void
 grd_session_rdp_init (GrdSessionRdp *session_rdp)
 {
+  session_rdp->start_event = CreateEvent (NULL, TRUE, FALSE, NULL);
+  session_rdp->stop_event = CreateEvent (NULL, TRUE, FALSE, NULL);
+
   session_rdp->pointer_cache = g_hash_table_new (NULL, are_pointer_bitmaps_equal);
   session_rdp->pressed_keys = g_hash_table_new (NULL, NULL);
   session_rdp->pressed_unicode_keys = g_hash_table_new (NULL, NULL);
@@ -2221,12 +2254,15 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
 
   session_rdp->rdp_event_queue = grd_rdp_event_queue_new (session_rdp);
 
+  session_rdp->graphics_context = g_main_context_new ();
+
   session_rdp->pending_encode_source = g_source_new (&pending_encode_source_funcs,
                                                      sizeof (GSource));
   g_source_set_callback (session_rdp->pending_encode_source,
                          encode_pending_frames, session_rdp, NULL);
   g_source_set_ready_time (session_rdp->pending_encode_source, -1);
-  g_source_attach (session_rdp->pending_encode_source, NULL);
+  g_source_attach (session_rdp->pending_encode_source,
+                   session_rdp->graphics_context);
 }
 
 static void
