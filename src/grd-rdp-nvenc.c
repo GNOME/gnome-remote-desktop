@@ -55,6 +55,21 @@ struct _GrdRdpNvenc
 
 G_DEFINE_TYPE (GrdRdpNvenc, grd_rdp_nvenc, G_TYPE_OBJECT);
 
+void
+grd_rdp_nvenc_push_cuda_context (GrdRdpNvenc *rdp_nvenc)
+{
+  if (rdp_nvenc->cuda_funcs->cuCtxPushCurrent (rdp_nvenc->cu_context) != CUDA_SUCCESS)
+    g_error ("[HWAccel.CUDA] Failed to push CUDA context");
+}
+
+void
+grd_rdp_nvenc_pop_cuda_context (GrdRdpNvenc *rdp_nvenc)
+{
+  CUcontext cu_context;
+
+  rdp_nvenc->cuda_funcs->cuCtxPopCurrent (&cu_context);
+}
+
 static uint32_t
 get_next_free_encode_session_id (GrdRdpNvenc *rdp_nvenc)
 {

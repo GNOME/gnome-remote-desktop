@@ -29,6 +29,10 @@ G_DECLARE_FINAL_TYPE (GrdRdpNvenc, grd_rdp_nvenc,
 
 GrdRdpNvenc *grd_rdp_nvenc_new (void);
 
+void grd_rdp_nvenc_push_cuda_context (GrdRdpNvenc *rdp_nvenc);
+
+void grd_rdp_nvenc_pop_cuda_context (GrdRdpNvenc *rdp_nvenc);
+
 gboolean grd_rdp_nvenc_create_encode_session (GrdRdpNvenc *rdp_nvenc,
                                               uint32_t    *encode_session_id,
                                               uint16_t     surface_width,
