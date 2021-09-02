@@ -1,0 +1,107 @@
+# Dutch translation for gnome-remote-desktop.master
+# Copyright (C) 2021 gnome-remote-desktop.master
+# This file is distributed under the same license as the gnome-remote-desktop.master package.
+#
+# Marcia van den Hout <mvdh1176@gmail.com>, 2021.
+# Hannie Dumoleyn <hannie@ubuntu-nl.org>, 2021.
+# Nathan Follens <nfollens@gnome.org>, 2021.
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop.master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-06-27 14:13+0000\n"
+"PO-Revision-Date: 2021-09-02 15:24+0200\n"
+"Last-Translator: Nathan Follens <nfollens@gnome.org>\n"
+"Language-Team: Dutch <gnome-nl-list@gnome.org>\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.0\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "Gnome Extern bureaublad"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Wilt u uw bureaublad delen?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Een gebruiker op computer ‘%s’ probeert uw bureaublad op afstand te bekijken "
+"of te bedienen."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Weigeren"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Accepteren"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Pad naar het certificaatbestand"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Om RDP met TLS-beveiliging te kunnen gebruiken, moeten zowel het "
+"privésleutelbestand als het certificaatbestand aan de RDP-server worden "
+"verstrekt."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Pad naar het privésleutelbestand"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Externe verbindingen alleen toestaan om de scherminhoud te bekijken"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Als alleen-lezen waar is, kunnen externe RDP-verbindingen geen "
+"invoerapparaten manipuleren (zoals muis en toetsenbord)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Als alleen-lezen waar is, kunnen externe VNC-verbindingen geen "
+"invoerapparaten manipuleren (zoals muis en toetsenbord)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Methode die wordt gebruikt om VNC-verbindingen te verifiëren"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"De VNC-authenticatiemethode beschrijft hoe een externe verbinding wordt "
+"geverifieerd. Dit kan momenteel op twee verschillende manieren worden "
+"gedaan: * prompt (vragen) - door de gebruiker om elke nieuwe verbinding te "
+"vragen, waarbij een persoon met fysieke toegang tot het werkstation wordt "
+"gevraagd om de nieuwe verbinding uitdrukkelijk goed te keuren. * password "
+"(wachtwoord) - door de externe cliënt te vragen een bekend wachtwoord op te "
+"geven"
