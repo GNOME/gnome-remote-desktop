@@ -1,0 +1,103 @@
+# Hungarian translation for gnome-remote-desktop.
+# Copyright (C) 2021 Free Software Foundation, Inc.
+# This file is distributed under the same license as the epiphany package.
+#
+# Balázs Meskó <mesko.balazs at fsf dot hu>, 2021.
+msgid ""
+msgstr ""
+"Project-Id-Version: epiphany master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/epiphany/issues\n"
+"POT-Creation-Date: 2021-09-09 08:41+0000\n"
+"PO-Revision-Date: 2021-09-12 01:22+0200\n"
+"Last-Translator: Balázs Meskó <mesko.balazs at fsf dot hu>\n"
+"Language-Team: Hungarian <gnome-hu-list at gnome dot org>\n"
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.0\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "GNOME Távoli asztal"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Szeretné megosztani az asztalát?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Egy felhasználó a(z) „%s” számítógépről próbálja távolról megtekinteni vagy "
+"vezérelni az asztalát."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Elutasítás"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Elfogadás"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "A tanúsítványfájl útvonala"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Annak érdekében, hogy TLS biztonsággal használhassa az RDP-t, mind a"
+" személyes kulcsot, mind a tanúsítványfájlt ugyanannak az RDP-kiszolgálónak"
+" kell biztosítania."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "A személyes kulcs fájl útvonala"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr ""
+"Csak a képernyő megtekintésének engedélyezése a távoli kapcsolatok számára"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Ha a „csak megtekintés” igaz, akkor a távoli RDP-kapcsolatok nem kezelhetik "
+"a bemeneti eszközöket (például az egeret és a billentyűzetet)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Ha a „csak megtekintés” igaz, akkor a távoli VNC-kapcsolatok nem kezelhetik "
+"a bemeneti eszközöket (például az egeret és a billentyűzetet)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "A VNC-kapcsolatok hitelesítéséhez használt módszer"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"A VNC hitelesítési módja a távoli kapcsolatok hitelesítését írja le. "
+"Jelenleg két különböző mód használható: * kérdés – a felhasználó "
+"megkérdezése az összes új kapcsolatnál, tehát egy fizikai hozzáféréssel "
+"rendelkező személy szükséges, aki explicit módon elfogadja az új "
+"kapcsolatot. * jelszó – a távoli kliensnek egy ismert jelszót kell megadnia"
