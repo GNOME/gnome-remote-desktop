@@ -1,0 +1,108 @@
+# French translation for gnome-remote-desktop.
+# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Titouan Bénard Le Bouffos <itotutona@evta.fr>, 2021
+# Claude Paroz <claude@2xlibre.net>, 2021
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-09-05 09:11+0000\n"
+"PO-Revision-Date: 2021-09-12 18:46+0200\n"
+"Last-Translator: Claude Paroz <claude@2xlibre.net>\n"
+"Language-Team: GNOME French Team <gnomefr@traduc.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"X-Generator: Gtranslator 40.0\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "Bureau à distance de GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Voulez vous partagez votre bureau ?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Un utilisateur sur l’ordinateur « %s » essaie d’afficher ou de contrôler à "
+"distance votre bureau."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Refuser"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Accepter"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Chemin vers le fichier du certificat"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Afin de pouvoir utiliser RDP avec la sécurité TLS, le fichier de clé privée "
+"et le fichier de certificat doivent être fournis au serveur RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Chemin vers le fichier de clé privée"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr ""
+"Autoriser les connexions à distance à uniquement afficher le contenu de "
+"l’écran."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Lorsque la lecture seule est active, les connexions RDP distantes ne peuvent "
+"pas manipuler les périphériques d’entrée (par exemple, la souris et le "
+"clavier)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Lorsque la lecture seule est active, les connexions VNC distantes ne peuvent "
+"pas manipuler les périphériques d’entrée (par exemple, la souris et le "
+"clavier)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Méthode utilisée pour authentifier les connexions VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"La méthode d’authentification VNC décrit comment une connexion à distance "
+"est authentifiée. Cela peut actuellement être fait de deux manières "
+"différentes : * invite - en invitant l’utilisateur à chaque nouvelle "
+"connexion, exigeant qu’une personne ayant un accès physique au poste de "
+"travail approuve explicitement la nouvelle connexion. * mot de passe - en "
+"demandant au client distant de fournir un mot de passe connu"
