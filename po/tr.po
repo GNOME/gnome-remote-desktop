@@ -1,0 +1,101 @@
+# Turkish translation for gnome-remote-desktop.
+# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-09-13 16:22+0000\n"
+"PO-Revision-Date: 2021-09-15 20:56+0300\n"
+"Last-Translator: Emin Tufan Çetin <etcetin@gmail.com>\n"
+"Language-Team: Turkish <gnometurk@gnome.org>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.0\n"
+
+#: src/grd-daemon.c:351
+msgid "GNOME Remote Desktop"
+msgstr "GNOME Uzak Masaüstü"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Masaüstünüzü paylaşmak istiyor musunuz?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"'%s' bilgisayarındaki kullanıcı masaüstünüzü uzaktan görüntülemek veya "
+"denetlemek istiyor."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Reddet"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Kabul Et"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Sertifika dosyası yolu"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"TLS Güvenliği ile RDP kullanmak için RDP sunucusuna hem özel anahtar dosyası "
+"hem de sertifika dosyası sağlanmalıdır."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Özel anahtar dosyası yolu"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Uzak bağlantıların yalnızca ekran içeriğini görmesine izin ver"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Yalnızca-görüntüle seçildiğinde uzak RDP bağlantıları girdi aygıtlarını "
+"(örn. fare ve klavye) hareket ettiremez."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Yalnızca-görüntüle seçildiğinde uzak VNC bağlantıları girdi aygıtlarını "
+"(örn. fare ve klavye) hareket ettiremez."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "VNC bağlantılarını doğrulamada kullanılacak yöntem"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"VNC doğrulama yöntemi, uzak bağlantının nasıl doğrulanacağını tanımlar.Şu "
+"anda bunu yapmanın iki yolu vardır: * prompt (istemde bulun) - her yeni "
+"bağlantı için kullanıcıdan istemde bulunur, yeni bağlantıyı açıkça onaylamak "
+"için iş istasyonuna bir kişinin fiziksel erişimini gerektirir. * password "
+"(parola) - uzak istemcinin bilinen parolayı sağlamasını gerektirir"
