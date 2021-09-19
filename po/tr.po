@@ -2,12 +2,14 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 #
+# Emin Tufan Çetin <etcetin@gmail.com>, 2021.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2021-09-13 16:22+0000\n"
+"POT-Creation-Date: 2021-09-19 10:29+0000\n"
 "PO-Revision-Date: 2021-09-15 20:56+0300\n"
 "Last-Translator: Emin Tufan Çetin <etcetin@gmail.com>\n"
 "Language-Team: Turkish <gnometurk@gnome.org>\n"
