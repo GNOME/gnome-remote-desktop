@@ -68,18 +68,19 @@ is_daemon_ready (GrdDaemon *daemon)
 }
 
 #ifdef HAVE_RDP
-static void
+static gboolean
 init_rdp_server (GrdDaemon *daemon)
 {
   GrdSettings *settings = grd_context_get_settings (daemon->context);
   g_autoptr (GError) error = NULL;
+  gboolean result = FALSE;
 
   daemon->rdp_server = NULL;
   if (!g_access (grd_settings_get_rdp_server_cert (settings), F_OK) &&
       !g_access (grd_settings_get_rdp_server_key (settings), F_OK))
     {
       daemon->rdp_server = grd_rdp_server_new (daemon->context);
-      if (!grd_rdp_server_start (daemon->rdp_server, &error))
+      if (!(result = grd_rdp_server_start (daemon->rdp_server, &error)))
         g_warning ("Failed to initialize RDP server: %s\n", error->message);
       else
         g_message ("Initialized RDP server");
@@ -88,36 +89,49 @@ init_rdp_server (GrdDaemon *daemon)
     {
       g_message ("Didn't initialize RDP server: not configured");
     }
+
+  return result;
 }
 #endif /* HAVE_RDP */
 
 #ifdef HAVE_VNC
-static void
+static gboolean
 init_vnc_server (GrdDaemon *daemon)
 {
   g_autoptr (GError) error = NULL;
+  gboolean result;
 
   daemon->vnc_server = grd_vnc_server_new (daemon->context);
-  if (!grd_vnc_server_start (daemon->vnc_server, &error))
+  if (!(result = grd_vnc_server_start (daemon->vnc_server, &error)))
     g_warning ("Failed to initialize VNC server: %s\n", error->message);
   else
     g_message ("Initialized VNC server");
+
+  return result;
 }
 #endif /* HAVE_VNC */
 
 static void
 maybe_enable_services (GrdDaemon *daemon)
 {
+  gboolean has_one_backend = FALSE;
+
   if (!is_daemon_ready (daemon))
     return;
 
 #ifdef HAVE_RDP
-  init_rdp_server (daemon);
+  has_one_backend = init_rdp_server (daemon) || has_one_backend;
 #endif
 
 #ifdef HAVE_VNC
-  init_vnc_server (daemon);
+  has_one_backend = init_vnc_server (daemon) || has_one_backend;
 #endif
+
+  if (!has_one_backend)
+    {
+      g_warning ("No backend initialized successfully. Exiting");
+      g_application_release (G_APPLICATION (daemon));
+    }
 }
 
 static void
