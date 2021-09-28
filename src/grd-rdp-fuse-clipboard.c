@@ -1533,7 +1533,7 @@ grd_rdp_fuse_clipboard_init (GrdRdpFuseClipboard *rdp_fuse_clipboard)
   g_source_set_callback (timeout_reset_source, reset_clip_data_entry_timeouts,
                          rdp_fuse_clipboard, NULL);
   g_source_set_ready_time (timeout_reset_source, -1);
-  g_source_attach (timeout_reset_source, g_main_context_get_thread_default ());
+  g_source_attach (timeout_reset_source, NULL);
   rdp_fuse_clipboard->timeout_reset_source = timeout_reset_source;
 }
 
