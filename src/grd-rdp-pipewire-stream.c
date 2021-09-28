@@ -612,6 +612,13 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
       g_clear_pointer (&stream->render_source, g_source_unref);
     }
 
+  if (stream->pending_frame)
+    {
+      g_free (stream->pending_frame->data);
+      g_free (stream->pending_frame->pointer_bitmap);
+      g_clear_pointer (&stream->pending_frame, g_free);
+    }
+
   G_OBJECT_CLASS (grd_rdp_pipewire_stream_parent_class)->finalize (object);
 }
 
