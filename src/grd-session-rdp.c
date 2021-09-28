@@ -214,10 +214,10 @@ grd_session_rdp_notify_graphics_pipeline_ready (GrdSessionRdp *session_rdp)
   g_source_set_ready_time (session_rdp->pending_encode_source, 0);
 }
 
-void
-grd_session_rdp_resize_framebuffer (GrdSessionRdp *session_rdp,
-                                    uint32_t       width,
-                                    uint32_t       height)
+static void
+maybe_resize_graphics_output_buffer (GrdSessionRdp *session_rdp,
+                                     uint32_t       width,
+                                     uint32_t       height)
 {
   freerdp_peer *peer = session_rdp->peer;
   rdpSettings *rdp_settings = peer->settings;
@@ -247,6 +247,7 @@ grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
   cairo_region_t *region;
 
   g_clear_pointer (&rdp_surface->pending_frame, g_free);
+  maybe_resize_graphics_output_buffer (session_rdp, width, height);
 
   if (is_rdp_peer_flag_set (session_rdp, RDP_PEER_ALL_SURFACES_INVALID))
     {

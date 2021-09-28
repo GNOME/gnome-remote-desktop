@@ -49,10 +49,6 @@ void grd_session_rdp_notify_graphics_pipeline_ready (GrdSessionRdp *session_rdp)
 int grd_session_rdp_get_stride_for_width (GrdSessionRdp *session_rdp,
                                           int            width);
 
-void grd_session_rdp_resize_framebuffer (GrdSessionRdp *session_rdp,
-                                         uint32_t       width,
-                                         uint32_t       height);
-
 void grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
                                   void          *data,
                                   uint16_t       width,

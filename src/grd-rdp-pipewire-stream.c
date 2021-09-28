@@ -177,8 +177,6 @@ on_stream_param_changed (void                 *user_data,
   GrdRdpPipeWireStream *stream = GRD_RDP_PIPEWIRE_STREAM (user_data);
   uint8_t params_buffer[1024];
   struct spa_pod_builder pod_builder;
-  int width;
-  int height;
   const struct spa_pod *params[3];
 
   if (!format || id != SPA_PARAM_Format)
@@ -187,11 +185,6 @@ on_stream_param_changed (void                 *user_data,
   spa_format_video_raw_parse (format, &stream->spa_format);
 
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
-
-  width = stream->spa_format.size.width;
-  height = stream->spa_format.size.height;
-
-  grd_session_rdp_resize_framebuffer (stream->session_rdp, width, height);
 
   params[0] = spa_pod_builder_add_object (
     &pod_builder,
