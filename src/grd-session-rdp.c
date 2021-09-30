@@ -1617,7 +1617,8 @@ rdp_peer_post_connect (freerdp_peer *peer)
   rdp_settings->PointerCacheSize = MIN (rdp_settings->PointerCacheSize, 100);
 
   session_rdp->rdp_surface = g_malloc0 (sizeof (GrdRdpSurface));
-  session_rdp->rdp_surface->refresh_rate = 30;
+  session_rdp->rdp_surface->refresh_rate = rdp_settings->SupportGraphicsPipeline ? 60
+                                                                                 : 30;
 
   if (rdp_settings->SupportGraphicsPipeline &&
       !rdp_settings->NetworkAutoDetect)
