@@ -1,0 +1,103 @@
+# Serbian translation for gnome-remote-desktop.
+# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Марко Костић <marko.m.kostic@gmail.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2021-09-28 20:35+0000\n"
+"PO-Revision-Date: 2021-10-02 09:29+0200\n"
+"Language-Team: Serbian <gnome-sr@googlegroups.com>\n"
+"Language: sr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=n==1? 3 : n%10==1 && n%100!=11 ? 0 : n"
+"%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"Last-Translator: Марко М. Костић <marko.m.kostic@gmail.com>\n"
+"X-Generator: Poedit 3.0\n"
+
+#: src/grd-daemon.c:365
+msgid "GNOME Remote Desktop"
+msgstr "Гномова удаљена површ"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Да ли желите поделити садржај вашег екрана?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Корисник на рачунару „%s“ жели да удаљено прегледа и управља вашом радном "
+"површином."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Одбиј"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Прихвати"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Path to the certificate file"
+msgstr "Путања до датотеке сертификата"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Да бисте користили РДП са ТЛС безбедношћу, морате дати датотеку приватног "
+"кључа и датотеку сертификата РДП серверу."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid "Path to the private key file"
+msgstr "Путања до датотеке приватног кључа"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+msgid "Only allow remote connections to view the screen content"
+msgstr "Само дозволи удаљеним везама прегледање садржаја екрана"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Када је само гледање омогућено, удаљене РДП везе не могу користити улазне "
+"уређаје (нпр.: миша и тастатуру)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Када је само гледање омогућено, удаљене ВНЦ везе не могу користити улазне "
+"уређаје (нпр.: миша и тастатуру)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Method used to authenticate VNC connections"
+msgstr "Начин потврде идентитета ВНЦ веза"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"Начин потврде идентитета ВНЦ веза описује како се удаљена веза "
+"аутентификује. Тренутно се то може урадити на два начина: * prompt - пита "
+"корисника за сваку нову везу, захтева особу са физичким приступом радној "
+"станици да би се свака нова веза експлицитно одобрила. * password - захтева "
+"од удаљеног клијента да достави постојећу лозинку"
