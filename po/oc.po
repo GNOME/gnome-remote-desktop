@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2021-07-16 05:29+0000\n"
-"PO-Revision-Date: 2021-07-22 19:48+0200\n"
+"POT-Creation-Date: 2021-07-22 17:48+0000\n"
+"PO-Revision-Date: 2021-10-03 19:06+0200\n"
+"Last-Translator: Quentin PAGÈS\n"
 "Language-Team: Occitan <totenoc@gmail.com>\n"
 "Language: oc\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: Quentin PAGÈS\n"
 "X-Generator: Poedit 3.0\n"
 
 #: src/grd-daemon.c:351
@@ -54,6 +54,8 @@ msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
 msgstr ""
+"Per poder utilizar RDP amb la seguretat TLS, tan lo fichièr de la clau "
+"privada que lo fichièr de certificat devon èsser fornits al servidor RDP."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 msgid "Path to the private key file"
@@ -63,18 +65,23 @@ msgstr "Camin cap al fichièr de clau privada"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
 msgid "Only allow remote connections to view the screen content"
 msgstr ""
+"Sonque autorizar las connexions distantas per veire lo contengut de l’ecran"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
+"Se view-only es definit a «true», las connexion distantas RDP pòdon pas "
+"manipular las entradas dels aparelhs (ex la mirga e lo clavièr)."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
+"Se view-only es definit a «true», las connexion distantas VNC pòdon pas "
+"manipular las entradas dels aparelhs (ex la mirga e lo clavièr)."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Method used to authenticate VNC connections"
