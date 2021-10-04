@@ -802,7 +802,9 @@ rdp_peer_encode_nsc_rect (gpointer data,
 
   g_mutex_lock (thread_pool_context->pending_jobs_mutex);
   --thread_pool_context->pending_job_count;
-  g_cond_signal (thread_pool_context->pending_jobs_cond);
+
+  if (!thread_pool_context->pending_job_count)
+    g_cond_signal (thread_pool_context->pending_jobs_cond);
   g_mutex_unlock (thread_pool_context->pending_jobs_mutex);
 }
 
@@ -976,7 +978,9 @@ rdp_peer_compress_raw_tile (gpointer data,
 
   g_mutex_lock (thread_pool_context->pending_jobs_mutex);
   --thread_pool_context->pending_job_count;
-  g_cond_signal (thread_pool_context->pending_jobs_cond);
+
+  if (!thread_pool_context->pending_job_count)
+    g_cond_signal (thread_pool_context->pending_jobs_cond);
   g_mutex_unlock (thread_pool_context->pending_jobs_mutex);
 }
 
