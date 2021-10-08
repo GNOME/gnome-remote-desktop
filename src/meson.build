@@ -1,3 +1,5 @@
+src_includepath = include_directories('.')
+
 deps = [
   cairo_dep,
   glib_dep,
@@ -6,6 +8,7 @@ deps = [
   pipewire_dep,
   libsecret_dep,
   libnotify_dep,
+  epoxy_dep,
 ]
 
 daemon_sources = files([
@@ -13,6 +16,8 @@ daemon_sources = files([
   'grd-clipboard.h',
   'grd-context.c',
   'grd-context.h',
+  'grd-egl-thread.c',
+  'grd-egl-thread.h',
   'grd-daemon.c',
   'grd-daemon.h',
   'grd-damage-utils.c',

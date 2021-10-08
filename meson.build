@@ -8,6 +8,7 @@ freerdp_req = '>= 2.3.0'
 fuse_req = '>= 3.9.1'
 nvenc_req = '>= 11'
 xkbcommon_req = '>= 1.0.0'
+epoxy_req = '>= 1.4'
 
 gnome = import('gnome')
 i18n  = import('i18n')
@@ -22,6 +23,7 @@ pipewire_dep = dependency('libpipewire-0.3', version: '>= 0.3.0')
 systemd_dep = dependency('systemd', required: get_option('systemd'))
 libsecret_dep = dependency('libsecret-1')
 libnotify_dep = dependency('libnotify')
+epoxy_dep = dependency('epoxy')
 
 have_rdp = get_option('rdp')
 have_vnc = get_option('vnc')

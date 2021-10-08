@@ -20,3 +20,19 @@ if have_vnc
     timeout: 10,
   )
 endif
+
+egl_thread_test = executable(
+  'egl-thread-test',
+  sources: [
+    'egl-thread-test.c',
+    '../src/grd-egl-thread.c',
+    '../src/grd-egl-thread.h',
+  ],
+  dependencies: deps,
+  include_directories: [
+    src_includepath,
+    configinc,
+  ],
+)
+
+test('egl-thread', egl_thread_test)
