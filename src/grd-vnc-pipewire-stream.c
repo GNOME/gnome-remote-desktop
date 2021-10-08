@@ -66,6 +66,7 @@ struct _GrdVncPipeWireStream
 
   GMutex frame_mutex;
   GrdVncFrame *pending_frame;
+  GSource *pending_frame_source;
 
   struct pw_stream *pipewire_stream;
   struct spa_hook pipewire_stream_listener;
@@ -216,13 +217,8 @@ on_stream_param_changed (void                 *user_data,
                            params, G_N_ELEMENTS (params));
 }
 
-static int
-do_render (struct spa_loop *loop,
-           bool             async,
-           uint32_t         seq,
-           const void      *data,
-           size_t           size,
-           void            *user_data)
+static gboolean
+do_render (gpointer user_data)
 {
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
   GrdVncFrame *frame;
@@ -232,14 +228,14 @@ do_render (struct spa_loop *loop,
   g_mutex_unlock (&stream->frame_mutex);
 
   if (!frame)
-    return 0;
+    return G_SOURCE_CONTINUE;
 
   if (grd_session_vnc_is_client_gone (stream->session))
     {
       g_free (frame->data);
       g_clear_pointer (&frame->rfb_cursor, rfbFreeCursor);
       g_free (frame);
-      return 0;
+      return G_SOURCE_CONTINUE;
     }
 
   if (frame->rfb_cursor)
@@ -259,7 +255,7 @@ do_render (struct spa_loop *loop,
 
   g_free (frame);
 
-  return 0;
+  return G_SOURCE_CONTINUE;
 }
 
 static GrdVncFrame *
@@ -399,12 +395,25 @@ process_buffer (GrdVncPipeWireStream *stream,
   return g_steal_pointer (&frame);
 }
 
+static gboolean
+pending_frame_source_dispatch (GSource     *source,
+                               GSourceFunc  callback,
+                               gpointer     user_data)
+{
+  g_source_set_ready_time (source, -1);
+
+  return callback (user_data);
+}
+
+static GSourceFuncs pending_frame_source_funcs =
+{
+  .dispatch = pending_frame_source_dispatch,
+};
+
 static void
 on_stream_process (void *user_data)
 {
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
-  GrdPipeWireSource *pipewire_source =
-    (GrdPipeWireSource *) stream->pipewire_source;
   struct pw_buffer *next_buffer;
   struct pw_buffer *buffer = NULL;
   GrdVncFrame *frame;
@@ -442,13 +451,21 @@ on_stream_process (void *user_data)
       g_clear_pointer (&stream->pending_frame, g_free);
     }
   stream->pending_frame = frame;
+  if (!stream->pending_frame_source)
+    {
+      GSource *source;
+
+      source = g_source_new (&pending_frame_source_funcs, sizeof (GSource));
+      stream->pending_frame_source = source;
+      g_source_set_callback (source, do_render, stream, NULL);
+      g_source_attach (source, NULL);
+      g_source_unref (source);
+    }
+  g_source_set_ready_time (stream->pending_frame_source, 0);
+
   g_mutex_unlock (&stream->frame_mutex);
 
   pw_stream_queue_buffer (stream->pipewire_stream, buffer);
-
-  pw_loop_invoke (pipewire_source->pipewire_loop, do_render,
-                  SPA_ID_INVALID, NULL, 0,
-                  false, stream);
 }
 
 static const struct pw_stream_events stream_events = {
@@ -605,6 +622,7 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
 
   g_clear_pointer (&stream->pipewire_core, pw_core_disconnect);
   g_clear_pointer (&stream->pipewire_context, pw_context_destroy);
+  g_clear_pointer (&stream->pending_frame_source, g_source_destroy);
   if (stream->pipewire_source)
     {
       g_source_destroy (stream->pipewire_source);
