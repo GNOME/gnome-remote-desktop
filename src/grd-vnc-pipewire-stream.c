@@ -52,6 +52,10 @@ typedef struct _GrdVncFrame
   int cursor_y;
 } GrdVncFrame;
 
+typedef void (* GrdVncFrameReadyCallback) (GrdVncPipeWireStream *stream,
+                                           GrdVncFrame          *frame,
+                                           gpointer              user_data);
+
 struct _GrdVncPipeWireStream
 {
   GObject parent;
@@ -258,9 +262,11 @@ do_render (gpointer user_data)
   return G_SOURCE_CONTINUE;
 }
 
-static GrdVncFrame *
-process_buffer (GrdVncPipeWireStream *stream,
-                struct spa_buffer    *buffer)
+static void
+process_buffer (GrdVncPipeWireStream     *stream,
+                struct spa_buffer        *buffer,
+                GrdVncFrameReadyCallback  callback,
+                gpointer                  user_data)
 {
   size_t size;
   uint8_t *map;
@@ -282,7 +288,8 @@ process_buffer (GrdVncPipeWireStream *stream,
       if (map == MAP_FAILED)
         {
           g_warning ("Failed to mmap buffer: %s", g_strerror (errno));
-          return NULL;
+          callback (stream, NULL, user_data);
+          return;
         }
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
     }
@@ -297,7 +304,8 @@ process_buffer (GrdVncPipeWireStream *stream,
       if (map == MAP_FAILED)
         {
           g_warning ("Failed to mmap DMA buffer: %s", g_strerror (errno));
-          return NULL;
+          callback (stream, NULL, user_data);
+          return;
         }
       grd_sync_dma_buf (fd, DMA_BUF_SYNC_START);
 
@@ -311,7 +319,8 @@ process_buffer (GrdVncPipeWireStream *stream,
     }
   else
     {
-      return NULL;
+      callback (stream, NULL, user_data);
+      return;
     }
 
   if (src_data)
@@ -392,7 +401,7 @@ process_buffer (GrdVncPipeWireStream *stream,
       frame->cursor_y = spa_meta_cursor->position.y;
     }
 
-  return g_steal_pointer (&frame);
+  callback (stream, frame, user_data);
 }
 
 static gboolean
@@ -411,26 +420,11 @@ static GSourceFuncs pending_frame_source_funcs =
 };
 
 static void
-on_stream_process (void *user_data)
+on_frame_ready (GrdVncPipeWireStream *stream,
+                GrdVncFrame          *frame,
+                gpointer              user_data)
 {
-  GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
-  struct pw_buffer *next_buffer;
-  struct pw_buffer *buffer = NULL;
-  GrdVncFrame *frame;
-
-  next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
-  while (next_buffer)
-    {
-      buffer = next_buffer;
-      next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
-
-      if (next_buffer)
-        pw_stream_queue_buffer (stream->pipewire_stream, buffer);
-    }
-  if (!buffer)
-    return;
-
-  frame = process_buffer (stream, buffer->buffer);
+  struct pw_buffer *buffer = user_data;
 
   g_assert (frame);
   g_mutex_lock (&stream->frame_mutex);
@@ -450,7 +444,6 @@ on_stream_process (void *user_data)
       g_free (stream->pending_frame->data);
       g_clear_pointer (&stream->pending_frame, g_free);
     }
-  stream->pending_frame = frame;
   if (!stream->pending_frame_source)
     {
       GSource *source;
@@ -463,9 +456,33 @@ on_stream_process (void *user_data)
     }
   g_source_set_ready_time (stream->pending_frame_source, 0);
 
+  stream->pending_frame = frame;
+
   g_mutex_unlock (&stream->frame_mutex);
 
   pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+}
+
+static void
+on_stream_process (void *user_data)
+{
+  GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
+  struct pw_buffer *next_buffer;
+  struct pw_buffer *buffer = NULL;
+
+  next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
+  while (next_buffer)
+    {
+      buffer = next_buffer;
+      next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
+
+      if (next_buffer)
+        pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+    }
+  if (!buffer)
+    return;
+
+  process_buffer (stream, buffer->buffer, on_frame_ready, buffer);
 }
 
 static const struct pw_stream_events stream_events = {
