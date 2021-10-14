@@ -147,6 +147,7 @@ struct _GrdSessionRdp
 
   GSource *pending_encode_source;
 
+  GMutex close_session_mutex;
   unsigned int close_session_idle_id;
 
   GrdRdpPipeWireStream *pipewire_stream;
@@ -565,11 +566,16 @@ grd_session_rdp_hide_pointer (GrdSessionRdp *session_rdp)
 static void
 maybe_queue_close_session_idle (GrdSessionRdp *session_rdp)
 {
+  g_mutex_lock (&session_rdp->close_session_mutex);
   if (session_rdp->close_session_idle_id)
-    return;
+    {
+      g_mutex_unlock (&session_rdp->close_session_mutex);
+      return;
+    }
 
   session_rdp->close_session_idle_id =
     g_idle_add (close_session_idle, session_rdp);
+  g_mutex_unlock (&session_rdp->close_session_mutex);
 
   SetEvent (session_rdp->stop_event);
 }
@@ -2211,6 +2217,7 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
   g_cond_init (&session_rdp->pending_jobs_cond);
   g_mutex_init (&session_rdp->pending_jobs_mutex);
   g_mutex_init (&session_rdp->rdp_flags_mutex);
+  g_mutex_init (&session_rdp->close_session_mutex);
 
   session_rdp->rdp_event_queue = grd_rdp_event_queue_new (session_rdp);
 
