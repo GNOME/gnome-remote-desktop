@@ -143,7 +143,7 @@ struct _GrdSessionRdp
 
 #ifdef HAVE_NVENC
   GrdRdpNvenc *rdp_nvenc;
-#endif /*HAVE_NVENC*/
+#endif /* HAVE_NVENC */
 
   GSource *pending_encode_source;
 
