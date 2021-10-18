@@ -565,7 +565,7 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
   FILEDESCRIPTORW *files = NULL;
   FILEDESCRIPTORW *file;
   uint32_t n_files = 0;
-  char *clip_data_dir_name;
+  g_autofree char *clip_data_dir_name = NULL;
   char *filename = NULL;
   char *escaped_name;
   char *file_uri;
@@ -576,6 +576,7 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
     g_strdup_printf ("%u", clip_data_id) :
     g_strdup_printf ("%lu", GRD_RDP_FUSE_CLIPBOARD_NO_CLIP_DATA_ID);
 
+  *dst_size = 0;
   dst_data = g_array_new (TRUE, TRUE, sizeof (char));
 
   cliprdr_parse_file_list (src_data, src_size, &files, &n_files);
@@ -583,8 +584,13 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
     {
       file = &files[i];
 
-      ConvertFromUnicode (CP_UTF8, 0, file->cFileName, -1, &filename, 0, NULL,
-                          NULL);
+      if (ConvertFromUnicode (CP_UTF8, 0, file->cFileName, -1, &filename,
+                              0, NULL, NULL) <= 0)
+        {
+          g_array_free (dst_data, TRUE);
+          g_free (files);
+          return NULL;
+        }
       if (strchr (filename, '\\'))
         {
           g_free (filename);
@@ -607,7 +613,6 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
   *dst_size = dst_data->len;
 
   g_free (files);
-  g_free (clip_data_dir_name);
 
   return (uint8_t *) g_array_free (dst_data, FALSE);
 }
@@ -699,7 +704,7 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
       FILEDESCRIPTORW *file;
       uint32_t n_files = 0;
       gboolean result;
-      char *clip_data_dir_name;
+      g_autofree char *clip_data_dir_name = NULL;
       char *filename = NULL;
       char *escaped_name;
       char *full_filepath;
@@ -742,8 +747,15 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
         {
           file = &files[i];
 
-          ConvertFromUnicode (CP_UTF8, 0, file->cFileName, -1, &filename,
-                              0, NULL, NULL);
+          if (ConvertFromUnicode (CP_UTF8, 0, file->cFileName, -1, &filename,
+                                  0, NULL, NULL) <= 0)
+            {
+              g_array_free (data_nautilus, TRUE);
+              grd_rdp_fuse_clipboard_clear_no_cdi_selection (rdp_fuse_clipboard);
+              g_free (files);
+              g_free (dst_data);
+              return NULL;
+            }
           if (strchr (filename, '\\'))
             {
               g_free (filename);
@@ -798,7 +810,6 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
                            GUINT_TO_POINTER (second_mime_type),
                            format_data);
 
-      g_free (clip_data_dir_name);
       g_free (files);
     }
 
