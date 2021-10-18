@@ -1136,8 +1136,6 @@ handle_frame_ack_event (GrdRdpGraphicsPipeline             *graphics_pipeline,
       uint32_t surface_serial;
 
       surface_serial = GPOINTER_TO_UINT (value);
-      surface_serial_unref (graphics_pipeline, surface_serial);
-
       if (!g_hash_table_lookup_extended (graphics_pipeline->serial_surface_table,
                                          GUINT_TO_POINTER (surface_serial),
                                          NULL, (gpointer *) &surface_context))
@@ -1149,6 +1147,8 @@ handle_frame_ack_event (GrdRdpGraphicsPipeline             *graphics_pipeline,
                                          frame_acknowledge->frameId,
                                          g_get_monotonic_time ());
         }
+
+      surface_serial_unref (graphics_pipeline, surface_serial);
     }
 
   if (frame_acknowledge->queueDepth == SUSPEND_FRAME_ACKNOWLEDGEMENT)
