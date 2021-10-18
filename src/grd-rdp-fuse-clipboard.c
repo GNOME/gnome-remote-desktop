@@ -1377,8 +1377,10 @@ grd_rdp_fuse_clipboard_dispose (GObject *object)
   GrdRdpFuseClipboard *rdp_fuse_clipboard = GRD_RDP_FUSE_CLIPBOARD (object);
 
   if (rdp_fuse_clipboard->timeout_reset_source)
-    g_source_destroy (rdp_fuse_clipboard->timeout_reset_source);
-  g_clear_pointer (&rdp_fuse_clipboard->timeout_reset_source, g_source_unref);
+    {
+      g_source_destroy (rdp_fuse_clipboard->timeout_reset_source);
+      g_clear_pointer (&rdp_fuse_clipboard->timeout_reset_source, g_source_unref);
+    }
 
   if (rdp_fuse_clipboard->fuse_thread)
     {
