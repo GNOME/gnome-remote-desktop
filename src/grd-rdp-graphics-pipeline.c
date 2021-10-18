@@ -26,11 +26,12 @@
 #include "grd-rdp-frame-info.h"
 #include "grd-rdp-gfx-surface.h"
 #include "grd-rdp-network-autodetection.h"
+#include "grd-rdp-surface.h"
+#include "grd-session-rdp.h"
+
 #ifdef HAVE_NVENC
 #include "grd-rdp-nvenc.h"
 #endif /* HAVE_NVENC */
-#include "grd-rdp-surface.h"
-#include "grd-session-rdp.h"
 
 #define ENC_TIMES_CHECK_INTERVAL_MS 1000
 #define MAX_TRACKED_ENC_FRAMES 1000
