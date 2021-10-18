@@ -1083,6 +1083,7 @@ fuse_ll_open (fuse_req_t             fuse_req,
 {
   GrdRdpFuseClipboard *rdp_fuse_clipboard = fuse_req_userdata (fuse_req);
   FuseFile *fuse_file;
+  g_autofree char *filename_with_root = NULL;
 
   g_mutex_lock (&rdp_fuse_clipboard->filesystem_mutex);
   if (!(fuse_file = get_fuse_file_by_ino (rdp_fuse_clipboard, fuse_ino)))
@@ -1097,6 +1098,8 @@ fuse_ll_open (fuse_req_t             fuse_req,
       fuse_reply_err (fuse_req, EISDIR);
       return;
     }
+
+  filename_with_root = g_strdup (fuse_file->filename_with_root);
   g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
 
   if ((file_info->flags & O_ACCMODE) != O_RDONLY)
@@ -1108,7 +1111,7 @@ fuse_ll_open (fuse_req_t             fuse_req,
   /* Using direct_io also increases FUSE_MAX_PAGES_PER_REQ */
   file_info->direct_io = 1;
 
-  g_debug ("[FUSE Clipboard] Opening file \"%s\"", fuse_file->filename_with_root);
+  g_debug ("[FUSE Clipboard] Opening file \"%s\"", filename_with_root);
   fuse_reply_open (fuse_req, file_info);
 }
 
@@ -1157,6 +1160,7 @@ fuse_ll_opendir (fuse_req_t             fuse_req,
 {
   GrdRdpFuseClipboard *rdp_fuse_clipboard = fuse_req_userdata (fuse_req);
   FuseFile *fuse_file;
+  g_autofree char *filename_with_root = NULL;
 
   g_mutex_lock (&rdp_fuse_clipboard->filesystem_mutex);
   if (!(fuse_file = get_fuse_file_by_ino (rdp_fuse_clipboard, fuse_ino)))
@@ -1171,6 +1175,8 @@ fuse_ll_opendir (fuse_req_t             fuse_req,
       fuse_reply_err (fuse_req, ENOTDIR);
       return;
     }
+
+  filename_with_root = g_strdup (fuse_file->filename_with_root);
   g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
 
   if ((file_info->flags & O_ACCMODE) != O_RDONLY)
@@ -1179,8 +1185,7 @@ fuse_ll_opendir (fuse_req_t             fuse_req,
       return;
     }
 
-  g_debug ("[FUSE Clipboard] Opening directory \"%s\"",
-           fuse_file->filename_with_root);
+  g_debug ("[FUSE Clipboard] Opening directory \"%s\"", filename_with_root);
   fuse_reply_open (fuse_req, file_info);
 }
 
