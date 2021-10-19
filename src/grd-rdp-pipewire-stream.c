@@ -47,6 +47,7 @@ typedef struct _GrdRdpFrame
   uint16_t width;
   uint16_t height;
 
+  gboolean has_pointer_data;
   uint8_t *pointer_bitmap;
   uint16_t pointer_hotspot_x;
   uint16_t pointer_hotspot_y;
@@ -393,14 +394,40 @@ process_buffer (GrdRdpPipeWireStream *stream,
           frame->pointer_hotspot_y = spa_meta_cursor->hotspot.y;
           frame->pointer_width = spa_meta_bitmap->size.width;
           frame->pointer_height = spa_meta_bitmap->size.height;
+          frame->has_pointer_data = TRUE;
         }
       else if (spa_meta_bitmap)
         {
           frame->pointer_is_hidden = TRUE;
+          frame->has_pointer_data = TRUE;
         }
     }
 
   return g_steal_pointer (&frame);
+}
+
+static void
+take_frame_data_from (GrdRdpFrame *src_frame,
+                      GrdRdpFrame *dst_frame)
+{
+  dst_frame->data = g_steal_pointer (&src_frame->data);
+  dst_frame->width = src_frame->width;
+  dst_frame->height = src_frame->height;
+}
+
+static void
+take_pointer_data_from (GrdRdpFrame *src_frame,
+                        GrdRdpFrame *dst_frame)
+{
+  g_assert (!dst_frame->pointer_bitmap);
+  dst_frame->pointer_bitmap = g_steal_pointer (&src_frame->pointer_bitmap);
+
+  dst_frame->pointer_hotspot_x = src_frame->pointer_hotspot_x;
+  dst_frame->pointer_hotspot_y = src_frame->pointer_hotspot_y;
+  dst_frame->pointer_width = src_frame->pointer_width;
+  dst_frame->pointer_height = src_frame->pointer_height;
+  dst_frame->pointer_is_hidden = src_frame->pointer_is_hidden;
+  dst_frame->has_pointer_data = TRUE;
 }
 
 static void
@@ -429,6 +456,11 @@ on_stream_process (void *user_data)
   g_mutex_lock (&stream->frame_mutex);
   if (stream->pending_frame)
     {
+      if (!frame->data && stream->pending_frame->data)
+        take_frame_data_from (stream->pending_frame, frame);
+      if (!frame->has_pointer_data && stream->pending_frame->has_pointer_data)
+        take_pointer_data_from (stream->pending_frame, frame);
+
       g_free (stream->pending_frame->data);
       g_free (stream->pending_frame->pointer_bitmap);
       g_clear_pointer (&stream->pending_frame, g_free);
