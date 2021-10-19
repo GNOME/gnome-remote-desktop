@@ -427,6 +427,17 @@ on_stream_process (void *user_data)
   g_mutex_lock (&stream->frame_mutex);
   if (stream->pending_frame)
     {
+      if (!frame->data && stream->pending_frame->data)
+        frame->data = g_steal_pointer (&stream->pending_frame->data);
+      if (!frame->rfb_cursor && stream->pending_frame->rfb_cursor)
+        frame->rfb_cursor = g_steal_pointer (&stream->pending_frame->rfb_cursor);
+      if (!frame->cursor_moved && stream->pending_frame->cursor_moved)
+        {
+          frame->cursor_x = stream->pending_frame->cursor_x;
+          frame->cursor_y = stream->pending_frame->cursor_y;
+          frame->cursor_moved = TRUE;
+        }
+
       g_free (stream->pending_frame->data);
       g_clear_pointer (&stream->pending_frame, g_free);
     }
