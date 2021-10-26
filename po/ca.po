@@ -62,7 +62,7 @@ msgstr "Camí al fitxer de clau privada"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
 msgid "Only allow remote connections to view the screen content"
 msgstr ""
-"Permet només a les connexions remotes per veure el contingut de la pantalla"
+"Permet només a les connexions remotes per a veure el contingut de la pantalla"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid ""
@@ -92,7 +92,7 @@ msgid ""
 "access to the workstation to explicitly approve the new connection. * "
 "password - by requiring the remote client to provide a known password"
 msgstr ""
-"El mètode d'autenticació VNC descriu com s'ha autentica una connexió remota. "
+"El mètode d'autenticació VNC descriu com s'autentica una connexió remota. "
 "Actualment, es pot fer de dues maneres diferents: * «prompt» - demanant a "
 "l'usuari per a cada nova connexió, requerint a una persona amb accés físic a "
 "l'estació de treball que aprovi explícitament la nova connexió. * «password» "
