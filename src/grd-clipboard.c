@@ -383,6 +383,8 @@ grd_clipboard_update_client_mime_type_list (GrdClipboard *clipboard,
    */
   abort_current_read_operation (clipboard);
 
+  g_assert (priv->enabled);
+
   if (!klass->update_client_mime_type_list)
     return;
 

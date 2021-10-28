@@ -266,6 +266,7 @@ grd_session_disable_clipboard (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
+  priv->clipboard = NULL;
   if (!priv->remote_desktop_session)
     return;
 
@@ -574,6 +575,9 @@ on_remote_desktop_session_selection_owner_changed (GrdDBusRemoteDesktopSession *
   GrdMimeType mime_type;
   GList *mime_type_list = NULL;
 
+  if (!priv->clipboard)
+    return;
+
   is_owner_variant = g_variant_lookup_value (options_variant, "session-is-owner",
                                              G_VARIANT_TYPE ("b"));
   if (is_owner_variant && g_variant_get_boolean (is_owner_variant))
@@ -621,6 +625,9 @@ on_remote_desktop_session_selection_transfer (GrdDBusRemoteDesktopSession *sessi
   int fd_idx;
   int fd;
   GrdMimeType mime_type;
+
+  if (!priv->clipboard)
+    return;
 
   mime_type = grd_mime_type_from_string (mime_type_string);
   if (mime_type == GRD_MIME_TYPE_NONE)
