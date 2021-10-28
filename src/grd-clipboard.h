@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Pascal Nowack
+ * Copyright (C) 2020-2021 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -35,9 +35,9 @@ struct _GrdClipboardClass
 
   void (*update_client_mime_type_list) (GrdClipboard *clipboard,
                                         GList        *mime_type_list);
-  uint8_t *(*request_client_content_for_mime_type) (GrdClipboard     *clipboard,
-                                                    GrdMimeTypeTable *mime_type_table,
-                                                    uint32_t         *size);
+  void (*request_client_content_for_mime_type) (GrdClipboard     *clipboard,
+                                                GrdMimeTypeTable *mime_type_table,
+                                                unsigned int      serial);
   void (*submit_requested_server_content) (GrdClipboard *clipboard,
                                            uint8_t      *data,
                                            uint32_t      size);
@@ -59,8 +59,13 @@ void grd_clipboard_disable_clipboard (GrdClipboard *clipboard);
 void grd_clipboard_update_client_mime_type_list (GrdClipboard *clipboard,
                                                  GList        *mime_type_list);
 
-uint8_t *grd_clipboard_request_client_content_for_mime_type (GrdClipboard *clipboard,
-                                                             GrdMimeType   mime_type,
-                                                             uint32_t     *size);
+void grd_clipboard_submit_client_content_for_mime_type (GrdClipboard  *clipboard,
+                                                        unsigned int   serial,
+                                                        const uint8_t *data,
+                                                        uint32_t       size);
+
+void grd_clipboard_request_client_content_for_mime_type (GrdClipboard *clipboard,
+                                                         GrdMimeType   mime_type,
+                                                         unsigned int  serial);
 
 #endif /* GRD_CLIPBOARD_H */

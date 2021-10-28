@@ -396,36 +396,51 @@ grd_clipboard_update_client_mime_type_list (GrdClipboard *clipboard,
   g_debug ("Clipboard[SelectionOwnerChanged]: Update complete");
 }
 
-uint8_t *
+void
+grd_clipboard_submit_client_content_for_mime_type (GrdClipboard  *clipboard,
+                                                   unsigned int   serial,
+                                                   const uint8_t *data,
+                                                   uint32_t       size)
+{
+  GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
+
+  g_assert (priv->enabled);
+
+  if (data && size)
+    g_debug ("Clipboard[SelectionTransfer]: Request for serial %u was successful", serial);
+  else
+    g_debug ("Clipboard[SelectionTransfer]: Request for serial %u failed", serial);
+
+  grd_session_selection_write (priv->session, serial, data, size);
+}
+
+void
 grd_clipboard_request_client_content_for_mime_type (GrdClipboard *clipboard,
                                                     GrdMimeType   mime_type,
-                                                    uint32_t     *size)
+                                                    unsigned int  serial)
 {
   GrdClipboardClass *klass = GRD_CLIPBOARD_GET_CLASS (clipboard);
   GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
   GrdMimeTypeTable *mime_type_table = NULL;
-  uint8_t *mime_type_content = NULL;
 
-  *size = 0;
+  g_assert (priv->enabled);
 
-  if (!klass->request_client_content_for_mime_type)
-    return NULL;
+  g_return_if_fail (klass->request_client_content_for_mime_type);
 
   g_debug ("Clipboard[SelectionTransfer]: Requesting data from clients clipboard"
-           " (mime type: %s)", grd_mime_type_to_string (mime_type));
+           " (mime type: %s, serial: %u)",
+           grd_mime_type_to_string (mime_type), serial);
   mime_type_table = g_hash_table_lookup (priv->client_mime_type_tables,
                                          GUINT_TO_POINTER (mime_type));
-  if (mime_type_table)
+  if (!mime_type_table)
     {
-      mime_type_content = klass->request_client_content_for_mime_type (
-                            clipboard, mime_type_table, size);
+      grd_clipboard_submit_client_content_for_mime_type (clipboard, serial,
+                                                         NULL, 0);
+      return;
     }
-  if (mime_type_content)
-    g_debug ("Clipboard[SelectionTransfer]: Request successful");
-  else
-    g_debug ("Clipboard[SelectionTransfer]: Request failed");
 
-  return mime_type_content;
+  klass->request_client_content_for_mime_type (clipboard, mime_type_table,
+                                               serial);
 }
 
 static void

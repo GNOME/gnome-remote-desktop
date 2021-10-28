@@ -819,10 +819,10 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
   return dst_data;
 }
 
-static uint8_t *
+static void
 grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipboard,
                                                         GrdMimeTypeTable *mime_type_table,
-                                                        uint32_t         *size)
+                                                        unsigned int      serial)
 {
   GrdClipboardRdp *clipboard_rdp = GRD_CLIPBOARD_RDP (clipboard);
   GrdRdpFuseClipboard *rdp_fuse_clipboard = clipboard_rdp->rdp_fuse_clipboard;
@@ -833,9 +833,12 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
   uint32_t src_size, dst_size;
   uint32_t clip_data_id = 0;
 
-  *size = 0;
   if (mime_type == GRD_MIME_TYPE_NONE)
-    return NULL;
+    {
+      grd_clipboard_submit_client_content_for_mime_type (clipboard, serial,
+                                                         NULL, 0);
+      return;
+    }
 
   if (g_hash_table_contains (clipboard_rdp->format_data_cache,
                              GUINT_TO_POINTER (mime_type)))
@@ -844,13 +847,19 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
 
       format_data = g_hash_table_lookup (clipboard_rdp->format_data_cache,
                                          GUINT_TO_POINTER (mime_type));
-      *size = format_data->size;
 
-      return g_memdup2 (format_data->data, format_data->size);
+      grd_clipboard_submit_client_content_for_mime_type (clipboard, serial,
+                                                         format_data->data,
+                                                         format_data->size);
+      return;
     }
 
   if (WaitForSingleObject (completed_format_list_event, 0) == WAIT_TIMEOUT)
-    return NULL;
+    {
+      grd_clipboard_submit_client_content_for_mime_type (clipboard, serial,
+                                                         NULL, 0);
+      return;
+    }
 
   if (clipboard_rdp->cliprdr_context->canLockClipData &&
       (mime_type == GRD_MIME_TYPE_TEXT_URILIST ||
@@ -866,7 +875,9 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
            mime_type == GRD_MIME_TYPE_XS_GNOME_COPIED_FILES))
         grd_rdp_fuse_clipboard_clip_data_id_free (rdp_fuse_clipboard, clip_data_id);
 
-      return NULL;
+      grd_clipboard_submit_client_content_for_mime_type (clipboard, serial,
+                                                         NULL, 0);
+      return;
     }
 
   dst_data = NULL;
@@ -899,7 +910,7 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
     {
       FormatData *format_data = g_malloc0 (sizeof (FormatData));
 
-      format_data->size = *size = dst_size;
+      format_data->size = dst_size;
       format_data->data = dst_data;
 
       g_hash_table_insert (clipboard_rdp->format_data_cache,
@@ -909,7 +920,8 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
 
   g_free (src_data);
 
-  return g_memdup2 (dst_data, dst_size);
+  grd_clipboard_submit_client_content_for_mime_type (clipboard, serial,
+                                                     dst_data, dst_size);
 }
 
 static void

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015 Red Hat Inc.
- * Copyright (C) 2020 Pascal Nowack
+ * Copyright (C) 2020-2021 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -325,6 +325,59 @@ acquire_fd_from_list (GUnixFDList  *fd_list,
   return fd;
 }
 
+void
+grd_session_selection_write (GrdSession    *session,
+                             unsigned int   serial,
+                             const uint8_t *data,
+                             uint32_t       size)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  g_autoptr (GError) error = NULL;
+  g_autoptr (GVariant) fd_variant = NULL;
+  g_autoptr (GUnixFDList) fd_list = NULL;
+  int fd_idx;
+  int fd;
+
+  if (!data || !size)
+    {
+      grd_dbus_remote_desktop_session_call_selection_write_done (
+        priv->remote_desktop_session, serial, FALSE, NULL, NULL, NULL);
+      return;
+    }
+
+  if (!grd_dbus_remote_desktop_session_call_selection_write_sync (
+         priv->remote_desktop_session, serial, NULL, &fd_variant, &fd_list,
+         NULL, &error))
+    {
+      g_warning ("Failed to write selection for serial %u: %s",
+                 serial, error->message);
+      return;
+    }
+
+  g_variant_get (fd_variant, "h", &fd_idx);
+  fd = acquire_fd_from_list (fd_list, fd_idx, &error);
+  if (fd == -1)
+    {
+      g_warning ("Failed to acquire file descriptor for serial %u: %s",
+                 serial, error->message);
+      return;
+    }
+
+  if (write (fd, data, size) < 0)
+    {
+      grd_dbus_remote_desktop_session_call_selection_write_done (
+        priv->remote_desktop_session, serial, FALSE, NULL, NULL, NULL);
+
+      close (fd);
+      return;
+    }
+
+  grd_dbus_remote_desktop_session_call_selection_write_done (
+    priv->remote_desktop_session, serial, TRUE, NULL, NULL, NULL);
+
+  close (fd);
+}
+
 int
 grd_session_selection_read (GrdSession  *session,
                             GrdMimeType  mime_type)
@@ -617,13 +670,6 @@ on_remote_desktop_session_selection_transfer (GrdDBusRemoteDesktopSession *sessi
                                               GrdSession                  *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  uint8_t *data;
-  uint32_t size;
-  g_autoptr (GError) error = NULL;
-  g_autoptr (GVariant) fd_variant = NULL;
-  g_autoptr (GUnixFDList) fd_list = NULL;
-  int fd_idx;
-  int fd;
   GrdMimeType mime_type;
 
   if (!priv->clipboard)
@@ -637,39 +683,8 @@ on_remote_desktop_session_selection_transfer (GrdDBusRemoteDesktopSession *sessi
       return;
     }
 
-  if (!grd_dbus_remote_desktop_session_call_selection_write_sync (
-         priv->remote_desktop_session, serial, NULL, &fd_variant, &fd_list,
-         NULL, &error))
-    {
-      g_warning ("Failed to write selection: %s", error->message);
-      return;
-    }
-
-  g_variant_get (fd_variant, "h", &fd_idx);
-  fd = acquire_fd_from_list (fd_list, fd_idx, &error);
-  if (fd == -1)
-    {
-      g_warning ("Failed to acquire file descriptor: %s", error->message);
-      return;
-    }
-
-  data = grd_clipboard_request_client_content_for_mime_type (priv->clipboard,
-                                                             mime_type, &size);
-  if (!size || write (fd, data, size) < 0)
-    {
-      grd_dbus_remote_desktop_session_call_selection_write_done (
-        priv->remote_desktop_session, serial, FALSE, NULL, NULL, NULL);
-
-      close (fd);
-      g_free (data);
-      return;
-    }
-
-  grd_dbus_remote_desktop_session_call_selection_write_done (
-    priv->remote_desktop_session, serial, TRUE, NULL, NULL, NULL);
-
-  close (fd);
-  g_free (data);
+  grd_clipboard_request_client_content_for_mime_type (priv->clipboard,
+                                                      mime_type, serial);
 }
 
 static void

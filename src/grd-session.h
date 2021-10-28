@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015 Red Hat Inc.
- * Copyright (C) 2020 Pascal Nowack
+ * Copyright (C) 2020-2021 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -109,6 +109,11 @@ void grd_session_disable_clipboard (GrdSession *session);
 
 void grd_session_set_selection (GrdSession *session,
                                 GList      *mime_type_tables);
+
+void grd_session_selection_write (GrdSession    *session,
+                                  unsigned int   serial,
+                                  const uint8_t *data,
+                                  uint32_t       size);
 
 int grd_session_selection_read (GrdSession  *session,
                                 GrdMimeType  mime_type);

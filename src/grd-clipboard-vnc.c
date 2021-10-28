@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Pascal Nowack
+ * Copyright (C) 2020-2021 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -79,16 +79,17 @@ grd_clipboard_vnc_update_client_mime_type_list (GrdClipboard *clipboard,
   g_list_free (mime_type_list);
 }
 
-static uint8_t *
+static void
 grd_clipboard_vnc_request_client_content_for_mime_type (GrdClipboard     *clipboard,
                                                         GrdMimeTypeTable *mime_type_table,
-                                                        uint32_t         *size)
+                                                        unsigned int      serial)
 {
   GrdClipboardVnc *clipboard_vnc = GRD_CLIPBOARD_VNC (clipboard);
+  uint32_t size;
 
-  *size = strlen (clipboard_vnc->clipboard_utf8_string);
-
-  return g_memdup2 (clipboard_vnc->clipboard_utf8_string, *size);
+  size = strlen (clipboard_vnc->clipboard_utf8_string);
+  grd_clipboard_submit_client_content_for_mime_type (
+    clipboard, serial, (uint8_t *) clipboard_vnc->clipboard_utf8_string, size);
 }
 
 static void
