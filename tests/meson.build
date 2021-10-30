@@ -21,6 +21,9 @@ if have_vnc
   )
 endif
 
+gbm_dep = dependency('gbm')
+gudev_dep = dependency('gudev-1.0')
+
 egl_thread_test = executable(
   'egl-thread-test',
   sources: [
@@ -28,7 +31,12 @@ egl_thread_test = executable(
     '../src/grd-egl-thread.c',
     '../src/grd-egl-thread.h',
   ],
-  dependencies: deps,
+  dependencies: [
+    deps,
+    drm_dep,
+    gbm_dep,
+    gudev_dep,
+  ],
   include_directories: [
     src_includepath,
     configinc,

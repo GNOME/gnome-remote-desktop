@@ -22,11 +22,30 @@
 #define GRD_EGL_THREAD_H
 
 #include <glib.h>
+#include <stdint.h>
 
 typedef struct _GrdEglThread GrdEglThread;
+
+typedef void (* GrdEglThreadCallback) (gboolean success,
+                                       gpointer user_data);
 
 GrdEglThread * grd_egl_thread_new (GError **error);
 
 void grd_egl_thread_free (GrdEglThread *egl_thread);
+
+void grd_egl_thread_download (GrdEglThread         *egl_thread,
+                              uint8_t              *dst_data,
+                              int                   dst_row_width,
+                              uint32_t              format,
+                              unsigned int          width,
+                              unsigned int          height,
+                              uint32_t              n_planes,
+                              const int            *fds,
+                              const uint32_t       *strides,
+                              const uint32_t       *offsets,
+                              const uint64_t       *modifiers,
+                              GrdEglThreadCallback  callback,
+                              gpointer              user_data,
+                              GDestroyNotify        destroy);
 
 #endif /* GRD_EGL_THREAD_H */

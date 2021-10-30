@@ -24,6 +24,7 @@ systemd_dep = dependency('systemd', required: get_option('systemd'))
 libsecret_dep = dependency('libsecret-1')
 libnotify_dep = dependency('libnotify')
 epoxy_dep = dependency('epoxy')
+drm_dep = dependency('libdrm')
 
 have_rdp = get_option('rdp')
 have_vnc = get_option('vnc')
