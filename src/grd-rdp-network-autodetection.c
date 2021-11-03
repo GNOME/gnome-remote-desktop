@@ -166,9 +166,11 @@ update_ping_source (GrdRdpNetworkAutodetection *network_autodetection)
       g_clear_pointer (&network_autodetection->ping_source, g_source_unref);
     }
 
-  if (network_autodetection->rtt_consumers == GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE)
+  if (network_autodetection->rtt_consumers == GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE ||
+      network_autodetection->ping_interval == new_ping_interval_type)
     return;
 
+  g_assert (!network_autodetection->ping_source);
   emit_ping (network_autodetection);
 
   switch (new_ping_interval_type)
