@@ -22,6 +22,7 @@
 
 #include "grd-pipewire-utils.h"
 
+#include <drm_fourcc.h>
 #include <linux/dma-buf.h>
 #include <pipewire/pipewire.h>
 #include <spa/param/video/raw.h>
@@ -80,4 +81,36 @@ grd_sync_dma_buf (int      fd,
           break;
         }
     }
+}
+
+static struct
+{
+  enum spa_video_format spa_format;
+  uint32_t drm_format;
+  int bpp;
+} format_table[] = {
+  { SPA_VIDEO_FORMAT_ARGB, DRM_FORMAT_BGRA8888, 4 },
+  { SPA_VIDEO_FORMAT_BGRA, DRM_FORMAT_ARGB8888, 4 },
+  { SPA_VIDEO_FORMAT_xRGB, DRM_FORMAT_BGRX8888, 4 },
+  { SPA_VIDEO_FORMAT_BGRx, DRM_FORMAT_XRGB8888, 4 },
+};
+
+void
+grd_get_spa_format_details (enum spa_video_format  spa_format,
+                            uint32_t              *drm_format,
+                            int                   *bpp)
+{
+  int i;
+
+  for (i = 0; i < G_N_ELEMENTS (format_table); i++)
+    {
+      if (format_table[i].spa_format == spa_format)
+        {
+          *drm_format = format_table[i].drm_format;
+          *bpp = format_table[i].bpp;
+          return;
+        }
+    }
+
+  g_assert_not_reached ();
 }

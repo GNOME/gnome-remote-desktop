@@ -22,6 +22,7 @@
 
 #include <gio/gio.h>
 #include <stdint.h>
+#include <spa/param/video/format-utils.h>
 
 #include "grd-types.h"
 
@@ -43,5 +44,9 @@ gboolean grd_spa_pixel_format_to_grd_pixel_format (uint32_t        spa_format,
 
 void grd_sync_dma_buf (int      fd,
                        uint64_t start_or_end);
+
+void grd_get_spa_format_details (enum spa_video_format  spa_format,
+                                 uint32_t              *drm_format,
+                                 int                   *bpp);
 
 #endif /* GRD_PIPEWIRE_UTILS_H */

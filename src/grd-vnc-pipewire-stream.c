@@ -26,7 +26,6 @@
 #include <pipewire/pipewire.h>
 #include <spa/param/props.h>
 #include <spa/param/format-utils.h>
-#include <spa/param/video/format-utils.h>
 #include <spa/utils/result.h>
 #include <sys/mman.h>
 
@@ -347,38 +346,6 @@ copy_frame_data (GrdVncFrame *frame,
     }
 }
 
-static struct
-{
-  enum spa_video_format spa_format;
-  uint32_t drm_format;
-  int bpp;
-} format_table[] = {
-      { SPA_VIDEO_FORMAT_ARGB, DRM_FORMAT_BGRA8888, 4 },
-      { SPA_VIDEO_FORMAT_BGRA, DRM_FORMAT_ARGB8888, 4 },
-      { SPA_VIDEO_FORMAT_xRGB, DRM_FORMAT_BGRX8888, 4 },
-      { SPA_VIDEO_FORMAT_BGRx, DRM_FORMAT_XRGB8888, 4 },
-};
-
-static void
-get_spa_format_details (enum spa_video_format  spa_format,
-                        uint32_t              *drm_format,
-                        int                   *bpp)
-{
-  int i;
-
-  for (i = 0; i < G_N_ELEMENTS (format_table); i++)
-    {
-      if (format_table[i].spa_format == spa_format)
-        {
-          *drm_format = format_table[i].drm_format;
-          *bpp = format_table[i].bpp;
-          return;
-        }
-    }
-
-  g_assert_not_reached ();
-}
-
 static void
 on_dma_buf_downloaded (gboolean success,
                        gpointer user_data)
@@ -409,8 +376,8 @@ process_buffer (GrdVncPipeWireStream     *stream,
   width = stream->spa_format.size.width;
   dst_stride = grd_session_vnc_get_stride_for_width (stream->session,
                                                      width);
-  get_spa_format_details (stream->spa_format.format,
-                          &drm_format, &bpp);
+  grd_get_spa_format_details (stream->spa_format.format,
+                              &drm_format, &bpp);
 
   frame = grd_vnc_frame_new (stream, callback, user_data);
 
