@@ -43,6 +43,8 @@ static guint signals[N_SIGNALS];
 
 typedef struct _GrdRdpFrame
 {
+  gatomicrefcount refcount;
+
   void *data;
   uint16_t width;
   uint16_t height;
@@ -83,6 +85,33 @@ struct _GrdRdpPipeWireStream
 G_DEFINE_TYPE (GrdRdpPipeWireStream, grd_rdp_pipewire_stream,
                G_TYPE_OBJECT)
 
+static void grd_rdp_frame_unref (GrdRdpFrame *frame);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdRdpFrame, grd_rdp_frame_unref)
+
+static GrdRdpFrame *
+grd_rdp_frame_new (void)
+{
+  GrdRdpFrame *frame;
+
+  frame = g_new0 (GrdRdpFrame, 1);
+
+  g_atomic_ref_count_init (&frame->refcount);
+
+  return frame;
+}
+
+static void
+grd_rdp_frame_unref (GrdRdpFrame *frame)
+{
+  if (g_atomic_ref_count_dec (&frame->refcount))
+    {
+      g_free (frame->data);
+      g_free (frame->pointer_bitmap);
+      g_free (frame);
+    }
+}
+
 static gboolean
 do_render (gpointer user_data)
 {
@@ -98,7 +127,8 @@ do_render (gpointer user_data)
 
   if (frame->data)
     {
-      grd_session_rdp_take_buffer (stream->session_rdp, frame->data,
+      grd_session_rdp_take_buffer (stream->session_rdp,
+                                   g_steal_pointer (&frame->data),
                                    frame->width, frame->height);
     }
 
@@ -109,14 +139,14 @@ do_render (gpointer user_data)
                                       frame->pointer_hotspot_y,
                                       frame->pointer_width,
                                       frame->pointer_height,
-                                      frame->pointer_bitmap);
+                                      g_steal_pointer (&frame->pointer_bitmap));
     }
   else if (frame->pointer_is_hidden)
     {
       grd_session_rdp_hide_pointer (stream->session_rdp);
     }
 
-  g_free (frame);
+  grd_rdp_frame_unref (frame);
 
   return G_SOURCE_CONTINUE;
 }
@@ -285,9 +315,9 @@ process_buffer (GrdRdpPipeWireStream *stream,
   uint8_t *map;
   void *src_data;
   struct spa_meta_cursor *spa_meta_cursor;
-  g_autofree GrdRdpFrame *frame = NULL;
+  g_autoptr (GrdRdpFrame) frame = NULL;
 
-  frame = g_new0 (GrdRdpFrame, 1);
+  frame = grd_rdp_frame_new ();
 
   if (buffer->datas[0].chunk->size == 0)
     {
@@ -463,9 +493,7 @@ on_stream_process (void *user_data)
       if (!frame->has_pointer_data && pending_frame->has_pointer_data)
         take_pointer_data_from (pending_frame, frame);
 
-      g_free (pending_frame->data);
-      g_free (pending_frame->pointer_bitmap);
-      g_free (pending_frame);
+      grd_rdp_frame_unref (pending_frame);
     }
   stream->pending_frame = frame;
   g_mutex_unlock (&stream->frame_mutex);
@@ -646,12 +674,7 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
       g_clear_pointer (&stream->render_source, g_source_unref);
     }
 
-  if (stream->pending_frame)
-    {
-      g_free (stream->pending_frame->data);
-      g_free (stream->pending_frame->pointer_bitmap);
-      g_clear_pointer (&stream->pending_frame, g_free);
-    }
+  g_clear_pointer (&stream->pending_frame, grd_rdp_frame_unref);
 
   g_mutex_clear (&stream->frame_mutex);
 
