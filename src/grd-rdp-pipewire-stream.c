@@ -437,6 +437,7 @@ on_stream_process (void *user_data)
   struct pw_buffer *next_buffer;
   struct pw_buffer *buffer = NULL;
   GrdRdpFrame *frame;
+  GrdRdpFrame *pending_frame;
 
   next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
   while (next_buffer)
@@ -454,16 +455,17 @@ on_stream_process (void *user_data)
 
   g_assert (frame);
   g_mutex_lock (&stream->frame_mutex);
-  if (stream->pending_frame)
+  pending_frame = g_steal_pointer (&stream->pending_frame);
+  if (pending_frame)
     {
-      if (!frame->data && stream->pending_frame->data)
-        take_frame_data_from (stream->pending_frame, frame);
-      if (!frame->has_pointer_data && stream->pending_frame->has_pointer_data)
-        take_pointer_data_from (stream->pending_frame, frame);
+      if (!frame->data && pending_frame->data)
+        take_frame_data_from (pending_frame, frame);
+      if (!frame->has_pointer_data && pending_frame->has_pointer_data)
+        take_pointer_data_from (pending_frame, frame);
 
-      g_free (stream->pending_frame->data);
-      g_free (stream->pending_frame->pointer_bitmap);
-      g_clear_pointer (&stream->pending_frame, g_free);
+      g_free (pending_frame->data);
+      g_free (pending_frame->pointer_bitmap);
+      g_free (pending_frame);
     }
   stream->pending_frame = frame;
   g_mutex_unlock (&stream->frame_mutex);
