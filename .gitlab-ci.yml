@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora:33@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 34
-    BASE_TAG: '2021-08-06.1'
+    BASE_TAG: '2021-11-05.1'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -19,6 +19,8 @@ stages:
       # To build
       dnf install -y meson &&
       dnf builddep -y gnome-remote-desktop &&
+      dnf install -y 'pkgconfig(epoxy)' 'pkgconfig(libdrm)' 'pkgconfig(gbm)' \
+                     'pkgconfig(gudev-1.0)' &&
 
       # To test
       dnf install -y 'pkgconfig(libvncclient)' &&
