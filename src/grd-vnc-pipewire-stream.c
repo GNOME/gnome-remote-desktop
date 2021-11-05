@@ -424,25 +424,29 @@ on_frame_ready (GrdVncPipeWireStream *stream,
                 GrdVncFrame          *frame,
                 gpointer              user_data)
 {
+  GrdVncFrame *pending_frame;
   struct pw_buffer *buffer = user_data;
 
   g_assert (frame);
+
   g_mutex_lock (&stream->frame_mutex);
-  if (stream->pending_frame)
+
+  pending_frame = g_steal_pointer (&stream->pending_frame);
+  if (pending_frame)
     {
-      if (!frame->data && stream->pending_frame->data)
-        frame->data = g_steal_pointer (&stream->pending_frame->data);
-      if (!frame->rfb_cursor && stream->pending_frame->rfb_cursor)
-        frame->rfb_cursor = g_steal_pointer (&stream->pending_frame->rfb_cursor);
-      if (!frame->cursor_moved && stream->pending_frame->cursor_moved)
+      if (!frame->data && pending_frame->data)
+        frame->data = g_steal_pointer (&pending_frame->data);
+      if (!frame->rfb_cursor && pending_frame->rfb_cursor)
+        frame->rfb_cursor = g_steal_pointer (&pending_frame->rfb_cursor);
+      if (!frame->cursor_moved && pending_frame->cursor_moved)
         {
-          frame->cursor_x = stream->pending_frame->cursor_x;
-          frame->cursor_y = stream->pending_frame->cursor_y;
+          frame->cursor_x = pending_frame->cursor_x;
+          frame->cursor_y = pending_frame->cursor_y;
           frame->cursor_moved = TRUE;
         }
 
       g_free (stream->pending_frame->data);
-      g_clear_pointer (&stream->pending_frame, g_free);
+      g_free (pending_frame);
     }
   if (!stream->pending_frame_source)
     {
