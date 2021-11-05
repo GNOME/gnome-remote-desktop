@@ -45,6 +45,8 @@ static guint signals[N_SIGNALS];
 
 typedef struct _GrdVncFrame
 {
+  gatomicrefcount refcount;
+
   void *data;
   rfbCursorPtr rfb_cursor;
   gboolean cursor_moved;
@@ -82,6 +84,10 @@ struct _GrdVncPipeWireStream
 
 G_DEFINE_TYPE (GrdVncPipeWireStream, grd_vnc_pipewire_stream,
                G_TYPE_OBJECT)
+
+static void grd_vnc_frame_unref (GrdVncFrame *frame);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdVncFrame, grd_vnc_frame_unref)
 
 static gboolean
 pipewire_loop_source_prepare (GSource *base,
@@ -221,6 +227,29 @@ on_stream_param_changed (void                 *user_data,
                            params, G_N_ELEMENTS (params));
 }
 
+static GrdVncFrame *
+grd_vnc_frame_new (void)
+{
+  GrdVncFrame *frame;
+
+  frame = g_new0 (GrdVncFrame, 1);
+
+  g_atomic_ref_count_init (&frame->refcount);
+
+  return frame;
+}
+
+static void
+grd_vnc_frame_unref (GrdVncFrame *frame)
+{
+  if (g_atomic_ref_count_dec (&frame->refcount))
+    {
+      g_free (frame->data);
+      g_clear_pointer (&frame->rfb_cursor, rfbFreeCursor);
+      g_free (frame);
+    }
+}
+
 static gboolean
 do_render (gpointer user_data)
 {
@@ -236,14 +265,15 @@ do_render (gpointer user_data)
 
   if (grd_session_vnc_is_client_gone (stream->session))
     {
-      g_free (frame->data);
-      g_clear_pointer (&frame->rfb_cursor, rfbFreeCursor);
-      g_free (frame);
+      grd_vnc_frame_unref (frame);
       return G_SOURCE_CONTINUE;
     }
 
   if (frame->rfb_cursor)
-    grd_session_vnc_set_cursor (stream->session, frame->rfb_cursor);
+    {
+      grd_session_vnc_set_cursor (stream->session,
+                                  g_steal_pointer (&frame->rfb_cursor));
+    }
 
   if (frame->cursor_moved)
     {
@@ -253,11 +283,16 @@ do_render (gpointer user_data)
     }
 
   if (frame->data)
-    grd_session_vnc_take_buffer (stream->session, frame->data);
+    {
+      grd_session_vnc_take_buffer (stream->session,
+                                   g_steal_pointer (&frame->data));
+    }
   else
-    grd_session_vnc_flush (stream->session);
+    {
+      grd_session_vnc_flush (stream->session);
+    }
 
-  g_free (frame);
+  grd_vnc_frame_unref (frame);
 
   return G_SOURCE_CONTINUE;
 }
@@ -272,9 +307,9 @@ process_buffer (GrdVncPipeWireStream     *stream,
   uint8_t *map;
   void *src_data;
   struct spa_meta_cursor *spa_meta_cursor;
-  g_autofree GrdVncFrame *frame = NULL;
+  g_autoptr (GrdVncFrame) frame = NULL;
 
-  frame = g_new0 (GrdVncFrame, 1);
+  frame = grd_vnc_frame_new ();
 
   if (buffer->datas[0].chunk->size == 0)
     {
@@ -401,7 +436,7 @@ process_buffer (GrdVncPipeWireStream     *stream,
       frame->cursor_y = spa_meta_cursor->position.y;
     }
 
-  callback (stream, frame, user_data);
+  callback (stream, g_steal_pointer (&frame), user_data);
 }
 
 static gboolean
@@ -445,8 +480,7 @@ on_frame_ready (GrdVncPipeWireStream *stream,
           frame->cursor_moved = TRUE;
         }
 
-      g_free (stream->pending_frame->data);
-      g_free (pending_frame);
+      grd_vnc_frame_unref (pending_frame);
     }
   if (!stream->pending_frame_source)
     {
