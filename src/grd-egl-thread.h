@@ -24,7 +24,7 @@
 #include <glib.h>
 #include <stdint.h>
 
-typedef struct _GrdEglThread GrdEglThread;
+#include "grd-types.h"
 
 typedef void (* GrdEglThreadCallback) (gboolean success,
                                        gpointer user_data);

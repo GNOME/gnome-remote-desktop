@@ -60,6 +60,8 @@ GList * grd_context_get_sessions (GrdContext *context);
 
 GrdSettings * grd_context_get_settings (GrdContext *context);
 
+GrdEglThread * grd_context_get_egl_thread (GrdContext *context);
+
 GrdDebugFlags grd_context_get_debug_flags (GrdContext *context);
 
 #endif /* GRD_CONTEXT_H */
