@@ -314,16 +314,50 @@ on_stream_param_changed (void                 *user_data,
 }
 
 static void
+copy_frame_data (GrdRdpFrame *frame,
+                 uint8_t     *src_data,
+                 int          width,
+                 int          height,
+                 int          dst_stride,
+                 int          src_stride,
+                 int          bpp)
+{
+  int y;
+
+  frame->data = g_malloc (height * dst_stride);
+  for (y = 0; y < height; ++y)
+    {
+      memcpy (((uint8_t *) frame->data) + y * dst_stride,
+              ((uint8_t *) src_data) + y * src_stride,
+              width * 4);
+    }
+}
+
+static void
 process_buffer (GrdRdpPipeWireStream     *stream,
                 struct spa_buffer        *buffer,
                 GrdRdpFrameReadyCallback  callback,
                 gpointer                  user_data)
 {
+  uint32_t drm_format;
+  int bpp;
+  int width;
+  int height;
+  int src_stride;
+  int dst_stride;
   size_t size;
   uint8_t *map;
   void *src_data;
   struct spa_meta_cursor *spa_meta_cursor;
   g_autoptr (GrdRdpFrame) frame = NULL;
+
+  height = stream->spa_format.size.height;
+  width = stream->spa_format.size.width;
+  src_stride = buffer->datas[0].chunk->stride;
+  dst_stride = grd_session_rdp_get_stride_for_width (stream->session_rdp,
+                                                     width);
+  grd_get_spa_format_details (stream->spa_format.format,
+                              &drm_format, &bpp);
 
   frame = grd_rdp_frame_new ();
 
@@ -381,6 +415,8 @@ process_buffer (GrdRdpPipeWireStream     *stream,
           return;
         }
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
+      frame->width = width;
+      frame->height = height;
     }
   else if (buffer->datas[0].type == SPA_DATA_DmaBuf)
     {
@@ -399,12 +435,16 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       grd_sync_dma_buf (fd, DMA_BUF_SYNC_START);
 
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
+      frame->width = width;
+      frame->height = height;
     }
   else if (buffer->datas[0].type == SPA_DATA_MemPtr)
     {
       size = buffer->datas[0].maxsize + buffer->datas[0].mapoffset;
       map = NULL;
       src_data = buffer->datas[0].data;
+      frame->width = width;
+      frame->height = height;
     }
   else
     {
@@ -414,27 +454,12 @@ process_buffer (GrdRdpPipeWireStream     *stream,
 
   if (src_data)
     {
-      int src_stride;
-      int dst_stride;
-      int height;
-      int width;
-      int y;
-
-      height = stream->spa_format.size.height;
-      width = stream->spa_format.size.width;
-      src_stride = buffer->datas[0].chunk->stride;
-      dst_stride = grd_session_rdp_get_stride_for_width (stream->session_rdp,
-                                                         width);
-
-      frame->data = g_malloc (height * dst_stride);
-      for (y = 0; y < height; ++y)
-        {
-          memcpy (((uint8_t *) frame->data) + y * dst_stride,
-                  ((uint8_t *) src_data) + y * src_stride,
-                  width * 4);
-        }
-      frame->width = width;
-      frame->height = height;
+      copy_frame_data (frame,
+                       src_data,
+                       width, height,
+                       dst_stride,
+                       src_stride,
+                       bpp);
     }
 
   if (map)
