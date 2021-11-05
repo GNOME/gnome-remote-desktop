@@ -327,6 +327,44 @@ process_buffer (GrdRdpPipeWireStream     *stream,
 
   frame = grd_rdp_frame_new ();
 
+  spa_meta_cursor = spa_buffer_find_meta_data (buffer, SPA_META_Cursor,
+                                               sizeof *spa_meta_cursor);
+  if (spa_meta_cursor && spa_meta_cursor_is_valid (spa_meta_cursor))
+    {
+      struct spa_meta_bitmap *spa_meta_bitmap = NULL;
+      GrdPixelFormat format;
+
+      if (spa_meta_cursor->bitmap_offset)
+        {
+          spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
+                                        spa_meta_cursor->bitmap_offset,
+                                        struct spa_meta_bitmap);
+        }
+
+      if (spa_meta_bitmap &&
+          spa_meta_bitmap->size.width > 0 &&
+          spa_meta_bitmap->size.height > 0 &&
+          grd_spa_pixel_format_to_grd_pixel_format (spa_meta_bitmap->format,
+                                                    &format))
+        {
+          uint8_t *buf;
+
+          buf = SPA_MEMBER (spa_meta_bitmap, spa_meta_bitmap->offset, uint8_t);
+          frame->pointer_bitmap = g_memdup2 (buf, spa_meta_bitmap->size.height *
+                                                  spa_meta_bitmap->stride);
+          frame->pointer_hotspot_x = spa_meta_cursor->hotspot.x;
+          frame->pointer_hotspot_y = spa_meta_cursor->hotspot.y;
+          frame->pointer_width = spa_meta_bitmap->size.width;
+          frame->pointer_height = spa_meta_bitmap->size.height;
+          frame->has_pointer_data = TRUE;
+        }
+      else if (spa_meta_bitmap)
+        {
+          frame->pointer_is_hidden = TRUE;
+          frame->has_pointer_data = TRUE;
+        }
+    }
+
   if (buffer->datas[0].chunk->size == 0)
     {
       callback (stream, g_steal_pointer (&frame), user_data);
@@ -404,44 +442,6 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       if (buffer->datas[0].type == SPA_DATA_DmaBuf)
         grd_sync_dma_buf (buffer->datas[0].fd, DMA_BUF_SYNC_END);
       munmap (map, size);
-    }
-
-  spa_meta_cursor = spa_buffer_find_meta_data (buffer, SPA_META_Cursor,
-                                               sizeof *spa_meta_cursor);
-  if (spa_meta_cursor && spa_meta_cursor_is_valid (spa_meta_cursor))
-    {
-      struct spa_meta_bitmap *spa_meta_bitmap = NULL;
-      GrdPixelFormat format;
-
-      if (spa_meta_cursor->bitmap_offset)
-        {
-          spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
-                                        spa_meta_cursor->bitmap_offset,
-                                        struct spa_meta_bitmap);
-        }
-
-      if (spa_meta_bitmap &&
-          spa_meta_bitmap->size.width > 0 &&
-          spa_meta_bitmap->size.height > 0 &&
-          grd_spa_pixel_format_to_grd_pixel_format (spa_meta_bitmap->format,
-                                                    &format))
-        {
-          uint8_t *buf;
-
-          buf = SPA_MEMBER (spa_meta_bitmap, spa_meta_bitmap->offset, uint8_t);
-          frame->pointer_bitmap = g_memdup2 (buf, spa_meta_bitmap->size.height *
-                                                  spa_meta_bitmap->stride);
-          frame->pointer_hotspot_x = spa_meta_cursor->hotspot.x;
-          frame->pointer_hotspot_y = spa_meta_cursor->hotspot.y;
-          frame->pointer_width = spa_meta_bitmap->size.width;
-          frame->pointer_height = spa_meta_bitmap->size.height;
-          frame->has_pointer_data = TRUE;
-        }
-      else if (spa_meta_bitmap)
-        {
-          frame->pointer_is_hidden = TRUE;
-          frame->has_pointer_data = TRUE;
-        }
     }
 
   callback (stream, g_steal_pointer (&frame), user_data);
