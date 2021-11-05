@@ -9,6 +9,7 @@ deps = [
   libsecret_dep,
   libnotify_dep,
   epoxy_dep,
+  drm_dep,
 ]
 
 daemon_sources = files([
