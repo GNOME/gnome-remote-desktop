@@ -1770,8 +1770,10 @@ cliprdr_client_format_data_response (CliprdrServerContext               *cliprdr
   GrdClipboardRdp *clipboard_rdp = cliprdr_context->custom;
 
   if (clipboard_rdp->format_data_response)
-    g_free ((uint8_t *) clipboard_rdp->format_data_response->requestedFormatData);
-  g_clear_pointer (&clipboard_rdp->format_data_response, g_free);
+    {
+      g_free ((uint8_t *) clipboard_rdp->format_data_response->requestedFormatData);
+      g_clear_pointer (&clipboard_rdp->format_data_response, g_free);
+    }
 
   clipboard_rdp->format_data_response =
     g_memdup2 (format_data_response,
@@ -2078,8 +2080,10 @@ grd_clipboard_rdp_dispose (GObject *object)
     }
 
   if (clipboard_rdp->format_data_response)
-    g_free ((uint8_t *) clipboard_rdp->format_data_response->requestedFormatData);
-  g_clear_pointer (&clipboard_rdp->format_data_response, g_free);
+    {
+      g_free ((uint8_t *) clipboard_rdp->format_data_response->requestedFormatData);
+      g_clear_pointer (&clipboard_rdp->format_data_response, g_free);
+    }
 
   if (clipboard_rdp->clipboard_retrieval_id)
     g_clear_pointer (&clipboard_rdp->clipboard_retrieval_context.entry, g_free);
