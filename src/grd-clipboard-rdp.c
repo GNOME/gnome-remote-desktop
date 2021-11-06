@@ -836,7 +836,10 @@ grd_clipboard_rdp_submit_requested_server_content (GrdClipboard *clipboard,
                 }
             }
           if (!success || !dst_data)
-            g_warning ("[RDP.CLIPRDR] Converting clipboard content failed");
+            {
+              g_warning ("[RDP.CLIPRDR] Converting clipboard content for "
+                         "client failed");
+            }
         }
       else
         {
