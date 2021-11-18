@@ -2189,6 +2189,19 @@ grd_session_rdp_dispose (GObject *object)
   G_OBJECT_CLASS (grd_session_rdp_parent_class)->dispose (object);
 }
 
+static void
+grd_session_rdp_finalize (GObject *object)
+{
+  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
+
+  g_mutex_clear (&session_rdp->close_session_mutex);
+  g_mutex_clear (&session_rdp->rdp_flags_mutex);
+  g_mutex_clear (&session_rdp->pending_jobs_mutex);
+  g_cond_clear (&session_rdp->pending_jobs_cond);
+
+  G_OBJECT_CLASS (grd_session_rdp_parent_class)->finalize (object);
+}
+
 static gboolean
 are_pointer_bitmaps_equal (gconstpointer a,
                            gconstpointer b)
@@ -2277,6 +2290,7 @@ grd_session_rdp_class_init (GrdSessionRdpClass *klass)
   GrdSessionClass *session_class = GRD_SESSION_CLASS (klass);
 
   object_class->dispose = grd_session_rdp_dispose;
+  object_class->finalize = grd_session_rdp_finalize;
 
   session_class->remote_desktop_session_ready =
     grd_session_rdp_remote_desktop_session_ready;
