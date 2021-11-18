@@ -390,6 +390,16 @@ grd_rdp_event_queue_dispose (GObject *object)
 }
 
 static void
+grd_rdp_event_queue_finalize (GObject *object)
+{
+  GrdRdpEventQueue *rdp_event_queue = GRD_RDP_EVENT_QUEUE (object);
+
+  g_mutex_clear (&rdp_event_queue->event_mutex);
+
+  G_OBJECT_CLASS (grd_rdp_event_queue_parent_class)->finalize (object);
+}
+
+static void
 grd_rdp_event_queue_init (GrdRdpEventQueue *rdp_event_queue)
 {
   rdp_event_queue->queue = g_queue_new ();
@@ -406,4 +416,5 @@ grd_rdp_event_queue_class_init (GrdRdpEventQueueClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->dispose = grd_rdp_event_queue_dispose;
+  object_class->finalize = grd_rdp_event_queue_finalize;
 }
