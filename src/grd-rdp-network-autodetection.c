@@ -411,6 +411,19 @@ grd_rdp_network_autodetection_dispose (GObject *object)
 }
 
 static void
+grd_rdp_network_autodetection_finalize (GObject *object)
+{
+  GrdRdpNetworkAutodetection *network_autodetection =
+    GRD_RDP_NETWORK_AUTODETECTION (object);
+
+  g_mutex_clear (&network_autodetection->sequence_mutex);
+  g_mutex_clear (&network_autodetection->consumer_mutex);
+  g_mutex_clear (&network_autodetection->shutdown_mutex);
+
+  G_OBJECT_CLASS (grd_rdp_network_autodetection_parent_class)->finalize (object);
+}
+
+static void
 grd_rdp_network_autodetection_init (GrdRdpNetworkAutodetection *network_autodetection)
 {
   network_autodetection->sequences = g_hash_table_new (NULL, NULL);
@@ -428,4 +441,5 @@ grd_rdp_network_autodetection_class_init (GrdRdpNetworkAutodetectionClass *klass
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->dispose = grd_rdp_network_autodetection_dispose;
+  object_class->finalize = grd_rdp_network_autodetection_finalize;
 }
