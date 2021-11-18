@@ -1433,6 +1433,17 @@ grd_rdp_fuse_clipboard_dispose (GObject *object)
 }
 
 static void
+grd_rdp_fuse_clipboard_finalize (GObject *object)
+{
+  GrdRdpFuseClipboard *rdp_fuse_clipboard = GRD_RDP_FUSE_CLIPBOARD (object);
+
+  g_mutex_clear (&rdp_fuse_clipboard->selection_mutex);
+  g_mutex_clear (&rdp_fuse_clipboard->filesystem_mutex);
+
+  G_OBJECT_CLASS (grd_rdp_fuse_clipboard_parent_class)->finalize (object);
+}
+
+static void
 clip_data_entry_free (gpointer data)
 {
   ClipDataEntry *entry = data;
@@ -1550,4 +1561,5 @@ grd_rdp_fuse_clipboard_class_init (GrdRdpFuseClipboardClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->dispose = grd_rdp_fuse_clipboard_dispose;
+  object_class->finalize = grd_rdp_fuse_clipboard_finalize;
 }
