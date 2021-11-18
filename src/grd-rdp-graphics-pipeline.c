@@ -1332,6 +1332,16 @@ grd_rdp_graphics_pipeline_dispose (GObject *object)
   G_OBJECT_CLASS (grd_rdp_graphics_pipeline_parent_class)->dispose (object);
 }
 
+static void
+grd_rdp_graphics_pipeline_finalize (GObject *object)
+{
+  GrdRdpGraphicsPipeline *graphics_pipeline = GRD_RDP_GRAPHICS_PIPELINE (object);
+
+  g_mutex_clear (&graphics_pipeline->gfx_mutex);
+
+  G_OBJECT_CLASS (grd_rdp_graphics_pipeline_parent_class)->finalize (object);
+}
+
 static const char *
 rdpgfx_caps_version_to_string (uint32_t caps_version)
 {
@@ -1519,4 +1529,5 @@ grd_rdp_graphics_pipeline_class_init (GrdRdpGraphicsPipelineClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->dispose = grd_rdp_graphics_pipeline_dispose;
+  object_class->finalize = grd_rdp_graphics_pipeline_finalize;
 }
