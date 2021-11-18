@@ -448,6 +448,18 @@ grd_clipboard_dispose (GObject *object)
 }
 
 static void
+grd_clipboard_finalize (GObject *object)
+{
+  GrdClipboard *clipboard = GRD_CLIPBOARD (object);
+  GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
+
+  g_mutex_clear (&priv->pending_read_mutex);
+  g_cond_clear (&priv->pending_read_cond);
+
+  G_OBJECT_CLASS (grd_clipboard_parent_class)->finalize (object);
+}
+
+static void
 grd_clipboard_init (GrdClipboard *clipboard)
 {
   GrdClipboardPrivate *priv = grd_clipboard_get_instance_private (clipboard);
@@ -465,4 +477,5 @@ grd_clipboard_class_init (GrdClipboardClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->dispose = grd_clipboard_dispose;
+  object_class->finalize = grd_clipboard_finalize;
 }
