@@ -2153,8 +2153,8 @@ grd_clipboard_rdp_init (GrdClipboardRdp *clipboard_rdp)
     {
       if (mkdir (base_path, 0700))
         {
-          g_error ("Failed to create clipboard cache directory %s: %s",
-                   base_path, g_strerror (errno));
+          g_error ("Failed to create base runtime directory for "
+                   "gnome-remote-desktop: %s", g_strerror (errno));
         }
     }
   if (!mkdtemp (template_path))
