@@ -65,6 +65,7 @@ void
 grd_context_set_remote_desktop_proxy (GrdContext           *context,
                                       GrdDBusRemoteDesktop *proxy)
 {
+  g_clear_object (&context->remote_desktop_proxy);
   context->remote_desktop_proxy = proxy;
 }
 
@@ -72,6 +73,7 @@ void
 grd_context_set_screen_cast_proxy (GrdContext        *context,
                                    GrdDBusScreenCast *proxy)
 {
+  g_clear_object (&context->screen_cast_proxy);
   context->screen_cast_proxy = proxy;
 }
 
@@ -135,6 +137,8 @@ grd_context_finalize (GObject *object)
 {
   GrdContext *context = GRD_CONTEXT (object);
 
+  g_clear_object (&context->remote_desktop_proxy);
+  g_clear_object (&context->screen_cast_proxy);
   g_clear_object (&context->settings);
 
   G_OBJECT_CLASS (grd_context_parent_class)->finalize (object);
