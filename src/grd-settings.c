@@ -245,6 +245,7 @@ grd_settings_get_vnc_auth_method (GrdSettings *settings)
 static void
 update_rdp_tls_cert (GrdSettings *settings)
 {
+  g_clear_pointer (&settings->rdp.server_cert, g_free);
   settings->rdp.server_cert = g_settings_get_string (settings->rdp.settings,
                                                      "tls-cert");
 }
@@ -252,6 +253,7 @@ update_rdp_tls_cert (GrdSettings *settings)
 static void
 update_rdp_tls_key (GrdSettings *settings)
 {
+  g_clear_pointer (&settings->rdp.server_key, g_free);
   settings->rdp.server_key = g_settings_get_string (settings->rdp.settings,
                                                     "tls-key");
 }
@@ -320,6 +322,9 @@ static void
 grd_settings_finalize (GObject *object)
 {
   GrdSettings *settings = GRD_SETTINGS (object);
+
+  g_clear_pointer (&settings->rdp.server_cert, g_free);
+  g_clear_pointer (&settings->rdp.server_key, g_free);
 
   g_clear_object (&settings->rdp.settings);
   g_clear_object (&settings->vnc.settings);
