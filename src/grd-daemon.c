@@ -311,6 +311,8 @@ grd_daemon_shutdown (GApplication *app)
   g_bus_unwatch_name (daemon->screen_cast_watch_name_id);
   daemon->screen_cast_watch_name_id = 0;
 
+  g_clear_object (&daemon->context);
+
   G_APPLICATION_CLASS (grd_daemon_parent_class)->shutdown (app);
 }
 
