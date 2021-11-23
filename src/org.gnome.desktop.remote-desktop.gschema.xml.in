@@ -32,21 +32,21 @@
       <default>true</default>
       <summary>Only allow remote connections to view the screen content</summary>
       <description>
-	When view-only is true, remote VNC connections cannot manipulate input
-	devices (e.g. mouse and keyboard).
+        When view-only is true, remote VNC connections cannot manipulate input
+        devices (e.g. mouse and keyboard).
       </description>
     </key>
     <key name='auth-method' enum='org.gnome.desktop.remote-desktop.GrdVncAuthMethod'>
       <default>'prompt'</default>
       <summary>Method used to authenticate VNC connections</summary>
       <description>
-	The VNC authentication method describes how a remote connection is
-	authenticated. It can currently be done in two different ways:
+        The VNC authentication method describes how a remote connection is
+        authenticated. It can currently be done in two different ways:
 
-	 * prompt   - by prompting the user for each new connection, requiring a
-		      person with physical access to the workstation to
-		      explicitly approve the new connection.
-	 * password - by requiring the remote client to provide a known password
+         * prompt   - by prompting the user for each new connection, requiring a
+                      person with physical access to the workstation to
+                      explicitly approve the new connection.
+         * password - by requiring the remote client to provide a known password
       </description>
     </key>
   </schema>
