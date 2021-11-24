@@ -32,6 +32,7 @@
 
 enum
 {
+  RDP_SCREEN_SHARE_MODE_CHANGED,
   RDP_SERVER_CERT_CHANGED,
   RDP_SERVER_KEY_CHANGED,
   RDP_VIEW_ONLY_CHANGED,
@@ -50,6 +51,8 @@ struct _GrdSettings
 
   struct {
     GSettings *settings;
+
+    GrdRdpScreenShareMode screen_share_mode;
     char *server_cert;
     char *server_key;
     gboolean view_only;
@@ -119,6 +122,12 @@ grd_settings_override_vnc_port (GrdSettings *settings,
                                 int          port)
 {
   settings->vnc.port = port;
+}
+
+GrdRdpScreenShareMode
+grd_settings_get_screen_share_mode (GrdSettings *settings)
+{
+  return settings->rdp.screen_share_mode;
 }
 
 char *
@@ -249,6 +258,13 @@ grd_settings_get_vnc_auth_method (GrdSettings *settings)
 }
 
 static void
+update_screen_share_mode (GrdSettings *settings)
+{
+  settings->rdp.screen_share_mode =
+    g_settings_get_enum (settings->rdp.settings, "screen-share-mode");
+}
+
+static void
 update_rdp_tls_cert (GrdSettings *settings)
 {
   g_clear_pointer (&settings->rdp.server_cert, g_free);
@@ -290,6 +306,11 @@ on_rdp_settings_changed (GSettings   *rdp_settings,
                          const char  *key,
                          GrdSettings *settings)
 {
+  if (strcmp (key, "screen-share-mode") == 0)
+    {
+      update_screen_share_mode (settings);
+      g_signal_emit (settings, signals[RDP_SCREEN_SHARE_MODE_CHANGED], 0);
+    }
   if (strcmp (key, "tls-cert") == 0)
     {
       update_rdp_tls_cert (settings);
@@ -348,6 +369,7 @@ grd_settings_init (GrdSettings *settings)
   g_signal_connect (settings->vnc.settings, "changed",
                     G_CALLBACK (on_vnc_settings_changed), settings);
 
+  update_screen_share_mode (settings);
   update_rdp_tls_cert (settings);
   update_rdp_tls_key (settings);
   update_rdp_view_only (settings);
@@ -365,6 +387,13 @@ grd_settings_class_init (GrdSettingsClass *klass)
 
   object_class->finalize = grd_settings_finalize;
 
+  signals[RDP_SCREEN_SHARE_MODE_CHANGED] =
+    g_signal_new ("rdp-screen-share-mode-changed",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL, NULL,
+                  G_TYPE_NONE, 0);
   signals[RDP_SERVER_CERT_CHANGED] =
     g_signal_new ("rdp-tls-cert-changed",
                   G_TYPE_FROM_CLASS (klass),

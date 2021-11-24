@@ -23,6 +23,12 @@
 
 typedef enum
 {
+  GRD_RDP_SCREEN_SHARE_MODE_MIRROR_PRIMARY,
+  GRD_RDP_SCREEN_SHARE_MODE_EXTEND,
+} GrdRdpScreenShareMode;
+
+typedef enum
+{
   GRD_VNC_AUTH_METHOD_PROMPT,
   GRD_VNC_AUTH_METHOD_PASSWORD
 } GrdVncAuthMethod;
