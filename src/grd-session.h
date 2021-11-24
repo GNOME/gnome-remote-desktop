@@ -64,6 +64,7 @@ struct _GrdSessionClass
   GObjectClass parent_class;
 
   void (*remote_desktop_session_ready) (GrdSession *session);
+  void (*remote_desktop_session_started) (GrdSession *session);
   void (*stream_ready) (GrdSession *session,
                         GrdStream  *stream);
   void (*stop) (GrdSession *session);

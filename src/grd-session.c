@@ -449,6 +449,7 @@ on_session_start_finished (GObject      *object,
   GrdDBusRemoteDesktopSession *proxy;
   GrdSession *session;
   GrdSessionPrivate *priv;
+  GrdSessionClass *klass;
   g_autoptr (GError) error = NULL;
 
   proxy = GRD_DBUS_REMOTE_DESKTOP_SESSION (object);
@@ -466,8 +467,12 @@ on_session_start_finished (GObject      *object,
 
   session = GRD_SESSION (user_data);
   priv = grd_session_get_instance_private (session);
+  klass = GRD_SESSION_GET_CLASS (session);
 
   priv->started = TRUE;
+
+  if (klass->remote_desktop_session_started)
+    klass->remote_desktop_session_started (session);
 }
 
 static void
