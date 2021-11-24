@@ -42,9 +42,6 @@ void grd_maybe_initialize_pipewire (void);
 gboolean grd_spa_pixel_format_to_grd_pixel_format (uint32_t        spa_format,
                                                    GrdPixelFormat *out_format);
 
-void grd_sync_dma_buf (int      fd,
-                       uint64_t start_or_end);
-
 void grd_get_spa_format_details (enum spa_video_format  spa_format,
                                  uint32_t              *drm_format,
                                  int                   *bpp);

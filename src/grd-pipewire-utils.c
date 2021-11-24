@@ -23,11 +23,8 @@
 #include "grd-pipewire-utils.h"
 
 #include <drm_fourcc.h>
-#include <linux/dma-buf.h>
 #include <pipewire/pipewire.h>
 #include <spa/param/video/raw.h>
-#include <sys/ioctl.h>
-#include <errno.h>
 
 static gboolean is_pipewire_initialized = FALSE;
 
@@ -51,36 +48,6 @@ grd_spa_pixel_format_to_grd_pixel_format (uint32_t        spa_format,
     return FALSE;
 
   return TRUE;
-}
-
-void
-grd_sync_dma_buf (int      fd,
-                  uint64_t start_or_end)
-{
-  struct dma_buf_sync sync = { 0 };
-
-  sync.flags = start_or_end | DMA_BUF_SYNC_READ;
-
-  while (TRUE)
-    {
-      int ret;
-
-      ret = ioctl (fd, DMA_BUF_IOCTL_SYNC, &sync);
-      if (ret == -1 && errno == EINTR)
-        {
-          continue;
-        }
-      else if (ret == -1)
-        {
-          g_warning ("Failed to synchronize DMA buffer: %s",
-                     g_strerror (errno));
-          break;
-        }
-      else
-        {
-          break;
-        }
-    }
 }
 
 static struct
