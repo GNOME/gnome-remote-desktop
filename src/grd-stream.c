@@ -41,6 +41,8 @@ typedef struct _GrdStreamPrivate
   uint32_t pipewire_node_id;
 
   GrdDBusScreenCastStream *proxy;
+
+  unsigned long pipewire_stream_added_id;
 } GrdStreamPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdStream, grd_stream, G_TYPE_OBJECT)
@@ -59,6 +61,14 @@ grd_stream_get_object_path (GrdStream *stream)
   GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
 
   return g_dbus_proxy_get_object_path (G_DBUS_PROXY (priv->proxy));
+}
+
+void
+grd_stream_disconnect_proxy_signals (GrdStream *stream)
+{
+  GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
+
+  g_clear_signal_handler (&priv->pipewire_stream_added_id, priv->proxy);
 }
 
 static void
@@ -85,9 +95,10 @@ grd_stream_new (GrdContext              *context,
 
   priv->context = context;
   priv->proxy = proxy;
-  g_signal_connect (proxy, "pipewire-stream-added",
-                    G_CALLBACK (on_pipewire_stream_added),
-                    stream);
+  priv->pipewire_stream_added_id =
+    g_signal_connect (proxy, "pipewire-stream-added",
+                      G_CALLBACK (on_pipewire_stream_added),
+                      stream);
 
   return stream;
 }
