@@ -32,7 +32,7 @@ struct _GrdClipboardVnc
   char *clipboard_utf8_string;
 };
 
-G_DEFINE_TYPE (GrdClipboardVnc, grd_clipboard_vnc, GRD_TYPE_CLIPBOARD);
+G_DEFINE_TYPE (GrdClipboardVnc, grd_clipboard_vnc, GRD_TYPE_CLIPBOARD)
 
 static void
 grd_clipboard_vnc_update_client_mime_type_list (GrdClipboard *clipboard,

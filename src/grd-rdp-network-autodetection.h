@@ -25,7 +25,7 @@
 
 #define GRD_TYPE_RDP_NETWORK_AUTODETECTION (grd_rdp_network_autodetection_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpNetworkAutodetection, grd_rdp_network_autodetection,
-                      GRD, RDP_NETWORK_AUTODETECTION, GObject);
+                      GRD, RDP_NETWORK_AUTODETECTION, GObject)
 
 typedef enum _GrdRdpNwAutodetectRTTConsumer
 {

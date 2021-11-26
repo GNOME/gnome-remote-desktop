@@ -30,7 +30,7 @@
 typedef struct _GrdDaemon GrdDaemon;
 
 #define GRD_TYPE_DAEMON (grd_daemon_get_type ())
-G_DECLARE_FINAL_TYPE (GrdDaemon, grd_daemon, GRD, DAEMON, GApplication);
+G_DECLARE_FINAL_TYPE (GrdDaemon, grd_daemon, GRD, DAEMON, GApplication)
 
 GrdDBusRemoteDesktop *grd_daemon_get_dbus_proxy (GrdDaemon *daemon);
 

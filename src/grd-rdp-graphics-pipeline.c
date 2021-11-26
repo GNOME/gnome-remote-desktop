@@ -108,7 +108,7 @@ struct _GrdRdpGraphicsPipeline
   uint32_t next_serial;
 };
 
-G_DEFINE_TYPE (GrdRdpGraphicsPipeline, grd_rdp_graphics_pipeline, G_TYPE_OBJECT);
+G_DEFINE_TYPE (GrdRdpGraphicsPipeline, grd_rdp_graphics_pipeline, G_TYPE_OBJECT)
 
 #ifdef HAVE_NVENC
 void

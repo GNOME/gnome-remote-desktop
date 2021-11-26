@@ -32,7 +32,7 @@
 G_DECLARE_FINAL_TYPE (GrdVncServer,
                       grd_vnc_server,
                       GRD, VNC_SERVER,
-                      GSocketService);
+                      GSocketService)
 
 GrdContext *grd_vnc_server_get_context (GrdVncServer *vnc_server);
 

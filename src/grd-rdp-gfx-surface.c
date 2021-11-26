@@ -62,7 +62,7 @@ struct _GrdRdpGfxSurface
   uint32_t deactivate_throttling_th;
 };
 
-G_DEFINE_TYPE (GrdRdpGfxSurface, grd_rdp_gfx_surface, G_TYPE_OBJECT);
+G_DEFINE_TYPE (GrdRdpGfxSurface, grd_rdp_gfx_surface, G_TYPE_OBJECT)
 
 uint16_t
 grd_rdp_gfx_surface_get_surface_id (GrdRdpGfxSurface *gfx_surface)

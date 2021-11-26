@@ -160,7 +160,7 @@ struct _GrdSessionRdp
   GrdRdpPipeWireStream *pipewire_stream;
 };
 
-G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION);
+G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION)
 
 static gboolean
 close_session_idle (gpointer user_data);

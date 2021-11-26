@@ -33,7 +33,7 @@ struct _GrdRdpGfxFrameLog
   GHashTable *tracked_frames;
 };
 
-G_DEFINE_TYPE (GrdRdpGfxFrameLog, grd_rdp_gfx_frame_log, G_TYPE_OBJECT);
+G_DEFINE_TYPE (GrdRdpGfxFrameLog, grd_rdp_gfx_frame_log, G_TYPE_OBJECT)
 
 static void
 track_enc_frame_info (GrdRdpGfxFrameLog *frame_log,

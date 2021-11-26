@@ -25,7 +25,7 @@
 
 #define GRD_TYPE_RDP_NVENC (grd_rdp_nvenc_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpNvenc, grd_rdp_nvenc,
-                      GRD, RDP_NVENC, GObject);
+                      GRD, RDP_NVENC, GObject)
 
 GrdRdpNvenc *grd_rdp_nvenc_new (void);
 

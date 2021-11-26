@@ -29,7 +29,7 @@
 G_DECLARE_FINAL_TYPE (GrdRdpServer,
                       grd_rdp_server,
                       GRD, RDP_SERVER,
-                      GSocketService);
+                      GSocketService)
 
 GrdContext *grd_rdp_server_get_context (GrdRdpServer *rdp_server);
 

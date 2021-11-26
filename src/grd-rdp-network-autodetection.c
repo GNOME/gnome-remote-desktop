@@ -71,7 +71,9 @@ struct _GrdRdpNetworkAutodetection
   uint16_t next_sequence_number;
 };
 
-G_DEFINE_TYPE (GrdRdpNetworkAutodetection, grd_rdp_network_autodetection, G_TYPE_OBJECT);
+G_DEFINE_TYPE (GrdRdpNetworkAutodetection,
+               grd_rdp_network_autodetection,
+               G_TYPE_OBJECT)
 
 void
 grd_rdp_network_autodetection_invoke_shutdown (GrdRdpNetworkAutodetection *network_autodetection)

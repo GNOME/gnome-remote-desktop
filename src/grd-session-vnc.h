@@ -34,7 +34,7 @@
 G_DECLARE_FINAL_TYPE (GrdSessionVnc,
                       grd_session_vnc,
                       GRD, SESSION_VNC,
-                      GrdSession);
+                      GrdSession)
 
 GrdSessionVnc *grd_session_vnc_new (GrdVncServer      *vnc_server,
                                     GSocketConnection *connection);

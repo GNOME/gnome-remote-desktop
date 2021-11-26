@@ -50,7 +50,7 @@ struct _GrdVncServer
   GrdContext *context;
 };
 
-G_DEFINE_TYPE (GrdVncServer, grd_vnc_server, G_TYPE_SOCKET_SERVICE);
+G_DEFINE_TYPE (GrdVncServer, grd_vnc_server, G_TYPE_SOCKET_SERVICE)
 
 GrdContext *
 grd_vnc_server_get_context (GrdVncServer *vnc_server)

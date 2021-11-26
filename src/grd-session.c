@@ -78,7 +78,7 @@ typedef struct _GrdSessionPrivate
   gulong num_lock_state_changed_id;
 } GrdSessionPrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (GrdSession, grd_session, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (GrdSession, grd_session, G_TYPE_OBJECT)
 
 GrdContext *
 grd_session_get_context (GrdSession *session)

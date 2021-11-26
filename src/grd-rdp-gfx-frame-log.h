@@ -27,7 +27,7 @@
 
 #define GRD_TYPE_RDP_GFX_FRAME_LOG (grd_rdp_gfx_frame_log_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpGfxFrameLog, grd_rdp_gfx_frame_log,
-                      GRD, RDP_GFX_FRAME_LOG, GObject);
+                      GRD, RDP_GFX_FRAME_LOG, GObject)
 
 GrdRdpGfxFrameLog *grd_rdp_gfx_frame_log_new (void);
 

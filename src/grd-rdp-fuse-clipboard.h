@@ -29,7 +29,7 @@
 
 #define GRD_TYPE_RDP_FUSE_CLIPBOARD (grd_rdp_fuse_clipboard_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpFuseClipboard, grd_rdp_fuse_clipboard,
-                      GRD, RDP_FUSE_CLIPBOARD, GObject);
+                      GRD, RDP_FUSE_CLIPBOARD, GObject)
 
 GrdRdpFuseClipboard *grd_rdp_fuse_clipboard_new (GrdClipboardRdp *clipboard_rdp,
                                                  const char      *mount_path);

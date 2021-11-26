@@ -28,7 +28,7 @@
 G_DECLARE_FINAL_TYPE (GrdClipboardRdp,
                       grd_clipboard_rdp,
                       GRD, CLIPBOARD_RDP,
-                      GrdClipboard);
+                      GrdClipboard)
 
 GrdClipboardRdp *grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
                                         HANDLE         vcm,

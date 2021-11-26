@@ -31,7 +31,7 @@
 #include "grd-types.h"
 
 #define GRD_TYPE_SESSION (grd_session_get_type ())
-G_DECLARE_DERIVABLE_TYPE (GrdSession, grd_session, GRD, SESSION, GObject);
+G_DECLARE_DERIVABLE_TYPE (GrdSession, grd_session, GRD, SESSION, GObject)
 
 typedef enum _GrdKeyState
 {

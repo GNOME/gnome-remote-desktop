@@ -28,7 +28,7 @@
 
 #define GRD_TYPE_RDP_GRAPHICS_PIPELINE (grd_rdp_graphics_pipeline_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpGraphicsPipeline, grd_rdp_graphics_pipeline,
-                      GRD, RDP_GRAPHICS_PIPELINE, GObject);
+                      GRD, RDP_GRAPHICS_PIPELINE, GObject)
 
 GrdRdpGraphicsPipeline *grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
                                                        GMainContext               *pipeline_context,

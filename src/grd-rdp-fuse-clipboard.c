@@ -143,7 +143,7 @@ struct _GrdRdpFuseClipboard
   uint32_t next_stream_id;
 };
 
-G_DEFINE_TYPE (GrdRdpFuseClipboard, grd_rdp_fuse_clipboard, G_TYPE_OBJECT);
+G_DEFINE_TYPE (GrdRdpFuseClipboard, grd_rdp_fuse_clipboard, G_TYPE_OBJECT)
 
 static gboolean
 should_remove_fuse_file (FuseFile *fuse_file,

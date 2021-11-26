@@ -71,7 +71,7 @@ struct _GrdSessionVnc
   GrdClipboardVnc *clipboard_vnc;
 };
 
-G_DEFINE_TYPE (GrdSessionVnc, grd_session_vnc, GRD_TYPE_SESSION);
+G_DEFINE_TYPE (GrdSessionVnc, grd_session_vnc, GRD_TYPE_SESSION)
 
 static void
 grd_session_vnc_detach_source (GrdSessionVnc *session_vnc);

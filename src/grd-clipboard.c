@@ -58,7 +58,7 @@ typedef struct _GrdClipboardPrivate
   GMutex pending_read_mutex;
 } GrdClipboardPrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (GrdClipboard, grd_clipboard, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (GrdClipboard, grd_clipboard, G_TYPE_OBJECT)
 
 static void
 handle_read_result (GrdClipboard              *clipboard,

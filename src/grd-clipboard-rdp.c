@@ -135,7 +135,7 @@ struct _GrdClipboardRdp
   unsigned int client_format_data_response_id;
 };
 
-G_DEFINE_TYPE (GrdClipboardRdp, grd_clipboard_rdp, GRD_TYPE_CLIPBOARD);
+G_DEFINE_TYPE (GrdClipboardRdp, grd_clipboard_rdp, GRD_TYPE_CLIPBOARD)
 
 static gboolean
 send_mime_type_content_request (GrdClipboardRdp  *clipboard_rdp,

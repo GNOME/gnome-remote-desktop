@@ -53,7 +53,7 @@ struct _GrdRdpNvenc
   uint32_t next_encode_session_id;
 };
 
-G_DEFINE_TYPE (GrdRdpNvenc, grd_rdp_nvenc, G_TYPE_OBJECT);
+G_DEFINE_TYPE (GrdRdpNvenc, grd_rdp_nvenc, G_TYPE_OBJECT)
 
 void
 grd_rdp_nvenc_push_cuda_context (GrdRdpNvenc *rdp_nvenc)

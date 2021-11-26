@@ -27,7 +27,7 @@
 
 #define GRD_TYPE_RDP_GFX_SURFACE (grd_rdp_gfx_surface_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpGfxSurface, grd_rdp_gfx_surface,
-                      GRD, RDP_GFX_SURFACE, GObject);
+                      GRD, RDP_GFX_SURFACE, GObject)
 
 GrdRdpGfxSurface *grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline *graphics_pipeline,
                                            GrdSessionRdp          *session_rdp,

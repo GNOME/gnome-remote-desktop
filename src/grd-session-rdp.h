@@ -30,7 +30,7 @@
 G_DECLARE_FINAL_TYPE (GrdSessionRdp,
                       grd_session_rdp,
                       GRD, SESSION_RDP,
-                      GrdSession);
+                      GrdSession)
 
 GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                     GSocketConnection *connection,

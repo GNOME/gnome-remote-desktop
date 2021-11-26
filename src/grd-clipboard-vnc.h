@@ -26,7 +26,7 @@
 G_DECLARE_FINAL_TYPE (GrdClipboardVnc,
                       grd_clipboard_vnc,
                       GRD, CLIPBOARD_VNC,
-                      GrdClipboard);
+                      GrdClipboard)
 
 GrdClipboardVnc *grd_clipboard_vnc_new (GrdSessionVnc *session_vnc);
 

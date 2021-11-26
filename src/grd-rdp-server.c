@@ -53,7 +53,7 @@ struct _GrdRdpServer
 #endif /* HAVE_NVENC */
 };
 
-G_DEFINE_TYPE (GrdRdpServer, grd_rdp_server, G_TYPE_SOCKET_SERVICE);
+G_DEFINE_TYPE (GrdRdpServer, grd_rdp_server, G_TYPE_SOCKET_SERVICE)
 
 GrdContext *
 grd_rdp_server_get_context (GrdRdpServer *rdp_server)

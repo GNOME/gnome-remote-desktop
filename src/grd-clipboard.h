@@ -27,7 +27,7 @@
 #include "grd-types.h"
 
 #define GRD_TYPE_CLIPBOARD (grd_clipboard_get_type ())
-G_DECLARE_DERIVABLE_TYPE (GrdClipboard, grd_clipboard, GRD, CLIPBOARD, GObject);
+G_DECLARE_DERIVABLE_TYPE (GrdClipboard, grd_clipboard, GRD, CLIPBOARD, GObject)
 
 struct _GrdClipboardClass
 {

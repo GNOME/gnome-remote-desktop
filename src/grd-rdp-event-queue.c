@@ -97,7 +97,7 @@ struct _GrdRdpEventQueue
   gboolean num_lock_state;
 };
 
-G_DEFINE_TYPE (GrdRdpEventQueue, grd_rdp_event_queue, G_TYPE_OBJECT);
+G_DEFINE_TYPE (GrdRdpEventQueue, grd_rdp_event_queue, G_TYPE_OBJECT)
 
 static void
 queue_rdp_event (GrdRdpEventQueue *rdp_event_queue,
