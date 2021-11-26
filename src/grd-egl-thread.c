@@ -52,6 +52,22 @@ struct _GrdEglThread
 typedef struct _GrdEglTask
 {
   GFunc func;
+  GDestroyNotify destroy;
+
+  GMainContext *callback_context;
+  GrdEglThreadCallback callback;
+  gpointer callback_user_data;
+  GDestroyNotify callback_destroy;
+} GrdEglTask;
+
+typedef struct _GrdEglTaskSync
+{
+  GrdEglTask base;
+} GrdEglTaskSync;
+
+typedef struct _GrdEglTaskDownload
+{
+  GrdEglTask base;
 
   uint8_t *dst_data;
   int dst_row_width;
@@ -64,12 +80,7 @@ typedef struct _GrdEglTask
   uint32_t *strides;
   uint32_t *offsets;
   uint64_t *modifiers;
-
-  GMainContext *callback_context;
-  GrdEglThreadCallback callback;
-  gpointer callback_user_data;
-  GDestroyNotify callback_destroy;
-} GrdEglTask;
+} GrdEglTaskDownload;
 
 typedef void (* GrdEglFrameReady) (uint8_t  *data,
                                    gpointer  user_data);
@@ -193,12 +204,22 @@ grd_egl_init_in_impl (GrdEglThread  *egl_thread,
 static void
 grd_egl_task_free (GrdEglTask *task)
 {
-  g_clear_pointer (&task->callback_user_data, task->callback_destroy);
+  if (task->callback_destroy)
+    g_clear_pointer (&task->callback_user_data, task->callback_destroy);
+  g_free (task);
+}
+
+static void
+grd_egl_task_download_free (GrdEglTask *task_base)
+{
+  GrdEglTaskDownload *task = (GrdEglTaskDownload *) task_base;
+
   g_free (task->fds);
   g_free (task->strides);
   g_free (task->offsets);
   g_free (task->modifiers);
-  g_free (task);
+
+  grd_egl_task_free (task_base);
 }
 
 static void
@@ -211,7 +232,7 @@ grd_thread_dispatch_in_impl (GrdEglThread *egl_thread)
     return;
 
   task->func (egl_thread, task);
-  grd_egl_task_free (task);
+  task->destroy (task);
 }
 
 typedef struct _EglTaskSource
@@ -316,7 +337,7 @@ grd_egl_thread_func (gpointer user_data)
       if (!task)
         break;
 
-      grd_egl_task_free (task);
+      task->destroy (task);
     }
   g_async_queue_unref (egl_thread->task_queue);
 
@@ -476,11 +497,11 @@ create_dmabuf_image (GrdEglThread   *egl_thread,
 }
 
 static gboolean
-bind_egl_image (GrdEglThread *egl_thread,
-                EGLImageKHR   egl_image,
-                GrdEglTask   *task,
-                GLuint       *tex,
-                GLuint       *fbo)
+bind_egl_image (GrdEglThread       *egl_thread,
+                EGLImageKHR         egl_image,
+                GrdEglTaskDownload *task,
+                GLuint             *tex,
+                GLuint             *fbo)
 {
   glGenTextures (1, tex);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
@@ -504,7 +525,7 @@ bind_egl_image (GrdEglThread *egl_thread,
 }
 
 static void
-read_pixels (GrdEglTask *task)
+read_pixels (GrdEglTaskDownload *task)
 {
   glReadPixels (0, 0, task->width, task->height,
                 GL_BGRA, GL_UNSIGNED_BYTE,
@@ -516,7 +537,7 @@ download_in_impl (gpointer data,
                   gpointer user_data)
 {
   GrdEglThread *egl_thread = data;
-  GrdEglTask *task = user_data;
+  GrdEglTaskDownload *task = user_data;
   EGLImageKHR egl_image;
   gboolean success = FALSE;
   GLuint tex = 0;
@@ -562,7 +583,16 @@ out:
   if (egl_image != EGL_NO_IMAGE)
     eglDestroyImageKHR (egl_thread->impl.egl_display, egl_image);
 
-  task->callback (success, task->callback_user_data);
+  task->base.callback (success, task->base.callback_user_data);
+}
+
+static void
+sync_in_impl (gpointer data,
+              gpointer user_data)
+{
+  GrdEglTaskSync *task = user_data;
+
+  task->base.callback (TRUE, task->base.callback_user_data);
 }
 
 void
@@ -581,9 +611,9 @@ grd_egl_thread_download (GrdEglThread         *egl_thread,
                          gpointer              user_data,
                          GDestroyNotify        destroy)
 {
-  GrdEglTask *task;
+  GrdEglTaskDownload *task;
 
-  task = g_new0 (GrdEglTask, 1);
+  task = g_new0 (GrdEglTaskDownload, 1);
 
   task->dst_data = dst_data;
   task->dst_row_width = dst_row_width;
@@ -597,10 +627,31 @@ grd_egl_thread_download (GrdEglThread         *egl_thread,
   task->offsets = g_memdup2 (offsets, n_planes * sizeof (uint32_t));
   task->modifiers = g_memdup2 (modifiers, n_planes * sizeof (uint64_t));
 
-  task->func = download_in_impl;
-  task->callback = callback;
-  task->callback_user_data = user_data;
-  task->callback_destroy = destroy;
+  task->base.func = download_in_impl;
+  task->base.destroy = (GDestroyNotify) grd_egl_task_download_free;
+  task->base.callback = callback;
+  task->base.callback_user_data = user_data;
+  task->base.callback_destroy = destroy;
+
+  g_async_queue_push (egl_thread->task_queue, task);
+  g_main_context_wakeup (egl_thread->impl.main_context);
+}
+
+void
+grd_egl_thread_sync (GrdEglThread         *egl_thread,
+                     GrdEglThreadCallback  callback,
+                     gpointer              user_data,
+                     GDestroyNotify        destroy)
+{
+  GrdEglTaskSync *task;
+
+  task = g_new0 (GrdEglTaskSync, 1);
+
+  task->base.func = sync_in_impl;
+  task->base.destroy = (GDestroyNotify) grd_egl_task_free;
+  task->base.callback = callback;
+  task->base.callback_user_data = user_data;
+  task->base.callback_destroy = destroy;
 
   g_async_queue_push (egl_thread->task_queue, task);
   g_main_context_wakeup (egl_thread->impl.main_context);

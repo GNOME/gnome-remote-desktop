@@ -48,4 +48,9 @@ void grd_egl_thread_download (GrdEglThread         *egl_thread,
                               gpointer              user_data,
                               GDestroyNotify        destroy);
 
+void grd_egl_thread_sync (GrdEglThread         *egl_thread,
+                          GrdEglThreadCallback  callback,
+                          gpointer              user_data,
+                          GDestroyNotify        destroy);
+
 #endif /* GRD_EGL_THREAD_H */
