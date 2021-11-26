@@ -53,4 +53,9 @@ void grd_egl_thread_sync (GrdEglThread         *egl_thread,
                           gpointer              user_data,
                           GDestroyNotify        destroy);
 
+gboolean grd_egl_thread_get_modifiers_for_format (GrdEglThread  *egl_thread,
+                                                  uint32_t       format,
+                                                  int           *out_n_modifiers,
+                                                  uint64_t     **out_modifiers);
+
 #endif /* GRD_EGL_THREAD_H */

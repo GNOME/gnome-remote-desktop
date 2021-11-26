@@ -34,6 +34,8 @@ struct _GrdEglThread
 
   GAsyncQueue *task_queue;
 
+  GHashTable *modifiers;
+
   struct
   {
     gboolean initialized;
@@ -109,6 +111,80 @@ is_hardware_accelerated (void)
 }
 
 static gboolean
+query_format_modifiers (GrdEglThread  *egl_thread,
+                        EGLDisplay     egl_display,
+                        GError       **error)
+{
+  EGLint n_formats;
+  g_autofree EGLint *formats = NULL;
+  EGLint i;
+
+  if (!eglQueryDmaBufFormatsEXT (egl_display, 0, NULL, &n_formats))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to query number of DMA buffer formats");
+      return FALSE;
+    }
+
+  if (n_formats == 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "No available DMA buffer formats");
+      return FALSE;
+    }
+
+  formats = g_new0 (EGLint, n_formats);
+  if (!eglQueryDmaBufFormatsEXT (egl_display, n_formats, formats, &n_formats))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to query DMA buffer formats");
+      return FALSE;
+    }
+
+  for (i = 0; i < n_formats; i++)
+    {
+      EGLint n_modifiers;
+      GArray *modifiers;
+
+      if (!eglQueryDmaBufModifiersEXT (egl_display,
+                                       formats[i], 0, NULL, NULL,
+                                       &n_modifiers))
+        {
+          g_warning ("Failed to query number of modifiers for format %d",
+                     formats[0]);
+          continue;
+        }
+
+      if (n_modifiers == 0)
+        {
+          g_debug ("No modifiers available for format %d", formats[0]);
+          continue;
+        }
+
+      modifiers = g_array_sized_new (FALSE, FALSE,
+                                     sizeof (EGLuint64KHR),
+                                     n_modifiers);
+      g_array_set_size (modifiers, n_modifiers);
+      if (!eglQueryDmaBufModifiersEXT (egl_display,
+                                       formats[i], n_modifiers,
+                                       (EGLuint64KHR *) modifiers->data,
+                                       NULL,
+                                       &n_modifiers))
+        {
+          g_warning ("Failed to query modifiers for format %d",
+                     formats[0]);
+          continue;
+        }
+
+      g_hash_table_insert (egl_thread->modifiers,
+                           GINT_TO_POINTER (formats[i]),
+                           modifiers);
+    }
+
+  return TRUE;
+}
+
+static gboolean
 grd_egl_init_in_impl (GrdEglThread  *egl_thread,
                       GError       **error)
 {
@@ -165,6 +241,15 @@ grd_egl_init_in_impl (GrdEglThread  *egl_thread,
       return FALSE;
     }
 
+  if (!epoxy_has_egl_extension (egl_display,
+                                "EGL_EXT_image_dma_buf_import_modifiers"))
+    {
+      eglTerminate (egl_display);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Missing extension 'EGL_EXT_image_dma_buf_import_modifiers'");
+      return FALSE;
+    }
+
   attrs = (EGLint[]) {
     EGL_CONTEXT_CLIENT_VERSION, 2,
     EGL_NONE
@@ -185,6 +270,22 @@ grd_egl_init_in_impl (GrdEglThread  *egl_thread,
                   EGL_NO_SURFACE,
                   EGL_NO_SURFACE,
                   egl_context);
+
+  if (!query_format_modifiers (egl_thread, egl_display, error))
+    {
+      eglDestroyContext (egl_display, egl_context);
+      eglTerminate (egl_display);
+      return FALSE;
+    }
+
+  if (g_hash_table_size (egl_thread->modifiers) == 0)
+    {
+      eglDestroyContext (egl_display, egl_context);
+      eglTerminate (egl_display);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "No DMA buffer modifiers / format pair found");
+      return FALSE;
+    }
 
   if (!is_hardware_accelerated ())
     {
@@ -354,6 +455,11 @@ grd_egl_thread_new (GError **error)
   GrdEglThread *egl_thread;
 
   egl_thread = g_new0 (GrdEglThread, 1);
+
+  egl_thread->modifiers =
+    g_hash_table_new_full (NULL, NULL,
+                           NULL, (GDestroyNotify) g_array_unref);
+
   g_mutex_init (&egl_thread->mutex);
   g_cond_init (&egl_thread->cond);
 
@@ -402,6 +508,7 @@ grd_egl_thread_free (GrdEglThread *egl_thread)
   g_mutex_clear (&egl_thread->mutex);
   g_cond_clear (&egl_thread->cond);
 
+  g_clear_pointer (&egl_thread->modifiers, g_hash_table_unref);
   g_clear_pointer (&egl_thread->impl.main_context, g_main_context_unref);
 
   g_free (egl_thread);
@@ -655,4 +762,23 @@ grd_egl_thread_sync (GrdEglThread         *egl_thread,
 
   g_async_queue_push (egl_thread->task_queue, task);
   g_main_context_wakeup (egl_thread->impl.main_context);
+}
+
+gboolean
+grd_egl_thread_get_modifiers_for_format (GrdEglThread  *egl_thread,
+                                         uint32_t       format,
+                                         int           *out_n_modifiers,
+                                         uint64_t     **out_modifiers)
+{
+  GArray *modifiers;
+
+  modifiers = g_hash_table_lookup (egl_thread->modifiers,
+                                   GINT_TO_POINTER (format));
+  if (!modifiers)
+    return FALSE;
+
+  *out_n_modifiers = modifiers->len;
+  *out_modifiers = g_memdup2 (modifiers->data,
+                              sizeof (uint64_t) * modifiers->len);
+  return TRUE;
 }
