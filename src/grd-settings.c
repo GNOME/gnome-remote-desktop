@@ -138,8 +138,8 @@ grd_settings_get_rdp_username (GrdSettings  *settings,
                                GError      **error)
 {
   const char *test_password_override;
-  GVariant *credentials;
-  char *credentials_string;
+  g_autofree char *credentials_string = NULL;
+  g_autoptr (GVariant) credentials = NULL;
   char *username = NULL;
 
   test_password_override = g_getenv ("GNOME_REMOTE_DESKTOP_TEST_RDP_PASSWORD");
@@ -165,9 +165,6 @@ grd_settings_get_rdp_username (GrdSettings  *settings,
       return NULL;
     }
 
-  g_variant_unref (credentials);
-  g_free (credentials_string);
-
   return username;
 }
 
@@ -176,8 +173,8 @@ grd_settings_get_rdp_password (GrdSettings  *settings,
                                GError      **error)
 {
   const char *test_password_override;
-  GVariant *credentials;
-  char *credentials_string;
+  g_autofree char *credentials_string = NULL;
+  g_autoptr (GVariant) credentials = NULL;
   char *password = NULL;
 
   test_password_override = g_getenv ("GNOME_REMOTE_DESKTOP_TEST_RDP_PASSWORD");
@@ -202,9 +199,6 @@ grd_settings_get_rdp_password (GrdSettings  *settings,
                    "Password not set");
       return NULL;
     }
-
-  g_variant_unref (credentials);
-  g_free (credentials_string);
 
   return password;
 }
