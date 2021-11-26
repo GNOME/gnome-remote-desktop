@@ -73,8 +73,10 @@ grd_get_spa_format_details (enum spa_video_format  spa_format,
     {
       if (format_table[i].spa_format == spa_format)
         {
-          *drm_format = format_table[i].drm_format;
-          *bpp = format_table[i].bpp;
+          if (drm_format)
+            *drm_format = format_table[i].drm_format;
+          if (bpp)
+            *bpp = format_table[i].bpp;
           return;
         }
     }
