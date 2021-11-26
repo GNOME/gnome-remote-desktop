@@ -73,6 +73,9 @@ typedef struct _GrdSessionPrivate
   GCancellable *cancellable;
 
   gboolean started;
+
+  gulong caps_lock_state_changed_id;
+  gulong num_lock_state_changed_id;
 } GrdSessionPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdSession, grd_session, G_TYPE_OBJECT);
@@ -103,6 +106,11 @@ grd_session_stop (GrdSession *session)
           g_error_free (error);
         }
     }
+
+  g_clear_signal_handler (&priv->caps_lock_state_changed_id,
+                          priv->remote_desktop_session);
+  g_clear_signal_handler (&priv->num_lock_state_changed_id,
+                          priv->remote_desktop_session);
 
   g_clear_object (&priv->remote_desktop_session);
   g_clear_object (&priv->screen_cast_session);
@@ -776,12 +784,14 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
                                             on_screen_cast_session_created,
                                             session);
 
-  g_signal_connect (session_proxy, "notify::caps-lock-state",
-                    G_CALLBACK (on_caps_lock_state_changed),
-                    session);
-  g_signal_connect (session_proxy, "notify::num-lock-state",
-                    G_CALLBACK (on_num_lock_state_changed),
-                    session);
+  priv->caps_lock_state_changed_id =
+    g_signal_connect (session_proxy, "notify::caps-lock-state",
+                      G_CALLBACK (on_caps_lock_state_changed),
+                      session);
+  priv->num_lock_state_changed_id =
+    g_signal_connect (session_proxy, "notify::num-lock-state",
+                      G_CALLBACK (on_num_lock_state_changed),
+                      session);
 
   if (klass->remote_desktop_session_ready)
     klass->remote_desktop_session_ready (session);
