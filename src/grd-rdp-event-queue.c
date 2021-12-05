@@ -54,6 +54,7 @@ typedef struct _RdpEvent
   /* RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS */
   struct
   {
+    GrdStream *stream;
     double x;
     double y;
   } input_ptr_motion_abs;
@@ -142,6 +143,7 @@ grd_rdp_event_queue_add_input_event_keyboard_keysym (GrdRdpEventQueue *rdp_event
 
 void
 grd_rdp_event_queue_add_input_event_pointer_motion_abs (GrdRdpEventQueue *rdp_event_queue,
+                                                        GrdStream        *stream,
                                                         double            x,
                                                         double            y)
 {
@@ -149,6 +151,7 @@ grd_rdp_event_queue_add_input_event_pointer_motion_abs (GrdRdpEventQueue *rdp_ev
 
   rdp_event = g_malloc0 (sizeof (RdpEvent));
   rdp_event->type = RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS;
+  rdp_event->input_ptr_motion_abs.stream = stream;
   rdp_event->input_ptr_motion_abs.x = x;
   rdp_event->input_ptr_motion_abs.y = y;
 
@@ -297,7 +300,8 @@ process_rdp_events (GrdRdpEventQueue *rdp_event_queue)
           break;
         case RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS:
           grd_session_notify_pointer_motion_absolute (
-            session, rdp_event->input_ptr_motion_abs.x,
+            session, rdp_event->input_ptr_motion_abs.stream,
+            rdp_event->input_ptr_motion_abs.x,
             rdp_event->input_ptr_motion_abs.y);
           break;
         case RDP_EVENT_TYPE_INPUT_PTR_BUTTON:

@@ -62,6 +62,7 @@ struct _GrdSessionVnc
   GCancellable *prompt_cancellable;
 
   GrdVncPipeWireStream *pipewire_stream;
+  GrdStream *stream;
 
   int prev_x;
   int prev_y;
@@ -444,7 +445,9 @@ handle_pointer_event (int          button_mask,
 
   if (x != session_vnc->prev_x || y != session_vnc->prev_y)
     {
-      grd_session_notify_pointer_motion_absolute (session, x, y);
+      GrdStream *stream = session_vnc->stream;
+
+      grd_session_notify_pointer_motion_absolute (session, stream, x, y);
 
       session_vnc->prev_x = x;
       session_vnc->prev_y = y;
@@ -745,6 +748,7 @@ grd_session_vnc_stream_ready (GrdSession *session,
       return;
     }
 
+  session_vnc->stream = stream;
   g_signal_connect (session_vnc->pipewire_stream, "closed",
                     G_CALLBACK (on_pipewire_stream_closed),
                     session_vnc);

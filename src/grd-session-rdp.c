@@ -158,6 +158,7 @@ struct _GrdSessionRdp
   unsigned int close_session_idle_id;
 
   GrdRdpPipeWireStream *pipewire_stream;
+  GrdStream *stream;
 };
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION)
@@ -1278,8 +1279,10 @@ rdp_input_mouse_event (rdpInput *rdp_input,
 
   if (flags & PTR_FLAGS_MOVE)
     {
+      GrdStream *stream = session_rdp->stream;
+
       grd_rdp_event_queue_add_input_event_pointer_motion_abs (rdp_event_queue,
-                                                              x, y);
+                                                              stream, x, y);
     }
 
   button_state = flags & PTR_FLAGS_DOWN ? GRD_BUTTON_STATE_PRESSED
@@ -2140,6 +2143,7 @@ grd_session_rdp_stream_ready (GrdSession *session,
       return;
     }
 
+  session_rdp->stream = stream;
   g_signal_connect (session_rdp->pipewire_stream, "closed",
                     G_CALLBACK (on_pipewire_stream_closed),
                     session_rdp);
