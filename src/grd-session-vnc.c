@@ -722,6 +722,12 @@ close_session_idle (gpointer user_data)
 }
 
 static void
+grd_session_vnc_remote_desktop_session_started (GrdSession *session)
+{
+  grd_session_record_monitor (session, NULL, GRD_SCREEN_CAST_CURSOR_MODE_METADATA);
+}
+
+static void
 on_pipewire_stream_closed (GrdVncPipeWireStream *stream,
                            GrdSessionVnc        *session_vnc)
 {
@@ -772,5 +778,7 @@ grd_session_vnc_class_init (GrdSessionVncClass *klass)
   object_class->dispose = grd_session_vnc_dispose;
 
   session_class->stop = grd_session_vnc_stop;
+  session_class->remote_desktop_session_started =
+    grd_session_vnc_remote_desktop_session_started;
   session_class->stream_ready = grd_session_vnc_stream_ready;
 }

@@ -2112,6 +2112,12 @@ grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
 }
 
 static void
+grd_session_rdp_remote_desktop_session_started (GrdSession *session)
+{
+  grd_session_record_monitor (session, NULL, GRD_SCREEN_CAST_CURSOR_MODE_METADATA);
+}
+
+static void
 on_pipewire_stream_closed (GrdRdpPipeWireStream *stream,
                            GrdSessionRdp        *session_rdp)
 {
@@ -2298,6 +2304,8 @@ grd_session_rdp_class_init (GrdSessionRdpClass *klass)
 
   session_class->remote_desktop_session_ready =
     grd_session_rdp_remote_desktop_session_ready;
+  session_class->remote_desktop_session_started =
+    grd_session_rdp_remote_desktop_session_started;
   session_class->stop = grd_session_rdp_stop;
   session_class->stream_ready = grd_session_rdp_stream_ready;
   session_class->on_caps_lock_state_changed =
