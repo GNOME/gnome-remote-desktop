@@ -2097,15 +2097,6 @@ close_session_idle (gpointer user_data)
 }
 
 static void
-on_pipewire_stream_closed (GrdRdpPipeWireStream *stream,
-                           GrdSessionRdp        *session_rdp)
-{
-  g_warning ("PipeWire stream closed, closing client");
-
-  maybe_queue_close_session_idle (session_rdp);
-}
-
-static void
 grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
@@ -2115,6 +2106,15 @@ grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
   rdp_peer_context->clipboard_rdp = grd_clipboard_rdp_new (session_rdp,
                                                            rdp_peer_context->vcm,
                                                            session_rdp->stop_event);
+}
+
+static void
+on_pipewire_stream_closed (GrdRdpPipeWireStream *stream,
+                           GrdSessionRdp        *session_rdp)
+{
+  g_warning ("PipeWire stream closed, closing client");
+
+  maybe_queue_close_session_idle (session_rdp);
 }
 
 static void
