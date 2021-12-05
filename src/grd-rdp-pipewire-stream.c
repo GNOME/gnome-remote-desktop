@@ -33,6 +33,7 @@
 #include "grd-context.h"
 #include "grd-egl-thread.h"
 #include "grd-pipewire-utils.h"
+#include "grd-rdp-surface.h"
 
 enum
 {
@@ -76,6 +77,7 @@ struct _GrdRdpPipeWireStream
   GObject parent;
 
   GrdSessionRdp *session_rdp;
+  GrdRdpSurface *rdp_surface;
 
   GSource *pipewire_source;
   struct pw_context *pipewire_context;
@@ -794,8 +796,8 @@ static const struct pw_core_events core_events = {
 GrdRdpPipeWireStream *
 grd_rdp_pipewire_stream_new (GrdSessionRdp  *session_rdp,
                              GMainContext   *render_context,
+                             GrdRdpSurface  *rdp_surface,
                              uint32_t        src_node_id,
-                             uint32_t        refresh_rate,
                              GError        **error)
 {
   g_autoptr (GrdRdpPipeWireStream) stream = NULL;
@@ -805,6 +807,7 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp  *session_rdp,
 
   stream = g_object_new (GRD_TYPE_RDP_PIPEWIRE_STREAM, NULL);
   stream->session_rdp = session_rdp;
+  stream->rdp_surface = rdp_surface;
   stream->src_node_id = src_node_id;
 
   create_render_source (stream, render_context);
@@ -840,7 +843,7 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp  *session_rdp,
                         &core_events,
                         stream);
 
-  if (!connect_to_stream (stream, refresh_rate, error))
+  if (!connect_to_stream (stream, rdp_surface->refresh_rate, error))
     return NULL;
 
   return g_steal_pointer (&stream);
