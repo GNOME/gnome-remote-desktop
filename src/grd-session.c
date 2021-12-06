@@ -143,9 +143,9 @@ grd_session_notify_keyboard_keysym (GrdSession *session,
 }
 
 void
-grd_session_notify_pointer_button (GrdSession *session,
-                                   int32_t        button,
-                                   GrdButtonState state)
+grd_session_notify_pointer_button (GrdSession     *session,
+                                   int32_t         button,
+                                   GrdButtonState  state)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdDBusRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
