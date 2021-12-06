@@ -1,15 +1,15 @@
 include:
-  - remote: 'https://gitlab.freedesktop.org/freedesktop/ci-templates/-/raw/8445ff7af2a68795afb98f486251f2ef8f90621c/templates/fedora.yml'
+  - remote: 'https://gitlab.freedesktop.org/freedesktop/ci-templates/-/raw/34f4ade99434043f88e164933f570301fd18b125/templates/fedora.yml'
 
 stages:
   - prepare
   - build
   - test
 
-.gnome-remote-desktop.fedora:33@common:
+.gnome-remote-desktop.fedora:35@common:
   variables:
-    FDO_DISTRIBUTION_VERSION: 34
-    BASE_TAG: '2021-11-05.1'
+    FDO_DISTRIBUTION_VERSION: 35
+    BASE_TAG: '2022-01-17.2'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -32,10 +32,30 @@ stages:
                      python3-gobject gnome-settings-daemon mesa-dri-drivers \
                      xorg-x11-server-Xwayland mutter &&
 
+      # To build gsettings-desktop-schemas
+      dnf builddep -y gsettings-desktop-schemas --setopt=install_weak_deps=False &&
+      dnf builddep -y gnome-settings-daemon --setopt=install_weak_deps=False &&
+      dnf builddep -y mutter --setopt=install_weak_deps=False &&
+      dnf install -y wayland-protocols-devel &&
+
+      ./.gitlab-ci/install-meson-project.sh \
+          https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas.git \
+          master . 469f576b9b18291f858d64f2d8805fc4d578b857 &&
+
+      # To build gnome-settings-daemon
+      ./.gitlab-ci/install-meson-project.sh \
+          https://gitlab.gnome.org/GNOME/gnome-settings-daemon.git \
+          master . 62325b51b56da15a6da7c8145e550ae047d361ea &&
+
+      # To build mutter
+      ./.gitlab-ci/install-meson-project.sh \
+          https://gitlab.gnome.org/GNOME/mutter.git \
+          main . f1cf35e1017f06c9fb5fa9bbcc18d434769024c7 &&
+
       dnf clean all
 
-.gnome-remote-desktop.fedora:33@x86_64:
-  extends: .gnome-remote-desktop.fedora:33@common
+.gnome-remote-desktop.fedora:35@x86_64:
+  extends: .gnome-remote-desktop.fedora:35@common
   variables:
     FDO_DISTRIBUTION_TAG: "x86_64-${BASE_TAG}"
 
@@ -54,7 +74,7 @@ default:
 build-fedora-container@x86_64:
   extends:
     - .fdo.container-build@fedora@x86_64
-    - .gnome-remote-desktop.fedora:33@x86_64
+    - .gnome-remote-desktop.fedora:35@x86_64
   stage: prepare
   variables:
     GIT_STRATEGY: none
@@ -62,7 +82,7 @@ build-fedora-container@x86_64:
 build-gnome-remote-desktop:
   extends:
     - .fdo.distribution-image@fedora
-    - .gnome-remote-desktop.fedora:33@x86_64
+    - .gnome-remote-desktop.fedora:35@x86_64
   stage: build
   script:
     - meson . build -Ddebugtype=debugoptimized --werror
@@ -78,7 +98,7 @@ build-gnome-remote-desktop:
 test-gnome-remote-desktop:
   extends:
     - .fdo.distribution-image@fedora
-    - .gnome-remote-desktop.fedora:33@x86_64
+    - .gnome-remote-desktop.fedora:35@x86_64
   stage: test
   dependencies:
     - build-gnome-remote-desktop
