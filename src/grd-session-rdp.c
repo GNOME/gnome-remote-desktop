@@ -45,6 +45,8 @@
 #include "grd-settings.h"
 #include "grd-stream.h"
 
+/* TODO: Set this to 16, as soon as Multimonitor support is implemented */
+#define MAX_MONITOR_COUNT 1
 #define DISCRETE_SCROLL_STEP 10.0
 
 typedef enum _RdpPeerFlag
@@ -119,6 +121,7 @@ struct _GrdSessionRdp
   freerdp_peer *peer;
   GrdRdpSAMFile *sam_file;
   uint32_t rdp_error_info;
+  GrdRdpScreenShareMode screen_share_mode;
 
   GMutex rdp_flags_mutex;
   RdpPeerFlag rdp_flags;
@@ -156,6 +159,8 @@ struct _GrdSessionRdp
 
   GrdRdpPipeWireStream *pipewire_stream;
   GrdStream *stream;
+
+  GrdRdpMonitorConfig *monitor_config;
 };
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION)
@@ -646,7 +651,7 @@ is_view_only (GrdSessionRdp *session_rdp)
 }
 
 static void
-get_current_monitor_config (GrdSessionRdp  *session_rdp,
+get_current_monitor_layout (GrdSessionRdp  *session_rdp,
                             MONITOR_DEF   **monitors,
                             uint32_t       *n_monitors)
 {
@@ -676,7 +681,7 @@ rdp_peer_refresh_gfx (GrdSessionRdp  *session_rdp,
       MONITOR_DEF *monitors;
       uint32_t n_monitors;
 
-      get_current_monitor_config (session_rdp, &monitors, &n_monitors);
+      get_current_monitor_layout (session_rdp, &monitors, &n_monitors);
       grd_rdp_graphics_pipeline_reset_graphics (graphics_pipeline,
                                                 rdp_settings->DesktopWidth,
                                                 rdp_settings->DesktopHeight,
@@ -1603,7 +1608,38 @@ rdp_suppress_output (rdpContext         *rdp_context,
 static BOOL
 rdp_peer_capabilities (freerdp_peer *peer)
 {
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+  GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   rdpSettings *rdp_settings = peer->settings;
+
+  if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND &&
+      !rdp_settings->SupportGraphicsPipeline)
+    {
+      g_warning ("[RDP] Sessions with client monitor configurations require "
+                 "the Graphics Pipeline, closing connection");
+      return FALSE;
+    }
+
+  if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND)
+    {
+      session_rdp->monitor_config =
+        grd_rdp_monitor_config_new_from_client_data (rdp_settings,
+                                                     MAX_MONITOR_COUNT);
+    }
+  else
+    {
+      g_autoptr (GStrvBuilder) connector_builder = NULL;
+      char **connectors;
+
+      session_rdp->monitor_config = g_new0 (GrdRdpMonitorConfig, 1);
+
+      connector_builder = g_strv_builder_new ();
+      g_strv_builder_add (connector_builder, "");
+      connectors = g_strv_builder_end (connector_builder);
+
+      session_rdp->monitor_config->connectors = connectors;
+      session_rdp->monitor_config->monitor_count = 1;
+    }
 
   switch (rdp_settings->ColorDepth)
     {
@@ -2028,6 +2064,8 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   session_rdp->connection = g_object_ref (connection);
   session_rdp->hwaccel_nvidia = hwaccel_nvidia;
 
+  session_rdp->screen_share_mode = grd_settings_get_screen_share_mode (settings);
+
   session_rdp->socket_thread = g_thread_new ("RDP socket thread",
                                              socket_thread_func,
                                              session_rdp);
@@ -2124,6 +2162,7 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_object (&session_rdp->rdp_event_queue);
 
   g_clear_pointer (&session_rdp->rdp_surface, grd_rdp_surface_free);
+  g_clear_pointer (&session_rdp->monitor_config, grd_rdp_monitor_config_free);
 
   g_hash_table_foreach_remove (session_rdp->pointer_cache,
                                clear_pointer_bitmap,
@@ -2159,7 +2198,29 @@ grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
 static void
 grd_session_rdp_remote_desktop_session_started (GrdSession *session)
 {
-  grd_session_record_monitor (session, NULL, GRD_SCREEN_CAST_CURSOR_MODE_METADATA);
+  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
+
+  if (session_rdp->monitor_config->is_virtual)
+    g_debug ("[RDP] Remote Desktop session will use virtual monitors");
+  else
+    g_debug ("[RDP] Remote Desktop session will mirror the primary monitor");
+
+  g_assert (session_rdp->monitor_config->monitor_count == 1);
+
+  if (session_rdp->monitor_config->is_virtual)
+    {
+      grd_session_record_virtual (session,
+                                  GRD_SCREEN_CAST_CURSOR_MODE_METADATA,
+                                  TRUE);
+    }
+  else
+    {
+      const char *connector;
+
+      connector = session_rdp->monitor_config->connectors[0];
+      grd_session_record_monitor (session, connector,
+                                  GRD_SCREEN_CAST_CURSOR_MODE_METADATA);
+    }
 }
 
 static void
@@ -2179,15 +2240,17 @@ grd_session_rdp_stream_ready (GrdSession *session,
   GMainContext *graphics_context = session_rdp->graphics_context;
   GrdRdpSurface *rdp_surface;
   uint32_t pipewire_node_id;
+  GrdRdpVirtualMonitor *virtual_monitor;
   g_autoptr (GError) error = NULL;
 
   rdp_surface = session_rdp->rdp_surface;
+  virtual_monitor = session_rdp->monitor_config->virtual_monitors;
   pipewire_node_id = grd_stream_get_pipewire_node_id (stream);
   session_rdp->pipewire_stream = grd_rdp_pipewire_stream_new (session_rdp,
                                                               session_rdp->hwaccel_nvidia,
                                                               graphics_context,
                                                               rdp_surface,
-                                                              NULL,
+                                                              virtual_monitor,
                                                               pipewire_node_id,
                                                               &error);
   if (!session_rdp->pipewire_stream)
