@@ -8,7 +8,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issu"
 "es\n"
 "POT-Creation-Date: 2021-12-08 10:00+0000\n"
-"PO-Revision-Date: 2021-12-15 08:53+0000\n"
+"PO-Revision-Date: 2021-12-15 09:17+0000\n"
 "Last-Translator: Sveinn í Felli <sv1@fellsnet.is>\n"
 "Language-Team: Icelandic <translation-team-is@lists.sourceforge.org>\n"
 "Language: is\n"
@@ -54,6 +54,8 @@ msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
 msgstr ""
+"Til að geta notað RDP með TLS-öryggi, verður að gefa upp slóð á einkalykils-"
+" og skilríkjaskránna til RDP-þjónsins."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 msgid "Path to the private key file"
@@ -62,19 +64,23 @@ msgstr "Slóð að einkalykilskránni"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
 msgid "Only allow remote connections to view the screen content"
-msgstr ""
+msgstr "Einungis leyfa fjartengingum að skoða efni á skjánum"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
+"Þegar einungis-skoða er virkt, geta fjartengdir RDP-notendur ekki stjórnað"
+" inntakstækjum (t.d. mús og lyklaborði)."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
+"Þegar einungis-skoða er virkt, geta fjartengdir VNC-notendur ekki stjórnað"
+" inntakstækjum (t.d. mús og lyklaborði)."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Method used to authenticate VNC connections"
@@ -88,3 +94,9 @@ msgid ""
 "access to the workstation to explicitly approve the new connection. * "
 "password - by requiring the remote client to provide a known password"
 msgstr ""
+"Aðferð við auðkenningu VNC-tenginga lýsir því hvernig fjartenging er"
+" auðkennd. Eins og er má gera það á tvo mismunandi vegu: * prompt - biðja"
+" notandann að staðfesta allar nýjar tengingar, sem krefst þess að raunveruleg"
+" manneskja hafi aðgang að viðkomandi tölvu og samþykki sérstakleg nýju"
+" tenginguna. * "
+"password - þar sem fjartengdi notandinn þarf að gefa upp þekkt lykilorð"
