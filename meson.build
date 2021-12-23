@@ -4,7 +4,7 @@ project('gnome-remote-desktop', 'c',
         default_options: ['warning_level=1',
                           'buildtype=debugoptimized'])
 
-freerdp_req = '>= 2.3.0'
+freerdp_req = '>= 2.4.1'
 fuse_req = '>= 3.9.1'
 nvenc_req = '>= 11'
 xkbcommon_req = '>= 1.0.0'
