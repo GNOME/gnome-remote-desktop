@@ -77,6 +77,12 @@ struct _GrdHwAccelNvidia
   CUcontext cu_context;
   gboolean initialized;
 
+  CUmodule cu_module_dmg_utils;
+  CUfunction cu_chk_dmg_pxl;
+  CUfunction cu_cmb_dmg_arr_cols;
+  CUfunction cu_cmb_dmg_arr_rows;
+  CUfunction cu_simplify_dmg_arr;
+
   CUmodule cu_module_avc_utils;
   CUfunction cu_bgrx_to_yuv420;
 
@@ -651,6 +657,40 @@ run_function_in_egl_thread (GrdHwAccelNvidia       *hwaccel_nvidia,
   grd_sync_point_clear (&sync_point);
 }
 
+static gboolean
+load_cuda_module (GrdHwAccelNvidia *hwaccel_nvidia,
+                  CUmodule         *module,
+                  const char       *name,
+                  const char       *ptx_instructions)
+{
+  CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+
+  if (cuda_funcs->cuModuleLoadData (module, ptx_instructions) != CUDA_SUCCESS)
+    {
+      g_warning ("[HWAccel.CUDA] Failed to load %s module", name);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+load_cuda_function (GrdHwAccelNvidia *hwaccel_nvidia,
+                    CUfunction       *function,
+                    CUmodule          module,
+                    const char       *name)
+{
+  CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+
+  if (cuda_funcs->cuModuleGetFunction (function, module, name) != CUDA_SUCCESS)
+    {
+      g_warning ("[HWAccel.CUDA] Failed to get kernel %s", name);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 GrdHwAccelNvidia *
 grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
 {
@@ -661,6 +701,8 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
   unsigned int cu_device_count = 0;
   CudaFunctions *cuda_funcs;
   NvencFunctions *nvenc_funcs;
+  g_autofree char *dmg_ptx_path = NULL;
+  g_autofree char *dmg_ptx_instructions = NULL;
   g_autofree char *avc_ptx_path = NULL;
   g_autofree char *avc_ptx_instructions = NULL;
   g_autoptr (GError) error = NULL;
@@ -749,24 +791,34 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
 
   hwaccel_nvidia->initialized = TRUE;
 
+  dmg_ptx_path = g_strdup_printf ("%s/grd-cuda-damage-utils_30.ptx", GRD_DATA_DIR);
   avc_ptx_path = g_strdup_printf ("%s/grd-cuda-avc-utils_30.ptx", GRD_DATA_DIR);
-  if (!g_file_get_contents (avc_ptx_path, &avc_ptx_instructions, NULL, &error))
+
+  if (!g_file_get_contents (dmg_ptx_path, &dmg_ptx_instructions, NULL, &error) ||
+      !g_file_get_contents (avc_ptx_path, &avc_ptx_instructions, NULL, &error))
     g_error ("[HWAccel.CUDA] Failed to read PTX instructions: %s", error->message);
 
-  if (cuda_funcs->cuModuleLoadData (&hwaccel_nvidia->cu_module_avc_utils,
-                                    avc_ptx_instructions) != CUDA_SUCCESS)
-    {
-      g_warning ("[HWAccel.CUDA] Failed to load CUDA module");
-      return NULL;
-    }
+  if (!load_cuda_module (hwaccel_nvidia, &hwaccel_nvidia->cu_module_dmg_utils,
+                         "damage utils", dmg_ptx_instructions))
+    return NULL;
 
-  if (cuda_funcs->cuModuleGetFunction (&hwaccel_nvidia->cu_bgrx_to_yuv420,
-                                       hwaccel_nvidia->cu_module_avc_utils,
-                                       "convert_2x2_bgrx_area_to_yuv420_nv12") != CUDA_SUCCESS)
-    {
-      g_warning ("[HWAccel.CUDA] Failed to get AVC CUDA kernel");
-      return NULL;
-    }
+  if (!load_cuda_function (hwaccel_nvidia, &hwaccel_nvidia->cu_chk_dmg_pxl,
+                           hwaccel_nvidia->cu_module_dmg_utils, "check_damaged_pixel") ||
+      !load_cuda_function (hwaccel_nvidia, &hwaccel_nvidia->cu_cmb_dmg_arr_cols,
+                           hwaccel_nvidia->cu_module_dmg_utils, "combine_damage_array_cols") ||
+      !load_cuda_function (hwaccel_nvidia, &hwaccel_nvidia->cu_cmb_dmg_arr_rows,
+                           hwaccel_nvidia->cu_module_dmg_utils, "combine_damage_array_rows") ||
+      !load_cuda_function (hwaccel_nvidia, &hwaccel_nvidia->cu_simplify_dmg_arr,
+                           hwaccel_nvidia->cu_module_dmg_utils, "simplify_damage_array"))
+    return NULL;
+
+  if (!load_cuda_module (hwaccel_nvidia, &hwaccel_nvidia->cu_module_avc_utils,
+                         "AVC utils", avc_ptx_instructions))
+    return NULL;
+
+  if (!load_cuda_function (hwaccel_nvidia, &hwaccel_nvidia->cu_bgrx_to_yuv420,
+                           hwaccel_nvidia->cu_module_avc_utils, "convert_2x2_bgrx_area_to_yuv420_nv12"))
+    return NULL;
 
   return g_steal_pointer (&hwaccel_nvidia);
 }
@@ -787,6 +839,8 @@ grd_hwaccel_nvidia_dispose (GObject *object)
     }
 
   g_clear_pointer (&hwaccel_nvidia->cu_module_avc_utils,
+                   hwaccel_nvidia->cuda_funcs->cuModuleUnload);
+  g_clear_pointer (&hwaccel_nvidia->cu_module_dmg_utils,
                    hwaccel_nvidia->cuda_funcs->cuModuleUnload);
 
   g_clear_pointer (&hwaccel_nvidia->cuda_lib, dlclose);
