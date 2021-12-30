@@ -29,9 +29,9 @@
 #include "grd-rdp-surface.h"
 #include "grd-session-rdp.h"
 
-#ifdef HAVE_NVENC
-#include "grd-rdp-nvenc.h"
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+#include "grd-hwaccel-nvidia.h"
+#endif /* HAVE_HWACCEL_NVIDIA */
 
 #define ENC_TIMES_CHECK_INTERVAL_MS 1000
 #define MAX_TRACKED_ENC_FRAMES 1000
@@ -99,9 +99,9 @@ struct _GrdRdpGraphicsPipeline
   GQueue *enc_times;
 
   GHashTable *surface_hwaccel_table;
-#ifdef HAVE_NVENC
-  GrdRdpNvenc *rdp_nvenc;
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+  GrdHwAccelNvidia *hwaccel_nvidia;
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   uint32_t next_frame_id;
   uint16_t next_surface_id;
@@ -110,14 +110,14 @@ struct _GrdRdpGraphicsPipeline
 
 G_DEFINE_TYPE (GrdRdpGraphicsPipeline, grd_rdp_graphics_pipeline, G_TYPE_OBJECT)
 
-#ifdef HAVE_NVENC
+#ifdef HAVE_HWACCEL_NVIDIA
 void
-grd_rdp_graphics_pipeline_set_nvenc (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                     GrdRdpNvenc            *rdp_nvenc)
+grd_rdp_graphics_pipeline_set_hwaccel_nvidia (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                              GrdHwAccelNvidia       *hwaccel_nvidia)
 {
-  graphics_pipeline->rdp_nvenc = rdp_nvenc;
+  graphics_pipeline->hwaccel_nvidia = hwaccel_nvidia;
 }
-#endif /* HAVE_NVENC */
+#endif /* HAVE_HWACCEL_NVIDIA */
 
 void
 grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
@@ -129,10 +129,10 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
   uint16_t surface_id = grd_rdp_gfx_surface_get_surface_id (gfx_surface);
   uint32_t surface_serial = grd_rdp_gfx_surface_get_serial (gfx_surface);
   GfxSurfaceContext *surface_context;
-#ifdef HAVE_NVENC
+#ifdef HAVE_HWACCEL_NVIDIA
   HWAccelContext *hwaccel_context;
   uint32_t encode_session_id;
-#endif /* HAVE_NVENC */
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   surface_context = g_malloc0 (sizeof (GfxSurfaceContext));
 
@@ -144,16 +144,16 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
   g_hash_table_insert (graphics_pipeline->serial_surface_table,
                        GUINT_TO_POINTER (surface_serial), surface_context);
 
-#ifdef HAVE_NVENC
+#ifdef HAVE_HWACCEL_NVIDIA
   if ((rdpgfx_context->rdpcontext->settings->GfxAVC444v2 ||
        rdpgfx_context->rdpcontext->settings->GfxAVC444 ||
        rdpgfx_context->rdpcontext->settings->GfxH264) &&
-      graphics_pipeline->rdp_nvenc &&
-      grd_rdp_nvenc_create_encode_session (graphics_pipeline->rdp_nvenc,
-                                           &encode_session_id,
-                                           rdp_surface->width,
-                                           rdp_surface->height,
-                                           rdp_surface->refresh_rate))
+      graphics_pipeline->hwaccel_nvidia &&
+      grd_hwaccel_nvidia_create_nvenc_session (graphics_pipeline->hwaccel_nvidia,
+                                               &encode_session_id,
+                                               rdp_surface->width,
+                                               rdp_surface->height,
+                                               rdp_surface->refresh_rate))
     {
       g_debug ("[RDP.RDPGFX] Creating NVENC session for surface %u", surface_id);
 
@@ -164,7 +164,7 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
       g_hash_table_insert (graphics_pipeline->surface_hwaccel_table,
                            GUINT_TO_POINTER (surface_id), hwaccel_context);
     }
-#endif /* HAVE_NVENC */
+#endif /* HAVE_HWACCEL_NVIDIA */
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
   create_surface.surfaceId = surface_id;
@@ -184,9 +184,9 @@ grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipel
   RDPGFX_DELETE_SURFACE_PDU delete_surface = {0};
   gboolean needs_encoding_context_deletion = FALSE;
   GfxSurfaceContext *surface_context;
-#ifdef HAVE_NVENC
+#ifdef HAVE_HWACCEL_NVIDIA
   HWAccelContext *hwaccel_context;
-#endif /* HAVE_NVENC */
+#endif /* HAVE_HWACCEL_NVIDIA */
   uint16_t surface_id;
   uint32_t codec_context_id;
   uint32_t surface_serial;
@@ -211,7 +211,7 @@ grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipel
                            GUINT_TO_POINTER (surface_serial));
     }
 
-#ifdef HAVE_NVENC
+#ifdef HAVE_HWACCEL_NVIDIA
   if (g_hash_table_steal_extended (graphics_pipeline->surface_hwaccel_table,
                                    GUINT_TO_POINTER (surface_id),
                                    NULL, (gpointer *) &hwaccel_context))
@@ -219,11 +219,11 @@ grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipel
       g_debug ("[RDP.RDPGFX] Destroying NVENC session for surface %u", surface_id);
 
       g_assert (hwaccel_context->api == HW_ACCEL_API_NVENC);
-      grd_rdp_nvenc_free_encode_session (graphics_pipeline->rdp_nvenc,
-                                         hwaccel_context->encode_session_id);
+      grd_hwaccel_nvidia_free_nvenc_session (graphics_pipeline->hwaccel_nvidia,
+                                             hwaccel_context->encode_session_id);
       g_free (hwaccel_context);
     }
-#endif /* HAVE_NVENC */
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   if (g_hash_table_steal_extended (graphics_pipeline->codec_context_table,
                                    GUINT_TO_POINTER (codec_context_id),
@@ -399,7 +399,7 @@ enqueue_tracked_frame_info (GrdRdpGraphicsPipeline *graphics_pipeline,
   g_queue_push_tail (graphics_pipeline->encoded_frames, gfx_frame_info);
 }
 
-#ifdef HAVE_NVENC
+#ifdef HAVE_HWACCEL_NVIDIA
 static gboolean
 refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
                             HWAccelContext         *hwaccel_context,
@@ -431,12 +431,12 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
   aligned_width = surface_width + (surface_width % 16 ? 16 - surface_width % 16 : 0);
   aligned_height = surface_height + (surface_height % 64 ? 64 - surface_height % 64 : 0);
 
-  if (!grd_rdp_nvenc_avc420_encode_bgrx_frame (graphics_pipeline->rdp_nvenc,
-                                               hwaccel_context->encode_session_id,
-                                               src_data,
-                                               surface_width, surface_height,
-                                               aligned_width, aligned_height,
-                                               &avc420.data, &avc420.length))
+  if (!grd_hwaccel_nvidia_avc420_encode_bgrx_frame (graphics_pipeline->hwaccel_nvidia,
+                                                    hwaccel_context->encode_session_id,
+                                                    src_data,
+                                                    surface_width, surface_height,
+                                                    aligned_width, aligned_height,
+                                                    &avc420.data, &avc420.length))
     {
       g_warning ("[RDP.RDPGFX] Failed to encode YUV420 frame");
       return FALSE;
@@ -513,7 +513,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   return TRUE;
 }
-#endif /* HAVE_NVENC */
+#endif /* HAVE_HWACCEL_NVIDIA */
 
 static gboolean
 rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
@@ -894,10 +894,10 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
   GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
-#ifdef HAVE_NVENC
+#ifdef HAVE_HWACCEL_NVIDIA
   HWAccelContext *hwaccel_context;
   uint16_t surface_id;
-#endif /* HAVE_NVENC */
+#endif /* HAVE_HWACCEL_NVIDIA */
   int64_t enc_time_us;
   gboolean success;
 
@@ -919,7 +919,7 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
       map_surface_to_output (graphics_pipeline, rdp_surface->gfx_surface);
     }
 
-#ifdef HAVE_NVENC
+#ifdef HAVE_HWACCEL_NVIDIA
   surface_id = grd_rdp_gfx_surface_get_surface_id (rdp_surface->gfx_surface);
   if (rdp_settings->GfxH264 &&
       g_hash_table_lookup_extended (graphics_pipeline->surface_hwaccel_table,
@@ -932,7 +932,7 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
                                             &enc_time_us);
     }
   else
-#endif /* HAVE_NVENC */
+#endif /* HAVE_HWACCEL_NVIDIA */
     {
       success = refresh_gfx_surface_rfx_progressive (graphics_pipeline, rdp_surface,
                                                      region, src_data, &enc_time_us);

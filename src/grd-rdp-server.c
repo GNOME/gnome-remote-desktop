@@ -28,8 +28,11 @@
 #include <winpr/ssl.h>
 
 #include "grd-context.h"
-#include "grd-rdp-nvenc.h"
 #include "grd-session-rdp.h"
+
+#ifdef HAVE_HWACCEL_NVIDIA
+#include "grd-hwaccel-nvidia.h"
+#endif /* HAVE_HWACCEL_NVIDIA */
 
 enum
 {
@@ -48,9 +51,9 @@ struct _GrdRdpServer
   guint idle_task;
 
   GrdContext *context;
-#ifdef HAVE_NVENC
-  GrdRdpNvenc *rdp_nvenc;
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+  GrdHwAccelNvidia *hwaccel_nvidia;
+#endif /* HAVE_HWACCEL_NVIDIA */
 };
 
 G_DEFINE_TYPE (GrdRdpServer, grd_rdp_server, G_TYPE_SOCKET_SERVICE)
@@ -116,9 +119,9 @@ on_incoming (GSocketService    *service,
   g_debug ("New incoming RDP connection");
 
   if (!(session_rdp = grd_session_rdp_new (rdp_server, connection,
-#ifdef HAVE_NVENC
-                                           rdp_server->rdp_nvenc,
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+                                           rdp_server->hwaccel_nvidia,
+#endif /* HAVE_HWACCEL_NVIDIA */
                                            0)))
     return TRUE;
 
@@ -198,9 +201,9 @@ grd_rdp_server_dispose (GObject *object)
 {
   GrdRdpServer *rdp_server = GRD_RDP_SERVER (object);
 
-#ifdef HAVE_NVENC
-  g_clear_object (&rdp_server->rdp_nvenc);
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+  g_clear_object (&rdp_server->hwaccel_nvidia);
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   if (rdp_server->idle_task)
     {
@@ -239,9 +242,9 @@ grd_rdp_server_init (GrdRdpServer *rdp_server)
    */
   primitives_get ();
 
-#ifdef HAVE_NVENC
-  rdp_server->rdp_nvenc = grd_rdp_nvenc_new ();
-  if (rdp_server->rdp_nvenc)
+#ifdef HAVE_HWACCEL_NVIDIA
+  rdp_server->hwaccel_nvidia = grd_hwaccel_nvidia_new ();
+  if (rdp_server->hwaccel_nvidia)
     {
       g_debug ("[RDP] Initialization of NVENC was successful");
     }
@@ -253,7 +256,7 @@ grd_rdp_server_init (GrdRdpServer *rdp_server)
 #else
   g_message ("[RDP] RDP backend is built WITHOUT support for NVENC and CUDA. "
              "No hardware acceleration available");
-#endif /* HAVE_NVENC */
+#endif /* HAVE_HWACCEL_NVIDIA */
 }
 
 static void

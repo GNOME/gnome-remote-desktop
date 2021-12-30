@@ -4,9 +4,9 @@ project('gnome-remote-desktop', 'c',
         default_options: ['warning_level=1',
                           'buildtype=debugoptimized'])
 
+cuda_req = '>= 11'
 freerdp_req = '>= 2.4.1'
 fuse_req = '>= 3.9.1'
-nvenc_req = '>= 11'
 xkbcommon_req = '>= 1.0.0'
 epoxy_req = '>= 1.4'
 
@@ -28,13 +28,13 @@ drm_dep = dependency('libdrm')
 
 have_rdp = get_option('rdp')
 have_vnc = get_option('vnc')
-have_nvenc = get_option('nvenc')
+have_hwaccel_nvidia = get_option('nvenc_and_cuda')
 
 if not have_rdp and not have_vnc
   error('Must enable at least one backend')
 endif
 
-if have_nvenc and not have_rdp
+if have_hwaccel_nvidia and not have_rdp
   error('Support for hardware acceleration using NVENC requires the RDP backend')
 endif
 
@@ -48,9 +48,9 @@ if have_rdp
   winpr_dep = dependency('winpr2', version: freerdp_req)
   xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
 
-  if have_nvenc
+  if have_hwaccel_nvidia
     dl_dep = cc.find_library('dl', required: true)
-    nvenc_dep = dependency('ffnvcodec', version: nvenc_req)
+    cuda_dep = dependency('ffnvcodec', version: cuda_req)
   endif
 endif
 
@@ -72,7 +72,7 @@ cdata.set_quoted('VERSION', meson.project_version())
 
 cdata.set('HAVE_RDP', have_rdp)
 cdata.set('HAVE_VNC', have_vnc)
-cdata.set('HAVE_NVENC', have_nvenc)
+cdata.set('HAVE_HWACCEL_NVIDIA', have_hwaccel_nvidia)
 
 cdata.set_quoted('GRD_DATA_DIR', grd_datadir)
 
@@ -122,7 +122,7 @@ output = [
   '',
   '    Options for the RDP backend:',
   '',
-  '        Support for hardware acceleration using NVENC and CUDA........' + have_nvenc.to_string(),
+  '        Support for hardware acceleration using NVENC and CUDA........' + have_hwaccel_nvidia.to_string(),
   '',
   '  Now type \'ninja -C ' + meson.build_root() + '\' to build ' + meson.project_name(),
   '',

@@ -12,8 +12,8 @@
 /* Defined if VNC backend is enabled */
 #mesondefine HAVE_VNC
 
-/* Defined if NVENC is available */
-#mesondefine HAVE_NVENC
+/* Defined if CUDA is available */
+#mesondefine HAVE_HWACCEL_NVIDIA
 
 /* Path of the data dir */
 #mesondefine GRD_DATA_DIR

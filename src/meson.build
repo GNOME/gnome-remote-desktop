@@ -78,15 +78,15 @@ if have_rdp
     xkbcommon_dep,
   ]
 
-  if have_nvenc
+  if have_hwaccel_nvidia
     daemon_sources += files([
-      'grd-rdp-nvenc.c',
-      'grd-rdp-nvenc.h',
+      'grd-hwaccel-nvidia.c',
+      'grd-hwaccel-nvidia.h',
     ])
 
     deps += [
+      cuda_dep,
       dl_dep,
-      nvenc_dep,
     ]
   endif
 endif

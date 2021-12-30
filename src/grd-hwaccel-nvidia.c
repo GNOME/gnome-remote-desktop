@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#include "grd-rdp-nvenc.h"
+#include "grd-hwaccel-nvidia.h"
 
 #include <ffnvcodec/dynlink_loader.h>
 
@@ -33,7 +33,7 @@ typedef struct _NvEncEncodeSession
   NV_ENC_OUTPUT_PTR buffer_out;
 } NvEncEncodeSession;
 
-struct _GrdRdpNvenc
+struct _GrdHwAccelNvidia
 {
   GObject parent;
 
@@ -53,43 +53,45 @@ struct _GrdRdpNvenc
   uint32_t next_encode_session_id;
 };
 
-G_DEFINE_TYPE (GrdRdpNvenc, grd_rdp_nvenc, G_TYPE_OBJECT)
+G_DEFINE_TYPE (GrdHwAccelNvidia, grd_hwaccel_nvidia, G_TYPE_OBJECT)
 
 void
-grd_rdp_nvenc_push_cuda_context (GrdRdpNvenc *rdp_nvenc)
+grd_hwaccel_nvidia_push_cuda_context (GrdHwAccelNvidia *hwaccel_nvidia)
 {
-  if (rdp_nvenc->cuda_funcs->cuCtxPushCurrent (rdp_nvenc->cu_context) != CUDA_SUCCESS)
+  CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+
+  if (cuda_funcs->cuCtxPushCurrent (hwaccel_nvidia->cu_context) != CUDA_SUCCESS)
     g_error ("[HWAccel.CUDA] Failed to push CUDA context");
 }
 
 void
-grd_rdp_nvenc_pop_cuda_context (GrdRdpNvenc *rdp_nvenc)
+grd_hwaccel_nvidia_pop_cuda_context (GrdHwAccelNvidia *hwaccel_nvidia)
 {
   CUcontext cu_context;
 
-  rdp_nvenc->cuda_funcs->cuCtxPopCurrent (&cu_context);
+  hwaccel_nvidia->cuda_funcs->cuCtxPopCurrent (&cu_context);
 }
 
 static uint32_t
-get_next_free_encode_session_id (GrdRdpNvenc *rdp_nvenc)
+get_next_free_encode_session_id (GrdHwAccelNvidia *hwaccel_nvidia)
 {
-  uint32_t encode_session_id = rdp_nvenc->next_encode_session_id;
+  uint32_t encode_session_id = hwaccel_nvidia->next_encode_session_id;
 
-  while (g_hash_table_contains (rdp_nvenc->encode_sessions,
+  while (g_hash_table_contains (hwaccel_nvidia->encode_sessions,
                                 GUINT_TO_POINTER (encode_session_id)))
     ++encode_session_id;
 
-  rdp_nvenc->next_encode_session_id = encode_session_id + 1;
+  hwaccel_nvidia->next_encode_session_id = encode_session_id + 1;
 
   return encode_session_id;
 }
 
 gboolean
-grd_rdp_nvenc_create_encode_session (GrdRdpNvenc *rdp_nvenc,
-                                     uint32_t    *encode_session_id,
-                                     uint16_t     surface_width,
-                                     uint16_t     surface_height,
-                                     uint16_t     refresh_rate)
+grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
+                                         uint32_t         *encode_session_id,
+                                         uint16_t          surface_width,
+                                         uint16_t          surface_height,
+                                         uint16_t          refresh_rate)
 {
   NvEncEncodeSession *encode_session;
   NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS open_params = {0};
@@ -102,17 +104,17 @@ grd_rdp_nvenc_create_encode_session (GrdRdpNvenc *rdp_nvenc,
   aligned_width = surface_width + (surface_width % 16 ? 16 - surface_width % 16 : 0);
   aligned_height = surface_height + (surface_height % 64 ? 64 - surface_height % 64 : 0);
 
-  *encode_session_id = get_next_free_encode_session_id (rdp_nvenc);
+  *encode_session_id = get_next_free_encode_session_id (hwaccel_nvidia);
   encode_session = g_malloc0 (sizeof (NvEncEncodeSession));
   encode_session->enc_width = aligned_width;
   encode_session->enc_height = aligned_height;
 
   open_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
   open_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
-  open_params.device = rdp_nvenc->cu_context;
+  open_params.device = hwaccel_nvidia->cu_context;
   open_params.apiVersion = NVENCAPI_VERSION;
 
-  if (rdp_nvenc->nvenc_api.nvEncOpenEncodeSessionEx (
+  if (hwaccel_nvidia->nvenc_api.nvEncOpenEncodeSessionEx (
         &open_params, &encode_session->encoder) != NV_ENC_SUCCESS)
     {
       g_debug ("[HWAccel.NVENC] Failed to open encode session");
@@ -144,39 +146,39 @@ grd_rdp_nvenc_create_encode_session (GrdRdpNvenc *rdp_nvenc,
   init_params.frameRateDen = 1;
   init_params.enablePTD = 1;
   init_params.encodeConfig = &encode_config;
-  if (rdp_nvenc->nvenc_api.nvEncInitializeEncoder (
+  if (hwaccel_nvidia->nvenc_api.nvEncInitializeEncoder (
         encode_session->encoder, &init_params) != NV_ENC_SUCCESS)
     {
       NV_ENC_PIC_PARAMS pic_params = {0};
 
       g_warning ("[HWAccel.NVENC] Failed to initialize encoder");
       pic_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
-      rdp_nvenc->nvenc_api.nvEncEncodePicture (encode_session->encoder,
-                                               &pic_params);
-      rdp_nvenc->nvenc_api.nvEncDestroyEncoder (encode_session->encoder);
+      hwaccel_nvidia->nvenc_api.nvEncEncodePicture (encode_session->encoder,
+                                                    &pic_params);
+      hwaccel_nvidia->nvenc_api.nvEncDestroyEncoder (encode_session->encoder);
 
       g_free (encode_session);
       return FALSE;
     }
 
   create_bitstream_buffer.version = NV_ENC_CREATE_BITSTREAM_BUFFER_VER;
-  if (rdp_nvenc->nvenc_api.nvEncCreateBitstreamBuffer (
+  if (hwaccel_nvidia->nvenc_api.nvEncCreateBitstreamBuffer (
         encode_session->encoder, &create_bitstream_buffer) != NV_ENC_SUCCESS)
     {
       NV_ENC_PIC_PARAMS pic_params = {0};
 
       g_warning ("[HWAccel.NVENC] Failed to create bitstream buffer");
       pic_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
-      rdp_nvenc->nvenc_api.nvEncEncodePicture (encode_session->encoder,
-                                               &pic_params);
-      rdp_nvenc->nvenc_api.nvEncDestroyEncoder (encode_session->encoder);
+      hwaccel_nvidia->nvenc_api.nvEncEncodePicture (encode_session->encoder,
+                                                    &pic_params);
+      hwaccel_nvidia->nvenc_api.nvEncDestroyEncoder (encode_session->encoder);
 
       g_free (encode_session);
       return FALSE;
     }
   encode_session->buffer_out = create_bitstream_buffer.bitstreamBuffer;
 
-  g_hash_table_insert (rdp_nvenc->encode_sessions,
+  g_hash_table_insert (hwaccel_nvidia->encode_sessions,
                        GUINT_TO_POINTER (*encode_session_id),
                        encode_session);
 
@@ -184,38 +186,38 @@ grd_rdp_nvenc_create_encode_session (GrdRdpNvenc *rdp_nvenc,
 }
 
 void
-grd_rdp_nvenc_free_encode_session (GrdRdpNvenc *rdp_nvenc,
-                                   uint32_t     encode_session_id)
+grd_hwaccel_nvidia_free_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
+                                       uint32_t          encode_session_id)
 {
   NvEncEncodeSession *encode_session;
   NV_ENC_PIC_PARAMS pic_params = {0};
 
-  if (!g_hash_table_steal_extended (rdp_nvenc->encode_sessions,
+  if (!g_hash_table_steal_extended (hwaccel_nvidia->encode_sessions,
                                     GUINT_TO_POINTER (encode_session_id),
                                     NULL, (gpointer *) &encode_session))
     return;
 
-  rdp_nvenc->nvenc_api.nvEncDestroyBitstreamBuffer (encode_session->encoder,
-                                                    encode_session->buffer_out);
+  hwaccel_nvidia->nvenc_api.nvEncDestroyBitstreamBuffer (encode_session->encoder,
+                                                         encode_session->buffer_out);
 
   pic_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
-  rdp_nvenc->nvenc_api.nvEncEncodePicture (encode_session->encoder,
-                                           &pic_params);
-  rdp_nvenc->nvenc_api.nvEncDestroyEncoder (encode_session->encoder);
+  hwaccel_nvidia->nvenc_api.nvEncEncodePicture (encode_session->encoder,
+                                                &pic_params);
+  hwaccel_nvidia->nvenc_api.nvEncDestroyEncoder (encode_session->encoder);
 
   g_free (encode_session);
 }
 
 gboolean
-grd_rdp_nvenc_avc420_encode_bgrx_frame (GrdRdpNvenc  *rdp_nvenc,
-                                        uint32_t      encode_session_id,
-                                        uint8_t      *src_data,
-                                        uint16_t      src_width,
-                                        uint16_t      src_height,
-                                        uint16_t      aligned_width,
-                                        uint16_t      aligned_height,
-                                        uint8_t     **bitstream,
-                                        uint32_t     *bitstream_size)
+grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
+                                             uint32_t           encode_session_id,
+                                             uint8_t           *src_data,
+                                             uint16_t           src_width,
+                                             uint16_t           src_height,
+                                             uint16_t           aligned_width,
+                                             uint16_t           aligned_height,
+                                             uint8_t          **bitstream,
+                                             uint32_t          *bitstream_size)
 {
   NvEncEncodeSession *encode_session;
   CUDA_MEMCPY2D cu_memcpy_2d = {0};
@@ -230,7 +232,7 @@ grd_rdp_nvenc_avc420_encode_bgrx_frame (GrdRdpNvenc  *rdp_nvenc,
   unsigned int block_dim_x, block_dim_y, block_dim_z;
   void *args[8];
 
-  if (!g_hash_table_lookup_extended (rdp_nvenc->encode_sessions,
+  if (!g_hash_table_lookup_extended (hwaccel_nvidia->encode_sessions,
                                      GUINT_TO_POINTER (encode_session_id),
                                      NULL, (gpointer *) &encode_session))
     return FALSE;
@@ -238,17 +240,17 @@ grd_rdp_nvenc_avc420_encode_bgrx_frame (GrdRdpNvenc  *rdp_nvenc,
   g_assert (encode_session->enc_width == aligned_width);
   g_assert (encode_session->enc_height == aligned_height);
 
-  if (rdp_nvenc->cuda_funcs->cuStreamCreate (&cu_stream, 0) != CUDA_SUCCESS)
+  if (hwaccel_nvidia->cuda_funcs->cuStreamCreate (&cu_stream, 0) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to create stream");
       return FALSE;
     }
 
-  if (rdp_nvenc->cuda_funcs->cuMemAllocPitch (
+  if (hwaccel_nvidia->cuda_funcs->cuMemAllocPitch (
         &bgrx_buffer, &bgrx_pitch, src_width * 4, src_height, 4) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to allocate BGRX buffer");
-      rdp_nvenc->cuda_funcs->cuStreamDestroy (cu_stream);
+      hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
       return FALSE;
     }
 
@@ -263,23 +265,23 @@ grd_rdp_nvenc_avc420_encode_bgrx_frame (GrdRdpNvenc  *rdp_nvenc,
   cu_memcpy_2d.WidthInBytes = src_width * 4;
   cu_memcpy_2d.Height = src_height;
 
-  if (rdp_nvenc->cuda_funcs->cuMemcpy2DAsync (
+  if (hwaccel_nvidia->cuda_funcs->cuMemcpy2DAsync (
         &cu_memcpy_2d, cu_stream) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to initiate H2D copy");
-      rdp_nvenc->cuda_funcs->cuMemFree (bgrx_buffer);
-      rdp_nvenc->cuda_funcs->cuStreamDestroy (cu_stream);
+      hwaccel_nvidia->cuda_funcs->cuMemFree (bgrx_buffer);
+      hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
       return FALSE;
     }
 
-  if (rdp_nvenc->cuda_funcs->cuMemAllocPitch (
+  if (hwaccel_nvidia->cuda_funcs->cuMemAllocPitch (
         &nv12_buffer, &nv12_pitch,
         aligned_width, aligned_height + aligned_height / 2, 4) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to allocate NV12 buffer");
-      rdp_nvenc->cuda_funcs->cuStreamSynchronize (cu_stream);
-      rdp_nvenc->cuda_funcs->cuMemFree (bgrx_buffer);
-      rdp_nvenc->cuda_funcs->cuStreamDestroy (cu_stream);
+      hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cu_stream);
+      hwaccel_nvidia->cuda_funcs->cuMemFree (bgrx_buffer);
+      hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
       return FALSE;
     }
 
@@ -303,29 +305,29 @@ grd_rdp_nvenc_avc420_encode_bgrx_frame (GrdRdpNvenc  *rdp_nvenc,
   args[6] = &aligned_height;
   args[7] = &aligned_width;
 
-  if (rdp_nvenc->cuda_funcs->cuLaunchKernel (
-        rdp_nvenc->cu_bgrx_to_yuv420, grid_dim_x, grid_dim_y, grid_dim_z,
+  if (hwaccel_nvidia->cuda_funcs->cuLaunchKernel (
+        hwaccel_nvidia->cu_bgrx_to_yuv420, grid_dim_x, grid_dim_y, grid_dim_z,
         block_dim_x, block_dim_y, block_dim_z, 0, cu_stream, args, NULL) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to launch BGRX_TO_YUV420 kernel");
-      rdp_nvenc->cuda_funcs->cuStreamSynchronize (cu_stream);
-      rdp_nvenc->cuda_funcs->cuMemFree (nv12_buffer);
-      rdp_nvenc->cuda_funcs->cuMemFree (bgrx_buffer);
-      rdp_nvenc->cuda_funcs->cuStreamDestroy (cu_stream);
+      hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cu_stream);
+      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
+      hwaccel_nvidia->cuda_funcs->cuMemFree (bgrx_buffer);
+      hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
       return FALSE;
     }
 
-  if (rdp_nvenc->cuda_funcs->cuStreamSynchronize (cu_stream) != CUDA_SUCCESS)
+  if (hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cu_stream) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to synchronize stream");
-      rdp_nvenc->cuda_funcs->cuMemFree (nv12_buffer);
-      rdp_nvenc->cuda_funcs->cuMemFree (bgrx_buffer);
-      rdp_nvenc->cuda_funcs->cuStreamDestroy (cu_stream);
+      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
+      hwaccel_nvidia->cuda_funcs->cuMemFree (bgrx_buffer);
+      hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
       return FALSE;
     }
 
-  rdp_nvenc->cuda_funcs->cuStreamDestroy (cu_stream);
-  rdp_nvenc->cuda_funcs->cuMemFree (bgrx_buffer);
+  hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
+  hwaccel_nvidia->cuda_funcs->cuMemFree (bgrx_buffer);
 
   register_res.version = NV_ENC_REGISTER_RESOURCE_VER;
   register_res.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_CUDADEVICEPTR;
@@ -336,24 +338,24 @@ grd_rdp_nvenc_avc420_encode_bgrx_frame (GrdRdpNvenc  *rdp_nvenc,
   register_res.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
   register_res.bufferUsage = NV_ENC_INPUT_IMAGE;
 
-  if (rdp_nvenc->nvenc_api.nvEncRegisterResource (
+  if (hwaccel_nvidia->nvenc_api.nvEncRegisterResource (
         encode_session->encoder, &register_res) != NV_ENC_SUCCESS)
     {
       g_warning ("[HWAccel.NVENC] Failed to register resource");
-      rdp_nvenc->cuda_funcs->cuMemFree (nv12_buffer);
+      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
       return FALSE;
     }
 
   map_input_res.version = NV_ENC_MAP_INPUT_RESOURCE_VER;
   map_input_res.registeredResource = register_res.registeredResource;
 
-  if (rdp_nvenc->nvenc_api.nvEncMapInputResource (
+  if (hwaccel_nvidia->nvenc_api.nvEncMapInputResource (
         encode_session->encoder, &map_input_res) != NV_ENC_SUCCESS)
     {
       g_warning ("[HWAccel.NVENC] Failed to map input resource");
-      rdp_nvenc->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
-                                                    register_res.registeredResource);
-      rdp_nvenc->cuda_funcs->cuMemFree (nv12_buffer);
+      hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
+                                                         register_res.registeredResource);
+      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
       return FALSE;
     }
 
@@ -366,189 +368,184 @@ grd_rdp_nvenc_avc420_encode_bgrx_frame (GrdRdpNvenc  *rdp_nvenc,
   pic_params.bufferFmt = map_input_res.mappedBufferFmt;
   pic_params.pictureStruct = NV_ENC_PIC_STRUCT_FRAME;
 
-  if (rdp_nvenc->nvenc_api.nvEncEncodePicture (
+  if (hwaccel_nvidia->nvenc_api.nvEncEncodePicture (
         encode_session->encoder, &pic_params) != NV_ENC_SUCCESS)
     {
       g_warning ("[HWAccel.NVENC] Failed to encode frame");
-      rdp_nvenc->nvenc_api.nvEncUnmapInputResource (encode_session->encoder,
-                                                    map_input_res.mappedResource);
-      rdp_nvenc->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
-                                                    register_res.registeredResource);
-      rdp_nvenc->cuda_funcs->cuMemFree (nv12_buffer);
+      hwaccel_nvidia->nvenc_api.nvEncUnmapInputResource (encode_session->encoder,
+                                                         map_input_res.mappedResource);
+      hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
+                                                         register_res.registeredResource);
+      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
       return FALSE;
     }
 
   lock_bitstream.version = NV_ENC_LOCK_BITSTREAM_VER;
   lock_bitstream.outputBitstream = encode_session->buffer_out;
 
-  if (rdp_nvenc->nvenc_api.nvEncLockBitstream (
+  if (hwaccel_nvidia->nvenc_api.nvEncLockBitstream (
         encode_session->encoder, &lock_bitstream) != NV_ENC_SUCCESS)
     {
       g_warning ("[HWAccel.NVENC] Failed to lock bitstream");
-      rdp_nvenc->nvenc_api.nvEncUnmapInputResource (encode_session->encoder,
-                                                    map_input_res.mappedResource);
-      rdp_nvenc->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
-                                                    register_res.registeredResource);
-      rdp_nvenc->cuda_funcs->cuMemFree (nv12_buffer);
+      hwaccel_nvidia->nvenc_api.nvEncUnmapInputResource (encode_session->encoder,
+                                                         map_input_res.mappedResource);
+      hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
+                                                         register_res.registeredResource);
+      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
       return FALSE;
     }
 
   *bitstream_size = lock_bitstream.bitstreamSizeInBytes;
   *bitstream = g_memdup2 (lock_bitstream.bitstreamBufferPtr, *bitstream_size);
 
-  rdp_nvenc->nvenc_api.nvEncUnlockBitstream (encode_session->encoder,
-                                             lock_bitstream.outputBitstream);
+  hwaccel_nvidia->nvenc_api.nvEncUnlockBitstream (encode_session->encoder,
+                                                  lock_bitstream.outputBitstream);
 
-  rdp_nvenc->nvenc_api.nvEncUnmapInputResource (encode_session->encoder,
-                                                map_input_res.mappedResource);
-  rdp_nvenc->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
-                                                register_res.registeredResource);
-  rdp_nvenc->cuda_funcs->cuMemFree (nv12_buffer);
+  hwaccel_nvidia->nvenc_api.nvEncUnmapInputResource (encode_session->encoder,
+                                                     map_input_res.mappedResource);
+  hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
+                                                     register_res.registeredResource);
+  hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
 
   return TRUE;
 }
 
-GrdRdpNvenc *
-grd_rdp_nvenc_new (void)
+GrdHwAccelNvidia *
+grd_hwaccel_nvidia_new (void)
 {
-  GrdRdpNvenc *rdp_nvenc;
-  gboolean nvenc_device_found = FALSE;
+  g_autoptr (GrdHwAccelNvidia) hwaccel_nvidia = NULL;
+  gboolean cuda_device_found = FALSE;
   CUdevice cu_device = 0;
   int cu_device_count = 0;
+  CudaFunctions *cuda_funcs;
+  NvencFunctions *nvenc_funcs;
   g_autofree char *avc_ptx_path = NULL;
   g_autofree char *avc_ptx_instructions = NULL;
   g_autoptr (GError) error = NULL;
   int i;
 
-  rdp_nvenc = g_object_new (GRD_TYPE_RDP_NVENC, NULL);
-  cuda_load_functions (&rdp_nvenc->cuda_funcs, NULL);
-  nvenc_load_functions (&rdp_nvenc->nvenc_funcs, NULL);
+  hwaccel_nvidia = g_object_new (GRD_TYPE_HWACCEL_NVIDIA, NULL);
+  cuda_load_functions (&hwaccel_nvidia->cuda_funcs, NULL);
+  nvenc_load_functions (&hwaccel_nvidia->nvenc_funcs, NULL);
 
-  if (!rdp_nvenc->cuda_funcs || !rdp_nvenc->nvenc_funcs)
+  if (!hwaccel_nvidia->cuda_funcs || !hwaccel_nvidia->nvenc_funcs)
     {
       g_debug ("[HWAccel.CUDA] Failed to load CUDA or NVENC library");
-      g_clear_object (&rdp_nvenc);
       return NULL;
     }
 
-  rdp_nvenc->cuda_funcs->cuInit (0);
-  rdp_nvenc->cuda_funcs->cuDeviceGetCount (&cu_device_count);
+  cuda_funcs = hwaccel_nvidia->cuda_funcs;
+  nvenc_funcs = hwaccel_nvidia->nvenc_funcs;
+
+  cuda_funcs->cuInit (0);
+  cuda_funcs->cuDeviceGetCount (&cu_device_count);
 
   g_debug ("[HWAccel.CUDA] Found %i CUDA devices", cu_device_count);
   for (i = 0; i < cu_device_count; ++i)
     {
       int cc_major = 0, cc_minor = 0;
 
-      rdp_nvenc->cuda_funcs->cuDeviceGet (&cu_device, i);
-      rdp_nvenc->cuda_funcs->cuDeviceComputeCapability (&cc_major, &cc_minor,
-                                                        cu_device);
+      cuda_funcs->cuDeviceGet (&cu_device, i);
+      cuda_funcs->cuDeviceComputeCapability (&cc_major, &cc_minor, cu_device);
 
       g_debug ("[HWAccel.CUDA] Device %i compute capability: [%i, %i]",
                i, cc_major, cc_minor);
       if (cc_major >= 3)
         {
-          g_debug ("[HWAccel.NVENC] Choosing CUDA device with id %i", i);
-          nvenc_device_found = TRUE;
+          g_debug ("[HWAccel.CUDA] Choosing CUDA device with id %i", i);
+          cuda_device_found = TRUE;
           break;
         }
     }
 
-  if (!cu_device_count || !nvenc_device_found)
+  if (!cu_device_count || !cuda_device_found)
     {
-      g_debug ("[HWAccel.NVENC] No NVENC capable gpu found");
-      g_clear_object (&rdp_nvenc);
+      g_debug ("[HWAccel.CUDA] No appropriate CUDA capable gpu found");
       return NULL;
     }
 
-  rdp_nvenc->cu_device = cu_device;
-  if (rdp_nvenc->cuda_funcs->cuDevicePrimaryCtxRetain (
-        &rdp_nvenc->cu_context, rdp_nvenc->cu_device) != CUDA_SUCCESS)
+  hwaccel_nvidia->cu_device = cu_device;
+  if (cuda_funcs->cuDevicePrimaryCtxRetain (&hwaccel_nvidia->cu_context,
+                                            hwaccel_nvidia->cu_device) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to retain CUDA context");
-      g_clear_object (&rdp_nvenc);
       return NULL;
     }
 
-  rdp_nvenc->nvenc_api.version = NV_ENCODE_API_FUNCTION_LIST_VER;
-  if (rdp_nvenc->nvenc_funcs->NvEncodeAPICreateInstance (&rdp_nvenc->nvenc_api) != NV_ENC_SUCCESS)
+  hwaccel_nvidia->nvenc_api.version = NV_ENCODE_API_FUNCTION_LIST_VER;
+  if (nvenc_funcs->NvEncodeAPICreateInstance (&hwaccel_nvidia->nvenc_api) != NV_ENC_SUCCESS)
     {
       g_warning ("[HWAccel.NVENC] Could not create NVENC API instance");
-
-      rdp_nvenc->cuda_funcs->cuDevicePrimaryCtxRelease (rdp_nvenc->cu_device);
-      g_clear_object (&rdp_nvenc);
-
+      cuda_funcs->cuDevicePrimaryCtxRelease (hwaccel_nvidia->cu_device);
       return NULL;
     }
 
-  if (rdp_nvenc->cuda_funcs->cuCtxPushCurrent (rdp_nvenc->cu_context) != CUDA_SUCCESS)
+  if (cuda_funcs->cuCtxPushCurrent (hwaccel_nvidia->cu_context) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to push CUDA context");
-      rdp_nvenc->cuda_funcs->cuDevicePrimaryCtxRelease (rdp_nvenc->cu_device);
-      g_clear_object (&rdp_nvenc);
+      cuda_funcs->cuDevicePrimaryCtxRelease (hwaccel_nvidia->cu_device);
       return NULL;
     }
 
-  rdp_nvenc->initialized = TRUE;
+  hwaccel_nvidia->initialized = TRUE;
 
   avc_ptx_path = g_strdup_printf ("%s/grd-cuda-avc-utils_30.ptx", GRD_DATA_DIR);
   if (!g_file_get_contents (avc_ptx_path, &avc_ptx_instructions, NULL, &error))
     g_error ("[HWAccel.CUDA] Failed to read PTX instructions: %s", error->message);
 
-  if (rdp_nvenc->cuda_funcs->cuModuleLoadData (
-        &rdp_nvenc->cu_module_avc_utils, avc_ptx_instructions) != CUDA_SUCCESS)
+  if (cuda_funcs->cuModuleLoadData (&hwaccel_nvidia->cu_module_avc_utils,
+                                    avc_ptx_instructions) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to load CUDA module");
-      g_clear_object (&rdp_nvenc);
       return NULL;
     }
 
-  if (rdp_nvenc->cuda_funcs->cuModuleGetFunction (
-        &rdp_nvenc->cu_bgrx_to_yuv420, rdp_nvenc->cu_module_avc_utils,
-        "convert_2x2_bgrx_area_to_yuv420_nv12") != CUDA_SUCCESS)
+  if (cuda_funcs->cuModuleGetFunction (&hwaccel_nvidia->cu_bgrx_to_yuv420,
+                                       hwaccel_nvidia->cu_module_avc_utils,
+                                       "convert_2x2_bgrx_area_to_yuv420_nv12") != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to get AVC CUDA kernel");
-      g_clear_object (&rdp_nvenc);
       return NULL;
     }
 
-  return rdp_nvenc;
+  return g_steal_pointer (&hwaccel_nvidia);
 }
 
 static void
-grd_rdp_nvenc_dispose (GObject *object)
+grd_hwaccel_nvidia_dispose (GObject *object)
 {
-  GrdRdpNvenc *rdp_nvenc = GRD_RDP_NVENC (object);
+  GrdHwAccelNvidia *hwaccel_nvidia = GRD_HWACCEL_NVIDIA (object);
 
-  if (rdp_nvenc->initialized)
+  if (hwaccel_nvidia->initialized)
     {
-      rdp_nvenc->cuda_funcs->cuCtxPopCurrent (&rdp_nvenc->cu_context);
-      rdp_nvenc->cuda_funcs->cuDevicePrimaryCtxRelease (rdp_nvenc->cu_device);
+      hwaccel_nvidia->cuda_funcs->cuCtxPopCurrent (&hwaccel_nvidia->cu_context);
+      hwaccel_nvidia->cuda_funcs->cuDevicePrimaryCtxRelease (hwaccel_nvidia->cu_device);
 
-      rdp_nvenc->initialized = FALSE;
+      hwaccel_nvidia->initialized = FALSE;
     }
 
-  g_clear_pointer (&rdp_nvenc->cu_module_avc_utils,
-                   rdp_nvenc->cuda_funcs->cuModuleUnload);
+  g_clear_pointer (&hwaccel_nvidia->cu_module_avc_utils,
+                   hwaccel_nvidia->cuda_funcs->cuModuleUnload);
 
-  nvenc_free_functions (&rdp_nvenc->nvenc_funcs);
-  cuda_free_functions (&rdp_nvenc->cuda_funcs);
+  nvenc_free_functions (&hwaccel_nvidia->nvenc_funcs);
+  cuda_free_functions (&hwaccel_nvidia->cuda_funcs);
 
-  g_assert (g_hash_table_size (rdp_nvenc->encode_sessions) == 0);
-  g_clear_pointer (&rdp_nvenc->encode_sessions, g_hash_table_destroy);
+  g_assert (g_hash_table_size (hwaccel_nvidia->encode_sessions) == 0);
+  g_clear_pointer (&hwaccel_nvidia->encode_sessions, g_hash_table_destroy);
 
-  G_OBJECT_CLASS (grd_rdp_nvenc_parent_class)->dispose (object);
+  G_OBJECT_CLASS (grd_hwaccel_nvidia_parent_class)->dispose (object);
 }
 
 static void
-grd_rdp_nvenc_init (GrdRdpNvenc *rdp_nvenc)
+grd_hwaccel_nvidia_init (GrdHwAccelNvidia *hwaccel_nvidia)
 {
-  rdp_nvenc->encode_sessions = g_hash_table_new (NULL, NULL);
+  hwaccel_nvidia->encode_sessions = g_hash_table_new (NULL, NULL);
 }
 
 static void
-grd_rdp_nvenc_class_init (GrdRdpNvencClass *klass)
+grd_hwaccel_nvidia_class_init (GrdHwAccelNvidiaClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->dispose = grd_rdp_nvenc_dispose;
+  object_class->dispose = grd_hwaccel_nvidia_dispose;
 }

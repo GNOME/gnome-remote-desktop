@@ -8,7 +8,7 @@ option('vnc',
        value: true,
        description: 'Enable the VNC backend')
 
-option('nvenc',
+option('nvenc_and_cuda',
        type: 'boolean',
        value: true,
        description: 'Build with support for hardware acceleration using NVENC and CUDA')

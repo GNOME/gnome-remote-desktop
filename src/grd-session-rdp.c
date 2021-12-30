@@ -42,9 +42,9 @@
 #include "grd-settings.h"
 #include "grd-stream.h"
 
-#ifdef HAVE_NVENC
-#include "grd-rdp-nvenc.h"
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+#include "grd-hwaccel-nvidia.h"
+#endif /* HAVE_HWACCEL_NVIDIA */
 
 #define DISCRETE_SCROLL_STEP 10.0
 
@@ -148,9 +148,9 @@ struct _GrdSessionRdp
   NSCThreadPoolContext nsc_thread_pool_context;
   RawThreadPoolContext raw_thread_pool_context;
 
-#ifdef HAVE_NVENC
-  GrdRdpNvenc *rdp_nvenc;
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+  GrdHwAccelNvidia *hwaccel_nvidia;
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   GSource *pending_encode_source;
 
@@ -1654,10 +1654,10 @@ rdp_peer_post_connect (freerdp_peer *peer)
                                        rdp_peer_context->network_autodetection,
                                        rdp_peer_context->encode_stream,
                                        rdp_peer_context->rfx_context);
-#ifdef HAVE_NVENC
-      grd_rdp_graphics_pipeline_set_nvenc (rdp_peer_context->graphics_pipeline,
-                                           session_rdp->rdp_nvenc);
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+      grd_rdp_graphics_pipeline_set_hwaccel_nvidia (
+        rdp_peer_context->graphics_pipeline, session_rdp->hwaccel_nvidia);
+#endif /* HAVE_HWACCEL_NVIDIA */
     }
 
   grd_session_start (GRD_SESSION (session_rdp));
@@ -1927,18 +1927,18 @@ graphics_thread_func (gpointer data)
 {
   GrdSessionRdp *session_rdp = data;
 
-#ifdef HAVE_NVENC
-  if (session_rdp->rdp_nvenc)
-    grd_rdp_nvenc_push_cuda_context (session_rdp->rdp_nvenc);
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+  if (session_rdp->hwaccel_nvidia)
+    grd_hwaccel_nvidia_push_cuda_context (session_rdp->hwaccel_nvidia);
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   while (WaitForSingleObject (session_rdp->stop_event, 0) == WAIT_TIMEOUT)
     g_main_context_iteration (session_rdp->graphics_context, TRUE);
 
-#ifdef HAVE_NVENC
-  if (session_rdp->rdp_nvenc)
-    grd_rdp_nvenc_pop_cuda_context (session_rdp->rdp_nvenc);
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+  if (session_rdp->hwaccel_nvidia)
+    grd_hwaccel_nvidia_pop_cuda_context (session_rdp->hwaccel_nvidia);
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   return NULL;
 }
@@ -1946,9 +1946,9 @@ graphics_thread_func (gpointer data)
 GrdSessionRdp *
 grd_session_rdp_new (GrdRdpServer      *rdp_server,
                      GSocketConnection *connection,
-#ifdef HAVE_NVENC
-                     GrdRdpNvenc       *rdp_nvenc,
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+                     GrdHwAccelNvidia  *hwaccel_nvidia,
+#endif /* HAVE_HWACCEL_NVIDIA */
                      int                reserved)
 {
   GrdSessionRdp *session_rdp;
@@ -1979,9 +1979,9 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
                               NULL);
 
   session_rdp->connection = g_object_ref (connection);
-#ifdef HAVE_NVENC
-  session_rdp->rdp_nvenc = rdp_nvenc;
-#endif /* HAVE_NVENC */
+#ifdef HAVE_HWACCEL_NVIDIA
+  session_rdp->hwaccel_nvidia = hwaccel_nvidia;
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   session_rdp->socket_thread = g_thread_new ("RDP socket thread",
                                              socket_thread_func,
