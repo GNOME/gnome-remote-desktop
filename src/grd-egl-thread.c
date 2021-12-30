@@ -115,7 +115,7 @@ query_format_modifiers (GrdEglThread  *egl_thread,
                         EGLDisplay     egl_display,
                         GError       **error)
 {
-  EGLint n_formats;
+  EGLint n_formats = 0;
   g_autofree EGLint *formats = NULL;
   EGLint i;
 
@@ -185,26 +185,23 @@ query_format_modifiers (GrdEglThread  *egl_thread,
 }
 
 static gboolean
-grd_egl_init_in_impl (GrdEglThread  *egl_thread,
-                      GError       **error)
+initialize_egl_context (GrdEglThread  *egl_thread,
+                        EGLenum        egl_platform,
+                        GError       **error)
 {
   EGLDisplay egl_display;
   EGLint major, minor;
   EGLint *attrs;
   EGLContext egl_context;
 
-  if (!epoxy_has_egl_extension (NULL, "EGL_EXT_platform_base"))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Missing extension 'EGL_EXT_platform_base'");
-      return FALSE;
-    }
+  g_clear_error (error);
 
-  egl_display = eglGetPlatformDisplayEXT (EGL_PLATFORM_SURFACELESS_MESA,
-                                          NULL, NULL);
+  egl_display = eglGetPlatformDisplayEXT (egl_platform, NULL, NULL);
   if (egl_display == EGL_NO_DISPLAY)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+      int code = egl_platform == EGL_PLATFORM_DEVICE_EXT ? G_IO_ERROR_NOT_SUPPORTED
+                                                         : G_IO_ERROR_FAILED;
+      g_set_error (error, G_IO_ERROR, code,
                    "Failed to get EGL display");
       return FALSE;
     }
@@ -225,20 +222,23 @@ grd_egl_init_in_impl (GrdEglThread  *egl_thread,
       return FALSE;
     }
 
-  if (!epoxy_has_egl_extension (egl_display, "EGL_MESA_platform_surfaceless"))
+  if (egl_platform == EGL_PLATFORM_SURFACELESS_MESA)
     {
-      eglTerminate (egl_display);
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "Missing extension 'EGL_MESA_platform_surfaceless'");
-      return FALSE;
-    }
+      if (!epoxy_has_egl_extension (egl_display, "EGL_MESA_platform_surfaceless"))
+        {
+          eglTerminate (egl_display);
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                       "Missing extension 'EGL_MESA_platform_surfaceless'");
+          return FALSE;
+        }
 
-  if (!epoxy_has_egl_extension (egl_display, "EGL_MESA_configless_context"))
-    {
-      eglTerminate (egl_display);
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "Missing extension 'EGL_MESA_platform_surfaceless'");
-      return FALSE;
+      if (!epoxy_has_egl_extension (egl_display, "EGL_MESA_configless_context"))
+        {
+          eglTerminate (egl_display);
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                       "Missing extension 'EGL_MESA_configless_context'");
+          return FALSE;
+        }
     }
 
   if (!epoxy_has_egl_extension (egl_display,
@@ -300,6 +300,42 @@ grd_egl_init_in_impl (GrdEglThread  *egl_thread,
   egl_thread->impl.egl_context = egl_context;
 
   return TRUE;
+}
+
+static gboolean
+grd_egl_init_in_impl (GrdEglThread  *egl_thread,
+                      GError       **error)
+{
+  gboolean initialized;
+
+  if (!epoxy_has_egl_extension (NULL, "EGL_EXT_platform_base"))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Missing extension 'EGL_EXT_platform_base'");
+      return FALSE;
+    }
+
+  initialized = initialize_egl_context (egl_thread,
+                                        EGL_PLATFORM_SURFACELESS_MESA,
+                                        error);
+  if (initialized)
+    {
+      g_debug ("EGL context initialized with platform "
+               "EGL_PLATFORM_SURFACELESS_MESA");
+    }
+  else
+    {
+      initialized = initialize_egl_context (egl_thread,
+                                            EGL_PLATFORM_DEVICE_EXT,
+                                            error);
+      if (initialized)
+        {
+          g_debug ("EGL context initialized with platform "
+                   "EGL_PLATFORM_DEVICE_EXT");
+        }
+    }
+
+  return initialized;
 }
 
 static void
