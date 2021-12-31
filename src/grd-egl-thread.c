@@ -62,6 +62,14 @@ typedef struct _GrdEglTask
   GDestroyNotify callback_destroy;
 } GrdEglTask;
 
+typedef struct _GrdEglTaskCustom
+{
+  GrdEglTask base;
+
+  GrdEglThreadCustomFunc custom_func;
+  gpointer user_data;
+} GrdEglTaskCustom;
+
 typedef struct _GrdEglTaskSync
 {
   GrdEglTask base;
@@ -738,6 +746,18 @@ sync_in_impl (gpointer data,
   task->base.callback (TRUE, task->base.callback_user_data);
 }
 
+static void
+run_custom_task_in_impl (gpointer data,
+                         gpointer user_data)
+{
+  GrdEglTaskCustom *task = user_data;
+  gboolean success;
+
+  success = task->custom_func (task->user_data);
+
+  task->base.callback (success, task->base.callback_user_data);
+}
+
 void
 grd_egl_thread_download (GrdEglThread         *egl_thread,
                          uint8_t              *dst_data,
@@ -791,6 +811,31 @@ grd_egl_thread_sync (GrdEglThread         *egl_thread,
   task = g_new0 (GrdEglTaskSync, 1);
 
   task->base.func = sync_in_impl;
+  task->base.destroy = (GDestroyNotify) grd_egl_task_free;
+  task->base.callback = callback;
+  task->base.callback_user_data = user_data;
+  task->base.callback_destroy = destroy;
+
+  g_async_queue_push (egl_thread->task_queue, task);
+  g_main_context_wakeup (egl_thread->impl.main_context);
+}
+
+void
+grd_egl_thread_run_custom_task (GrdEglThread           *egl_thread,
+                                GrdEglThreadCustomFunc  custom_func,
+                                gpointer                custom_func_data,
+                                GrdEglThreadCallback    callback,
+                                gpointer                user_data,
+                                GDestroyNotify          destroy)
+{
+  GrdEglTaskCustom *task;
+
+  task = g_new0 (GrdEglTaskCustom, 1);
+
+  task->custom_func = custom_func;
+  task->user_data = custom_func_data;
+
+  task->base.func = run_custom_task_in_impl;
   task->base.destroy = (GDestroyNotify) grd_egl_task_free;
   task->base.callback = callback;
   task->base.callback_user_data = user_data;

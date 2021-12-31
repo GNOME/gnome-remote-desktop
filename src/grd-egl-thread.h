@@ -28,6 +28,7 @@
 
 typedef void (* GrdEglThreadCallback) (gboolean success,
                                        gpointer user_data);
+typedef gboolean (* GrdEglThreadCustomFunc) (gpointer user_data);
 
 GrdEglThread * grd_egl_thread_new (GError **error);
 
@@ -52,6 +53,13 @@ void grd_egl_thread_sync (GrdEglThread         *egl_thread,
                           GrdEglThreadCallback  callback,
                           gpointer              user_data,
                           GDestroyNotify        destroy);
+
+void grd_egl_thread_run_custom_task (GrdEglThread           *egl_thread,
+                                     GrdEglThreadCustomFunc  custom_func,
+                                     gpointer                custom_func_data,
+                                     GrdEglThreadCallback    callback,
+                                     gpointer                user_data,
+                                     GDestroyNotify          destroy);
 
 gboolean grd_egl_thread_get_modifiers_for_format (GrdEglThread  *egl_thread,
                                                   uint32_t       format,
