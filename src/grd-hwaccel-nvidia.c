@@ -23,6 +23,20 @@
 
 #include <ffnvcodec/dynlink_loader.h>
 
+#include "grd-egl-thread.h"
+#include "grd-utils.h"
+
+#define MAX_CUDA_DEVICES_FOR_RETRIEVAL 32
+
+typedef struct _DevRetrievalData
+{
+  GrdHwAccelNvidia *hwaccel_nvidia;
+  GrdSyncPoint sync_point;
+
+  unsigned int n_devices;
+  CUdevice *devices;
+} DevRetrievalData;
+
 typedef struct _NvEncEncodeSession
 {
   void *encoder;
@@ -410,19 +424,69 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
   return TRUE;
 }
 
+static gboolean
+get_cuda_devices_in_impl (gpointer user_data)
+{
+  DevRetrievalData *data = user_data;
+  GrdHwAccelNvidia *hwaccel_nvidia = data->hwaccel_nvidia;
+  CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+
+  return cuda_funcs->cuGLGetDevices (&data->n_devices, data->devices,
+                                     MAX_CUDA_DEVICES_FOR_RETRIEVAL,
+                                     CU_GL_DEVICE_LIST_ALL) == CUDA_SUCCESS;
+}
+
+static void
+compute_devices_ready (gboolean success,
+                       gpointer user_data)
+{
+  GrdSyncPoint *sync_point = user_data;
+
+  grd_sync_point_complete (sync_point, success);
+}
+
+static gboolean
+get_cuda_devices_from_gl_context (GrdHwAccelNvidia *hwaccel_nvidia,
+                                  GrdEglThread     *egl_thread,
+                                  unsigned int     *n_returned_devices,
+                                  CUdevice         *device_array)
+{
+  DevRetrievalData data = {};
+  gboolean success;
+
+  grd_sync_point_init (&data.sync_point);
+  data.hwaccel_nvidia = hwaccel_nvidia;
+  data.devices = device_array;
+
+  grd_egl_thread_run_custom_task (egl_thread,
+                                  get_cuda_devices_in_impl,
+                                  &data,
+                                  compute_devices_ready,
+                                  &data.sync_point,
+                                  NULL);
+
+  success = grd_sync_point_wait_for_completion (&data.sync_point);
+  grd_sync_point_clear (&data.sync_point);
+
+  *n_returned_devices = data.n_devices;
+
+  return success;
+}
+
 GrdHwAccelNvidia *
-grd_hwaccel_nvidia_new (void)
+grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
 {
   g_autoptr (GrdHwAccelNvidia) hwaccel_nvidia = NULL;
   gboolean cuda_device_found = FALSE;
+  CUdevice cu_devices[MAX_CUDA_DEVICES_FOR_RETRIEVAL] = {};
   CUdevice cu_device = 0;
-  int cu_device_count = 0;
+  unsigned int cu_device_count = 0;
   CudaFunctions *cuda_funcs;
   NvencFunctions *nvenc_funcs;
   g_autofree char *avc_ptx_path = NULL;
   g_autofree char *avc_ptx_instructions = NULL;
   g_autoptr (GError) error = NULL;
-  int i;
+  unsigned int i;
 
   hwaccel_nvidia = g_object_new (GRD_TYPE_HWACCEL_NVIDIA, NULL);
   cuda_load_functions (&hwaccel_nvidia->cuda_funcs, NULL);
@@ -437,22 +501,31 @@ grd_hwaccel_nvidia_new (void)
   cuda_funcs = hwaccel_nvidia->cuda_funcs;
   nvenc_funcs = hwaccel_nvidia->nvenc_funcs;
 
-  cuda_funcs->cuInit (0);
-  cuda_funcs->cuDeviceGetCount (&cu_device_count);
+  if (cuda_funcs->cuInit (0) != CUDA_SUCCESS)
+    {
+      g_debug ("[HWAccel.CUDA] Failed to initialize CUDA");
+      return NULL;
+    }
+  if (!get_cuda_devices_from_gl_context (hwaccel_nvidia, egl_thread,
+                                         &cu_device_count, cu_devices))
+    {
+      g_warning ("[HWAccel.CUDA] Failed to retrieve CUDA devices");
+      return NULL;
+    }
 
-  g_debug ("[HWAccel.CUDA] Found %i CUDA devices", cu_device_count);
+  g_debug ("[HWAccel.CUDA] Retrieved %u CUDA device(s)", cu_device_count);
   for (i = 0; i < cu_device_count; ++i)
     {
       int cc_major = 0, cc_minor = 0;
 
-      cuda_funcs->cuDeviceGet (&cu_device, i);
+      cu_device = cu_devices[i];
       cuda_funcs->cuDeviceComputeCapability (&cc_major, &cc_minor, cu_device);
 
-      g_debug ("[HWAccel.CUDA] Device %i compute capability: [%i, %i]",
+      g_debug ("[HWAccel.CUDA] Device %u compute capability: [%i, %i]",
                i, cc_major, cc_minor);
       if (cc_major >= 3)
         {
-          g_debug ("[HWAccel.CUDA] Choosing CUDA device with id %i", i);
+          g_debug ("[HWAccel.CUDA] Choosing CUDA device with id %u", i);
           cuda_device_found = TRUE;
           break;
         }

@@ -23,11 +23,13 @@
 #include <glib-object.h>
 #include <stdint.h>
 
+#include "grd-types.h"
+
 #define GRD_TYPE_HWACCEL_NVIDIA (grd_hwaccel_nvidia_get_type ())
 G_DECLARE_FINAL_TYPE (GrdHwAccelNvidia, grd_hwaccel_nvidia,
                       GRD, HWACCEL_NVIDIA, GObject)
 
-GrdHwAccelNvidia *grd_hwaccel_nvidia_new (void);
+GrdHwAccelNvidia *grd_hwaccel_nvidia_new (GrdEglThread *egl_thread);
 
 void grd_hwaccel_nvidia_push_cuda_context (GrdHwAccelNvidia *hwaccel_nvidia);
 

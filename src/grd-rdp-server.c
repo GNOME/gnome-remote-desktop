@@ -68,10 +68,30 @@ GrdRdpServer *
 grd_rdp_server_new (GrdContext *context)
 {
   GrdRdpServer *rdp_server;
+#ifdef HAVE_HWACCEL_NVIDIA
+  GrdEglThread *egl_thread;
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   rdp_server = g_object_new (GRD_TYPE_RDP_SERVER,
                              "context", context,
                              NULL);
+
+#ifdef HAVE_HWACCEL_NVIDIA
+  egl_thread = grd_context_get_egl_thread (rdp_server->context);
+  if (egl_thread &&
+      (rdp_server->hwaccel_nvidia = grd_hwaccel_nvidia_new (egl_thread)))
+    {
+      g_message ("[RDP] Initialization of CUDA was successful");
+    }
+  else
+    {
+      g_debug ("[RDP] Initialization of CUDA failed. "
+               "No hardware acceleration available");
+    }
+#else
+  g_message ("[RDP] RDP backend is built WITHOUT support for NVENC and CUDA. "
+             "No hardware acceleration available");
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   return rdp_server;
 }
@@ -241,22 +261,6 @@ grd_rdp_server_init (GrdRdpServer *rdp_server)
    * Run the primitives benchmark here to save time, when initializing a session
    */
   primitives_get ();
-
-#ifdef HAVE_HWACCEL_NVIDIA
-  rdp_server->hwaccel_nvidia = grd_hwaccel_nvidia_new ();
-  if (rdp_server->hwaccel_nvidia)
-    {
-      g_debug ("[RDP] Initialization of NVENC was successful");
-    }
-  else
-    {
-      g_message ("[RDP] Initialization of NVENC failed. "
-                 "No hardware acceleration available");
-    }
-#else
-  g_message ("[RDP] RDP backend is built WITHOUT support for NVENC and CUDA. "
-             "No hardware acceleration available");
-#endif /* HAVE_HWACCEL_NVIDIA */
 }
 
 static void
