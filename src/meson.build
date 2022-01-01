@@ -37,6 +37,8 @@ daemon_sources = files([
   'grd-stream.c',
   'grd-stream.h',
   'grd-types.h',
+  'grd-utils.c',
+  'grd-utils.h',
 ])
 
 if have_rdp
