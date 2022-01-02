@@ -30,6 +30,7 @@ typedef struct _GrdClipboardVnc GrdClipboardVnc;
 typedef struct _GrdEglThread GrdEglThread;
 typedef struct _GrdHwAccelNvidia GrdHwAccelNvidia;
 typedef struct _GrdRdpEventQueue GrdRdpEventQueue;
+typedef struct _GrdRdpBuffer GrdRdpBuffer;
 typedef struct _GrdRdpGfxFrameLog GrdRdpGfxFrameLog;
 typedef struct _GrdRdpGfxSurface GrdRdpGfxSurface;
 typedef struct _GrdRdpGraphicsPipeline GrdRdpGraphicsPipeline;
