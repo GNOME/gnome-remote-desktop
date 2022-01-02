@@ -33,6 +33,7 @@
 #include "grd-context.h"
 #include "grd-egl-thread.h"
 #include "grd-pipewire-utils.h"
+#include "grd-rdp-buffer.h"
 #include "grd-rdp-surface.h"
 
 enum
@@ -55,9 +56,7 @@ struct _GrdRdpFrame
 {
   gatomicrefcount refcount;
 
-  void *data;
-  uint16_t width;
-  uint16_t height;
+  GrdRdpBuffer *buffer;
 
   gboolean has_pointer_data;
   uint8_t *pointer_bitmap;
@@ -135,7 +134,7 @@ grd_rdp_frame_unref (GrdRdpFrame *frame)
 {
   if (g_atomic_ref_count_dec (&frame->refcount))
     {
-      g_free (frame->data);
+      g_clear_pointer (&frame->buffer, grd_rdp_buffer_free);
       g_free (frame->pointer_bitmap);
       g_free (frame);
     }
@@ -154,11 +153,10 @@ do_render (gpointer user_data)
   if (!frame)
     return G_SOURCE_CONTINUE;
 
-  if (frame->data)
+  if (frame->buffer)
     {
-      grd_session_rdp_take_buffer (stream->session_rdp,
-                                   g_steal_pointer (&frame->data),
-                                   frame->width, frame->height);
+      grd_session_rdp_take_buffer (stream->session_rdp, stream->rdp_surface,
+                                   g_steal_pointer (&frame->buffer));
     }
 
   if (frame->pointer_bitmap)
@@ -353,12 +351,12 @@ copy_frame_data (GrdRdpFrame *frame,
                  int          src_stride,
                  int          bpp)
 {
+  GrdRdpBuffer *buffer = frame->buffer;
   int y;
 
-  frame->data = g_malloc (height * dst_stride);
   for (y = 0; y < height; ++y)
     {
-      memcpy (((uint8_t *) frame->data) + y * dst_stride,
+      memcpy (((uint8_t *) buffer->local_data) + y * dst_stride,
               ((uint8_t *) src_data) + y * src_stride,
               width * 4);
     }
@@ -459,8 +457,9 @@ process_buffer (GrdRdpPipeWireStream     *stream,
           return;
         }
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
-      frame->width = width;
-      frame->height = height;
+
+      frame->buffer = grd_rdp_buffer_new ();
+      grd_rdp_buffer_resize (frame->buffer, width, height, dst_stride);
 
       copy_frame_data (frame,
                        src_data,
@@ -487,8 +486,8 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       unsigned int i;
       uint8_t *dst_data;
 
-      frame->width = width;
-      frame->height = height;
+      frame->buffer = grd_rdp_buffer_new ();
+      grd_rdp_buffer_resize (frame->buffer, width, height, dst_stride);
 
       row_width = dst_stride / bpp;
 
@@ -505,9 +504,8 @@ process_buffer (GrdRdpPipeWireStream     *stream,
           strides[i] = buffer->datas[i].chunk->stride;
           modifiers[i] = stream->spa_format.modifier;
         }
-      dst_data = g_malloc0 (height * dst_stride);
+      dst_data = frame->buffer->local_data;
 
-      frame->data = dst_data;
       grd_egl_thread_download (egl_thread,
                                dst_data,
                                row_width,
@@ -527,8 +525,9 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       void *src_data;
 
       src_data = buffer->datas[0].data;
-      frame->width = width;
-      frame->height = height;
+
+      frame->buffer = grd_rdp_buffer_new ();
+      grd_rdp_buffer_resize (frame->buffer, width, height, dst_stride);
 
       copy_frame_data (frame,
                        src_data,
@@ -543,15 +542,6 @@ process_buffer (GrdRdpPipeWireStream     *stream,
     {
       callback (stream, g_steal_pointer (&frame), TRUE, user_data);
     }
-}
-
-static void
-take_frame_data_from (GrdRdpFrame *src_frame,
-                      GrdRdpFrame *dst_frame)
-{
-  dst_frame->data = g_steal_pointer (&src_frame->data);
-  dst_frame->width = src_frame->width;
-  dst_frame->height = src_frame->height;
 }
 
 static void
@@ -587,8 +577,8 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
   pending_frame = g_steal_pointer (&stream->pending_frame);
   if (pending_frame)
     {
-      if (!frame->data && pending_frame->data)
-        take_frame_data_from (pending_frame, frame);
+      if (!frame->buffer && pending_frame->buffer)
+        frame->buffer = g_steal_pointer (&pending_frame->buffer);
       if (!frame->has_pointer_data && pending_frame->has_pointer_data)
         take_pointer_data_from (pending_frame, frame);
 

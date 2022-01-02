@@ -32,8 +32,8 @@ struct _GrdRdpSurface
   uint16_t width;
   uint16_t height;
 
-  uint8_t *last_frame;
-  uint8_t *pending_frame;
+  GrdRdpBuffer *last_framebuffer;
+  GrdRdpBuffer *pending_framebuffer;
 
   gboolean valid;
 

@@ -50,9 +50,8 @@ int grd_session_rdp_get_stride_for_width (GrdSessionRdp *session_rdp,
                                           int            width);
 
 void grd_session_rdp_take_buffer (GrdSessionRdp *session_rdp,
-                                  void          *data,
-                                  uint16_t       width,
-                                  uint16_t       height);
+                                  GrdRdpSurface *rdp_surface,
+                                  GrdRdpBuffer  *buffer);
 
 void grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
                                                  GrdRdpSurface *rdp_surface);

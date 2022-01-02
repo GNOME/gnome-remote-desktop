@@ -23,6 +23,7 @@
 
 #include <winpr/sysinfo.h>
 
+#include "grd-rdp-buffer.h"
 #include "grd-rdp-frame-info.h"
 #include "grd-rdp-gfx-surface.h"
 #include "grd-rdp-network-autodetection.h"
@@ -405,7 +406,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
                             HWAccelContext         *hwaccel_context,
                             GrdRdpSurface          *rdp_surface,
                             cairo_region_t         *region,
-                            uint8_t                *src_data,
+                            GrdRdpBuffer           *buffer,
                             int64_t                *enc_time_us)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
@@ -433,7 +434,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   if (!grd_hwaccel_nvidia_avc420_encode_bgrx_frame (graphics_pipeline->hwaccel_nvidia,
                                                     hwaccel_context->encode_session_id,
-                                                    src_data,
+                                                    buffer->local_data,
                                                     surface_width, surface_height,
                                                     aligned_width, aligned_height,
                                                     &avc420.data, &avc420.length))
@@ -650,7 +651,7 @@ static gboolean
 refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
                                      GrdRdpSurface          *rdp_surface,
                                      cairo_region_t         *region,
-                                     uint8_t                *src_data,
+                                     GrdRdpBuffer           *buffer,
                                      int64_t                *enc_time_us)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
@@ -703,7 +704,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   rfx_message = rfx_encode_message (graphics_pipeline->rfx_context,
                                     rfx_rects,
                                     n_rects,
-                                    src_data,
+                                    buffer->local_data,
                                     rdp_surface->width,
                                     rdp_surface->height,
                                     src_stride);
@@ -889,7 +890,7 @@ void
 grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline,
                                        GrdRdpSurface          *rdp_surface,
                                        cairo_region_t         *region,
-                                       uint8_t                *src_data)
+                                       GrdRdpBuffer           *buffer)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
@@ -928,14 +929,14 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
     {
       g_assert (hwaccel_context->api == HW_ACCEL_API_NVENC);
       success = refresh_gfx_surface_avc420 (graphics_pipeline, hwaccel_context,
-                                            rdp_surface, region, src_data,
+                                            rdp_surface, region, buffer,
                                             &enc_time_us);
     }
   else
 #endif /* HAVE_HWACCEL_NVIDIA */
     {
       success = refresh_gfx_surface_rfx_progressive (graphics_pipeline, rdp_surface,
-                                                     region, src_data, &enc_time_us);
+                                                     region, buffer, &enc_time_us);
     }
 
   if (success)
