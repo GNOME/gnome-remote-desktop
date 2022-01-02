@@ -64,6 +64,8 @@ struct _GrdHwAccelNvidia
 {
   GObject parent;
 
+  GrdEglThread *egl_thread;
+
   CudaFunctions *cuda_funcs;
   NvencFunctions *nvenc_funcs;
   NV_ENCODE_API_FUNCTION_LIST nvenc_api;
@@ -601,6 +603,54 @@ get_cuda_devices_from_gl_context (GrdHwAccelNvidia *hwaccel_nvidia,
   return success;
 }
 
+static gboolean
+push_cuda_context_in_egl_thread (gpointer user_data)
+{
+  GrdHwAccelNvidia *hwaccel_nvidia = user_data;
+
+  grd_hwaccel_nvidia_push_cuda_context (hwaccel_nvidia);
+
+  return TRUE;
+}
+
+static gboolean
+pop_cuda_context_in_egl_thread (gpointer user_data)
+{
+  GrdHwAccelNvidia *hwaccel_nvidia = user_data;
+
+  grd_hwaccel_nvidia_pop_cuda_context (hwaccel_nvidia);
+
+  return TRUE;
+}
+
+static void
+complete_sync (gboolean success,
+               gpointer user_data)
+{
+  GrdSyncPoint *sync_point = user_data;
+
+  grd_sync_point_complete (sync_point, success);
+}
+
+static void
+run_function_in_egl_thread (GrdHwAccelNvidia       *hwaccel_nvidia,
+                            GrdEglThreadCustomFunc  function)
+{
+  GrdSyncPoint sync_point = {};
+
+  grd_sync_point_init (&sync_point);
+
+  grd_egl_thread_run_custom_task (hwaccel_nvidia->egl_thread,
+                                  function,
+                                  hwaccel_nvidia,
+                                  complete_sync,
+                                  &sync_point,
+                                  NULL);
+
+  grd_sync_point_wait_for_completion (&sync_point);
+  grd_sync_point_clear (&sync_point);
+}
+
 GrdHwAccelNvidia *
 grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
 {
@@ -617,6 +667,8 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
   unsigned int i;
 
   hwaccel_nvidia = g_object_new (GRD_TYPE_HWACCEL_NVIDIA, NULL);
+  hwaccel_nvidia->egl_thread = egl_thread;
+
   cuda_load_functions (&hwaccel_nvidia->cuda_funcs, NULL);
   nvenc_load_functions (&hwaccel_nvidia->nvenc_funcs, NULL);
 
@@ -693,6 +745,8 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
       return NULL;
     }
 
+  run_function_in_egl_thread (hwaccel_nvidia, push_cuda_context_in_egl_thread);
+
   hwaccel_nvidia->initialized = TRUE;
 
   avc_ptx_path = g_strdup_printf ("%s/grd-cuda-avc-utils_30.ptx", GRD_DATA_DIR);
@@ -724,6 +778,8 @@ grd_hwaccel_nvidia_dispose (GObject *object)
 
   if (hwaccel_nvidia->initialized)
     {
+      run_function_in_egl_thread (hwaccel_nvidia, pop_cuda_context_in_egl_thread);
+
       hwaccel_nvidia->cuda_funcs->cuCtxPopCurrent (&hwaccel_nvidia->cu_context);
       hwaccel_nvidia->cuda_funcs->cuDevicePrimaryCtxRelease (hwaccel_nvidia->cu_device);
 
