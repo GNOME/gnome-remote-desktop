@@ -47,6 +47,8 @@ if have_rdp
     'grd-clipboard-rdp.h',
     'grd-rdp-buffer.c',
     'grd-rdp-buffer.h',
+    'grd-rdp-buffer-pool.c',
+    'grd-rdp-buffer-pool.h',
     'grd-rdp-event-queue.c',
     'grd-rdp-event-queue.h',
     'grd-rdp-frame-info.h',
