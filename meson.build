@@ -28,30 +28,23 @@ drm_dep = dependency('libdrm')
 
 have_rdp = get_option('rdp')
 have_vnc = get_option('vnc')
-have_hwaccel_nvidia = get_option('nvenc_and_cuda')
 
 if not have_rdp and not have_vnc
   error('Must enable at least one backend')
 endif
 
-if have_hwaccel_nvidia and not have_rdp
-  error('Support for hardware acceleration using NVENC requires the RDP backend')
-endif
-
 if have_rdp
   add_global_arguments('-D_GNU_SOURCE', language : 'c')
 
+  dl_dep = cc.find_library('dl', required: true)
+
+  cuda_dep = dependency('ffnvcodec', version: cuda_req)
   freerdp_dep = dependency('freerdp2', version: freerdp_req)
   freerdp_client_dep = dependency('freerdp-client2', version: freerdp_req)
   freerdp_server_dep = dependency('freerdp-server2', version: freerdp_req)
   fuse_dep = dependency('fuse3', version: fuse_req)
   winpr_dep = dependency('winpr2', version: freerdp_req)
   xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
-
-  if have_hwaccel_nvidia
-    dl_dep = cc.find_library('dl', required: true)
-    cuda_dep = dependency('ffnvcodec', version: cuda_req)
-  endif
 endif
 
 if have_vnc
@@ -72,7 +65,6 @@ cdata.set_quoted('VERSION', meson.project_version())
 
 cdata.set('HAVE_RDP', have_rdp)
 cdata.set('HAVE_VNC', have_vnc)
-cdata.set('HAVE_HWACCEL_NVIDIA', have_hwaccel_nvidia)
 
 cdata.set_quoted('GRD_DATA_DIR', grd_datadir)
 
@@ -119,10 +111,6 @@ output = [
   '',
   '        RDP...................... ' + have_rdp.to_string(),
   '        VNC...................... ' + have_vnc.to_string(),
-  '',
-  '    Options for the RDP backend:',
-  '',
-  '        Support for hardware acceleration using NVENC and CUDA........' + have_hwaccel_nvidia.to_string(),
   '',
   '  Now type \'ninja -C ' + meson.build_root() + '\' to build ' + meson.project_name(),
   '',

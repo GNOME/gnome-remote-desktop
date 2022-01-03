@@ -47,6 +47,8 @@ if have_rdp
   daemon_sources += files([
     'grd-clipboard-rdp.c',
     'grd-clipboard-rdp.h',
+    'grd-hwaccel-nvidia.c',
+    'grd-hwaccel-nvidia.h',
     'grd-rdp-buffer.c',
     'grd-rdp-buffer.h',
     'grd-rdp-buffer-pool.c',
@@ -82,6 +84,8 @@ if have_rdp
   ])
 
   deps += [
+    cuda_dep,
+    dl_dep,
     freerdp_dep,
     freerdp_client_dep,
     freerdp_server_dep,
@@ -89,18 +93,6 @@ if have_rdp
     winpr_dep,
     xkbcommon_dep,
   ]
-
-  if have_hwaccel_nvidia
-    daemon_sources += files([
-      'grd-hwaccel-nvidia.c',
-      'grd-hwaccel-nvidia.h',
-    ])
-
-    deps += [
-      cuda_dep,
-      dl_dep,
-    ]
-  endif
 endif
 
 if have_vnc

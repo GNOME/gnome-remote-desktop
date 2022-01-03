@@ -41,10 +41,7 @@ typedef enum _GrdSessionRdpError
 
 GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                     GSocketConnection *connection,
-#ifdef HAVE_HWACCEL_NVIDIA
-                                    GrdHwAccelNvidia  *hwaccel_nvidia,
-#endif /* HAVE_HWACCEL_NVIDIA */
-                                    int                reserved);
+                                    GrdHwAccelNvidia  *hwaccel_nvidia);
 
 void grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
                                    GrdSessionRdpError  error_info);

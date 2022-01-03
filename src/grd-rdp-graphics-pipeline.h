@@ -41,10 +41,8 @@ GrdRdpGraphicsPipeline *grd_rdp_graphics_pipeline_new (GrdSessionRdp            
 
 void grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline);
 
-#ifdef HAVE_HWACCEL_NVIDIA
 void grd_rdp_graphics_pipeline_set_hwaccel_nvidia (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                    GrdHwAccelNvidia       *hwaccel_nvidia);
-#endif /* HAVE_HWACCEL_NVIDIA */
 
 void grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                GrdRdpGfxSurface       *gfx_surface);

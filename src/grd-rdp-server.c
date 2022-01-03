@@ -28,11 +28,9 @@
 #include <winpr/ssl.h>
 
 #include "grd-context.h"
+#include "grd-hwaccel-nvidia.h"
 #include "grd-session-rdp.h"
 
-#ifdef HAVE_HWACCEL_NVIDIA
-#include "grd-hwaccel-nvidia.h"
-#endif /* HAVE_HWACCEL_NVIDIA */
 
 enum
 {
@@ -51,9 +49,7 @@ struct _GrdRdpServer
   guint cleanup_sessions_idle_id;
 
   GrdContext *context;
-#ifdef HAVE_HWACCEL_NVIDIA
   GrdHwAccelNvidia *hwaccel_nvidia;
-#endif /* HAVE_HWACCEL_NVIDIA */
 };
 
 G_DEFINE_TYPE (GrdRdpServer, grd_rdp_server, G_TYPE_SOCKET_SERVICE)
@@ -68,15 +64,12 @@ GrdRdpServer *
 grd_rdp_server_new (GrdContext *context)
 {
   GrdRdpServer *rdp_server;
-#ifdef HAVE_HWACCEL_NVIDIA
   GrdEglThread *egl_thread;
-#endif /* HAVE_HWACCEL_NVIDIA */
 
   rdp_server = g_object_new (GRD_TYPE_RDP_SERVER,
                              "context", context,
                              NULL);
 
-#ifdef HAVE_HWACCEL_NVIDIA
   egl_thread = grd_context_get_egl_thread (rdp_server->context);
   if (egl_thread &&
       (rdp_server->hwaccel_nvidia = grd_hwaccel_nvidia_new (egl_thread)))
@@ -88,10 +81,6 @@ grd_rdp_server_new (GrdContext *context)
       g_debug ("[RDP] Initialization of CUDA failed. "
                "No hardware acceleration available");
     }
-#else
-  g_message ("[RDP] RDP backend is built WITHOUT support for NVENC and CUDA. "
-             "No hardware acceleration available");
-#endif /* HAVE_HWACCEL_NVIDIA */
 
   return rdp_server;
 }
@@ -139,10 +128,7 @@ on_incoming (GSocketService    *service,
   g_debug ("New incoming RDP connection");
 
   if (!(session_rdp = grd_session_rdp_new (rdp_server, connection,
-#ifdef HAVE_HWACCEL_NVIDIA
-                                           rdp_server->hwaccel_nvidia,
-#endif /* HAVE_HWACCEL_NVIDIA */
-                                           0)))
+                                           rdp_server->hwaccel_nvidia)))
     return TRUE;
 
   rdp_server->sessions = g_list_append (rdp_server->sessions, session_rdp);
@@ -187,9 +173,7 @@ grd_rdp_server_stop (GrdRdpServer *rdp_server)
   g_clear_handle_id (&rdp_server->cleanup_sessions_idle_id, g_source_remove);
   grd_rdp_server_cleanup_stopped_sessions (rdp_server);
 
-#ifdef HAVE_HWACCEL_NVIDIA
   g_clear_object (&rdp_server->hwaccel_nvidia);
-#endif /* HAVE_HWACCEL_NVIDIA */
 }
 
 static void
@@ -238,9 +222,7 @@ grd_rdp_server_dispose (GObject *object)
   g_assert (!rdp_server->cleanup_sessions_idle_id);
   g_assert (!rdp_server->stopped_sessions);
 
-#ifdef HAVE_HWACCEL_NVIDIA
   g_assert (!rdp_server->hwaccel_nvidia);
-#endif /* HAVE_HWACCEL_NVIDIA */
 
   G_OBJECT_CLASS (grd_rdp_server_parent_class)->dispose (object);
 }
