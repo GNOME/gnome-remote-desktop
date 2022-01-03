@@ -4,7 +4,7 @@ project('gnome-remote-desktop', 'c',
         default_options: ['warning_level=1',
                           'buildtype=debugoptimized'])
 
-cuda_req = '>= 11'
+cuda_req = '>= 11.1.5.0'
 freerdp_req = '>= 2.5.0'
 fuse_req = '>= 3.9.1'
 xkbcommon_req = '>= 1.0.0'
