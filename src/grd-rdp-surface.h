@@ -32,6 +32,8 @@ struct _GrdRdpSurface
   uint16_t width;
   uint16_t height;
 
+  GMutex surface_mutex;
+  GrdRdpBuffer *new_framebuffer;
   GrdRdpBuffer *last_framebuffer;
   GrdRdpBuffer *pending_framebuffer;
 
@@ -41,6 +43,8 @@ struct _GrdRdpSurface
   uint16_t refresh_rate;
   gboolean encoding_suspended;
 };
+
+GrdRdpSurface *grd_rdp_surface_new (void);
 
 void grd_rdp_surface_free (GrdRdpSurface *rdp_surface);
 

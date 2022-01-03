@@ -23,12 +23,28 @@
 
 #include "grd-rdp-buffer.h"
 
+GrdRdpSurface *
+grd_rdp_surface_new (void)
+{
+  GrdRdpSurface *rdp_surface;
+
+  rdp_surface = g_malloc0 (sizeof (GrdRdpSurface));
+
+  g_mutex_init (&rdp_surface->surface_mutex);
+
+  return rdp_surface;
+}
+
 void
 grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
 {
   g_assert (!rdp_surface->gfx_surface);
-  g_clear_pointer (&rdp_surface->last_framebuffer, grd_rdp_buffer_free);
-  g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_free);
+
+  g_assert (!rdp_surface->new_framebuffer);
+  g_assert (!rdp_surface->last_framebuffer);
+  g_assert (!rdp_surface->pending_framebuffer);
+
+  g_mutex_clear (&rdp_surface->surface_mutex);
 
   g_free (rdp_surface);
 }

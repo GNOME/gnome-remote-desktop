@@ -34,7 +34,11 @@
 #include "grd-egl-thread.h"
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-buffer.h"
+#include "grd-rdp-buffer-pool.h"
 #include "grd-rdp-surface.h"
+#include "grd-utils.h"
+
+#define DEFAULT_BUFFER_POOL_SIZE 5
 
 enum
 {
@@ -83,6 +87,8 @@ struct _GrdRdpPipeWireStream
   struct pw_core *pipewire_core;
 
   struct spa_hook pipewire_core_listener;
+
+  GrdRdpBufferPool *buffer_pool;
 
   GSource *render_source;
   GMutex frame_mutex;
@@ -134,7 +140,7 @@ grd_rdp_frame_unref (GrdRdpFrame *frame)
 {
   if (g_atomic_ref_count_dec (&frame->refcount))
     {
-      g_clear_pointer (&frame->buffer, grd_rdp_buffer_free);
+      g_clear_pointer (&frame->buffer, grd_rdp_buffer_release);
       g_free (frame->pointer_bitmap);
       g_free (frame);
     }
@@ -148,16 +154,22 @@ do_render (gpointer user_data)
 
   g_mutex_lock (&stream->frame_mutex);
   frame = g_steal_pointer (&stream->pending_frame);
+
+  if (frame && frame->buffer)
+    {
+      g_mutex_lock (&stream->rdp_surface->surface_mutex);
+      g_assert (!stream->rdp_surface->new_framebuffer);
+
+      stream->rdp_surface->new_framebuffer = g_steal_pointer (&frame->buffer);
+      g_mutex_unlock (&stream->rdp_surface->surface_mutex);
+    }
   g_mutex_unlock (&stream->frame_mutex);
 
   if (!frame)
     return G_SOURCE_CONTINUE;
 
-  if (frame->buffer)
-    {
-      grd_session_rdp_take_buffer (stream->session_rdp, stream->rdp_surface,
-                                   g_steal_pointer (&frame->buffer));
-    }
+  grd_session_rdp_maybe_encode_new_frame (stream->session_rdp,
+                                          stream->rdp_surface);
 
   if (frame->pointer_bitmap)
     {
@@ -292,6 +304,45 @@ on_stream_state_changed (void                 *user_data,
 }
 
 static void
+on_sync_complete (gboolean success,
+                  gpointer user_data)
+{
+  GrdSyncPoint *sync_point = user_data;
+
+  grd_sync_point_complete (sync_point, success);
+}
+
+static void
+sync_egl_thread (GrdEglThread *egl_thread)
+{
+  GrdSyncPoint sync_point = {};
+
+  grd_sync_point_init (&sync_point);
+  grd_egl_thread_sync (egl_thread, on_sync_complete, &sync_point, NULL);
+
+  grd_sync_point_wait_for_completion (&sync_point);
+  grd_sync_point_clear (&sync_point);
+}
+
+static void
+release_all_buffers (GrdRdpPipeWireStream *stream)
+{
+  g_mutex_lock (&stream->frame_mutex);
+  if (stream->pending_frame)
+    g_clear_pointer (&stream->pending_frame->buffer, grd_rdp_buffer_release);
+  g_mutex_unlock (&stream->frame_mutex);
+
+  g_mutex_lock (&stream->rdp_surface->surface_mutex);
+  g_clear_pointer (&stream->rdp_surface->new_framebuffer,
+                   grd_rdp_buffer_release);
+  g_clear_pointer (&stream->rdp_surface->last_framebuffer,
+                   grd_rdp_buffer_release);
+  g_clear_pointer (&stream->rdp_surface->pending_framebuffer,
+                   grd_rdp_buffer_release);
+  g_mutex_unlock (&stream->rdp_surface->surface_mutex);
+}
+
+static void
 on_stream_param_changed (void                 *user_data,
                          uint32_t              id,
                          const struct spa_pod *format)
@@ -299,6 +350,10 @@ on_stream_param_changed (void                 *user_data,
   GrdRdpPipeWireStream *stream = GRD_RDP_PIPEWIRE_STREAM (user_data);
   GrdSession *session = GRD_SESSION (stream->session_rdp);
   GrdContext *context = grd_session_get_context (session);
+  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
+  uint32_t width;
+  uint32_t height;
+  uint32_t stride;
   uint8_t params_buffer[1024];
   struct spa_pod_builder pod_builder;
   enum spa_data_type allowed_buffer_types;
@@ -308,11 +363,20 @@ on_stream_param_changed (void                 *user_data,
     return;
 
   spa_format_video_raw_parse (format, &stream->spa_format);
+  height = stream->spa_format.size.height;
+  width = stream->spa_format.size.width;
+  stride = grd_session_rdp_get_stride_for_width (stream->session_rdp, width);
+
+  if (egl_thread)
+    sync_egl_thread (egl_thread);
+  release_all_buffers (stream);
+
+  grd_rdp_buffer_pool_resize_buffers (stream->buffer_pool, width, height, stride);
 
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
   allowed_buffer_types = 1 << SPA_DATA_MemFd;
-  if (grd_context_get_egl_thread (context))
+  if (egl_thread)
     allowed_buffer_types |= 1 << SPA_DATA_DmaBuf;
 
   params[0] = spa_pod_builder_add_object (
@@ -458,8 +522,7 @@ process_buffer (GrdRdpPipeWireStream     *stream,
         }
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
 
-      frame->buffer = grd_rdp_buffer_new ();
-      grd_rdp_buffer_resize (frame->buffer, width, height, dst_stride);
+      frame->buffer = grd_rdp_buffer_pool_acquire (stream->buffer_pool);
 
       copy_frame_data (frame,
                        src_data,
@@ -486,8 +549,7 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       unsigned int i;
       uint8_t *dst_data;
 
-      frame->buffer = grd_rdp_buffer_new ();
-      grd_rdp_buffer_resize (frame->buffer, width, height, dst_stride);
+      frame->buffer = grd_rdp_buffer_pool_acquire (stream->buffer_pool);
 
       row_width = dst_stride / bpp;
 
@@ -526,8 +588,7 @@ process_buffer (GrdRdpPipeWireStream     *stream,
 
       src_data = buffer->datas[0].data;
 
-      frame->buffer = grd_rdp_buffer_new ();
-      grd_rdp_buffer_resize (frame->buffer, width, height, dst_stride);
+      frame->buffer = grd_rdp_buffer_pool_acquire (stream->buffer_pool);
 
       copy_frame_data (frame,
                        src_data,
@@ -836,26 +897,9 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp  *session_rdp,
   if (!connect_to_stream (stream, rdp_surface->refresh_rate, error))
     return NULL;
 
+  stream->buffer_pool = grd_rdp_buffer_pool_new (DEFAULT_BUFFER_POOL_SIZE);
+
   return g_steal_pointer (&stream);
-}
-
-typedef struct
-{
-  GMutex mutex;
-  GCond cond;
-  gboolean done;
-} SyncData;
-
-static void
-on_sync_done (gboolean success,
-              gpointer user_data)
-{
-  SyncData *sync_data = user_data;
-
-  g_mutex_lock (&sync_data->mutex);
-  sync_data->done = TRUE;
-  g_cond_signal (&sync_data->cond);
-  g_mutex_unlock (&sync_data->mutex);
 }
 
 static void
@@ -873,22 +917,7 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
 
   egl_thread = grd_context_get_egl_thread (context);
   if (egl_thread && stream->pipewire_stream)
-    {
-      SyncData sync_data = {};
-
-      g_mutex_init (&sync_data.mutex);
-      g_cond_init (&sync_data.cond);
-
-      grd_egl_thread_sync (egl_thread, on_sync_done, &sync_data, NULL);
-
-      g_mutex_lock (&sync_data.mutex);
-      while (!sync_data.done)
-        g_cond_wait (&sync_data.cond, &sync_data.mutex);
-      g_mutex_unlock (&sync_data.mutex);
-
-      g_cond_clear (&sync_data.cond);
-      g_mutex_clear (&sync_data.mutex);
-    }
+    sync_egl_thread (egl_thread);
 
   /*
    * We can't clear stream->pipewire_stream before destroying it, as the data
@@ -912,6 +941,9 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
     }
 
   g_clear_pointer (&stream->pending_frame, grd_rdp_frame_unref);
+
+  release_all_buffers (stream);
+  g_clear_object (&stream->buffer_pool);
 
   g_mutex_clear (&stream->frame_mutex);
 

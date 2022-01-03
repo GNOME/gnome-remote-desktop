@@ -26,15 +26,19 @@
 
 struct _GrdRdpBuffer
 {
+  GrdRdpBufferPool *buffer_pool;
+
   uint32_t width;
   uint32_t height;
 
   uint8_t *local_data;
 };
 
-GrdRdpBuffer *grd_rdp_buffer_new (void);
+GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool);
 
 void grd_rdp_buffer_free (GrdRdpBuffer *buffer);
+
+void grd_rdp_buffer_release (GrdRdpBuffer *buffer);
 
 void grd_rdp_buffer_resize (GrdRdpBuffer *buffer,
                             uint32_t      width,

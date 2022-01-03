@@ -23,12 +23,15 @@
 
 #include <gio/gio.h>
 
+#include "grd-rdp-buffer-pool.h"
+
 GrdRdpBuffer *
-grd_rdp_buffer_new (void)
+grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool)
 {
   GrdRdpBuffer *buffer;
 
   buffer = g_new0 (GrdRdpBuffer, 1);
+  buffer->buffer_pool = buffer_pool;
 
   return buffer;
 }
@@ -44,6 +47,12 @@ grd_rdp_buffer_free (GrdRdpBuffer *buffer)
 {
   clear_buffers (buffer);
   g_free (buffer);
+}
+
+void
+grd_rdp_buffer_release (GrdRdpBuffer *buffer)
+{
+  grd_rdp_buffer_pool_release_buffer (buffer->buffer_pool, buffer);
 }
 
 void

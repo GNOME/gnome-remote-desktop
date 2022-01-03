@@ -53,7 +53,7 @@ add_buffer_to_pool (GrdRdpBufferPool *buffer_pool)
   GrdRdpBuffer *buffer;
   BufferInfo *buffer_info;
 
-  buffer = grd_rdp_buffer_new ();
+  buffer = grd_rdp_buffer_new (buffer_pool);
   buffer_info = g_new0 (BufferInfo, 1);
 
   if (buffer_pool->has_buffer_size)
