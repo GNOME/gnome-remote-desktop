@@ -102,6 +102,93 @@ grd_hwaccel_nvidia_pop_cuda_context (GrdHwAccelNvidia *hwaccel_nvidia)
   hwaccel_nvidia->cuda_funcs->cuCtxPopCurrent (&cu_context);
 }
 
+gboolean
+grd_hwaccel_nvidia_register_read_only_gl_buffer (GrdHwAccelNvidia   *hwaccel_nvidia,
+                                                 CUgraphicsResource *cuda_resource,
+                                                 uint32_t            buffer)
+{
+  ExtraCudaFunctions *extra_cuda_funcs = hwaccel_nvidia->extra_cuda_funcs;
+
+  if (extra_cuda_funcs->cuGraphicsGLRegisterBuffer (
+        cuda_resource, buffer,
+        CU_GRAPHICS_REGISTER_FLAGS_READ_ONLY) != CUDA_SUCCESS)
+    {
+      g_warning ("[HWAccel.CUDA] Failed to register GL buffer");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+void
+grd_hwaccel_nvidia_unregister_cuda_resource (GrdHwAccelNvidia   *hwaccel_nvidia,
+                                             CUgraphicsResource  cuda_resource,
+                                             CUstream            cuda_stream)
+{
+  hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cuda_stream);
+  hwaccel_nvidia->cuda_funcs->cuGraphicsUnregisterResource (cuda_resource);
+}
+
+gboolean
+grd_hwaccel_nvidia_map_cuda_resource (GrdHwAccelNvidia   *hwaccel_nvidia,
+                                      CUgraphicsResource  cuda_resource,
+                                      CUdeviceptr        *dev_ptr,
+                                      size_t             *size,
+                                      CUstream            cuda_stream)
+{
+  CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+  ExtraCudaFunctions *extra_cuda_funcs = hwaccel_nvidia->extra_cuda_funcs;
+
+  if (cuda_funcs->cuGraphicsMapResources (1, &cuda_resource,
+                                          cuda_stream) != CUDA_SUCCESS)
+    {
+      g_warning ("[HWAccel.CUDA] Failed to map resources");
+      return FALSE;
+    }
+  if (extra_cuda_funcs->cuGraphicsResourceGetMappedPointer (dev_ptr, size,
+                                                            cuda_resource) != CUDA_SUCCESS)
+    {
+      g_warning ("[HWAccel.CUDA] Failed to get mapped pointer");
+      cuda_funcs->cuGraphicsUnmapResources (1, &cuda_resource, cuda_stream);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+void
+grd_hwaccel_nvidia_unmap_cuda_resource (GrdHwAccelNvidia   *hwaccel_nvidia,
+                                        CUgraphicsResource  cuda_resource,
+                                        CUstream            cuda_stream)
+{
+  hwaccel_nvidia->cuda_funcs->cuGraphicsUnmapResources (1, &cuda_resource,
+                                                        cuda_stream);
+}
+
+gboolean
+grd_hwaccel_nvidia_create_cuda_stream (GrdHwAccelNvidia *hwaccel_nvidia,
+                                       CUstream         *cuda_stream)
+{
+  CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+
+  if (cuda_funcs->cuStreamCreate (cuda_stream,
+                                  CU_STREAM_NON_BLOCKING) != CUDA_SUCCESS)
+    {
+      g_warning ("[HWAccel.CUDA] Failed to create stream");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+void
+grd_hwaccel_nvidia_destroy_cuda_stream (GrdHwAccelNvidia *hwaccel_nvidia,
+                                        CUstream          cuda_stream)
+{
+  hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cuda_stream);
+  hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cuda_stream);
+}
+
 static uint32_t
 get_next_free_encode_session_id (GrdHwAccelNvidia *hwaccel_nvidia)
 {

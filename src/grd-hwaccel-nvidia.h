@@ -20,6 +20,7 @@
 #ifndef GRD_HWACCEL_NVIDIA_H
 #define GRD_HWACCEL_NVIDIA_H
 
+#include <ffnvcodec/dynlink_cuda.h>
 #include <glib-object.h>
 #include <stdint.h>
 
@@ -34,6 +35,30 @@ GrdHwAccelNvidia *grd_hwaccel_nvidia_new (GrdEglThread *egl_thread);
 void grd_hwaccel_nvidia_push_cuda_context (GrdHwAccelNvidia *hwaccel_nvidia);
 
 void grd_hwaccel_nvidia_pop_cuda_context (GrdHwAccelNvidia *hwaccel_nvidia);
+
+gboolean grd_hwaccel_nvidia_register_read_only_gl_buffer (GrdHwAccelNvidia   *hwaccel_nvidia,
+                                                          CUgraphicsResource *cuda_resource,
+                                                          uint32_t            buffer);
+
+void grd_hwaccel_nvidia_unregister_cuda_resource (GrdHwAccelNvidia   *hwaccel_nvidia,
+                                                  CUgraphicsResource  cuda_resource,
+                                                  CUstream            cuda_stream);
+
+gboolean grd_hwaccel_nvidia_map_cuda_resource (GrdHwAccelNvidia   *hwaccel_nvidia,
+                                               CUgraphicsResource  cuda_resource,
+                                               CUdeviceptr        *dev_ptr,
+                                               size_t             *size,
+                                               CUstream            cuda_stream);
+
+void grd_hwaccel_nvidia_unmap_cuda_resource (GrdHwAccelNvidia   *hwaccel_nvidia,
+                                             CUgraphicsResource  cuda_resource,
+                                             CUstream            cuda_stream);
+
+gboolean grd_hwaccel_nvidia_create_cuda_stream (GrdHwAccelNvidia *hwaccel_nvidia,
+                                                CUstream         *cuda_stream);
+
+void grd_hwaccel_nvidia_destroy_cuda_stream (GrdHwAccelNvidia *hwaccel_nvidia,
+                                             CUstream          cuda_stream);
 
 gboolean grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
                                                   uint32_t         *encode_session_id,
