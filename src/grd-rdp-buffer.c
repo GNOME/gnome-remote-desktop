@@ -88,13 +88,14 @@ clear_buffers (GrdRdpBuffer *buffer)
       data->hwaccel_nvidia = buffer->hwaccel_nvidia;
       data->cuda_resource = buffer->cuda_resource;
       data->cuda_stream = buffer->cuda_stream;
-      data->is_mapped = FALSE;
+      data->is_mapped = !!buffer->mapped_cuda_pointer;
       grd_egl_thread_deallocate (buffer->egl_thread,
                                  buffer->pbo,
                                  cuda_deallocate_buffer,
                                  data,
                                  NULL, data, g_free);
 
+      buffer->mapped_cuda_pointer = 0;
       buffer->cuda_resource = NULL;
       buffer->pbo = 0;
     }

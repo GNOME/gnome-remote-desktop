@@ -42,6 +42,7 @@ struct _GrdRdpBuffer
 
   CUgraphicsResource cuda_resource;
   CUstream cuda_stream;
+  CUdeviceptr mapped_cuda_pointer;
 };
 
 GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,

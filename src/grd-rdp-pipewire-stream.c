@@ -32,6 +32,7 @@
 
 #include "grd-context.h"
 #include "grd-egl-thread.h"
+#include "grd-hwaccel-nvidia.h"
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-buffer-pool.h"
@@ -75,6 +76,24 @@ struct _GrdRdpFrame
   GrdRdpFrameReadyCallback callback;
   gpointer callback_user_data;
 };
+
+typedef struct
+{
+  GrdHwAccelNvidia *hwaccel_nvidia;
+  GrdRdpBuffer *rdp_buffer;
+} UnmapBufferData;
+
+typedef struct
+{
+  GrdHwAccelNvidia *hwaccel_nvidia;
+  GrdRdpBuffer *rdp_buffer;
+} AllocateBufferData;
+
+typedef struct
+{
+  GrdHwAccelNvidia *hwaccel_nvidia;
+  GrdRdpBuffer *rdp_buffer;
+} RealizeBufferData;
 
 struct _GrdRdpPipeWireStream
 {
@@ -433,9 +452,72 @@ copy_frame_data (GrdRdpFrame *frame,
     }
 }
 
+static gboolean
+cuda_unmap_resource (gpointer user_data)
+{
+  UnmapBufferData *data = user_data;
+
+  if (!data->rdp_buffer->mapped_cuda_pointer)
+    return TRUE;
+
+  grd_hwaccel_nvidia_unmap_cuda_resource (data->hwaccel_nvidia,
+                                          data->rdp_buffer->cuda_resource,
+                                          data->rdp_buffer->cuda_stream);
+  data->rdp_buffer->mapped_cuda_pointer = 0;
+
+  return TRUE;
+}
+
 static void
-on_dma_buf_downloaded (gboolean success,
-                       gpointer user_data)
+unmap_cuda_resources (GrdEglThread     *egl_thread,
+                      GrdHwAccelNvidia *hwaccel_nvidia,
+                      GrdRdpBuffer     *rdp_buffer)
+{
+  UnmapBufferData *data;
+
+  data = g_new0 (UnmapBufferData, 1);
+  data->hwaccel_nvidia = hwaccel_nvidia;
+  data->rdp_buffer = rdp_buffer;
+
+  grd_egl_thread_run_custom_task (egl_thread,
+                                  cuda_unmap_resource, data,
+                                  NULL, data, g_free);
+}
+
+static gboolean
+cuda_allocate_buffer (gpointer user_data,
+                      uint32_t pbo)
+{
+  AllocateBufferData *data = user_data;
+  GrdRdpBuffer *rdp_buffer = data->rdp_buffer;
+  gboolean success;
+
+  success = grd_hwaccel_nvidia_register_read_only_gl_buffer (data->hwaccel_nvidia,
+                                                             &rdp_buffer->cuda_resource,
+                                                             pbo);
+  if (success)
+    rdp_buffer->pbo = pbo;
+
+  return success;
+}
+
+static gboolean
+cuda_map_resource (gpointer user_data)
+{
+  RealizeBufferData *data = user_data;
+  GrdRdpBuffer *rdp_buffer = data->rdp_buffer;
+  size_t mapped_size = 0;
+
+  return grd_hwaccel_nvidia_map_cuda_resource (data->hwaccel_nvidia,
+                                               rdp_buffer->cuda_resource,
+                                               &rdp_buffer->mapped_cuda_pointer,
+                                               &mapped_size,
+                                               rdp_buffer->cuda_stream);
+}
+
+static void
+on_framebuffer_ready (gboolean success,
+                      gpointer user_data)
 {
   GrdRdpFrame *frame = user_data;
 
@@ -515,9 +597,18 @@ process_buffer (GrdRdpPipeWireStream     *stream,
     }
   else if (buffer->datas[0].type == SPA_DATA_MemFd)
     {
+      GrdSession *session = GRD_SESSION (stream->session_rdp);
+      GrdContext *context = grd_session_get_context (session);
+      GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
+      GrdHwAccelNvidia *hwaccel_nvidia = stream->rdp_surface->hwaccel_nvidia;
+      AllocateBufferData *allocate_buffer_data;
+      RealizeBufferData *realize_buffer_data;
+      GrdRdpBuffer *rdp_buffer;
       size_t size;
       uint8_t *map;
       void *src_data;
+      uint32_t pbo;
+      uint8_t *local_data;
 
       size = buffer->datas[0].maxsize + buffer->datas[0].mapoffset;
       map = mmap (NULL, size, PROT_READ, MAP_PRIVATE, buffer->datas[0].fd, 0);
@@ -537,6 +628,9 @@ process_buffer (GrdRdpPipeWireStream     *stream,
           callback (stream, g_steal_pointer (&frame), FALSE, user_data);
           return;
         }
+      rdp_buffer = frame->buffer;
+      pbo = rdp_buffer->pbo;
+      local_data = rdp_buffer->local_data;
 
       copy_frame_data (frame,
                        src_data,
@@ -547,7 +641,36 @@ process_buffer (GrdRdpPipeWireStream     *stream,
 
       munmap (map, size);
 
-      callback (stream, g_steal_pointer (&frame), TRUE, user_data);
+      if (!hwaccel_nvidia)
+        {
+          callback (stream, g_steal_pointer (&frame), TRUE, user_data);
+          return;
+        }
+
+      unmap_cuda_resources (egl_thread, hwaccel_nvidia, rdp_buffer);
+
+      allocate_buffer_data = g_new0 (AllocateBufferData, 1);
+      allocate_buffer_data->hwaccel_nvidia = hwaccel_nvidia;
+      allocate_buffer_data->rdp_buffer = rdp_buffer;
+
+      realize_buffer_data = g_new0 (RealizeBufferData, 1);
+      realize_buffer_data->hwaccel_nvidia = hwaccel_nvidia;
+      realize_buffer_data->rdp_buffer = rdp_buffer;
+
+      grd_egl_thread_upload (egl_thread,
+                             pbo,
+                             height,
+                             dst_stride,
+                             local_data,
+                             cuda_allocate_buffer,
+                             allocate_buffer_data,
+                             g_free,
+                             cuda_map_resource,
+                             realize_buffer_data,
+                             g_free,
+                             on_framebuffer_ready,
+                             grd_rdp_frame_ref (g_steal_pointer (&frame)),
+                             (GDestroyNotify) grd_rdp_frame_unref);
     }
   else if (buffer->datas[0].type == SPA_DATA_DmaBuf)
     {
@@ -599,13 +722,22 @@ process_buffer (GrdRdpPipeWireStream     *stream,
                                strides,
                                offsets,
                                modifiers,
-                               on_dma_buf_downloaded,
+                               on_framebuffer_ready,
                                grd_rdp_frame_ref (g_steal_pointer (&frame)),
                                (GDestroyNotify) grd_rdp_frame_unref);
     }
   else if (buffer->datas[0].type == SPA_DATA_MemPtr)
     {
+      GrdSession *session = GRD_SESSION (stream->session_rdp);
+      GrdContext *context = grd_session_get_context (session);
+      GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
+      GrdHwAccelNvidia *hwaccel_nvidia = stream->rdp_surface->hwaccel_nvidia;
+      AllocateBufferData *allocate_buffer_data;
+      RealizeBufferData *realize_buffer_data;
+      GrdRdpBuffer *rdp_buffer;
       void *src_data;
+      uint32_t pbo;
+      uint8_t *local_data;
 
       src_data = buffer->datas[0].data;
 
@@ -617,6 +749,9 @@ process_buffer (GrdRdpPipeWireStream     *stream,
           callback (stream, g_steal_pointer (&frame), FALSE, user_data);
           return;
         }
+      rdp_buffer = frame->buffer;
+      pbo = rdp_buffer->pbo;
+      local_data = rdp_buffer->local_data;
 
       copy_frame_data (frame,
                        src_data,
@@ -625,7 +760,36 @@ process_buffer (GrdRdpPipeWireStream     *stream,
                        src_stride,
                        bpp);
 
-      callback (stream, g_steal_pointer (&frame), TRUE, user_data);
+      if (!hwaccel_nvidia)
+        {
+          callback (stream, g_steal_pointer (&frame), TRUE, user_data);
+          return;
+        }
+
+      unmap_cuda_resources (egl_thread, hwaccel_nvidia, rdp_buffer);
+
+      allocate_buffer_data = g_new0 (AllocateBufferData, 1);
+      allocate_buffer_data->hwaccel_nvidia = hwaccel_nvidia;
+      allocate_buffer_data->rdp_buffer = rdp_buffer;
+
+      realize_buffer_data = g_new0 (RealizeBufferData, 1);
+      realize_buffer_data->hwaccel_nvidia = hwaccel_nvidia;
+      realize_buffer_data->rdp_buffer = rdp_buffer;
+
+      grd_egl_thread_upload (egl_thread,
+                             pbo,
+                             height,
+                             dst_stride,
+                             local_data,
+                             cuda_allocate_buffer,
+                             allocate_buffer_data,
+                             g_free,
+                             cuda_map_resource,
+                             realize_buffer_data,
+                             g_free,
+                             on_framebuffer_ready,
+                             grd_rdp_frame_ref (g_steal_pointer (&frame)),
+                             (GDestroyNotify) grd_rdp_frame_unref);
     }
   else
     {
