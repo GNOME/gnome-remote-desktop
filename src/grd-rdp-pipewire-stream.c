@@ -673,13 +673,15 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
 
       grd_rdp_frame_unref (pending_frame);
     }
-  stream->pending_frame = frame;
+  stream->pending_frame = g_steal_pointer (&frame);
   g_mutex_unlock (&stream->frame_mutex);
 
 out:
   pw_stream_queue_buffer (stream->pipewire_stream, buffer);
 
   g_source_set_ready_time (stream->render_source, 0);
+
+  g_clear_pointer (&frame, grd_rdp_frame_unref);
 }
 
 static void
