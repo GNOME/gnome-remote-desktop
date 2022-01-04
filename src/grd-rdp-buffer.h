@@ -20,6 +20,8 @@
 #ifndef GRD_RDP_BUFFER_H
 #define GRD_RDP_BUFFER_H
 
+#include <ffnvcodec/dynlink_cuda.h>
+#include <gio/gio.h>
 #include <stdint.h>
 
 #include "grd-types.h"
@@ -28,21 +30,33 @@ struct _GrdRdpBuffer
 {
   GrdRdpBufferPool *buffer_pool;
 
+  GrdEglThread *egl_thread;
+  GrdHwAccelNvidia *hwaccel_nvidia;
+
   uint32_t width;
   uint32_t height;
 
   uint8_t *local_data;
+
+  uint32_t pbo;
+
+  CUgraphicsResource cuda_resource;
+  CUstream cuda_stream;
 };
 
-GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool);
+GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
+                                  GrdEglThread     *egl_thread,
+                                  GrdHwAccelNvidia *hwaccel_nvidia,
+                                  CUstream          cuda_stream);
 
 void grd_rdp_buffer_free (GrdRdpBuffer *buffer);
 
 void grd_rdp_buffer_release (GrdRdpBuffer *buffer);
 
-void grd_rdp_buffer_resize (GrdRdpBuffer *buffer,
-                            uint32_t      width,
-                            uint32_t      height,
-                            uint32_t      stride);
+gboolean grd_rdp_buffer_resize (GrdRdpBuffer *buffer,
+                                uint32_t      width,
+                                uint32_t      height,
+                                uint32_t      stride,
+                                gboolean      preallocate_on_gpu);
 
 #endif /* GRD_RDP_BUFFER_H */

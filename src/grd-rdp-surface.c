@@ -21,21 +21,29 @@
 
 #include "grd-rdp-surface.h"
 
+#include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-damage-detector-memcmp.h"
 
 GrdRdpSurface *
-grd_rdp_surface_new (void)
+grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia)
 {
-  GrdRdpSurface *rdp_surface;
+  g_autofree GrdRdpSurface *rdp_surface = NULL;
 
   rdp_surface = g_malloc0 (sizeof (GrdRdpSurface));
+  rdp_surface->hwaccel_nvidia = hwaccel_nvidia;
+
+  if (hwaccel_nvidia &&
+      !grd_hwaccel_nvidia_create_cuda_stream (hwaccel_nvidia,
+                                              &rdp_surface->cuda_stream))
+    return NULL;
+
   rdp_surface->detector = (GrdRdpDamageDetector *)
     grd_rdp_damage_detector_memcmp_new ();
 
   g_mutex_init (&rdp_surface->surface_mutex);
 
-  return rdp_surface;
+  return g_steal_pointer (&rdp_surface);
 }
 
 void
@@ -49,6 +57,12 @@ grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
   g_mutex_clear (&rdp_surface->surface_mutex);
 
   g_clear_object (&rdp_surface->detector);
+  if (rdp_surface->cuda_stream)
+    {
+      grd_hwaccel_nvidia_destroy_cuda_stream (rdp_surface->hwaccel_nvidia,
+                                              rdp_surface->cuda_stream);
+      rdp_surface->cuda_stream = NULL;
+    }
 
   g_free (rdp_surface);
 }

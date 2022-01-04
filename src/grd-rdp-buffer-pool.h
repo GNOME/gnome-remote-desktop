@@ -20,6 +20,7 @@
 #ifndef GRD_RDP_BUFFER_POOL_H
 #define GRD_RDP_BUFFER_POOL_H
 
+#include <ffnvcodec/dynlink_cuda.h>
 #include <glib-object.h>
 #include <stdint.h>
 
@@ -29,12 +30,15 @@
 G_DECLARE_FINAL_TYPE (GrdRdpBufferPool, grd_rdp_buffer_pool,
                       GRD, RDP_BUFFER_POOL, GObject)
 
-GrdRdpBufferPool *grd_rdp_buffer_pool_new (uint32_t minimum_size);
+GrdRdpBufferPool *grd_rdp_buffer_pool_new (GrdEglThread     *egl_thread,
+                                           GrdHwAccelNvidia *hwaccel_nvidia,
+                                           CUstream          cuda_stream,
+                                           uint32_t          minimum_size);
 
-void grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
-                                         uint32_t          buffer_width,
-                                         uint32_t          buffer_height,
-                                         uint32_t          buffer_stride);
+gboolean grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
+                                             uint32_t          buffer_width,
+                                             uint32_t          buffer_height,
+                                             uint32_t          buffer_stride);
 
 GrdRdpBuffer *grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool);
 

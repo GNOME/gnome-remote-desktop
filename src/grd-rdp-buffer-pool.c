@@ -21,7 +21,9 @@
 
 #include "grd-rdp-buffer-pool.h"
 
+#include "grd-egl-thread.h"
 #include "grd-rdp-buffer.h"
+#include "grd-utils.h"
 
 typedef struct _BufferInfo
 {
@@ -31,6 +33,11 @@ typedef struct _BufferInfo
 struct _GrdRdpBufferPool
 {
   GObject parent;
+
+  GrdEglThread *egl_thread;
+  GrdHwAccelNvidia *hwaccel_nvidia;
+
+  CUstream cuda_stream;
 
   gboolean has_buffer_size;
   uint32_t buffer_width;
@@ -47,37 +54,47 @@ struct _GrdRdpBufferPool
 
 G_DEFINE_TYPE (GrdRdpBufferPool, grd_rdp_buffer_pool, G_TYPE_OBJECT)
 
-static void
-add_buffer_to_pool (GrdRdpBufferPool *buffer_pool)
+static gboolean
+add_buffer_to_pool (GrdRdpBufferPool *buffer_pool,
+                    gboolean          preallocate_on_gpu)
 {
   GrdRdpBuffer *buffer;
   BufferInfo *buffer_info;
 
-  buffer = grd_rdp_buffer_new (buffer_pool);
-  buffer_info = g_new0 (BufferInfo, 1);
-
-  if (buffer_pool->has_buffer_size)
+  buffer = grd_rdp_buffer_new (buffer_pool,
+                               buffer_pool->egl_thread,
+                               buffer_pool->hwaccel_nvidia,
+                               buffer_pool->cuda_stream);
+  if (buffer_pool->has_buffer_size &&
+      !grd_rdp_buffer_resize (buffer,
+                              buffer_pool->buffer_width,
+                              buffer_pool->buffer_height,
+                              buffer_pool->buffer_stride,
+                              preallocate_on_gpu))
     {
-      grd_rdp_buffer_resize (buffer,
-                             buffer_pool->buffer_width,
-                             buffer_pool->buffer_height,
-                             buffer_pool->buffer_stride);
+      grd_rdp_buffer_free (buffer);
+      return FALSE;
     }
 
+  buffer_info = g_new0 (BufferInfo, 1);
+
   g_hash_table_insert (buffer_pool->buffer_table, buffer, buffer_info);
+
+  return TRUE;
 }
 
-void
+gboolean
 grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
                                     uint32_t          buffer_width,
                                     uint32_t          buffer_height,
                                     uint32_t          buffer_stride)
 {
+  g_autoptr (GMutexLocker) locker = NULL;
   GHashTableIter iter;
   GrdRdpBuffer *buffer;
   BufferInfo *buffer_info;
 
-  g_mutex_lock (&buffer_pool->pool_mutex);
+  locker = g_mutex_locker_new (&buffer_pool->pool_mutex);
   g_assert (buffer_pool->buffers_taken == 0);
 
   buffer_pool->buffer_width = buffer_width;
@@ -90,21 +107,26 @@ grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
                                         (gpointer *) &buffer_info))
     {
       g_assert (!buffer_info->buffer_taken);
-      grd_rdp_buffer_resize (buffer, buffer_width, buffer_height, buffer_stride);
+      if (!grd_rdp_buffer_resize (buffer, buffer_width, buffer_height,
+                                 buffer_stride, TRUE))
+        return FALSE;
     }
-  g_mutex_unlock (&buffer_pool->pool_mutex);
+
+  return TRUE;
 }
 
 GrdRdpBuffer *
 grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool)
 {
+  g_autoptr (GMutexLocker) locker = NULL;
   GHashTableIter iter;
   GrdRdpBuffer *buffer;
   BufferInfo *buffer_info;
 
-  g_mutex_lock (&buffer_pool->pool_mutex);
-  if (g_hash_table_size (buffer_pool->buffer_table) <= buffer_pool->buffers_taken)
-    add_buffer_to_pool (buffer_pool);
+  locker = g_mutex_locker_new (&buffer_pool->pool_mutex);
+  if (g_hash_table_size (buffer_pool->buffer_table) <= buffer_pool->buffers_taken &&
+      !add_buffer_to_pool (buffer_pool, FALSE))
+    return NULL;
 
   g_hash_table_iter_init (&iter, buffer_pool->buffer_table);
   while (g_hash_table_iter_next (&iter, (gpointer *) &buffer,
@@ -116,7 +138,6 @@ grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool)
 
   buffer_info->buffer_taken = TRUE;
   ++buffer_pool->buffers_taken;
-  g_mutex_unlock (&buffer_pool->pool_mutex);
 
   return buffer;
 }
@@ -196,21 +217,32 @@ static GSourceFuncs resize_pool_source_funcs =
   .dispatch = resize_pool_source_dispatch,
 };
 
-static void
+static gboolean
 fill_buffer_pool (GrdRdpBufferPool *buffer_pool)
 {
   uint32_t minimum_size = buffer_pool->minimum_pool_size;
 
   while (g_hash_table_size (buffer_pool->buffer_table) < minimum_size)
-    add_buffer_to_pool (buffer_pool);
+    {
+      if (!add_buffer_to_pool (buffer_pool, TRUE))
+        return FALSE;
+    }
+
+  return TRUE;
 }
 
 GrdRdpBufferPool *
-grd_rdp_buffer_pool_new (uint32_t minimum_size)
+grd_rdp_buffer_pool_new (GrdEglThread     *egl_thread,
+                         GrdHwAccelNvidia *hwaccel_nvidia,
+                         CUstream          cuda_stream,
+                         uint32_t          minimum_size)
 {
-  GrdRdpBufferPool *buffer_pool;
+  g_autoptr (GrdRdpBufferPool) buffer_pool = NULL;
 
   buffer_pool = g_object_new (GRD_TYPE_RDP_BUFFER_POOL, NULL);
+  buffer_pool->egl_thread = egl_thread;
+  buffer_pool->hwaccel_nvidia = hwaccel_nvidia;
+  buffer_pool->cuda_stream = cuda_stream;
   buffer_pool->minimum_pool_size = minimum_size;
 
   buffer_pool->resize_pool_source = g_source_new (&resize_pool_source_funcs,
@@ -220,9 +252,32 @@ grd_rdp_buffer_pool_new (uint32_t minimum_size)
   g_source_set_ready_time (buffer_pool->resize_pool_source, -1);
   g_source_attach (buffer_pool->resize_pool_source, NULL);
 
-  fill_buffer_pool (buffer_pool);
+  if (!fill_buffer_pool (buffer_pool))
+    return NULL;
 
-  return buffer_pool;
+  return g_steal_pointer (&buffer_pool);
+}
+
+static void
+on_sync_complete (gboolean success,
+                  gpointer user_data)
+{
+  GrdSyncPoint *sync_point = user_data;
+
+  grd_sync_point_complete (sync_point, success);
+}
+
+static void
+sync_egl_thread (GrdRdpBufferPool *buffer_pool)
+{
+  GrdSyncPoint sync_point = {};
+
+  grd_sync_point_init (&sync_point);
+  grd_egl_thread_sync (buffer_pool->egl_thread, on_sync_complete,
+                       &sync_point, NULL);
+
+  grd_sync_point_wait_for_completion (&sync_point);
+  grd_sync_point_clear (&sync_point);
 }
 
 static void
@@ -249,6 +304,14 @@ grd_rdp_buffer_pool_finalize (GObject *object)
   g_mutex_clear (&buffer_pool->pool_mutex);
 
   g_clear_pointer (&buffer_pool->buffer_table, g_hash_table_unref);
+
+  /*
+   * All buffers need to be destroyed, before the pool is freed to avoid use
+   * after free by the EGL thread, when the RDP server is shut down and with it
+   * the GrdHwAccelNvidia instance
+   */
+  if (buffer_pool->egl_thread)
+    sync_egl_thread (buffer_pool);
 
   G_OBJECT_CLASS (grd_rdp_buffer_pool_parent_class)->finalize (object);
 }

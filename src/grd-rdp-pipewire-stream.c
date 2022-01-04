@@ -371,13 +371,14 @@ on_stream_param_changed (void                 *user_data,
   release_all_buffers (stream);
 
   if (!grd_rdp_damage_detector_resize_surface (stream->rdp_surface->detector,
-                                               width, height))
+                                               width, height) ||
+      !grd_rdp_buffer_pool_resize_buffers (stream->buffer_pool,
+                                           width, height, stride))
     {
       grd_session_rdp_notify_error (
         stream->session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
       return;
     }
-  grd_rdp_buffer_pool_resize_buffers (stream->buffer_pool, width, height, stride);
 
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
@@ -529,6 +530,13 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
 
       frame->buffer = grd_rdp_buffer_pool_acquire (stream->buffer_pool);
+      if (!frame->buffer)
+        {
+          grd_session_rdp_notify_error (stream->session_rdp,
+                                        GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+          callback (stream, g_steal_pointer (&frame), FALSE, user_data);
+          return;
+        }
 
       copy_frame_data (frame,
                        src_data,
@@ -556,6 +564,13 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       uint8_t *dst_data;
 
       frame->buffer = grd_rdp_buffer_pool_acquire (stream->buffer_pool);
+      if (!frame->buffer)
+        {
+          grd_session_rdp_notify_error (stream->session_rdp,
+                                        GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+          callback (stream, g_steal_pointer (&frame), FALSE, user_data);
+          return;
+        }
 
       row_width = dst_stride / bpp;
 
@@ -595,6 +610,13 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       src_data = buffer->datas[0].data;
 
       frame->buffer = grd_rdp_buffer_pool_acquire (stream->buffer_pool);
+      if (!frame->buffer)
+        {
+          grd_session_rdp_notify_error (stream->session_rdp,
+                                        GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+          callback (stream, g_steal_pointer (&frame), FALSE, user_data);
+          return;
+        }
 
       copy_frame_data (frame,
                        src_data,
@@ -851,12 +873,16 @@ static const struct pw_core_events core_events = {
 };
 
 GrdRdpPipeWireStream *
-grd_rdp_pipewire_stream_new (GrdSessionRdp  *session_rdp,
-                             GMainContext   *render_context,
-                             GrdRdpSurface  *rdp_surface,
-                             uint32_t        src_node_id,
-                             GError        **error)
+grd_rdp_pipewire_stream_new (GrdSessionRdp     *session_rdp,
+                             GrdHwAccelNvidia  *hwaccel_nvidia,
+                             GMainContext      *render_context,
+                             GrdRdpSurface     *rdp_surface,
+                             uint32_t           src_node_id,
+                             GError           **error)
 {
+  GrdSession *session = GRD_SESSION (session_rdp);
+  GrdContext *context = grd_session_get_context (session);
+  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
   g_autoptr (GrdRdpPipeWireStream) stream = NULL;
   GrdPipeWireSource *pipewire_source;
 
@@ -903,7 +929,12 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp  *session_rdp,
   if (!connect_to_stream (stream, rdp_surface->refresh_rate, error))
     return NULL;
 
-  stream->buffer_pool = grd_rdp_buffer_pool_new (DEFAULT_BUFFER_POOL_SIZE);
+  stream->buffer_pool = grd_rdp_buffer_pool_new (egl_thread,
+                                                 hwaccel_nvidia,
+                                                 rdp_surface->cuda_stream,
+                                                 DEFAULT_BUFFER_POOL_SIZE);
+  if (!stream->buffer_pool)
+    return NULL;
 
   return g_steal_pointer (&stream);
 }

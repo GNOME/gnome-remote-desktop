@@ -1671,7 +1671,13 @@ rdp_peer_post_connect (freerdp_peer *peer)
 
   rdp_settings->PointerCacheSize = MIN (rdp_settings->PointerCacheSize, 100);
 
-  session_rdp->rdp_surface = grd_rdp_surface_new ();
+  session_rdp->rdp_surface = grd_rdp_surface_new (session_rdp->hwaccel_nvidia);
+  if (!session_rdp->rdp_surface)
+    {
+      g_warning ("[RDP] Failed to create RDP surface");
+      return FALSE;
+    }
+
   session_rdp->rdp_surface->refresh_rate = rdp_settings->SupportGraphicsPipeline ? 60
                                                                                  : 30;
 
@@ -1893,6 +1899,9 @@ socket_thread_func (gpointer data)
   uint32_t n_events;
   uint32_t n_freerdp_handles;
 
+  if (session_rdp->hwaccel_nvidia)
+    grd_hwaccel_nvidia_push_cuda_context (session_rdp->hwaccel_nvidia);
+
   WaitForSingleObject (session_rdp->start_event, INFINITE);
 
   peer = session_rdp->peer;
@@ -1964,6 +1973,9 @@ socket_thread_func (gpointer data)
           break;
         }
     }
+
+  if (session_rdp->hwaccel_nvidia)
+    grd_hwaccel_nvidia_pop_cuda_context (session_rdp->hwaccel_nvidia);
 
   return NULL;
 }
@@ -2176,6 +2188,7 @@ grd_session_rdp_stream_ready (GrdSession *session,
   rdp_surface = session_rdp->rdp_surface;
   pipewire_node_id = grd_stream_get_pipewire_node_id (stream);
   session_rdp->pipewire_stream = grd_rdp_pipewire_stream_new (session_rdp,
+                                                              session_rdp->hwaccel_nvidia,
                                                               graphics_context,
                                                               rdp_surface,
                                                               pipewire_node_id,

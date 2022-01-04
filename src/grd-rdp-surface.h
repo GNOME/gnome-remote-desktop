@@ -20,6 +20,7 @@
 #ifndef GRD_RDP_SURFACE_H
 #define GRD_RDP_SURFACE_H
 
+#include <ffnvcodec/dynlink_cuda.h>
 #include <gio/gio.h>
 #include <stdint.h>
 
@@ -37,6 +38,9 @@ struct _GrdRdpSurface
   GrdRdpBuffer *pending_framebuffer;
   GrdRdpDamageDetector *detector;
 
+  GrdHwAccelNvidia *hwaccel_nvidia;
+  CUstream cuda_stream;
+
   gboolean valid;
 
   GrdRdpGfxSurface *gfx_surface;
@@ -44,7 +48,7 @@ struct _GrdRdpSurface
   gboolean encoding_suspended;
 };
 
-GrdRdpSurface *grd_rdp_surface_new (void);
+GrdRdpSurface *grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia);
 
 void grd_rdp_surface_free (GrdRdpSurface *rdp_surface);
 
