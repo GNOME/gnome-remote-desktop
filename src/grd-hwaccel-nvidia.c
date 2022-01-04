@@ -28,6 +28,19 @@
 
 #define MAX_CUDA_DEVICES_FOR_RETRIEVAL 32
 
+typedef CUresult CUDAAPI tcuGraphicsGLRegisterBuffer (CUgraphicsResource *resource,
+                                                      GLuint              buffer,
+                                                      unsigned int        flags);
+typedef CUresult CUDAAPI tcuGraphicsResourceGetMappedPointer_v2 (CUdeviceptr        *dev_ptr,
+                                                                 size_t             *size,
+                                                                 CUgraphicsResource  resource);
+
+typedef struct _ExtraCudaFunctions
+{
+  tcuGraphicsGLRegisterBuffer *cuGraphicsGLRegisterBuffer;
+  tcuGraphicsResourceGetMappedPointer_v2 *cuGraphicsResourceGetMappedPointer;
+} ExtraCudaFunctions;
+
 typedef struct _DevRetrievalData
 {
   GrdHwAccelNvidia *hwaccel_nvidia;
@@ -54,6 +67,9 @@ struct _GrdHwAccelNvidia
   CudaFunctions *cuda_funcs;
   NvencFunctions *nvenc_funcs;
   NV_ENCODE_API_FUNCTION_LIST nvenc_api;
+
+  void *cuda_lib;
+  ExtraCudaFunctions *extra_cuda_funcs;
 
   CUdevice cu_device;
   CUcontext cu_context;
@@ -425,6 +441,31 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
 }
 
 static gboolean
+load_extra_cuda_functions (GrdHwAccelNvidia *hwaccel_nvidia)
+{
+  ExtraCudaFunctions *extra_cuda_funcs;
+
+  hwaccel_nvidia->cuda_lib = dlopen ("libcuda.so.1", RTLD_LAZY);
+  if (!hwaccel_nvidia->cuda_lib)
+    return FALSE;
+
+  hwaccel_nvidia->extra_cuda_funcs = g_malloc0 (sizeof (ExtraCudaFunctions));
+
+  extra_cuda_funcs = hwaccel_nvidia->extra_cuda_funcs;
+  extra_cuda_funcs->cuGraphicsGLRegisterBuffer =
+    dlsym (hwaccel_nvidia->cuda_lib, "cuGraphicsGLRegisterBuffer");
+  if (!extra_cuda_funcs->cuGraphicsGLRegisterBuffer)
+    return FALSE;
+
+  extra_cuda_funcs->cuGraphicsResourceGetMappedPointer =
+    dlsym (hwaccel_nvidia->cuda_lib, "cuGraphicsResourceGetMappedPointer_v2");
+  if (!extra_cuda_funcs->cuGraphicsGLRegisterBuffer)
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
 get_cuda_devices_in_impl (gpointer user_data)
 {
   DevRetrievalData *data = user_data;
@@ -495,6 +536,11 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
   if (!hwaccel_nvidia->cuda_funcs || !hwaccel_nvidia->nvenc_funcs)
     {
       g_debug ("[HWAccel.CUDA] Failed to load CUDA or NVENC library");
+      return NULL;
+    }
+  if (!load_extra_cuda_functions (hwaccel_nvidia))
+    {
+      g_warning ("[HWAccel.CUDA] Failed to load extra CUDA functions");
       return NULL;
     }
 
@@ -599,6 +645,9 @@ grd_hwaccel_nvidia_dispose (GObject *object)
 
   g_clear_pointer (&hwaccel_nvidia->cu_module_avc_utils,
                    hwaccel_nvidia->cuda_funcs->cuModuleUnload);
+
+  g_clear_pointer (&hwaccel_nvidia->cuda_lib, dlclose);
+  g_clear_pointer (&hwaccel_nvidia->extra_cuda_funcs, g_free);
 
   nvenc_free_functions (&hwaccel_nvidia->nvenc_funcs);
   cuda_free_functions (&hwaccel_nvidia->cuda_funcs);
