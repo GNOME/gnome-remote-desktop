@@ -29,6 +29,9 @@
 typedef void (* GrdEglThreadCallback) (gboolean success,
                                        gpointer user_data);
 typedef gboolean (* GrdEglThreadCustomFunc) (gpointer user_data);
+typedef gboolean (* GrdEglThreadAllocBufferFunc) (gpointer user_data,
+                                                  uint32_t pbo);
+typedef void (* GrdEglThreadDeallocBufferFunc) (gpointer user_data);
 
 GrdEglThread * grd_egl_thread_new (GError **error);
 
@@ -48,6 +51,38 @@ void grd_egl_thread_download (GrdEglThread         *egl_thread,
                               GrdEglThreadCallback  callback,
                               gpointer              user_data,
                               GDestroyNotify        destroy);
+
+void grd_egl_thread_allocate (GrdEglThread                *egl_thread,
+                              uint32_t                     height,
+                              uint32_t                     stride,
+                              GrdEglThreadAllocBufferFunc  allocate_func,
+                              gpointer                     allocate_user_data,
+                              GrdEglThreadCallback         callback,
+                              gpointer                     user_data,
+                              GDestroyNotify               destroy);
+
+void grd_egl_thread_deallocate (GrdEglThread                  *egl_thread,
+                                uint32_t                       pbo,
+                                GrdEglThreadDeallocBufferFunc  deallocate_func,
+                                gpointer                       deallocate_user_data,
+                                GrdEglThreadCallback           callback,
+                                gpointer                       user_data,
+                                GDestroyNotify                 destroy);
+
+void grd_egl_thread_upload (GrdEglThread                *egl_thread,
+                            uint32_t                     pbo,
+                            uint32_t                     height,
+                            uint32_t                     stride,
+                            uint8_t                     *src_data,
+                            GrdEglThreadAllocBufferFunc  allocate_func,
+                            gpointer                     allocate_user_data,
+                            GDestroyNotify               allocate_user_data_destroy,
+                            GrdEglThreadCustomFunc       realize_func,
+                            gpointer                     realize_user_data,
+                            GDestroyNotify               realize_user_data_destroy,
+                            GrdEglThreadCallback         callback,
+                            gpointer                     user_data,
+                            GDestroyNotify               destroy);
 
 void grd_egl_thread_sync (GrdEglThread         *egl_thread,
                           GrdEglThreadCallback  callback,
