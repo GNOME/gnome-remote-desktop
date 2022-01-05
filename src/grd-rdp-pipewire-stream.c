@@ -35,6 +35,7 @@
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-buffer-pool.h"
+#include "grd-rdp-damage-detector.h"
 #include "grd-rdp-surface.h"
 #include "grd-utils.h"
 
@@ -335,8 +336,6 @@ release_all_buffers (GrdRdpPipeWireStream *stream)
   g_mutex_lock (&stream->rdp_surface->surface_mutex);
   g_clear_pointer (&stream->rdp_surface->new_framebuffer,
                    grd_rdp_buffer_release);
-  g_clear_pointer (&stream->rdp_surface->last_framebuffer,
-                   grd_rdp_buffer_release);
   g_clear_pointer (&stream->rdp_surface->pending_framebuffer,
                    grd_rdp_buffer_release);
   g_mutex_unlock (&stream->rdp_surface->surface_mutex);
@@ -371,6 +370,13 @@ on_stream_param_changed (void                 *user_data,
     sync_egl_thread (egl_thread);
   release_all_buffers (stream);
 
+  if (!grd_rdp_damage_detector_resize_surface (stream->rdp_surface->detector,
+                                               width, height))
+    {
+      grd_session_rdp_notify_error (
+        stream->session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+      return;
+    }
   grd_rdp_buffer_pool_resize_buffers (stream->buffer_pool, width, height, stride);
 
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
@@ -940,6 +946,7 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
       g_clear_pointer (&stream->render_source, g_source_unref);
     }
 
+  grd_rdp_damage_detector_invalidate_surface (stream->rdp_surface->detector);
   g_clear_pointer (&stream->pending_frame, grd_rdp_frame_unref);
 
   release_all_buffers (stream);

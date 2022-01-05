@@ -22,6 +22,7 @@
 #include "grd-rdp-surface.h"
 
 #include "grd-rdp-buffer.h"
+#include "grd-rdp-damage-detector-memcmp.h"
 
 GrdRdpSurface *
 grd_rdp_surface_new (void)
@@ -29,6 +30,8 @@ grd_rdp_surface_new (void)
   GrdRdpSurface *rdp_surface;
 
   rdp_surface = g_malloc0 (sizeof (GrdRdpSurface));
+  rdp_surface->detector = (GrdRdpDamageDetector *)
+    grd_rdp_damage_detector_memcmp_new ();
 
   g_mutex_init (&rdp_surface->surface_mutex);
 
@@ -41,10 +44,11 @@ grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
   g_assert (!rdp_surface->gfx_surface);
 
   g_assert (!rdp_surface->new_framebuffer);
-  g_assert (!rdp_surface->last_framebuffer);
   g_assert (!rdp_surface->pending_framebuffer);
 
   g_mutex_clear (&rdp_surface->surface_mutex);
+
+  g_clear_object (&rdp_surface->detector);
 
   g_free (rdp_surface);
 }

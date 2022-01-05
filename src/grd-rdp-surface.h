@@ -34,8 +34,8 @@ struct _GrdRdpSurface
 
   GMutex surface_mutex;
   GrdRdpBuffer *new_framebuffer;
-  GrdRdpBuffer *last_framebuffer;
   GrdRdpBuffer *pending_framebuffer;
+  GrdRdpDamageDetector *detector;
 
   gboolean valid;
 

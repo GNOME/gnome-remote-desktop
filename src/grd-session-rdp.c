@@ -32,6 +32,7 @@
 #include "grd-context.h"
 #include "grd-damage-utils.h"
 #include "grd-rdp-buffer.h"
+#include "grd-rdp-damage-detector.h"
 #include "grd-rdp-event-queue.h"
 #include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-network-autodetection.h"
@@ -253,7 +254,6 @@ take_or_encode_frame (GrdSessionRdp *session_rdp,
 {
   uint16_t width = buffer->width;
   uint16_t height = buffer->height;
-  uint32_t stride;
   cairo_region_t *region;
 
   g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_release);
@@ -275,32 +275,43 @@ take_or_encode_frame (GrdSessionRdp *session_rdp,
       rdp_surface->valid = FALSE;
     }
 
-  if (!rdp_surface->valid)
-    g_clear_pointer (&rdp_surface->last_framebuffer, grd_rdp_buffer_release);
+  if (!rdp_surface->valid &&
+      !grd_rdp_damage_detector_invalidate_surface (rdp_surface->detector))
+    {
+      grd_rdp_buffer_release (buffer);
+      grd_session_rdp_notify_error (
+        session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+      return;
+    }
 
   if (is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) &&
       is_rdp_peer_flag_set (session_rdp, RDP_PEER_OUTPUT_ENABLED) &&
       !is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT) &&
       !rdp_surface->encoding_suspended)
     {
-      uint8_t *last_frame_local_data = NULL;
+      gboolean is_region_damaged;
 
-      if (rdp_surface->last_framebuffer)
-        last_frame_local_data = rdp_surface->last_framebuffer->local_data;
+      if (!grd_rdp_damage_detector_submit_new_framebuffer (rdp_surface->detector,
+                                                           buffer))
+        {
+          grd_rdp_buffer_release (buffer);
+          grd_session_rdp_notify_error (
+            session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+          return;
+        }
 
-      stride = grd_session_rdp_get_stride_for_width (session_rdp,
-                                                     rdp_surface->width);
-      region = grd_get_damage_region (buffer->local_data,
-                                      last_frame_local_data,
-                                      rdp_surface->width,
-                                      rdp_surface->height,
-                                      64, 64,
-                                      stride, 4);
-      if (!cairo_region_is_empty (region))
+      is_region_damaged =
+        grd_rdp_damage_detector_is_region_damaged (rdp_surface->detector);
+
+      region = grd_rdp_damage_detector_get_damage_region (rdp_surface->detector);
+      if (!region)
+        {
+          grd_session_rdp_notify_error (
+            session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+          return;
+        }
+      if (is_region_damaged)
         rdp_peer_refresh_region (session_rdp, rdp_surface, region, buffer);
-
-      g_clear_pointer (&rdp_surface->last_framebuffer, grd_rdp_buffer_release);
-      rdp_surface->last_framebuffer = buffer;
 
       cairo_region_destroy (region);
     }
