@@ -356,23 +356,23 @@ grd_hwaccel_nvidia_free_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
 gboolean
 grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
                                              uint32_t           encode_session_id,
-                                             uint8_t           *src_data,
+                                             CUdeviceptr        src_data,
                                              uint16_t           src_width,
                                              uint16_t           src_height,
                                              uint16_t           aligned_width,
                                              uint16_t           aligned_height,
                                              uint8_t          **bitstream,
-                                             uint32_t          *bitstream_size)
+                                             uint32_t          *bitstream_size,
+                                             CUstream           cuda_stream)
 {
   NvEncEncodeSession *encode_session;
-  CUDA_MEMCPY2D cu_memcpy_2d = {0};
   NV_ENC_REGISTER_RESOURCE register_res = {0};
   NV_ENC_MAP_INPUT_RESOURCE map_input_res = {0};
   NV_ENC_PIC_PARAMS pic_params = {0};
   NV_ENC_LOCK_BITSTREAM lock_bitstream = {0};
-  CUstream cu_stream = NULL;
-  CUdeviceptr bgrx_buffer = 0, nv12_buffer = 0;
-  size_t bgrx_pitch = 0, nv12_pitch = 0;
+  uint16_t src_stride;
+  CUdeviceptr nv12_buffer = 0;
+  size_t nv12_pitch = 0;
   unsigned int grid_dim_x, grid_dim_y, grid_dim_z;
   unsigned int block_dim_x, block_dim_y, block_dim_z;
   void *args[8];
@@ -385,50 +385,15 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
   g_assert (encode_session->enc_width == aligned_width);
   g_assert (encode_session->enc_height == aligned_height);
 
-  if (hwaccel_nvidia->cuda_funcs->cuStreamCreate (&cu_stream, 0) != CUDA_SUCCESS)
-    {
-      g_warning ("[HWAccel.CUDA] Failed to create stream");
-      return FALSE;
-    }
-
-  if (hwaccel_nvidia->cuda_funcs->cuMemAllocPitch (
-        &bgrx_buffer, &bgrx_pitch, src_width * 4, src_height, 4) != CUDA_SUCCESS)
-    {
-      g_warning ("[HWAccel.CUDA] Failed to allocate BGRX buffer");
-      hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
-      return FALSE;
-    }
-
-  cu_memcpy_2d.srcMemoryType = CU_MEMORYTYPE_HOST;
-  cu_memcpy_2d.srcHost = src_data;
-  cu_memcpy_2d.srcPitch = src_width * 4;
-
-  cu_memcpy_2d.dstMemoryType = CU_MEMORYTYPE_DEVICE;
-  cu_memcpy_2d.dstDevice = bgrx_buffer;
-  cu_memcpy_2d.dstPitch = bgrx_pitch;
-
-  cu_memcpy_2d.WidthInBytes = src_width * 4;
-  cu_memcpy_2d.Height = src_height;
-
-  if (hwaccel_nvidia->cuda_funcs->cuMemcpy2DAsync (
-        &cu_memcpy_2d, cu_stream) != CUDA_SUCCESS)
-    {
-      g_warning ("[HWAccel.CUDA] Failed to initiate H2D copy");
-      hwaccel_nvidia->cuda_funcs->cuMemFree (bgrx_buffer);
-      hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
-      return FALSE;
-    }
-
   if (hwaccel_nvidia->cuda_funcs->cuMemAllocPitch (
         &nv12_buffer, &nv12_pitch,
         aligned_width, aligned_height + aligned_height / 2, 4) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to allocate NV12 buffer");
-      hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cu_stream);
-      hwaccel_nvidia->cuda_funcs->cuMemFree (bgrx_buffer);
-      hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
       return FALSE;
     }
+
+  src_stride = src_width * 4;
 
   /* Threads per blocks */
   block_dim_x = 32;
@@ -442,37 +407,29 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
   grid_dim_z = 1;
 
   args[0] = &nv12_buffer;
-  args[1] = &bgrx_buffer;
+  args[1] = &src_data;
   args[2] = &src_width;
   args[3] = &src_height;
-  args[4] = &bgrx_pitch;
+  args[4] = &src_stride;
   args[5] = &aligned_width;
   args[6] = &aligned_height;
   args[7] = &aligned_width;
 
   if (hwaccel_nvidia->cuda_funcs->cuLaunchKernel (
         hwaccel_nvidia->cu_bgrx_to_yuv420, grid_dim_x, grid_dim_y, grid_dim_z,
-        block_dim_x, block_dim_y, block_dim_z, 0, cu_stream, args, NULL) != CUDA_SUCCESS)
+        block_dim_x, block_dim_y, block_dim_z, 0, cuda_stream, args, NULL) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to launch BGRX_TO_YUV420 kernel");
-      hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cu_stream);
       hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
-      hwaccel_nvidia->cuda_funcs->cuMemFree (bgrx_buffer);
-      hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
       return FALSE;
     }
 
-  if (hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cu_stream) != CUDA_SUCCESS)
+  if (hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cuda_stream) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to synchronize stream");
       hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
-      hwaccel_nvidia->cuda_funcs->cuMemFree (bgrx_buffer);
-      hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
       return FALSE;
     }
-
-  hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cu_stream);
-  hwaccel_nvidia->cuda_funcs->cuMemFree (bgrx_buffer);
 
   register_res.version = NV_ENC_REGISTER_RESOURCE_VER;
   register_res.resourceType = NV_ENC_INPUT_RESOURCE_TYPE_CUDADEVICEPTR;

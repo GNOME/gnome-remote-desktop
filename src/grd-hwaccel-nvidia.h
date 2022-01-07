@@ -80,12 +80,13 @@ void grd_hwaccel_nvidia_free_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
 
 gboolean grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
                                                       uint32_t           encode_session_id,
-                                                      uint8_t           *src_data,
+                                                      CUdeviceptr        src_data,
                                                       uint16_t           src_width,
                                                       uint16_t           src_height,
                                                       uint16_t           aligned_width,
                                                       uint16_t           aligned_height,
                                                       uint8_t          **bitstream,
-                                                      uint32_t          *bitstream_size);
+                                                      uint32_t          *bitstream_size,
+                                                      CUstream           cuda_stream);
 
 #endif /* GRD_HWACCEL_NVIDIA_H */
