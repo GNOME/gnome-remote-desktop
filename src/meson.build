@@ -55,6 +55,8 @@ if have_rdp
     'grd-rdp-buffer-pool.h',
     'grd-rdp-damage-detector.c',
     'grd-rdp-damage-detector.h',
+    'grd-rdp-damage-detector-cuda.c',
+    'grd-rdp-damage-detector-cuda.h',
     'grd-rdp-damage-detector-memcmp.c',
     'grd-rdp-damage-detector-memcmp.h',
     'grd-rdp-event-queue.c',
