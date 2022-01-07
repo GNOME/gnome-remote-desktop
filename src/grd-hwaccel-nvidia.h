@@ -32,6 +32,15 @@ G_DECLARE_FINAL_TYPE (GrdHwAccelNvidia, grd_hwaccel_nvidia,
 
 GrdHwAccelNvidia *grd_hwaccel_nvidia_new (GrdEglThread *egl_thread);
 
+void grd_hwaccel_nvidia_get_cuda_functions (GrdHwAccelNvidia *hwaccel_nvidia,
+                                            gpointer         *cuda_funcs);
+
+void grd_hwaccel_nvidia_get_cuda_damage_kernels (GrdHwAccelNvidia *hwaccel_nvidia,
+                                                 CUfunction       *cu_chk_dmg_pxl,
+                                                 CUfunction       *cu_cmb_dmg_arr_cols,
+                                                 CUfunction       *cu_cmb_dmg_arr_rows,
+                                                 CUfunction       *cu_simplify_dmg_arr);
+
 void grd_hwaccel_nvidia_push_cuda_context (GrdHwAccelNvidia *hwaccel_nvidia);
 
 void grd_hwaccel_nvidia_pop_cuda_context (GrdHwAccelNvidia *hwaccel_nvidia);

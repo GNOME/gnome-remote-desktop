@@ -94,6 +94,26 @@ struct _GrdHwAccelNvidia
 G_DEFINE_TYPE (GrdHwAccelNvidia, grd_hwaccel_nvidia, G_TYPE_OBJECT)
 
 void
+grd_hwaccel_nvidia_get_cuda_functions (GrdHwAccelNvidia *hwaccel_nvidia,
+                                       gpointer         *cuda_funcs)
+{
+  *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+}
+
+void
+grd_hwaccel_nvidia_get_cuda_damage_kernels (GrdHwAccelNvidia *hwaccel_nvidia,
+                                            CUfunction       *cu_chk_dmg_pxl,
+                                            CUfunction       *cu_cmb_dmg_arr_cols,
+                                            CUfunction       *cu_cmb_dmg_arr_rows,
+                                            CUfunction       *cu_simplify_dmg_arr)
+{
+  *cu_chk_dmg_pxl = hwaccel_nvidia->cu_chk_dmg_pxl;
+  *cu_cmb_dmg_arr_cols = hwaccel_nvidia->cu_cmb_dmg_arr_cols;
+  *cu_cmb_dmg_arr_rows = hwaccel_nvidia->cu_cmb_dmg_arr_rows;
+  *cu_simplify_dmg_arr = hwaccel_nvidia->cu_simplify_dmg_arr;
+}
+
+void
 grd_hwaccel_nvidia_push_cuda_context (GrdHwAccelNvidia *hwaccel_nvidia)
 {
   CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
