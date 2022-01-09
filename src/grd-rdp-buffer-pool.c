@@ -115,6 +115,15 @@ grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
   return TRUE;
 }
 
+static gboolean
+buffer_has_mapped_data (GrdRdpBuffer *buffer)
+{
+  if (buffer->mapped_cuda_pointer)
+    return TRUE;
+
+  return FALSE;
+}
+
 GrdRdpBuffer *
 grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool)
 {
@@ -122,6 +131,7 @@ grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool)
   GHashTableIter iter;
   GrdRdpBuffer *buffer;
   BufferInfo *buffer_info;
+  gboolean buffer_found = FALSE;
 
   locker = g_mutex_locker_new (&buffer_pool->pool_mutex);
   if (g_hash_table_size (buffer_pool->buffer_table) <= buffer_pool->buffers_taken &&
@@ -132,9 +142,24 @@ grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool)
   while (g_hash_table_iter_next (&iter, (gpointer *) &buffer,
                                         (gpointer *) &buffer_info))
     {
-      if (!buffer_info->buffer_taken)
-        break;
+      if (!buffer_info->buffer_taken && !buffer_has_mapped_data (buffer))
+        {
+          buffer_found = TRUE;
+          break;
+        }
     }
+
+  if (!buffer_found)
+    {
+      g_hash_table_iter_init (&iter, buffer_pool->buffer_table);
+      while (g_hash_table_iter_next (&iter, (gpointer *) &buffer,
+                                            (gpointer *) &buffer_info))
+        {
+          if (!buffer_info->buffer_taken)
+            break;
+        }
+    }
+  g_assert (buffer);
 
   buffer_info->buffer_taken = TRUE;
   ++buffer_pool->buffers_taken;
