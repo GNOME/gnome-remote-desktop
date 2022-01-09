@@ -47,6 +47,8 @@ struct _GrdRdpBufferPool
   GSource *resize_pool_source;
   uint32_t minimum_pool_size;
 
+  GSource *unmap_source;
+
   GMutex pool_mutex;
   GHashTable *buffer_table;
   uint32_t buffers_taken;
@@ -189,6 +191,7 @@ grd_rdp_buffer_pool_release_buffer (GrdRdpBufferPool *buffer_pool,
 {
   BufferInfo *buffer_info;
   gboolean queue_pool_resize;
+  gboolean queue_unmap;
 
   g_mutex_lock (&buffer_pool->pool_mutex);
   if (!g_hash_table_lookup_extended (buffer_pool->buffer_table, buffer,
@@ -201,10 +204,13 @@ grd_rdp_buffer_pool_release_buffer (GrdRdpBufferPool *buffer_pool,
   --buffer_pool->buffers_taken;
 
   queue_pool_resize = should_resize_buffer_pool (buffer_pool);
+  queue_unmap = buffer_has_mapped_data (buffer);
   g_mutex_unlock (&buffer_pool->pool_mutex);
 
   if (queue_pool_resize)
     g_source_set_ready_time (buffer_pool->resize_pool_source, 0);
+  if (queue_unmap)
+    g_source_set_ready_time (buffer_pool->unmap_source, 0);
 }
 
 static gboolean
@@ -228,7 +234,28 @@ resize_buffer_pool (gpointer user_data)
 }
 
 static gboolean
-resize_pool_source_dispatch (GSource     *source,
+unmap_untaken_buffers (gpointer user_data)
+{
+  GrdRdpBufferPool *buffer_pool = user_data;
+  GHashTableIter iter;
+  GrdRdpBuffer *buffer;
+  BufferInfo *buffer_info;
+
+  g_mutex_lock (&buffer_pool->pool_mutex);
+  g_hash_table_iter_init (&iter, buffer_pool->buffer_table);
+  while (g_hash_table_iter_next (&iter, (gpointer *) &buffer,
+                                        (gpointer *) &buffer_info))
+    {
+      if (!buffer_info->buffer_taken)
+        grd_rdp_buffer_unmap_resources (buffer);
+    }
+  g_mutex_unlock (&buffer_pool->pool_mutex);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean
+buffer_pool_source_dispatch (GSource     *source,
                              GSourceFunc  callback,
                              gpointer     user_data)
 {
@@ -237,9 +264,9 @@ resize_pool_source_dispatch (GSource     *source,
   return callback (user_data);
 }
 
-static GSourceFuncs resize_pool_source_funcs =
+static GSourceFuncs buffer_pool_source_funcs =
 {
-  .dispatch = resize_pool_source_dispatch,
+  .dispatch = buffer_pool_source_dispatch,
 };
 
 static gboolean
@@ -270,12 +297,20 @@ grd_rdp_buffer_pool_new (GrdEglThread     *egl_thread,
   buffer_pool->cuda_stream = cuda_stream;
   buffer_pool->minimum_pool_size = minimum_size;
 
-  buffer_pool->resize_pool_source = g_source_new (&resize_pool_source_funcs,
-                                                 sizeof (GSource));
+  buffer_pool->resize_pool_source = g_source_new (&buffer_pool_source_funcs,
+                                                  sizeof (GSource));
   g_source_set_callback (buffer_pool->resize_pool_source,
                          resize_buffer_pool, buffer_pool, NULL);
   g_source_set_ready_time (buffer_pool->resize_pool_source, -1);
   g_source_attach (buffer_pool->resize_pool_source, NULL);
+
+  buffer_pool->unmap_source = g_source_new (&buffer_pool_source_funcs,
+                                            sizeof (GSource));
+  g_source_set_callback (buffer_pool->unmap_source,
+                         unmap_untaken_buffers, buffer_pool, NULL);
+  g_source_set_priority (buffer_pool->unmap_source, G_PRIORITY_LOW);
+  g_source_set_ready_time (buffer_pool->unmap_source, -1);
+  g_source_attach (buffer_pool->unmap_source, NULL);
 
   if (!fill_buffer_pool (buffer_pool))
     return NULL;
@@ -310,6 +345,11 @@ grd_rdp_buffer_pool_dispose (GObject *object)
 {
   GrdRdpBufferPool *buffer_pool = GRD_RDP_BUFFER_POOL (object);
 
+  if (buffer_pool->unmap_source)
+    {
+      g_source_destroy (buffer_pool->unmap_source);
+      g_clear_pointer (&buffer_pool->unmap_source, g_source_unref);
+    }
   if (buffer_pool->resize_pool_source)
     {
       g_source_destroy (buffer_pool->resize_pool_source);
