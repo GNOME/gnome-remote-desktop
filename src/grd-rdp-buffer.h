@@ -52,6 +52,8 @@ GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
 
 void grd_rdp_buffer_free (GrdRdpBuffer *buffer);
 
+void grd_rdp_buffer_unmap_resources (GrdRdpBuffer *buffer);
+
 void grd_rdp_buffer_release (GrdRdpBuffer *buffer);
 
 gboolean grd_rdp_buffer_resize (GrdRdpBuffer *buffer,

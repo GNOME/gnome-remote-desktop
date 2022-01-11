@@ -42,6 +42,13 @@ typedef struct
   GrdRdpBuffer *buffer;
 } AllocateBufferData;
 
+typedef struct
+{
+  GrdHwAccelNvidia *hwaccel_nvidia;
+  CUgraphicsResource cuda_resource;
+  CUstream cuda_stream;
+} UnmapBufferData;
+
 GrdRdpBuffer *
 grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
                     GrdEglThread     *egl_thread,
@@ -108,6 +115,42 @@ grd_rdp_buffer_free (GrdRdpBuffer *buffer)
 {
   clear_buffers (buffer);
   g_free (buffer);
+}
+
+static gboolean
+cuda_unmap_resource (gpointer user_data)
+{
+  UnmapBufferData *data = user_data;
+
+  grd_hwaccel_nvidia_unmap_cuda_resource (data->hwaccel_nvidia,
+                                          data->cuda_resource,
+                                          data->cuda_stream);
+
+  return TRUE;
+}
+
+void
+grd_rdp_buffer_unmap_resources (GrdRdpBuffer *buffer)
+{
+  if (buffer->mapped_cuda_pointer)
+    {
+      UnmapBufferData *data;
+
+      data = g_new0 (UnmapBufferData, 1);
+      data->hwaccel_nvidia = buffer->hwaccel_nvidia;
+      data->cuda_resource = buffer->cuda_resource;
+      data->cuda_stream = buffer->cuda_stream;
+      grd_egl_thread_run_custom_task (buffer->egl_thread,
+                                      cuda_unmap_resource,
+                                      data,
+                                      NULL, data, g_free);
+
+      /*
+       * The mapped CUDA pointer indicates whether the resource is mapped, but
+       * it is itself not needed to unmap the resource.
+       */
+      buffer->mapped_cuda_pointer = 0;
+    }
 }
 
 void
