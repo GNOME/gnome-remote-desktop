@@ -901,7 +901,8 @@ run_custom_task_in_impl (gpointer data,
 
   success = task->custom_func (task->user_data);
 
-  task->base.callback (success, task->base.callback_user_data);
+  if (task->base.callback)
+    task->base.callback (success, task->base.callback_user_data);
 }
 
 void
