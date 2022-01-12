@@ -32,6 +32,13 @@ G_DECLARE_FINAL_TYPE (GrdSessionRdp,
                       GRD, SESSION_RDP,
                       GrdSession)
 
+typedef enum _GrdSessionRdpError
+{
+  GRD_SESSION_RDP_ERROR_NONE,
+  GRD_SESSION_RDP_ERROR_BAD_CAPS,
+  GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED,
+} GrdSessionRdpError;
+
 GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                     GSocketConnection *connection,
 #ifdef HAVE_HWACCEL_NVIDIA
@@ -39,8 +46,8 @@ GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
 #endif /* HAVE_HWACCEL_NVIDIA */
                                     int                reserved);
 
-void grd_session_rdp_notify_error (GrdSessionRdp *session_rdp,
-                                   uint32_t       error_info);
+void grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
+                                   GrdSessionRdpError  error_info);
 
 void grd_session_rdp_notify_graphics_pipeline_reset (GrdSessionRdp *session_rdp);
 

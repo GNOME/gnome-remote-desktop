@@ -617,10 +617,21 @@ maybe_queue_close_session_idle (GrdSessionRdp *session_rdp)
 }
 
 void
-grd_session_rdp_notify_error (GrdSessionRdp *session_rdp,
-                              uint32_t       error_info)
+grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
+                              GrdSessionRdpError  error_info)
 {
-  session_rdp->rdp_error_info = error_info;
+  switch (error_info)
+    {
+    case GRD_SESSION_RDP_ERROR_NONE:
+      g_assert_not_reached ();
+      break;
+    case GRD_SESSION_RDP_ERROR_BAD_CAPS:
+      session_rdp->rdp_error_info = ERRINFO_BAD_CAPABILITIES;
+      break;
+    case GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED:
+      session_rdp->rdp_error_info = ERRINFO_GRAPHICS_SUBSYSTEM_FAILED;
+      break;
+    }
 
   unset_rdp_peer_flag (session_rdp, RDP_PEER_ACTIVATED);
   maybe_queue_close_session_idle (session_rdp);

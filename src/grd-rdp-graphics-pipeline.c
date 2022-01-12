@@ -1002,7 +1002,7 @@ rdpgfx_caps_advertise (RdpgfxServerContext             *rdpgfx_context,
                  "CapsAdvertise PDU (RDPGFX: initialized, initial "
                  "version < 103)");
       grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
-                                    ERRINFO_GRAPHICS_SUBSYSTEM_FAILED);
+                                    GRD_SESSION_RDP_ERROR_BAD_CAPS);
 
       return CHANNEL_RC_ALREADY_INITIALIZED;
     }
@@ -1013,7 +1013,7 @@ rdpgfx_caps_advertise (RdpgfxServerContext             *rdpgfx_context,
       g_warning ("[RDP.RDPGFX] CapsAdvertise PDU does NOT contain any supported "
                  "capability sets");
       grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
-                                    ERRINFO_GRAPHICS_SUBSYSTEM_FAILED);
+                                    GRD_SESSION_RDP_ERROR_BAD_CAPS);
 
       return CHANNEL_RC_UNSUPPORTED_VERSION;
     }
@@ -1196,7 +1196,7 @@ grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
       g_warning ("[RDP.RDPGFX] Failed to open Graphics Pipeline. The client "
                  "probably falsely advertised GFX support");
       grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
-                                    ERRINFO_GRAPHICS_SUBSYSTEM_FAILED);
+                                    GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
       return;
     }
 
