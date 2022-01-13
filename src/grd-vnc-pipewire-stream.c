@@ -496,6 +496,8 @@ process_buffer (GrdVncPipeWireStream     *stream,
 
       frame->data = dst_data;
       grd_egl_thread_download (egl_thread,
+                               0, 0, 0,
+                               NULL, NULL, NULL,
                                dst_data,
                                row_width,
                                drm_format,

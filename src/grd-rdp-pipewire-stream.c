@@ -95,6 +95,14 @@ typedef struct
   GrdRdpBuffer *rdp_buffer;
 } RealizeBufferData;
 
+typedef struct
+{
+  AllocateBufferData allocate;
+  RealizeBufferData realize;
+
+  GrdRdpBuffer *rdp_buffer;
+} ImportBufferData;
+
 struct _GrdRdpPipeWireStream
 {
   GObject parent;
@@ -503,6 +511,15 @@ cuda_allocate_buffer (gpointer user_data,
 }
 
 static gboolean
+allocate_buffer (gpointer user_data,
+                 uint32_t pbo)
+{
+  ImportBufferData *data = user_data;
+
+  return cuda_allocate_buffer (&data->allocate, pbo);
+}
+
+static gboolean
 cuda_map_resource (gpointer user_data)
 {
   RealizeBufferData *data = user_data;
@@ -514,6 +531,14 @@ cuda_map_resource (gpointer user_data)
                                                &rdp_buffer->mapped_cuda_pointer,
                                                &mapped_size,
                                                rdp_buffer->cuda_stream);
+}
+
+static gboolean
+realize_buffer (gpointer user_data)
+{
+  ImportBufferData *data = user_data;
+
+  return cuda_map_resource (&data->realize);
 }
 
 static void
@@ -678,6 +703,10 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       GrdSession *session = GRD_SESSION (stream->session_rdp);
       GrdContext *context = grd_session_get_context (session);
       GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
+      GrdHwAccelNvidia *hwaccel_nvidia = stream->rdp_surface->hwaccel_nvidia;
+      GrdEglThreadImportIface iface;
+      ImportBufferData *import_buffer_data = NULL;
+      GrdRdpBuffer *rdp_buffer;
       int row_width;
       int *fds;
       uint32_t *offsets;
@@ -695,6 +724,7 @@ process_buffer (GrdRdpPipeWireStream     *stream,
           callback (stream, g_steal_pointer (&frame), FALSE, user_data);
           return;
         }
+      rdp_buffer = frame->buffer;
 
       row_width = dst_stride / bpp;
 
@@ -713,7 +743,30 @@ process_buffer (GrdRdpPipeWireStream     *stream,
         }
       dst_data = frame->buffer->local_data;
 
+      if (hwaccel_nvidia)
+        {
+          unmap_cuda_resources (egl_thread, hwaccel_nvidia, rdp_buffer);
+
+          iface.allocate = allocate_buffer;
+          iface.realize = realize_buffer;
+
+          import_buffer_data = g_new0 (ImportBufferData, 1);
+          import_buffer_data->allocate.hwaccel_nvidia = hwaccel_nvidia;
+          import_buffer_data->allocate.rdp_buffer = rdp_buffer;
+
+          import_buffer_data->realize.hwaccel_nvidia = hwaccel_nvidia;
+          import_buffer_data->realize.rdp_buffer = rdp_buffer;
+
+          import_buffer_data->rdp_buffer = rdp_buffer;
+        }
+
       grd_egl_thread_download (egl_thread,
+                               rdp_buffer->pbo,
+                               height,
+                               dst_stride,
+                               hwaccel_nvidia ? &iface : NULL,
+                               import_buffer_data,
+                               g_free,
                                dst_data,
                                row_width,
                                drm_format,

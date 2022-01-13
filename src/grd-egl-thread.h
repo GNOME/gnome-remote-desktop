@@ -33,24 +33,36 @@ typedef gboolean (* GrdEglThreadAllocBufferFunc) (gpointer user_data,
                                                   uint32_t pbo);
 typedef void (* GrdEglThreadDeallocBufferFunc) (gpointer user_data);
 
+typedef struct _GrdEglThreadImportIface
+{
+  GrdEglThreadAllocBufferFunc allocate;
+  GrdEglThreadCustomFunc realize;
+} GrdEglThreadImportIface;
+
 GrdEglThread * grd_egl_thread_new (GError **error);
 
 void grd_egl_thread_free (GrdEglThread *egl_thread);
 
-void grd_egl_thread_download (GrdEglThread         *egl_thread,
-                              uint8_t              *dst_data,
-                              int                   dst_row_width,
-                              uint32_t              format,
-                              unsigned int          width,
-                              unsigned int          height,
-                              uint32_t              n_planes,
-                              const int            *fds,
-                              const uint32_t       *strides,
-                              const uint32_t       *offsets,
-                              const uint64_t       *modifiers,
-                              GrdEglThreadCallback  callback,
-                              gpointer              user_data,
-                              GDestroyNotify        destroy);
+void grd_egl_thread_download (GrdEglThread                  *egl_thread,
+                              uint32_t                       pbo,
+                              uint32_t                       pbo_height,
+                              uint32_t                       pbo_stride,
+                              const GrdEglThreadImportIface *iface,
+                              gpointer                       import_user_data,
+                              GDestroyNotify                 import_destroy_notify,
+                              uint8_t                       *dst_data,
+                              int                            dst_row_width,
+                              uint32_t                       format,
+                              unsigned int                   width,
+                              unsigned int                   height,
+                              uint32_t                       n_planes,
+                              const int                     *fds,
+                              const uint32_t                *strides,
+                              const uint32_t                *offsets,
+                              const uint64_t                *modifiers,
+                              GrdEglThreadCallback           callback,
+                              gpointer                       user_data,
+                              GDestroyNotify                 destroy);
 
 void grd_egl_thread_allocate (GrdEglThread                *egl_thread,
                               uint32_t                     height,

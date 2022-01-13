@@ -119,6 +119,14 @@ typedef struct _GrdEglTaskDownload
 {
   GrdEglTask base;
 
+  GLuint pbo;
+  uint32_t pbo_height;
+  uint32_t pbo_stride;
+
+  GrdEglThreadImportIface iface;
+  gpointer import_user_data;
+  GDestroyNotify import_destroy_notify;
+
   uint8_t *dst_data;
   int dst_row_width;
 
@@ -403,6 +411,9 @@ grd_egl_task_download_free (GrdEglTask *task_base)
   g_free (task->strides);
   g_free (task->offsets);
   g_free (task->modifiers);
+
+  if (task->import_destroy_notify)
+    task->import_destroy_notify (task->import_user_data);
 
   grd_egl_task_free (task_base);
 }
@@ -699,18 +710,29 @@ create_dmabuf_image (GrdEglThread   *egl_thread,
 }
 
 static gboolean
-bind_egl_image (GrdEglThread       *egl_thread,
-                EGLImageKHR         egl_image,
-                GrdEglTaskDownload *task,
-                GLuint             *tex,
-                GLuint             *fbo)
+bind_egl_image (GrdEglThread *egl_thread,
+                EGLImageKHR   egl_image,
+                int           dst_row_width,
+                GLuint       *tex,
+                GLuint       *fbo)
 {
+  GLenum error;
+
   glGenTextures (1, tex);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glBindTexture (GL_TEXTURE_2D, *tex);
-  glPixelStorei (GL_PACK_ROW_LENGTH, task->dst_row_width);
+  glPixelStorei (GL_PACK_ROW_LENGTH, dst_row_width);
   glEGLImageTargetTexture2DOES (GL_TEXTURE_2D, egl_image);
+  error = glGetError ();
+  if (error != GL_NO_ERROR)
+    {
+      g_warning ("[EGL Thread] Failed to bind DMA buf texture: %u", error);
+      return FALSE;
+    }
+
+  if (!fbo)
+    return TRUE;
 
   glGenFramebuffers (1, fbo);
   glBindFramebuffer (GL_FRAMEBUFFER, *fbo);
@@ -727,11 +749,13 @@ bind_egl_image (GrdEglThread       *egl_thread,
 }
 
 static void
-read_pixels (GrdEglTaskDownload *task)
+read_pixels (uint8_t      *dst_data,
+             unsigned int  width,
+             unsigned int  height)
 {
-  glReadPixels (0, 0, task->width, task->height,
+  glReadPixels (0, 0, width, height,
                 GL_BGRA, GL_UNSIGNED_BYTE,
-                task->dst_data);
+                dst_data);
 }
 
 static void
@@ -742,13 +766,30 @@ download_in_impl (gpointer data,
   GrdEglTaskDownload *task = user_data;
   EGLImageKHR egl_image;
   gboolean success = FALSE;
+  uint32_t buffer_size;
   GLuint tex = 0;
   GLuint fbo = 0;
 
-  eglMakeCurrent (egl_thread->impl.egl_display,
-                  EGL_NO_SURFACE,
-                  EGL_NO_SURFACE,
-                  egl_thread->impl.egl_context);
+  buffer_size = task->pbo_stride * task->pbo_height * sizeof (uint8_t);
+  if (task->iface.allocate && !task->pbo)
+    {
+      GLuint pbo = 0;
+
+      glGenBuffers (1, &pbo);
+      glBindBuffer (GL_PIXEL_PACK_BUFFER, pbo);
+      glBufferData (GL_PIXEL_PACK_BUFFER, buffer_size, NULL, GL_DYNAMIC_DRAW);
+      glBindBuffer (GL_PIXEL_PACK_BUFFER, 0);
+
+      if (!task->iface.allocate (task->import_user_data, pbo))
+        {
+          g_warning ("[EGL Thread] Failed to allocate GL resources");
+          glDeleteBuffers (1, &pbo);
+          goto out;
+        }
+
+      g_debug ("[EGL Thread] Allocating GL resources was successful");
+      task->pbo = pbo;
+    }
 
   egl_image =
     create_dmabuf_image (egl_thread,
@@ -763,14 +804,39 @@ download_in_impl (gpointer data,
   if (egl_image == EGL_NO_IMAGE)
     goto out;
 
-  if (!bind_egl_image (egl_thread, egl_image, task, &tex, &fbo))
+  if (!bind_egl_image (egl_thread, egl_image, task->dst_row_width, &tex,
+                       task->dst_data ? &fbo : NULL))
     goto out;
 
-  read_pixels (task);
+  if (task->iface.realize)
+    {
+      GLenum error;
+
+      glBindBuffer (GL_PIXEL_PACK_BUFFER, task->pbo);
+      glBufferData (GL_PIXEL_PACK_BUFFER, buffer_size, NULL, GL_DYNAMIC_DRAW);
+      glReadPixels (0, 0, task->width, task->height,
+                    GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+      error = glGetError ();
+      if (error != GL_NO_ERROR)
+        {
+          g_warning ("[EGL Thread] Failed to update buffer data: %u", error);
+          goto out;
+        }
+
+      glBindBuffer (GL_PIXEL_PACK_BUFFER, 0);
+
+      if (!task->iface.realize (task->import_user_data))
+        goto out;
+    }
+
+  if (task->dst_data)
+    read_pixels (task->dst_data, task->width, task->height);
 
   success = TRUE;
 
 out:
+  glBindBuffer (GL_PIXEL_PACK_BUFFER, 0);
+
   if (fbo)
     {
       glBindFramebuffer (GL_FRAMEBUFFER, 0);
@@ -906,24 +972,38 @@ run_custom_task_in_impl (gpointer data,
 }
 
 void
-grd_egl_thread_download (GrdEglThread         *egl_thread,
-                         uint8_t              *dst_data,
-                         int                   dst_row_width,
-                         uint32_t              format,
-                         unsigned int          width,
-                         unsigned int          height,
-                         uint32_t              n_planes,
-                         const int            *fds,
-                         const uint32_t       *strides,
-                         const uint32_t       *offsets,
-                         const uint64_t       *modifiers,
-                         GrdEglThreadCallback  callback,
-                         gpointer              user_data,
-                         GDestroyNotify        destroy)
+grd_egl_thread_download (GrdEglThread                  *egl_thread,
+                         uint32_t                       pbo,
+                         uint32_t                       pbo_height,
+                         uint32_t                       pbo_stride,
+                         const GrdEglThreadImportIface *iface,
+                         gpointer                       import_user_data,
+                         GDestroyNotify                 import_destroy_notify,
+                         uint8_t                       *dst_data,
+                         int                            dst_row_width,
+                         uint32_t                       format,
+                         unsigned int                   width,
+                         unsigned int                   height,
+                         uint32_t                       n_planes,
+                         const int                     *fds,
+                         const uint32_t                *strides,
+                         const uint32_t                *offsets,
+                         const uint64_t                *modifiers,
+                         GrdEglThreadCallback           callback,
+                         gpointer                       user_data,
+                         GDestroyNotify                 destroy)
 {
   GrdEglTaskDownload *task;
 
   task = g_new0 (GrdEglTaskDownload, 1);
+
+  task->pbo = pbo;
+  task->pbo_height = pbo_height;
+  task->pbo_stride = pbo_stride;
+
+  task->iface = iface ? *iface : (GrdEglThreadImportIface) {};
+  task->import_user_data = import_user_data;
+  task->import_destroy_notify = import_destroy_notify;
 
   task->dst_data = dst_data;
   task->dst_row_width = dst_row_width;
