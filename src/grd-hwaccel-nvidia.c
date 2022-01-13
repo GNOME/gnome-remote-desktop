@@ -58,6 +58,9 @@ typedef struct _NvEncEncodeSession
   uint16_t enc_height;
 
   NV_ENC_OUTPUT_PTR buffer_out;
+
+  NV_ENC_REGISTERED_PTR registered_resource;
+  NV_ENC_INPUT_PTR mapped_resource;
 } NvEncEncodeSession;
 
 struct _GrdHwAccelNvidia
@@ -361,6 +364,7 @@ void
 grd_hwaccel_nvidia_free_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
                                        uint32_t          encode_session_id)
 {
+  NV_ENCODE_API_FUNCTION_LIST *nvenc_api = &hwaccel_nvidia->nvenc_api;
   NvEncEncodeSession *encode_session;
   NV_ENC_PIC_PARAMS pic_params = {0};
 
@@ -369,13 +373,25 @@ grd_hwaccel_nvidia_free_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
                                     NULL, (gpointer *) &encode_session))
     return;
 
-  hwaccel_nvidia->nvenc_api.nvEncDestroyBitstreamBuffer (encode_session->encoder,
-                                                         encode_session->buffer_out);
+  if (encode_session->mapped_resource)
+    {
+      nvenc_api->nvEncUnmapInputResource (encode_session->encoder,
+                                          encode_session->mapped_resource);
+      encode_session->mapped_resource = NULL;
+    }
+  if (encode_session->registered_resource)
+    {
+      nvenc_api->nvEncUnregisterResource (encode_session->encoder,
+                                          encode_session->registered_resource);
+      encode_session->registered_resource = NULL;
+    }
+
+  nvenc_api->nvEncDestroyBitstreamBuffer (encode_session->encoder,
+                                          encode_session->buffer_out);
 
   pic_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
-  hwaccel_nvidia->nvenc_api.nvEncEncodePicture (encode_session->encoder,
-                                                &pic_params);
-  hwaccel_nvidia->nvenc_api.nvEncDestroyEncoder (encode_session->encoder);
+  nvenc_api->nvEncEncodePicture (encode_session->encoder, &pic_params);
+  nvenc_api->nvEncDestroyEncoder (encode_session->encoder);
 
   g_free (encode_session);
 }
@@ -389,15 +405,12 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
                                              uint16_t           src_height,
                                              uint16_t           aligned_width,
                                              uint16_t           aligned_height,
-                                             uint8_t          **bitstream,
-                                             uint32_t          *bitstream_size,
                                              CUstream           cuda_stream)
 {
   NvEncEncodeSession *encode_session;
   NV_ENC_REGISTER_RESOURCE register_res = {0};
   NV_ENC_MAP_INPUT_RESOURCE map_input_res = {0};
   NV_ENC_PIC_PARAMS pic_params = {0};
-  NV_ENC_LOCK_BITSTREAM lock_bitstream = {0};
   uint16_t src_stride;
   unsigned int grid_dim_x, grid_dim_y, grid_dim_z;
   unsigned int block_dim_x, block_dim_y, block_dim_z;
@@ -410,6 +423,9 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
 
   g_assert (encode_session->enc_width == aligned_width);
   g_assert (encode_session->enc_height == aligned_height);
+
+  g_assert (encode_session->mapped_resource == NULL);
+  g_assert (encode_session->registered_resource == NULL);
 
   if (!(*main_view_nv12) &&
       !grd_hwaccel_nvidia_alloc_mem (hwaccel_nvidia, main_view_nv12,
@@ -500,32 +516,60 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
       return FALSE;
     }
 
+  encode_session->mapped_resource = map_input_res.mappedResource;
+  encode_session->registered_resource = register_res.registeredResource;
+
+  return TRUE;
+}
+
+gboolean
+grd_hwaccel_nvidia_avc420_retrieve_bitstream (GrdHwAccelNvidia  *hwaccel_nvidia,
+                                              uint32_t           encode_session_id,
+                                              uint8_t          **bitstream,
+                                              uint32_t          *bitstream_size)
+{
+  NV_ENCODE_API_FUNCTION_LIST *nvenc_api = &hwaccel_nvidia->nvenc_api;
+  NvEncEncodeSession *encode_session;
+  NV_ENC_LOCK_BITSTREAM lock_bitstream = {0};
+  gboolean success = FALSE;
+
+  if (!g_hash_table_lookup_extended (hwaccel_nvidia->encode_sessions,
+                                     GUINT_TO_POINTER (encode_session_id),
+                                     NULL, (gpointer *) &encode_session))
+    g_assert_not_reached ();
+
+  g_assert (encode_session->mapped_resource != NULL);
+  g_assert (encode_session->registered_resource != NULL);
+
   lock_bitstream.version = NV_ENC_LOCK_BITSTREAM_VER;
   lock_bitstream.outputBitstream = encode_session->buffer_out;
 
-  if (hwaccel_nvidia->nvenc_api.nvEncLockBitstream (
-        encode_session->encoder, &lock_bitstream) != NV_ENC_SUCCESS)
+  if (nvenc_api->nvEncLockBitstream (encode_session->encoder,
+                                     &lock_bitstream) != NV_ENC_SUCCESS)
     {
       g_warning ("[HWAccel.NVENC] Failed to lock bitstream");
-      hwaccel_nvidia->nvenc_api.nvEncUnmapInputResource (encode_session->encoder,
-                                                         map_input_res.mappedResource);
-      hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
-                                                         register_res.registeredResource);
-      return FALSE;
+      goto out;
     }
 
-  *bitstream_size = lock_bitstream.bitstreamSizeInBytes;
-  *bitstream = g_memdup2 (lock_bitstream.bitstreamBufferPtr, *bitstream_size);
+  if (bitstream_size)
+    *bitstream_size = lock_bitstream.bitstreamSizeInBytes;
+  if (bitstream)
+    *bitstream = g_memdup2 (lock_bitstream.bitstreamBufferPtr, *bitstream_size);
 
-  hwaccel_nvidia->nvenc_api.nvEncUnlockBitstream (encode_session->encoder,
-                                                  lock_bitstream.outputBitstream);
+  nvenc_api->nvEncUnlockBitstream (encode_session->encoder,
+                                   lock_bitstream.outputBitstream);
 
-  hwaccel_nvidia->nvenc_api.nvEncUnmapInputResource (encode_session->encoder,
-                                                     map_input_res.mappedResource);
-  hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
-                                                     register_res.registeredResource);
+  success = TRUE;
 
-  return TRUE;
+out:
+  nvenc_api->nvEncUnmapInputResource (encode_session->encoder,
+                                      encode_session->mapped_resource);
+  nvenc_api->nvEncUnregisterResource (encode_session->encoder,
+                                      encode_session->registered_resource);
+  encode_session->mapped_resource = NULL;
+  encode_session->registered_resource = NULL;
+
+  return success;
 }
 
 static gboolean

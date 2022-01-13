@@ -422,10 +422,17 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                     &rdp_surface->avc.main_view,
                                                     surface_width, surface_height,
                                                     aligned_width, aligned_height,
-                                                    &avc420.data, &avc420.length,
                                                     rdp_surface->cuda_stream))
     {
       g_warning ("[RDP.RDPGFX] Failed to encode YUV420 frame");
+      return FALSE;
+    }
+
+  if (!grd_hwaccel_nvidia_avc420_retrieve_bitstream (graphics_pipeline->hwaccel_nvidia,
+                                                     hwaccel_context->encode_session_id,
+                                                     &avc420.data, &avc420.length))
+    {
+      g_warning ("[RDP.RDPGFX] Failed to retrieve AVC420 bitstream");
       return FALSE;
     }
 

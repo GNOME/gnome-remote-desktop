@@ -93,8 +93,11 @@ gboolean grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel
                                                       uint16_t           src_height,
                                                       uint16_t           aligned_width,
                                                       uint16_t           aligned_height,
-                                                      uint8_t          **bitstream,
-                                                      uint32_t          *bitstream_size,
                                                       CUstream           cuda_stream);
+
+gboolean grd_hwaccel_nvidia_avc420_retrieve_bitstream (GrdHwAccelNvidia  *hwaccel_nvidia,
+                                                       uint32_t           encode_session_id,
+                                                       uint8_t          **bitstream,
+                                                       uint32_t          *bitstream_size);
 
 #endif /* GRD_HWACCEL_NVIDIA_H */
