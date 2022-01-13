@@ -157,6 +157,8 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
 
       g_hash_table_insert (graphics_pipeline->surface_hwaccel_table,
                            GUINT_TO_POINTER (surface_id), hwaccel_context);
+
+      rdp_surface->needs_no_local_data = TRUE;
     }
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
@@ -175,6 +177,7 @@ grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipel
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   RDPGFX_DELETE_ENCODING_CONTEXT_PDU delete_encoding_context = {0};
   RDPGFX_DELETE_SURFACE_PDU delete_surface = {0};
+  GrdRdpSurface *rdp_surface = grd_rdp_gfx_surface_get_rdp_surface (gfx_surface);
   gboolean needs_encoding_context_deletion = FALSE;
   GfxSurfaceContext *surface_context;
   HWAccelContext *hwaccel_context;
@@ -207,6 +210,7 @@ grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipel
                                    NULL, (gpointer *) &hwaccel_context))
     {
       g_debug ("[RDP.RDPGFX] Destroying NVENC session for surface %u", surface_id);
+      rdp_surface->needs_no_local_data = FALSE;
 
       g_assert (hwaccel_context->api == HW_ACCEL_API_NVENC);
       grd_hwaccel_nvidia_free_nvenc_session (graphics_pipeline->hwaccel_nvidia,

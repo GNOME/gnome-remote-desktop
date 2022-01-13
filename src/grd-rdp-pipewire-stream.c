@@ -64,6 +64,10 @@ struct _GrdRdpFrame
 
   GrdRdpBuffer *buffer;
 
+  gboolean has_map;
+  size_t map_size;
+  uint8_t *map;
+
   gboolean has_pointer_data;
   uint8_t *pointer_bitmap;
   uint16_t pointer_hotspot_x;
@@ -168,6 +172,8 @@ grd_rdp_frame_unref (GrdRdpFrame *frame)
 {
   if (g_atomic_ref_count_dec (&frame->refcount))
     {
+      g_assert (!frame->has_map);
+
       g_clear_pointer (&frame->buffer, grd_rdp_buffer_release);
       g_free (frame->pointer_bitmap);
       g_free (frame);
@@ -634,7 +640,7 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       uint8_t *map;
       void *src_data;
       uint32_t pbo;
-      uint8_t *local_data;
+      uint8_t *data_to_upload;
 
       size = buffer->datas[0].maxsize + buffer->datas[0].mapoffset;
       map = mmap (NULL, size, PROT_READ, MAP_PRIVATE, buffer->datas[0].fd, 0);
@@ -656,16 +662,29 @@ process_buffer (GrdRdpPipeWireStream     *stream,
         }
       rdp_buffer = frame->buffer;
       pbo = rdp_buffer->pbo;
-      local_data = rdp_buffer->local_data;
 
-      copy_frame_data (frame,
-                       src_data,
-                       width, height,
-                       dst_stride,
-                       src_stride,
-                       bpp);
+      if (stream->rdp_surface->needs_no_local_data &&
+          src_stride == dst_stride)
+        {
+          frame->map_size = size;
+          frame->map = map;
+          frame->has_map = TRUE;
 
-      munmap (map, size);
+          data_to_upload = src_data;
+        }
+      else
+        {
+          copy_frame_data (frame,
+                           src_data,
+                           width, height,
+                           dst_stride,
+                           src_stride,
+                           bpp);
+
+          munmap (map, size);
+
+          data_to_upload = rdp_buffer->local_data;
+        }
 
       if (!hwaccel_nvidia)
         {
@@ -687,7 +706,7 @@ process_buffer (GrdRdpPipeWireStream     *stream,
                              pbo,
                              height,
                              dst_stride,
-                             local_data,
+                             data_to_upload,
                              cuda_allocate_buffer,
                              allocate_buffer_data,
                              g_free,
@@ -714,7 +733,7 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       uint64_t *modifiers;
       uint32_t n_planes;
       unsigned int i;
-      uint8_t *dst_data;
+      uint8_t *dst_data = NULL;
 
       frame->buffer = grd_rdp_buffer_pool_acquire (stream->buffer_pool);
       if (!frame->buffer)
@@ -741,7 +760,9 @@ process_buffer (GrdRdpPipeWireStream     *stream,
           strides[i] = buffer->datas[i].chunk->stride;
           modifiers[i] = stream->spa_format.modifier;
         }
-      dst_data = frame->buffer->local_data;
+
+      if (!stream->rdp_surface->needs_no_local_data)
+        dst_data = frame->buffer->local_data;
 
       if (hwaccel_nvidia)
         {
@@ -791,7 +812,7 @@ process_buffer (GrdRdpPipeWireStream     *stream,
       GrdRdpBuffer *rdp_buffer;
       void *src_data;
       uint32_t pbo;
-      uint8_t *local_data;
+      uint8_t *data_to_upload;
 
       src_data = buffer->datas[0].data;
 
@@ -805,14 +826,23 @@ process_buffer (GrdRdpPipeWireStream     *stream,
         }
       rdp_buffer = frame->buffer;
       pbo = rdp_buffer->pbo;
-      local_data = rdp_buffer->local_data;
 
-      copy_frame_data (frame,
-                       src_data,
-                       width, height,
-                       dst_stride,
-                       src_stride,
-                       bpp);
+      if (stream->rdp_surface->needs_no_local_data &&
+          src_stride == dst_stride)
+        {
+          data_to_upload = src_data;
+        }
+      else
+        {
+          copy_frame_data (frame,
+                           src_data,
+                           width, height,
+                           dst_stride,
+                           src_stride,
+                           bpp);
+
+          data_to_upload = rdp_buffer->local_data;
+        }
 
       if (!hwaccel_nvidia)
         {
@@ -834,7 +864,7 @@ process_buffer (GrdRdpPipeWireStream     *stream,
                              pbo,
                              height,
                              dst_stride,
-                             local_data,
+                             data_to_upload,
                              cuda_allocate_buffer,
                              allocate_buffer_data,
                              g_free,
@@ -876,6 +906,12 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
   GrdRdpFrame *pending_frame;
 
   g_assert (frame);
+
+  if (frame->has_map)
+    {
+      munmap (frame->map, frame->map_size);
+      frame->has_map = FALSE;
+    }
 
   if (!success)
     goto out;

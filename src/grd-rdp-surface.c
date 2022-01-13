@@ -100,6 +100,8 @@ grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
 void
 grd_rdp_surface_reset (GrdRdpSurface *rdp_surface)
 {
+  rdp_surface->needs_no_local_data = FALSE;
+
   if (rdp_surface->avc.main_view)
     {
       grd_hwaccel_nvidia_clear_mem_ptr (rdp_surface->hwaccel_nvidia,

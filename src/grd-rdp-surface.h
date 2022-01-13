@@ -46,6 +46,7 @@ struct _GrdRdpSurface
     CUdeviceptr main_view;
   } avc;
 
+  gboolean needs_no_local_data;
   gboolean valid;
 
   GrdRdpGfxSurface *gfx_surface;
