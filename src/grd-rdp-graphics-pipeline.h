@@ -20,7 +20,6 @@
 #ifndef GRD_RDP_GRAPHICS_PIPELINE_H
 #define GRD_RDP_GRAPHICS_PIPELINE_H
 
-#include <cairo/cairo.h>
 #include <freerdp/server/rdpgfx.h>
 #include <glib-object.h>
 
@@ -61,7 +60,6 @@ void grd_rdp_graphics_pipeline_notify_new_round_trip_time (GrdRdpGraphicsPipelin
 
 void grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline,
                                             GrdRdpSurface          *rdp_surface,
-                                            cairo_region_t         *region,
                                             GrdRdpBuffer           *buffer);
 
 #endif /* GRD_RDP_GRAPHICS_PIPELINE_H */

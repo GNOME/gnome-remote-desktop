@@ -21,10 +21,12 @@
 
 #include "grd-rdp-graphics-pipeline.h"
 
+#include <cairo/cairo.h>
 #include <winpr/sysinfo.h>
 
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-buffer.h"
+#include "grd-rdp-damage-detector.h"
 #include "grd-rdp-frame-info.h"
 #include "grd-rdp-gfx-surface.h"
 #include "grd-rdp-network-autodetection.h"
@@ -389,7 +391,6 @@ static gboolean
 refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
                             HWAccelContext         *hwaccel_context,
                             GrdRdpSurface          *rdp_surface,
-                            cairo_region_t         *region,
                             GrdRdpBuffer           *buffer,
                             int64_t                *enc_time_us)
 {
@@ -406,6 +407,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
   uint16_t surface_height = rdp_surface->height;
   uint16_t aligned_width;
   uint16_t aligned_height;
+  cairo_region_t *region;
   uint32_t surface_serial;
   int64_t enc_ack_time_us;
   int i;
@@ -428,11 +430,23 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
       return FALSE;
     }
 
+  region = grd_rdp_damage_detector_get_damage_region (rdp_surface->detector);
+  if (!region)
+    {
+      grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
+                                    GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+      grd_hwaccel_nvidia_avc420_retrieve_bitstream (graphics_pipeline->hwaccel_nvidia,
+                                                    hwaccel_context->encode_session_id,
+                                                    NULL, NULL);
+      return FALSE;
+    }
+
   if (!grd_hwaccel_nvidia_avc420_retrieve_bitstream (graphics_pipeline->hwaccel_nvidia,
                                                      hwaccel_context->encode_session_id,
                                                      &avc420.data, &avc420.length))
     {
       g_warning ("[RDP.RDPGFX] Failed to retrieve AVC420 bitstream");
+      cairo_region_destroy (region);
       return FALSE;
     }
 
@@ -504,6 +518,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
   g_free (avc420.data);
   g_free (avc420.meta.quantQualityVals);
   g_free (avc420.meta.regionRects);
+  cairo_region_destroy (region);
 
   return TRUE;
 }
@@ -642,7 +657,6 @@ rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
 static gboolean
 refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
                                      GrdRdpSurface          *rdp_surface,
-                                     cairo_region_t         *region,
                                      GrdRdpBuffer           *buffer,
                                      int64_t                *enc_time_us)
 {
@@ -655,6 +669,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   RDPGFX_START_FRAME_PDU cmd_start = {0};
   RDPGFX_END_FRAME_PDU cmd_end = {0};
   gboolean needs_progressive_header = FALSE;
+  cairo_region_t *region;
   cairo_rectangle_int_t cairo_rect;
   RFX_RECT *rfx_rects, *rfx_rect;
   int n_rects;
@@ -664,6 +679,14 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   uint32_t surface_serial;
   int64_t enc_ack_time_us;
   int i;
+
+  region = grd_rdp_damage_detector_get_damage_region (rdp_surface->detector);
+  if (!region)
+    {
+      grd_session_rdp_notify_error (
+        session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+      return FALSE;
+    }
 
   graphics_pipeline->rfx_context->mode = RLGR1;
   if (!rdp_surface->valid)
@@ -722,6 +745,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
     {
       g_warning ("[RDP.RDPGFX] rfx_progressive_write_message() failed");
       rfx_message_free (graphics_pipeline->rfx_context, rfx_message);
+      cairo_region_destroy (region);
       return FALSE;
     }
   rfx_message_free (graphics_pipeline->rfx_context, rfx_message);
@@ -760,6 +784,8 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
                                        &cmd_start, &cmd_end);
 
   *enc_time_us = enc_ack_time_us;
+
+  cairo_region_destroy (region);
 
   return TRUE;
 }
@@ -881,7 +907,6 @@ ensure_rtt_receivement (GrdRdpGraphicsPipeline *graphics_pipeline)
 void
 grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline,
                                        GrdRdpSurface          *rdp_surface,
-                                       cairo_region_t         *region,
                                        GrdRdpBuffer           *buffer)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
@@ -918,13 +943,12 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
     {
       g_assert (hwaccel_context->api == HW_ACCEL_API_NVENC);
       success = refresh_gfx_surface_avc420 (graphics_pipeline, hwaccel_context,
-                                            rdp_surface, region, buffer,
-                                            &enc_time_us);
+                                            rdp_surface, buffer, &enc_time_us);
     }
   else
     {
       success = refresh_gfx_surface_rfx_progressive (graphics_pipeline, rdp_surface,
-                                                     region, buffer, &enc_time_us);
+                                                     buffer, &enc_time_us);
     }
 
   if (success)

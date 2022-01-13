@@ -166,7 +166,6 @@ close_session_idle (gpointer user_data);
 static void
 rdp_peer_refresh_region (GrdSessionRdp  *session_rdp,
                          GrdRdpSurface  *rdp_surface,
-                         cairo_region_t *region,
                          GrdRdpBuffer   *buffer);
 
 static gboolean
@@ -249,7 +248,6 @@ take_or_encode_frame (GrdSessionRdp *session_rdp,
 {
   uint16_t width = buffer->width;
   uint16_t height = buffer->height;
-  cairo_region_t *region;
 
   g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_release);
   maybe_resize_graphics_output_buffer (session_rdp, width, height);
@@ -284,8 +282,6 @@ take_or_encode_frame (GrdSessionRdp *session_rdp,
       !is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT) &&
       !rdp_surface->encoding_suspended)
     {
-      gboolean is_region_damaged;
-
       if (!grd_rdp_damage_detector_submit_new_framebuffer (rdp_surface->detector,
                                                            buffer))
         {
@@ -295,20 +291,8 @@ take_or_encode_frame (GrdSessionRdp *session_rdp,
           return;
         }
 
-      is_region_damaged =
-        grd_rdp_damage_detector_is_region_damaged (rdp_surface->detector);
-
-      region = grd_rdp_damage_detector_get_damage_region (rdp_surface->detector);
-      if (!region)
-        {
-          grd_session_rdp_notify_error (
-            session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
-          return;
-        }
-      if (is_region_damaged)
-        rdp_peer_refresh_region (session_rdp, rdp_surface, region, buffer);
-
-      cairo_region_destroy (region);
+      if (grd_rdp_damage_detector_is_region_damaged (rdp_surface->detector))
+        rdp_peer_refresh_region (session_rdp, rdp_surface, buffer);
     }
   else
     {
@@ -680,7 +664,6 @@ get_current_monitor_config (GrdSessionRdp  *session_rdp,
 static void
 rdp_peer_refresh_gfx (GrdSessionRdp  *session_rdp,
                       GrdRdpSurface  *rdp_surface,
-                      cairo_region_t *region,
                       GrdRdpBuffer   *buffer)
 {
   freerdp_peer *peer = session_rdp->peer;
@@ -704,7 +687,7 @@ rdp_peer_refresh_gfx (GrdSessionRdp  *session_rdp,
     }
 
   grd_rdp_graphics_pipeline_refresh_gfx (graphics_pipeline,
-                                         rdp_surface, region, buffer);
+                                         rdp_surface, buffer);
 }
 
 static void
@@ -1229,21 +1212,34 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
 static void
 rdp_peer_refresh_region (GrdSessionRdp  *session_rdp,
                          GrdRdpSurface  *rdp_surface,
-                         cairo_region_t *region,
                          GrdRdpBuffer   *buffer)
 {
   freerdp_peer *peer = session_rdp->peer;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   rdpSettings *rdp_settings = peer->settings;
+  cairo_region_t *region = NULL;
+
+  if (!rdp_settings->SupportGraphicsPipeline)
+    {
+      region = grd_rdp_damage_detector_get_damage_region (rdp_surface->detector);
+      if (!region)
+        {
+          grd_session_rdp_notify_error (
+            session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+          return;
+        }
+    }
 
   if (rdp_settings->SupportGraphicsPipeline)
-    rdp_peer_refresh_gfx (session_rdp, rdp_surface, region, buffer);
+    rdp_peer_refresh_gfx (session_rdp, rdp_surface, buffer);
   else if (rdp_settings->RemoteFxCodec)
     rdp_peer_refresh_rfx (session_rdp, rdp_surface, region, buffer);
   else if (rdp_settings->NSCodec)
     rdp_peer_refresh_nsc (session_rdp, rdp_surface, region, buffer);
   else
     rdp_peer_refresh_raw (session_rdp, rdp_surface, region, buffer);
+
+  g_clear_pointer (&region, cairo_region_destroy);
 
   ++rdp_peer_context->frame_id;
 }
