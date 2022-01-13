@@ -68,6 +68,7 @@ struct _GrdRdpGraphicsPipeline
   RdpgfxServerContext *rdpgfx_context;
   HANDLE stop_event;
   gboolean channel_opened;
+  gboolean received_first_cap_sets;
   gboolean initialized;
   uint32_t initial_version;
 
@@ -998,6 +999,51 @@ cap_sets_contains_supported_version (RDPGFX_CAPSET *cap_sets,
   return FALSE;
 }
 
+static gboolean
+cap_sets_would_disable_avc (RDPGFX_CAPSET *cap_sets,
+                            uint16_t       n_cap_sets)
+{
+  size_t i;
+  uint16_t j;
+
+  for (i = 0; i < G_N_ELEMENTS (cap_list); ++i)
+    {
+      for (j = 0; j < n_cap_sets; ++j)
+        {
+          if (cap_sets[j].version == cap_list[i])
+            {
+              uint32_t flags = cap_sets[i].flags;
+
+              switch (cap_sets[j].version)
+                {
+                case RDPGFX_CAPVERSION_106:
+                case RDPGFX_CAPVERSION_105:
+                case RDPGFX_CAPVERSION_104:
+                case RDPGFX_CAPVERSION_103:
+                case RDPGFX_CAPVERSION_102:
+                case RDPGFX_CAPVERSION_101:
+                case RDPGFX_CAPVERSION_10:
+                  if (flags & RDPGFX_CAPS_FLAG_AVC_DISABLED)
+                    return TRUE;
+                  return FALSE;
+                case RDPGFX_CAPVERSION_81:
+                  if (!(flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED))
+                    return TRUE;
+                  return FALSE;
+                case RDPGFX_CAPVERSION_8:
+                  return TRUE;
+                default:
+                  g_assert_not_reached ();
+                }
+            }
+        }
+    }
+
+  g_assert_not_reached ();
+
+  return TRUE;
+}
+
 static uint32_t
 rdpgfx_caps_advertise (RdpgfxServerContext             *rdpgfx_context,
                        const RDPGFX_CAPS_ADVERTISE_PDU *caps_advertise)
@@ -1029,6 +1075,19 @@ rdpgfx_caps_advertise (RdpgfxServerContext             *rdpgfx_context,
 
       return CHANNEL_RC_UNSUPPORTED_VERSION;
     }
+
+  if (graphics_pipeline->received_first_cap_sets &&
+      cap_sets_would_disable_avc (caps_advertise->capsSets,
+                                  caps_advertise->capsSetCount))
+    {
+      g_warning ("[RDP.RDPGFX] CapsAdvertise PDU would reset protocol with "
+                 "unsupported capability sets (disabling AVC)");
+      grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
+                                    GRD_SESSION_RDP_ERROR_BAD_CAPS);
+
+      return CHANNEL_RC_ALREADY_INITIALIZED;
+    }
+  graphics_pipeline->received_first_cap_sets = TRUE;
 
   g_mutex_lock (&graphics_pipeline->caps_mutex);
   g_clear_pointer (&graphics_pipeline->cap_sets, g_free);
