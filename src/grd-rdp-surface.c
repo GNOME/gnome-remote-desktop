@@ -34,6 +34,11 @@ destroy_hwaccel_util_objects (GrdRdpSurface *rdp_surface)
                                               rdp_surface->cuda_stream);
       rdp_surface->cuda_stream = NULL;
     }
+  if (rdp_surface->avc.main_view)
+    {
+      grd_hwaccel_nvidia_clear_mem_ptr (rdp_surface->hwaccel_nvidia,
+                                        &rdp_surface->avc.main_view);
+    }
 }
 
 GrdRdpSurface *
@@ -90,4 +95,14 @@ grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
   destroy_hwaccel_util_objects (rdp_surface);
 
   g_free (rdp_surface);
+}
+
+void
+grd_rdp_surface_reset (GrdRdpSurface *rdp_surface)
+{
+  if (rdp_surface->avc.main_view)
+    {
+      grd_hwaccel_nvidia_clear_mem_ptr (rdp_surface->hwaccel_nvidia,
+                                        &rdp_surface->avc.main_view);
+    }
 }

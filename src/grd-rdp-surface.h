@@ -41,6 +41,11 @@ struct _GrdRdpSurface
   GrdHwAccelNvidia *hwaccel_nvidia;
   CUstream cuda_stream;
 
+  struct
+  {
+    CUdeviceptr main_view;
+  } avc;
+
   gboolean valid;
 
   GrdRdpGfxSurface *gfx_surface;
@@ -51,5 +56,7 @@ struct _GrdRdpSurface
 GrdRdpSurface *grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia);
 
 void grd_rdp_surface_free (GrdRdpSurface *rdp_surface);
+
+void grd_rdp_surface_reset (GrdRdpSurface *rdp_surface);
 
 #endif /* GRD_RDP_SURFACE_H */

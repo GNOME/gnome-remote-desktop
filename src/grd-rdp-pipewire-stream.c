@@ -388,6 +388,7 @@ on_stream_param_changed (void                 *user_data,
   if (egl_thread)
     sync_egl_thread (egl_thread);
   release_all_buffers (stream);
+  grd_rdp_surface_reset (stream->rdp_surface);
 
   if (!grd_rdp_damage_detector_resize_surface (stream->rdp_surface->detector,
                                                width, height) ||

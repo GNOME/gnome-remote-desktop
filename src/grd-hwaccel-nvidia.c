@@ -384,6 +384,7 @@ gboolean
 grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
                                              uint32_t           encode_session_id,
                                              CUdeviceptr        src_data,
+                                             CUdeviceptr       *main_view_nv12,
                                              uint16_t           src_width,
                                              uint16_t           src_height,
                                              uint16_t           aligned_width,
@@ -398,8 +399,6 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
   NV_ENC_PIC_PARAMS pic_params = {0};
   NV_ENC_LOCK_BITSTREAM lock_bitstream = {0};
   uint16_t src_stride;
-  CUdeviceptr nv12_buffer = 0;
-  size_t nv12_pitch = 0;
   unsigned int grid_dim_x, grid_dim_y, grid_dim_z;
   unsigned int block_dim_x, block_dim_y, block_dim_z;
   void *args[8];
@@ -412,13 +411,10 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
   g_assert (encode_session->enc_width == aligned_width);
   g_assert (encode_session->enc_height == aligned_height);
 
-  if (hwaccel_nvidia->cuda_funcs->cuMemAllocPitch (
-        &nv12_buffer, &nv12_pitch,
-        aligned_width, aligned_height + aligned_height / 2, 4) != CUDA_SUCCESS)
-    {
-      g_warning ("[HWAccel.CUDA] Failed to allocate NV12 buffer");
-      return FALSE;
-    }
+  if (!(*main_view_nv12) &&
+      !grd_hwaccel_nvidia_alloc_mem (hwaccel_nvidia, main_view_nv12,
+                                     aligned_width * (aligned_height + aligned_height / 2)))
+    return FALSE;
 
   src_stride = src_width * 4;
 
@@ -433,7 +429,7 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
                (aligned_height / 2 % block_dim_y ? 1 : 0);
   grid_dim_z = 1;
 
-  args[0] = &nv12_buffer;
+  args[0] = main_view_nv12;
   args[1] = &src_data;
   args[2] = &src_width;
   args[3] = &src_height;
@@ -447,14 +443,12 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
         block_dim_x, block_dim_y, block_dim_z, 0, cuda_stream, args, NULL) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to launch BGRX_TO_YUV420 kernel");
-      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
       return FALSE;
     }
 
   if (hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cuda_stream) != CUDA_SUCCESS)
     {
       g_warning ("[HWAccel.CUDA] Failed to synchronize stream");
-      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
       return FALSE;
     }
 
@@ -463,7 +457,7 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
   register_res.width = aligned_width;
   register_res.height = aligned_height;
   register_res.pitch = aligned_width;
-  register_res.resourceToRegister = (void *) nv12_buffer;
+  register_res.resourceToRegister = (void *) *main_view_nv12;
   register_res.bufferFormat = NV_ENC_BUFFER_FORMAT_NV12;
   register_res.bufferUsage = NV_ENC_INPUT_IMAGE;
 
@@ -471,7 +465,6 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
         encode_session->encoder, &register_res) != NV_ENC_SUCCESS)
     {
       g_warning ("[HWAccel.NVENC] Failed to register resource");
-      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
       return FALSE;
     }
 
@@ -484,7 +477,6 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
       g_warning ("[HWAccel.NVENC] Failed to map input resource");
       hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
                                                          register_res.registeredResource);
-      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
       return FALSE;
     }
 
@@ -505,7 +497,6 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
                                                          map_input_res.mappedResource);
       hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
                                                          register_res.registeredResource);
-      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
       return FALSE;
     }
 
@@ -520,7 +511,6 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
                                                          map_input_res.mappedResource);
       hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
                                                          register_res.registeredResource);
-      hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
       return FALSE;
     }
 
@@ -534,7 +524,6 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
                                                      map_input_res.mappedResource);
   hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
                                                      register_res.registeredResource);
-  hwaccel_nvidia->cuda_funcs->cuMemFree (nv12_buffer);
 
   return TRUE;
 }
