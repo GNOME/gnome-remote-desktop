@@ -217,6 +217,33 @@ grd_hwaccel_nvidia_destroy_cuda_stream (GrdHwAccelNvidia *hwaccel_nvidia,
   hwaccel_nvidia->cuda_funcs->cuStreamDestroy (cuda_stream);
 }
 
+gboolean
+grd_hwaccel_nvidia_alloc_mem (GrdHwAccelNvidia *hwaccel_nvidia,
+                              CUdeviceptr      *device_ptr,
+                              size_t            size)
+{
+  CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+
+  if (cuda_funcs->cuMemAlloc (device_ptr, size) != CUDA_SUCCESS)
+    {
+      g_warning ("[HWAccel.CUDA] Failed to allocate memory");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+void
+grd_hwaccel_nvidia_clear_mem_ptr (GrdHwAccelNvidia *hwaccel_nvidia,
+                                  CUdeviceptr      *device_ptr)
+{
+  if (!(*device_ptr))
+    return;
+
+  hwaccel_nvidia->cuda_funcs->cuMemFree (*device_ptr);
+  *device_ptr = 0;
+}
+
 static uint32_t
 get_next_free_encode_session_id (GrdHwAccelNvidia *hwaccel_nvidia)
 {

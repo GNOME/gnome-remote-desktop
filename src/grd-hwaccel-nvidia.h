@@ -69,6 +69,13 @@ gboolean grd_hwaccel_nvidia_create_cuda_stream (GrdHwAccelNvidia *hwaccel_nvidia
 void grd_hwaccel_nvidia_destroy_cuda_stream (GrdHwAccelNvidia *hwaccel_nvidia,
                                              CUstream          cuda_stream);
 
+gboolean grd_hwaccel_nvidia_alloc_mem (GrdHwAccelNvidia *hwaccel_nvidia,
+                                       CUdeviceptr      *device_ptr,
+                                       size_t            size);
+
+void grd_hwaccel_nvidia_clear_mem_ptr (GrdHwAccelNvidia *hwaccel_nvidia,
+                                       CUdeviceptr      *device_ptr);
+
 gboolean grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
                                                   uint32_t         *encode_session_id,
                                                   uint16_t          surface_width,
