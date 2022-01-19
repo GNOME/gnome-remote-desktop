@@ -399,6 +399,9 @@ on_stream_param_changed (void                 *user_data,
   width = stream->spa_format.size.width;
   stride = grd_session_rdp_get_stride_for_width (stream->session_rdp, width);
 
+  g_debug ("[RDP] Stream parameters changed. New surface size: [%u, %u]",
+           width, height);
+
   if (egl_thread)
     sync_egl_thread (egl_thread);
   release_all_buffers (stream);
@@ -971,9 +974,10 @@ static const struct pw_stream_events stream_events = {
 };
 
 static void
-add_common_format_params (struct spa_pod_builder *pod_builder,
-                          enum spa_video_format   spa_format,
-                          uint32_t                refresh_rate)
+add_common_format_params (struct spa_pod_builder     *pod_builder,
+                          enum spa_video_format       spa_format,
+                          const GrdRdpVirtualMonitor *virtual_monitor,
+                          uint32_t                    refresh_rate)
 {
   struct spa_rectangle min_rect;
   struct spa_rectangle max_rect;
@@ -994,11 +998,25 @@ add_common_format_params (struct spa_pod_builder *pod_builder,
   spa_pod_builder_add (pod_builder,
                        SPA_FORMAT_VIDEO_format,
                        SPA_POD_Id (spa_format), 0);
-  spa_pod_builder_add (pod_builder,
-                       SPA_FORMAT_VIDEO_size,
-                       SPA_POD_CHOICE_RANGE_Rectangle (&min_rect,
-                                                       &min_rect,
-                                                       &max_rect), 0);
+
+  if (virtual_monitor)
+    {
+      struct spa_rectangle virtual_monitor_rect;
+
+      virtual_monitor_rect = SPA_RECTANGLE (virtual_monitor->width,
+                                            virtual_monitor->height);
+      spa_pod_builder_add (pod_builder,
+                           SPA_FORMAT_VIDEO_size,
+                           SPA_POD_Rectangle (&virtual_monitor_rect), 0);
+    }
+  else
+    {
+      spa_pod_builder_add (pod_builder,
+                           SPA_FORMAT_VIDEO_size,
+                           SPA_POD_CHOICE_RANGE_Rectangle (&min_rect,
+                                                           &min_rect,
+                                                           &max_rect), 0);
+    }
   spa_pod_builder_add (pod_builder,
                        SPA_FORMAT_VIDEO_framerate,
                        SPA_POD_Fraction (&SPA_FRACTION (0, 1)), 0);
@@ -1010,9 +1028,10 @@ add_common_format_params (struct spa_pod_builder *pod_builder,
 }
 
 static gboolean
-connect_to_stream (GrdRdpPipeWireStream  *stream,
-                   uint32_t               refresh_rate,
-                   GError               **error)
+connect_to_stream (GrdRdpPipeWireStream        *stream,
+                   const GrdRdpVirtualMonitor  *virtual_monitor,
+                   uint32_t                     refresh_rate,
+                   GError                     **error)
 {
   GrdSession *session = GRD_SESSION (stream->session_rdp);
   GrdContext *context = grd_session_get_context (session);
@@ -1035,7 +1054,8 @@ connect_to_stream (GrdRdpPipeWireStream  *stream,
   spa_pod_builder_push_object (&pod_builder, &format_frame,
                                SPA_TYPE_OBJECT_Format,
                                SPA_PARAM_EnumFormat);
-  add_common_format_params (&pod_builder, spa_format, refresh_rate);
+  add_common_format_params (&pod_builder, spa_format, virtual_monitor,
+                            refresh_rate);
 
   egl_thread = grd_context_get_egl_thread (context);
   if (egl_thread)
@@ -1081,7 +1101,8 @@ connect_to_stream (GrdRdpPipeWireStream  *stream,
       spa_pod_builder_push_object (&pod_builder, &format_frame,
                                    SPA_TYPE_OBJECT_Format,
                                    SPA_PARAM_EnumFormat);
-      add_common_format_params (&pod_builder, spa_format, refresh_rate);
+      add_common_format_params (&pod_builder, spa_format, virtual_monitor,
+                                refresh_rate);
       params[1] = spa_pod_builder_pop (&pod_builder, &format_frame);
     }
 
@@ -1129,12 +1150,13 @@ static const struct pw_core_events core_events = {
 };
 
 GrdRdpPipeWireStream *
-grd_rdp_pipewire_stream_new (GrdSessionRdp     *session_rdp,
-                             GrdHwAccelNvidia  *hwaccel_nvidia,
-                             GMainContext      *render_context,
-                             GrdRdpSurface     *rdp_surface,
-                             uint32_t           src_node_id,
-                             GError           **error)
+grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
+                             GrdHwAccelNvidia            *hwaccel_nvidia,
+                             GMainContext                *render_context,
+                             GrdRdpSurface               *rdp_surface,
+                             const GrdRdpVirtualMonitor  *virtual_monitor,
+                             uint32_t                     src_node_id,
+                             GError                     **error)
 {
   GrdSession *session = GRD_SESSION (session_rdp);
   GrdContext *context = grd_session_get_context (session);
@@ -1182,7 +1204,7 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp     *session_rdp,
                         &core_events,
                         stream);
 
-  if (!connect_to_stream (stream, rdp_surface->refresh_rate, error))
+  if (!connect_to_stream (stream, virtual_monitor, rdp_surface->refresh_rate, error))
     return NULL;
 
   stream->buffer_pool = grd_rdp_buffer_pool_new (egl_thread,

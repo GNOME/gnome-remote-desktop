@@ -23,6 +23,7 @@
 #include <glib-object.h>
 #include <stdint.h>
 
+#include "grd-rdp-monitor-config.h"
 #include "grd-session-rdp.h"
 
 #define GRD_TYPE_RDP_PIPEWIRE_STREAM grd_rdp_pipewire_stream_get_type ()
@@ -30,11 +31,12 @@ G_DECLARE_FINAL_TYPE (GrdRdpPipeWireStream, grd_rdp_pipewire_stream,
                       GRD, RDP_PIPEWIRE_STREAM,
                       GObject)
 
-GrdRdpPipeWireStream *grd_rdp_pipewire_stream_new (GrdSessionRdp     *session_rdp,
-                                                   GrdHwAccelNvidia  *hwaccel_nvidia,
-                                                   GMainContext      *render_context,
-                                                   GrdRdpSurface     *rdp_surface,
-                                                   uint32_t           src_node_id,
-                                                   GError           **error);
+GrdRdpPipeWireStream *grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
+                                                   GrdHwAccelNvidia            *hwaccel_nvidia,
+                                                   GMainContext                *render_context,
+                                                   GrdRdpSurface               *rdp_surface,
+                                                   const GrdRdpVirtualMonitor  *virtual_monitor,
+                                                   uint32_t                     src_node_id,
+                                                   GError                     **error);
 
 #endif /* GRD_RDP_PIPEWIRE_STREAM_H */

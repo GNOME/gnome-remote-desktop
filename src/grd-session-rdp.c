@@ -2187,6 +2187,7 @@ grd_session_rdp_stream_ready (GrdSession *session,
                                                               session_rdp->hwaccel_nvidia,
                                                               graphics_context,
                                                               rdp_surface,
+                                                              NULL,
                                                               pipewire_node_id,
                                                               &error);
   if (!session_rdp->pipewire_stream)
