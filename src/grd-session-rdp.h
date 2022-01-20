@@ -23,6 +23,7 @@
 #include <gio/gio.h>
 #include <glib-object.h>
 
+#include "grd-rdp-monitor-config.h"
 #include "grd-session.h"
 #include "grd-types.h"
 
@@ -45,6 +46,9 @@ GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
 
 void grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
                                    GrdSessionRdpError  error_info);
+
+void grd_session_rdp_submit_new_monitor_config (GrdSessionRdp       *session_rdp,
+                                                GrdRdpMonitorConfig *new_monitor_config);
 
 void grd_session_rdp_notify_graphics_pipeline_reset (GrdSessionRdp *session_rdp);
 

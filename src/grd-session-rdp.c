@@ -160,6 +160,8 @@ struct _GrdSessionRdp
   GrdRdpPipeWireStream *pipewire_stream;
   GrdStream *stream;
 
+  GSource *update_monitor_layout_source;
+  GMutex monitor_config_mutex;
   GrdRdpMonitorConfig *monitor_config;
 };
 
@@ -206,6 +208,21 @@ unset_rdp_peer_flag (GrdSessionRdp *session_rdp,
   g_mutex_lock (&session_rdp->rdp_flags_mutex);
   session_rdp->rdp_flags &= ~flag;
   g_mutex_unlock (&session_rdp->rdp_flags_mutex);
+}
+
+void
+grd_session_rdp_submit_new_monitor_config (GrdSessionRdp       *session_rdp,
+                                           GrdRdpMonitorConfig *new_monitor_config)
+{
+  g_assert (new_monitor_config);
+
+  g_mutex_lock (&session_rdp->monitor_config_mutex);
+  g_clear_pointer (&session_rdp->monitor_config, grd_rdp_monitor_config_free);
+
+  session_rdp->monitor_config = new_monitor_config;
+  g_mutex_unlock (&session_rdp->monitor_config_mutex);
+
+  g_source_set_ready_time (session_rdp->update_monitor_layout_source, 0);
 }
 
 void
@@ -2138,6 +2155,12 @@ grd_session_rdp_stop (GrdSession *session)
 
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
 
+  if (session_rdp->update_monitor_layout_source)
+    {
+      g_source_destroy (session_rdp->update_monitor_layout_source);
+      g_clear_pointer (&session_rdp->update_monitor_layout_source, g_source_unref);
+    }
+
   peer->Close (peer);
   g_clear_object (&session_rdp->connection);
 
@@ -2314,6 +2337,7 @@ grd_session_rdp_finalize (GObject *object)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
 
+  g_mutex_clear (&session_rdp->monitor_config_mutex);
   g_mutex_clear (&session_rdp->close_session_mutex);
   g_mutex_clear (&session_rdp->rdp_flags_mutex);
   g_mutex_clear (&session_rdp->pending_jobs_mutex);
@@ -2361,18 +2385,39 @@ encode_pending_frames (gpointer user_data)
 }
 
 static gboolean
-pending_encode_source_dispatch (GSource     *source,
-                                GSourceFunc  callback,
-                                gpointer     user_data)
+update_monitor_layout (gpointer user_data)
+{
+  GrdSessionRdp *session_rdp = user_data;
+  GrdRdpVirtualMonitor *virtual_monitor;
+
+  if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED))
+    return G_SOURCE_CONTINUE;
+
+  g_mutex_lock (&session_rdp->monitor_config_mutex);
+  g_assert (session_rdp->monitor_config->monitor_count == 1);
+  g_assert (session_rdp->monitor_config->is_virtual);
+
+  virtual_monitor = session_rdp->monitor_config->virtual_monitors;
+  grd_rdp_pipewire_stream_resize (session_rdp->pipewire_stream,
+                                  virtual_monitor);
+  g_mutex_unlock (&session_rdp->monitor_config_mutex);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean
+session_source_dispatch (GSource     *source,
+                         GSourceFunc  callback,
+                         gpointer     user_data)
 {
   g_source_set_ready_time (source, -1);
 
   return callback (user_data);
 }
 
-static GSourceFuncs pending_encode_source_funcs =
+static GSourceFuncs session_source_funcs =
 {
-  .dispatch = pending_encode_source_dispatch,
+  .dispatch = session_source_dispatch,
 };
 
 static void
@@ -2389,18 +2434,26 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
   g_mutex_init (&session_rdp->pending_jobs_mutex);
   g_mutex_init (&session_rdp->rdp_flags_mutex);
   g_mutex_init (&session_rdp->close_session_mutex);
+  g_mutex_init (&session_rdp->monitor_config_mutex);
 
   session_rdp->rdp_event_queue = grd_rdp_event_queue_new (session_rdp);
 
   session_rdp->graphics_context = g_main_context_new ();
 
-  session_rdp->pending_encode_source = g_source_new (&pending_encode_source_funcs,
+  session_rdp->pending_encode_source = g_source_new (&session_source_funcs,
                                                      sizeof (GSource));
   g_source_set_callback (session_rdp->pending_encode_source,
                          encode_pending_frames, session_rdp, NULL);
   g_source_set_ready_time (session_rdp->pending_encode_source, -1);
   g_source_attach (session_rdp->pending_encode_source,
                    session_rdp->graphics_context);
+
+  session_rdp->update_monitor_layout_source = g_source_new (&session_source_funcs,
+                                                            sizeof (GSource));
+  g_source_set_callback (session_rdp->update_monitor_layout_source,
+                         update_monitor_layout, session_rdp, NULL);
+  g_source_set_ready_time (session_rdp->update_monitor_layout_source, -1);
+  g_source_attach (session_rdp->update_monitor_layout_source, NULL);
 }
 
 static void
