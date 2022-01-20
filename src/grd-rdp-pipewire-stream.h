@@ -39,4 +39,7 @@ GrdRdpPipeWireStream *grd_rdp_pipewire_stream_new (GrdSessionRdp               *
                                                    uint32_t                     src_node_id,
                                                    GError                     **error);
 
+void grd_rdp_pipewire_stream_resize (GrdRdpPipeWireStream *stream,
+                                     GrdRdpVirtualMonitor *virtual_monitor);
+
 #endif /* GRD_RDP_PIPEWIRE_STREAM_H */
