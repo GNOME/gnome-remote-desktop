@@ -764,6 +764,11 @@ on_remote_desktop_session_closed (GrdDBusRemoteDesktopSession *session_proxy,
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
+  g_clear_signal_handler (&priv->caps_lock_state_changed_id,
+                          priv->remote_desktop_session);
+  g_clear_signal_handler (&priv->num_lock_state_changed_id,
+                          priv->remote_desktop_session);
+
   g_clear_object (&priv->remote_desktop_session);
   g_clear_object (&priv->screen_cast_session);
 
