@@ -115,7 +115,7 @@ on_incoming (GSocketService    *service,
     {
       /* TODO: Add the rfbScreen instance to GrdVncServer to support multiple
        * sessions. */
-      g_debug ("Refusing new VNC connection: already an active session");
+      g_message ("Refusing new VNC connection: already an active session");
       return TRUE;
     }
 
