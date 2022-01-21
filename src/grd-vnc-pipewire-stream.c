@@ -201,6 +201,9 @@ on_stream_param_changed (void                 *user_data,
   enum spa_data_type allowed_buffer_types;
   const struct spa_pod *params[3];
 
+  if (grd_session_vnc_is_client_gone (stream->session))
+    return;
+
   if (!format || id != SPA_PARAM_Format)
     return;
 
