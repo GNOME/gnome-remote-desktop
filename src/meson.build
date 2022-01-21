@@ -32,6 +32,8 @@ daemon_sources = files([
   'grd-prompt.h',
   'grd-session.c',
   'grd-session.h',
+  'grd-schemas.c',
+  'grd-schemas.h',
   'grd-settings.c',
   'grd-settings.h',
   'grd-stream.c',

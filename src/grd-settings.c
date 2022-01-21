@@ -25,6 +25,8 @@
 #include <gio/gio.h>
 #include <string.h>
 
+#include "grd-schemas.h"
+
 #define GRD_RDP_SCHEMA_ID "org.gnome.desktop.remote-desktop.rdp"
 #define GRD_VNC_SCHEMA_ID "org.gnome.desktop.remote-desktop.vnc"
 #define GRD_RDP_SERVER_PORT 3389
@@ -67,36 +69,6 @@ struct _GrdSettings
 };
 
 G_DEFINE_TYPE (GrdSettings, grd_settings, G_TYPE_OBJECT)
-
-const SecretSchema *
-grd_rdp_credentials_get_schema (void)
-{
-  static const SecretSchema grd_rdp_credentials_schema = {
-    .name = "org.gnome.RemoteDesktop.RdpCredentials",
-    .flags = SECRET_SCHEMA_NONE,
-    .attributes = {
-      { "credentials", SECRET_SCHEMA_ATTRIBUTE_STRING },
-      { "NULL", 0 },
-    },
-  };
-
-  return &grd_rdp_credentials_schema;
-}
-
-const SecretSchema *
-grd_vnc_password_get_schema (void)
-{
-  static const SecretSchema grd_vnc_password_schema = {
-    .name = "org.gnome.RemoteDesktop.VncPassword",
-    .flags = SECRET_SCHEMA_NONE,
-    .attributes = {
-      { "password", SECRET_SCHEMA_ATTRIBUTE_STRING },
-      { "NULL", 0 },
-    },
-  };
-
-  return &grd_vnc_password_schema;
-}
 
 int
 grd_settings_get_rdp_port (GrdSettings *settings)
