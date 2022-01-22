@@ -475,6 +475,51 @@ on_stream_param_changed (void                 *user_data,
 }
 
 static void
+process_mouse_pointer_bitmap (GrdRdpPipeWireStream *stream,
+                              struct spa_buffer    *buffer,
+                              GrdRdpFrame          *frame)
+{
+  struct spa_meta_cursor *spa_meta_cursor;
+  struct spa_meta_bitmap *spa_meta_bitmap;
+  GrdPixelFormat format;
+
+  spa_meta_cursor = spa_buffer_find_meta_data (buffer, SPA_META_Cursor,
+                                               sizeof *spa_meta_cursor);
+
+  g_assert (spa_meta_cursor);
+  g_assert (spa_meta_cursor_is_valid (spa_meta_cursor));
+  g_assert (spa_meta_cursor->bitmap_offset);
+
+  spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
+                                spa_meta_cursor->bitmap_offset,
+                                struct spa_meta_bitmap);
+
+  if (spa_meta_bitmap &&
+      spa_meta_bitmap->size.width > 0 &&
+      spa_meta_bitmap->size.height > 0 &&
+      grd_spa_pixel_format_to_grd_pixel_format (spa_meta_bitmap->format,
+                                                &format))
+    {
+      uint8_t *buf;
+
+      buf = SPA_MEMBER (spa_meta_bitmap, spa_meta_bitmap->offset, uint8_t);
+      frame->pointer_bitmap =
+        g_memdup2 (buf, spa_meta_bitmap->size.height *
+                        spa_meta_bitmap->stride);
+      frame->pointer_hotspot_x = spa_meta_cursor->hotspot.x;
+      frame->pointer_hotspot_y = spa_meta_cursor->hotspot.y;
+      frame->pointer_width = spa_meta_bitmap->size.width;
+      frame->pointer_height = spa_meta_bitmap->size.height;
+      frame->has_pointer_data = TRUE;
+    }
+  else if (spa_meta_bitmap)
+    {
+      frame->pointer_is_hidden = TRUE;
+      frame->has_pointer_data = TRUE;
+    }
+}
+
+static void
 copy_frame_data (GrdRdpFrame *frame,
                  uint8_t     *src_data,
                  int          width,
@@ -587,19 +632,20 @@ on_framebuffer_ready (gboolean success,
 }
 
 static void
-process_buffer (GrdRdpPipeWireStream     *stream,
-                struct spa_buffer        *buffer,
-                GrdRdpFrameReadyCallback  callback,
-                gpointer                  user_data)
+process_frame_data (GrdRdpPipeWireStream *stream,
+                    struct spa_buffer    *buffer,
+                    GrdRdpFrame          *frame)
 {
+  GrdRdpFrameReadyCallback callback = frame->callback;
+  gpointer user_data = frame->callback_user_data;
   uint32_t drm_format;
   int bpp;
   int width;
   int height;
   int src_stride;
   int dst_stride;
-  struct spa_meta_cursor *spa_meta_cursor;
-  g_autoptr (GrdRdpFrame) frame = NULL;
+
+  g_assert (buffer->datas[0].chunk->size > 0);
 
   height = stream->spa_format.size.height;
   width = stream->spa_format.size.width;
@@ -609,52 +655,7 @@ process_buffer (GrdRdpPipeWireStream     *stream,
   grd_get_spa_format_details (stream->spa_format.format,
                               &drm_format, &bpp);
 
-  frame = grd_rdp_frame_new (stream, callback, user_data);
-
-  spa_meta_cursor = spa_buffer_find_meta_data (buffer, SPA_META_Cursor,
-                                               sizeof *spa_meta_cursor);
-  if (spa_meta_cursor && spa_meta_cursor_is_valid (spa_meta_cursor))
-    {
-      struct spa_meta_bitmap *spa_meta_bitmap = NULL;
-      GrdPixelFormat format;
-
-      if (spa_meta_cursor->bitmap_offset)
-        {
-          spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
-                                        spa_meta_cursor->bitmap_offset,
-                                        struct spa_meta_bitmap);
-        }
-
-      if (spa_meta_bitmap &&
-          spa_meta_bitmap->size.width > 0 &&
-          spa_meta_bitmap->size.height > 0 &&
-          grd_spa_pixel_format_to_grd_pixel_format (spa_meta_bitmap->format,
-                                                    &format))
-        {
-          uint8_t *buf;
-
-          buf = SPA_MEMBER (spa_meta_bitmap, spa_meta_bitmap->offset, uint8_t);
-          frame->pointer_bitmap = g_memdup2 (buf, spa_meta_bitmap->size.height *
-                                                  spa_meta_bitmap->stride);
-          frame->pointer_hotspot_x = spa_meta_cursor->hotspot.x;
-          frame->pointer_hotspot_y = spa_meta_cursor->hotspot.y;
-          frame->pointer_width = spa_meta_bitmap->size.width;
-          frame->pointer_height = spa_meta_bitmap->size.height;
-          frame->has_pointer_data = TRUE;
-        }
-      else if (spa_meta_bitmap)
-        {
-          frame->pointer_is_hidden = TRUE;
-          frame->has_pointer_data = TRUE;
-        }
-    }
-
-  if (buffer->datas[0].chunk->size == 0)
-    {
-      callback (stream, g_steal_pointer (&frame), TRUE, user_data);
-      return;
-    }
-  else if (buffer->datas[0].type == SPA_DATA_MemFd)
+  if (buffer->datas[0].type == SPA_DATA_MemFd)
     {
       GrdSession *session = GRD_SESSION (stream->session_rdp);
       GrdContext *context = grd_session_get_context (session);
@@ -958,7 +959,8 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
   g_mutex_unlock (&stream->frame_mutex);
 
 out:
-  pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+  if (buffer)
+    pw_stream_queue_buffer (stream->pipewire_stream, buffer);
 
   g_source_set_ready_time (stream->render_source, 0);
 
@@ -969,25 +971,56 @@ static void
 on_stream_process (void *user_data)
 {
   GrdRdpPipeWireStream *stream = GRD_RDP_PIPEWIRE_STREAM (user_data);
+  g_autoptr (GrdRdpFrame) frame = NULL;
+  struct pw_buffer *last_pointer_buffer = NULL;
+  struct pw_buffer *last_frame_buffer = NULL;
   struct pw_buffer *next_buffer;
-  struct pw_buffer *buffer = NULL;
 
   if (stream->destroyed)
     return;
 
-  next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
-  while (next_buffer)
+  while ((next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream)))
     {
-      buffer = next_buffer;
-      next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
+      if (grd_pipewire_buffer_has_pointer_bitmap (next_buffer))
+        {
+          if (last_pointer_buffer == last_frame_buffer)
+            last_pointer_buffer = NULL;
 
-      if (next_buffer)
-        pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+          if (last_pointer_buffer)
+            pw_stream_queue_buffer (stream->pipewire_stream, last_pointer_buffer);
+          last_pointer_buffer = next_buffer;
+        }
+      if (grd_pipewire_buffer_has_frame_data (next_buffer))
+        {
+          if (last_frame_buffer)
+            pw_stream_queue_buffer (stream->pipewire_stream, last_frame_buffer);
+          last_frame_buffer = next_buffer;
+        }
+
+      if (next_buffer != last_pointer_buffer &&
+          next_buffer != last_frame_buffer)
+        pw_stream_queue_buffer (stream->pipewire_stream, next_buffer);
     }
-  if (!buffer)
+  if (!last_pointer_buffer && !last_frame_buffer)
     return;
 
-  process_buffer (stream, buffer->buffer, on_frame_ready, buffer);
+  frame = grd_rdp_frame_new (stream, on_frame_ready, last_frame_buffer);
+  if (last_pointer_buffer)
+    {
+      process_mouse_pointer_bitmap (stream, last_pointer_buffer->buffer, frame);
+      if (last_pointer_buffer != last_frame_buffer)
+        pw_stream_queue_buffer (stream->pipewire_stream, last_pointer_buffer);
+    }
+
+  if (!last_frame_buffer)
+    {
+      frame->callback (stream, g_steal_pointer (&frame),
+                       TRUE, frame->callback_user_data);
+      return;
+    }
+
+  process_frame_data (stream, last_frame_buffer->buffer,
+                      g_steal_pointer (&frame));
 }
 
 static const struct pw_stream_events stream_events = {
