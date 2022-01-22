@@ -48,7 +48,7 @@ struct _GrdRdpServer
   GList *sessions;
 
   GList *stopped_sessions;
-  guint idle_task;
+  guint cleanup_sessions_idle_id;
 
   GrdContext *context;
 #ifdef HAVE_HWACCEL_NVIDIA
@@ -107,7 +107,7 @@ static gboolean
 cleanup_stopped_sessions_idle (GrdRdpServer *rdp_server)
 {
   grd_rdp_server_cleanup_stopped_sessions (rdp_server);
-  rdp_server->idle_task = 0;
+  rdp_server->cleanup_sessions_idle_id = 0;
 
   return G_SOURCE_REMOVE;
 }
@@ -121,9 +121,9 @@ on_session_stopped (GrdSession   *session,
   rdp_server->stopped_sessions = g_list_append (rdp_server->stopped_sessions,
                                                 session);
   rdp_server->sessions = g_list_remove (rdp_server->sessions, session);
-  if (!rdp_server->idle_task)
+  if (!rdp_server->cleanup_sessions_idle_id)
     {
-      rdp_server->idle_task =
+      rdp_server->cleanup_sessions_idle_id =
         g_idle_add ((GSourceFunc) cleanup_stopped_sessions_idle,
                     rdp_server);
     }
@@ -172,11 +172,11 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
   return TRUE;
 }
 
-static void
-stop_and_unref_session (GrdSession *session)
+void
+grd_rdp_server_stop (GrdRdpServer *rdp_server)
 {
-  grd_session_stop (session);
-  g_object_unref (session);
+  g_socket_service_stop (G_SOCKET_SERVICE (rdp_server));
+  g_socket_listener_close (G_SOCKET_LISTENER (rdp_server));
 }
 
 static void
@@ -221,22 +221,15 @@ grd_rdp_server_dispose (GObject *object)
 {
   GrdRdpServer *rdp_server = GRD_RDP_SERVER (object);
 
-  if (rdp_server->idle_task)
+  while (rdp_server->sessions)
     {
-      g_source_remove (rdp_server->idle_task);
-      rdp_server->idle_task = 0;
+      GrdSession *session = rdp_server->sessions->data;
+
+      grd_session_stop (session);
     }
 
-  if (rdp_server->stopped_sessions)
-    {
-      grd_rdp_server_cleanup_stopped_sessions (rdp_server);
-    }
-  if (rdp_server->sessions)
-    {
-      g_list_free_full (rdp_server->sessions,
-                        (GDestroyNotify) stop_and_unref_session);
-      rdp_server->sessions = NULL;
-    }
+  g_clear_handle_id (&rdp_server->cleanup_sessions_idle_id, g_source_remove);
+  grd_rdp_server_cleanup_stopped_sessions (rdp_server);
 
 #ifdef HAVE_HWACCEL_NVIDIA
   g_clear_object (&rdp_server->hwaccel_nvidia);

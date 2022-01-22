@@ -92,6 +92,17 @@ init_rdp_server (GrdDaemon *daemon)
 
   return result;
 }
+
+static void
+stop_rdp_server (GrdDaemon *daemon)
+{
+  if (!daemon->rdp_server)
+    return;
+
+  g_message ("Stopping RDP server");
+  grd_rdp_server_stop (daemon->rdp_server);
+  g_clear_object (&daemon->rdp_server);
+}
 #endif /* HAVE_RDP */
 
 #ifdef HAVE_VNC
@@ -108,6 +119,17 @@ init_vnc_server (GrdDaemon *daemon)
     g_message ("Initialized VNC server");
 
   return result;
+}
+
+static void
+stop_vnc_server (GrdDaemon *daemon)
+{
+  if (!daemon->vnc_server)
+    return;
+
+  g_message ("Stopping VNC server");
+  grd_vnc_server_stop (daemon->vnc_server);
+  g_clear_object (&daemon->vnc_server);
 }
 #endif /* HAVE_VNC */
 
@@ -135,28 +157,16 @@ maybe_enable_services (GrdDaemon *daemon)
 }
 
 static void
-close_all_sessions (GrdDaemon *daemon)
-{
-  GList *l;
-
-  while ((l = grd_context_get_sessions (daemon->context)))
-    {
-      GrdSession *session = l->data;
-
-      grd_session_stop (session);
-    }
-}
-
-static void
 disable_services (GrdDaemon *daemon)
 {
-  close_all_sessions (daemon);
 #ifdef HAVE_RDP
-  g_clear_object (&daemon->rdp_server);
+  stop_rdp_server (daemon);
 #endif
 #ifdef HAVE_VNC
-  g_clear_object (&daemon->vnc_server);
+  stop_vnc_server (daemon);
 #endif
+
+  g_assert (!grd_context_get_sessions (daemon->context));
 }
 
 static void

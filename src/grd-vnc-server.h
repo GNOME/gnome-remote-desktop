@@ -38,6 +38,8 @@ GrdContext *grd_vnc_server_get_context (GrdVncServer *vnc_server);
 
 gboolean grd_vnc_server_start (GrdVncServer *vnc_server, GError **error);
 
+void grd_vnc_server_stop (GrdVncServer *vnc_server);
+
 GrdVncServer *grd_vnc_server_new (GrdContext *context);
 
 #endif /* GRD_VNC_SERVER_H */

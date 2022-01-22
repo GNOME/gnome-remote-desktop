@@ -45,7 +45,7 @@ struct _GrdVncServer
   GList *sessions;
 
   GList *stopped_sessions;
-  guint idle_task;
+  guint cleanup_sessions_idle_id;
 
   GrdContext *context;
 };
@@ -81,7 +81,7 @@ static gboolean
 cleanup_stopped_sessions_idle (GrdVncServer *vnc_server)
 {
   grd_vnc_server_cleanup_stopped_sessions (vnc_server);
-  vnc_server->idle_task = 0;
+  vnc_server->cleanup_sessions_idle_id = 0;
 
   return G_SOURCE_REMOVE;
 }
@@ -94,9 +94,9 @@ on_session_stopped (GrdSession *session, GrdVncServer *vnc_server)
   vnc_server->stopped_sessions = g_list_append (vnc_server->stopped_sessions,
                                                 session);
   vnc_server->sessions = g_list_remove (vnc_server->sessions, session);
-  if (!vnc_server->idle_task)
+  if (!vnc_server->cleanup_sessions_idle_id)
     {
-      vnc_server->idle_task =
+      vnc_server->cleanup_sessions_idle_id =
         g_idle_add ((GSourceFunc) cleanup_stopped_sessions_idle,
                     vnc_server);
     }
@@ -147,11 +147,11 @@ grd_vnc_server_start (GrdVncServer  *vnc_server,
   return TRUE;
 }
 
-static void
-stop_and_unref_session (GrdSession *session)
+void
+grd_vnc_server_stop (GrdVncServer *vnc_server)
 {
-  grd_session_stop (session);
-  g_object_unref (session);
+  g_socket_service_stop (G_SOCKET_SERVICE (vnc_server));
+  g_socket_listener_close (G_SOCKET_LISTENER (vnc_server));
 }
 
 static void
@@ -196,22 +196,16 @@ grd_vnc_server_dispose (GObject *object)
 {
   GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
 
-  if (vnc_server->idle_task)
+  while (vnc_server->sessions)
     {
-      g_source_remove (vnc_server->idle_task);
-      vnc_server->idle_task = 0;
+      GrdSession *session = vnc_server->sessions->data;
+
+      grd_session_stop (session);
     }
 
-  if (vnc_server->stopped_sessions)
-    {
-      grd_vnc_server_cleanup_stopped_sessions (vnc_server);
-    }
-  if (vnc_server->sessions)
-    {
-      g_list_free_full (vnc_server->sessions,
-                        (GDestroyNotify) stop_and_unref_session);
-      vnc_server->sessions = NULL;
-    }
+  grd_vnc_server_cleanup_stopped_sessions (vnc_server);
+  g_clear_handle_id (&vnc_server->cleanup_sessions_idle_id,
+                     g_source_remove);
 
   G_OBJECT_CLASS (grd_vnc_server_parent_class)->dispose (object);
 }

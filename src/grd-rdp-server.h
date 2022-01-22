@@ -36,6 +36,8 @@ GrdContext *grd_rdp_server_get_context (GrdRdpServer *rdp_server);
 gboolean grd_rdp_server_start (GrdRdpServer  *rdp_server,
                                GError       **error);
 
+void grd_rdp_server_stop (GrdRdpServer *rdp_server);
+
 GrdRdpServer *grd_rdp_server_new (GrdContext *context);
 
 #endif /* GRD_RDP_SERVER_H */
