@@ -121,7 +121,6 @@ on_incoming (GSocketService    *service,
 
   session_vnc = grd_session_vnc_new (vnc_server, connection);
   vnc_server->sessions = g_list_append (vnc_server->sessions, session_vnc);
-  grd_context_add_session (vnc_server->context, GRD_SESSION (session_vnc));
 
   g_signal_connect (session_vnc, "stopped",
                     G_CALLBACK (on_session_stopped),

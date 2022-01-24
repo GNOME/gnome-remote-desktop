@@ -46,8 +46,6 @@ struct _GrdContext
 
   GrdSettings *settings;
 
-  GList *sessions;
-
   GrdDebugFlags debug_flags;
 };
 
@@ -85,28 +83,6 @@ GMainContext *
 grd_context_get_main_context (GrdContext *context)
 {
   return context->main_context;
-}
-
-static void
-on_session_stopped (GrdSession *session,
-                    GrdContext *context)
-{
-  context->sessions = g_list_remove (context->sessions, session);
-}
-
-void
-grd_context_add_session (GrdContext *context,
-                         GrdSession *session)
-{
-  context->sessions = g_list_append (context->sessions, session);
-  g_signal_connect (session, "stopped",
-                    G_CALLBACK (on_session_stopped), context);
-}
-
-GList *
-grd_context_get_sessions (GrdContext *context)
-{
-  return context->sessions;
 }
 
 GrdSettings *

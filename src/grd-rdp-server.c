@@ -146,7 +146,6 @@ on_incoming (GSocketService    *service,
     return TRUE;
 
   rdp_server->sessions = g_list_append (rdp_server->sessions, session_rdp);
-  grd_context_add_session (rdp_server->context, GRD_SESSION (session_rdp));
 
   g_signal_connect (session_rdp, "stopped",
                     G_CALLBACK (on_session_stopped),

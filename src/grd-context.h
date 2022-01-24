@@ -53,11 +53,6 @@ GrdPipeWireStreamMonitor *grd_context_get_pipewire_stream_monitor (GrdContext *c
 
 GMainContext *grd_context_get_main_context (GrdContext *context);
 
-void grd_context_add_session (GrdContext *context,
-                              GrdSession *session);
-
-GList * grd_context_get_sessions (GrdContext *context);
-
 GrdSettings * grd_context_get_settings (GrdContext *context);
 
 GrdEglThread * grd_context_get_egl_thread (GrdContext *context);

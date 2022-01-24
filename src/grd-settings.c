@@ -34,10 +34,12 @@
 
 enum
 {
+  RDP_ENABLED_CHANGED,
   RDP_SCREEN_SHARE_MODE_CHANGED,
   RDP_SERVER_CERT_CHANGED,
   RDP_SERVER_KEY_CHANGED,
   RDP_VIEW_ONLY_CHANGED,
+  VNC_ENABLED_CHANGED,
   VNC_VIEW_ONLY_CHANGED,
   VNC_AUTH_METHOD_CHANGED,
   VNC_ENCRYPTION_CHANGED,
@@ -54,6 +56,7 @@ struct _GrdSettings
   struct {
     GSettings *settings;
 
+    gboolean is_enabled;
     GrdRdpScreenShareMode screen_share_mode;
     char *server_cert;
     char *server_key;
@@ -62,6 +65,7 @@ struct _GrdSettings
   } rdp;
   struct {
     GSettings *settings;
+    gboolean is_enabled;
     gboolean view_only;
     GrdVncAuthMethod auth_method;
     int port;
@@ -220,6 +224,18 @@ grd_settings_get_vnc_view_only (GrdSettings *settings)
   return settings->vnc.view_only;
 }
 
+gboolean
+grd_settings_is_rdp_enabled (GrdSettings *settings)
+{
+  return settings->rdp.is_enabled;
+}
+
+gboolean
+grd_settings_is_vnc_enabled (GrdSettings *settings)
+{
+  return settings->vnc.is_enabled;
+}
+
 GrdVncAuthMethod
 grd_settings_get_vnc_auth_method (GrdSettings *settings)
 {
@@ -234,6 +250,13 @@ update_screen_share_mode (GrdSettings *settings)
 {
   settings->rdp.screen_share_mode =
     g_settings_get_enum (settings->rdp.settings, "screen-share-mode");
+}
+
+static void
+update_rdp_enabled (GrdSettings *settings)
+{
+  settings->rdp.is_enabled = g_settings_get_boolean (settings->rdp.settings,
+                                                     "enable");
 }
 
 static void
@@ -260,6 +283,13 @@ update_rdp_view_only (GrdSettings *settings)
 }
 
 static void
+update_vnc_enabled (GrdSettings *settings)
+{
+  settings->vnc.is_enabled = g_settings_get_boolean (settings->vnc.settings,
+                                                     "enable");
+}
+
+static void
 update_vnc_view_only (GrdSettings *settings)
 {
   settings->vnc.view_only = g_settings_get_boolean (settings->vnc.settings,
@@ -278,12 +308,17 @@ on_rdp_settings_changed (GSettings   *rdp_settings,
                          const char  *key,
                          GrdSettings *settings)
 {
-  if (strcmp (key, "screen-share-mode") == 0)
+  if (strcmp (key, "enable") == 0)
+    {
+      update_rdp_enabled (settings);
+      g_signal_emit (settings, signals[RDP_ENABLED_CHANGED], 0);
+    }
+  else if (strcmp (key, "screen-share-mode") == 0)
     {
       update_screen_share_mode (settings);
       g_signal_emit (settings, signals[RDP_SCREEN_SHARE_MODE_CHANGED], 0);
     }
-  if (strcmp (key, "tls-cert") == 0)
+  else if (strcmp (key, "tls-cert") == 0)
     {
       update_rdp_tls_cert (settings);
       g_signal_emit (settings, signals[RDP_SERVER_CERT_CHANGED], 0);
@@ -305,7 +340,12 @@ on_vnc_settings_changed (GSettings   *vnc_settings,
                          const char  *key,
                          GrdSettings *settings)
 {
-  if (strcmp (key, "view-only") == 0)
+  if (strcmp (key, "enable") == 0)
+    {
+      update_vnc_enabled (settings);
+      g_signal_emit (settings, signals[VNC_ENABLED_CHANGED], 0);
+    }
+  else if (strcmp (key, "view-only") == 0)
     {
       update_vnc_view_only (settings);
       g_signal_emit (settings, signals[VNC_VIEW_ONLY_CHANGED], 0);
@@ -341,10 +381,12 @@ grd_settings_init (GrdSettings *settings)
   g_signal_connect (settings->vnc.settings, "changed",
                     G_CALLBACK (on_vnc_settings_changed), settings);
 
+  update_rdp_enabled (settings);
   update_screen_share_mode (settings);
   update_rdp_tls_cert (settings);
   update_rdp_tls_key (settings);
   update_rdp_view_only (settings);
+  update_vnc_enabled (settings);
   update_vnc_view_only (settings);
   update_vnc_auth_method (settings);
 
@@ -359,6 +401,13 @@ grd_settings_class_init (GrdSettingsClass *klass)
 
   object_class->finalize = grd_settings_finalize;
 
+  signals[RDP_ENABLED_CHANGED] =
+    g_signal_new ("rdp-enabled-changed",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL, NULL,
+                  G_TYPE_NONE, 0);
   signals[RDP_SCREEN_SHARE_MODE_CHANGED] =
     g_signal_new ("rdp-screen-share-mode-changed",
                   G_TYPE_FROM_CLASS (klass),
@@ -382,6 +431,13 @@ grd_settings_class_init (GrdSettingsClass *klass)
                   G_TYPE_NONE, 0);
   signals[RDP_VIEW_ONLY_CHANGED] =
     g_signal_new ("rdp-view-only-changed",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL, NULL,
+                  G_TYPE_NONE, 0);
+  signals[VNC_ENABLED_CHANGED] =
+    g_signal_new ("vnc-enabled-changed",
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_LAST,
                   0,

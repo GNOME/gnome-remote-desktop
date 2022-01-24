@@ -2,6 +2,13 @@
   <schema id='org.gnome.desktop.remote-desktop' path='/org/gnome/desktop/remote-desktop/'>
   </schema>
   <schema id='org.gnome.desktop.remote-desktop.rdp' path='/org/gnome/desktop/remote-desktop/rdp/'>
+    <key name='enable' type='b'>
+      <default>false</default>
+      <summary>Whether the RDP backend is enabled or not</summary>
+      <description>
+        If set to to 'true' the RDP backend will be initialized.
+      </description>
+    </key>
     <key name='screen-share-mode' enum='org.gnome.desktop.remote-desktop.GrdRdpScreenShareMode'>
       <default>'mirror-primary'</default>
       <summary>Screenshare mode of RDP connections</summary>
@@ -55,6 +62,13 @@
     </key>
   </schema>
   <schema id='org.gnome.desktop.remote-desktop.vnc' path='/org/gnome/desktop/remote-desktop/vnc/'>
+    <key name='enable' type='b'>
+      <default>false</default>
+      <summary>Whether the VNC backend is enabled or not</summary>
+      <description>
+        If set to to 'true' the VNC backend will be initialized.
+      </description>
+    </key>
     <key name='view-only' type='b'>
       <default>true</default>
       <summary>Only allow remote connections to view the screen content</summary>

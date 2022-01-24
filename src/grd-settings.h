@@ -30,6 +30,10 @@
 G_DECLARE_FINAL_TYPE (GrdSettings, grd_settings,
                       GRD, SETTINGS, GObject)
 
+gboolean grd_settings_is_rdp_enabled (GrdSettings *settings);
+
+gboolean grd_settings_is_vnc_enabled (GrdSettings *settings);
+
 int grd_settings_get_rdp_port (GrdSettings *settings);
 
 int grd_settings_get_vnc_port (GrdSettings *settings);

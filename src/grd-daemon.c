@@ -68,29 +68,27 @@ is_daemon_ready (GrdDaemon *daemon)
 }
 
 #ifdef HAVE_RDP
-static gboolean
-init_rdp_server (GrdDaemon *daemon)
+static void
+start_rdp_server (GrdDaemon *daemon)
 {
   GrdSettings *settings = grd_context_get_settings (daemon->context);
   g_autoptr (GError) error = NULL;
-  gboolean result = FALSE;
 
-  daemon->rdp_server = NULL;
+  g_assert (!daemon->rdp_server);
+
   if (!g_access (grd_settings_get_rdp_server_cert (settings), F_OK) &&
       !g_access (grd_settings_get_rdp_server_key (settings), F_OK))
     {
       daemon->rdp_server = grd_rdp_server_new (daemon->context);
-      if (!(result = grd_rdp_server_start (daemon->rdp_server, &error)))
-        g_warning ("Failed to initialize RDP server: %s\n", error->message);
+      if (!grd_rdp_server_start (daemon->rdp_server, &error))
+        g_warning ("Failed to start RDP server: %s\n", error->message);
       else
-        g_message ("Initialized RDP server");
+        g_message ("RDP server started");
     }
   else
     {
-      g_message ("Didn't initialize RDP server: not configured");
+      g_warning ("RDP TLS certificate and key not configured properly");
     }
-
-  return result;
 }
 
 static void
@@ -99,26 +97,25 @@ stop_rdp_server (GrdDaemon *daemon)
   if (!daemon->rdp_server)
     return;
 
-  g_message ("Stopping RDP server");
   grd_rdp_server_stop (daemon->rdp_server);
   g_clear_object (&daemon->rdp_server);
+  g_message ("RDP server stopped");
 }
 #endif /* HAVE_RDP */
 
 #ifdef HAVE_VNC
-static gboolean
-init_vnc_server (GrdDaemon *daemon)
+static void
+start_vnc_server (GrdDaemon *daemon)
 {
   g_autoptr (GError) error = NULL;
-  gboolean result;
+
+  g_assert (!daemon->vnc_server);
 
   daemon->vnc_server = grd_vnc_server_new (daemon->context);
-  if (!(result = grd_vnc_server_start (daemon->vnc_server, &error)))
+  if (!grd_vnc_server_start (daemon->vnc_server, &error))
     g_warning ("Failed to initialize VNC server: %s\n", error->message);
   else
-    g_message ("Initialized VNC server");
-
-  return result;
+    g_message ("VNC server started");
 }
 
 static void
@@ -127,33 +124,29 @@ stop_vnc_server (GrdDaemon *daemon)
   if (!daemon->vnc_server)
     return;
 
-  g_message ("Stopping VNC server");
   grd_vnc_server_stop (daemon->vnc_server);
   g_clear_object (&daemon->vnc_server);
+  g_message ("VNC server stopped");
 }
 #endif /* HAVE_VNC */
 
 static void
 maybe_enable_services (GrdDaemon *daemon)
 {
-  gboolean has_one_backend = FALSE;
+  GrdSettings *settings = grd_context_get_settings (daemon->context);
 
   if (!is_daemon_ready (daemon))
     return;
 
 #ifdef HAVE_RDP
-  has_one_backend = init_rdp_server (daemon) || has_one_backend;
+  if (grd_settings_is_rdp_enabled (settings))
+    start_rdp_server (daemon);
 #endif
 
 #ifdef HAVE_VNC
-  has_one_backend = init_vnc_server (daemon) || has_one_backend;
+  if (grd_settings_is_vnc_enabled (settings))
+    start_vnc_server (daemon);
 #endif
-
-  if (!has_one_backend)
-    {
-      g_warning ("No backend initialized successfully. Exiting");
-      g_application_release (G_APPLICATION (daemon));
-    }
 }
 
 static void
@@ -165,8 +158,6 @@ disable_services (GrdDaemon *daemon)
 #ifdef HAVE_VNC
   stop_vnc_server (daemon);
 #endif
-
-  g_assert (!grd_context_get_sessions (daemon->context));
 }
 
 static void
@@ -268,10 +259,65 @@ on_screen_cast_name_vanished (GDBusConnection *connection,
   grd_context_set_screen_cast_proxy (daemon->context, NULL);
 }
 
+#ifdef HAVE_RDP
+static void
+on_rdp_enabled_changed (GrdSettings *settings,
+                        GrdDaemon   *daemon)
+{
+  if (!is_daemon_ready (daemon))
+    return;
+
+  if (grd_settings_is_rdp_enabled (settings))
+    {
+      g_return_if_fail (!daemon->rdp_server);
+      start_rdp_server (daemon);
+    }
+  else
+    {
+      stop_rdp_server (daemon);
+    }
+}
+#endif /* HAVE_RDP */
+
+#ifdef HAVE_VNC
+static void
+on_vnc_enabled_changed (GrdSettings *settings,
+                        GrdDaemon   *daemon)
+{
+  if (!is_daemon_ready (daemon))
+    return;
+
+  if (grd_settings_is_vnc_enabled (settings))
+    {
+      g_return_if_fail (!daemon->vnc_server);
+      start_vnc_server (daemon);
+    }
+  else
+    {
+      stop_vnc_server (daemon);
+    }
+}
+#endif /* HAVE_VNC */
+
 static void
 grd_daemon_init (GrdDaemon *daemon)
 {
+  GrdSettings *settings;
+
   daemon->context = g_object_new (GRD_TYPE_CONTEXT, NULL);
+
+  settings = grd_context_get_settings (daemon->context);
+
+#ifdef HAVE_RDP
+  g_signal_connect (settings, "rdp-enabled-changed",
+                    G_CALLBACK (on_rdp_enabled_changed),
+                    daemon);
+#endif
+#ifdef HAVE_VNC
+  g_signal_connect (settings, "vnc-enabled-changed",
+                    G_CALLBACK (on_vnc_enabled_changed),
+                    daemon);
+#endif
 }
 
 static void
