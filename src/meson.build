@@ -135,6 +135,12 @@ control_sources = ([
   'grd-control.c'
 ])
 
+ctl_sources = ([
+  'grd-ctl.c',
+  'grd-schemas.c',
+  'grd-schemas.h',
+])
+
 executable('gnome-remote-desktop-daemon',
            daemon_sources,
            dependencies: deps,
@@ -147,6 +153,12 @@ executable('gnome-remote-desktop-control',
            dependencies: [glib_dep, gio_dep],
            include_directories: [configinc],
            install : false)
+
+executable('grdctl',
+           ctl_sources,
+           dependencies: [glib_dep, gio_dep, libsecret_dep],
+           include_directories: [configinc],
+           install: true)
 
 service_config = configuration_data()
 service_config.set('libexecdir', libexecdir)

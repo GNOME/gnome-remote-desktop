@@ -1,3 +1,4 @@
 src/grd-daemon.c
 src/grd-prompt.c
+src/grd-ctl.c
 src/org.gnome.desktop.remote-desktop.gschema.xml.in
