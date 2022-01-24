@@ -419,7 +419,9 @@ print_help (void)
   /* For translators: This first words on each line is the command;
    * don't translate. Try to fit each line within 80 characters. */
   const char *help_other =
-    _("Options:\n"
+    _("  status                                     - Show current status\n"
+      "\n"
+      "Options:\n"
       "  --help                                     - Print this help text\n");
 
   print_usage ();
@@ -439,6 +441,126 @@ print_help (void)
           help_vnc,
 #endif
           help_other);
+}
+
+static const char *
+status_to_string (gboolean enabled,
+                  gboolean use_colors)
+{
+  if (use_colors)
+    {
+      if (enabled)
+        return "\x1b[1menabled\033[m";
+      else
+        return "\x1b[1mdisabled\033[m";
+    }
+  else
+    {
+      if (enabled)
+        return "enabled";
+      else
+        return "disabled";
+    }
+}
+
+#ifdef HAVE_RDP
+static void
+print_rdp_status (gboolean use_colors)
+{
+  g_autoptr (GSettings) rdp_settings = NULL;
+  g_autofree char *tls_cert = NULL;
+  g_autofree char *tls_key = NULL;
+  g_autofree char *credentials_string = NULL;
+  g_autoptr (GVariant) credentials = NULL;
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
+  g_autoptr (GError) error = NULL;
+
+  credentials_string = secret_password_lookup_sync (GRD_RDP_CREDENTIALS_SCHEMA,
+                                                    NULL, &error,
+                                                    NULL);
+  if (error)
+    {
+      fprintf (stderr, "Failed to lookup RDP credentials: %s", error->message);
+      return;
+    }
+
+  rdp_settings = g_settings_new (GRD_RDP_SETTINGS_SCHEMA);
+
+  printf ("RDP:\n");
+  printf ("\tStatus: %s\n",
+          status_to_string (g_settings_get_boolean (rdp_settings, "enable"),
+                            use_colors));
+
+  tls_cert = g_settings_get_string (rdp_settings, "tls-cert");
+  printf ("\tTLS certificate: %s\n", tls_cert);
+  tls_key = g_settings_get_string (rdp_settings, "tls-key");
+  printf ("\tTLS key: %s\n", tls_key);
+  printf ("\tView-only: %s\n",
+          g_settings_get_boolean (rdp_settings, "view-only") ? "yes" : "no");
+
+  if (credentials_string)
+    {
+      credentials = g_variant_parse (NULL, credentials_string,
+                                     NULL, NULL, NULL);
+      g_variant_lookup (credentials, "username", "s", &username);
+      g_variant_lookup (credentials, "password", "s", &password);
+    }
+
+  printf ("\tUsername: %s\n",
+          (username && strlen (username) > 1) ? "(hidden)" : "(empty)");
+  printf ("\tPassword: %s\n",
+          (password && strlen (password) > 1) ? "(hidden)" : "(empty)");
+}
+#endif /* HAVE_RDP */
+
+#ifdef HAVE_VNC
+static void
+print_vnc_status (gboolean use_colors)
+{
+  g_autoptr (GSettings) vnc_settings = NULL;
+  g_autofree char *auth_method = NULL;
+  g_autofree char *password = NULL;
+  g_autoptr (GError) error = NULL;
+
+  password = secret_password_lookup_sync (GRD_VNC_PASSWORD_SCHEMA,
+                                          NULL, &error,
+                                          NULL);
+  if (error)
+    {
+      fprintf (stderr, "Failed to lookup RDP credentials: %s", error->message);
+      return;
+    }
+
+  vnc_settings = g_settings_new (GRD_VNC_SETTINGS_SCHEMA);
+
+  printf ("VNC:\n");
+  printf ("\tStatus: %s\n",
+          status_to_string (g_settings_get_boolean (vnc_settings, "enable"),
+                            use_colors));
+
+  auth_method = g_settings_get_string (vnc_settings, "auth-method");
+  printf ("\tAuth method: %s\n", auth_method);
+  printf ("\tView-only: %s\n",
+          g_settings_get_boolean (vnc_settings, "view-only") ? "yes" : "no");
+  printf ("\tPassword: %s\n",
+          (password && strlen (password) > 1) ? "(hidden)" : "(empty)");
+}
+#endif /* HAVE_VNC */
+
+static void
+print_status (void)
+{
+  gboolean use_colors;
+
+  use_colors = isatty (fileno (stdout));
+
+#ifdef HAVE_RDP
+  print_rdp_status (use_colors);
+#endif /* HAVE_RDP */
+#ifdef HAVE_VNC
+  print_vnc_status (use_colors);
+#endif /* HAVE_VNC */
 }
 
 int
@@ -471,6 +593,12 @@ main (int   argc,
       return process_vnc_options (argc - 2, argv + 2);
     }
 #endif
+
+  if (strcmp (argv[1], "status") == 0 && argc == 2)
+    {
+      print_status ();
+      return EXIT_SUCCESS;
+    }
 
   print_usage ();
   return EXIT_FAILURE;
