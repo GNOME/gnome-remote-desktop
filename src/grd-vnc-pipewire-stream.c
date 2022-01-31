@@ -578,7 +578,7 @@ on_frame_ready (GrdVncPipeWireStream *stream,
       grd_vnc_frame_unref (pending_frame);
     }
 
-  stream->pending_frame = frame;
+  stream->pending_frame = g_steal_pointer (&frame);
 
   g_mutex_unlock (&stream->frame_mutex);
 
@@ -586,6 +586,8 @@ out:
   pw_stream_queue_buffer (stream->pipewire_stream, buffer);
 
   g_source_set_ready_time (stream->pending_frame_source, 0);
+
+  g_clear_pointer (&frame, grd_vnc_frame_unref);
 }
 
 static void
