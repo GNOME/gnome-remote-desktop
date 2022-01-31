@@ -411,10 +411,9 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
   NV_ENC_REGISTER_RESOURCE register_res = {0};
   NV_ENC_MAP_INPUT_RESOURCE map_input_res = {0};
   NV_ENC_PIC_PARAMS pic_params = {0};
-  uint16_t src_stride;
   unsigned int grid_dim_x, grid_dim_y, grid_dim_z;
   unsigned int block_dim_x, block_dim_y, block_dim_z;
-  void *args[8];
+  void *args[7];
 
   if (!g_hash_table_lookup_extended (hwaccel_nvidia->encode_sessions,
                                      GUINT_TO_POINTER (encode_session_id),
@@ -432,8 +431,6 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
                                      aligned_width * (aligned_height + aligned_height / 2)))
     return FALSE;
 
-  src_stride = src_width * 4;
-
   /* Threads per blocks */
   block_dim_x = 32;
   block_dim_y = 8;
@@ -449,10 +446,9 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
   args[1] = &src_data;
   args[2] = &src_width;
   args[3] = &src_height;
-  args[4] = &src_stride;
-  args[5] = &aligned_width;
-  args[6] = &aligned_height;
-  args[7] = &aligned_width;
+  args[4] = &aligned_width;
+  args[5] = &aligned_height;
+  args[6] = &aligned_width;
 
   if (hwaccel_nvidia->cuda_funcs->cuLaunchKernel (
         hwaccel_nvidia->cu_bgrx_to_yuv420, grid_dim_x, grid_dim_y, grid_dim_z,

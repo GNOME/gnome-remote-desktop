@@ -73,16 +73,17 @@ extern "C"
 
   __global__ void
   convert_2x2_bgrx_area_to_yuv420_nv12 (uint8_t  *dst_data,
-                                        uint8_t  *src_data,
+                                        uint32_t *src_data,
                                         uint16_t  src_width,
                                         uint16_t  src_height,
-                                        uint16_t  src_stride,
                                         uint16_t  aligned_width,
                                         uint16_t  aligned_height,
                                         uint16_t  aligned_stride)
   {
-    uint8_t *src, *dst_y0, *dst_y1, *dst_y2, *dst_y3, *dst_u, *dst_v;
+    uint8_t *dst_y0, *dst_y1, *dst_y2, *dst_y3, *dst_u, *dst_v;
+    uint32_t *src_u32;
     uint16_t s0, s1, s2, s3;
+    uint32_t bgrx;
     int32_t r_a, g_a, b_a;
     uint8_t r, g, b;
     uint16_t x_1x1, y_1x1;
@@ -102,9 +103,9 @@ extern "C"
      *  -------------
      */
     s0 = 0;
-    s1 = 4;
-    s2 = src_stride;
-    s3 = src_stride + 4;
+    s1 = 1;
+    s2 = src_width;
+    s3 = src_width + 1;
     /*
      * Technically, the correct positions for the Y data in the resulting NV12
      * image would be the following:
@@ -130,7 +131,7 @@ extern "C"
 
     x_1x1 = x_2x2 << 1;
     y_1x1 = y_2x2 << 1;
-    src = src_data + y_1x1 * src_stride + (x_1x1 << 2);
+    src_u32 = src_data + y_1x1 * src_width + x_1x1;
 
     dst_y0 = dst_data +
              nv12_get_interlaced_y_1x1 (y_1x1, aligned_height) * aligned_stride +
@@ -148,9 +149,11 @@ extern "C"
     /* d_0 */
     if (x_1x1 < src_width && y_1x1 < src_height)
       {
-        b_a = b = src[s0 + 0];
-        g_a = g = src[s0 + 1];
-        r_a = r = src[s0 + 2];
+        bgrx = src_u32[s0];
+
+        b_a = b = *(((uint8_t *) &bgrx) + 0);
+        g_a = g = *(((uint8_t *) &bgrx) + 1);
+        r_a = r = *(((uint8_t *) &bgrx) + 2);
         *dst_y0 = rgb_to_y (r, g, b);
       }
     else
@@ -163,10 +166,12 @@ extern "C"
 
     if (x_1x1 + 1 < src_width && y_1x1 < src_height)
       {
+        bgrx = src_u32[s1];
+
         /* d_1 */
-        b_a += b = src[s1 + 0];
-        g_a += g = src[s1 + 1];
-        r_a += r = src[s1 + 2];
+        b_a += b = *(((uint8_t *) &bgrx) + 0);
+        g_a += g = *(((uint8_t *) &bgrx) + 1);
+        r_a += r = *(((uint8_t *) &bgrx) + 2);
         *dst_y1 = rgb_to_y (r, g, b);
       }
     else
@@ -176,18 +181,22 @@ extern "C"
 
     if (x_1x1 < src_width && y_1x1 + 1 < src_height)
       {
+        bgrx = src_u32[s2];
+
         /* d_2 */
-        b_a += b = src[s2 + 0];
-        g_a += g = src[s2 + 1];
-        r_a += r = src[s2 + 2];
+        b_a += b = *(((uint8_t *) &bgrx) + 0);
+        g_a += g = *(((uint8_t *) &bgrx) + 1);
+        r_a += r = *(((uint8_t *) &bgrx) + 2);
         *dst_y2 = rgb_to_y (r, g, b);
 
         if (x_1x1 + 1 < src_width)
           {
+            bgrx = src_u32[s3];
+
             /* d_3 */
-            b_a += b = src[s3 + 0];
-            g_a += g = src[s3 + 1];
-            r_a += r = src[s3 + 2];
+            b_a += b = *(((uint8_t *) &bgrx) + 0);
+            g_a += g = *(((uint8_t *) &bgrx) + 1);
+            r_a += r = *(((uint8_t *) &bgrx) + 2);
             *dst_y3 = rgb_to_y (r, g, b);
           }
         else
