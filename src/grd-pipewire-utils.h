@@ -21,6 +21,7 @@
 #define GRD_PIPEWIRE_UTILS_H
 
 #include <gio/gio.h>
+#include <pipewire/pipewire.h>
 #include <stdint.h>
 #include <spa/param/video/format-utils.h>
 
@@ -38,6 +39,10 @@ typedef struct _GrdPipeWireSource
 } GrdPipeWireSource;
 
 void grd_maybe_initialize_pipewire (void);
+
+gboolean grd_pipewire_buffer_has_pointer_bitmap (struct pw_buffer *buffer);
+
+gboolean grd_pipewire_buffer_has_frame_data (struct pw_buffer *buffer);
 
 gboolean grd_spa_pixel_format_to_grd_pixel_format (uint32_t        spa_format,
                                                    GrdPixelFormat *out_format);

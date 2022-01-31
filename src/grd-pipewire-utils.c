@@ -23,7 +23,6 @@
 #include "grd-pipewire-utils.h"
 
 #include <drm_fourcc.h>
-#include <pipewire/pipewire.h>
 #include <spa/param/video/raw.h>
 
 static gboolean is_pipewire_initialized = FALSE;
@@ -36,6 +35,36 @@ grd_maybe_initialize_pipewire (void)
       pw_init (NULL, NULL);
       is_pipewire_initialized = TRUE;
     }
+}
+
+gboolean
+grd_pipewire_buffer_has_pointer_bitmap (struct pw_buffer *buffer)
+{
+  struct spa_meta_cursor *spa_meta_cursor;
+
+  spa_meta_cursor = spa_buffer_find_meta_data (buffer->buffer, SPA_META_Cursor,
+                                               sizeof *spa_meta_cursor);
+  if (spa_meta_cursor && spa_meta_cursor_is_valid (spa_meta_cursor))
+    {
+      struct spa_meta_bitmap *spa_meta_bitmap = NULL;
+
+      if (spa_meta_cursor->bitmap_offset)
+        {
+          spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
+                                        spa_meta_cursor->bitmap_offset,
+                                        struct spa_meta_bitmap);
+        }
+      if (spa_meta_bitmap)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+gboolean
+grd_pipewire_buffer_has_frame_data (struct pw_buffer *buffer)
+{
+  return buffer->buffer->datas[0].chunk->size > 0;
 }
 
 gboolean
