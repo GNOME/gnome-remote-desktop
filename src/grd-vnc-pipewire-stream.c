@@ -452,7 +452,6 @@ process_buffer (GrdVncPipeWireStream     *stream,
           return;
         }
 
-      frame->data = g_malloc0 (height * dst_stride);
       src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
       src_stride = buffer->datas[0].chunk->stride;
       copy_frame_data (frame, src_data,
@@ -516,8 +515,6 @@ process_buffer (GrdVncPipeWireStream     *stream,
       int src_stride;
 
       src_data = buffer->datas[0].data;
-
-      frame->data = g_malloc0 (height * dst_stride);
 
       src_stride = buffer->datas[0].chunk->stride;
       copy_frame_data (frame, src_data,
