@@ -432,8 +432,8 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
     return FALSE;
 
   /* Threads per blocks */
-  block_dim_x = 32;
-  block_dim_y = 8;
+  block_dim_x = 16;
+  block_dim_y = 16;
   block_dim_z = 1;
   /* Amount of blocks per grid */
   grid_dim_x = aligned_width / 2 / block_dim_x +
