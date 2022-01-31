@@ -901,6 +901,8 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
       g_clear_pointer (&stream->pipewire_source, g_source_unref);
     }
 
+  g_clear_pointer (&stream->pending_frame, grd_vnc_frame_unref);
+
   g_mutex_clear (&stream->frame_mutex);
 
   G_OBJECT_CLASS (grd_vnc_pipewire_stream_parent_class)->finalize (object);
