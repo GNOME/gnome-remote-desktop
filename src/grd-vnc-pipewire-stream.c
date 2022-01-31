@@ -330,6 +330,52 @@ do_render (gpointer user_data)
 }
 
 static void
+process_mouse_pointer_bitmap (GrdVncPipeWireStream *stream,
+                              struct spa_buffer    *buffer,
+                              GrdVncFrame          *frame)
+{
+  struct spa_meta_cursor *spa_meta_cursor;
+  struct spa_meta_bitmap *spa_meta_bitmap;
+  GrdPixelFormat format;
+
+  spa_meta_cursor = spa_buffer_find_meta_data (buffer, SPA_META_Cursor,
+                                               sizeof *spa_meta_cursor);
+
+  g_assert (spa_meta_cursor);
+  g_assert (spa_meta_cursor_is_valid (spa_meta_cursor));
+  g_assert (spa_meta_cursor->bitmap_offset);
+
+  spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
+                                spa_meta_cursor->bitmap_offset,
+                                struct spa_meta_bitmap);
+
+  if (spa_meta_bitmap &&
+      spa_meta_bitmap->size.width > 0 &&
+      spa_meta_bitmap->size.height > 0 &&
+      grd_spa_pixel_format_to_grd_pixel_format (spa_meta_bitmap->format,
+                                                &format))
+    {
+      uint8_t *buf;
+      rfbCursorPtr rfb_cursor;
+
+      buf = SPA_MEMBER (spa_meta_bitmap, spa_meta_bitmap->offset, uint8_t);
+      rfb_cursor = grd_vnc_create_cursor (spa_meta_bitmap->size.width,
+                                          spa_meta_bitmap->size.height,
+                                          spa_meta_bitmap->stride,
+                                          format,
+                                          buf);
+      rfb_cursor->xhot = spa_meta_cursor->hotspot.x;
+      rfb_cursor->yhot = spa_meta_cursor->hotspot.y;
+
+      frame->rfb_cursor = rfb_cursor;
+    }
+  else if (spa_meta_bitmap)
+    {
+      frame->rfb_cursor = grd_vnc_create_empty_cursor (1, 1);
+    }
+}
+
+static void
 copy_frame_data (GrdVncFrame *frame,
                  uint8_t     *src_data,
                  int          width,
@@ -362,18 +408,19 @@ on_dma_buf_downloaded (gboolean success,
 }
 
 static void
-process_buffer (GrdVncPipeWireStream     *stream,
-                struct spa_buffer        *buffer,
-                GrdVncFrameReadyCallback  callback,
-                gpointer                  user_data)
+process_frame_data (GrdVncPipeWireStream *stream,
+                    struct spa_buffer    *buffer,
+                    GrdVncFrame          *frame)
 {
+  GrdVncFrameReadyCallback callback = frame->callback;
+  gpointer user_data = frame->callback_user_data;
   int dst_stride;
   uint32_t drm_format;
   int bpp;
   int width;
   int height;
-  struct spa_meta_cursor *spa_meta_cursor;
-  g_autoptr (GrdVncFrame) frame = NULL;
+
+  g_assert (buffer->datas[0].chunk->size > 0);
 
   height = stream->spa_format.size.height;
   width = stream->spa_format.size.width;
@@ -382,61 +429,7 @@ process_buffer (GrdVncPipeWireStream     *stream,
   grd_get_spa_format_details (stream->spa_format.format,
                               &drm_format, &bpp);
 
-  frame = grd_vnc_frame_new (stream, callback, user_data);
-
-  spa_meta_cursor = spa_buffer_find_meta_data (buffer, SPA_META_Cursor,
-                                               sizeof *spa_meta_cursor);
-  if (spa_meta_cursor && spa_meta_cursor_is_valid (spa_meta_cursor))
-    {
-      struct spa_meta_bitmap *spa_meta_bitmap;
-      GrdPixelFormat format;
-
-      if (spa_meta_cursor->bitmap_offset)
-        {
-          spa_meta_bitmap = SPA_MEMBER (spa_meta_cursor,
-                                        spa_meta_cursor->bitmap_offset,
-                                        struct spa_meta_bitmap);
-        }
-      else
-        {
-          spa_meta_bitmap = NULL;
-        }
-
-      if (spa_meta_bitmap &&
-          spa_meta_bitmap->size.width > 0 &&
-          spa_meta_bitmap->size.height > 0 &&
-          grd_spa_pixel_format_to_grd_pixel_format (spa_meta_bitmap->format,
-                                                    &format))
-        {
-          uint8_t *buf;
-          rfbCursorPtr rfb_cursor;
-
-          buf = SPA_MEMBER (spa_meta_bitmap, spa_meta_bitmap->offset, uint8_t);
-          rfb_cursor = grd_vnc_create_cursor (spa_meta_bitmap->size.width,
-                                              spa_meta_bitmap->size.height,
-                                              spa_meta_bitmap->stride,
-                                              format,
-                                              buf);
-          rfb_cursor->xhot = spa_meta_cursor->hotspot.x;
-          rfb_cursor->yhot = spa_meta_cursor->hotspot.y;
-
-          frame->rfb_cursor = rfb_cursor;
-        }
-      else if (spa_meta_bitmap)
-        {
-          frame->rfb_cursor = grd_vnc_create_empty_cursor (1, 1);
-        }
-
-      frame->cursor_moved = TRUE;
-      frame->cursor_x = spa_meta_cursor->position.x;
-      frame->cursor_y = spa_meta_cursor->position.y;
-    }
-
-  if (buffer->datas[0].chunk->size == 0)
-    {
-      callback (stream, g_steal_pointer (&frame), TRUE, user_data);
-    }
-  else if (buffer->datas[0].type == SPA_DATA_MemFd)
+  if (buffer->datas[0].type == SPA_DATA_MemFd)
     {
       size_t size;
       uint8_t *map;
@@ -585,7 +578,8 @@ on_frame_ready (GrdVncPipeWireStream *stream,
   g_mutex_unlock (&stream->frame_mutex);
 
 out:
-  pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+  if (buffer)
+    pw_stream_queue_buffer (stream->pipewire_stream, buffer);
 
   g_source_set_ready_time (stream->pending_frame_source, 0);
 
@@ -593,28 +587,87 @@ out:
 }
 
 static void
+maybe_consume_pointer_position (struct pw_buffer *buffer,
+                                gboolean         *cursor_moved,
+                                int              *cursor_x,
+                                int              *cursor_y)
+{
+  struct spa_meta_cursor *spa_meta_cursor;
+
+  spa_meta_cursor = spa_buffer_find_meta_data (buffer->buffer, SPA_META_Cursor,
+                                               sizeof *spa_meta_cursor);
+  if (spa_meta_cursor && spa_meta_cursor_is_valid (spa_meta_cursor))
+    {
+      *cursor_x = spa_meta_cursor->position.x;
+      *cursor_y = spa_meta_cursor->position.y;
+      *cursor_moved = TRUE;
+    }
+}
+
+static void
 on_stream_process (void *user_data)
 {
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
+  g_autoptr (GrdVncFrame) frame = NULL;
+  struct pw_buffer *last_pointer_buffer = NULL;
+  struct pw_buffer *last_frame_buffer = NULL;
   struct pw_buffer *next_buffer;
-  struct pw_buffer *buffer = NULL;
+  gboolean cursor_moved = FALSE;
+  int cursor_x = 0;
+  int cursor_y = 0;
 
   if (stream->destroyed)
     return;
 
-  next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
-  while (next_buffer)
+  while ((next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream)))
     {
-      buffer = next_buffer;
-      next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream);
+      maybe_consume_pointer_position (next_buffer, &cursor_moved,
+                                      &cursor_x, &cursor_y);
 
-      if (next_buffer)
-        pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+      if (grd_pipewire_buffer_has_pointer_bitmap (next_buffer))
+        {
+          if (last_pointer_buffer == last_frame_buffer)
+            last_pointer_buffer = NULL;
+
+          if (last_pointer_buffer)
+            pw_stream_queue_buffer (stream->pipewire_stream, last_pointer_buffer);
+          last_pointer_buffer = next_buffer;
+        }
+      if (grd_pipewire_buffer_has_frame_data (next_buffer))
+        {
+          if (last_frame_buffer)
+            pw_stream_queue_buffer (stream->pipewire_stream, last_frame_buffer);
+          last_frame_buffer = next_buffer;
+        }
+
+      if (next_buffer != last_pointer_buffer &&
+          next_buffer != last_frame_buffer)
+        pw_stream_queue_buffer (stream->pipewire_stream, next_buffer);
     }
-  if (!buffer)
+  if (!last_pointer_buffer && !last_frame_buffer && !cursor_moved)
     return;
 
-  process_buffer (stream, buffer->buffer, on_frame_ready, buffer);
+  frame = grd_vnc_frame_new (stream, on_frame_ready, last_frame_buffer);
+  frame->cursor_moved = cursor_moved;
+  frame->cursor_x = cursor_x;
+  frame->cursor_y = cursor_y;
+
+  if (last_pointer_buffer)
+    {
+      process_mouse_pointer_bitmap (stream, last_pointer_buffer->buffer, frame);
+      if (last_pointer_buffer != last_frame_buffer)
+        pw_stream_queue_buffer (stream->pipewire_stream, last_pointer_buffer);
+    }
+
+  if (!last_frame_buffer)
+    {
+      frame->callback (stream, g_steal_pointer (&frame),
+                       TRUE, frame->callback_user_data);
+      return;
+    }
+
+  process_frame_data (stream, last_frame_buffer->buffer,
+                      g_steal_pointer (&frame));
 }
 
 static const struct pw_stream_events stream_events = {
