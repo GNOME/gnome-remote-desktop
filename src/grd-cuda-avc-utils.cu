@@ -174,7 +174,7 @@ extern "C"
         *dst_y1 = 0;
       }
 
-    if (y_1x1 + 1 < src_height)
+    if (x_1x1 < src_width && y_1x1 + 1 < src_height)
       {
         /* d_2 */
         b_a += b = src[s2 + 0];
