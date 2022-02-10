@@ -221,10 +221,6 @@ grd_rdp_server_dispose (GObject *object)
 {
   GrdRdpServer *rdp_server = GRD_RDP_SERVER (object);
 
-#ifdef HAVE_HWACCEL_NVIDIA
-  g_clear_object (&rdp_server->hwaccel_nvidia);
-#endif /* HAVE_HWACCEL_NVIDIA */
-
   if (rdp_server->idle_task)
     {
       g_source_remove (rdp_server->idle_task);
@@ -241,6 +237,10 @@ grd_rdp_server_dispose (GObject *object)
                         (GDestroyNotify) stop_and_unref_session);
       rdp_server->sessions = NULL;
     }
+
+#ifdef HAVE_HWACCEL_NVIDIA
+  g_clear_object (&rdp_server->hwaccel_nvidia);
+#endif /* HAVE_HWACCEL_NVIDIA */
 
   G_OBJECT_CLASS (grd_rdp_server_parent_class)->dispose (object);
 }
