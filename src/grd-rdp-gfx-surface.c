@@ -40,6 +40,8 @@ struct _GrdRdpGfxSurface
   uint16_t width;
   uint16_t height;
 
+  GrdRdpGfxSurface *render_surface;
+
   GrdRdpGfxFrameController *frame_controller;
 };
 
@@ -79,6 +81,24 @@ uint16_t
 grd_rdp_gfx_surface_get_height (GrdRdpGfxSurface *gfx_surface)
 {
   return gfx_surface->height;
+}
+
+GrdRdpGfxSurface *
+grd_rdp_gfx_surface_get_render_surface (GrdRdpGfxSurface *gfx_surface)
+{
+  if (gfx_surface->render_surface)
+    return gfx_surface->render_surface;
+
+  return gfx_surface;
+}
+
+void
+grd_rdp_gfx_surface_override_render_surface (GrdRdpGfxSurface *gfx_surface,
+                                             GrdRdpGfxSurface *render_surface)
+{
+  g_assert (!gfx_surface->render_surface);
+
+  gfx_surface->render_surface = render_surface;
 }
 
 GrdRdpGfxFrameController *
@@ -137,6 +157,7 @@ grd_rdp_gfx_surface_dispose (GObject *object)
   GrdRdpGfxSurface *gfx_surface = GRD_RDP_GFX_SURFACE (object);
 
   g_clear_object (&gfx_surface->frame_controller);
+  g_clear_object (&gfx_surface->render_surface);
 
   if (gfx_surface->created)
     {

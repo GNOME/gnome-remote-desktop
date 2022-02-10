@@ -64,6 +64,11 @@ uint16_t grd_rdp_gfx_surface_get_width (GrdRdpGfxSurface *gfx_surface);
 
 uint16_t grd_rdp_gfx_surface_get_height (GrdRdpGfxSurface *gfx_surface);
 
+GrdRdpGfxSurface *grd_rdp_gfx_surface_get_render_surface (GrdRdpGfxSurface *gfx_surface);
+
+void grd_rdp_gfx_surface_override_render_surface (GrdRdpGfxSurface *gfx_surface,
+                                                  GrdRdpGfxSurface *render_surface);
+
 GrdRdpGfxFrameController *grd_rdp_gfx_surface_get_frame_controller (GrdRdpGfxSurface *gfx_surface);
 
 void grd_rdp_gfx_surface_attach_frame_controller (GrdRdpGfxSurface         *gfx_surface,
