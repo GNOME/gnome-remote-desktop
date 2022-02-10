@@ -343,6 +343,7 @@ grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline *graphics_pipeline,
   gfx_surface->session_rdp = session_rdp;
   gfx_surface->rdp_surface = rdp_surface;
   gfx_surface->surface_id = surface_id;
+  gfx_surface->serial = serial;
   /*
    * Use the same id for the codec context as for the surface
    * (only relevant for RDPGFX_WIRE_TO_SURFACE_PDU_2 PDUs)
