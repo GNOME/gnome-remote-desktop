@@ -404,6 +404,36 @@ enqueue_tracked_frame_info (GrdRdpGraphicsPipeline *graphics_pipeline,
   g_queue_push_tail (graphics_pipeline->encoded_frames, gfx_frame_info);
 }
 
+static void
+blit_surface_to_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
+                         GrdRdpGfxSurface       *dst_surface,
+                         GrdRdpGfxSurface       *src_surface,
+                         RECTANGLE_16           *region_rects,
+                         int                     n_rects)
+{
+  RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
+  RDPGFX_SURFACE_TO_SURFACE_PDU surface_to_surface = {};
+  RDPGFX_POINT16 dst_point = {};
+  int i;
+
+  surface_to_surface.surfaceIdSrc =
+    grd_rdp_gfx_surface_get_surface_id (src_surface);
+  surface_to_surface.surfaceIdDest =
+    grd_rdp_gfx_surface_get_surface_id (dst_surface);
+
+  for (i = 0; i < n_rects; ++i)
+    {
+      dst_point.x = region_rects[i].left;
+      dst_point.y = region_rects[i].top;
+
+      surface_to_surface.rectSrc = region_rects[i];
+      surface_to_surface.destPts = &dst_point;
+      surface_to_surface.destPtsCount = 1;
+
+      rdpgfx_context->SurfaceToSurface (rdpgfx_context, &surface_to_surface);
+    }
+}
+
 static gboolean
 refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
                             HWAccelContext         *hwaccel_context,
@@ -413,12 +443,15 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   GrdRdpGfxSurface *gfx_surface = rdp_surface->gfx_surface;
+  GrdRdpGfxSurface *render_surface =
+    grd_rdp_gfx_surface_get_render_surface (gfx_surface);
   GrdRdpGfxFrameController *frame_controller =
     grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
   RDPGFX_SURFACE_COMMAND cmd = {0};
   RDPGFX_START_FRAME_PDU cmd_start = {0};
   RDPGFX_END_FRAME_PDU cmd_end = {0};
   RDPGFX_AVC420_BITMAP_STREAM avc420 = {0};
+  RECTANGLE_16 *region_rects;
   SYSTEMTIME system_time;
   cairo_rectangle_int_t cairo_rect, region_extents;
   int n_rects;
@@ -479,7 +512,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   cairo_region_get_extents (region, &region_extents);
 
-  cmd.surfaceId = grd_rdp_gfx_surface_get_surface_id (gfx_surface);
+  cmd.surfaceId = grd_rdp_gfx_surface_get_surface_id (render_surface);
   cmd.codecId = RDPGFX_CODECID_AVC420;
   cmd.format = PIXEL_FORMAT_BGRX32;
   cmd.left = 0;
@@ -491,16 +524,16 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
   cmd.extra = &avc420;
 
   avc420.meta.numRegionRects = n_rects = cairo_region_num_rectangles (region);
-  avc420.meta.regionRects = g_malloc0 (n_rects * sizeof (RECTANGLE_16));
+  avc420.meta.regionRects = region_rects = g_new0 (RECTANGLE_16, n_rects);
   avc420.meta.quantQualityVals = g_malloc0 (n_rects * sizeof (RDPGFX_H264_QUANT_QUALITY));
   for (i = 0; i < n_rects; ++i)
     {
       cairo_region_get_rectangle (region, i, &cairo_rect);
 
-      avc420.meta.regionRects[i].left = cairo_rect.x;
-      avc420.meta.regionRects[i].top = cairo_rect.y;
-      avc420.meta.regionRects[i].right = cairo_rect.x + cairo_rect.width;
-      avc420.meta.regionRects[i].bottom = cairo_rect.y + cairo_rect.height;
+      region_rects[i].left = cairo_rect.x;
+      region_rects[i].top = cairo_rect.y;
+      region_rects[i].right = cairo_rect.x + cairo_rect.width;
+      region_rects[i].bottom = cairo_rect.y + cairo_rect.height;
 
       avc420.meta.quantQualityVals[i].qp = 22;
       avc420.meta.quantQualityVals[i].p = hwaccel_context->has_first_frame ? 1 : 0;
@@ -529,14 +562,21 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
     }
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
-  rdpgfx_context->SurfaceFrameCommand (rdpgfx_context, &cmd,
-                                       &cmd_start, &cmd_end);
+  rdpgfx_context->StartFrame (rdpgfx_context, &cmd_start);
+  rdpgfx_context->SurfaceCommand (rdpgfx_context, &cmd);
+
+  if (render_surface != gfx_surface)
+    {
+      blit_surface_to_surface (graphics_pipeline, gfx_surface, render_surface,
+                               region_rects, n_rects);
+    }
+  rdpgfx_context->EndFrame (rdpgfx_context, &cmd_end);
 
   *enc_time_us = enc_ack_time_us;
 
   g_free (avc420.data);
   g_free (avc420.meta.quantQualityVals);
-  g_free (avc420.meta.regionRects);
+  g_free (region_rects);
   cairo_region_destroy (region);
 
   return TRUE;
