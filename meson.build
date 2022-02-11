@@ -5,7 +5,7 @@ project('gnome-remote-desktop', 'c',
                           'buildtype=debugoptimized'])
 
 cuda_req = '>= 11'
-freerdp_req = '>= 2.4.1'
+freerdp_req = '>= 2.5.0'
 fuse_req = '>= 3.9.1'
 xkbcommon_req = '>= 1.0.0'
 epoxy_req = '>= 1.4'
