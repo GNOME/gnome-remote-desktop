@@ -29,12 +29,16 @@ struct _GrdRdpGfxSurface
   GObject parent;
 
   GrdRdpGraphicsPipeline *graphics_pipeline;
+  GrdRdpGfxSurfaceFlag flags;
   GrdRdpSurface *rdp_surface;
   gboolean created;
 
   uint16_t surface_id;
   uint32_t codec_context_id;
   uint32_t serial;
+
+  uint16_t width;
+  uint16_t height;
 
   GrdRdpGfxFrameController *frame_controller;
 };
@@ -65,6 +69,18 @@ grd_rdp_gfx_surface_get_rdp_surface (GrdRdpGfxSurface *gfx_surface)
   return gfx_surface->rdp_surface;
 }
 
+uint16_t
+grd_rdp_gfx_surface_get_width (GrdRdpGfxSurface *gfx_surface)
+{
+  return gfx_surface->width;
+}
+
+uint16_t
+grd_rdp_gfx_surface_get_height (GrdRdpGfxSurface *gfx_surface)
+{
+  return gfx_surface->height;
+}
+
 GrdRdpGfxFrameController *
 grd_rdp_gfx_surface_get_frame_controller (GrdRdpGfxSurface *gfx_surface)
 {
@@ -81,23 +97,33 @@ grd_rdp_gfx_surface_attach_frame_controller (GrdRdpGfxSurface         *gfx_surfa
 }
 
 GrdRdpGfxSurface *
-grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline *graphics_pipeline,
-                         GrdRdpSurface          *rdp_surface,
-                         uint16_t                surface_id,
-                         uint32_t                serial)
+grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline           *graphics_pipeline,
+                         const GrdRdpGfxSurfaceDescriptor *surface_descriptor)
 {
   GrdRdpGfxSurface *gfx_surface;
 
   gfx_surface = g_object_new (GRD_TYPE_RDP_GFX_SURFACE, NULL);
   gfx_surface->graphics_pipeline = graphics_pipeline;
-  gfx_surface->rdp_surface = rdp_surface;
-  gfx_surface->surface_id = surface_id;
-  gfx_surface->serial = serial;
+  gfx_surface->flags = surface_descriptor->flags;
+  gfx_surface->rdp_surface = surface_descriptor->rdp_surface;
+  gfx_surface->surface_id = surface_descriptor->surface_id;
+  gfx_surface->serial = surface_descriptor->serial;
   /*
    * Use the same id for the codec context as for the surface
    * (only relevant for RDPGFX_WIRE_TO_SURFACE_PDU_2 PDUs)
    */
-  gfx_surface->codec_context_id = surface_id;
+  gfx_surface->codec_context_id = surface_descriptor->surface_id;
+
+  if (surface_descriptor->flags & GRD_RDP_GFX_SURFACE_FLAG_ALIGNED_SIZE)
+    {
+      gfx_surface->width = surface_descriptor->aligned_width;
+      gfx_surface->height = surface_descriptor->aligned_height;
+    }
+  else
+    {
+      gfx_surface->width = gfx_surface->rdp_surface->width;
+      gfx_surface->height = gfx_surface->rdp_surface->height;
+    }
 
   grd_rdp_graphics_pipeline_create_surface (graphics_pipeline, gfx_surface);
   gfx_surface->created = TRUE;

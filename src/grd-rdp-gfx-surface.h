@@ -29,10 +29,28 @@
 G_DECLARE_FINAL_TYPE (GrdRdpGfxSurface, grd_rdp_gfx_surface,
                       GRD, RDP_GFX_SURFACE, GObject)
 
-GrdRdpGfxSurface *grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                           GrdRdpSurface          *rdp_surface,
-                                           uint16_t                surface_id,
-                                           uint32_t                serial);
+typedef enum _GrdRdpGfxSurfaceFlag
+{
+  GRD_RDP_GFX_SURFACE_FLAG_NONE = 0,
+  GRD_RDP_GFX_SURFACE_FLAG_ALIGNED_SIZE = 1 << 0,
+} GrdRdpGfxSurfaceFlag;
+
+typedef struct _GrdRdpGfxSurfaceDescriptor
+{
+  /* Mandatory */
+  GrdRdpGfxSurfaceFlag flags;
+  uint16_t surface_id;
+  uint32_t serial;
+
+  GrdRdpSurface *rdp_surface;
+
+  /* GRD_RDP_GFX_SURFACE_FLAG_ALIGNED_SIZE */
+  uint16_t aligned_width;
+  uint16_t aligned_height;
+} GrdRdpGfxSurfaceDescriptor;
+
+GrdRdpGfxSurface *grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline           *graphics_pipeline,
+                                           const GrdRdpGfxSurfaceDescriptor *surface_descriptor);
 
 uint16_t grd_rdp_gfx_surface_get_surface_id (GrdRdpGfxSurface *gfx_surface);
 
@@ -41,6 +59,10 @@ uint32_t grd_rdp_gfx_surface_get_codec_context_id (GrdRdpGfxSurface *gfx_surface
 uint32_t grd_rdp_gfx_surface_get_serial (GrdRdpGfxSurface *gfx_surface);
 
 GrdRdpSurface *grd_rdp_gfx_surface_get_rdp_surface (GrdRdpGfxSurface *gfx_surface);
+
+uint16_t grd_rdp_gfx_surface_get_width (GrdRdpGfxSurface *gfx_surface);
+
+uint16_t grd_rdp_gfx_surface_get_height (GrdRdpGfxSurface *gfx_surface);
 
 GrdRdpGfxFrameController *grd_rdp_gfx_surface_get_frame_controller (GrdRdpGfxSurface *gfx_surface);
 
