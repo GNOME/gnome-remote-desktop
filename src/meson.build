@@ -66,6 +66,8 @@ if have_rdp
     'grd-rdp-frame-info.h',
     'grd-rdp-fuse-clipboard.c',
     'grd-rdp-fuse-clipboard.h',
+    'grd-rdp-gfx-frame-controller.c',
+    'grd-rdp-gfx-frame-controller.h',
     'grd-rdp-gfx-frame-log.c',
     'grd-rdp-gfx-frame-log.h',
     'grd-rdp-gfx-surface.c',
