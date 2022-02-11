@@ -33,6 +33,7 @@
 #include "grd-rdp-network-autodetection.h"
 #include "grd-rdp-surface.h"
 #include "grd-session-rdp.h"
+#include "grd-utils.h"
 
 #define ENC_TIMES_CHECK_INTERVAL_MS 1000
 #define MAX_TRACKED_ENC_FRAMES 1000
@@ -117,6 +118,38 @@ grd_rdp_graphics_pipeline_set_hwaccel_nvidia (GrdRdpGraphicsPipeline *graphics_p
   graphics_pipeline->hwaccel_nvidia = hwaccel_nvidia;
 }
 
+static uint16_t
+get_next_free_surface_id (GrdRdpGraphicsPipeline *graphics_pipeline)
+{
+  uint16_t surface_id = graphics_pipeline->next_surface_id;
+
+  g_mutex_lock (&graphics_pipeline->gfx_mutex);
+  while (g_hash_table_contains (graphics_pipeline->surface_table,
+                                GUINT_TO_POINTER (surface_id)))
+    ++surface_id;
+  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
+
+  graphics_pipeline->next_surface_id = surface_id + 1;
+
+  return surface_id;
+}
+
+static uint32_t
+get_next_free_serial (GrdRdpGraphicsPipeline *graphics_pipeline)
+{
+  uint32_t serial = graphics_pipeline->next_serial;
+
+  g_mutex_lock (&graphics_pipeline->gfx_mutex);
+  while (g_hash_table_contains (graphics_pipeline->serial_surface_table,
+                                GUINT_TO_POINTER (serial)))
+    ++serial;
+  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
+
+  graphics_pipeline->next_serial = serial + 1;
+
+  return serial;
+}
+
 void
 grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
                                           GrdRdpGfxSurface       *gfx_surface)
@@ -129,6 +162,7 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
   uint16_t surface_width = grd_rdp_gfx_surface_get_width (gfx_surface);
   uint16_t surface_height = grd_rdp_gfx_surface_get_height (gfx_surface);
   GfxSurfaceContext *surface_context;
+  gboolean needs_separate_render_surface = FALSE;
   HWAccelContext *hwaccel_context;
   uint32_t encode_session_id;
   uint16_t aligned_width;
@@ -155,7 +189,15 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
                                                &aligned_width, &aligned_height,
                                                rdp_surface->refresh_rate))
     {
+      uint16_t aligned_width_16;
+      uint16_t aligned_height_16;
+
       g_debug ("[RDP.RDPGFX] Creating NVENC session for surface %u", surface_id);
+
+      aligned_width_16 = grd_get_aligned_size (surface_width, 16);
+      aligned_height_16 = grd_get_aligned_size (surface_height, 16);
+      if (aligned_width != aligned_width_16 || aligned_height != aligned_height_16)
+        needs_separate_render_surface = TRUE;
 
       hwaccel_context = g_malloc0 (sizeof (HWAccelContext));
       hwaccel_context->api = HW_ACCEL_API_NVENC;
@@ -174,6 +216,29 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
   create_surface.pixelFormat = GFX_PIXEL_FORMAT_XRGB_8888;
 
   rdpgfx_context->CreateSurface (rdpgfx_context, &create_surface);
+
+  if (needs_separate_render_surface)
+    {
+      g_autoptr (GrdRdpGfxSurface) render_surface = NULL;
+      GrdRdpGfxSurfaceDescriptor surface_descriptor = {};
+
+      g_debug ("[RDP.RDPGFX] Creating separate render surface for surface %u",
+               surface_id);
+
+      surface_descriptor.flags = GRD_RDP_GFX_SURFACE_FLAG_ALIGNED_SIZE |
+                                 GRD_RDP_GFX_SURFACE_FLAG_NO_HWACCEL_SESSIONS;
+      surface_descriptor.surface_id = get_next_free_surface_id (graphics_pipeline);
+      surface_descriptor.serial = get_next_free_serial (graphics_pipeline);
+      surface_descriptor.rdp_surface = rdp_surface;
+
+      surface_descriptor.aligned_width = aligned_width;
+      surface_descriptor.aligned_height = aligned_height;
+
+      render_surface = grd_rdp_gfx_surface_new (graphics_pipeline,
+                                                &surface_descriptor);
+      grd_rdp_gfx_surface_override_render_surface (gfx_surface,
+                                                   g_steal_pointer (&render_surface));
+    }
 }
 
 void
@@ -853,38 +918,6 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   cairo_region_destroy (region);
 
   return TRUE;
-}
-
-static uint16_t
-get_next_free_surface_id (GrdRdpGraphicsPipeline *graphics_pipeline)
-{
-  uint16_t surface_id = graphics_pipeline->next_surface_id;
-
-  g_mutex_lock (&graphics_pipeline->gfx_mutex);
-  while (g_hash_table_contains (graphics_pipeline->surface_table,
-                                GUINT_TO_POINTER (surface_id)))
-    ++surface_id;
-  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
-
-  graphics_pipeline->next_surface_id = surface_id + 1;
-
-  return surface_id;
-}
-
-static uint32_t
-get_next_free_serial (GrdRdpGraphicsPipeline *graphics_pipeline)
-{
-  uint32_t serial = graphics_pipeline->next_serial;
-
-  g_mutex_lock (&graphics_pipeline->gfx_mutex);
-  while (g_hash_table_contains (graphics_pipeline->serial_surface_table,
-                                GUINT_TO_POINTER (serial)))
-    ++serial;
-  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
-
-  graphics_pipeline->next_serial = serial + 1;
-
-  return serial;
 }
 
 static void
