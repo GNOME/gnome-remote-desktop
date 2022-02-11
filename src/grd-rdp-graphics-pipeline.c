@@ -28,6 +28,7 @@
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-frame-info.h"
+#include "grd-rdp-gfx-frame-controller.h"
 #include "grd-rdp-gfx-surface.h"
 #include "grd-rdp-network-autodetection.h"
 #include "grd-rdp-surface.h"
@@ -288,12 +289,20 @@ grd_rdp_graphics_pipeline_notify_new_round_trip_time (GrdRdpGraphicsPipeline *gr
                                                       uint64_t                round_trip_time_us)
 {
   GrdRdpGfxSurface *gfx_surface;
+  GrdRdpGfxFrameController *frame_controller;
   GHashTableIter iter;
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
   g_hash_table_iter_init (&iter, graphics_pipeline->surface_table);
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &gfx_surface))
-    grd_rdp_gfx_surface_notify_new_round_trip_time (gfx_surface, round_trip_time_us);
+    {
+      frame_controller = grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
+      if (!frame_controller)
+        continue;
+
+      grd_rdp_gfx_frame_controller_notify_new_round_trip_time (frame_controller,
+                                                               round_trip_time_us);
+    }
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 }
 
@@ -401,6 +410,8 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   GrdRdpGfxSurface *gfx_surface = rdp_surface->gfx_surface;
+  GrdRdpGfxFrameController *frame_controller =
+    grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
   RDPGFX_SURFACE_COMMAND cmd = {0};
   RDPGFX_START_FRAME_PDU cmd_start = {0};
   RDPGFX_END_FRAME_PDU cmd_end = {0};
@@ -496,8 +507,8 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
   enc_ack_time_us = g_get_monotonic_time ();
-  grd_rdp_gfx_surface_unack_frame (gfx_surface, cmd_start.frameId,
-                                   enc_ack_time_us);
+  grd_rdp_gfx_frame_controller_unack_frame (frame_controller, cmd_start.frameId,
+                                            enc_ack_time_us);
 
   surface_serial = grd_rdp_gfx_surface_get_serial (gfx_surface);
   g_hash_table_insert (graphics_pipeline->frame_serial_table,
@@ -508,8 +519,8 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   if (graphics_pipeline->frame_acks_suspended)
     {
-      grd_rdp_gfx_surface_ack_frame (gfx_surface, cmd_start.frameId,
-                                     enc_ack_time_us);
+      grd_rdp_gfx_frame_controller_ack_frame (frame_controller, cmd_start.frameId,
+                                              enc_ack_time_us);
       enqueue_tracked_frame_info (graphics_pipeline, surface_serial,
                                   cmd_start.frameId, enc_ack_time_us);
     }
@@ -668,6 +679,8 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
   GrdRdpGfxSurface *gfx_surface = rdp_surface->gfx_surface;
+  GrdRdpGfxFrameController *frame_controller =
+    grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
   uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
                                                               rdp_surface->width);
   RDPGFX_SURFACE_COMMAND cmd = {0};
@@ -766,8 +779,8 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
     }
 
   enc_ack_time_us = g_get_monotonic_time ();
-  grd_rdp_gfx_surface_unack_frame (gfx_surface, cmd_start.frameId,
-                                   enc_ack_time_us);
+  grd_rdp_gfx_frame_controller_unack_frame (frame_controller, cmd_start.frameId,
+                                            enc_ack_time_us);
 
   surface_serial = grd_rdp_gfx_surface_get_serial (gfx_surface);
   g_hash_table_insert (graphics_pipeline->frame_serial_table,
@@ -778,8 +791,8 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   if (graphics_pipeline->frame_acks_suspended)
     {
-      grd_rdp_gfx_surface_ack_frame (gfx_surface, cmd_start.frameId,
-                                     enc_ack_time_us);
+      grd_rdp_gfx_frame_controller_ack_frame (frame_controller, cmd_start.frameId,
+                                              enc_ack_time_us);
       enqueue_tracked_frame_info (graphics_pipeline, surface_serial,
                                   cmd_start.frameId, enc_ack_time_us);
     }
@@ -933,10 +946,18 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
     g_clear_object (&rdp_surface->gfx_surface);
   if (!rdp_surface->gfx_surface)
     {
-      rdp_surface->gfx_surface = grd_rdp_gfx_surface_new (
-        graphics_pipeline, session_rdp, graphics_pipeline->pipeline_context,
-        rdp_surface, get_next_free_surface_id (graphics_pipeline),
-        get_next_free_serial (graphics_pipeline));
+      g_autoptr (GrdRdpGfxFrameController) frame_controller = NULL;
+
+      rdp_surface->gfx_surface =
+        grd_rdp_gfx_surface_new (graphics_pipeline, rdp_surface,
+                                 get_next_free_surface_id (graphics_pipeline),
+                                 get_next_free_serial (graphics_pipeline));
+      frame_controller =
+        grd_rdp_gfx_frame_controller_new (session_rdp,
+                                          graphics_pipeline->pipeline_context,
+                                          rdp_surface);
+      grd_rdp_gfx_surface_attach_frame_controller (rdp_surface->gfx_surface,
+                                                   g_steal_pointer (&frame_controller));
       map_surface_to_output (graphics_pipeline, rdp_surface->gfx_surface);
     }
 
@@ -1141,9 +1162,12 @@ maybe_rewrite_frame_history (GrdRdpGraphicsPipeline *graphics_pipeline,
 
       if (surface_context->gfx_surface)
         {
-          grd_rdp_gfx_surface_unack_last_acked_frame (surface_context->gfx_surface,
-                                                      frame_info->frame_id,
-                                                      frame_info->enc_time_us);
+          GrdRdpGfxFrameController *frame_controller =
+            grd_rdp_gfx_surface_get_frame_controller (surface_context->gfx_surface);
+
+          grd_rdp_gfx_frame_controller_unack_last_acked_frame (frame_controller,
+                                                               frame_info->frame_id,
+                                                               frame_info->enc_time_us);
         }
 
       g_free (gfx_frame_info);
@@ -1156,8 +1180,10 @@ clear_all_unacked_frames_in_gfx_surface (gpointer key,
                                          gpointer user_data)
 {
   GrdRdpGfxSurface *gfx_surface = value;
+  GrdRdpGfxFrameController *frame_controller =
+    grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
 
-  grd_rdp_gfx_surface_clear_all_unacked_frames (gfx_surface);
+  grd_rdp_gfx_frame_controller_clear_all_unacked_frames (frame_controller);
 }
 
 static gboolean
@@ -1219,9 +1245,12 @@ handle_frame_ack_event (GrdRdpGraphicsPipeline             *graphics_pipeline,
 
       if (surface_context->gfx_surface)
         {
-          grd_rdp_gfx_surface_ack_frame (surface_context->gfx_surface,
-                                         frame_acknowledge->frameId,
-                                         g_get_monotonic_time ());
+          GrdRdpGfxFrameController *frame_controller =
+            grd_rdp_gfx_surface_get_frame_controller (surface_context->gfx_surface);
+
+          grd_rdp_gfx_frame_controller_ack_frame (frame_controller,
+                                                  frame_acknowledge->frameId,
+                                                  g_get_monotonic_time ());
         }
 
       surface_serial_unref (graphics_pipeline, surface_serial);
