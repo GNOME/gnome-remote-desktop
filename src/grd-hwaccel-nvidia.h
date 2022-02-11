@@ -80,6 +80,8 @@ gboolean grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvid
                                                   uint32_t         *encode_session_id,
                                                   uint16_t          surface_width,
                                                   uint16_t          surface_height,
+                                                  uint16_t         *aligned_width,
+                                                  uint16_t         *aligned_height,
                                                   uint16_t          refresh_rate);
 
 void grd_hwaccel_nvidia_free_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,

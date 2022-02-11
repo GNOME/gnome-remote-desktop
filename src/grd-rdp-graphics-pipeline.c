@@ -131,6 +131,8 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
   GfxSurfaceContext *surface_context;
   HWAccelContext *hwaccel_context;
   uint32_t encode_session_id;
+  uint16_t aligned_width;
+  uint16_t aligned_height;
 
   surface_context = g_malloc0 (sizeof (GfxSurfaceContext));
 
@@ -149,8 +151,8 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
       graphics_pipeline->hwaccel_nvidia &&
       grd_hwaccel_nvidia_create_nvenc_session (graphics_pipeline->hwaccel_nvidia,
                                                &encode_session_id,
-                                               surface_width,
-                                               surface_height,
+                                               surface_width, surface_height,
+                                               &aligned_width, &aligned_height,
                                                rdp_surface->refresh_rate))
     {
       g_debug ("[RDP.RDPGFX] Creating NVENC session for surface %u", surface_id);

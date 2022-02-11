@@ -266,6 +266,8 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
                                          uint32_t         *encode_session_id,
                                          uint16_t          surface_width,
                                          uint16_t          surface_height,
+                                         uint16_t         *aligned_width,
+                                         uint16_t         *aligned_height,
                                          uint16_t          refresh_rate)
 {
   NvEncEncodeSession *encode_session;
@@ -273,16 +275,14 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
   NV_ENC_INITIALIZE_PARAMS init_params = {0};
   NV_ENC_CONFIG encode_config = {0};
   NV_ENC_CREATE_BITSTREAM_BUFFER create_bitstream_buffer = {0};
-  uint16_t aligned_width;
-  uint16_t aligned_height;
 
-  aligned_width = surface_width + (surface_width % 16 ? 16 - surface_width % 16 : 0);
-  aligned_height = surface_height + (surface_height % 64 ? 64 - surface_height % 64 : 0);
+  *aligned_width = grd_get_aligned_size (surface_width, 16);
+  *aligned_height = grd_get_aligned_size (surface_height, 64);
 
   *encode_session_id = get_next_free_encode_session_id (hwaccel_nvidia);
   encode_session = g_malloc0 (sizeof (NvEncEncodeSession));
-  encode_session->enc_width = aligned_width;
-  encode_session->enc_height = aligned_height;
+  encode_session->enc_width = *aligned_width;
+  encode_session->enc_height = *aligned_height;
 
   open_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
   open_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
@@ -313,8 +313,8 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
 
   init_params.version = NV_ENC_INITIALIZE_PARAMS_VER;
   init_params.encodeGUID = NV_ENC_CODEC_H264_GUID;
-  init_params.encodeWidth = aligned_width;
-  init_params.encodeHeight = aligned_height;
+  init_params.encodeWidth = *aligned_width;
+  init_params.encodeHeight = *aligned_height;
   init_params.darWidth = surface_width;
   init_params.darHeight = surface_height;
   init_params.frameRateNum = refresh_rate;
