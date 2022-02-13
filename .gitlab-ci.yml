@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora:35@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 35
-    BASE_TAG: '2022-05-04.0'
+    BASE_TAG: '2022-05-05.0'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -24,6 +24,7 @@ stages:
       dnf install -y asciidoc &&
 
       # To test
+      dnf install -y openssl &&
       dnf install -y 'pkgconfig(libvncclient)' &&
       dnf remove -y pipewire0.2-devel pipewire0.2-libs &&
       dnf install -y 'pkgconfig(libpipewire-0.3)' &&

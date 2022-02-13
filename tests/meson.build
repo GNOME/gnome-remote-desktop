@@ -1,3 +1,28 @@
+if have_rdp
+  test_client_rdp = executable(
+    'test-client-rdp',
+    files(['test-client-rdp.c']),
+    dependencies: [glib_dep,
+                   freerdp_dep,
+                   freerdp_client_dep,
+                   winpr_dep],
+    include_directories: [configinc],
+    install: false)
+
+  test_runner = find_program('rdp-test-runner.sh')
+
+  test_env = environment()
+  test_env.set('TEST_SRCDIR', top_srcdir)
+  test_env.set('TEST_BUILDDIR', builddir)
+  test_env.set('NO_AT_BRIDGE', '1')
+
+  test('gnome-remote-desktop/rdp', test_runner,
+    env: test_env,
+    is_parallel: false,
+    timeout: 10,
+  )
+endif
+
 if have_vnc
   test_client_vnc = executable(
     'test-client-vnc',
