@@ -2278,17 +2278,15 @@ grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
                        HANDLE         vcm,
                        HANDLE         stop_event)
 {
-  GrdClipboardRdp *clipboard_rdp;
+  g_autoptr (GrdClipboardRdp) clipboard_rdp = NULL;
   GrdClipboard *clipboard;
   CliprdrServerContext *cliprdr_context;
 
   clipboard_rdp = g_object_new (GRD_TYPE_CLIPBOARD_RDP, NULL);
   cliprdr_context = cliprdr_server_context_new (vcm);
-  if (!clipboard_rdp || !cliprdr_context)
+  if (!cliprdr_context)
     {
-      g_warning ("[RDP.CLIPRDR] An error occurred while creating the RDP clipboard");
-      g_clear_pointer (&cliprdr_context, cliprdr_server_context_free);
-      g_clear_object (&clipboard_rdp);
+      g_warning ("[RDP.CLIPRDR] Failed to create server context");
       return NULL;
     }
 
@@ -2318,15 +2316,13 @@ grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
 
   if (cliprdr_context->Start (cliprdr_context))
     {
-      g_message ("[RDP.CLIPRDR] An error occurred while starting the RDP "
-                 "clipboard. The RDP client might not support the CLIPRDR channel");
+      g_warning ("[RDP.CLIPRDR] Failed to open CLIPRDR channel");
       g_clear_pointer (&clipboard_rdp->cliprdr_context,
                        cliprdr_server_context_free);
-      g_clear_object (&clipboard_rdp);
       return NULL;
     }
 
-  return clipboard_rdp;
+  return g_steal_pointer (&clipboard_rdp);
 }
 
 static gboolean

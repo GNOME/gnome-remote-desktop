@@ -2219,9 +2219,14 @@ grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
   freerdp_peer *peer = session_rdp->peer;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
 
-  rdp_peer_context->clipboard_rdp = grd_clipboard_rdp_new (session_rdp,
-                                                           rdp_peer_context->vcm,
-                                                           session_rdp->stop_event);
+  if (WTSVirtualChannelManagerIsChannelJoined (rdp_peer_context->vcm,
+                                               "cliprdr"))
+    {
+      rdp_peer_context->clipboard_rdp =
+        grd_clipboard_rdp_new (session_rdp,
+                               rdp_peer_context->vcm,
+                               session_rdp->stop_event);
+    }
 }
 
 static void
