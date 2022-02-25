@@ -10,8 +10,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-02-25 18:41+0000\n"
-"PO-Revision-Date: 2022-02-25 19:46+0100\n"
+"POT-Creation-Date: 2022-02-25 20:19+0000\n"
+"PO-Revision-Date: 2022-02-25 22:15+0100\n"
 "Last-Translator: \n"
 "Language-Team: Slovenščina <gnome-si@googlegroups.com>\n"
 "Language: sl\n"
@@ -23,7 +23,7 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: Poedit 3.0\n"
 
-#: src/grd-daemon.c:367
+#: src/grd-daemon.c:423
 msgid "GNOME Remote Desktop"
 msgstr "Oddaljeno namizje GNOME"
 
@@ -50,10 +50,18 @@ msgid "Accept"
 msgstr "Sprejmi"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "Ali je ozadnji program RDP omogočen ali ne"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to to 'true' the RDP backend will be initialized."
+msgstr "Izbrana možnost določa, ali naj bo ozadnji program RDP začet."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Screenshare mode of RDP connections"
 msgstr "Souporaba zaslona za povezave RDP"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -81,12 +89,12 @@ msgstr ""
 "oddaljenega namizja. Ločljivost tega navideznega monitorja izhaja iz "
 "konfiguracije monitorja, ki jo posreduje odjemalec oddaljenega namizja."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
 msgstr "Pot do datoteke potrdila"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:35
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:43
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -94,16 +102,16 @@ msgstr ""
 "Za uporabo RDP z varnostnim protokolom TLS Security morata biti datoteki "
 "zasebnega ključa in potrdila na voljo strežniku RDP."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
 msgid "Path to the private key file"
 msgstr "Pot do datoteke zasebnega ključa"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:60
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid "Only allow remote connections to view the screen content"
 msgstr "Oddaljenim povezavam dovoli le ogled vsebine zaslona"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:51
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -111,7 +119,15 @@ msgstr ""
 "Če je omogočen le ogled vsebine zaslona, prek povezave RDP ni mogoče "
 "upravljati z vhodnimi napravami (npr. miško in tipkovnico)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:61
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "Ali je ozadnji program VNC omogočen ali ne"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to to 'true' the VNC backend will be initialized."
+msgstr "Izbrana možnost določa, ali naj bo ozadnji program VNC začet."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -119,11 +135,11 @@ msgstr ""
 "Če je omogočen le ogled vsebine zaslona, prek povezave VNC ni mogoče "
 "upravljati z vhodnimi napravami (npr. miško in tipkovnico)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
 msgid "Method used to authenticate VNC connections"
 msgstr "Način za overjanje povezav VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:69
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
