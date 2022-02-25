@@ -2,13 +2,13 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 #
-# Yuri Chornoivan <yurchor@ukr.net>, 2021.
+# Yuri Chornoivan <yurchor@ukr.net>, 2021, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues\n"
-"POT-Creation-Date: 2021-06-24 07:32+0000\n"
-"PO-Revision-Date: 2021-06-24 14:54+0300\n"
+"POT-Creation-Date: 2022-02-25 17:00+0000\n"
+"PO-Revision-Date: 2022-02-25 21:18+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=n==1 ? 3 : n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Lokalize 20.12.0\n"
 
-#: src/grd-daemon.c:351
+#: src/grd-daemon.c:367
 msgid "GNOME Remote Desktop"
 msgstr "Віддалена стільниця GNOME"
 
@@ -45,14 +45,34 @@ msgid "Accept"
 msgstr "Прийняти"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Screenshare mode of RDP connections"
+msgstr ""
+"Режим спільного використання екрана для з'єднань RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Control Channel Extension "
+"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"Режим спільного використання екрана визначає, віддзеркалюватиме модуль RDP основний екран чи буде створено віртуальний монітор. Для початкової роздільної здатності віртуального монітора модуль RDP використовує або дані ядра клієнта ([MS-RDPBCGR] 2.2.1.3.2), або дані монітора клієнта ([MS-RDPBCGR] 2.2.1.3.6), залежно від того, які дані є доступними. При використанні сеансу віддаленої стільниці із віртуальним монітором клієнти можуть змінювати роздільну здатність віртуального монітора під час сеансу за допомогою розширення каналу керування дисплеєм "
+"([MS-RDPEDISP]). Дозволеними режимами спільного використання екрана є такі: * mirror-primary — записувати основний монітор поточного сеансу користувача. * extend — створити новий віртуальний моніторі і скористатися ним для сеансу віддаленої стільниці. Дані щодо роздільної здатності цього віртуального монітора буде визначено на основі налаштувань монітора, які надаються клієнтом віддаленої стільниці."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
 msgid "Path to the certificate file"
 msgstr "Шлях до файла сертифіката"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
-#| msgid ""
-#| "In Order to be able to use RDP with TLS Security, both the private key "
-#| "file and the certificate file need to be provided to the RDP server."
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:35
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:43
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -60,16 +80,16 @@ msgstr ""
 "Що мати змогу користуватися RDP з захистом TLS, серверу RDP слід надати "
 "одразу файл закритого ключа і файл сертифіката."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
 msgid "Path to the private key file"
 msgstr "Шлях до файла закритого ключа"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:60
 msgid "Only allow remote connections to view the screen content"
 msgstr "Дозволити віддалених з'єднанням лише переглядати вміст екрана"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:51
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -77,7 +97,7 @@ msgstr ""
 "Якщо view-only має значення true, користувачі віддалених з'єднань RDP не "
 "зможуть керувати пристроями введення (наприклад мишею або клавіатурою)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:61
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -85,11 +105,11 @@ msgstr ""
 "Якщо view-only має значення true, користувачі віддалених з'єднань VNC не "
 "зможуть керувати пристроями введення (наприклад мишею або клавіатурою)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
 msgid "Method used to authenticate VNC connections"
 msgstr "Спосіб, який буде використано для розпізнавання у з'єднаннях VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:69
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
