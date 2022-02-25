@@ -419,7 +419,7 @@ print_help (void)
   /* For translators: This first words on each line is the command;
    * don't translate. Try to fit each line within 80 characters. */
   const char *help_other =
-    _("  status                                     - Show current status\n"
+    _("  status [--show-credentials]                - Show current status\n"
       "\n"
       "Options:\n"
       "  --help                                     - Print this help text\n");
@@ -465,7 +465,8 @@ status_to_string (gboolean enabled,
 
 #ifdef HAVE_RDP
 static void
-print_rdp_status (gboolean use_colors)
+print_rdp_status (gboolean use_colors,
+                  gboolean show_credentials)
 {
   g_autoptr (GSettings) rdp_settings = NULL;
   g_autofree char *tls_cert = NULL;
@@ -507,16 +508,25 @@ print_rdp_status (gboolean use_colors)
       g_variant_lookup (credentials, "password", "s", &password);
     }
 
-  printf ("\tUsername: %s\n",
-          (username && strlen (username) > 1) ? "(hidden)" : "(empty)");
-  printf ("\tPassword: %s\n",
-          (password && strlen (password) > 1) ? "(hidden)" : "(empty)");
+  if (show_credentials)
+    {
+      printf ("\tUsername: %s\n", username);
+      printf ("\tPassword: %s\n", password);
+    }
+  else
+    {
+      printf ("\tUsername: %s\n",
+              (username && strlen (username) > 1) ? "(hidden)" : "(empty)");
+      printf ("\tPassword: %s\n",
+              (password && strlen (password) > 1) ? "(hidden)" : "(empty)");
+    }
 }
 #endif /* HAVE_RDP */
 
 #ifdef HAVE_VNC
 static void
-print_vnc_status (gboolean use_colors)
+print_vnc_status (gboolean use_colors,
+                  gboolean show_credentials)
 {
   g_autoptr (GSettings) vnc_settings = NULL;
   g_autofree char *auth_method = NULL;
@@ -543,24 +553,53 @@ print_vnc_status (gboolean use_colors)
   printf ("\tAuth method: %s\n", auth_method);
   printf ("\tView-only: %s\n",
           g_settings_get_boolean (vnc_settings, "view-only") ? "yes" : "no");
-  printf ("\tPassword: %s\n",
-          (password && strlen (password) > 1) ? "(hidden)" : "(empty)");
+  if (show_credentials)
+    {
+      printf ("\tPassword: %s\n", password);
+    }
+  else
+    {
+      printf ("\tPassword: %s\n",
+              (password && strlen (password) > 1) ? "(hidden)" : "(empty)");
+    }
 }
 #endif /* HAVE_VNC */
 
-static void
-print_status (void)
+static int
+print_status (int    argc,
+              char **argv)
 {
   gboolean use_colors;
+  gboolean show_credentials = FALSE;
+
+  if (argc > 1)
+    {
+      print_usage ();
+      return EXIT_FAILURE;
+    }
+  else if (argc == 1)
+    {
+      if (strcmp (argv[0], "--show-credentials") == 0)
+        {
+          show_credentials = TRUE;
+        }
+      else
+        {
+          print_usage ();
+          return EXIT_FAILURE;
+        }
+    }
 
   use_colors = isatty (fileno (stdout));
 
 #ifdef HAVE_RDP
-  print_rdp_status (use_colors);
+  print_rdp_status (use_colors, show_credentials);
 #endif /* HAVE_RDP */
 #ifdef HAVE_VNC
-  print_vnc_status (use_colors);
+  print_vnc_status (use_colors, show_credentials);
 #endif /* HAVE_VNC */
+
+  return EXIT_SUCCESS;
 }
 
 int
@@ -594,10 +633,9 @@ main (int   argc,
     }
 #endif
 
-  if (strcmp (argv[1], "status") == 0 && argc == 2)
+  if (strcmp (argv[1], "status") == 0)
     {
-      print_status ();
-      return EXIT_SUCCESS;
+      return print_status (argc - 2, argv + 2);
     }
 
   print_usage ();
