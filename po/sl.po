@@ -3,15 +3,15 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-# Matej Urbančič <mateju@svn.gnome.org>, 2021–.
+# Matej Urbančič <mateju@svn.gnome.org>, 2022–.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2021-06-30 16:36+0000\n"
-"PO-Revision-Date: 2021-07-02 14:31+0200\n"
+"POT-Creation-Date: 2022-02-25 18:41+0000\n"
+"PO-Revision-Date: 2022-02-25 19:46+0100\n"
 "Last-Translator: \n"
 "Language-Team: Slovenščina <gnome-si@googlegroups.com>\n"
 "Language: sl\n"
@@ -21,9 +21,9 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n"
 "%100==4 ? 3 : 0);\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.0\n"
 
-#: src/grd-daemon.c:351
+#: src/grd-daemon.c:367
 msgid "GNOME Remote Desktop"
 msgstr "Oddaljeno namizje GNOME"
 
@@ -50,11 +50,43 @@ msgid "Accept"
 msgstr "Sprejmi"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Screenshare mode of RDP connections"
+msgstr "Souporaba zaslona za povezave RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Control Channel Extension "
+"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"Način souporabe zaslona določa, ali zaledni sistem RDP zrcali primarni "
+"zaslon ali pa se ustvari navidezni monitor. Za začetno ločljivost "
+"navideznega monitorja zaledje RDP uporabi bodisi podatke o jedru odjemalca "
+"([MS-RDPBCGR] 2.2.1.3.2) bodisi podatke o monitorju odjemalca ([MS-RDPBCGR] "
+"2.2.1.3.6). Uporaba je odvisna od razpoložljivosti. Pri uporabi seje "
+"oddaljenega namizja z navideznim monitorjem lahko odjemalci med sejo z "
+"razširitvijo Display Control Channel Extension ([MS-RDPEDISP]) spremenijo "
+"ločljivost navideznega monitorja. Dovoljeni načini souporabe zaslona "
+"vključujejo: * mirror-primary - Snema primarni monitor trenutne seje "
+"uporabnika. * extend - Ustvari nov navidezni monitor in ga uporabi za sejo "
+"oddaljenega namizja. Ločljivost tega navideznega monitorja izhaja iz "
+"konfiguracije monitorja, ki jo posreduje odjemalec oddaljenega namizja."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
 msgid "Path to the certificate file"
 msgstr "Pot do datoteke potrdila"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:35
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:43
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -62,16 +94,16 @@ msgstr ""
 "Za uporabo RDP z varnostnim protokolom TLS Security morata biti datoteki "
 "zasebnega ključa in potrdila na voljo strežniku RDP."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
 msgid "Path to the private key file"
 msgstr "Pot do datoteke zasebnega ključa"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:60
 msgid "Only allow remote connections to view the screen content"
 msgstr "Oddaljenim povezavam dovoli le ogled vsebine zaslona"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:51
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -79,7 +111,7 @@ msgstr ""
 "Če je omogočen le ogled vsebine zaslona, prek povezave RDP ni mogoče "
 "upravljati z vhodnimi napravami (npr. miško in tipkovnico)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:61
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -87,11 +119,11 @@ msgstr ""
 "Če je omogočen le ogled vsebine zaslona, prek povezave VNC ni mogoče "
 "upravljati z vhodnimi napravami (npr. miško in tipkovnico)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
 msgid "Method used to authenticate VNC connections"
 msgstr "Način za overjanje povezav VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:69
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
