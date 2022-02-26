@@ -151,6 +151,17 @@ grd_vnc_server_stop (GrdVncServer *vnc_server)
 {
   g_socket_service_stop (G_SOCKET_SERVICE (vnc_server));
   g_socket_listener_close (G_SOCKET_LISTENER (vnc_server));
+
+  while (vnc_server->sessions)
+    {
+      GrdSession *session = vnc_server->sessions->data;
+
+      grd_session_stop (session);
+    }
+
+  grd_vnc_server_cleanup_stopped_sessions (vnc_server);
+  g_clear_handle_id (&vnc_server->cleanup_sessions_idle_id,
+                     g_source_remove);
 }
 
 static void
@@ -195,16 +206,9 @@ grd_vnc_server_dispose (GObject *object)
 {
   GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
 
-  while (vnc_server->sessions)
-    {
-      GrdSession *session = vnc_server->sessions->data;
-
-      grd_session_stop (session);
-    }
-
-  grd_vnc_server_cleanup_stopped_sessions (vnc_server);
-  g_clear_handle_id (&vnc_server->cleanup_sessions_idle_id,
-                     g_source_remove);
+  g_assert (!vnc_server->sessions);
+  g_assert (!vnc_server->stopped_sessions);
+  g_assert (!vnc_server->cleanup_sessions_idle_id);
 
   G_OBJECT_CLASS (grd_vnc_server_parent_class)->dispose (object);
 }
