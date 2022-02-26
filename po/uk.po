@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues\n"
-"POT-Creation-Date: 2022-02-25 17:00+0000\n"
-"PO-Revision-Date: 2022-02-25 21:18+0200\n"
+"POT-Creation-Date: 2022-02-25 22:19+0000\n"
+"PO-Revision-Date: 2022-02-26 15:48+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=n==1 ? 3 : n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Lokalize 20.12.0\n"
 
-#: src/grd-daemon.c:367
+#: src/grd-daemon.c:423
 msgid "GNOME Remote Desktop"
 msgstr "Віддалена стільниця GNOME"
 
@@ -44,12 +44,106 @@ msgstr "Відкинути"
 msgid "Accept"
 msgstr "Прийняти"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
-msgid "Screenshare mode of RDP connections"
+#: src/grd-ctl.c:44
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr ""
-"Режим спільного використання екрана для з'єднань RDP"
+"Користування: %s [ПАРАМЕТРИ...] КОМАНДА [ПІДКОМАНДА]...\n"
+
+#: src/grd-ctl.c:383
+msgid "Commands:\n"
+msgstr ""
+"Команди:\n"
+
+#: src/grd-ctl.c:388
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  rdp                                        - підкоманди RDP:\n"
+"    enable                                   - увімкнути модуль RDP\n"
+"    disable                                  - вимкнути модуль RDP\n"
+"    set-tls-cert <шлях-до-сертифіката>       - встановити шлях до сертифіката TLS\n"
+"    set-tls-key <шлях-до-ключа>              - встановити шлях до ключа TLS\n"
+"    set-credentials <користувач> <пароль>    - встановити реєстраційні дані\n"
+"                                               користувача і пароль\n"
+"    clear-credentials                        - вилучити реєстраційні дані\n"
+"                                               користувача і пароль\n"
+"    enable-view-only                         - вимкнути віддалене керування пристроями\n"
+"                                               введення\n"
+"    disable-view-only                        - увімкнути віддалене керування пристроями\n"
+"                                               введення\n"
+"\n"
+
+#: src/grd-ctl.c:407
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  vnc                                        - підкоманди VNC:\n"
+"    enable                                   - увімкнути модуль VNC\n"
+"    disable                                  - вимкнути модуль VNC\n"
+"    set-password <password>                  - встановити пароль до VNC\n"
+"    clear-password                           - вилучити пароль VNC\n"
+"    set-auth-method password|prompt          - встановити спосіб розпізнавання\n"
+"    enable-view-only                         - вимкнути віддалене керування пристроями\n"
+"                                               введення\n"
+"    disable-view-only                        - увімкнути віддалене керування пристроями\n"
+"                                               введення\n"
+"\n"
+
+#: src/grd-ctl.c:422
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  status [--show-credentials]                - вивести поточний стан\n"
+"\n"
+"Параметри:\n"
+"  --help                                     - вивести цей довідковий текст\n"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr ""
+"Визначає, чи увімкнено модуль RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to to 'true' the RDP backend will be initialized."
+msgstr ""
+"Якщо встановлено у значення «true» модуль RDP буде ініціалізовано."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "Режим спільного використання екрана для з'єднань RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -64,15 +158,26 @@ msgid ""
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
-"Режим спільного використання екрана визначає, віддзеркалюватиме модуль RDP основний екран чи буде створено віртуальний монітор. Для початкової роздільної здатності віртуального монітора модуль RDP використовує або дані ядра клієнта ([MS-RDPBCGR] 2.2.1.3.2), або дані монітора клієнта ([MS-RDPBCGR] 2.2.1.3.6), залежно від того, які дані є доступними. При використанні сеансу віддаленої стільниці із віртуальним монітором клієнти можуть змінювати роздільну здатність віртуального монітора під час сеансу за допомогою розширення каналу керування дисплеєм "
-"([MS-RDPEDISP]). Дозволеними режимами спільного використання екрана є такі: * mirror-primary — записувати основний монітор поточного сеансу користувача. * extend — створити новий віртуальний моніторі і скористатися ним для сеансу віддаленої стільниці. Дані щодо роздільної здатності цього віртуального монітора буде визначено на основі налаштувань монітора, які надаються клієнтом віддаленої стільниці."
+"Режим спільного використання екрана визначає, віддзеркалюватиме модуль RDP "
+"основний екран чи буде створено віртуальний монітор. Для початкової "
+"роздільної здатності віртуального монітора модуль RDP використовує або дані "
+"ядра клієнта ([MS-RDPBCGR] 2.2.1.3.2), або дані монітора клієнта ([MS-"
+"RDPBCGR] 2.2.1.3.6), залежно від того, які дані є доступними. При "
+"використанні сеансу віддаленої стільниці із віртуальним монітором клієнти "
+"можуть змінювати роздільну здатність віртуального монітора під час сеансу за "
+"допомогою розширення каналу керування дисплеєм ([MS-RDPEDISP]). Дозволеними "
+"режимами спільного використання екрана є такі: * mirror-primary — записувати "
+"основний монітор поточного сеансу користувача. * extend — створити новий "
+"віртуальний моніторі і скористатися ним для сеансу віддаленої стільниці. "
+"Дані щодо роздільної здатності цього віртуального монітора буде визначено на "
+"основі налаштувань монітора, які надаються клієнтом віддаленої стільниці."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
 msgstr "Шлях до файла сертифіката"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:35
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:43
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -80,16 +185,16 @@ msgstr ""
 "Що мати змогу користуватися RDP з захистом TLS, серверу RDP слід надати "
 "одразу файл закритого ключа і файл сертифіката."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
 msgid "Path to the private key file"
 msgstr "Шлях до файла закритого ключа"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:60
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid "Only allow remote connections to view the screen content"
 msgstr "Дозволити віддалених з'єднанням лише переглядати вміст екрана"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:51
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -97,7 +202,17 @@ msgstr ""
 "Якщо view-only має значення true, користувачі віддалених з'єднань RDP не "
 "зможуть керувати пристроями введення (наприклад мишею або клавіатурою)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:61
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr ""
+"Визначає, чи увімкнено модуль VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to to 'true' the VNC backend will be initialized."
+msgstr ""
+"Якщо встановлено у значення «true» модуль VNC буде ініціалізовано."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -105,11 +220,11 @@ msgstr ""
 "Якщо view-only має значення true, користувачі віддалених з'єднань VNC не "
 "зможуть керувати пристроями введення (наприклад мишею або клавіатурою)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
 msgid "Method used to authenticate VNC connections"
 msgstr "Спосіб, який буде використано для розпізнавання у з'єднаннях VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:69
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
