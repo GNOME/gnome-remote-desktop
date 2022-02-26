@@ -176,6 +176,20 @@ grd_rdp_server_stop (GrdRdpServer *rdp_server)
 {
   g_socket_service_stop (G_SOCKET_SERVICE (rdp_server));
   g_socket_listener_close (G_SOCKET_LISTENER (rdp_server));
+
+  while (rdp_server->sessions)
+    {
+      GrdSession *session = rdp_server->sessions->data;
+
+      grd_session_stop (session);
+    }
+
+  g_clear_handle_id (&rdp_server->cleanup_sessions_idle_id, g_source_remove);
+  grd_rdp_server_cleanup_stopped_sessions (rdp_server);
+
+#ifdef HAVE_HWACCEL_NVIDIA
+  g_clear_object (&rdp_server->hwaccel_nvidia);
+#endif /* HAVE_HWACCEL_NVIDIA */
 }
 
 static void
@@ -220,18 +234,12 @@ grd_rdp_server_dispose (GObject *object)
 {
   GrdRdpServer *rdp_server = GRD_RDP_SERVER (object);
 
-  while (rdp_server->sessions)
-    {
-      GrdSession *session = rdp_server->sessions->data;
-
-      grd_session_stop (session);
-    }
-
-  g_clear_handle_id (&rdp_server->cleanup_sessions_idle_id, g_source_remove);
-  grd_rdp_server_cleanup_stopped_sessions (rdp_server);
+  g_assert (!rdp_server->sessions);
+  g_assert (!rdp_server->cleanup_sessions_idle_id);
+  g_assert (!rdp_server->stopped_sessions);
 
 #ifdef HAVE_HWACCEL_NVIDIA
-  g_clear_object (&rdp_server->hwaccel_nvidia);
+  g_assert (!rdp_server->hwaccel_nvidia);
 #endif /* HAVE_HWACCEL_NVIDIA */
 
   G_OBJECT_CLASS (grd_rdp_server_parent_class)->dispose (object);
