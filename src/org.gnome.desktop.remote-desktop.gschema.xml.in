@@ -6,7 +6,7 @@
       <default>false</default>
       <summary>Whether the RDP backend is enabled or not</summary>
       <description>
-        If set to to 'true' the RDP backend will be initialized.
+        If set to 'true' the RDP backend will be initialized.
       </description>
     </key>
     <key name='screen-share-mode' enum='org.gnome.desktop.remote-desktop.GrdRdpScreenShareMode'>
@@ -66,7 +66,7 @@
       <default>false</default>
       <summary>Whether the VNC backend is enabled or not</summary>
       <description>
-        If set to to 'true' the VNC backend will be initialized.
+        If set to 'true' the VNC backend will be initialized.
       </description>
     </key>
     <key name='view-only' type='b'>
