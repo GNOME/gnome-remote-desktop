@@ -1,15 +1,15 @@
 # Korean translation for gnome-remote-desktop.
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
-# Seong-ho Cho <shcho@gnome.org>, 2021.
+# Seong-ho Cho <shcho@gnome.org>, 2021-2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2021-08-29 10:56+0000\n"
-"PO-Revision-Date: 2021-08-30 18:01+0900\n"
+"POT-Creation-Date: 2022-02-25 22:19+0000\n"
+"PO-Revision-Date: 2022-03-01 18:10+0900\n"
 "Last-Translator: Seong-ho Cho <shcho@gnome.org>\n"
 "Language-Team: Korean <gnome-kr@googlegroups.com>\n"
 "Language: ko\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 2.3.1\n"
 
-#: src/grd-daemon.c:351
+#: src/grd-daemon.c:423
 msgid "GNOME Remote Desktop"
 msgstr "그놈 원격 데스크톱"
 
@@ -43,12 +43,126 @@ msgstr "거절"
 msgid "Accept"
 msgstr "수락"
 
+#: src/grd-ctl.c:44
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "사용법: %s [<옵션>...] <명령> [<하위명령>]...\n"
+
+#: src/grd-ctl.c:383
+msgid "Commands:\n"
+msgstr "명령:\n"
+
+#: src/grd-ctl.c:388
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  rdp                                        - RDP 하위 명령:\n"
+"    enable                                   - RDP 백엔드 사용\n"
+"    disable                                  - RDP 백엔드 미사용\n"
+"    set-tls-cert <인증서경로>              - TLS 인증서 경로 설정\n"
+"    set-tls-key <키-경로>                - TLS 키 경로 설정\n"
+"    set-credentials <사용자이름> <암호>    - 사용자이름과 암호 인증 설정\n"
+"    clear-credentials                        - 사용자 이름과 암호 인증 지움\n"
+"    enable-view-only                         - 입력 장치 원격 제어 미사용\n"
+"    disable-view-only                        - 입력 장치 원격 제어 사용\n"
+"\n"
+
+#: src/grd-ctl.c:407
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  vnc                                        - VNC 하위 명령:\n"
+"    enable                                   - VNC 백엔드 사용\n"
+"    disable                                  - VNC 백엔드 미사용\n"
+"    set-password <password>                  - VNC 암호 설정\n"
+"    clear-password                           - VNC 암호 지움\n"
+"    set-auth-method password|prompt          - 인증 방식 설정\n"
+"    enable-view-only                         - 원격 입력 장치 제어 미사용\n"
+"    disable-view-only                        - 원격 입력 장치 제어 사용\n"
+"\n"
+
+#: src/grd-ctl.c:422
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  status [--show-credentials]                - 현재 상태를 표시합니다\n"
+"\n"
+"옵션:\n"
+"  --help                                     - 도움말 문구를 출력합니다\n"
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "RDP 백엔드 사용 여부"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to to 'true' the RDP backend will be initialized."
+msgstr "'true'로 설정하면 RDP 백엔드를 초기화합니다."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "RDP 연결 화면 공유 모드"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Control Channel Extension "
+"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"화면 공유 모드는 RDP 백엔드로 기본 화면을 복제할지, 가상 모니터를 만들지 지정"
+"합니다. 가상 모니터 초기 해상도는 RDP 백엔드에서 클라이언트 코어 데이터([MS-"
+"RDPBCGR] 2.2.1.3.2)를 활용하거나, 클라이언트 모니터 데이터([MS-RDPBCGR] "
+"2.2.1.3.6)를 사용 가능 여부에 따라 사용합니다. 원격 데스크톱 세션을 가상 모니"
+"터로 사용할 경우 클라이언트에서 디스플레이 제어 채널 확장([MS-RDPEDISP])으로 "
+"세션 실행 과정에서 가상 모니터 해상도를 조절할 수 있습니다. 사용할 수 있는 화"
+"면 공유 모드는 현재 사용자 세션의 주 모니터를 기록하는 mirror-primary, 원격 "
+"데스크톱 세션용 새 가상 모니터를 만들어 활용하는 extend가 있습니다. 이 가상 "
+"모니터의 해상도는 원격 데스크톱 클라이언트가 보낸 모니터 설정을 따릅니다."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
 msgstr "인증 파일 경로"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -56,36 +170,44 @@ msgstr ""
 "TLS 보안 수단으로 RDP 연결을 사용할 수 있으려면 개인키 파일과 인증 파일을 "
 "RDP 서버에 제공해야합니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
 msgid "Path to the private key file"
 msgstr "개인키 경로"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid "Only allow remote connections to view the screen content"
 msgstr "화면 내용 보기 연결만 허용"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"view-only 값이 참이면, 원격 RDP 연결로 입력 장치(예: 마우스, 키보드)를 제어"
+"view-only 값이 true면, 원격 RDP 연결로 입력 장치(예: 마우스, 키보드)를 제어"
 "할 수 없습니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "VNC 백엔드 사용 여부"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to to 'true' the VNC backend will be initialized."
+msgstr "'true'로 설정하면 VNC 백엔드를 초기화합니다."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"view-only 값이 참이면, 원격 VNC 연결로 입력 장치(예: 마우스, 키보드)를 제어"
+"view-only 값이 true면, 원격 VNC 연결로 입력 장치(예: 마우스, 키보드)를 제어"
 "할 수 없습니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
 msgid "Method used to authenticate VNC connections"
 msgstr "VNC 연결 인증 방식"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
