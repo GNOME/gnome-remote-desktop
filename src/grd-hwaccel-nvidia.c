@@ -865,6 +865,11 @@ grd_hwaccel_nvidia_dispose (GObject *object)
 {
   GrdHwAccelNvidia *hwaccel_nvidia = GRD_HWACCEL_NVIDIA (object);
 
+  g_clear_pointer (&hwaccel_nvidia->cu_module_avc_utils,
+                   hwaccel_nvidia->cuda_funcs->cuModuleUnload);
+  g_clear_pointer (&hwaccel_nvidia->cu_module_dmg_utils,
+                   hwaccel_nvidia->cuda_funcs->cuModuleUnload);
+
   if (hwaccel_nvidia->initialized)
     {
       run_function_in_egl_thread (hwaccel_nvidia, pop_cuda_context_in_egl_thread);
@@ -874,11 +879,6 @@ grd_hwaccel_nvidia_dispose (GObject *object)
 
       hwaccel_nvidia->initialized = FALSE;
     }
-
-  g_clear_pointer (&hwaccel_nvidia->cu_module_avc_utils,
-                   hwaccel_nvidia->cuda_funcs->cuModuleUnload);
-  g_clear_pointer (&hwaccel_nvidia->cu_module_dmg_utils,
-                   hwaccel_nvidia->cuda_funcs->cuModuleUnload);
 
   g_clear_pointer (&hwaccel_nvidia->cuda_lib, dlclose);
   g_clear_pointer (&hwaccel_nvidia->extra_cuda_funcs, g_free);
