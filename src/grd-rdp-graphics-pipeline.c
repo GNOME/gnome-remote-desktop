@@ -142,7 +142,8 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
   g_hash_table_insert (graphics_pipeline->serial_surface_table,
                        GUINT_TO_POINTER (surface_serial), surface_context);
 
-  if ((rdpgfx_context->rdpcontext->settings->GfxAVC444v2 ||
+  if (!grd_rdp_gfx_surface_disallows_hwaccel_sessions (gfx_surface) &&
+      (rdpgfx_context->rdpcontext->settings->GfxAVC444v2 ||
        rdpgfx_context->rdpcontext->settings->GfxAVC444 ||
        rdpgfx_context->rdpcontext->settings->GfxH264) &&
       graphics_pipeline->hwaccel_nvidia &&

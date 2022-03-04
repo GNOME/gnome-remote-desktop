@@ -33,6 +33,7 @@ typedef enum _GrdRdpGfxSurfaceFlag
 {
   GRD_RDP_GFX_SURFACE_FLAG_NONE = 0,
   GRD_RDP_GFX_SURFACE_FLAG_ALIGNED_SIZE = 1 << 0,
+  GRD_RDP_GFX_SURFACE_FLAG_NO_HWACCEL_SESSIONS = 1 << 1,
 } GrdRdpGfxSurfaceFlag;
 
 typedef struct _GrdRdpGfxSurfaceDescriptor
@@ -63,6 +64,8 @@ GrdRdpSurface *grd_rdp_gfx_surface_get_rdp_surface (GrdRdpGfxSurface *gfx_surfac
 uint16_t grd_rdp_gfx_surface_get_width (GrdRdpGfxSurface *gfx_surface);
 
 uint16_t grd_rdp_gfx_surface_get_height (GrdRdpGfxSurface *gfx_surface);
+
+gboolean grd_rdp_gfx_surface_disallows_hwaccel_sessions (GrdRdpGfxSurface *gfx_surface);
 
 GrdRdpGfxSurface *grd_rdp_gfx_surface_get_render_surface (GrdRdpGfxSurface *gfx_surface);
 

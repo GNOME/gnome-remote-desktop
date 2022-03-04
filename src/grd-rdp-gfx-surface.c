@@ -83,6 +83,12 @@ grd_rdp_gfx_surface_get_height (GrdRdpGfxSurface *gfx_surface)
   return gfx_surface->height;
 }
 
+gboolean
+grd_rdp_gfx_surface_disallows_hwaccel_sessions (GrdRdpGfxSurface *gfx_surface)
+{
+  return !!(gfx_surface->flags & GRD_RDP_GFX_SURFACE_FLAG_NO_HWACCEL_SESSIONS);
+}
+
 GrdRdpGfxSurface *
 grd_rdp_gfx_surface_get_render_surface (GrdRdpGfxSurface *gfx_surface)
 {
