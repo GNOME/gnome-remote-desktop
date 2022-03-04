@@ -992,6 +992,9 @@ on_stream_process (void *user_data)
         }
       if (grd_pipewire_buffer_has_frame_data (next_buffer))
         {
+          if (last_pointer_buffer == last_frame_buffer)
+            last_frame_buffer = NULL;
+
           if (last_frame_buffer)
             pw_stream_queue_buffer (stream->pipewire_stream, last_frame_buffer);
           last_frame_buffer = next_buffer;
