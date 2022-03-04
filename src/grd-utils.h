@@ -21,6 +21,7 @@
 #define GRD_UTILS_H
 
 #include <gio/gio.h>
+#include <stdint.h>
 
 typedef struct _GrdSyncPoint
 {
@@ -30,6 +31,13 @@ typedef struct _GrdSyncPoint
 
   gboolean success;
 } GrdSyncPoint;
+
+static inline uint32_t
+grd_get_aligned_size (uint32_t size,
+                      uint32_t alignment)
+{
+  return size + (size % alignment ? alignment - size % alignment : 0);
+}
 
 void grd_sync_point_init (GrdSyncPoint *sync_point);
 
