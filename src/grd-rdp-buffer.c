@@ -49,13 +49,49 @@ typedef struct
   CUstream cuda_stream;
 } UnmapBufferData;
 
+static gboolean
+cuda_allocate_buffer (gpointer user_data,
+                      uint32_t pbo)
+{
+  AllocateBufferData *data = user_data;
+  GrdRdpBuffer *buffer = data->buffer;
+  gboolean success;
+
+  success = grd_hwaccel_nvidia_register_read_only_gl_buffer (data->hwaccel_nvidia,
+                                                             &buffer->cuda_resource,
+                                                             pbo);
+  if (success)
+    buffer->pbo = pbo;
+
+  return success;
+}
+
+static void
+resources_ready (gboolean success,
+                 gpointer user_data)
+{
+  GrdSyncPoint *sync_point = user_data;
+
+  if (success)
+    g_debug ("[RDP] Allocating GL resources was successful");
+  else
+    g_warning ("[RDP] Failed to allocate GL resources");
+
+  grd_sync_point_complete (sync_point, success);
+}
+
 GrdRdpBuffer *
 grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
                     GrdEglThread     *egl_thread,
                     GrdHwAccelNvidia *hwaccel_nvidia,
-                    CUstream          cuda_stream)
+                    CUstream          cuda_stream,
+                    uint32_t          width,
+                    uint32_t          height,
+                    uint32_t          stride,
+                    gboolean          preallocate_on_gpu)
 {
   GrdRdpBuffer *buffer;
+  gboolean success = TRUE;
 
   buffer = g_new0 (GrdRdpBuffer, 1);
   buffer->buffer_pool = buffer_pool;
@@ -63,6 +99,38 @@ grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
   buffer->hwaccel_nvidia = hwaccel_nvidia;
 
   buffer->cuda_stream = cuda_stream;
+
+  buffer->width = width;
+  buffer->height = height;
+  buffer->local_data = g_malloc0 (stride * height * sizeof (uint8_t));
+
+  if (preallocate_on_gpu &&
+      buffer->hwaccel_nvidia)
+    {
+      AllocateBufferData data = {};
+      GrdSyncPoint sync_point = {};
+
+      g_assert (buffer->egl_thread);
+
+      grd_sync_point_init (&sync_point);
+      data.hwaccel_nvidia = buffer->hwaccel_nvidia;
+      data.buffer = buffer;
+
+      grd_egl_thread_allocate (buffer->egl_thread,
+                               buffer->height,
+                               stride,
+                               cuda_allocate_buffer,
+                               &data,
+                               resources_ready,
+                               &sync_point,
+                               NULL);
+
+      success = grd_sync_point_wait_for_completion (&sync_point);
+      grd_sync_point_clear (&sync_point);
+    }
+
+  if (!success)
+    g_clear_pointer (&buffer, grd_rdp_buffer_free);
 
   return buffer;
 }
@@ -157,78 +225,4 @@ void
 grd_rdp_buffer_release (GrdRdpBuffer *buffer)
 {
   grd_rdp_buffer_pool_release_buffer (buffer->buffer_pool, buffer);
-}
-
-static gboolean
-cuda_allocate_buffer (gpointer user_data,
-                      uint32_t pbo)
-{
-  AllocateBufferData *data = user_data;
-  GrdRdpBuffer *buffer = data->buffer;
-  gboolean success;
-
-  success = grd_hwaccel_nvidia_register_read_only_gl_buffer (data->hwaccel_nvidia,
-                                                             &buffer->cuda_resource,
-                                                             pbo);
-  if (success)
-    buffer->pbo = pbo;
-
-  return success;
-}
-
-static void
-resources_ready (gboolean success,
-                 gpointer user_data)
-{
-  GrdSyncPoint *sync_point = user_data;
-
-  if (success)
-    g_debug ("[RDP] Allocating GL resources was successful");
-  else
-    g_warning ("[RDP] Failed to allocate GL resources");
-
-  grd_sync_point_complete (sync_point, success);
-}
-
-gboolean
-grd_rdp_buffer_resize (GrdRdpBuffer *buffer,
-                       uint32_t      width,
-                       uint32_t      height,
-                       uint32_t      stride,
-                       gboolean      preallocate_on_gpu)
-{
-  gboolean success = TRUE;
-
-  clear_buffers (buffer);
-
-  buffer->width = width;
-  buffer->height = height;
-  buffer->local_data = g_malloc0 (stride * height * sizeof (uint8_t));
-
-  if (preallocate_on_gpu &&
-      buffer->hwaccel_nvidia)
-    {
-      AllocateBufferData data = {};
-      GrdSyncPoint sync_point = {};
-
-      g_assert (buffer->egl_thread);
-
-      grd_sync_point_init (&sync_point);
-      data.hwaccel_nvidia = buffer->hwaccel_nvidia;
-      data.buffer = buffer;
-
-      grd_egl_thread_allocate (buffer->egl_thread,
-                               buffer->height,
-                               stride,
-                               cuda_allocate_buffer,
-                               &data,
-                               resources_ready,
-                               &sync_point,
-                               NULL);
-
-      success = grd_sync_point_wait_for_completion (&sync_point);
-      grd_sync_point_clear (&sync_point);
-    }
-
-  return success;
 }

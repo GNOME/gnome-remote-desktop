@@ -39,7 +39,6 @@ struct _GrdRdpBufferPool
 
   CUstream cuda_stream;
 
-  gboolean has_buffer_size;
   uint32_t buffer_width;
   uint32_t buffer_height;
   uint32_t buffer_stride;
@@ -66,21 +65,31 @@ add_buffer_to_pool (GrdRdpBufferPool *buffer_pool,
   buffer = grd_rdp_buffer_new (buffer_pool,
                                buffer_pool->egl_thread,
                                buffer_pool->hwaccel_nvidia,
-                               buffer_pool->cuda_stream);
-  if (buffer_pool->has_buffer_size &&
-      !grd_rdp_buffer_resize (buffer,
-                              buffer_pool->buffer_width,
-                              buffer_pool->buffer_height,
-                              buffer_pool->buffer_stride,
-                              preallocate_on_gpu))
-    {
-      grd_rdp_buffer_free (buffer);
-      return FALSE;
-    }
+                               buffer_pool->cuda_stream,
+                               buffer_pool->buffer_width,
+                               buffer_pool->buffer_height,
+                               buffer_pool->buffer_stride,
+                               preallocate_on_gpu);
+  if (!buffer)
+    return FALSE;
 
   buffer_info = g_new0 (BufferInfo, 1);
 
   g_hash_table_insert (buffer_pool->buffer_table, buffer, buffer_info);
+
+  return TRUE;
+}
+
+static gboolean
+fill_buffer_pool (GrdRdpBufferPool *buffer_pool)
+{
+  uint32_t minimum_size = buffer_pool->minimum_pool_size;
+
+  while (g_hash_table_size (buffer_pool->buffer_table) < minimum_size)
+    {
+      if (!add_buffer_to_pool (buffer_pool, TRUE))
+        return FALSE;
+    }
 
   return TRUE;
 }
@@ -92,9 +101,6 @@ grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
                                     uint32_t          buffer_stride)
 {
   g_autoptr (GMutexLocker) locker = NULL;
-  GHashTableIter iter;
-  GrdRdpBuffer *buffer;
-  BufferInfo *buffer_info;
 
   locker = g_mutex_locker_new (&buffer_pool->pool_mutex);
   g_assert (buffer_pool->buffers_taken == 0);
@@ -102,17 +108,10 @@ grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
   buffer_pool->buffer_width = buffer_width;
   buffer_pool->buffer_height = buffer_height;
   buffer_pool->buffer_stride = buffer_stride;
-  buffer_pool->has_buffer_size = TRUE;
 
-  g_hash_table_iter_init (&iter, buffer_pool->buffer_table);
-  while (g_hash_table_iter_next (&iter, (gpointer *) &buffer,
-                                        (gpointer *) &buffer_info))
-    {
-      g_assert (!buffer_info->buffer_taken);
-      if (!grd_rdp_buffer_resize (buffer, buffer_width, buffer_height,
-                                 buffer_stride, TRUE))
-        return FALSE;
-    }
+  g_hash_table_remove_all (buffer_pool->buffer_table);
+  if (!fill_buffer_pool (buffer_pool))
+    return FALSE;
 
   return TRUE;
 }
@@ -134,6 +133,10 @@ grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool)
   GrdRdpBuffer *buffer;
   BufferInfo *buffer_info;
   gboolean buffer_found = FALSE;
+
+  g_assert (buffer_pool->buffer_width > 0);
+  g_assert (buffer_pool->buffer_height > 0);
+  g_assert (buffer_pool->buffer_stride > 0);
 
   locker = g_mutex_locker_new (&buffer_pool->pool_mutex);
   if (g_hash_table_size (buffer_pool->buffer_table) <= buffer_pool->buffers_taken &&
@@ -269,20 +272,6 @@ static GSourceFuncs buffer_pool_source_funcs =
   .dispatch = buffer_pool_source_dispatch,
 };
 
-static gboolean
-fill_buffer_pool (GrdRdpBufferPool *buffer_pool)
-{
-  uint32_t minimum_size = buffer_pool->minimum_pool_size;
-
-  while (g_hash_table_size (buffer_pool->buffer_table) < minimum_size)
-    {
-      if (!add_buffer_to_pool (buffer_pool, TRUE))
-        return FALSE;
-    }
-
-  return TRUE;
-}
-
 GrdRdpBufferPool *
 grd_rdp_buffer_pool_new (GrdEglThread     *egl_thread,
                          GrdHwAccelNvidia *hwaccel_nvidia,
@@ -311,9 +300,6 @@ grd_rdp_buffer_pool_new (GrdEglThread     *egl_thread,
   g_source_set_priority (buffer_pool->unmap_source, G_PRIORITY_LOW);
   g_source_set_ready_time (buffer_pool->unmap_source, -1);
   g_source_attach (buffer_pool->unmap_source, NULL);
-
-  if (!fill_buffer_pool (buffer_pool))
-    return NULL;
 
   return g_steal_pointer (&buffer_pool);
 }

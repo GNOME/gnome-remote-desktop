@@ -48,18 +48,16 @@ struct _GrdRdpBuffer
 GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
                                   GrdEglThread     *egl_thread,
                                   GrdHwAccelNvidia *hwaccel_nvidia,
-                                  CUstream          cuda_stream);
+                                  CUstream          cuda_stream,
+                                  uint32_t          width,
+                                  uint32_t          height,
+                                  uint32_t          stride,
+                                  gboolean          preallocate_on_gpu);
 
 void grd_rdp_buffer_free (GrdRdpBuffer *buffer);
 
 void grd_rdp_buffer_unmap_resources (GrdRdpBuffer *buffer);
 
 void grd_rdp_buffer_release (GrdRdpBuffer *buffer);
-
-gboolean grd_rdp_buffer_resize (GrdRdpBuffer *buffer,
-                                uint32_t      width,
-                                uint32_t      height,
-                                uint32_t      stride,
-                                gboolean      preallocate_on_gpu);
 
 #endif /* GRD_RDP_BUFFER_H */
