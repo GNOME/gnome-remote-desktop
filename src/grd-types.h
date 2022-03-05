@@ -23,17 +23,17 @@
 #ifndef GRD_TYPES_H
 #define GRD_TYPES_H
 
-typedef struct _GrdContext GrdContext;
 typedef struct _GrdClipboard GrdClipboard;
 typedef struct _GrdClipboardRdp GrdClipboardRdp;
 typedef struct _GrdClipboardVnc GrdClipboardVnc;
+typedef struct _GrdContext GrdContext;
 typedef struct _GrdEglThread GrdEglThread;
 typedef struct _GrdHwAccelNvidia GrdHwAccelNvidia;
+typedef struct _GrdRdpBuffer GrdRdpBuffer;
+typedef struct _GrdRdpBufferPool GrdRdpBufferPool;
 typedef struct _GrdRdpDamageDetector GrdRdpDamageDetector;
 typedef struct _GrdRdpDisplayControl GrdRdpDisplayControl;
 typedef struct _GrdRdpEventQueue GrdRdpEventQueue;
-typedef struct _GrdRdpBuffer GrdRdpBuffer;
-typedef struct _GrdRdpBufferPool GrdRdpBufferPool;
 typedef struct _GrdRdpGfxFrameController GrdRdpGfxFrameController;
 typedef struct _GrdRdpGfxFrameLog GrdRdpGfxFrameLog;
 typedef struct _GrdRdpGfxSurface GrdRdpGfxSurface;
