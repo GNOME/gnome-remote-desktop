@@ -385,10 +385,12 @@ grd_rdp_event_queue_dispose (GObject *object)
   process_rdp_events (rdp_event_queue);
 
   g_clear_pointer (&rdp_event_queue->rdp_sync_event, g_free);
-  g_queue_free_full (rdp_event_queue->queue, free_rdp_event);
 
-  g_source_destroy (rdp_event_queue->flush_source);
-  g_clear_pointer (&rdp_event_queue->flush_source, g_source_unref);
+  if (rdp_event_queue->flush_source)
+    {
+      g_source_destroy (rdp_event_queue->flush_source);
+      g_clear_pointer (&rdp_event_queue->flush_source, g_source_unref);
+    }
 
   G_OBJECT_CLASS (grd_rdp_event_queue_parent_class)->dispose (object);
 }
@@ -399,6 +401,8 @@ grd_rdp_event_queue_finalize (GObject *object)
   GrdRdpEventQueue *rdp_event_queue = GRD_RDP_EVENT_QUEUE (object);
 
   g_mutex_clear (&rdp_event_queue->event_mutex);
+
+  g_queue_free_full (rdp_event_queue->queue, free_rdp_event);
 
   G_OBJECT_CLASS (grd_rdp_event_queue_parent_class)->finalize (object);
 }
