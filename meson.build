@@ -5,10 +5,10 @@ project('gnome-remote-desktop', 'c',
                           'buildtype=debugoptimized'])
 
 cuda_req = '>= 11.1.5.0'
+epoxy_req = '>= 1.4'
 freerdp_req = '>= 2.5.0'
 fuse_req = '>= 3.9.1'
 xkbcommon_req = '>= 1.0.0'
-epoxy_req = '>= 1.4'
 
 gnome = import('gnome')
 i18n  = import('i18n')
@@ -16,15 +16,15 @@ i18n  = import('i18n')
 cc = meson.get_compiler('c')
 
 cairo_dep = dependency('cairo')
+drm_dep = dependency('libdrm')
+epoxy_dep = dependency('epoxy')
 glib_dep = dependency('glib-2.0', version: '>= 2.68')
 gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')
+libnotify_dep = dependency('libnotify')
+libsecret_dep = dependency('libsecret-1')
 pipewire_dep = dependency('libpipewire-0.3', version: '>= 0.3.0')
 systemd_dep = dependency('systemd', required: get_option('systemd'))
-libsecret_dep = dependency('libsecret-1')
-libnotify_dep = dependency('libnotify')
-epoxy_dep = dependency('epoxy')
-drm_dep = dependency('libdrm')
 
 have_rdp = get_option('rdp')
 have_vnc = get_option('vnc')
@@ -48,8 +48,8 @@ if have_rdp
 endif
 
 if have_vnc
-  libvncserver_dep = dependency('libvncserver')
   libvncclient_dep = dependency('libvncclient')
+  libvncserver_dep = dependency('libvncserver')
 endif
 
 prefix = get_option('prefix')
