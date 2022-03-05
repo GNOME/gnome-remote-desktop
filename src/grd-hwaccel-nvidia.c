@@ -882,7 +882,8 @@ grd_hwaccel_nvidia_dispose (GObject *object)
   nvenc_free_functions (&hwaccel_nvidia->nvenc_funcs);
   cuda_free_functions (&hwaccel_nvidia->cuda_funcs);
 
-  g_assert (g_hash_table_size (hwaccel_nvidia->encode_sessions) == 0);
+  g_assert (!hwaccel_nvidia->encode_sessions ||
+            g_hash_table_size (hwaccel_nvidia->encode_sessions) == 0);
   g_clear_pointer (&hwaccel_nvidia->encode_sessions, g_hash_table_destroy);
 
   G_OBJECT_CLASS (grd_hwaccel_nvidia_parent_class)->dispose (object);
