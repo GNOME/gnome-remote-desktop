@@ -8,17 +8,18 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2021-06-24 07:32+0000\n"
-"PO-Revision-Date: 2021-09-01 15:16+0430\n"
+"POT-Creation-Date: 2022-02-25 22:19+0000\n"
+"PO-Revision-Date: 2022-03-07 14:17+0330\n"
 "Last-Translator: Danial Behzadi <dani.behzi@ubuntu.com>\n"
 "Language-Team: Persian <fa@li.org>\n"
 "Language: fa\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-DamnedLies-Scope: partial\n"
+"X-Generator: Poedit 3.0\n"
 
-#: src/grd-daemon.c:351
+#: src/grd-daemon.c:423
 msgid "GNOME Remote Desktop"
 msgstr "میزکار دوردست گنوم"
 
@@ -42,12 +43,90 @@ msgstr "رد"
 msgid "Accept"
 msgstr "پذیرش"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+#: src/grd-ctl.c:44
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "استفاده: ‪%s [OPTIONS...] COMMAND [SUBCOMMAND]...‬\n"
+
+#: src/grd-ctl.c:383
+msgid "Commands:\n"
+msgstr "دستورها:\n"
+
+#: src/grd-ctl.c:388
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  rdp                                        - زیردستورهای‫ RDP‬:\n"
+"    enable                                   - به کار انداختن پسانهٔ‫ RDP‬\n"
+"    disable                                  - ‫از کار انداختن پسانهٔRDP‬\n"
+"    set-tls-cert <path-to-cert>              - ‫تنظیم مسیر به گواهینامهٔ TLS‬\n"
+"    set-tls-key <path-to-key>                - ‫تنظمی مسیر به کلید TLS‬\n"
+"    set-credentials <username> <password>    - تنظیم نام کاربری و گذرواژه\n"
+"    clear-credentials                        - پاک سازی نام کاربری و گذرواژه\n"
+"    enable-view-only                         - از کار انداختن واپایش دوردست "
+"افزاره‌های ورودی\n"
+"    disable-view-only                        - به کار انداختن واپایش دوردست "
+"افزاره‌های ورودی\n"
+"\n"
+
+#: src/grd-ctl.c:407
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  vnc                                        - زیردستورهای‫ VNC‬:\n"
+"    enable                                   - به کار انداختن پسانهٔ‫ VNC‬\n"
+"    disable                                  - ‫از کار انداختن پسانهٔ VNC‬\n"
+"\n"
+"    set-password <password>                  - ‪تنظیم گذرواژهٔ‫ VNC‬\n"
+"    clear-password                           - ‫پاک سازی گذرواژهٔ VNC‬\n"
+"    set-auth-method password|prompt          - تنظیم روش تأیید هویت\n"
+"    enable-view-only                         - از کار انداختن واپایش دوردست "
+"افزاره‌های ورودی\n"
+"    disable-view-only                        - به کار انداختن واپایش دوردست "
+"افزاره‌های ورودی\n"
+"\n"
+
+#: src/grd-ctl.c:422
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  status [--show-credentials]                - نمایش وضعیت کنونی\n"
+"\n"
+"گزینه‌ها:\n"
+"  --help                                     - چاپ این متن راهنما\n"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
 msgstr "مسیر پروندهٔ گواهی‌نامه"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file and "
 "the certificate file need to be provided to the RDP server."
@@ -55,16 +134,16 @@ msgstr ""
 "برای استفاده از RDP با امنیت TLS، باید هر دو پروندهٔ گواهی‌نامه و کلید خصوصی، به "
 "کارساز RDP داده شوند."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
 msgid "Path to the private key file"
 msgstr "مسیر پروندهٔ کلید خصوصی"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid "Only allow remote connections to view the screen content"
 msgstr "اجازه به اتّصال‌های دوردست فقط برای دیدن محتوای صفحه"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input devices "
 "(e.g. mouse and keyboard)."
@@ -72,7 +151,7 @@ msgstr ""
 "هنگامی که فقط‌دیدنی روشن است، اتّصال‌های RDP دودردست نمی‌توانند افزاره‌های ورودی (مثل "
 "موشی و صفحه‌کلید) را دستکاری کنند."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input devices "
 "(e.g. mouse and keyboard)."
@@ -80,11 +159,11 @@ msgstr ""
 "هنگامی که فقط‌دیدنی روشن است، اتّصال‌های VNC دودردست نمی‌توانند افزاره‌های ورودی (مثل "
 "موشی و صفحه‌کلید) را دستکاری کنند."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
 msgid "Method used to authenticate VNC connections"
 msgstr "روش استفاده‌شده برای تأیید هویت اتّصال‌های VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
