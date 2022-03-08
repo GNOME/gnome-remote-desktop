@@ -1,15 +1,15 @@
 # Persian translation for gnome-remote-desktop.
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
-# Danial Behzadi <dani.behzi@ubuntu.com>, 2021.
+# Danial Behzadi <dani.behzi@ubuntu.com>, 2021-2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2022-03-07 14:17+0330\n"
+"POT-Creation-Date: 2022-03-07 10:48+0000\n"
+"PO-Revision-Date: 2022-03-08 13:23+0330\n"
 "Last-Translator: Danial Behzadi <dani.behzi@ubuntu.com>\n"
 "Language-Team: Persian <fa@li.org>\n"
 "Language: fa\n"
@@ -121,6 +121,33 @@ msgstr ""
 "گزینه‌ها:\n"
 "  --help                                     - چاپ این متن راهنما\n"
 
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "این که پسانهٔ RDP به کار افتاده یا نه"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to to 'true' the RDP backend will be initialized."
+msgstr "اگه به «درست» تنظیم شود، پسانهٔ RDP راه‌اندازی خواهد شد."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "حالت هم‌رسانی صفحه برای اتّصال‌های RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution of "
+"the virtual monitor, the RDP backend uses either the client core data ([MS-"
+"RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] 2.2.1.3.6), "
+"depending on what is available. When using a remote desktop session with a "
+"virtual monitor, clients can resize the resolution of the virtual monitor during "
+"a session with the Display Control Channel Extension ([MS-RDPEDISP]). Allowed "
+"screenshare modes include: * mirror-primary - Record the primary monitor of the "
+"current user session. * extend - Create a new virtual monitor and use it for the "
+"remote desktop session. The resolution of this virtual monitor is derived from "
+"the monitor configuration, submitted by the remote desktop client."
+msgstr ""
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
 msgstr "مسیر پروندهٔ گواهی‌نامه"
@@ -150,6 +177,14 @@ msgid ""
 msgstr ""
 "هنگامی که فقط‌دیدنی روشن است، اتّصال‌های RDP دودردست نمی‌توانند افزاره‌های ورودی (مثل "
 "موشی و صفحه‌کلید) را دستکاری کنند."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "این که پسانهٔ VNC به کار افتاده یا نه"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to to 'true' the VNC backend will be initialized."
+msgstr "اگه به «درست» تنظیم شود، پسانهٔ VNC راه‌اندازی خواهد شد."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
