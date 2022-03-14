@@ -55,6 +55,7 @@ endif
 prefix = get_option('prefix')
 libexecdir = join_paths(prefix, get_option('libexecdir'))
 datadir = join_paths(prefix, get_option('datadir'))
+mandir = join_paths(prefix, get_option('mandir'))
 schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
 
 grd_datadir = join_paths(datadir, 'gnome-remote-desktop')
@@ -92,6 +93,10 @@ subdir('data')
 subdir('src')
 subdir('tests')
 subdir('po')
+
+if get_option('man')
+  subdir('man')
+endif
 
 meson.add_install_script('meson_post_install.py')
 

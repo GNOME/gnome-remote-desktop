@@ -1,3 +1,8 @@
+option('man',
+       type: 'boolean',
+       value: true,
+       description: 'Generate man pages')
+
 option('rdp',
        type: 'boolean',
        value: true,
