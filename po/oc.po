@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2022-03-15 20:40+0100\n"
+"POT-Creation-Date: 2022-03-15 19:40+0000\n"
+"PO-Revision-Date: 2022-03-16 15:04+0100\n"
 "Last-Translator: Quentin PAGÈS\n"
 "Language-Team: Occitan <totenoc@gmail.com>\n"
 "Language: oc\n"
@@ -47,7 +47,7 @@ msgstr "Acceptar"
 #: src/grd-ctl.c:44
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
-msgstr ""
+msgstr "Sintaxi : %s [OPCION...] COMANDA [JOSCOMANDA]...\n"
 
 #: src/grd-ctl.c:383
 msgid "Commands:\n"
@@ -89,6 +89,20 @@ msgid ""
 "                                               devices\n"
 "\n"
 msgstr ""
+"  vnc                                        - Joscomandas VNC :\n"
+"    enable                                   - Activar lo backend VNC\n"
+"    disable                                  - Desactivar lo backend VNC\n"
+"    set-password <password>                  - Definir lo senhal VNC\n"
+"    clear-password                           - Escafar lo senhal VNC\n"
+"    set-auth-method password|prompt          - Definir lo metòde "
+"d’autorizacion\n"
+"    enable-view-only                         - Desactivar contraròla a "
+"distància dels aparelhs\n"
+"                                               donats\n"
+"    disable-view-only                        - Activar contraròla a "
+"distància dels aparelhs\n"
+"                                               donats\n"
+"\n"
 
 #: src/grd-ctl.c:422
 msgid ""
@@ -97,14 +111,19 @@ msgid ""
 "Options:\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
+"  status [--show-credentials]                - Afichar lo estatut actual\n"
+"\n"
+"Opcions :\n"
+"  --help                                     - Afichar aqueste tèxte "
+"d’ajuda\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "Whether the RDP backend is enabled or not"
-msgstr ""
+msgstr "Indica se lo backend RDP es activat o non"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
 msgid "If set to to 'true' the RDP backend will be initialized."
-msgstr ""
+msgstr "Se definit a « true » lo backend RDP serà inicializat."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Screenshare mode of RDP connections"
@@ -159,11 +178,11 @@ msgstr ""
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
 msgid "Whether the VNC backend is enabled or not"
-msgstr ""
+msgstr "Indica se lo backend VNC es activat o non"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
 msgid "If set to to 'true' the VNC backend will be initialized."
-msgstr ""
+msgstr "Se definit a « true » lo backend VNC serà inicializat."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
