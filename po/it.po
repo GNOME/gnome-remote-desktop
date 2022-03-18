@@ -1,0 +1,246 @@
+# Italian translation for gnome-remote-desktop.
+# Copyright (C) 2021, 2022 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Davide Ferracin <davide.ferracin@protonmail.com>, 2021.
+# Milo Casagrande <milo@milo.name>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2022-02-25 22:19+0000\n"
+"PO-Revision-Date: 2022-03-18 09:48+0100\n"
+"Last-Translator: Milo Casagrande <milo@milo.name>\n"
+"Language-Team: Italian <gnome-it-list@gnome.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.0.1\n"
+
+#: src/grd-daemon.c:423
+msgid "GNOME Remote Desktop"
+msgstr "Computer remoto GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Condividere il proprio computer?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Un utente sul computer «%s» sta cercando di visualizzare o controllare da "
+"remoto il proprio computer."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Rifiuta"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Accetta"
+
+#: src/grd-ctl.c:44
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "Uso: %s [OPZIONI...] COMANDO [SOTTOCOMANDO]...\n"
+
+#: src/grd-ctl.c:383
+msgid "Commands:\n"
+msgstr "Comandi:\n"
+
+#: src/grd-ctl.c:388
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  rdp                                        - Sotto-comandi RDP:\n"
+"    enable                                   - Abilita il motore RDP\n"
+"    disable                                  - Disabilita il motore RDP\n"
+"    set-tls-cert <path-to-cert>              - Imposta il percorso al "
+"certificato TLS\n"
+"    set-tls-key <path-to-key>                - Imposta il percorso alla "
+"chiave TLS\n"
+"    set-credentials <username> <password>    - Imposta nome utente e "
+"password\n"
+"    clear-credentials                        - Azzera nome utente e "
+"password\n"
+"    enable-view-only                         - Disabilita il controllo "
+"remoto dei\n"
+"                                               dispositivi di ingresso\n"
+"    disable-view-only                        - Abilita il controllo remoto "
+"dei\n"
+"                                               dispositivi di ingresso\n"
+"\n"
+
+#: src/grd-ctl.c:407
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  vnc                                        - Sotto-comandi VNC:\n"
+"    enable                                   - Abilita il motore VNC\n"
+"    disable                                  - Disabilita il motore VNC\n"
+"    set-password <password>                  - Imposta la password VNC\n"
+"    clear-password                           - Azzera la password VNC\n"
+"    set-auth-method password|prompt          - Imposta il metodo di "
+"autorizzazione\n"
+"    enable-view-only                         - Disabilita il controllo "
+"remoto dei\n"
+"                                               dispositivi di ingresso\n"
+"    disable-view-only                        - Abilita il controllo remoto "
+"dei\n"
+"                                               dispositivi di ingresso\n"
+"\n"
+
+#: src/grd-ctl.c:422
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  status [--show-credentials]                - Mostra lo stato attuale\n"
+"\n"
+"Opzioni:\n"
+"  --help                                     - Stampa questo aiuto\n"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "Indica se il motore RDP è abilitato o meno"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to to 'true' the RDP backend will be initialized."
+msgstr "Se impostato a VERO, il motore RDP verrà inizializzato."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "Modalità di condivisione dello schermo delle connessioni RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Control Channel Extension "
+"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"La modalità di condivisione dello schermo specifica se il motore RDP "
+"rispecchia lo schermo principale o se viene creato uno monitor virtuale. Per "
+"la risoluzione iniziale del monitor virtuale, il motore RDP utilizza o i "
+"dati del client ([MS-RDPBCGR] 2.2.1.3.2) o i dati del monitor del client "
+"([MS-RDPBCGR] 2.2.1.3.6), a seconda di ciò che è disponibile. Quando si "
+"utilizza una sessione di computer remoto con un monitor virtuale, i client "
+"possono ridimensionare la risoluzione del monitor virtuale durante una "
+"sessione tramite Display Control Channel Extension ([MS-RDPEDISP]). Le "
+"modalità di condivisione dello schermo consentite includono: * mirror-"
+"primary - Registra il monitor principale della sessione utente corrente. * "
+"extend - Crea un nuovo monitor virtuale e lo utilizza per la sessione di "
+"computer remoto. La risoluzione di questo monitor virtuale deriva dalla "
+"configurazione del monitor, inviata dal client."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Path to the certificate file"
+msgstr "Percorso del file del certificato"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Per poter usare RDP con il protocollo di sicurezza TLS, sia il file della "
+"chiave privata sia quello del certificato devono essere forniti dal server "
+"RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+msgid "Path to the private key file"
+msgstr "Percorso del file della chiave privata"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+msgid "Only allow remote connections to view the screen content"
+msgstr ""
+"Permetti alle connessioni remote solo di visualizzare il contenuto dello "
+"schermo"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Quando \"view-only\" è VERO, le connessioni RDP remote non possono "
+"manipolare i dispositivi di ingresso (come mouse e tastiera)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "Indica se il motore VNC è abilitato o meno"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to to 'true' the VNC backend will be initialized."
+msgstr "Se impostato a VERO, il motore VNC verrà inizializzato."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Quando \"view-only\" è VERO, le connessioni VNC remote non possono "
+"manipolare i dispositivi di ingresso (come mouse e tastiera)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+msgid "Method used to authenticate VNC connections"
+msgstr "Metodo usato per l'autenticazione di connessioni VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"Il metodo di autenticazione VNC descrive come una connessione remota viene "
+"autenticata. Si può fare, al momento, in due modi:* a richiesta - chiedendo "
+"all'utente di accettare ciascuna nuova connessione, avendo bisogno quindi di "
+"una persona che possa accedere fisicamente alla postazione per poter "
+"approvare esplicitamente le nuove richieste; * con password - richiedendo al "
+"client remoto di fornire una password prestabilita."
