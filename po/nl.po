@@ -4,14 +4,15 @@
 #
 # Marcia van den Hout <mvdh1176@gmail.com>, 2021.
 # Hannie Dumoleyn <hannie@ubuntu-nl.org>, 2021.
-# Nathan Follens <nfollens@gnome.org>, 2021.
+# Nathan Follens <nfollens@gnome.org>, 2021-2022.
+# Philip Goto <philip.goto@gmail.com>, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop.master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2021-06-27 14:13+0000\n"
-"PO-Revision-Date: 2021-09-02 15:24+0200\n"
+"POT-Creation-Date: 2022-03-08 09:54+0000\n"
+"PO-Revision-Date: 2022-03-25 12:41+0100\n"
 "Last-Translator: Nathan Follens <nfollens@gnome.org>\n"
 "Language-Team: Dutch <gnome-nl-list@gnome.org>\n"
 "Language: nl\n"
@@ -19,9 +20,9 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.0.1\n"
 
-#: src/grd-daemon.c:351
+#: src/grd-daemon.c:423
 msgid "GNOME Remote Desktop"
 msgstr "Gnome Extern bureaublad"
 
@@ -47,12 +48,147 @@ msgstr "Weigeren"
 msgid "Accept"
 msgstr "Accepteren"
 
+#: src/grd-ctl.c:44
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "Gebruik: %s [OPTIES...] OPDRACHT [SUBOPDRACHT]...\n"
+
+#: src/grd-ctl.c:383
+msgid "Commands:\n"
+msgstr "Opdrachten:\n"
+
+#: src/grd-ctl.c:388
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  rdp                                        - RDP-subopdrachten:\n"
+"    enable                                   - De RDP-back-end inschakelen\n"
+"    disable                                  - De RDP-back-end uitschakelen\n"
+"    set-tls-cert <pad-naar-cert>              - Pad naar TLS-certificaat "
+"instellen\n"
+"    set-tls-key <pad-naar-sleutel>                - Pad naar TLS-sleutel "
+"instellen\n"
+"    set-credentials <gebruikersnaam> <wachtwoord>    - Gebruikersnaam en "
+"wachtwoord instellen\n"
+"                                               credentials\n"
+"    clear-credentials                        - Gebruikersnaam en wachtwoord "
+"wissen\n"
+"                                               credentials\n"
+"    enable-view-only                         - Externe bediening van invoer "
+"uitschakelen\n"
+"                                               devices\n"
+"    disable-view-only                        - Externe bediening van invoer "
+"inschakelen\n"
+"                                               devices\n"
+"\n"
+
+#: src/grd-ctl.c:407
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  vnc                                        - VNC-subopdrachten:\n"
+"    enable                                   - De VNC-back-end inschakelen\n"
+"    disable                                  - De VNC-back-end uitschakelen\n"
+"    set-password <wachtwoord>                  - Het VNC-wachtwoord "
+"instellen\n"
+"    clear-password                           - Het VNC-wachtwoord wissen\n"
+"    set-auth-method password|prompt          - De aanmeldingsmethode "
+"instellen\n"
+"    enable-view-only                         - Externe bediening van invoer "
+"uitschakelen\n"
+"                                               devices\n"
+"    disable-view-only                        - Externe bediening van invoer "
+"inschakelen\n"
+"                                               devices\n"
+"\n"
+
+#: src/grd-ctl.c:422
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  status [--show-credentials]                - Huidige status tonen\n"
+"\n"
+"Opties:\n"
+"  --help                                     - Deze hulptekst tonen\n"
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "Of de RDP-backend is ingeschakeld of niet"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to to 'true' the RDP backend will be initialized."
+msgstr "Indien ingesteld op ‘waar’ zal de RDP-backend worden geïnitialiseerd."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "Schermdeelmodus van RDP-verbindingen"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Control Channel Extension "
+"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"De schermdeelmodus bepaalt of de RDP-back-end het hoofdscherm spiegelt, of "
+"er een virtueel beeldscherm ingesteld wordt. Voor de beginresolutie van het "
+"virtueel beeldscherm gebruikt de RDP-back-end de cliëntkerngegevens ([MS-"
+"RDPBCGR] 2.2.1.3.2) of de cliëntbeeldschermgegevens ([MS-RDPBCGR] "
+"2.2.1.3.6), afhankelijk van wat er beschikbaar is. Bij het gebruik van een "
+"externe bureaubladsessie met een virtueel beeldscherm kunnen cliënten de "
+"resolutie van het virtueel beeldscherm tijdens de sessies aanpassen met "
+"behulp van de Display Control Channel Extension ([MS-RDPEDISP]). Toegestane "
+"schermdeelmodi zijn: * mirror-primary (spiegel-hoofdscherm) - Neem het "
+"hoofdbeeldscherm van de huidige gebruikerssessie op. * extend (uitbreiden) - "
+"Stel een nieuw virtueel beeldscherm in en gebruik het voor de externe "
+"bureaubladsessie. De resolutie van dit virtueel beeldscherm wordt afgeleid "
+"uit de beeldschermconfiguratie die door de externe bureaubladcliënt wordt "
+"meegedeeld."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
 msgstr "Pad naar het certificaatbestand"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -61,16 +197,16 @@ msgstr ""
 "privésleutelbestand als het certificaatbestand aan de RDP-server worden "
 "verstrekt."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
 msgid "Path to the private key file"
 msgstr "Pad naar het privésleutelbestand"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid "Only allow remote connections to view the screen content"
 msgstr "Externe verbindingen alleen toestaan om de scherminhoud te bekijken"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -78,7 +214,15 @@ msgstr ""
 "Als alleen-lezen waar is, kunnen externe RDP-verbindingen geen "
 "invoerapparaten manipuleren (zoals muis en toetsenbord)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "Of de VNC-backend is ingeschakeld of niet"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to to 'true' the VNC backend will be initialized."
+msgstr "Indien ingesteld op ‘waar’ zal de VNC-backend worden geïnitialiseerd."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -86,11 +230,11 @@ msgstr ""
 "Als alleen-lezen waar is, kunnen externe VNC-verbindingen geen "
 "invoerapparaten manipuleren (zoals muis en toetsenbord)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
 msgid "Method used to authenticate VNC connections"
 msgstr "Methode die wordt gebruikt om VNC-verbindingen te verifiëren"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
