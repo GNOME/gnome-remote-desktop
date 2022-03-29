@@ -25,6 +25,7 @@
 #include "grd-daemon.h"
 
 #include <gio/gio.h>
+#include <glib-unix.h>
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 #include <stdio.h>
@@ -40,6 +41,9 @@
 struct _GrdDaemon
 {
   GApplication parent;
+
+  GSource *sigint_source;
+  GSource *sigterm_source;
 
   GCancellable *cancellable;
   guint remote_desktop_watch_name_id;
@@ -369,6 +373,17 @@ grd_daemon_shutdown (GApplication *app)
 
   g_clear_object (&daemon->context);
 
+  if (daemon->sigterm_source)
+    {
+      g_source_destroy (daemon->sigterm_source);
+      g_clear_pointer (&daemon->sigterm_source, g_source_unref);
+    }
+  if (daemon->sigint_source)
+    {
+      g_source_destroy (daemon->sigint_source);
+      g_clear_pointer (&daemon->sigint_source, g_source_unref);
+    }
+
   G_APPLICATION_CLASS (grd_daemon_parent_class)->shutdown (app);
 }
 
@@ -397,6 +412,44 @@ add_actions (GApplication *app)
   action = g_simple_action_new ("terminate", NULL);
   g_signal_connect (action, "activate", G_CALLBACK (activate_terminate), app);
   g_action_map_add_action (G_ACTION_MAP (app), G_ACTION (action));
+}
+
+static gboolean
+sigint_terminate_daemon (gpointer user_data)
+{
+  GrdDaemon *daemon = user_data;
+
+  g_debug ("Received SIGINT signal. Exiting...");
+  g_clear_pointer (&daemon->sigint_source, g_source_unref);
+  g_application_release (G_APPLICATION (daemon));
+
+  return G_SOURCE_REMOVE;
+}
+
+static gboolean
+sigterm_terminate_daemon (gpointer user_data)
+{
+  GrdDaemon *daemon = user_data;
+
+  g_debug ("Received SIGTERM signal. Exiting...");
+  g_clear_pointer (&daemon->sigterm_source, g_source_unref);
+  g_application_release (G_APPLICATION (daemon));
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+register_signals (GrdDaemon *daemon)
+{
+  daemon->sigint_source = g_unix_signal_source_new (SIGINT);
+  g_source_set_callback (daemon->sigint_source, sigint_terminate_daemon,
+                         daemon, NULL);
+  g_source_attach (daemon->sigint_source, NULL);
+
+  daemon->sigterm_source = g_unix_signal_source_new (SIGTERM);
+  g_source_set_callback (daemon->sigterm_source, sigterm_terminate_daemon,
+                         daemon, NULL);
+  g_source_attach (daemon->sigterm_source, NULL);
 }
 
 int
@@ -443,6 +496,7 @@ main (int argc, char **argv)
                       NULL);
 
   add_actions (app);
+  register_signals (GRD_DAEMON (app));
 
   settings = grd_context_get_settings (GRD_DAEMON (app)->context);
   if (rdp_port != -1)
