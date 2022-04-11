@@ -6,3 +6,6 @@ Type=dbus
 BusName=org.gnome.RemoteDesktop
 ExecStart=@libexecdir@/gnome-remote-desktop-daemon
 Restart=on-failure
+
+[Install]
+WantedBy=gnome-session.target
