@@ -1714,7 +1714,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
   if (!rdp_settings->SupportGraphicsPipeline &&
       !rdp_settings->RemoteFxCodec)
     {
-      g_warning ("[RDP] Client does neither support RFX nor GFX. This is will "
+      g_warning ("[RDP] Client does neither support RFX nor GFX. This will "
                  "result in heavy performance and heavy bandwidth usage "
                  "regressions. The legacy path is deprecated!");
     }
