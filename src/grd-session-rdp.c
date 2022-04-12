@@ -1705,6 +1705,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
 
   if (!rdp_settings->SupportGraphicsPipeline &&
       !rdp_settings->RemoteFxCodec &&
+      rdp_settings->NSCodec &&
       rdp_settings->MultifragMaxRequestSize < 0x3F0000)
     {
       g_message ("Disabling NSCodec since it does not support fragmentation");
