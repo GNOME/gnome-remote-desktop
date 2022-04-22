@@ -278,16 +278,8 @@ initialize_egl_context (GrdEglThread  *egl_thread,
       return FALSE;
     }
 
-  if (egl_platform == EGL_PLATFORM_SURFACELESS_MESA)
+  if (egl_platform == EGL_PLATFORM_WAYLAND_EXT)
     {
-      if (!epoxy_has_egl_extension (egl_display, "EGL_MESA_platform_surfaceless"))
-        {
-          eglTerminate (egl_display);
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                       "Missing extension 'EGL_MESA_platform_surfaceless'");
-          return FALSE;
-        }
-
       if (!epoxy_has_egl_extension (egl_display, "EGL_MESA_configless_context"))
         {
           eglTerminate (egl_display);
@@ -372,12 +364,12 @@ grd_egl_init_in_impl (GrdEglThread  *egl_thread,
     }
 
   initialized = initialize_egl_context (egl_thread,
-                                        EGL_PLATFORM_SURFACELESS_MESA,
+                                        EGL_PLATFORM_WAYLAND_EXT,
                                         error);
   if (initialized)
     {
       g_debug ("EGL context initialized with platform "
-               "EGL_PLATFORM_SURFACELESS_MESA");
+               "EGL_PLATFORM_WAYLAND_EXT");
     }
   else
     {
