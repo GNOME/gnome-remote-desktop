@@ -78,7 +78,8 @@ start_rdp_server (GrdDaemon *daemon)
   GrdSettings *settings = grd_context_get_settings (daemon->context);
   g_autoptr (GError) error = NULL;
 
-  g_assert (!daemon->rdp_server);
+  if (daemon->rdp_server)
+    return;
 
   if (!g_access (grd_settings_get_rdp_server_cert (settings), F_OK) &&
       !g_access (grd_settings_get_rdp_server_key (settings), F_OK))
@@ -113,7 +114,8 @@ start_vnc_server (GrdDaemon *daemon)
 {
   g_autoptr (GError) error = NULL;
 
-  g_assert (!daemon->vnc_server);
+  if (daemon->vnc_server)
+    return;
 
   daemon->vnc_server = grd_vnc_server_new (daemon->context);
   if (!grd_vnc_server_start (daemon->vnc_server, &error))
