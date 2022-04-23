@@ -142,6 +142,13 @@ grd_settings_get_rdp_username (GrdSettings  *settings,
     }
 
   credentials = g_variant_parse (NULL, credentials_string, NULL, NULL, NULL);
+  if (!credentials)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Unable to parse credentials");
+      return NULL;
+    }
+
   g_variant_lookup (credentials, "username", "s", &username);
   if (!username)
     {
@@ -177,6 +184,13 @@ grd_settings_get_rdp_password (GrdSettings  *settings,
     }
 
   credentials = g_variant_parse (NULL, credentials_string, NULL, NULL, NULL);
+  if (!credentials)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Unable to parse credentials");
+      return NULL;
+    }
+
   g_variant_lookup (credentials, "password", "s", &password);
   if (!password)
     {
