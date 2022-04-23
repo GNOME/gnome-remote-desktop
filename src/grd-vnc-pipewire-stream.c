@@ -664,8 +664,10 @@ on_stream_process (void *user_data)
 
   if (!last_frame_buffer)
     {
-      frame->callback (stream, g_steal_pointer (&frame),
-                       TRUE, frame->callback_user_data);
+      GrdVncFrameReadyCallback callback = frame->callback;
+      gpointer callback_user_data = frame->callback_user_data;
+
+      callback (stream, g_steal_pointer (&frame), TRUE, callback_user_data);
       return;
     }
 
