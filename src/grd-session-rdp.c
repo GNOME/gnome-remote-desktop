@@ -128,7 +128,6 @@ struct _GrdSessionRdp
   RdpPeerFlag rdp_flags;
 
   GThread *socket_thread;
-  HANDLE start_event;
   HANDLE stop_event;
 
   GThread *graphics_thread;
@@ -1813,30 +1812,6 @@ rdp_peer_activate (freerdp_peer *peer)
   return TRUE;
 }
 
-static BOOL
-rdp_peer_context_new (freerdp_peer   *peer,
-                      RdpPeerContext *rdp_peer_context)
-{
-  rdpSettings *rdp_settings = peer->settings;
-
-  rdp_peer_context->frame_id = 0;
-
-  rdp_peer_context->rfx_context = rfx_context_new (TRUE);
-  rfx_context_set_pixel_format (rdp_peer_context->rfx_context,
-                                PIXEL_FORMAT_BGRX32);
-
-  rdp_peer_context->encode_stream = Stream_New (NULL, 64 * 64 * 4);
-
-  rdp_peer_context->planar_flags = 0;
-  if (rdp_settings->DrawAllowSkipAlpha)
-    rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_NA;
-  rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_RLE;
-
-  rdp_peer_context->vcm = WTSOpenServerA ((LPSTR) peer->context);
-
-  return TRUE;
-}
-
 static void
 rdp_peer_context_free (freerdp_peer   *peer,
                        RdpPeerContext *rdp_peer_context)
@@ -1847,10 +1822,53 @@ rdp_peer_context_free (freerdp_peer   *peer,
   g_clear_pointer (&rdp_peer_context->vcm, WTSCloseServer);
 
   if (rdp_peer_context->encode_stream)
-    Stream_Free (rdp_peer_context->encode_stream, TRUE);
+    {
+      Stream_Free (rdp_peer_context->encode_stream, TRUE);
+      rdp_peer_context->encode_stream = NULL;
+    }
 
-  if (rdp_peer_context->rfx_context)
-    rfx_context_free (rdp_peer_context->rfx_context);
+  g_clear_pointer (&rdp_peer_context->rfx_context, rfx_context_free);
+}
+
+static BOOL
+rdp_peer_context_new (freerdp_peer   *peer,
+                      RdpPeerContext *rdp_peer_context)
+{
+  rdpSettings *rdp_settings = peer->settings;
+
+  rdp_peer_context->frame_id = 0;
+
+  rdp_peer_context->rfx_context = rfx_context_new (TRUE);
+  if (!rdp_peer_context->rfx_context)
+    {
+      g_warning ("[RDP] Failed to create RFX context");
+      return FALSE;
+    }
+  rfx_context_set_pixel_format (rdp_peer_context->rfx_context,
+                                PIXEL_FORMAT_BGRX32);
+
+  rdp_peer_context->encode_stream = Stream_New (NULL, 64 * 64 * 4);
+  if (!rdp_peer_context->encode_stream)
+    {
+      g_warning ("[RDP] Failed to create encode stream");
+      rdp_peer_context_free (peer, rdp_peer_context);
+      return FALSE;
+    }
+
+  rdp_peer_context->planar_flags = 0;
+  if (rdp_settings->DrawAllowSkipAlpha)
+    rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_NA;
+  rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_RLE;
+
+  rdp_peer_context->vcm = WTSOpenServerA ((LPSTR) peer->context);
+  if (!rdp_peer_context->vcm)
+    {
+      g_warning ("[RDP] Failed to retrieve VCM handle");
+      rdp_peer_context_free (peer, rdp_peer_context);
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 int
@@ -1860,10 +1878,11 @@ grd_session_rdp_get_stride_for_width (GrdSessionRdp *session_rdp,
   return width * 4;
 }
 
-static void
-init_rdp_session (GrdSessionRdp *session_rdp,
-                  const char    *username,
-                  const char    *password)
+static gboolean
+init_rdp_session (GrdSessionRdp  *session_rdp,
+                  const char     *username,
+                  const char     *password,
+                  GError        **error)
 {
   GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
   GrdSettings *settings = grd_context_get_settings (context);
@@ -1876,21 +1895,48 @@ init_rdp_session (GrdSessionRdp *session_rdp,
   g_debug ("Initialize RDP session");
 
   peer = freerdp_peer_new (g_socket_get_fd (socket));
+  if (!peer)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create peer");
+      return FALSE;
+    }
 
   peer->ContextSize = sizeof (RdpPeerContext);
-  peer->ContextNew = (psPeerContextNew) rdp_peer_context_new;
   peer->ContextFree = (psPeerContextFree) rdp_peer_context_free;
-  freerdp_peer_context_new (peer);
+  peer->ContextNew = (psPeerContextNew) rdp_peer_context_new;
+  if (!freerdp_peer_context_new (peer))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create peer context");
+      freerdp_peer_free (peer);
+      return FALSE;
+    }
 
   rdp_peer_context = (RdpPeerContext *) peer->context;
   rdp_peer_context->session_rdp = session_rdp;
 
   session_rdp->sam_file = grd_rdp_sam_create_sam_file (username, password);
+  if (!session_rdp->sam_file)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create SAM database");
+      freerdp_peer_context_free (peer);
+      freerdp_peer_free (peer);
+      return FALSE;
+    }
 
   rdp_settings = peer->settings;
-  freerdp_settings_set_string (rdp_settings,
-                               FreeRDP_NtlmSamFile,
-                               session_rdp->sam_file->filename);
+  if (!freerdp_settings_set_string (rdp_settings, FreeRDP_NtlmSamFile,
+                                    session_rdp->sam_file->filename))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to set path of SAM database");
+      freerdp_peer_context_free (peer);
+      freerdp_peer_free (peer);
+      return FALSE;
+    }
+
   rdp_settings->CertificateFile = strdup (grd_settings_get_rdp_server_cert (settings));
   rdp_settings->PrivateKeyFile = strdup (grd_settings_get_rdp_server_key (settings));
   rdp_settings->RdpSecurity = FALSE;
@@ -1928,13 +1974,19 @@ init_rdp_session (GrdSessionRdp *session_rdp,
   rdp_input->KeyboardEvent = rdp_input_keyboard_event;
   rdp_input->UnicodeKeyboardEvent = rdp_input_unicode_keyboard_event;
 
-  peer->Initialize (peer);
+  if (!peer->Initialize (peer))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to initialize peer");
+      grd_rdp_sam_maybe_close_and_free_sam_file (session_rdp->sam_file);
+      freerdp_peer_context_free (peer);
+      freerdp_peer_free (peer);
+      return FALSE;
+    }
 
   session_rdp->peer = peer;
-  session_rdp->last_pointer = NULL;
-  session_rdp->thread_pool = NULL;
 
-  SetEvent (session_rdp->start_event);
+  return TRUE;
 }
 
 gpointer
@@ -1952,8 +2004,6 @@ socket_thread_func (gpointer data)
 
   if (session_rdp->hwaccel_nvidia)
     grd_hwaccel_nvidia_push_cuda_context (session_rdp->hwaccel_nvidia);
-
-  WaitForSingleObject (session_rdp->start_event, INFINITE);
 
   peer = session_rdp->peer;
   rdp_peer_context = (RdpPeerContext *) peer->context;
@@ -2057,7 +2107,7 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
                      GSocketConnection *connection,
                      GrdHwAccelNvidia  *hwaccel_nvidia)
 {
-  GrdSessionRdp *session_rdp;
+  g_autoptr (GrdSessionRdp) session_rdp = NULL;
   GrdContext *context;
   GrdSettings *settings;
   char *username;
@@ -2089,6 +2139,15 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
 
   session_rdp->screen_share_mode = grd_settings_get_screen_share_mode (settings);
 
+  if (!init_rdp_session (session_rdp, username, password, &error))
+    {
+      g_warning ("[RDP] Couldn't initialize session: %s", error->message);
+      g_clear_object (&session_rdp->connection);
+      g_free (password);
+      g_free (username);
+      return NULL;
+    }
+
   session_rdp->socket_thread = g_thread_new ("RDP socket thread",
                                              socket_thread_func,
                                              session_rdp);
@@ -2096,12 +2155,10 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                                graphics_thread_func,
                                                session_rdp);
 
-  init_rdp_session (session_rdp, username, password);
-
   g_free (password);
   g_free (username);
 
-  return session_rdp;
+  return g_steal_pointer (&session_rdp);
 }
 
 static gboolean
@@ -2354,7 +2411,6 @@ grd_session_rdp_dispose (GObject *object)
   g_clear_pointer (&session_rdp->pointer_cache, g_hash_table_unref);
 
   g_clear_pointer (&session_rdp->stop_event, CloseHandle);
-  g_clear_pointer (&session_rdp->start_event, CloseHandle);
 
   G_OBJECT_CLASS (grd_session_rdp_parent_class)->dispose (object);
 }
@@ -2450,7 +2506,6 @@ static GSourceFuncs session_source_funcs =
 static void
 grd_session_rdp_init (GrdSessionRdp *session_rdp)
 {
-  session_rdp->start_event = CreateEvent (NULL, TRUE, FALSE, NULL);
   session_rdp->stop_event = CreateEvent (NULL, TRUE, FALSE, NULL);
 
   session_rdp->pointer_cache = g_hash_table_new (NULL, are_pointer_bitmaps_equal);
