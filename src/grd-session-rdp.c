@@ -2202,8 +2202,12 @@ grd_session_rdp_stop (GrdSession *session)
 
   if (session_rdp->graphics_thread)
     {
+      uint32_t status;
+
       g_assert (session_rdp->graphics_context);
-      g_assert (WaitForSingleObject (session_rdp->stop_event, 0) != WAIT_TIMEOUT);
+
+      status = WaitForSingleObject (session_rdp->stop_event, 0);
+      g_assert (status != WAIT_TIMEOUT);
 
       g_main_context_wakeup (session_rdp->graphics_context);
       g_clear_pointer (&session_rdp->graphics_thread, g_thread_join);
