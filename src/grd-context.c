@@ -37,8 +37,6 @@ struct _GrdContext
 {
   GObject parent;
 
-  GMainContext *main_context;
-
   GrdDBusRemoteDesktop *remote_desktop_proxy;
   GrdDBusScreenCast *screen_cast_proxy;
 
@@ -77,12 +75,6 @@ grd_context_set_screen_cast_proxy (GrdContext        *context,
 {
   g_clear_object (&context->screen_cast_proxy);
   context->screen_cast_proxy = proxy;
-}
-
-GMainContext *
-grd_context_get_main_context (GrdContext *context)
-{
-  return context->main_context;
 }
 
 GrdSettings *
@@ -135,8 +127,6 @@ static void
 grd_context_init (GrdContext *context)
 {
   g_autoptr (GError) error = NULL;
-
-  context->main_context = g_main_context_default ();
 
   init_debug_flags (context);
 
