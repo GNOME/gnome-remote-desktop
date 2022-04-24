@@ -28,6 +28,19 @@
 #include <sys/stat.h>
 #include <winpr/ntlm.h>
 
+void
+grd_rdp_sam_free_sam_file (GrdRdpSAMFile *rdp_sam_file)
+{
+  if (rdp_sam_file->fd >= 0)
+    {
+      unlink (rdp_sam_file->filename);
+      close (rdp_sam_file->fd);
+    }
+
+  g_free (rdp_sam_file->filename);
+  g_free (rdp_sam_file);
+}
+
 static char *
 create_sam_string (const char *username,
                    const char *password)
@@ -59,51 +72,58 @@ grd_rdp_sam_create_sam_file (const char *username,
 {
   const char *grd_path = "/gnome-remote-desktop";
   const char *template = "/rdp-sam-XXXXXX";
-  const char *path;
-  char *filename;
-  char *sam_string;
-  int fd_flags;
   GrdRdpSAMFile *rdp_sam_file;
+  g_autofree char *file_dir = NULL;
+  g_autofree char *filename = NULL;
+  g_autofree char *sam_string = NULL;
+  int fd;
+  int fd_flags;
   FILE *sam_file;
 
-  rdp_sam_file = g_malloc0 (sizeof (GrdRdpSAMFile));
+  file_dir = g_strdup_printf ("%s%s", g_get_user_runtime_dir (), grd_path);
+  filename = g_strdup_printf ("%s%s%s", g_get_user_runtime_dir (), grd_path,
+                              template);
 
-  path = getenv ("XDG_RUNTIME_DIR");
-  filename = g_malloc0 (strlen (path) + strlen (grd_path) +
-                        strlen (template) + 1);
-  strcpy (filename, path);
-  strcat (filename, grd_path);
-  if (g_access (filename, F_OK))
-    mkdir (filename, 0700);
+  if (g_access (file_dir, F_OK) &&
+      mkdir (file_dir, 0700))
+    {
+      g_warning ("Failed to create base runtime directory for "
+                 "gnome-remote-desktop: %s", g_strerror (errno));
+      return NULL;
+    }
 
-  strcat (filename, template);
+  fd = mkstemp (filename);
+  if (fd < 0)
+    {
+      g_warning ("[RDP] mkstemp() failed: %s", g_strerror (errno));
+      return NULL;
+    }
 
-  rdp_sam_file->fd = mkstemp (filename);
-  rdp_sam_file->filename = filename;
+  rdp_sam_file = g_new0 (GrdRdpSAMFile, 1);
+  rdp_sam_file->fd = fd;
+  rdp_sam_file->filename = g_steal_pointer (&filename);
 
   fd_flags = fcntl (rdp_sam_file->fd, F_GETFD);
-  fcntl (rdp_sam_file->fd, F_SETFD, fd_flags | FD_CLOEXEC);
+  if (fd_flags == -1 ||
+      fcntl (rdp_sam_file->fd, F_SETFD, fd_flags | FD_CLOEXEC) == -1)
+    {
+      g_warning ("[RDP] fcntl() failed: %s", g_strerror (errno));
+      grd_rdp_sam_free_sam_file (rdp_sam_file);
+      return NULL;
+    }
 
   sam_string = create_sam_string (username, password);
 
   sam_file = fdopen (rdp_sam_file->fd, "w+");
+  if (!sam_file)
+    {
+      g_warning ("[RDP] Failed to open SAM database: %s", g_strerror (errno));
+      grd_rdp_sam_free_sam_file (rdp_sam_file);
+      return NULL;
+    }
+
   fputs (sam_string, sam_file);
   fclose (sam_file);
 
-  g_free (sam_string);
-
   return rdp_sam_file;
-}
-
-void
-grd_rdp_sam_maybe_close_and_free_sam_file (GrdRdpSAMFile *rdp_sam_file)
-{
-  if (rdp_sam_file->fd >= 0)
-    {
-      unlink (rdp_sam_file->filename);
-      close (rdp_sam_file->fd);
-    }
-
-  g_free (rdp_sam_file->filename);
-  g_free (rdp_sam_file);
 }

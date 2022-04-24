@@ -1698,7 +1698,6 @@ rdp_peer_post_connect (freerdp_peer *peer)
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   rdpSettings *rdp_settings = peer->settings;
-  GrdRdpSAMFile *sam_file;
 
   g_debug ("New RDP client");
 
@@ -1764,8 +1763,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
 
   grd_session_start (GRD_SESSION (session_rdp));
 
-  sam_file = g_steal_pointer (&session_rdp->sam_file);
-  grd_rdp_sam_maybe_close_and_free_sam_file (sam_file);
+  g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
 
   if (rdp_settings->SupportGraphicsPipeline &&
       rdp_peer_context->network_autodetection)
@@ -1978,7 +1976,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Failed to initialize peer");
-      grd_rdp_sam_maybe_close_and_free_sam_file (session_rdp->sam_file);
+      g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
       freerdp_peer_context_free (peer);
       freerdp_peer_free (peer);
       return FALSE;
@@ -2228,8 +2226,7 @@ grd_session_rdp_stop (GrdSession *session)
   peer->Close (peer);
   g_clear_object (&session_rdp->connection);
 
-  if (session_rdp->sam_file)
-    grd_rdp_sam_maybe_close_and_free_sam_file (session_rdp->sam_file);
+  g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
 
   g_clear_object (&rdp_peer_context->network_autodetection);
 

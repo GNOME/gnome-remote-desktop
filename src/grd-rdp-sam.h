@@ -31,6 +31,6 @@ struct _GrdRdpSAMFile
 GrdRdpSAMFile *grd_rdp_sam_create_sam_file (const char *username,
                                             const char *password);
 
-void grd_rdp_sam_maybe_close_and_free_sam_file (GrdRdpSAMFile *rdp_sam_file);
+void grd_rdp_sam_free_sam_file (GrdRdpSAMFile *rdp_sam_file);
 
 #endif /* GRD_RDP_SAM_H */
