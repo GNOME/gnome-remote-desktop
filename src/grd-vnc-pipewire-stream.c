@@ -465,7 +465,7 @@ process_frame_data (GrdVncPipeWireStream *stream,
       int *fds;
       uint32_t *offsets;
       uint32_t *strides;
-      uint64_t *modifiers;
+      uint64_t *modifiers = NULL;
       uint32_t n_planes;
       unsigned int i;
       uint8_t *dst_data;
@@ -476,14 +476,16 @@ process_frame_data (GrdVncPipeWireStream *stream,
       fds = g_alloca (sizeof (int) * n_planes);
       offsets = g_alloca (sizeof (uint32_t) * n_planes);
       strides = g_alloca (sizeof (uint32_t) * n_planes);
-      modifiers = g_alloca (sizeof (uint64_t) * n_planes);
+      if (stream->spa_format.modifier != DRM_FORMAT_MOD_INVALID)
+        modifiers = g_alloca (sizeof (uint64_t) * n_planes);
 
       for (i = 0; i < n_planes; i++)
         {
           fds[i] = buffer->datas[i].fd;
           offsets[i] = buffer->datas[i].chunk->offset;
           strides[i] = buffer->datas[i].chunk->stride;
-          modifiers[i] = stream->spa_format.modifier;
+          if (modifiers)
+            modifiers[i] = stream->spa_format.modifier;
         }
       dst_data = g_malloc0 (height * dst_stride);
 
