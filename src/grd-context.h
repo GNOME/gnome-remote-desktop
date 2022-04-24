@@ -55,4 +55,6 @@ GrdEglThread * grd_context_get_egl_thread (GrdContext *context);
 
 GrdDebugFlags grd_context_get_debug_flags (GrdContext *context);
 
+void grd_context_notify_daemon_ready (GrdContext *context);
+
 #endif /* GRD_CONTEXT_H */

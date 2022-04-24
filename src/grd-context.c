@@ -95,6 +95,19 @@ grd_context_get_debug_flags (GrdContext *context)
   return context->debug_flags;
 }
 
+void
+grd_context_notify_daemon_ready (GrdContext *context)
+{
+  g_autoptr (GError) error = NULL;
+
+  if (context->egl_thread)
+    return;
+
+  context->egl_thread = grd_egl_thread_new (&error);
+  if (!context->egl_thread)
+    g_debug ("Failed to create EGL thread: %s", error->message);
+}
+
 static void
 init_debug_flags (GrdContext *context)
 {
@@ -126,15 +139,9 @@ grd_context_finalize (GObject *object)
 static void
 grd_context_init (GrdContext *context)
 {
-  g_autoptr (GError) error = NULL;
-
   init_debug_flags (context);
 
   context->settings = g_object_new (GRD_TYPE_SETTINGS, NULL);
-
-  context->egl_thread = grd_egl_thread_new (&error);
-  if (!context->egl_thread)
-    g_debug ("Failed to create EGL thread: %s", error->message);
 }
 
 static void

@@ -144,6 +144,8 @@ maybe_enable_services (GrdDaemon *daemon)
   if (!is_daemon_ready (daemon))
     return;
 
+  grd_context_notify_daemon_ready (daemon->context);
+
 #ifdef HAVE_RDP
   if (grd_settings_is_rdp_enabled (settings))
     start_rdp_server (daemon);
