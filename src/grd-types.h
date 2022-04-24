@@ -46,8 +46,6 @@ typedef struct _GrdSession GrdSession;
 typedef struct _GrdSessionRdp GrdSessionRdp;
 typedef struct _GrdSessionVnc GrdSessionVnc;
 typedef struct _GrdStream GrdStream;
-typedef struct _GrdPipeWireStream GrdPipeWireStream;
-typedef struct _GrdPipeWireStreamMonitor GrdPipeWireStreamMonitor;
 typedef struct _GrdVncServer GrdVncServer;
 
 typedef enum _GrdPixelFormat
