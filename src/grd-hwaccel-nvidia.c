@@ -769,7 +769,7 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
   if (!get_cuda_devices_from_gl_context (hwaccel_nvidia, egl_thread,
                                          &cu_device_count, cu_devices))
     {
-      g_warning ("[HWAccel.CUDA] Failed to retrieve CUDA devices");
+      g_message ("[HWAccel.CUDA] Unable to retrieve CUDA devices");
       return NULL;
     }
 
