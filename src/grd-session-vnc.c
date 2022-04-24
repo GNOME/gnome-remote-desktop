@@ -654,7 +654,11 @@ grd_session_vnc_attach_source (GrdSessionVnc *session_vnc)
 static void
 grd_session_vnc_detach_source (GrdSessionVnc *session_vnc)
 {
-  g_clear_pointer (&session_vnc->source, g_source_destroy);
+  if (!session_vnc->source)
+    return;
+
+  g_source_destroy (session_vnc->source);
+  g_clear_pointer (&session_vnc->source, g_source_unref);
 }
 
 GrdSessionVnc *
