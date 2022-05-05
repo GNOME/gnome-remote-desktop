@@ -506,21 +506,6 @@ process_frame_data (GrdVncPipeWireStream *stream,
                                grd_vnc_frame_ref (g_steal_pointer (&frame)),
                                (GDestroyNotify) grd_vnc_frame_unref);
     }
-  else if (buffer->datas[0].type == SPA_DATA_MemPtr)
-    {
-      uint8_t *src_data;
-      int src_stride;
-
-      src_data = buffer->datas[0].data;
-
-      src_stride = buffer->datas[0].chunk->stride;
-      copy_frame_data (frame, src_data,
-                       width, height,
-                       dst_stride, src_stride,
-                       bpp);
-
-      callback (stream, g_steal_pointer (&frame), TRUE, user_data);
-    }
   else
     {
       callback (stream, NULL, FALSE, user_data);
