@@ -38,8 +38,6 @@ typedef struct _GrdPipeWireSource
   struct pw_loop *pipewire_loop;
 } GrdPipeWireSource;
 
-void grd_maybe_initialize_pipewire (void);
-
 gboolean grd_pipewire_buffer_has_pointer_bitmap (struct pw_buffer *buffer);
 
 gboolean grd_pipewire_buffer_has_frame_data (struct pw_buffer *buffer);

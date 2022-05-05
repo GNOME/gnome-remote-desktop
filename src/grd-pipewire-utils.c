@@ -25,18 +25,6 @@
 #include <drm_fourcc.h>
 #include <spa/param/video/raw.h>
 
-static gboolean is_pipewire_initialized = FALSE;
-
-void
-grd_maybe_initialize_pipewire (void)
-{
-  if (!is_pipewire_initialized)
-    {
-      pw_init (NULL, NULL);
-      is_pipewire_initialized = TRUE;
-    }
-}
-
 gboolean
 grd_pipewire_buffer_has_pointer_bitmap (struct pw_buffer *buffer)
 {
