@@ -849,11 +849,11 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc  *session_vnc,
   GrdPipeWireSource *pipewire_source;
   GSource *source;
 
-  grd_maybe_initialize_pipewire ();
-
   stream = g_object_new (GRD_TYPE_VNC_PIPEWIRE_STREAM, NULL);
   stream->session = session_vnc;
   stream->src_node_id = src_node_id;
+
+  pw_init (NULL, NULL);
 
   pipewire_source = create_pipewire_source ();
   if (!pipewire_source)
@@ -968,6 +968,8 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
   g_clear_pointer (&stream->pending_frame, grd_vnc_frame_unref);
 
   g_mutex_clear (&stream->frame_mutex);
+
+  pw_deinit ();
 
   G_OBJECT_CLASS (grd_vnc_pipewire_stream_parent_class)->finalize (object);
 }
