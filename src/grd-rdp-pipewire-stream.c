@@ -1228,12 +1228,12 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
   g_autoptr (GrdRdpPipeWireStream) stream = NULL;
   GrdPipeWireSource *pipewire_source;
 
-  grd_maybe_initialize_pipewire ();
-
   stream = g_object_new (GRD_TYPE_RDP_PIPEWIRE_STREAM, NULL);
   stream->session_rdp = session_rdp;
   stream->rdp_surface = rdp_surface;
   stream->src_node_id = src_node_id;
+
+  pw_init (NULL, NULL);
 
   create_render_source (stream, render_context);
 
@@ -1326,6 +1326,8 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
   g_clear_object (&stream->buffer_pool);
 
   g_mutex_clear (&stream->frame_mutex);
+
+  pw_deinit ();
 
   G_OBJECT_CLASS (grd_rdp_pipewire_stream_parent_class)->finalize (object);
 }

@@ -23,7 +23,7 @@ gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')
 libnotify_dep = dependency('libnotify')
 libsecret_dep = dependency('libsecret-1')
-pipewire_dep = dependency('libpipewire-0.3', version: '>= 0.3.0')
+pipewire_dep = dependency('libpipewire-0.3', version: '>= 0.3.49')
 systemd_dep = dependency('systemd', required: get_option('systemd'))
 
 have_rdp = get_option('rdp')
