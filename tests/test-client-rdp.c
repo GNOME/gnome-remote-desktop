@@ -345,6 +345,7 @@ run_main_loop (rdpContext *rdp_context)
   HANDLE events[64];
   uint32_t n_events;
   uint32_t n_freerdp_handles;
+  gboolean result;
 
   rdp_peer_context->test_state = TEST_STATE_TEST_1;
 
@@ -388,7 +389,10 @@ run_main_loop (rdpContext *rdp_context)
         }
     }
 
-  return rdp_peer_context->test_state == TEST_STATE_TESTS_COMPLETE;
+  result = rdp_peer_context->test_state == TEST_STATE_TESTS_COMPLETE;
+  g_debug ("Main loop tests complete: %i", result);
+
+  return result;
 }
 
 int
@@ -428,6 +432,8 @@ main (int    argc,
   success = run_main_loop (rdp_context);
 
   freerdp_client_context_free (rdp_context);
+
+  g_debug ("Client context freed. Exiting test with result: %i", success);
 
   if (success)
     return 0;
