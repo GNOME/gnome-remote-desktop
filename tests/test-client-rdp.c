@@ -300,6 +300,8 @@ rdp_client_new (freerdp    *instance,
   PubSub_SubscribeTerminate (rdp_context->pubSub, on_terminate);
 
   rdp_peer_context->stop_event = CreateEvent (NULL, TRUE, FALSE, NULL);
+  if (!rdp_peer_context->stop_event)
+    return FALSE;
 
   return TRUE;
 }
