@@ -8,8 +8,8 @@ stages:
 
 .gnome-remote-desktop.fedora:35@common:
   variables:
-    FDO_DISTRIBUTION_VERSION: 35
-    BASE_TAG: '2022-05-05.0'
+    FDO_DISTRIBUTION_VERSION: 36
+    BASE_TAG: '2022-05-10.0'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -33,26 +33,6 @@ stages:
       dnf install -y dbus-daemon xorg-x11-server-Xvfb python3-dbus \
                      python3-gobject gnome-settings-daemon mesa-dri-drivers \
                      xorg-x11-server-Xwayland mutter &&
-
-      # To build gsettings-desktop-schemas
-      dnf builddep -y gsettings-desktop-schemas --setopt=install_weak_deps=False &&
-      dnf builddep -y gnome-settings-daemon --setopt=install_weak_deps=False &&
-      dnf builddep -y mutter --setopt=install_weak_deps=False &&
-      dnf install -y wayland-protocols-devel &&
-
-      ./.gitlab-ci/install-meson-project.sh \
-          https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas.git \
-          master . 469f576b9b18291f858d64f2d8805fc4d578b857 &&
-
-      # To build gnome-settings-daemon
-      ./.gitlab-ci/install-meson-project.sh \
-          https://gitlab.gnome.org/GNOME/gnome-settings-daemon.git \
-          master . 62325b51b56da15a6da7c8145e550ae047d361ea &&
-
-      # To build mutter
-      ./.gitlab-ci/install-meson-project.sh \
-          https://gitlab.gnome.org/GNOME/mutter.git \
-          main . f1cf35e1017f06c9fb5fa9bbcc18d434769024c7 &&
 
       dnf clean all
 
@@ -87,7 +67,7 @@ build-gnome-remote-desktop:
     - .gnome-remote-desktop.fedora:35@x86_64
   stage: build
   script:
-    - meson . build -Ddebugtype=debugoptimized --werror
+    - meson . build -Dbuildtype=debugoptimized --werror
     - ninja -C build
     - ninja -C build install
   needs:

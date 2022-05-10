@@ -6,7 +6,7 @@ project('gnome-remote-desktop', 'c',
 
 cuda_req = '>= 11.1.5.0'
 epoxy_req = '>= 1.4'
-freerdp_req = '>= 2.5.0'
+freerdp_req = '>= 2.7.0'
 fuse_req = '>= 3.9.1'
 xkbcommon_req = '>= 1.0.0'
 
