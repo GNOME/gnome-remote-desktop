@@ -21,6 +21,7 @@
 
 #include "config.h"
 
+#include <drm_fourcc.h>
 #include <epoxy/egl.h>
 #include <epoxy/gl.h>
 #include <fcntl.h>
@@ -95,7 +96,7 @@ create_dmabuf_image (EGLDisplay  egl_display,
       attribs[atti++] = dma_buf->offsets[0];
       attribs[atti++] = EGL_DMA_BUF_PLANE0_PITCH_EXT;
       attribs[atti++] = dma_buf->strides[0];
-      if (dma_buf->modifiers)
+      if (dma_buf->modifiers[0] != DRM_FORMAT_MOD_INVALID)
         {
           attribs[atti++] = EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT;
           attribs[atti++] = dma_buf->modifiers[0] & 0xFFFFFFFF;
@@ -112,7 +113,7 @@ create_dmabuf_image (EGLDisplay  egl_display,
       attribs[atti++] = dma_buf->offsets[1];
       attribs[atti++] = EGL_DMA_BUF_PLANE1_PITCH_EXT;
       attribs[atti++] = dma_buf->strides[1];
-      if (dma_buf->modifiers)
+      if (dma_buf->modifiers[1] != DRM_FORMAT_MOD_INVALID)
         {
           attribs[atti++] = EGL_DMA_BUF_PLANE1_MODIFIER_LO_EXT;
           attribs[atti++] = dma_buf->modifiers[1] & 0xFFFFFFFF;
@@ -129,7 +130,7 @@ create_dmabuf_image (EGLDisplay  egl_display,
       attribs[atti++] = dma_buf->offsets[2];
       attribs[atti++] = EGL_DMA_BUF_PLANE2_PITCH_EXT;
       attribs[atti++] = dma_buf->strides[2];
-      if (dma_buf->modifiers)
+      if (dma_buf->modifiers[2] != DRM_FORMAT_MOD_INVALID)
         {
           attribs[atti++] = EGL_DMA_BUF_PLANE2_MODIFIER_LO_EXT;
           attribs[atti++] = dma_buf->modifiers[2] & 0xFFFFFFFF;
