@@ -1,15 +1,13 @@
-How to produce the PTX instructions for CUDA kernels
-====================================================
+# How to produce the PTX instructions for CUDA kernels
 
 For the generation of the PTX instructions, the CUDA toolkit needs to be
 installed (See for this below in "Retrieving the CUDA toolkit").
 
-Generation:
------------
+## Generation
 
 When the CUDA toolkit is installed, and the current directory is `src`,
 generate the PTX instructions via:
-/opt/cuda/bin/./nvcc -arch=compute_30 -ptx grd-cuda-avc-utils.cu -o ../data/grd-cuda-avc-utils_30.ptx
+`/opt/cuda/bin/./nvcc -arch=compute_30 -ptx grd-cuda-avc-utils.cu -o ../data/grd-cuda-avc-utils_30.ptx`
 
 The nvcc path differ from OS to OS. In the case above, Archlinux is used, which
 uses the path `/opt/cuda/bin/nvcc` for nvcc.
@@ -32,8 +30,7 @@ fallback.
 Use then the CUDA functions to check the compute capability of the selected GPU
 at runtime to determine, which PTX instructions should be loaded.
 
-Retrieving the CUDA toolkit:
-----------------------------
+## Retrieving the CUDA toolkit:
 
 Retrieving the CUDA toolkit depends on the distribution. It should be noted,
 that the generation of PTX instructions for compute capability 3.0 was removed
@@ -41,8 +38,7 @@ from the CUDA toolkit version 11.
 So, an older version of the CUDA toolkit (version 10) is needed to generate PTX
 instructions for Kepler GPUs.
 
-Instructions to retrieve the CUDA toolkit version 10 on Archlinux:
-------------------------------------------------------------------
+## Instructions to retrieve the CUDA toolkit version 10 on Archlinux:
 
 While the current version of the CUDA toolkit can be found in the `community`
 repository (included by default) under the name `cuda`, the older version 10 is
