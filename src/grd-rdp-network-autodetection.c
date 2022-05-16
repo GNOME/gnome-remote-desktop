@@ -319,8 +319,9 @@ autodetect_rtt_measure_response (rdpContext *rdp_context,
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   GrdRdpNetworkAutodetection *network_autodetection;
-  PingInfo *ping_info;
+  g_autofree PingInfo *ping_info = NULL;
   int64_t pong_time_us;
+  int64_t ping_time_us;
   int64_t avg_round_trip_time_us;
   gboolean has_rtt_consumer_rdpgfx = FALSE;
 
@@ -344,20 +345,17 @@ autodetect_rtt_measure_response (rdpContext *rdp_context,
       g_clear_pointer (&ping_info, g_free);
     }
 
-  if (ping_info)
-    {
-      int64_t ping_time_us = ping_info->ping_time_us;
+  g_assert (ping_info);
+  g_assert (ping_info->sequence_number == sequence_number);
 
-      g_assert (ping_info->sequence_number == sequence_number);
-
-      track_round_trip_time (network_autodetection, ping_time_us, pong_time_us);
-      avg_round_trip_time_us =
-        get_current_avg_round_trip_time_us (network_autodetection);
-
-      g_hash_table_remove (network_autodetection->sequences,
-                           GUINT_TO_POINTER (ping_info->sequence_number));
-    }
+  g_hash_table_remove (network_autodetection->sequences,
+                       GUINT_TO_POINTER (ping_info->sequence_number));
   g_mutex_unlock (&network_autodetection->sequence_mutex);
+
+  ping_time_us = ping_info->ping_time_us;
+  track_round_trip_time (network_autodetection, ping_time_us, pong_time_us);
+  avg_round_trip_time_us =
+    get_current_avg_round_trip_time_us (network_autodetection);
 
   g_mutex_lock (&network_autodetection->consumer_mutex);
   has_rtt_consumer_rdpgfx = has_rtt_consumer (
@@ -365,14 +363,12 @@ autodetect_rtt_measure_response (rdpContext *rdp_context,
   g_mutex_unlock (&network_autodetection->consumer_mutex);
 
   g_mutex_lock (&network_autodetection->shutdown_mutex);
-  if (ping_info && !network_autodetection->in_shutdown && has_rtt_consumer_rdpgfx)
+  if (!network_autodetection->in_shutdown && has_rtt_consumer_rdpgfx)
     {
       grd_rdp_graphics_pipeline_notify_new_round_trip_time (
         rdp_peer_context->graphics_pipeline, avg_round_trip_time_us);
     }
   g_mutex_unlock (&network_autodetection->shutdown_mutex);
-
-  g_free (ping_info);
 
   return TRUE;
 }
