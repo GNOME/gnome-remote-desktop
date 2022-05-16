@@ -207,8 +207,7 @@ grd_rdp_network_autodetection_ensure_rtt_consumer (GrdRdpNetworkAutodetection   
   g_assert (rtt_consumer != GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE);
 
   g_mutex_lock (&network_autodetection->consumer_mutex);
-  if (!has_rtt_consumer (network_autodetection, rtt_consumer))
-    network_autodetection->rtt_consumers |= rtt_consumer;
+  network_autodetection->rtt_consumers |= rtt_consumer;
 
   update_ping_source (network_autodetection);
   g_mutex_unlock (&network_autodetection->consumer_mutex);
