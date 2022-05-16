@@ -25,6 +25,7 @@
 #include "grd-rdp-private.h"
 
 #define BW_MEASURE_SEQUENCE_NUMBER 0
+#define MIN_NW_CHAR_RES_INTERVAL_US G_USEC_PER_SEC
 #define PING_INTERVAL_HIGH_MS 70
 #define PING_INTERVAL_LOW_MS 700
 #define RTT_AVG_PERIOD_US (500 * 1000)
@@ -68,6 +69,8 @@ struct _GrdRdpNetworkAutodetection
   GQueue *pings;
   GQueue *round_trip_times;
   PingInterval ping_interval;
+
+  int64_t last_nw_char_res_notification_us;
 
   uint16_t next_sequence_number;
 };
@@ -290,27 +293,71 @@ remove_old_round_trip_times (GrdRdpNetworkAutodetection *network_autodetection)
     g_free (g_queue_pop_head (network_autodetection->round_trip_times));
 }
 
-static int64_t
-get_current_avg_round_trip_time_us (GrdRdpNetworkAutodetection *network_autodetection)
+static void
+update_round_trip_time_values (GrdRdpNetworkAutodetection *network_autodetection,
+                               int64_t                    *base_round_trip_time_us,
+                               int64_t                    *avg_round_trip_time_us)
 {
   int64_t sum_round_trip_times_us = 0;
   uint32_t total_round_trip_times;
   RTTInfo *rtt_info;
   GQueue *tmp;
 
+  *base_round_trip_time_us = 0;
+  *avg_round_trip_time_us = 0;
+
   remove_old_round_trip_times (network_autodetection);
-  if (!g_queue_get_length (network_autodetection->round_trip_times))
-    return 0;
+  if (g_queue_get_length (network_autodetection->round_trip_times) == 0)
+    return;
 
   tmp = g_queue_copy (network_autodetection->round_trip_times);
   total_round_trip_times = g_queue_get_length (tmp);
+  g_assert (total_round_trip_times > 0);
+
+  *base_round_trip_time_us = INT64_MAX;
 
   while ((rtt_info = g_queue_pop_head (tmp)))
-    sum_round_trip_times_us += rtt_info->round_trip_time_us;
+    {
+      *base_round_trip_time_us = MIN (*base_round_trip_time_us,
+                                      rtt_info->round_trip_time_us);
+      sum_round_trip_times_us += rtt_info->round_trip_time_us;
+    }
 
   g_queue_free (tmp);
 
-  return sum_round_trip_times_us / total_round_trip_times;
+  *avg_round_trip_time_us = sum_round_trip_times_us / total_round_trip_times;
+}
+
+static void
+maybe_send_network_characteristics_results (GrdRdpNetworkAutodetection *network_autodetection,
+                                            uint32_t                    base_round_trip_time_ms,
+                                            uint32_t                    avg_round_trip_time_ms)
+{
+  rdpContext *rdp_context = network_autodetection->rdp_context;
+  rdpAutoDetect *rdp_autodetect = network_autodetection->rdp_autodetect;
+  int64_t last_notification_us;
+  int64_t current_time_us;
+  uint16_t sequence_number;
+
+  if (g_queue_get_length (network_autodetection->round_trip_times) == 0)
+    return;
+
+  current_time_us = g_get_monotonic_time ();
+  last_notification_us = network_autodetection->last_nw_char_res_notification_us;
+
+  if (current_time_us - last_notification_us < MIN_NW_CHAR_RES_INTERVAL_US)
+    return;
+
+  rdp_autodetect->netCharBaseRTT = base_round_trip_time_ms;
+  rdp_autodetect->netCharAverageRTT = avg_round_trip_time_ms;
+
+  g_mutex_lock (&network_autodetection->sequence_mutex);
+  sequence_number = get_next_free_sequence_number (network_autodetection);
+  g_mutex_unlock (&network_autodetection->sequence_mutex);
+
+  rdp_autodetect->NetworkCharacteristicsResult (rdp_context, sequence_number);
+
+  network_autodetection->last_nw_char_res_notification_us = current_time_us;
 }
 
 static BOOL
@@ -322,6 +369,7 @@ autodetect_rtt_measure_response (rdpContext *rdp_context,
   g_autofree PingInfo *ping_info = NULL;
   int64_t pong_time_us;
   int64_t ping_time_us;
+  int64_t base_round_trip_time_us;
   int64_t avg_round_trip_time_us;
   gboolean has_rtt_consumer_rdpgfx = FALSE;
 
@@ -354,8 +402,9 @@ autodetect_rtt_measure_response (rdpContext *rdp_context,
 
   ping_time_us = ping_info->ping_time_us;
   track_round_trip_time (network_autodetection, ping_time_us, pong_time_us);
-  avg_round_trip_time_us =
-    get_current_avg_round_trip_time_us (network_autodetection);
+  update_round_trip_time_values (network_autodetection,
+                                 &base_round_trip_time_us,
+                                 &avg_round_trip_time_us);
 
   g_mutex_lock (&network_autodetection->consumer_mutex);
   has_rtt_consumer_rdpgfx = has_rtt_consumer (
@@ -369,6 +418,10 @@ autodetect_rtt_measure_response (rdpContext *rdp_context,
         rdp_peer_context->graphics_pipeline, avg_round_trip_time_us);
     }
   g_mutex_unlock (&network_autodetection->shutdown_mutex);
+
+  maybe_send_network_characteristics_results (network_autodetection,
+                                              base_round_trip_time_us / 1000,
+                                              avg_round_trip_time_us / 1000);
 
   return TRUE;
 }
