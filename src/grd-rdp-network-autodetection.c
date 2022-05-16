@@ -31,6 +31,7 @@
 
 typedef enum _PingInterval
 {
+  PING_INTERVAL_NONE,
   PING_INTERVAL_HIGH,
   PING_INTERVAL_LOW,
 } PingInterval;
@@ -104,6 +105,16 @@ is_active_high_nec_rtt_consumer (GrdRdpNetworkAutodetection    *network_autodete
   return FALSE;
 }
 
+static gboolean
+has_active_high_nec_rtt_consumers (GrdRdpNetworkAutodetection *network_autodetection)
+{
+  if (is_active_high_nec_rtt_consumer (network_autodetection,
+                                       GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX))
+    return TRUE;
+
+  return FALSE;
+}
+
 static uint16_t
 get_next_free_sequence_number (GrdRdpNetworkAutodetection *network_autodetection)
 {
@@ -146,30 +157,26 @@ emit_ping (gpointer user_data)
 static void
 update_ping_source (GrdRdpNetworkAutodetection *network_autodetection)
 {
-  GrdRdpNwAutodetectRTTConsumer active_high_nec_rtt_consumers;
   PingInterval new_ping_interval_type;
   uint32_t ping_interval_ms;
 
-  active_high_nec_rtt_consumers = GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE;
-  if (is_active_high_nec_rtt_consumer (
-        network_autodetection, GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX))
-    active_high_nec_rtt_consumers |= GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX;
-
-  if (active_high_nec_rtt_consumers)
+  if (network_autodetection->rtt_consumers == GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE)
+    new_ping_interval_type = PING_INTERVAL_NONE;
+  else if (has_active_high_nec_rtt_consumers (network_autodetection))
     new_ping_interval_type = PING_INTERVAL_HIGH;
   else
     new_ping_interval_type = PING_INTERVAL_LOW;
 
-  if ((network_autodetection->rtt_consumers == GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE ||
-       network_autodetection->ping_interval != new_ping_interval_type) &&
+  if (network_autodetection->ping_interval != new_ping_interval_type &&
       network_autodetection->ping_source)
     {
       g_source_destroy (network_autodetection->ping_source);
       g_clear_pointer (&network_autodetection->ping_source, g_source_unref);
     }
 
-  if (network_autodetection->rtt_consumers == GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE ||
-      network_autodetection->ping_interval == new_ping_interval_type)
+  network_autodetection->ping_interval = new_ping_interval_type;
+
+  if (network_autodetection->ping_interval == PING_INTERVAL_NONE)
     return;
 
   g_assert (!network_autodetection->ping_source);
@@ -177,6 +184,8 @@ update_ping_source (GrdRdpNetworkAutodetection *network_autodetection)
 
   switch (new_ping_interval_type)
     {
+    case PING_INTERVAL_NONE:
+      g_assert_not_reached ();
     case PING_INTERVAL_HIGH:
       ping_interval_ms = PING_INTERVAL_HIGH_MS;
       break;
@@ -189,7 +198,6 @@ update_ping_source (GrdRdpNetworkAutodetection *network_autodetection)
   g_source_set_callback (network_autodetection->ping_source, emit_ping,
                          network_autodetection, NULL);
   g_source_attach (network_autodetection->ping_source, NULL);
-  network_autodetection->ping_interval = new_ping_interval_type;
 }
 
 void
@@ -430,6 +438,8 @@ grd_rdp_network_autodetection_finalize (GObject *object)
 static void
 grd_rdp_network_autodetection_init (GrdRdpNetworkAutodetection *network_autodetection)
 {
+  network_autodetection->ping_interval = PING_INTERVAL_NONE;
+
   network_autodetection->sequences = g_hash_table_new (NULL, NULL);
   network_autodetection->pings = g_queue_new ();
   network_autodetection->round_trip_times = g_queue_new ();
