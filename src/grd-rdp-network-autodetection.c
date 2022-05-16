@@ -217,6 +217,8 @@ void
 grd_rdp_network_autodetection_remove_rtt_consumer (GrdRdpNetworkAutodetection    *network_autodetection,
                                                    GrdRdpNwAutodetectRTTConsumer  rtt_consumer)
 {
+  g_assert (rtt_consumer != GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_NONE);
+
   g_mutex_lock (&network_autodetection->consumer_mutex);
   network_autodetection->rtt_consumers &= ~rtt_consumer;
 
