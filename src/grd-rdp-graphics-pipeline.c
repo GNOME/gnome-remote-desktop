@@ -37,6 +37,7 @@
 
 #define ENC_TIMES_CHECK_INTERVAL_MS 1000
 #define MAX_TRACKED_ENC_FRAMES 1000
+#define MIN_BW_MEASURE_SIZE (10 * 1024)
 
 typedef enum _HwAccelAPI
 {
@@ -509,6 +510,8 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
                             int64_t                *enc_time_us)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
+  GrdRdpNetworkAutodetection *network_autodetection =
+    graphics_pipeline->network_autodetection;
   GrdRdpGfxSurface *gfx_surface = rdp_surface->gfx_surface;
   GrdRdpGfxSurface *render_surface =
     grd_rdp_gfx_surface_get_render_surface (gfx_surface);
@@ -529,6 +532,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
   cairo_region_t *region;
   uint32_t surface_serial;
   int64_t enc_ack_time_us;
+  gboolean pending_bw_measure_stop = FALSE;
   int i;
 
   if (!rdp_surface->valid)
@@ -629,6 +633,13 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
     }
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
+  if (network_autodetection &&
+      (4 + avc420.meta.numRegionRects * 10 + avc420.length) >= MIN_BW_MEASURE_SIZE)
+    {
+      pending_bw_measure_stop =
+        grd_rdp_network_autodetection_try_bw_measure_start (network_autodetection);
+    }
+
   rdpgfx_context->StartFrame (rdpgfx_context, &cmd_start);
   rdpgfx_context->SurfaceCommand (rdpgfx_context, &cmd);
 
@@ -638,6 +649,9 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
                                region_rects, n_rects);
     }
   rdpgfx_context->EndFrame (rdpgfx_context, &cmd_end);
+
+  if (pending_bw_measure_stop)
+    grd_rdp_network_autodetection_queue_bw_measure_stop (network_autodetection);
 
   *enc_time_us = enc_ack_time_us;
 
@@ -788,6 +802,8 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
+  GrdRdpNetworkAutodetection *network_autodetection =
+    graphics_pipeline->network_autodetection;
   GrdRdpGfxSurface *gfx_surface = rdp_surface->gfx_surface;
   GrdRdpGfxFrameController *frame_controller =
     grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
@@ -808,6 +824,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   uint32_t codec_context_id;
   uint32_t surface_serial;
   int64_t enc_ack_time_us;
+  gboolean pending_bw_measure_stop = FALSE;
   int i;
 
   region = grd_rdp_damage_detector_get_damage_region (rdp_surface->detector);
@@ -910,8 +927,17 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
     }
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
+  if (network_autodetection && cmd.length >= MIN_BW_MEASURE_SIZE)
+    {
+      pending_bw_measure_stop =
+        grd_rdp_network_autodetection_try_bw_measure_start (network_autodetection);
+    }
+
   rdpgfx_context->SurfaceFrameCommand (rdpgfx_context, &cmd,
                                        &cmd_start, &cmd_end);
+
+  if (pending_bw_measure_stop)
+    grd_rdp_network_autodetection_queue_bw_measure_stop (network_autodetection);
 
   *enc_time_us = enc_ack_time_us;
 
