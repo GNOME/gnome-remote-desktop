@@ -53,4 +53,12 @@ void grd_rdp_network_autodetection_set_rtt_consumer_necessity (GrdRdpNetworkAuto
                                                                GrdRdpNwAutodetectRTTConsumer   rtt_consumer,
                                                                GrdRdpNwAutodetectRTTNecessity  rtt_necessity);
 
+gboolean grd_rdp_network_autodetection_try_bw_measure_start (GrdRdpNetworkAutodetection *network_autodetection);
+
+void grd_rdp_network_autodetection_bw_measure_stop (GrdRdpNetworkAutodetection *network_autodetection);
+
+void grd_rdp_network_autodetection_queue_bw_measure_stop (GrdRdpNetworkAutodetection *network_autodetection);
+
+HANDLE grd_rdp_network_autodetection_get_bw_measure_stop_event_handle (GrdRdpNetworkAutodetection *network_autodetection);
+
 #endif /* GRD_RDP_NETWORK_AUTODETECTION_H */
