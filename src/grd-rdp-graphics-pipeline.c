@@ -1425,9 +1425,11 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
   rdpgfx_context->rdpcontext = rdp_context;
   rdpgfx_context->custom = graphics_pipeline;
 
+  g_mutex_lock (&graphics_pipeline->gfx_mutex);
   if (rdp_context->settings->NetworkAutoDetect &&
       !graphics_pipeline->rtt_pause_source)
     ensure_rtt_receivement (graphics_pipeline);
+  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
   return graphics_pipeline;
 }
