@@ -2011,9 +2011,20 @@ socket_thread_func (gpointer data)
 
   while (TRUE)
     {
+      GrdRdpNetworkAutodetection *network_autodetection =
+        rdp_peer_context->network_autodetection;
+      gboolean pending_bw_measure_stop = FALSE;
+      HANDLE bw_measure_stop_event = NULL;
+
       n_events = 0;
 
       events[n_events++] = session_rdp->stop_event;
+      if (network_autodetection)
+        {
+          bw_measure_stop_event =
+            grd_rdp_network_autodetection_get_bw_measure_stop_event_handle (network_autodetection);
+          events[n_events++] = bw_measure_stop_event;
+        }
 
       n_freerdp_handles = peer->GetEventHandles (peer, &events[n_events],
                                                  32 - n_events);
@@ -2068,6 +2079,12 @@ socket_thread_func (gpointer data)
             break;
         }
 
+      if (bw_measure_stop_event)
+        {
+          pending_bw_measure_stop = WaitForSingleObject (bw_measure_stop_event,
+                                                         0) == WAIT_OBJECT_0;
+        }
+
       if (WaitForSingleObject (channel_event, 0) == WAIT_OBJECT_0 &&
           !WTSVirtualChannelManagerCheckFileDescriptor (vcm))
         {
@@ -2075,6 +2092,9 @@ socket_thread_func (gpointer data)
           handle_client_gone (session_rdp);
           break;
         }
+
+      if (pending_bw_measure_stop)
+        grd_rdp_network_autodetection_bw_measure_stop (network_autodetection);
     }
 
   if (session_rdp->hwaccel_nvidia)
