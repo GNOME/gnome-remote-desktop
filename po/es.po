@@ -10,8 +10,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-03-02 14:52+0000\n"
-"PO-Revision-Date: 2022-03-03 11:18+0100\n"
+"POT-Creation-Date: 2022-05-05 18:39+0000\n"
+"PO-Revision-Date: 2022-05-19 09:45+0200\n"
 "Last-Translator: Daniel Mustieles García <daniel.mustieles@gmail.com>\n"
 "Language-Team: Spanish - Spain <gnome-es-list@gnome.org>\n"
 "Language: es_ES\n"
@@ -19,9 +19,9 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"X-Generator: Gtranslator 41.0\n"
+"X-Generator: Gtranslator 42.0\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:480
 msgid "GNOME Remote Desktop"
 msgstr "Escritorio remoto GNOME"
 
@@ -144,8 +144,8 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "Indica si el «backend» de RDP está activado o no"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
-msgstr "Si es cierto se inicializará el «backend» de RDP"
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr "Si es cierto se inicializará el «backend» de RDP."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Screenshare mode of RDP connections"
@@ -215,8 +215,8 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "Indica si el «backend» de VNC está activado o no"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
-msgstr "Si es cierto se inicializará el «backend» de VNC"
+msgid "If set to 'true' the VNC backend will be initialized."
+msgstr "Si es cierto se inicializará el «backend» de VNC."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
