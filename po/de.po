@@ -9,18 +9,18 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2021-07-13 09:47+0000\n"
-"PO-Revision-Date: 2021-08-12 21:48+0200\n"
-"Last-Translator: Tim Sabsch <tim@sabsch.com>\n"
+"POT-Creation-Date: 2022-05-09 07:39+0000\n"
+"PO-Revision-Date: 2022-05-22 00:53+0200\n"
+"Last-Translator: Christian Kirbach <christian.kirbach@gmail.com>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.0.1\n"
 
-#: src/grd-daemon.c:351
+#: src/grd-daemon.c:480
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Remote Desktop"
 
@@ -46,12 +46,140 @@ msgstr "Abweisen"
 msgid "Accept"
 msgstr "Akzeptieren"
 
+#: src/grd-ctl.c:44
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "Aufruf: %s [OPTIONEN …] BEFEHL [UNTERBEFEHL] …\n"
+
+#: src/grd-ctl.c:383
+msgid "Commands:\n"
+msgstr "Befehle:\n"
+
+#: src/grd-ctl.c:388
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  rdp                                          - RDP-Unterbefehle:\n"
+"    enable                                     - RDP-Backend aktivieren\n"
+"    disable                                    - RDP-Backend deaktivieren\n"
+"    set-tls-cert <pfad-zu-zertifikat>          - Pfad zum TLS-Zertifikat "
+"festlegen\n"
+"    set-tls-key <pfad-zu-schlüssel>            - Pfad zum TLS-Schlüssel "
+"festlegen\n"
+"    set-credentials <Benutzername> <Passwort>  - Nutzername und Passwort "
+"festlegen\n"
+"    clear-credentials                          - Nutzername und Passwort "
+"löschen\n"
+"    enable-view-only                           - Fernsteuerung mittels "
+"Eingabegeräten deaktivieren\n"
+"    disable-view-only                          - Fernsteuerung mittels "
+"Eingabegeräten aktivieren\n"
+"\n"
+
+#: src/grd-ctl.c:407
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  vnc                                        - VNC-Unterbefehle:\n"
+"    enable                                   - VNC-Backend aktivieren\n"
+"    disable                                  - VNC-Backend deaktivieren\n"
+"    set-password <Passwort>                  - VNC-Passwort festlegen\n"
+"    clear-password                           - VNC-Passwort löschen\n"
+"    set-auth-method password|prompt          - Authentifizierungsmethode "
+"festlegen\n"
+"    enable-view-only                         - Fernsteuerung von "
+"Eingabegeräten deaktivieren\n"
+"    disable-view-only                        - Fernsteuerung von "
+"Eingabegeräten aktivieren\n"
+"\n"
+
+#: src/grd-ctl.c:422
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  status [--show-credentials]                - Aktuellen Status anzeigen\n"
+"\n"
+"Optionen:\n"
+"  --help                                     - Diesen Hilfetext anzeigen\n"
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "Legt fest, ob das RDP-Backend aktiviert ist oder nicht"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to to 'true' the RDP backend will be initialized."
+msgstr "Wenn »wahr«, wird das RDP-Backend initialisiert."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "Art der Bildschirmfreigabe bei RDP-Verbindungen"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Control Channel Extension "
+"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"Die Art der Bildschirmfreigabe legt fest, ob das RDB-Backend den primären "
+"Bildschirm spiegelt, oder ob ein virtueller Monitor erstellt wird. Das RDP-"
+"Backend verwendet für die anfängliche Auflösung des virtuellen Monitors "
+"entweder die Client Kerndaten ([MS-RDPBCGR] 2.2.1.3.2), oder die Client "
+"Monitor-Daten ([MS-RDPBCGR] 2.2.1.3.6), je nachdem was verfügbar ist. Bei "
+"Einsatz einer Freigabesitzung mit virtuellem Monitor können Clients die "
+"Auflösung des virtuellen Monitors wärhend einer Sitzung mit der Display "
+"Control Channel Erweiterung anpassen ([MS-RDPEDISP]). Mögliche Arten der "
+"Bildschirmfreigabe sind:\n"
+"* mirror-primary - Den primären Bildschirm der aktuellen Benutzersitzung "
+"aufnehmen.\n"
+"* extend         - Einen neuen virtuellen Monitor erstellen und für die "
+"Freigabesitzung verwenden. Die Auflösung der Monitors wird von der "
+"Monitorkonfiguration abgeleitet, die vom Client übermittelt wurde."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
 msgstr "Pfad zur Zertifikatsdatei"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -60,17 +188,17 @@ msgstr ""
 "Schlüsseldatei als auch die Zertifikatsdatei dem RDP-Server bereitgestellt "
 "werden."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
 msgid "Path to the private key file"
 msgstr "Pfad zur privaten Schlüsseldatei"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid "Only allow remote connections to view the screen content"
 msgstr ""
 "Entfernten Verbindungen lediglich das Ansehen des Bildschirminhalts erlauben"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -78,7 +206,15 @@ msgstr ""
 "Wenn »Nur ansehen« wahr ist, können entfernte RDP-Verbindungen keine "
 "Eingabegeräte manipulieren (z.B. Maus und Tastatur)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "Legt fest, ob das VNC-Backend aktiviert ist oder nicht"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to to 'true' the VNC backend will be initialized."
+msgstr "Wenn »wahr«, wird das VNC-Backend initialisiert."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -86,11 +222,11 @@ msgstr ""
 "Wenn »Nur ansehen« wahr ist, können entfernte VNC-Verbindungen keine "
 "Eingabegeräte manipulieren (z.B. Maus und Tastatur)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
 msgid "Method used to authenticate VNC connections"
 msgstr "Zur Authentifizierung von VNC-Verbindungen genutzte Methode"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
