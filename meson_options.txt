@@ -3,6 +3,11 @@ option('man',
        value: true,
        description: 'Generate man pages')
 
+option('fdk_aac',
+       type: 'boolean',
+       value: true,
+       description: 'Audio output redirection for the RDP backend')
+
 option('rdp',
        type: 'boolean',
        value: true,

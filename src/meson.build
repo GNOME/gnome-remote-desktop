@@ -66,6 +66,8 @@ if have_rdp
     'grd-rdp-damage-detector-memcmp.h',
     'grd-rdp-display-control.c',
     'grd-rdp-display-control.h',
+    'grd-rdp-dsp.c',
+    'grd-rdp-dsp.h',
     'grd-rdp-event-queue.c',
     'grd-rdp-event-queue.h',
     'grd-rdp-frame-info.h',
@@ -106,6 +108,12 @@ if have_rdp
     winpr_dep,
     xkbcommon_dep,
   ]
+
+  if (have_fdk_aac)
+    deps += [
+      fdk_aac_dep,
+    ]
+  endif
 endif
 
 if have_vnc

@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora:35@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 36
-    BASE_TAG: '2022-07-28.2'
+    BASE_TAG: '2022-07-28.3'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -23,6 +23,7 @@ stages:
                      'pkgconfig(gudev-1.0)' &&
       dnf install -y 'pkgconfig(ffnvcodec)' &&
       dnf install -y 'pkgconfig(fuse3)' &&
+      dnf install -y 'pkgconfig(fdk-aac)' &&
       dnf install -y asciidoc &&
 
       # To test
