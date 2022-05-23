@@ -9,18 +9,18 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2022-02-26 09:20+0800\n"
+"POT-Creation-Date: 2022-05-05 18:39+0000\n"
+"PO-Revision-Date: 2022-05-22 09:19+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese - China <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Gtranslator 41.0\n"
+"X-Generator: Gtranslator 42.0\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:480
 msgid "GNOME Remote Desktop"
 msgstr "GNOME 远程桌面"
 
@@ -132,7 +132,7 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "RDP 后端是否已启用"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "如果设置为“true”则 RDP 后端将初始化。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
@@ -195,7 +195,7 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "VNC 后端是否已启用"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "如果设置为“true”则 VNC 后端将初始化。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
