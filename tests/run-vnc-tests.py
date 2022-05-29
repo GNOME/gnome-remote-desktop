@@ -21,7 +21,6 @@ vnc_client_failed = None
 vnc_server_failed = None
 
 os.environ['GNOME_REMOTE_DESKTOP_TEST_VNC_PASSWORD'] = 'secret'
-os.environ['MUTTER_DEBUG_DUMMY_MODE_SPECS'] = '1024x768'
 
 def run_vnc_test_client():
   print("Running VNC test client")
@@ -70,7 +69,8 @@ def remote_desktop_name_appeared_cb(name):
 def start_mutter():
   global mutter
   print("Starting mutter")
-  mutter = subprocess.Popen(['mutter', '--nested', '--wayland'],
+  mutter = subprocess.Popen(['mutter', '--headless', '--wayland', '--no-x11',
+                             '--virtual-monitor', '1024x768'],
                             stderr=subprocess.STDOUT)
 
 def stop_mutter():
