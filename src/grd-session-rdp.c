@@ -650,6 +650,23 @@ grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
   maybe_queue_close_session_idle (session_rdp);
 }
 
+void
+grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
+                                   GrdRdpChannel  channel)
+{
+  freerdp_peer *peer = session_rdp->peer;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+
+  g_mutex_lock (&rdp_peer_context->channel_mutex);
+  switch (channel)
+    {
+    case GRD_RDP_CHANNEL_NONE:
+      g_assert_not_reached ();
+      break;
+    }
+  g_mutex_unlock (&rdp_peer_context->channel_mutex);
+}
+
 static void
 handle_client_gone (GrdSessionRdp *session_rdp)
 {
@@ -1827,6 +1844,8 @@ rdp_peer_context_free (freerdp_peer   *peer,
     }
 
   g_clear_pointer (&rdp_peer_context->rfx_context, rfx_context_free);
+
+  g_mutex_clear (&rdp_peer_context->channel_mutex);
 }
 
 static BOOL
@@ -1837,10 +1856,13 @@ rdp_peer_context_new (freerdp_peer   *peer,
 
   rdp_peer_context->frame_id = 0;
 
+  g_mutex_init (&rdp_peer_context->channel_mutex);
+
   rdp_peer_context->rfx_context = rfx_context_new (TRUE);
   if (!rdp_peer_context->rfx_context)
     {
       g_warning ("[RDP] Failed to create RFX context");
+      rdp_peer_context_free (peer, rdp_peer_context);
       return FALSE;
     }
   rfx_context_set_pixel_format (rdp_peer_context->rfx_context,
@@ -1994,7 +2016,6 @@ socket_thread_func (gpointer data)
   GrdSessionRdp *session_rdp = data;
   freerdp_peer *peer;
   RdpPeerContext *rdp_peer_context;
-  rdpSettings *rdp_settings;
   HANDLE vcm;
   HANDLE channel_event;
   HANDLE events[32];
@@ -2006,7 +2027,6 @@ socket_thread_func (gpointer data)
 
   peer = session_rdp->peer;
   rdp_peer_context = (RdpPeerContext *) peer->context;
-  rdp_settings = peer->settings;
   vcm = rdp_peer_context->vcm;
   channel_event = WTSVirtualChannelManagerGetEventHandle (vcm);
 
@@ -2066,13 +2086,13 @@ socket_thread_func (gpointer data)
               SetEvent (channel_event);
               break;
             case DRDYNVC_STATE_READY:
+              g_mutex_lock (&rdp_peer_context->channel_mutex);
               graphics_pipeline = rdp_peer_context->graphics_pipeline;
               display_control = rdp_peer_context->display_control;
 
-              if (rdp_settings->SupportGraphicsPipeline)
-                grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
-
+              grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
               grd_rdp_display_control_maybe_init (display_control);
+              g_mutex_unlock (&rdp_peer_context->channel_mutex);
               break;
             }
 

@@ -40,12 +40,20 @@ typedef enum _GrdSessionRdpError
   GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED,
 } GrdSessionRdpError;
 
+typedef enum _GrdRdpChannel
+{
+  GRD_RDP_CHANNEL_NONE,
+} GrdRdpChannel;
+
 GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                     GSocketConnection *connection,
                                     GrdHwAccelNvidia  *hwaccel_nvidia);
 
 void grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
                                    GrdSessionRdpError  error_info);
+
+void grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
+                                        GrdRdpChannel  channel);
 
 void grd_session_rdp_submit_new_monitor_config (GrdSessionRdp       *session_rdp,
                                                 GrdRdpMonitorConfig *new_monitor_config);
