@@ -1,0 +1,239 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2022-05-10 16:53+0000\n"
+"PO-Revision-Date: 2022-05-13 06:48+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <(nothing)>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.0.1\n"
+
+#: src/grd-daemon.c:480
+msgid "GNOME Remote Desktop"
+msgstr "GNOME Remote Desktop"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "გნებავთ თქვენი სამუშაო მაგიდის გაზიარება?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"მომხმარებელი კომპიუტერიდან '%s' ცდილობს შორიდან ნახოს ან მართოს თქვენი "
+"სამუშაო მაგიდა."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "უარყოფა"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "დასტური"
+
+#: src/grd-ctl.c:44
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "გამოყენება: %s [პარამეტრები...] ბრძანება [ქვებრძანება]...\n"
+
+#: src/grd-ctl.c:383
+msgid "Commands:\n"
+msgstr "ბრძანებები:\n"
+
+#: src/grd-ctl.c:388
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+" rdp                                          - RDP-ის ქვებრძანებები:\n"
+"   enable                                   - RDP-ის უკანაბოლოს ჩართვა\n"
+"   disable                                  - RDP-ის უკანაბოლოს გამორთვა\n"
+"   set-tls-cert <path-to-cert>                            - ბილიკი TLS "
+"სერტიფიკატის ფაილამდე\n"
+"   set-tls-key  <path-to-key>                            - ბილიკი TLS "
+"სერტიფიკატის გასაღებამდე\n"
+"   set-credentials <username> <password>    - მომხმარებლისა და პაროლის "
+"დაყენება\n"
+"                                             მომხმარებელი და პაროლი\n"
+"   clear-credentials                                              - "
+"მომხმარებლისა და პაროლის წაშლა\n"
+"   enable-view-only                  დაშორებული მომხმარებლისთვის ლოკალური "
+"მოწყობილობების\n"
+"                                                 მართვა\n"
+"   disable-view-obly                                            - ლოკალური "
+"მოწყობილობების\n"
+"                                                                            მართვის "
+"უფლების მიცემა\n"
+"\n"
+
+#: src/grd-ctl.c:407
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - VNC-ის ქვებრძანებები\n"
+"    set-password <password>                  - VNC პაროლის დაყენება\n"
+"    clear-password                           - VNC პაროლის გასუფთავება\n"
+"    set-auth-method password|prompt          - აირჩიეთ ავტორიზაციის მეთოდი\n"
+"    enable-view-only                         - მოწყობილობების დაშორებული "
+"მართვის\n"
+"                                               გამორთვა\n"
+"    disable-view-only                        - შეყვანის ლოკალური "
+"მოწყობილობების კონტროლის\n"
+"                                               უფლების მიცემა\n"
+"\n"
+
+#: src/grd-ctl.c:422
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  სტატუსი [--show-credentials]                - მიმდინარე სტატუსის ჩვენება\n"
+"\n"
+"პარამეტრები:\n"
+"  --help                                     - ამ ტექსტის ჩვენება\n"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "ჩართულია RDP უკანა ბოლო თუ არა"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr "თუ ჩართულია, გამოყენებული იქნება RDP უკანაბოლო."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "RDP შეერთების ეკრანის გაზიარების რეჟიმი"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Control Channel Extension "
+"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"ეკრანის გაზიარების მეთოდი მიუთითებს, RDP უკანაბოლო ძირითადი ეკრანის "
+"სარკისებურ ასლს იღებს თუ ახალი ვირტუალური ეკრანი იქმნება. ვირტუალური "
+"მონიტორის საწყისი გაფართოებისთვის RDP უკანაბოლო ან კლიენტის ბირთვის "
+"მონაცემებს იყენებს ([MS-RDPBCGR] 2.2.1.3.2), ან კლიენტის მონიტორის "
+"მონაცემებს ([MS-RDPBCGR] 2.2.1.3.6), ხელმისაწვდომობის მიხედვით. თუ RDP_ს "
+"ვირტუალური მონიტორით იყენებთ, კლიენტებს ვირტუალური მონიტორის ზომის შეცვლაც "
+"შეიძლიათ ([MS-RDPEDISP]). ეკრანის გაზიარების რეჟიმებია: * mirror-primary "
+"მიმდინარე მომხმარებლის ძირითადი ეკრანის ჩაწერა. * გაფართოება - დაშორებული "
+"სამუშაო მაგიდის სესიისთვის ახალი ვირტუალური მონიტორის შექმნა. გაფართოება "
+"მიიღება მონიტორის კონფიგურაციიდან, რომელიც კლიენტის მიერ იქნა მოწოდებული."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Path to the certificate file"
+msgstr "ბილიკი სერტიფიკატის ფაილამდე"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"RDP-ის TLS უსაფრთხოების გამოსაყენებლად ორივე, პირადი გასაღების და "
+"სერტიფიკატის ფაილის მითითებაა საჭირო."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+msgid "Path to the private key file"
+msgstr "ბილიკი პირადი გასაღების ფაილამდე"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+msgid "Only allow remote connections to view the screen content"
+msgstr "დაშორებული შეერთებებისთვის ეკრანის მხოლოდ ნახვის უფლების მიცემა"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"როცა ჩართულია მხოლოდ თვალიერების რეჟიმი, RDP შეერთებების შეყვანის ლოკალური "
+"მოწყობილობების კონტროლი არ შეუძლიათ (თაგუნა, კლავიატურა)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "ჩართულია VNC-ის უკანაბოლო თუ არა"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to 'true' the VNC backend will be initialized."
+msgstr "თუ ჩართულია, გამოყენებული იქნება VNC უკანაბოლო."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"როცა ჩართულია მხოლოდ თვალიერების რეჟიმი, VNC შეერთებების შეყვანის ლოკალური "
+"მოწყობილობების კონტროლი არ შეუძლიათ (თაგუნა, კლავიატურა)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+msgid "Method used to authenticate VNC connections"
+msgstr "VNC შეერთებების ავთენტიკაციის მეთოდი"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"VNC ავთენტიფიკაციის მეთოდი აღწერს, თუ როგორ ხდება დაშორებული კავშირის "
+"ავტორიზაცია. ამჟამად ეს შეიძლება გაკეთდეს ორი განსხვავებული გზით: * მოწოდება "
+"- მომხმარებლის მოთხოვნით ყოველი ახალი კავშირის შესახებ, სამუშაო სადგურზე "
+"ფიზიკური წვდომის მქონე პირისგან ახალი კავშირის ცალსახად დამტკიცების "
+"მოთხოვნას. * პაროლი - დისტანციური კლიენტისგან ცნობილი პაროლის მოთხოვნით"
