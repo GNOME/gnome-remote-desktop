@@ -44,6 +44,7 @@
 #include "grd-rdp-sam.h"
 #include "grd-rdp-server.h"
 #include "grd-rdp-surface.h"
+#include "grd-rdp-telemetry.h"
 #include "grd-settings.h"
 #include "grd-stream.h"
 
@@ -793,6 +794,7 @@ grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
       g_clear_object (&rdp_peer_context->audio_playback);
       break;
     case GRD_RDP_CHANNEL_TELEMETRY:
+      g_clear_object (&rdp_peer_context->telemetry);
       break;
     }
   g_mutex_unlock (&rdp_peer_context->channel_mutex);
@@ -1909,6 +1911,11 @@ rdp_peer_post_connect (freerdp_peer *peer)
     {
       set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
 
+      rdp_peer_context->telemetry =
+        grd_rdp_telemetry_new (session_rdp,
+                               rdp_peer_context->vcm,
+                               session_rdp->stop_event,
+                               peer->context);
       rdp_peer_context->graphics_pipeline =
         grd_rdp_graphics_pipeline_new (session_rdp,
                                        session_rdp->graphics_context,
@@ -2272,6 +2279,7 @@ socket_thread_func (gpointer data)
 
       if (WTSVirtualChannelManagerIsChannelJoined (vcm, "drdynvc"))
         {
+          GrdRdpTelemetry *telemetry;
           GrdRdpGraphicsPipeline *graphics_pipeline;
           GrdRdpAudioPlayback *audio_playback;
           GrdRdpDisplayControl *display_control;
@@ -2287,10 +2295,13 @@ socket_thread_func (gpointer data)
               break;
             case DRDYNVC_STATE_READY:
               g_mutex_lock (&rdp_peer_context->channel_mutex);
+              telemetry = rdp_peer_context->telemetry;
               graphics_pipeline = rdp_peer_context->graphics_pipeline;
               audio_playback = rdp_peer_context->audio_playback;
               display_control = rdp_peer_context->display_control;
 
+              if (telemetry)
+                grd_rdp_telemetry_maybe_init (telemetry);
               if (graphics_pipeline)
                 grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
               if (audio_playback)
@@ -2481,6 +2492,7 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_object (&rdp_peer_context->audio_playback);
   g_clear_object (&rdp_peer_context->display_control);
   g_clear_object (&rdp_peer_context->graphics_pipeline);
+  g_clear_object (&rdp_peer_context->telemetry);
 
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
   clear_session_sources (session_rdp);
