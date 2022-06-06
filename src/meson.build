@@ -113,6 +113,8 @@ if have_rdp
     'grd-rdp-server.h',
     'grd-rdp-surface.c',
     'grd-rdp-surface.h',
+    'grd-rdp-telemetry.c',
+    'grd-rdp-telemetry.h',
     'grd-session-rdp.c',
     'grd-session-rdp.h',
   ])
