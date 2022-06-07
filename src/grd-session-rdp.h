@@ -45,12 +45,24 @@ typedef enum _GrdRdpChannel
   GRD_RDP_CHANNEL_NONE,
 } GrdRdpChannel;
 
+typedef void (* GrdRdpDVCCreationStatusCallback) (gpointer user_data,
+                                                  int32_t  creation_status);
+
 GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                     GSocketConnection *connection,
                                     GrdHwAccelNvidia  *hwaccel_nvidia);
 
 void grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
                                    GrdSessionRdpError  error_info);
+
+uint32_t grd_session_rdp_subscribe_dvc_creation_status (GrdSessionRdp                   *session_rdp,
+                                                        uint32_t                         channel_id,
+                                                        GrdRdpDVCCreationStatusCallback  callback,
+                                                        gpointer                         callback_user_data);
+
+void grd_session_rdp_unsubscribe_dvc_creation_status (GrdSessionRdp *session_rdp,
+                                                      uint32_t       channel_id,
+                                                      uint32_t       subscription_id);
 
 void grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
                                         GrdRdpChannel  channel);
