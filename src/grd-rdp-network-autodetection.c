@@ -303,14 +303,17 @@ void
 grd_rdp_network_autodetection_bw_measure_stop (GrdRdpNetworkAutodetection *network_autodetection)
 {
   rdpAutoDetect *rdp_autodetect = network_autodetection->rdp_autodetect;
+  g_autoptr (GMutexLocker) locker = NULL;
 
-  g_mutex_lock (&network_autodetection->bw_measure_mutex);
-  g_assert (network_autodetection->bw_measure_state == BW_MEASURE_STATE_PENDING_STOP ||
-            network_autodetection->bw_measure_state == BW_MEASURE_STATE_QUEUED_STOP);
-
+  locker = g_mutex_locker_new (&network_autodetection->bw_measure_mutex);
   ResetEvent (network_autodetection->bw_measure_stop_event);
+
+  if (network_autodetection->bw_measure_state != BW_MEASURE_STATE_PENDING_STOP &&
+      network_autodetection->bw_measure_state != BW_MEASURE_STATE_QUEUED_STOP)
+    return;
+
   network_autodetection->bw_measure_state = BW_MEASURE_STATE_PENDING_RESULTS;
-  g_mutex_unlock (&network_autodetection->bw_measure_mutex);
+  g_clear_pointer (&locker, g_mutex_locker_free);
 
   rdp_autodetect->BandwidthMeasureStop (network_autodetection->rdp_context,
                                         BW_MEASURE_SEQUENCE_NUMBER);
