@@ -32,10 +32,77 @@ struct _GrdRdpDisplayControl
   gboolean channel_opened;
   gboolean channel_unavailable;
 
+  uint32_t channel_id;
+  uint32_t dvc_subscription_id;
+  gboolean subscribed_status;
+
   GrdSessionRdp *session_rdp;
+
+  GSource *channel_teardown_source;
 };
 
 G_DEFINE_TYPE (GrdRdpDisplayControl, grd_rdp_display_control, G_TYPE_OBJECT)
+
+void
+grd_rdp_display_control_maybe_init (GrdRdpDisplayControl *display_control)
+{
+  DispServerContext *disp_context;
+
+  if (display_control->channel_opened || display_control->channel_unavailable)
+    return;
+
+  if (WaitForSingleObject (display_control->stop_event, 0) == WAIT_OBJECT_0)
+    return;
+
+  disp_context = display_control->disp_context;
+  if (disp_context->Open (disp_context))
+    {
+      g_warning ("[RDP.DISP] Failed to open channel. Terminating protocol");
+      display_control->channel_unavailable = TRUE;
+      g_source_set_ready_time (display_control->channel_teardown_source, 0);
+      return;
+    }
+  display_control->channel_opened = TRUE;
+}
+
+static void
+dvc_creation_status (gpointer user_data,
+                     int32_t  creation_status)
+{
+  GrdRdpDisplayControl *display_control = user_data;
+  DispServerContext *disp_context = display_control->disp_context;
+
+  if (creation_status < 0)
+    {
+      g_debug ("[RDP.DISP] Failed to open channel (CreationStatus %i). "
+               "Terminating protocol", creation_status);
+      g_source_set_ready_time (display_control->channel_teardown_source, 0);
+      return;
+    }
+
+  g_debug ("[RDP.DISP] Channel opened successfully. "
+           "Ready for receiving new monitor layouts");
+  disp_context->DisplayControlCaps (disp_context);
+}
+
+static BOOL
+disp_channel_id_assigned (DispServerContext *disp_context,
+                          uint32_t           channel_id)
+{
+  GrdRdpDisplayControl *display_control = disp_context->custom;
+
+  g_debug ("[RDP.DISP] DVC channel id assigned to id %u", channel_id);
+  display_control->channel_id = channel_id;
+
+  display_control->dvc_subscription_id =
+    grd_session_rdp_subscribe_dvc_creation_status (display_control->session_rdp,
+                                                   channel_id,
+                                                   dvc_creation_status,
+                                                   display_control);
+  display_control->subscribed_status = TRUE;
+
+  return TRUE;
+}
 
 static uint32_t
 disp_monitor_layout (DispServerContext                        *disp_context,
@@ -68,32 +135,6 @@ disp_monitor_layout (DispServerContext                        *disp_context,
   return CHANNEL_RC_OK;
 }
 
-void
-grd_rdp_display_control_maybe_init (GrdRdpDisplayControl *display_control)
-{
-  DispServerContext *disp_context;
-
-  if (display_control->channel_opened || display_control->channel_unavailable)
-    return;
-
-  if (WaitForSingleObject (display_control->stop_event, 0) == WAIT_OBJECT_0)
-    return;
-
-  disp_context = display_control->disp_context;
-  if (disp_context->Open (disp_context))
-    {
-      g_warning ("[RDP.DISP] An error occurred while opening the DISP channel.");
-      display_control->channel_unavailable = TRUE;
-      return;
-    }
-
-  g_debug ("[RDP.DISP] Channel opened successfully. "
-           "Ready for receiving new monitor layouts");
-  disp_context->DisplayControlCaps (disp_context);
-
-  display_control->channel_opened = TRUE;
-}
-
 GrdRdpDisplayControl *
 grd_rdp_display_control_new (GrdSessionRdp *session_rdp,
                              HANDLE         vcm,
@@ -116,6 +157,7 @@ grd_rdp_display_control_new (GrdSessionRdp *session_rdp,
   disp_context->MaxMonitorAreaFactorA = 8192;
   disp_context->MaxMonitorAreaFactorB = 8192;
 
+  disp_context->ChannelIdAssigned = disp_channel_id_assigned;
   disp_context->DispMonitorLayout = disp_monitor_layout;
   disp_context->custom = display_control;
 
@@ -132,15 +174,66 @@ grd_rdp_display_control_dispose (GObject *object)
       display_control->disp_context->Close (display_control->disp_context);
       display_control->channel_opened = FALSE;
     }
+  if (display_control->subscribed_status)
+    {
+      grd_session_rdp_unsubscribe_dvc_creation_status (display_control->session_rdp,
+                                                       display_control->channel_id,
+                                                       display_control->dvc_subscription_id);
+      display_control->subscribed_status = FALSE;
+    }
+
+  if (display_control->channel_teardown_source)
+    {
+      g_source_destroy (display_control->channel_teardown_source);
+      g_clear_pointer (&display_control->channel_teardown_source, g_source_unref);
+    }
 
   g_clear_pointer (&display_control->disp_context, disp_server_context_free);
 
   G_OBJECT_CLASS (grd_rdp_display_control_parent_class)->dispose (object);
 }
 
+static gboolean
+tear_down_channel (gpointer user_data)
+{
+  GrdRdpDisplayControl *display_control = user_data;
+
+  g_debug ("[RDP.DISP] Tearing down channel");
+
+  g_clear_pointer (&display_control->channel_teardown_source, g_source_unref);
+
+  grd_session_rdp_tear_down_channel (display_control->session_rdp,
+                                     GRD_RDP_CHANNEL_DISPLAY_CONTROL);
+
+  return G_SOURCE_REMOVE;
+}
+
+static gboolean
+source_dispatch (GSource     *source,
+                 GSourceFunc  callback,
+                 gpointer     user_data)
+{
+  g_source_set_ready_time (source, -1);
+
+  return callback (user_data);
+}
+
+static GSourceFuncs source_funcs =
+{
+  .dispatch = source_dispatch,
+};
+
 static void
 grd_rdp_display_control_init (GrdRdpDisplayControl *display_control)
 {
+  GSource *channel_teardown_source;
+
+  channel_teardown_source = g_source_new (&source_funcs, sizeof (GSource));
+  g_source_set_callback (channel_teardown_source, tear_down_channel,
+                         display_control, NULL);
+  g_source_set_ready_time (channel_teardown_source, -1);
+  g_source_attach (channel_teardown_source, NULL);
+  display_control->channel_teardown_source = channel_teardown_source;
 }
 
 static void
