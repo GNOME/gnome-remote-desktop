@@ -123,6 +123,7 @@ struct _GrdSessionRdp
   GrdRdpSAMFile *sam_file;
   uint32_t rdp_error_info;
   GrdRdpScreenShareMode screen_share_mode;
+  gboolean session_stopped;
 
   GMutex rdp_flags_mutex;
   RdpPeerFlag rdp_flags;
@@ -2111,7 +2112,7 @@ graphics_thread_func (gpointer data)
   if (session_rdp->hwaccel_nvidia)
     grd_hwaccel_nvidia_push_cuda_context (session_rdp->hwaccel_nvidia);
 
-  while (WaitForSingleObject (session_rdp->stop_event, 0) == WAIT_TIMEOUT)
+  while (!session_rdp->session_stopped)
     g_main_context_iteration (session_rdp->graphics_context, TRUE);
 
   if (session_rdp->hwaccel_nvidia)
@@ -2202,6 +2203,8 @@ grd_session_rdp_stop (GrdSession *session)
   g_debug ("Stopping RDP session");
 
   unset_rdp_peer_flag (session_rdp, RDP_PEER_ACTIVATED);
+  session_rdp->session_stopped = TRUE;
+
   if (WaitForSingleObject (session_rdp->stop_event, 0) == WAIT_TIMEOUT)
     {
       freerdp_set_error_info (peer->context->rdp,
@@ -2222,12 +2225,8 @@ grd_session_rdp_stop (GrdSession *session)
 
   if (session_rdp->graphics_thread)
     {
-      uint32_t status;
-
       g_assert (session_rdp->graphics_context);
-
-      status = WaitForSingleObject (session_rdp->stop_event, 0);
-      g_assert (status != WAIT_TIMEOUT);
+      g_assert (session_rdp->session_stopped);
 
       g_main_context_wakeup (session_rdp->graphics_context);
       g_clear_pointer (&session_rdp->graphics_thread, g_thread_join);
