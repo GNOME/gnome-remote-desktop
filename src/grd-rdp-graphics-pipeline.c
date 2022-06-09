@@ -1143,15 +1143,16 @@ rdpgfx_channel_id_assigned (RdpgfxServerContext *rdpgfx_context,
 
 static uint32_t cap_list[] =
 {
-  RDPGFX_CAPVERSION_106,
-  RDPGFX_CAPVERSION_105,
-  RDPGFX_CAPVERSION_104,
-  RDPGFX_CAPVERSION_103,
-  RDPGFX_CAPVERSION_102,
-  RDPGFX_CAPVERSION_101,
-  RDPGFX_CAPVERSION_10,
-  RDPGFX_CAPVERSION_81,
-  RDPGFX_CAPVERSION_8,
+  RDPGFX_CAPVERSION_107, /* [MS-RDPEGFX] 2.2.3.10 */
+  RDPGFX_CAPVERSION_106, /* [MS-RDPEGFX] 2.2.3.9 */
+  RDPGFX_CAPVERSION_105, /* [MS-RDPEGFX] 2.2.3.8 */
+  RDPGFX_CAPVERSION_104, /* [MS-RDPEGFX] 2.2.3.7 */
+  RDPGFX_CAPVERSION_103, /* [MS-RDPEGFX] 2.2.3.6 */
+  RDPGFX_CAPVERSION_102, /* [MS-RDPEGFX] 2.2.3.5 */
+  RDPGFX_CAPVERSION_101, /* [MS-RDPEGFX] 2.2.3.4 */
+  RDPGFX_CAPVERSION_10,  /* [MS-RDPEGFX] 2.2.3.3 */
+  RDPGFX_CAPVERSION_81,  /* [MS-RDPEGFX] 2.2.3.2 */
+  RDPGFX_CAPVERSION_8,   /* [MS-RDPEGFX] 2.2.3.1 */
 };
 
 static gboolean
@@ -1193,6 +1194,7 @@ cap_sets_would_disable_avc (RDPGFX_CAPSET *cap_sets,
 
               switch (cap_sets[j].version)
                 {
+                case RDPGFX_CAPVERSION_107:
                 case RDPGFX_CAPVERSION_106:
                 case RDPGFX_CAPVERSION_105:
                 case RDPGFX_CAPVERSION_104:
@@ -1640,6 +1642,8 @@ rdpgfx_caps_version_to_string (uint32_t caps_version)
 {
   switch (caps_version)
     {
+    case RDPGFX_CAPVERSION_107:
+      return "RDPGFX_CAPVERSION_107";
     case RDPGFX_CAPVERSION_106:
       return "RDPGFX_CAPVERSION_106";
     case RDPGFX_CAPVERSION_105:
@@ -1684,6 +1688,7 @@ test_caps_version (GrdRdpGraphicsPipeline *graphics_pipeline,
 
           switch (caps_version)
             {
+            case RDPGFX_CAPVERSION_107:
             case RDPGFX_CAPVERSION_106:
             case RDPGFX_CAPVERSION_105:
             case RDPGFX_CAPVERSION_104:
