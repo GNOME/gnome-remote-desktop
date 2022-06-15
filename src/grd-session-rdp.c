@@ -34,6 +34,7 @@
 #include "grd-rdp-cursor-renderer.h"
 #include "grd-rdp-dvc-audio-input.h"
 #include "grd-rdp-dvc-audio-playback.h"
+#include "grd-rdp-dvc-camera-enumerator.h"
 #include "grd-rdp-dvc-display-control.h"
 #include "grd-rdp-dvc-graphics-pipeline.h"
 #include "grd-rdp-dvc-handler.h"
@@ -489,6 +490,7 @@ grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
       g_assert_not_reached ();
       break;
     case GRD_RDP_CHANNEL_CAMERA_ENUMERATOR:
+      g_clear_object (&rdp_peer_context->camera_enumerator);
       break;
     case GRD_RDP_CHANNEL_DISPLAY_CONTROL:
       g_clear_object (&rdp_peer_context->display_control);
@@ -1466,6 +1468,7 @@ socket_thread_func (gpointer data)
           GrdRdpDvcAudioPlayback *audio_playback;
           GrdRdpDvcDisplayControl *display_control;
           GrdRdpDvcAudioInput *audio_input;
+          GrdRdpDvcCameraEnumerator *camera_enumerator;
 
           switch (WTSVirtualChannelManagerGetDrdynvcState (vcm))
             {
@@ -1484,6 +1487,7 @@ socket_thread_func (gpointer data)
               audio_playback = rdp_peer_context->audio_playback;
               display_control = rdp_peer_context->display_control;
               audio_input = rdp_peer_context->audio_input;
+              camera_enumerator = rdp_peer_context->camera_enumerator;
 
               if (telemetry && !session_rdp->session_should_stop)
                 grd_rdp_dvc_maybe_init (GRD_RDP_DVC (telemetry));
@@ -1497,6 +1501,8 @@ socket_thread_func (gpointer data)
                 grd_rdp_dvc_maybe_init (GRD_RDP_DVC (display_control));
               if (audio_input && !session_rdp->session_should_stop)
                 grd_rdp_dvc_maybe_init (GRD_RDP_DVC (audio_input));
+              if (camera_enumerator && !session_rdp->session_should_stop)
+                grd_rdp_dvc_maybe_init (GRD_RDP_DVC (camera_enumerator));
               g_mutex_unlock (&rdp_peer_context->channel_mutex);
               break;
             }
@@ -1654,6 +1660,7 @@ grd_session_rdp_stop (GrdSession *session)
   grd_rdp_renderer_invoke_shutdown (session_rdp->renderer);
 
   g_mutex_lock (&rdp_peer_context->channel_mutex);
+  g_clear_object (&rdp_peer_context->camera_enumerator);
   g_clear_object (&rdp_peer_context->audio_input);
   g_clear_object (&rdp_peer_context->clipboard_rdp);
   g_clear_object (&rdp_peer_context->audio_playback);
@@ -1782,6 +1789,10 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
         grd_rdp_dvc_audio_input_new (session_rdp, dvc_handler, vcm,
                                      rdp_context);
     }
+
+  rdp_peer_context->camera_enumerator =
+    grd_rdp_dvc_camera_enumerator_new (session_rdp, dvc_handler, vcm,
+                                       rdp_context);
 }
 
 static void
