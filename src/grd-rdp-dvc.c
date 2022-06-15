@@ -135,6 +135,10 @@ channel_to_string (GrdRdpChannel channel)
       return "AUDIO_INPUT";
     case GRD_RDP_CHANNEL_AUDIO_PLAYBACK:
       return "AUDIO_PLAYBACK";
+    case GRD_RDP_CHANNEL_CAMERA:
+      return "CAM";
+    case GRD_RDP_CHANNEL_CAMERA_ENUMERATOR:
+      return "CAM_ENUMERATOR";
     case GRD_RDP_CHANNEL_DISPLAY_CONTROL:
       return "DISP";
     case GRD_RDP_CHANNEL_GRAPHICS_PIPELINE:

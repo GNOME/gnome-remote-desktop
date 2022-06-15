@@ -485,6 +485,11 @@ grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
     case GRD_RDP_CHANNEL_AUDIO_PLAYBACK:
       g_clear_object (&rdp_peer_context->audio_playback);
       break;
+    case GRD_RDP_CHANNEL_CAMERA:
+      g_assert_not_reached ();
+      break;
+    case GRD_RDP_CHANNEL_CAMERA_ENUMERATOR:
+      break;
     case GRD_RDP_CHANNEL_DISPLAY_CONTROL:
       g_clear_object (&rdp_peer_context->display_control);
       break;
