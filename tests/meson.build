@@ -68,4 +68,25 @@ egl_thread_test = executable(
   ],
 )
 
+tpm_test = executable(
+  'tpm-test',
+  sources: [
+    'tpm-test.c',
+    '../src/grd-tpm.c',
+    '../src/grd-tpm.h',
+  ],
+  dependencies: [
+    deps,
+    tss2_esys_dep,
+    tss2_mu_dep,
+    tss2_rc_dep,
+    tss2_tctildr_dep,
+  ],
+  include_directories: [
+    src_includepath,
+    configinc,
+  ],
+)
+
 test('egl-thread', egl_thread_test)
+test('tpm', tpm_test)
