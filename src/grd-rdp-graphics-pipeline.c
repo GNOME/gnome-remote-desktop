@@ -1406,13 +1406,11 @@ grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
   rdpgfx_context = graphics_pipeline->rdpgfx_context;
   if (!rdpgfx_context->Open (rdpgfx_context))
     {
-      g_warning ("[RDP.RDPGFX] Failed to open Graphics Pipeline. The client "
-                 "probably falsely advertised GFX support");
+      g_warning ("[RDP.RDPGFX] Failed to open channel. Terminating session");
       grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
                                     GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
       return;
     }
-
   graphics_pipeline->channel_opened = TRUE;
 
   return;
