@@ -22,7 +22,7 @@
 
         When using a remote desktop session with a virtual monitor, clients can
         resize the resolution of the virtual monitor during a session with the
-        Display Control Channel Extension ([MS-RDPEDISP]).
+        Display Update Virtual Channel Extension ([MS-RDPEDISP]).
 
         Allowed screenshare modes include:
 
