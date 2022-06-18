@@ -35,6 +35,8 @@
 #include "grd-session-rdp.h"
 #include "grd-utils.h"
 
+#define PROTOCOL_TIMEOUT_MS (10 * 1000)
+
 #define ENC_TIMES_CHECK_INTERVAL_MS 1000
 #define MAX_TRACKED_ENC_FRAMES 1000
 #define MIN_BW_MEASURE_SIZE (10 * 1024)
@@ -80,6 +82,8 @@ struct _GrdRdpGraphicsPipeline
   GrdRdpNetworkAutodetection *network_autodetection;
   wStream *encode_stream;
   RFX_CONTEXT *rfx_context;
+
+  GSource *protocol_timeout_source;
 
   GSource *protocol_reset_source;
   GMutex caps_mutex;
@@ -1392,6 +1396,22 @@ rdpgfx_qoe_frame_acknowledge (RdpgfxServerContext                    *rdpgfx_con
   return CHANNEL_RC_OK;
 }
 
+static gboolean
+initiate_session_teardown (gpointer user_data)
+{
+  GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
+
+  g_warning ("[RDP.RDPGFX] Client did not respond to protocol initiation. "
+             "Terminating session");
+
+  g_clear_pointer (&graphics_pipeline->protocol_timeout_source, g_source_unref);
+
+  grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
+                                GRD_SESSION_RDP_ERROR_BAD_CAPS);
+
+  return G_SOURCE_REMOVE;
+}
+
 void
 grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
 {
@@ -1413,7 +1433,14 @@ grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
     }
   graphics_pipeline->channel_opened = TRUE;
 
-  return;
+  g_assert (!graphics_pipeline->protocol_timeout_source);
+
+  graphics_pipeline->protocol_timeout_source =
+    g_timeout_source_new (PROTOCOL_TIMEOUT_MS);
+  g_source_set_callback (graphics_pipeline->protocol_timeout_source,
+                         initiate_session_teardown, graphics_pipeline, NULL);
+  g_source_attach (graphics_pipeline->protocol_timeout_source,
+                   graphics_pipeline->pipeline_context);
 }
 
 GrdRdpGraphicsPipeline *
@@ -1507,12 +1534,16 @@ grd_rdp_graphics_pipeline_dispose (GObject *object)
       graphics_pipeline->channel_opened = FALSE;
     }
 
+  if (graphics_pipeline->protocol_timeout_source)
+    {
+      g_source_destroy (graphics_pipeline->protocol_timeout_source);
+      g_clear_pointer (&graphics_pipeline->protocol_timeout_source, g_source_unref);
+    }
   if (graphics_pipeline->rtt_pause_source)
     {
       g_source_destroy (graphics_pipeline->rtt_pause_source);
       g_clear_pointer (&graphics_pipeline->rtt_pause_source, g_source_unref);
     }
-
   if (graphics_pipeline->protocol_reset_source)
     {
       g_source_destroy (graphics_pipeline->protocol_reset_source);
@@ -1671,6 +1702,12 @@ reset_protocol (gpointer user_data)
       g_free (cap_sets);
 
       return G_SOURCE_CONTINUE;
+    }
+
+  if (graphics_pipeline->protocol_timeout_source)
+    {
+      g_source_destroy (graphics_pipeline->protocol_timeout_source);
+      g_clear_pointer (&graphics_pipeline->protocol_timeout_source, g_source_unref);
     }
 
   for (i = 0; i < G_N_ELEMENTS (cap_list); ++i)
