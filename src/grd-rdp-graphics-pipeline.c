@@ -1554,6 +1554,7 @@ grd_rdp_graphics_pipeline_finalize (GObject *object)
   GrdRdpGraphicsPipeline *graphics_pipeline = GRD_RDP_GRAPHICS_PIPELINE (object);
 
   g_mutex_clear (&graphics_pipeline->gfx_mutex);
+  g_mutex_clear (&graphics_pipeline->caps_mutex);
 
   G_OBJECT_CLASS (grd_rdp_graphics_pipeline_parent_class)->finalize (object);
 }
@@ -1728,6 +1729,7 @@ grd_rdp_graphics_pipeline_init (GrdRdpGraphicsPipeline *graphics_pipeline)
   graphics_pipeline->encoded_frames = g_queue_new ();
   graphics_pipeline->enc_times = g_queue_new ();
 
+  g_mutex_init (&graphics_pipeline->caps_mutex);
   g_mutex_init (&graphics_pipeline->gfx_mutex);
 
   protocol_reset_source = g_source_new (&protocol_reset_source_funcs,
