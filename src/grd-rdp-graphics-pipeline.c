@@ -77,6 +77,10 @@ struct _GrdRdpGraphicsPipeline
   gboolean initialized;
   uint32_t initial_version;
 
+  uint32_t channel_id;
+  uint32_t dvc_subscription_id;
+  gboolean subscribed_status;
+
   GrdSessionRdp *session_rdp;
   GMainContext *pipeline_context;
   GrdRdpNetworkAutodetection *network_autodetection;
@@ -1102,6 +1106,41 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
     }
 }
 
+static void
+dvc_creation_status (gpointer user_data,
+                     int32_t  creation_status)
+{
+  GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
+
+  if (creation_status < 0)
+    {
+      g_warning ("[RDP.RDPGFX] Failed to open channel (CreationStatus %i). "
+                 "Terminating session", creation_status);
+      grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
+                                    GRD_SESSION_RDP_ERROR_BAD_CAPS);
+    }
+}
+
+static BOOL
+rdpgfx_channel_id_assigned (RdpgfxServerContext *rdpgfx_context,
+                            uint32_t             channel_id)
+{
+  GrdRdpGraphicsPipeline *graphics_pipeline = rdpgfx_context->custom;
+  GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
+
+  g_debug ("[RDP.RDPGFX] DVC channel id assigned to id %u", channel_id);
+  graphics_pipeline->channel_id = channel_id;
+
+  graphics_pipeline->dvc_subscription_id =
+    grd_session_rdp_subscribe_dvc_creation_status (session_rdp,
+                                                   channel_id,
+                                                   dvc_creation_status,
+                                                   graphics_pipeline);
+  graphics_pipeline->subscribed_status = TRUE;
+
+  return TRUE;
+}
+
 static uint32_t cap_list[] =
 {
   RDPGFX_CAPVERSION_106,
@@ -1469,6 +1508,7 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
   graphics_pipeline->encode_stream = encode_stream;
   graphics_pipeline->rfx_context = rfx_context;
 
+  rdpgfx_context->ChannelIdAssigned = rdpgfx_channel_id_assigned;
   rdpgfx_context->CapsAdvertise = rdpgfx_caps_advertise;
   rdpgfx_context->CacheImportOffer = rdpgfx_cache_import_offer;
   rdpgfx_context->FrameAcknowledge = rdpgfx_frame_acknowledge;
@@ -1532,6 +1572,13 @@ grd_rdp_graphics_pipeline_dispose (GObject *object)
       reset_graphics_pipeline (graphics_pipeline);
       graphics_pipeline->rdpgfx_context->Close (graphics_pipeline->rdpgfx_context);
       graphics_pipeline->channel_opened = FALSE;
+    }
+  if (graphics_pipeline->subscribed_status)
+    {
+      grd_session_rdp_unsubscribe_dvc_creation_status (graphics_pipeline->session_rdp,
+                                                       graphics_pipeline->channel_id,
+                                                       graphics_pipeline->dvc_subscription_id);
+      graphics_pipeline->subscribed_status = FALSE;
     }
 
   if (graphics_pipeline->protocol_timeout_source)
