@@ -20,11 +20,11 @@
 
 #include "config.h"
 
+#include <gio/gio.h>
 #include <glib/gi18n.h>
-#include <libsecret/secret.h>
 #include <stdio.h>
 
-#include "grd-schemas.h"
+#include "grd-credentials-libsecret.h"
 
 #define GRD_RDP_SETTINGS_SCHEMA "org.gnome.desktop.remote-desktop.rdp"
 #define GRD_VNC_SETTINGS_SCHEMA "org.gnome.desktop.remote-desktop.vnc"
@@ -87,39 +87,41 @@ process_options (int                argc,
   return EXIT_FAILURE;
 }
 
+static GrdCredentials *
+create_credentials (void)
+{
+  return GRD_CREDENTIALS (grd_credentials_libsecret_new ());
+}
+
 #ifdef HAVE_RDP
 static gboolean
 grd_store_rdp_credentials (const char  *username,
                            const char  *password,
                            GError     **error)
 {
+  g_autoptr (GrdCredentials) credentials = NULL;
   GVariantBuilder builder;
-  g_autofree char *credentials = NULL;
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&builder, "{sv}",
                          "username", g_variant_new_string (username));
   g_variant_builder_add (&builder, "{sv}",
                          "password", g_variant_new_string (password));
-  credentials = g_variant_print (g_variant_builder_end (&builder), TRUE);
 
-  if (!secret_password_store_sync (GRD_RDP_CREDENTIALS_SCHEMA,
-                                   SECRET_COLLECTION_DEFAULT,
-                                   "GNOME Remote Desktop RDP credentials",
-                                   credentials,
-                                   NULL, error,
-                                   NULL))
-    return FALSE;
-
-  return TRUE;
+  credentials = create_credentials ();
+  return grd_credentials_store (credentials,
+                                GRD_CREDENTIALS_TYPE_RDP,
+                                g_variant_builder_end (&builder),
+                                error);
 }
 
 static gboolean
 grd_clear_rdp_credentials (GError **error)
 {
-  return secret_password_clear_sync (GRD_RDP_CREDENTIALS_SCHEMA,
-                                     NULL, error,
-                                     NULL);
+  g_autoptr (GrdCredentials) credentials = NULL;
+
+  credentials = create_credentials ();
+  return grd_credentials_clear (credentials, GRD_CREDENTIALS_TYPE_RDP, error);
 }
 
 static gboolean
@@ -279,6 +281,7 @@ vnc_set_credentials (int      argc,
                      char   **argv,
                      GError **error)
 {
+  g_autoptr (GrdCredentials) credentials = NULL;
   char *password;
 
   password = argv[0];
@@ -289,15 +292,11 @@ vnc_set_credentials (int      argc,
       return FALSE;
     }
 
-  if (!secret_password_store_sync (GRD_VNC_PASSWORD_SCHEMA,
-                                   SECRET_COLLECTION_DEFAULT,
-                                   "GNOME Remote Desktop VNC password",
-                                   password,
-                                   NULL, error,
-                                   NULL))
-    return FALSE;
-
-  return TRUE;
+  credentials = create_credentials ();
+  return grd_credentials_store (credentials,
+                                GRD_CREDENTIALS_TYPE_VNC,
+                                g_variant_new_string (password),
+                                error);
 }
 
 static gboolean
@@ -305,9 +304,10 @@ vnc_clear_credentials (int      argc,
                        char   **argv,
                        GError **error)
 {
-  return secret_password_clear_sync (GRD_VNC_PASSWORD_SCHEMA,
-                                     NULL, error,
-                                     NULL);
+  g_autoptr (GrdCredentials) credentials = NULL;
+
+  credentials = create_credentials ();
+  return grd_credentials_clear (credentials, GRD_CREDENTIALS_TYPE_VNC, error);
 }
 
 static gboolean
@@ -468,18 +468,19 @@ static void
 print_rdp_status (gboolean use_colors,
                   gboolean show_credentials)
 {
+  g_autoptr (GrdCredentials) credentials = NULL;
   g_autoptr (GSettings) rdp_settings = NULL;
   g_autofree char *tls_cert = NULL;
   g_autofree char *tls_key = NULL;
-  g_autofree char *credentials_string = NULL;
-  g_autoptr (GVariant) credentials = NULL;
+  g_autoptr (GVariant) rdp_credentials = NULL;
   g_autofree char *username = NULL;
   g_autofree char *password = NULL;
   g_autoptr (GError) error = NULL;
 
-  credentials_string = secret_password_lookup_sync (GRD_RDP_CREDENTIALS_SCHEMA,
-                                                    NULL, &error,
-                                                    NULL);
+  credentials = create_credentials ();
+  rdp_credentials = grd_credentials_lookup (credentials,
+                                            GRD_CREDENTIALS_TYPE_RDP,
+                                            &error);
   if (error)
     {
       fprintf (stderr, "Failed to lookup RDP credentials: %s", error->message);
@@ -500,12 +501,10 @@ print_rdp_status (gboolean use_colors,
   printf ("\tView-only: %s\n",
           g_settings_get_boolean (rdp_settings, "view-only") ? "yes" : "no");
 
-  if (credentials_string)
+  if (rdp_credentials)
     {
-      credentials = g_variant_parse (NULL, credentials_string,
-                                     NULL, NULL, NULL);
-      g_variant_lookup (credentials, "username", "s", &username);
-      g_variant_lookup (credentials, "password", "s", &password);
+      g_variant_lookup (rdp_credentials, "username", "s", &username);
+      g_variant_lookup (rdp_credentials, "password", "s", &password);
     }
 
   if (show_credentials)
@@ -528,19 +527,25 @@ static void
 print_vnc_status (gboolean use_colors,
                   gboolean show_credentials)
 {
+  g_autoptr (GrdCredentials) credentials = NULL;
   g_autoptr (GSettings) vnc_settings = NULL;
+  g_autoptr (GVariant) password_variant = NULL;
   g_autofree char *auth_method = NULL;
-  g_autofree char *password = NULL;
+  const char *password = NULL;
   g_autoptr (GError) error = NULL;
 
-  password = secret_password_lookup_sync (GRD_VNC_PASSWORD_SCHEMA,
-                                          NULL, &error,
-                                          NULL);
+  credentials = create_credentials ();
+  password_variant = grd_credentials_lookup (credentials,
+                                             GRD_CREDENTIALS_TYPE_VNC,
+                                             &error);
   if (error)
     {
       fprintf (stderr, "Failed to lookup RDP credentials: %s", error->message);
       return;
     }
+
+  if (password_variant)
+    password = g_variant_get_string (password_variant, NULL);
 
   vnc_settings = g_settings_new (GRD_VNC_SETTINGS_SCHEMA);
 

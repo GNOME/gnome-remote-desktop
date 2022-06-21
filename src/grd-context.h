@@ -51,6 +51,8 @@ void grd_context_set_screen_cast_proxy (GrdContext        *context,
 
 GrdSettings * grd_context_get_settings (GrdContext *context);
 
+GrdCredentials * grd_context_get_credentials (GrdContext *context);
+
 GrdEglThread * grd_context_get_egl_thread (GrdContext *context);
 
 GrdDebugFlags grd_context_get_debug_flags (GrdContext *context);

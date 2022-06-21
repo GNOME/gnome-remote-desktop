@@ -19,17 +19,15 @@
  *
  */
 
-#ifndef GRD_SCHEMAS_H
-#define GRD_SCHEMAS_H
+#ifndef GRD_CREDENTIALS_LIBSECRET_H
+#define GRD_CREDENTIALS_LIBSECRET_H
 
-#include <libsecret/secret.h>
+#include "grd-credentials.h"
 
-const SecretSchema * grd_rdp_credentials_get_schema (void);
+#define GRD_TYPE_CREDENTIALS_LIBSECRET (grd_credentials_libsecret_get_type ())
+G_DECLARE_FINAL_TYPE (GrdCredentialsLibsecret, grd_credentials_libsecret,
+                      GRD, CREDENTIALS_LIBSECRET, GrdCredentials)
 
-const SecretSchema * grd_vnc_password_get_schema (void);
+GrdCredentialsLibsecret * grd_credentials_libsecret_new (void);
 
-#define GRD_RDP_CREDENTIALS_SCHEMA (grd_rdp_credentials_get_schema ())
-
-#define GRD_VNC_PASSWORD_SCHEMA (grd_vnc_password_get_schema ())
-
-#endif /* GRD_SCHEMA_H */
+#endif /* GRD_CREDENTIALS_LIBSECRET_H */

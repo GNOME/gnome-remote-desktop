@@ -12,6 +12,13 @@ deps = [
   drm_dep,
 ]
 
+credentials_sources = files([
+  'grd-credentials.c',
+  'grd-credentials.h',
+  'grd-credentials-libsecret.c',
+  'grd-credentials-libsecret.h',
+])
+
 daemon_sources = files([
   'grd-clipboard.c',
   'grd-clipboard.h',
@@ -30,8 +37,6 @@ daemon_sources = files([
   'grd-private.h',
   'grd-prompt.c',
   'grd-prompt.h',
-  'grd-schemas.c',
-  'grd-schemas.h',
   'grd-session.c',
   'grd-session.h',
   'grd-settings.c',
@@ -123,6 +128,8 @@ if have_vnc
   ]
 endif
 
+daemon_sources += credentials_sources
+
 gen_daemon_sources = []
 
 gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-screen-cast',
@@ -142,8 +149,7 @@ control_sources = ([
 
 ctl_sources = ([
   'grd-ctl.c',
-  'grd-schemas.c',
-  'grd-schemas.h',
+  credentials_sources,
 ])
 
 executable('gnome-remote-desktop-daemon',

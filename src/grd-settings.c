@@ -25,7 +25,8 @@
 #include <gio/gio.h>
 #include <string.h>
 
-#include "grd-schemas.h"
+#include "grd-context.h"
+#include "grd-credentials.h"
 
 #define GRD_RDP_SCHEMA_ID "org.gnome.desktop.remote-desktop.rdp"
 #define GRD_VNC_SCHEMA_ID "org.gnome.desktop.remote-desktop.vnc"
@@ -53,6 +54,8 @@ static guint signals[N_SIGNALS];
 struct _GrdSettings
 {
   GObject parent;
+
+  GrdContext *context;
 
   struct {
     GSettings *settings;
@@ -126,112 +129,90 @@ grd_settings_get_rdp_server_key (GrdSettings *settings)
   return settings->rdp.server_key;
 }
 
-char *
-grd_settings_get_rdp_username (GrdSettings  *settings,
-                               GError      **error)
+gboolean
+grd_settings_get_rdp_credentials (GrdSettings  *settings,
+                                  char        **out_username,
+                                  char        **out_password,
+                                  GError      **error)
 {
+  GrdContext *context = settings->context;
   const char *test_username_override;
-  g_autofree char *credentials_string = NULL;
-  g_autoptr (GVariant) credentials = NULL;
-  char *username = NULL;
-
-  test_username_override = g_getenv ("GNOME_REMOTE_DESKTOP_TEST_RDP_USERNAME");
-  if (test_username_override)
-    return g_strdup (test_username_override);
-
-  credentials_string = secret_password_lookup_sync (GRD_RDP_CREDENTIALS_SCHEMA,
-                                                    NULL, error,
-                                                    NULL);
-  if (!credentials_string)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Credentials not set");
-      return NULL;
-    }
-
-  credentials = g_variant_parse (NULL, credentials_string, NULL, NULL, NULL);
-  if (!credentials)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Unable to parse credentials");
-      return NULL;
-    }
-
-  g_variant_lookup (credentials, "username", "s", &username);
-  if (!username)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Username not set");
-      return NULL;
-    }
-
-  return username;
-}
-
-char *
-grd_settings_get_rdp_password (GrdSettings  *settings,
-                               GError      **error)
-{
   const char *test_password_override;
   g_autofree char *credentials_string = NULL;
   g_autoptr (GVariant) credentials = NULL;
-  char *password = NULL;
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
 
+  test_username_override = g_getenv ("GNOME_REMOTE_DESKTOP_TEST_RDP_USERNAME");
   test_password_override = g_getenv ("GNOME_REMOTE_DESKTOP_TEST_RDP_PASSWORD");
-  if (test_password_override)
-    return g_strdup (test_password_override);
 
-  credentials_string = secret_password_lookup_sync (GRD_RDP_CREDENTIALS_SCHEMA,
-                                                    NULL, error,
-                                                    NULL);
-  if (!credentials_string)
+  if (test_username_override && test_password_override)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Credentials not set");
-      return NULL;
+      *out_username = g_strdup (test_username_override);
+      *out_password = g_strdup (test_password_override);
+      return TRUE;
     }
 
-  credentials = g_variant_parse (NULL, credentials_string, NULL, NULL, NULL);
+  credentials = grd_credentials_lookup (grd_context_get_credentials (context),
+                                        GRD_CREDENTIALS_TYPE_RDP,
+                                        error);
   if (!credentials)
+    return FALSE;
+
+  if (!test_username_override)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Unable to parse credentials");
-      return NULL;
+      g_variant_lookup (credentials, "username", "s", &username);
+      if (!username)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                       "Username not set");
+          return FALSE;
+        }
+    }
+  else
+    {
+      username = g_strdup (test_username_override);
     }
 
-  g_variant_lookup (credentials, "password", "s", &password);
-  if (!password)
+  if (!test_password_override)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Password not set");
-      return NULL;
+      g_variant_lookup (credentials, "password", "s", &password);
+      if (!password)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                       "Username not set");
+          return FALSE;
+        }
+    }
+  else
+    {
+      password = g_strdup (test_password_override);
     }
 
-  return password;
+  *out_username = g_steal_pointer (&username);
+  *out_password = g_steal_pointer (&password);
+  return TRUE;
 }
 
 char *
 grd_settings_get_vnc_password (GrdSettings  *settings,
                                GError      **error)
 {
+  GrdContext *context = settings->context;
   const char *test_password_override;
-  char *password;
+  g_autoptr (GVariant) password = NULL;
 
   test_password_override = g_getenv ("GNOME_REMOTE_DESKTOP_TEST_VNC_PASSWORD");
   if (test_password_override)
     return g_strdup (test_password_override);
 
-  password = secret_password_lookup_sync (GRD_VNC_PASSWORD_SCHEMA,
-                                          NULL, error,
-                                          NULL);
+  password = grd_credentials_lookup (grd_context_get_credentials (context),
+                                     GRD_CREDENTIALS_TYPE_VNC,
+                                     error);
   if (!password)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Password not set");
-      return NULL;
-    }
+    return NULL;
 
-  return password;
+  return g_variant_dup_string (password, NULL);
 }
 
 gboolean
@@ -389,6 +370,17 @@ on_vnc_settings_changed (GSettings   *vnc_settings,
       update_vnc_auth_method (settings);
       g_signal_emit (settings, signals[VNC_AUTH_METHOD_CHANGED], 0);
     }
+}
+
+GrdSettings *
+grd_settings_new (GrdContext *context)
+{
+  GrdSettings *settings;
+
+  settings = g_object_new (GRD_TYPE_SETTINGS, NULL);
+  settings->context = context;
+
+  return settings;
 }
 
 static void

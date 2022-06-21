@@ -24,7 +24,9 @@
 
 #include "grd-context.h"
 
+#include "grd-credentials-libsecret.h"
 #include "grd-egl-thread.h"
+#include "grd-settings.h"
 
 #include "grd-dbus-remote-desktop.h"
 #include "grd-dbus-screen-cast.h"
@@ -42,6 +44,7 @@ struct _GrdContext
 
   GrdEglThread *egl_thread;
 
+  GrdCredentials *credentials;
   GrdSettings *settings;
 
   GrdDebugFlags debug_flags;
@@ -81,6 +84,12 @@ GrdSettings *
 grd_context_get_settings (GrdContext *context)
 {
   return context->settings;
+}
+
+GrdCredentials *
+grd_context_get_credentials (GrdContext *context)
+{
+  return context->credentials;
 }
 
 GrdEglThread *
@@ -132,6 +141,7 @@ grd_context_finalize (GObject *object)
   g_clear_object (&context->screen_cast_proxy);
   g_clear_pointer (&context->egl_thread, grd_egl_thread_free);
   g_clear_object (&context->settings);
+  g_clear_object (&context->credentials);
 
   G_OBJECT_CLASS (grd_context_parent_class)->finalize (object);
 }
@@ -141,7 +151,8 @@ grd_context_init (GrdContext *context)
 {
   init_debug_flags (context);
 
-  context->settings = g_object_new (GRD_TYPE_SETTINGS, NULL);
+  context->credentials = GRD_CREDENTIALS (grd_credentials_libsecret_new ());
+  context->settings = grd_settings_new (context);
 }
 
 static void

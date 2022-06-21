@@ -2135,17 +2135,11 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
 
   context = grd_rdp_server_get_context (rdp_server);
   settings = grd_context_get_settings (context);
-  username = grd_settings_get_rdp_username (settings, &error);
-  if (!username)
+  if (!grd_settings_get_rdp_credentials (settings,
+                                         &username, &password,
+                                         &error))
     {
-      g_warning ("Couldn't retrieve RDP username: %s", error->message);
-      return NULL;
-    }
-  password = grd_settings_get_rdp_password (settings, &error);
-  if (!password)
-    {
-      g_warning ("Couldn't retrieve RDP password: %s", error->message);
-      g_free (username);
+      g_warning ("Couldn't retrieve RDP credentials: %s", error->message);
       return NULL;
     }
 
