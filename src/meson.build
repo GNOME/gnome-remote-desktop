@@ -1,15 +1,20 @@
 src_includepath = include_directories('.')
 
+credentials_deps = [
+  libsecret_dep,
+]
+
 deps = [
   cairo_dep,
   glib_dep,
   gio_dep,
   gio_unix_dep,
   pipewire_dep,
-  libsecret_dep,
   libnotify_dep,
   epoxy_dep,
   drm_dep,
+
+  credentials_deps,
 ]
 
 credentials_sources = files([
@@ -179,7 +184,11 @@ executable('gnome-remote-desktop-control',
 
 executable('grdctl',
            ctl_sources,
-           dependencies: [glib_dep, gio_dep, libsecret_dep],
+           dependencies: [
+             glib_dep,
+             gio_dep,
+             credentials_deps,
+           ],
            include_directories: [configinc],
            install: true)
 
