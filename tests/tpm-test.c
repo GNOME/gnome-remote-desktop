@@ -30,6 +30,25 @@
 static GVariant *secret_variant;
 
 static void
+test_tpm_caps (void)
+{
+  g_autoptr (GrdTpm) tpm = NULL;
+  g_autoptr (GError) error = NULL;
+
+  tpm = grd_tpm_new (GRD_TPM_MODE_NONE, &error);
+  if (!tpm)
+    g_error ("Failed to create TPM credentials manager: %s", error->message);
+
+  if (!grd_tpm_check_capabilities (tpm, &error))
+    {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED))
+        g_debug ("Incompatible TPM 2.0 module: %s", error->message);
+      else
+        g_error ("Capability check failed: %s", error->message);
+    }
+}
+
+static void
 test_tpm_write (void)
 {
   g_autoptr (GrdTpm) tpm = NULL;
@@ -123,6 +142,8 @@ main (int    argc,
       return 77;
     }
 
+  g_test_add_func ("/tpm/caps",
+                   test_tpm_caps);
   g_test_add_func ("/tpm/write",
                    test_tpm_write);
   g_test_add_func ("/tpm/read",

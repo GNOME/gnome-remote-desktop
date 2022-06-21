@@ -535,6 +535,185 @@ grd_tpm_restore_secret (GrdTpm              *tpm,
   return g_strdup ((char *) unsealed_data->buffer);
 }
 
+static const char *
+get_algorithm_name (uint32_t algorithm)
+{
+  switch (algorithm)
+    {
+    case TPM2_ALG_SHA256:
+      return "SHA-256";
+    case TPM2_ALG_RSA:
+      return "RSA";
+    default:
+      return "unknown";
+    }
+}
+
+static const char *
+get_command_name (uint32_t command)
+{
+  switch (command)
+    {
+    case TPM2_CC_CreatePrimary:
+      return "CreatePrimary";
+    case TPM2_CC_StartAuthSession:
+      return "StartAuthSession";
+    case TPM2_CC_FlushContext:
+      return "FlushContext";
+    case TPM2_CC_PCR_Read:
+      return "PCR_Read";
+    case TPM2_CC_PolicyPCR:
+      return "PolicyPCR";
+    case TPM2_CC_PolicyGetDigest:
+      return "PolicyGetDigest";
+    case TPM2_CC_CreateLoaded:
+      return "CreateLoaded";
+    case TPM2_CC_ContextSave:
+      return "ContextSave";
+    case TPM2_CC_ContextLoad:
+      return "ContextLoad";
+    case TPM2_CC_Unseal:
+      return "Unseal";
+    default:
+      return "unkown";
+    }
+}
+
+gboolean
+grd_tpm_check_capabilities (GrdTpm  *tpm,
+                            GError **error)
+{
+  const struct
+  {
+    TPM2_CAP capability;
+    uint32_t property;
+    int count;
+  } capabilities[] = {
+    { .capability = TPM2_CAP_ALGS, .property = TPM2_ALG_SHA256 },
+    { .capability = TPM2_CAP_ALGS, .property = TPM2_ALG_RSA },
+    { .capability = TPM2_CAP_COMMANDS, .property = TPM2_CC_CreatePrimary },
+    { .capability = TPM2_CAP_COMMANDS, .property = TPM2_CC_StartAuthSession },
+    { .capability = TPM2_CAP_COMMANDS, .property = TPM2_CC_FlushContext },
+    { .capability = TPM2_CAP_COMMANDS, .property = TPM2_CC_PCR_Read },
+    { .capability = TPM2_CAP_COMMANDS, .property = TPM2_CC_PolicyPCR },
+    { .capability = TPM2_CAP_COMMANDS, .property = TPM2_CC_PolicyGetDigest },
+    { .capability = TPM2_CAP_COMMANDS, .property = TPM2_CC_CreateLoaded },
+    { .capability = TPM2_CAP_COMMANDS, .property = TPM2_CC_ContextSave },
+    { .capability = TPM2_CAP_COMMANDS, .property = TPM2_CC_ContextLoad },
+  };
+  gboolean sha256_pcrs_found = FALSE;
+  uint32_t property = 0;
+  uint32_t count = TPM2_MAX_TPM_PROPERTIES;
+  int i;
+
+  for (i = 0; i < G_N_ELEMENTS (capabilities); i++)
+    {
+      g_autofree TPMS_CAPABILITY_DATA *data = NULL;
+      TSS2_RC rc;
+
+      rc = Esys_GetCapability (tpm->esys_context,
+                               ESYS_TR_NONE, ESYS_TR_NONE, ESYS_TR_NONE,
+                               capabilities[i].capability,
+                               capabilities[i].property,
+                               1,
+                               NULL,
+                               &data);
+      if (rc != TSS2_RC_SUCCESS)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Failed to get capability: %s",
+                       Tss2_RC_Decode (rc));
+          return FALSE;
+        }
+
+      switch (capabilities[i].capability)
+        {
+        case TPM2_CAP_ALGS:
+          g_warn_if_fail (data->data.algorithms.count == 1);
+
+          if (capabilities[i].property !=
+              data->data.algorithms.algProperties[0].alg)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                           "Algorithm %s not supported",
+                           get_algorithm_name (capabilities[i].property));
+              return FALSE;
+            }
+
+          break;
+
+        case TPM2_CAP_COMMANDS:
+          g_warn_if_fail (data->data.command.count == 1);
+
+          if ((data->data.command.commandAttributes[0] &
+               TPMA_CC_COMMANDINDEX_MASK) !=
+              capabilities[i].property)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                           "Command %s not supported",
+                           get_command_name (capabilities[i].property));
+              return FALSE;
+            }
+
+          break;
+
+        case TPM2_CAP_PCRS:
+          g_warn_if_fail (data->data.assignedPCR.count == 1);
+          break;
+        }
+    }
+
+  while (TRUE)
+    {
+      TPMI_YES_NO more_data = TPM2_NO;
+      g_autofree TPMS_CAPABILITY_DATA *data = NULL;
+      TSS2_RC rc;
+
+      rc = Esys_GetCapability (tpm->esys_context,
+                               ESYS_TR_NONE, ESYS_TR_NONE, ESYS_TR_NONE,
+                               TPM2_CAP_PCRS,
+                               property,
+                               count,
+                               &more_data,
+                               &data);
+      if (rc != TSS2_RC_SUCCESS)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Failed to get capability: %s",
+                       Tss2_RC_Decode (rc));
+          return FALSE;
+        }
+
+      property += data->data.assignedPCR.count;
+      count -= data->data.assignedPCR.count;
+
+      for (i = 0; i < data->data.assignedPCR.count; i++)
+        {
+          if (data->data.assignedPCR.pcrSelections[i].hash != TPM2_ALG_SHA256)
+            continue;
+
+          if (data->data.assignedPCR.pcrSelections[i].pcrSelect[0] &
+              (1 << 0 | 1 << 1 | 1 << 2))
+            {
+              sha256_pcrs_found = TRUE;
+              break;
+            }
+        }
+
+      if (more_data == TPM2_NO)
+        break;
+    }
+
+  if (!sha256_pcrs_found)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "SHA-256 PCRs not available");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 GrdTpm *
 grd_tpm_new (GrdTpmMode   mode,
              GError     **error)
@@ -549,16 +728,19 @@ grd_tpm_new (GrdTpmMode   mode,
   if (!init_tss2_esys (tpm, error))
     return NULL;
 
-  if (!start_hmac_session (tpm, error))
-    return NULL;
-
   switch (mode)
     {
+    case GRD_TPM_MODE_NONE:
+      break;
     case GRD_TPM_MODE_WRITE:
+      if (!start_hmac_session (tpm, error))
+        return NULL;
       if (!start_trial_session (tpm, error))
         return NULL;
       break;
     case GRD_TPM_MODE_READ:
+      if (!start_hmac_session (tpm, error))
+        return NULL;
       if (!start_policy_session (tpm, error))
         return NULL;
       break;

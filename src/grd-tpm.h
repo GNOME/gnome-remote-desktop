@@ -27,6 +27,7 @@
 
 typedef enum _GrdTpmMode
 {
+  GRD_TPM_MODE_NONE,
   GRD_TPM_MODE_WRITE,
   GRD_TPM_MODE_READ,
 } GrdTpmMode;
@@ -61,5 +62,8 @@ char * grd_tpm_restore_secret (GrdTpm              *tpm,
                                TPML_PCR_SELECTION  *pcr_selection,
                                TPML_DIGEST         *pcr_digest,
                                GError             **error);
+
+gboolean grd_tpm_check_capabilities (GrdTpm  *tpm,
+                                     GError **error);
 
 #endif /* GRD_TPM_H */
