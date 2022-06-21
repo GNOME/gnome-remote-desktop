@@ -2,6 +2,10 @@ src_includepath = include_directories('.')
 
 credentials_deps = [
   libsecret_dep,
+  tss2_esys_dep,
+  tss2_mu_dep,
+  tss2_rc_dep,
+  tss2_tctildr_dep,
 ]
 
 deps = [
@@ -22,6 +26,10 @@ credentials_sources = files([
   'grd-credentials.h',
   'grd-credentials-libsecret.c',
   'grd-credentials-libsecret.h',
+  'grd-credentials-tpm.c',
+  'grd-credentials-tpm.h',
+  'grd-tpm.c',
+  'grd-tpm.h',
 ])
 
 daemon_sources = files([

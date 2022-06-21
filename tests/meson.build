@@ -77,10 +77,6 @@ tpm_test = executable(
   ],
   dependencies: [
     deps,
-    tss2_esys_dep,
-    tss2_mu_dep,
-    tss2_rc_dep,
-    tss2_tctildr_dep,
   ],
   include_directories: [
     src_includepath,
