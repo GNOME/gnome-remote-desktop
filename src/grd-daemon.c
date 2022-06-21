@@ -310,22 +310,6 @@ on_vnc_enabled_changed (GrdSettings *settings,
 static void
 grd_daemon_init (GrdDaemon *daemon)
 {
-  GrdSettings *settings;
-
-  daemon->context = g_object_new (GRD_TYPE_CONTEXT, NULL);
-
-  settings = grd_context_get_settings (daemon->context);
-
-#ifdef HAVE_RDP
-  g_signal_connect (settings, "rdp-enabled-changed",
-                    G_CALLBACK (on_rdp_enabled_changed),
-                    daemon);
-#endif
-#ifdef HAVE_VNC
-  g_signal_connect (settings, "vnc-enabled-changed",
-                    G_CALLBACK (on_vnc_enabled_changed),
-                    daemon);
-#endif
 }
 
 static void
@@ -456,17 +440,55 @@ register_signals (GrdDaemon *daemon)
   g_source_attach (daemon->sigterm_source, NULL);
 }
 
+static GrdDaemon *
+grd_daemon_new (GrdRuntimeMode   runtime_mode,
+                GError         **error)
+{
+  GrdContext *context;
+  GrdDaemon *daemon;
+  GrdSettings *settings;
+
+  context = grd_context_new (runtime_mode, error);
+  if (!context)
+    return NULL;
+
+  daemon = g_object_new (GRD_TYPE_DAEMON,
+                         "application-id", GRD_DAEMON_APPLICATION_ID,
+                         "flags", G_APPLICATION_IS_SERVICE,
+                         NULL);
+
+  daemon->context = context;
+
+  settings = grd_context_get_settings (daemon->context);
+
+#ifdef HAVE_RDP
+  g_signal_connect (settings, "rdp-enabled-changed",
+                    G_CALLBACK (on_rdp_enabled_changed),
+                    daemon);
+#endif
+#ifdef HAVE_VNC
+  g_signal_connect (settings, "vnc-enabled-changed",
+                    G_CALLBACK (on_vnc_enabled_changed),
+                    daemon);
+#endif
+
+  return daemon;
+}
+
 int
 main (int argc, char **argv)
 {
   GrdSettings *settings;
   gboolean print_version = FALSE;
+  gboolean headless = FALSE;
   int rdp_port = -1;
   int vnc_port = -1;
 
   GOptionEntry entries[] = {
     { "version", 0, 0, G_OPTION_ARG_NONE, &print_version,
       "Print version", NULL },
+    { "headless", 0, 0, G_OPTION_ARG_NONE, &headless,
+      "Run in headless mode", NULL },
     { "rdp-port", 0, 0, G_OPTION_ARG_INT, &rdp_port,
       "RDP port", NULL },
     { "vnc-port", 0, 0, G_OPTION_ARG_INT, &vnc_port,
@@ -474,8 +496,9 @@ main (int argc, char **argv)
     { NULL }
   };
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(GApplication) app = NULL;
+  g_autoptr (GrdDaemon) daemon = NULL;
   GError *error = NULL;
+  GrdRuntimeMode runtime_mode;
 
   g_set_application_name (_("GNOME Remote Desktop"));
 
@@ -494,19 +517,27 @@ main (int argc, char **argv)
       return EXIT_SUCCESS;
     }
 
-  app = g_object_new (GRD_TYPE_DAEMON,
-                      "application-id", GRD_DAEMON_APPLICATION_ID,
-                      "flags", G_APPLICATION_IS_SERVICE,
-                      NULL);
+  if (headless)
+    runtime_mode = GRD_RUNTIME_MODE_HEADLESS;
+  else
+    runtime_mode = GRD_RUNTIME_MODE_SCREEN_SHARE;
 
-  add_actions (app);
-  register_signals (GRD_DAEMON (app));
+  daemon = grd_daemon_new (runtime_mode, &error);
+  if (!daemon)
+    {
+      g_printerr ("Failed to initialize: %s\n", error->message);
+      g_error_free (error);
+      return EXIT_FAILURE;
+    }
 
-  settings = grd_context_get_settings (GRD_DAEMON (app)->context);
+  add_actions (G_APPLICATION (daemon));
+  register_signals (daemon);
+
+  settings = grd_context_get_settings (daemon->context);
   if (rdp_port != -1)
     grd_settings_override_rdp_port (settings, rdp_port);
   if (vnc_port != -1)
     grd_settings_override_vnc_port (settings, vnc_port);
 
-  return g_application_run (app, argc, argv);
+  return g_application_run (G_APPLICATION (daemon), argc, argv);
 }

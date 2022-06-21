@@ -215,6 +215,15 @@ grd_credentials_tpm_clear (GrdCredentials      *credentials,
 GrdCredentialsTpm *
 grd_credentials_tpm_new (GError **error)
 {
+  g_autoptr (GrdTpm) tpm = NULL;
+
+  tpm = grd_tpm_new (GRD_TPM_MODE_NONE, error);
+  if (!tpm)
+    return NULL;
+
+  if (!grd_tpm_check_capabilities (tpm, error))
+    return NULL;
+
   return g_object_new (GRD_TYPE_CREDENTIALS_TPM, NULL);
 }
 

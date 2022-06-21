@@ -25,6 +25,7 @@
 #include "grd-context.h"
 
 #include "grd-credentials-libsecret.h"
+#include "grd-credentials-tpm.h"
 #include "grd-egl-thread.h"
 #include "grd-settings.h"
 
@@ -132,6 +133,34 @@ init_debug_flags (GrdContext *context)
     }
 }
 
+GrdContext *
+grd_context_new (GrdRuntimeMode   runtime_mode,
+                 GError         **error)
+{
+  g_autoptr (GrdContext) context = NULL;
+
+  context = g_object_new (GRD_TYPE_CONTEXT, NULL);
+
+  init_debug_flags (context);
+
+  switch (runtime_mode)
+    {
+    case GRD_RUNTIME_MODE_HEADLESS:
+      context->credentials = GRD_CREDENTIALS (grd_credentials_tpm_new (error));
+      break;
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      context->credentials = GRD_CREDENTIALS (grd_credentials_libsecret_new ());
+      break;
+    }
+
+  if (!context->credentials)
+    return NULL;
+
+  context->settings = grd_settings_new (context);
+
+  return g_steal_pointer (&context);
+}
+
 static void
 grd_context_finalize (GObject *object)
 {
@@ -149,10 +178,6 @@ grd_context_finalize (GObject *object)
 static void
 grd_context_init (GrdContext *context)
 {
-  init_debug_flags (context);
-
-  context->credentials = GRD_CREDENTIALS (grd_credentials_libsecret_new ());
-  context->settings = grd_settings_new (context);
 }
 
 static void
