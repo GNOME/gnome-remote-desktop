@@ -504,7 +504,7 @@ print_rdp_status (gboolean use_colors,
                                                     NULL);
   if (error)
     {
-      fprintf (stderr, "Failed to lookup RDP credentials: %s", error->message);
+      fprintf (stderr, "Failed to lookup RDP credentials: %s\n", error->message);
       return;
     }
 
@@ -560,7 +560,7 @@ print_vnc_status (gboolean use_colors,
                                           NULL);
   if (error)
     {
-      fprintf (stderr, "Failed to lookup RDP credentials: %s", error->message);
+      fprintf (stderr, "Failed to lookup VNC credentials: %s\n", error->message);
       return;
     }
 
