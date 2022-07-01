@@ -80,7 +80,7 @@ build-gnome-remote-desktop:
     - .gnome-remote-desktop.fedora:35@x86_64
   stage: build
   script:
-    - meson . build -Dbuildtype=debugoptimized --werror
+    - meson . build -Dbuildtype=debugoptimized -Dvnc=true --werror
     - ninja -C build
     - ninja -C build install
   needs:
