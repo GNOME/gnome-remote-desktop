@@ -15,7 +15,7 @@ option('rdp',
 
 option('vnc',
        type: 'boolean',
-       value: true,
+       value: false,
        description: 'Enable the VNC backend')
 
 option('systemd',
