@@ -540,6 +540,8 @@ grd_egl_thread_func (gpointer user_data)
     }
   g_async_queue_unref (egl_thread->task_queue);
 
+  eglMakeCurrent (egl_thread->impl.egl_display,
+                  EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
   eglDestroyContext (egl_thread->impl.egl_display,
                      egl_thread->impl.egl_context);
   eglTerminate (egl_thread->impl.egl_display);
