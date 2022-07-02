@@ -32,6 +32,8 @@ G_DECLARE_FINAL_TYPE (GrdRdpEventQueue, grd_rdp_event_queue,
 
 GrdRdpEventQueue *grd_rdp_event_queue_new (GrdSessionRdp *session_rdp);
 
+void grd_rdp_event_queue_flush (GrdRdpEventQueue *rdp_event_queue);
+
 void grd_rdp_event_queue_add_input_event_keyboard_keycode (GrdRdpEventQueue *rdp_event_queue,
                                                            uint32_t          keycode,
                                                            GrdKeyState       state);

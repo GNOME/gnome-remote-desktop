@@ -2266,7 +2266,7 @@ grd_session_rdp_stop (GrdSession *session)
   g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
                                notify_keysym_released,
                                session_rdp);
-  g_clear_object (&session_rdp->rdp_event_queue);
+  grd_rdp_event_queue_flush (session_rdp->rdp_event_queue);
 
   g_clear_pointer (&session_rdp->rdp_surface, grd_rdp_surface_free);
   g_clear_pointer (&session_rdp->monitor_config, grd_rdp_monitor_config_free);
@@ -2425,6 +2425,8 @@ grd_session_rdp_dispose (GObject *object)
 
   g_assert (!session_rdp->graphics_thread);
   g_clear_pointer (&session_rdp->graphics_context, g_main_context_unref);
+
+  g_clear_object (&session_rdp->rdp_event_queue);
 
   g_clear_pointer (&session_rdp->pressed_unicode_keys, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pressed_keys, g_hash_table_unref);

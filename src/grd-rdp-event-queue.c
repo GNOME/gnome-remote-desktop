@@ -101,6 +101,100 @@ struct _GrdRdpEventQueue
 G_DEFINE_TYPE (GrdRdpEventQueue, grd_rdp_event_queue, G_TYPE_OBJECT)
 
 static void
+handle_synchronization_event (GrdRdpEventQueue *rdp_event_queue)
+{
+  GrdSession *session = GRD_SESSION (rdp_event_queue->session_rdp);
+  RdpSynchronizationEvent *rdp_sync_event;
+
+  rdp_sync_event = g_steal_pointer (&rdp_event_queue->rdp_sync_event);
+
+  if (rdp_sync_event->caps_lock_state != rdp_event_queue->caps_lock_state)
+    {
+      g_debug ("Synchronizing caps lock state to be %s",
+               rdp_sync_event->caps_lock_state ? "locked": "unlocked");
+
+      grd_session_notify_keyboard_keysym (session, XKB_KEY_Caps_Lock,
+                                          GRD_KEY_STATE_PRESSED);
+      grd_session_notify_keyboard_keysym (session, XKB_KEY_Caps_Lock,
+                                          GRD_KEY_STATE_RELEASED);
+
+      rdp_event_queue->pending_sync_caps_lock = TRUE;
+    }
+  if (rdp_sync_event->num_lock_state != rdp_event_queue->num_lock_state)
+    {
+      g_debug ("Synchronizing num lock state to be %s",
+               rdp_sync_event->num_lock_state ? "locked": "unlocked");
+
+      grd_session_notify_keyboard_keysym (session, XKB_KEY_Num_Lock,
+                                          GRD_KEY_STATE_PRESSED);
+      grd_session_notify_keyboard_keysym (session, XKB_KEY_Num_Lock,
+                                          GRD_KEY_STATE_RELEASED);
+
+      rdp_event_queue->pending_sync_num_lock = TRUE;
+    }
+
+  g_free (rdp_sync_event);
+}
+
+static void
+process_rdp_events (GrdRdpEventQueue *rdp_event_queue)
+{
+  GrdSession *session = GRD_SESSION (rdp_event_queue->session_rdp);
+  RdpEvent *rdp_event;
+
+  if (rdp_event_queue->rdp_sync_event &&
+      !rdp_event_queue->pending_sync_caps_lock &&
+      !rdp_event_queue->pending_sync_num_lock)
+    handle_synchronization_event (rdp_event_queue);
+
+  while ((rdp_event = g_queue_pop_head (rdp_event_queue->queue)))
+    {
+      switch (rdp_event->type)
+        {
+        case RDP_EVENT_TYPE_NONE:
+          break;
+        case RDP_EVENT_TYPE_INPUT_KBD_KEYCODE:
+          grd_session_notify_keyboard_keycode (
+            session, rdp_event->input_kbd_keycode.keycode,
+            rdp_event->input_kbd_keycode.state);
+          break;
+        case RDP_EVENT_TYPE_INPUT_KBD_KEYSYM:
+          grd_session_notify_keyboard_keysym (session,
+                                              rdp_event->input_kbd_keysym.keysym,
+                                              rdp_event->input_kbd_keysym.state);
+          break;
+        case RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS:
+          grd_session_notify_pointer_motion_absolute (
+            session, rdp_event->input_ptr_motion_abs.stream,
+            rdp_event->input_ptr_motion_abs.x,
+            rdp_event->input_ptr_motion_abs.y);
+          break;
+        case RDP_EVENT_TYPE_INPUT_PTR_BUTTON:
+          grd_session_notify_pointer_button (session,
+                                             rdp_event->input_ptr_button.button,
+                                             rdp_event->input_ptr_button.state);
+          break;
+        case RDP_EVENT_TYPE_INPUT_PTR_AXIS:
+          grd_session_notify_pointer_axis (session,
+                                           rdp_event->input_ptr_axis.dx,
+                                           rdp_event->input_ptr_axis.dy,
+                                           rdp_event->input_ptr_axis.flags);
+          break;
+        }
+
+      g_free (rdp_event);
+    }
+}
+
+void
+grd_rdp_event_queue_flush (GrdRdpEventQueue *rdp_event_queue)
+{
+  g_mutex_lock (&rdp_event_queue->event_mutex);
+  process_rdp_events (rdp_event_queue);
+  g_mutex_unlock (&rdp_event_queue->event_mutex);
+}
+
+static void
 queue_rdp_event (GrdRdpEventQueue *rdp_event_queue,
                  RdpEvent         *rdp_event)
 {
@@ -235,92 +329,6 @@ grd_rdp_event_queue_add_synchronization_event (GrdRdpEventQueue *rdp_event_queue
   g_source_set_ready_time (rdp_event_queue->flush_source, 0);
 }
 
-static void
-handle_synchronization_event (GrdRdpEventQueue *rdp_event_queue)
-{
-  GrdSession *session = GRD_SESSION (rdp_event_queue->session_rdp);
-  RdpSynchronizationEvent *rdp_sync_event;
-
-  rdp_sync_event = g_steal_pointer (&rdp_event_queue->rdp_sync_event);
-
-  if (rdp_sync_event->caps_lock_state != rdp_event_queue->caps_lock_state)
-    {
-      g_debug ("Synchronizing caps lock state to be %s",
-               rdp_sync_event->caps_lock_state ? "locked": "unlocked");
-
-      grd_session_notify_keyboard_keysym (session, XKB_KEY_Caps_Lock,
-                                          GRD_KEY_STATE_PRESSED);
-      grd_session_notify_keyboard_keysym (session, XKB_KEY_Caps_Lock,
-                                          GRD_KEY_STATE_RELEASED);
-
-      rdp_event_queue->pending_sync_caps_lock = TRUE;
-    }
-  if (rdp_sync_event->num_lock_state != rdp_event_queue->num_lock_state)
-    {
-      g_debug ("Synchronizing num lock state to be %s",
-               rdp_sync_event->num_lock_state ? "locked": "unlocked");
-
-      grd_session_notify_keyboard_keysym (session, XKB_KEY_Num_Lock,
-                                          GRD_KEY_STATE_PRESSED);
-      grd_session_notify_keyboard_keysym (session, XKB_KEY_Num_Lock,
-                                          GRD_KEY_STATE_RELEASED);
-
-      rdp_event_queue->pending_sync_num_lock = TRUE;
-    }
-
-  g_free (rdp_sync_event);
-}
-
-static void
-process_rdp_events (GrdRdpEventQueue *rdp_event_queue)
-{
-  GrdSession *session = GRD_SESSION (rdp_event_queue->session_rdp);
-  RdpEvent *rdp_event;
-
-  if (rdp_event_queue->rdp_sync_event &&
-      !rdp_event_queue->pending_sync_caps_lock &&
-      !rdp_event_queue->pending_sync_num_lock)
-    handle_synchronization_event (rdp_event_queue);
-
-  while ((rdp_event = g_queue_pop_head (rdp_event_queue->queue)))
-    {
-      switch (rdp_event->type)
-        {
-        case RDP_EVENT_TYPE_NONE:
-          break;
-        case RDP_EVENT_TYPE_INPUT_KBD_KEYCODE:
-          grd_session_notify_keyboard_keycode (
-            session, rdp_event->input_kbd_keycode.keycode,
-            rdp_event->input_kbd_keycode.state);
-          break;
-        case RDP_EVENT_TYPE_INPUT_KBD_KEYSYM:
-          grd_session_notify_keyboard_keysym (session,
-                                              rdp_event->input_kbd_keysym.keysym,
-                                              rdp_event->input_kbd_keysym.state);
-          break;
-        case RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS:
-          grd_session_notify_pointer_motion_absolute (
-            session, rdp_event->input_ptr_motion_abs.stream,
-            rdp_event->input_ptr_motion_abs.x,
-            rdp_event->input_ptr_motion_abs.y);
-          break;
-        case RDP_EVENT_TYPE_INPUT_PTR_BUTTON:
-          grd_session_notify_pointer_button (session,
-                                             rdp_event->input_ptr_button.button,
-                                             rdp_event->input_ptr_button.state);
-          break;
-        case RDP_EVENT_TYPE_INPUT_PTR_AXIS:
-          grd_session_notify_pointer_axis (session,
-                                           rdp_event->input_ptr_axis.dx,
-                                           rdp_event->input_ptr_axis.dy,
-                                           rdp_event->input_ptr_axis.flags);
-          break;
-        }
-
-      g_free (rdp_event);
-    }
-}
-
 static gboolean
 flush_rdp_events (gpointer user_data)
 {
@@ -378,11 +386,6 @@ static void
 grd_rdp_event_queue_dispose (GObject *object)
 {
   GrdRdpEventQueue *rdp_event_queue = GRD_RDP_EVENT_QUEUE (object);
-
-  /**
-   * Process all events to ensure that remaining keysym-released events are sent
-   */
-  process_rdp_events (rdp_event_queue);
 
   g_clear_pointer (&rdp_event_queue->rdp_sync_event, g_free);
   g_queue_free_full (rdp_event_queue->queue, free_rdp_event);
