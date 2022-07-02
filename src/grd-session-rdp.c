@@ -2180,6 +2180,21 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   return g_steal_pointer (&session_rdp);
 }
 
+static void
+clear_session_sources (GrdSessionRdp *session_rdp)
+{
+  if (session_rdp->update_monitor_layout_source)
+    {
+      g_source_destroy (session_rdp->update_monitor_layout_source);
+      g_clear_pointer (&session_rdp->update_monitor_layout_source, g_source_unref);
+    }
+  if (session_rdp->pending_encode_source)
+    {
+      g_source_destroy (session_rdp->pending_encode_source);
+      g_clear_pointer (&session_rdp->pending_encode_source, g_source_unref);
+    }
+}
+
 static gboolean
 clear_pointer_bitmap (gpointer key,
                       gpointer value,
@@ -2239,12 +2254,7 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_object (&rdp_peer_context->graphics_pipeline);
 
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
-
-  if (session_rdp->update_monitor_layout_source)
-    {
-      g_source_destroy (session_rdp->update_monitor_layout_source);
-      g_clear_pointer (&session_rdp->update_monitor_layout_source, g_source_unref);
-    }
+  clear_session_sources (session_rdp);
 
   peer->Close (peer);
   g_clear_object (&session_rdp->connection);
@@ -2417,11 +2427,7 @@ grd_session_rdp_dispose (GObject *object)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
 
-  if (session_rdp->pending_encode_source)
-    {
-      g_source_destroy (session_rdp->pending_encode_source);
-      g_clear_pointer (&session_rdp->pending_encode_source, g_source_unref);
-    }
+  clear_session_sources (session_rdp);
 
   g_assert (!session_rdp->graphics_thread);
   g_clear_pointer (&session_rdp->graphics_context, g_main_context_unref);
