@@ -635,8 +635,7 @@ set_selection_for_clip_data_entry (GrdRdpFuseClipboard *rdp_fuse_clipboard,
           g_warning ("[RDP.CLIPRDR] Failed to convert filename. Aborting "
                      "SelectionTransfer");
           clear_entry_selection (rdp_fuse_clipboard, entry);
-
-          g_free (fuse_file);
+          fuse_file_free (fuse_file);
 
           return FALSE;
         }
@@ -653,6 +652,16 @@ set_selection_for_clip_data_entry (GrdRdpFuseClipboard *rdp_fuse_clipboard,
 
       parent = get_parent_directory (rdp_fuse_clipboard,
                                      fuse_file->filename_with_root);
+      if (!parent)
+        {
+          g_warning ("[RDP.CLIPRDR] Failed to find parent directory. Aborting "
+                     "SelectionTransfer");
+          clear_entry_selection (rdp_fuse_clipboard, entry);
+          fuse_file_free (fuse_file);
+
+          return FALSE;
+        }
+
       parent->children = g_list_append (parent->children, fuse_file);
       fuse_file->parent = parent;
 
