@@ -58,8 +58,8 @@ void grd_rdp_graphics_pipeline_reset_graphics (GrdRdpGraphicsPipeline *graphics_
 void grd_rdp_graphics_pipeline_notify_new_round_trip_time (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                            uint64_t                round_trip_time_us);
 
-void grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                            GrdRdpSurface          *rdp_surface,
-                                            GrdRdpBuffer           *buffer);
+gboolean grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                                GrdRdpSurface          *rdp_surface,
+                                                GrdRdpBuffer           *buffer);
 
 #endif /* GRD_RDP_GRAPHICS_PIPELINE_H */

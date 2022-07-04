@@ -1036,7 +1036,7 @@ ensure_rtt_receivement (GrdRdpGraphicsPipeline *graphics_pipeline)
                    graphics_pipeline->pipeline_context);
 }
 
-void
+gboolean
 grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline,
                                        GrdRdpSurface          *rdp_surface,
                                        GrdRdpBuffer           *buffer)
@@ -1104,6 +1104,8 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
         ensure_rtt_receivement (graphics_pipeline);
       g_mutex_unlock (&graphics_pipeline->gfx_mutex);
     }
+
+  return success;
 }
 
 static void
