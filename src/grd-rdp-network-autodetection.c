@@ -484,7 +484,8 @@ autodetect_rtt_measure_response (rdpContext *rdp_context,
   g_mutex_unlock (&network_autodetection->consumer_mutex);
 
   g_mutex_lock (&network_autodetection->shutdown_mutex);
-  if (!network_autodetection->in_shutdown && has_rtt_consumer_rdpgfx)
+  if (!network_autodetection->in_shutdown && has_rtt_consumer_rdpgfx &&
+      rdp_peer_context->graphics_pipeline)
     {
       grd_rdp_graphics_pipeline_notify_new_round_trip_time (
         rdp_peer_context->graphics_pipeline, avg_round_trip_time_us);

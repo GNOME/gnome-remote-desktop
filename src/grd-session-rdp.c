@@ -1969,26 +1969,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
     }
 
   if (rdp_settings->SupportGraphicsPipeline)
-    {
-      set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
-
-      rdp_peer_context->telemetry =
-        grd_rdp_telemetry_new (session_rdp,
-                               rdp_peer_context->vcm,
-                               session_rdp->stop_event,
-                               peer->context);
-      rdp_peer_context->graphics_pipeline =
-        grd_rdp_graphics_pipeline_new (session_rdp,
-                                       session_rdp->graphics_context,
-                                       rdp_peer_context->vcm,
-                                       session_rdp->stop_event,
-                                       peer->context,
-                                       rdp_peer_context->network_autodetection,
-                                       rdp_peer_context->encode_stream,
-                                       rdp_peer_context->rfx_context);
-      grd_rdp_graphics_pipeline_set_hwaccel_nvidia (
-        rdp_peer_context->graphics_pipeline, session_rdp->hwaccel_nvidia);
-    }
+    set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
 
   session_metrics->rd_session_start_init_us = g_get_monotonic_time ();
   grd_session_start (GRD_SESSION (session_rdp));
@@ -2018,7 +1999,8 @@ rdp_peer_activate (freerdp_peer *peer)
 
   g_debug ("Activating client");
 
-  if (rdp_peer_context->graphics_pipeline &&
+  if ((rdp_peer_context->graphics_pipeline ||
+       is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT)) &&
       !rdp_settings->SupportGraphicsPipeline)
     {
       g_warning ("Client disabled support for the graphics pipeline during the "
@@ -2604,15 +2586,48 @@ close_session_idle (gpointer user_data)
 }
 
 static void
-grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
+maybe_initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
 {
-  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
-  SessionMetrics *session_metrics = &session_rdp->session_metrics;
   freerdp_peer *peer = session_rdp->peer;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   rdpSettings *rdp_settings = peer->settings;
+  GrdRdpGraphicsPipeline *graphics_pipeline;
+  GrdRdpTelemetry *telemetry;
 
-  session_metrics->rd_session_ready_us = g_get_monotonic_time ();
+  g_assert (!rdp_peer_context->telemetry);
+  g_assert (!rdp_peer_context->graphics_pipeline);
+
+  if (!rdp_settings->SupportGraphicsPipeline)
+    return;
+
+  g_assert (is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT));
+
+  telemetry = grd_rdp_telemetry_new (session_rdp,
+                                     rdp_peer_context->vcm,
+                                     session_rdp->stop_event,
+                                     peer->context);
+  rdp_peer_context->telemetry = telemetry;
+
+  graphics_pipeline =
+    grd_rdp_graphics_pipeline_new (session_rdp,
+                                   session_rdp->graphics_context,
+                                   rdp_peer_context->vcm,
+                                   session_rdp->stop_event,
+                                   peer->context,
+                                   rdp_peer_context->network_autodetection,
+                                   rdp_peer_context->encode_stream,
+                                   rdp_peer_context->rfx_context);
+  grd_rdp_graphics_pipeline_set_hwaccel_nvidia (graphics_pipeline,
+                                                session_rdp->hwaccel_nvidia);
+  rdp_peer_context->graphics_pipeline = graphics_pipeline;
+}
+
+static void
+initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
+{
+  freerdp_peer *peer = session_rdp->peer;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
+  rdpSettings *rdp_settings = peer->settings;
 
   if (WTSVirtualChannelManagerIsChannelJoined (rdp_peer_context->vcm,
                                                "cliprdr"))
@@ -2627,6 +2642,18 @@ grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
         grd_rdp_audio_playback_new (session_rdp, rdp_peer_context->vcm,
                                     session_rdp->stop_event, peer->context);
     }
+}
+
+static void
+grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
+{
+  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
+  SessionMetrics *session_metrics = &session_rdp->session_metrics;
+
+  session_metrics->rd_session_ready_us = g_get_monotonic_time ();
+
+  maybe_initialize_graphics_pipeline (session_rdp);
+  initialize_remaining_virtual_channels (session_rdp);
 }
 
 static void
