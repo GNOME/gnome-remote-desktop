@@ -1914,7 +1914,9 @@ rdp_peer_post_connect (freerdp_peer *peer)
   SessionMetrics *session_metrics = &session_rdp->session_metrics;
   rdpSettings *rdp_settings = peer->settings;
 
-  g_debug ("New RDP client");
+  g_debug ("New RDP client: [OS major type, OS minor type]: [%s, %s]",
+           freerdp_peer_os_major_type_string (peer),
+           freerdp_peer_os_minor_type_string (peer));
 
   if (!rdp_settings->SupportGraphicsPipeline &&
       !rdp_settings->RemoteFxCodec &&
