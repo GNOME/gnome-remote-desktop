@@ -29,6 +29,7 @@
 
 #include "grd-session.h"
 #include "grd-types.h"
+#include "grd-vnc-monitor-config.h"
 
 #define GRD_TYPE_SESSION_VNC (grd_session_vnc_get_type ())
 G_DECLARE_FINAL_TYPE (GrdSessionVnc,

@@ -70,6 +70,8 @@ struct _GrdSessionVnc
   GHashTable *pressed_keys;
 
   GrdClipboardVnc *clipboard_vnc;
+  GrdVncScreenShareMode screen_share_mode;
+  GrdVncMonitorConfig *monitor_config;
 };
 
 G_DEFINE_TYPE (GrdSessionVnc, grd_session_vnc, GRD_TYPE_SESSION)
@@ -565,10 +567,11 @@ init_vnc_session (GrdSessionVnc *session_vnc)
   int screen_width;
   int screen_height;
   rfbScreenInfoPtr rfb_screen;
+  GrdVncMonitorConfig *monitor_config;
 
   /* Arbitrary framebuffer size, will get the proper size from the stream. */
-  screen_width = 800;
-  screen_height = 600;
+  screen_width = GRD_VNC_DEFAULT_WIDTH;
+  screen_height = GRD_VNC_DEFAULT_HEIGHT;
   rfb_screen = rfbGetScreen (0, NULL,
                              screen_width, screen_height,
                              8, 3, 4);
@@ -596,6 +599,35 @@ init_vnc_session (GrdSessionVnc *session_vnc)
 
   rfb_screen->frameBuffer = g_malloc0 (screen_width * screen_height * 4);
   memset (rfb_screen->frameBuffer, 0x1f, screen_width * screen_height * 4);
+
+  session_vnc->monitor_config = g_new0 (GrdVncMonitorConfig, 1);
+  monitor_config = session_vnc->monitor_config;
+  monitor_config->virtual_monitors = NULL;
+  /* No multi-monitor support yet */
+  monitor_config->monitor_count = 1;
+
+  if (session_vnc->screen_share_mode == GRD_VNC_SCREEN_SHARE_MODE_EXTEND)
+    {
+      monitor_config->is_virtual = TRUE;
+      monitor_config->virtual_monitors = g_new0 (GrdVncVirtualMonitor, 1);
+
+      monitor_config->virtual_monitors->pos_x = 0;
+      monitor_config->virtual_monitors->pos_y = 0;
+      monitor_config->virtual_monitors->width = GRD_VNC_CLAMP_DESKTOP_SIZE (screen_width);
+      monitor_config->virtual_monitors->height = GRD_VNC_CLAMP_DESKTOP_SIZE (screen_height);
+    }
+  else
+    {
+      monitor_config->is_virtual = FALSE;
+      g_autoptr (GStrvBuilder) connector_builder = NULL;
+      char **connectors;
+
+      connector_builder = g_strv_builder_new ();
+      g_strv_builder_add (connector_builder, "");
+      connectors = g_strv_builder_end (connector_builder);
+
+      session_vnc->monitor_config->connectors = connectors;
+    }
 
   rfbInitServer (rfb_screen);
   rfbProcessEvents (rfb_screen, 0);
@@ -675,6 +707,7 @@ grd_session_vnc_new (GrdVncServer      *vnc_server,
 {
   GrdSessionVnc *session_vnc;
   GrdContext *context;
+  GrdSettings *settings;
 
   context = grd_vnc_server_get_context (vnc_server);
   session_vnc = g_object_new (GRD_TYPE_SESSION_VNC,
@@ -682,6 +715,9 @@ grd_session_vnc_new (GrdVncServer      *vnc_server,
                               NULL);
 
   session_vnc->connection = g_object_ref (connection);
+
+  settings = grd_context_get_settings (context);
+  session_vnc->screen_share_mode = grd_settings_get_vnc_screen_share_mode (settings);
 
   grd_session_vnc_attach_source (session_vnc);
 
@@ -717,6 +753,7 @@ grd_session_vnc_stop (GrdSession *session)
   g_clear_object (&session_vnc->clipboard_vnc);
   g_clear_pointer (&session_vnc->rfb_screen->frameBuffer, g_free);
   g_clear_pointer (&session_vnc->rfb_screen, rfbScreenCleanup);
+  g_clear_pointer (&session_vnc->monitor_config, grd_vnc_monitor_config_free);
 
   g_clear_handle_id (&session_vnc->close_session_idle_id, g_source_remove);
 }
@@ -736,7 +773,30 @@ close_session_idle (gpointer user_data)
 static void
 grd_session_vnc_remote_desktop_session_started (GrdSession *session)
 {
-  grd_session_record_monitor (session, NULL, GRD_SCREEN_CAST_CURSOR_MODE_METADATA);
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
+
+  if (session_vnc->monitor_config->is_virtual)
+    g_debug ("[VNC] Remote Desktop session will use virtual monitors");
+  else
+    g_debug ("[VNC] Remote Desktop session will mirror the primary monitor");
+
+  /* Not supporting multi-monitor at the moment */
+  g_assert (session_vnc->monitor_config->monitor_count == 1);
+
+  if (session_vnc->monitor_config->is_virtual)
+    {
+      grd_session_record_virtual (session,
+                                  GRD_SCREEN_CAST_CURSOR_MODE_METADATA,
+                                  TRUE);
+    }
+  else
+    {
+      const char *connector;
+
+      connector = session_vnc->monitor_config->connectors[0];
+      grd_session_record_monitor (session, connector,
+                                  GRD_SCREEN_CAST_CURSOR_MODE_METADATA);
+    }
 }
 
 static void
@@ -754,12 +814,14 @@ grd_session_vnc_stream_ready (GrdSession *session,
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
   uint32_t pipewire_node_id;
+  GrdVncVirtualMonitor *virtual_monitor;
   g_autoptr (GError) error = NULL;
 
+  virtual_monitor = session_vnc->monitor_config->virtual_monitors;
   pipewire_node_id = grd_stream_get_pipewire_node_id (stream);
   session_vnc->pipewire_stream = grd_vnc_pipewire_stream_new (session_vnc,
                                                               pipewire_node_id,
-                                                              NULL,
+                                                              virtual_monitor,
                                                               &error);
   if (!session_vnc->pipewire_stream)
     {
