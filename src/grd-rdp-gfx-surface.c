@@ -162,15 +162,15 @@ grd_rdp_gfx_surface_dispose (GObject *object)
 {
   GrdRdpGfxSurface *gfx_surface = GRD_RDP_GFX_SURFACE (object);
 
-  g_clear_object (&gfx_surface->frame_controller);
-  g_clear_object (&gfx_surface->render_surface);
-
   if (gfx_surface->created)
     {
       grd_rdp_graphics_pipeline_delete_surface (gfx_surface->graphics_pipeline,
                                                 gfx_surface);
       gfx_surface->created = FALSE;
     }
+
+  g_clear_object (&gfx_surface->frame_controller);
+  g_clear_object (&gfx_surface->render_surface);
 
   G_OBJECT_CLASS (grd_rdp_gfx_surface_parent_class)->dispose (object);
 }
