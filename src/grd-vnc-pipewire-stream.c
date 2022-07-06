@@ -670,8 +670,9 @@ static const struct pw_stream_events stream_events = {
 };
 
 static void
-add_common_format_params (struct spa_pod_builder *pod_builder,
-                          enum spa_video_format   spa_format)
+add_common_format_params (struct spa_pod_builder     *pod_builder,
+                          enum spa_video_format       spa_format,
+                          const GrdVncVirtualMonitor *virtual_monitor)
 {
   struct spa_rectangle min_rect;
   struct spa_rectangle max_rect;
@@ -692,11 +693,26 @@ add_common_format_params (struct spa_pod_builder *pod_builder,
   spa_pod_builder_add (pod_builder,
                        SPA_FORMAT_VIDEO_format,
                        SPA_POD_Id (spa_format), 0);
-  spa_pod_builder_add (pod_builder,
-                       SPA_FORMAT_VIDEO_size,
-                       SPA_POD_CHOICE_RANGE_Rectangle (&min_rect,
-                                                       &min_rect,
-                                                       &max_rect), 0);
+
+  if (virtual_monitor)
+    {
+      struct spa_rectangle virtual_monitor_rect;
+
+      virtual_monitor_rect = SPA_RECTANGLE (virtual_monitor->width,
+                                            virtual_monitor->height);
+      spa_pod_builder_add (pod_builder,
+                           SPA_FORMAT_VIDEO_size,
+                           SPA_POD_Rectangle (&virtual_monitor_rect), 0);
+    }
+  else
+    {
+      spa_pod_builder_add (pod_builder,
+                           SPA_FORMAT_VIDEO_size,
+                           SPA_POD_CHOICE_RANGE_Rectangle (&min_rect,
+                                                           &min_rect,
+                                                           &max_rect), 0);
+    }
+
   spa_pod_builder_add (pod_builder,
                        SPA_FORMAT_VIDEO_framerate,
                        SPA_POD_Fraction (&SPA_FRACTION (0, 1)), 0);
@@ -708,8 +724,9 @@ add_common_format_params (struct spa_pod_builder *pod_builder,
 }
 
 static gboolean
-connect_to_stream (GrdVncPipeWireStream  *stream,
-                   GError               **error)
+connect_to_stream (GrdVncPipeWireStream        *stream,
+                   const GrdVncVirtualMonitor  *virtual_monitor,
+                   GError                     **error)
 {
   GrdSession *session = GRD_SESSION (stream->session);
   GrdContext *context = grd_session_get_context (session);
@@ -732,7 +749,7 @@ connect_to_stream (GrdVncPipeWireStream  *stream,
   spa_pod_builder_push_object (&pod_builder, &format_frame,
                                SPA_TYPE_OBJECT_Format,
                                SPA_PARAM_EnumFormat);
-  add_common_format_params (&pod_builder, spa_format);
+  add_common_format_params (&pod_builder, spa_format, virtual_monitor);
 
   egl_thread = grd_context_get_egl_thread (context);
   if (egl_thread)
@@ -778,7 +795,7 @@ connect_to_stream (GrdVncPipeWireStream  *stream,
       spa_pod_builder_push_object (&pod_builder, &format_frame,
                                    SPA_TYPE_OBJECT_Format,
                                    SPA_PARAM_EnumFormat);
-      add_common_format_params (&pod_builder, spa_format);
+      add_common_format_params (&pod_builder, spa_format, virtual_monitor);
       params[1] = spa_pod_builder_pop (&pod_builder, &format_frame);
     }
 
@@ -826,9 +843,10 @@ static const struct pw_core_events core_events = {
 };
 
 GrdVncPipeWireStream *
-grd_vnc_pipewire_stream_new (GrdSessionVnc  *session_vnc,
-                             uint32_t        src_node_id,
-                             GError        **error)
+grd_vnc_pipewire_stream_new (GrdSessionVnc               *session_vnc,
+                             uint32_t                     src_node_id,
+                             const GrdVncVirtualMonitor  *virtual_monitor,
+                             GError                     **error)
 {
   g_autoptr (GrdVncPipeWireStream) stream = NULL;
   GrdPipeWireSource *pipewire_source;
@@ -877,7 +895,7 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc  *session_vnc,
                         &core_events,
                         stream);
 
-  if (!connect_to_stream (stream, error))
+  if (!connect_to_stream (stream, virtual_monitor, error))
     return NULL;
 
   return g_steal_pointer (&stream);

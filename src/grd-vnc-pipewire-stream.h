@@ -25,14 +25,16 @@
 #include <stdint.h>
 
 #include "grd-session-vnc.h"
+#include "grd-vnc-monitor-config.h"
 
 #define GRD_TYPE_VNC_PIPEWIRE_STREAM grd_vnc_pipewire_stream_get_type ()
 G_DECLARE_FINAL_TYPE (GrdVncPipeWireStream, grd_vnc_pipewire_stream,
                       GRD, VNC_PIPEWIRE_STREAM,
                       GObject)
 
-GrdVncPipeWireStream * grd_vnc_pipewire_stream_new (GrdSessionVnc  *session_vnc,
-                                                    uint32_t        src_node_id,
-                                                    GError        **error);
+GrdVncPipeWireStream * grd_vnc_pipewire_stream_new (GrdSessionVnc              *session_vnc,
+                                                    uint32_t                    src_node_id,
+                                                    const GrdVncVirtualMonitor *virtual_monitor,
+                                                    GError                    **error);
 
 #endif /* GRD_VNC_PIPEWIRE_STREAM_H */

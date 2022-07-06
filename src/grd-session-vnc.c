@@ -759,6 +759,7 @@ grd_session_vnc_stream_ready (GrdSession *session,
   pipewire_node_id = grd_stream_get_pipewire_node_id (stream);
   session_vnc->pipewire_stream = grd_vnc_pipewire_stream_new (session_vnc,
                                                               pipewire_node_id,
+                                                              NULL,
                                                               &error);
   if (!session_vnc->pipewire_stream)
     {
