@@ -80,6 +80,8 @@ struct _GrdClipboardRdp
   CliprdrServerContext *cliprdr_context;
   HANDLE stop_event;
 
+  gboolean relieve_filename_restriction;
+
   wClipboard *system;
   wClipboardDelegate *delegate;
   gboolean has_file_list;
@@ -2256,6 +2258,27 @@ cliprdr_file_range_failure (wClipboardDelegate               *delegate,
                                               file_range_request->streamId);
 }
 
+static BOOL
+is_valid_unix_filename (LPCWSTR filename)
+{
+  LPCWSTR c;
+
+  if (!filename)
+    return FALSE;
+
+  if (filename[0] == L'\0')
+    return FALSE;
+
+  /* Reserved characters */
+  for (c = filename; *c; ++c)
+    {
+      if (*c == L'/')
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 static void
 create_new_winpr_clipboard (GrdClipboardRdp *clipboard_rdp)
 {
@@ -2270,13 +2293,17 @@ create_new_winpr_clipboard (GrdClipboardRdp *clipboard_rdp)
   clipboard_rdp->delegate->basePath = NULL;
   clipboard_rdp->delegate->custom = clipboard_rdp;
 
+  if (clipboard_rdp->relieve_filename_restriction)
+    clipboard_rdp->delegate->IsFileNameComponentValid = is_valid_unix_filename;
+
   clipboard_rdp->has_file_list = FALSE;
 }
 
 GrdClipboardRdp *
 grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
                        HANDLE         vcm,
-                       HANDLE         stop_event)
+                       HANDLE         stop_event,
+                       gboolean       relieve_filename_restriction)
 {
   g_autoptr (GrdClipboardRdp) clipboard_rdp = NULL;
   GrdClipboard *clipboard;
@@ -2292,6 +2319,7 @@ grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
 
   clipboard_rdp->cliprdr_context = cliprdr_context;
   clipboard_rdp->stop_event = stop_event;
+  clipboard_rdp->relieve_filename_restriction = relieve_filename_restriction;
 
   clipboard = GRD_CLIPBOARD (clipboard_rdp);
   grd_clipboard_initialize (clipboard, GRD_SESSION (session_rdp));
@@ -2313,6 +2341,12 @@ grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
   cliprdr_context->ClientFileContentsRequest = cliprdr_client_file_contents_request;
   cliprdr_context->ClientFileContentsResponse = cliprdr_client_file_contents_response;
   cliprdr_context->custom = clipboard_rdp;
+
+  if (relieve_filename_restriction)
+    {
+      g_message ("[RDP.CLIPRDR] Relieving CLIPRDR filename restriction");
+      clipboard_rdp->delegate->IsFileNameComponentValid = is_valid_unix_filename;
+    }
 
   if (cliprdr_context->Start (cliprdr_context))
     {

@@ -2637,9 +2637,12 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
   if (WTSVirtualChannelManagerIsChannelJoined (rdp_peer_context->vcm,
                                                "cliprdr"))
     {
+      gboolean peer_is_on_ms_windows;
+
+      peer_is_on_ms_windows = rdp_settings->OsMajorType == OSMAJORTYPE_WINDOWS;
       rdp_peer_context->clipboard_rdp =
         grd_clipboard_rdp_new (session_rdp, rdp_peer_context->vcm,
-                               session_rdp->stop_event);
+                               session_rdp->stop_event, !peer_is_on_ms_windows);
     }
   if (rdp_settings->AudioPlayback && !rdp_settings->RemoteConsoleAudio)
     {
