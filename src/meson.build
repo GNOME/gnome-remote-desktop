@@ -24,6 +24,8 @@ deps = [
 credentials_sources = files([
   'grd-credentials.c',
   'grd-credentials.h',
+  'grd-credentials-file.c',
+  'grd-credentials-file.h',
   'grd-credentials-libsecret.c',
   'grd-credentials-libsecret.h',
   'grd-credentials-tpm.c',
