@@ -32,6 +32,7 @@
 #include "grd-context.h"
 #include "grd-debug.h"
 #include "grd-hwaccel-nvidia.h"
+#include "grd-rdp-audio-input.h"
 #include "grd-rdp-audio-playback.h"
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-cursor-renderer.h"
@@ -398,6 +399,7 @@ grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
       g_assert_not_reached ();
       break;
     case GRD_RDP_CHANNEL_AUDIO_INPUT:
+      g_clear_object (&rdp_peer_context->audio_input);
       break;
     case GRD_RDP_CHANNEL_AUDIO_PLAYBACK:
       g_clear_object (&rdp_peer_context->audio_playback);
@@ -1907,6 +1909,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   freerdp_settings_set_bool (rdp_settings, FreeRDP_HasQoeEvent, FALSE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_UnicodeInput, TRUE);
 
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioCapture, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_RemoteConsoleAudio, TRUE);
 
@@ -2005,6 +2008,7 @@ socket_thread_func (gpointer data)
           GrdRdpGraphicsPipeline *graphics_pipeline;
           GrdRdpAudioPlayback *audio_playback;
           GrdRdpDisplayControl *display_control;
+          GrdRdpAudioInput *audio_input;
 
           switch (WTSVirtualChannelManagerGetDrdynvcState (vcm))
             {
@@ -2021,6 +2025,7 @@ socket_thread_func (gpointer data)
               graphics_pipeline = rdp_peer_context->graphics_pipeline;
               audio_playback = rdp_peer_context->audio_playback;
               display_control = rdp_peer_context->display_control;
+              audio_input = rdp_peer_context->audio_input;
 
               if (telemetry && !session_rdp->session_should_stop)
                 grd_rdp_telemetry_maybe_init (telemetry);
@@ -2030,6 +2035,8 @@ socket_thread_func (gpointer data)
                 grd_rdp_audio_playback_maybe_init (audio_playback);
               if (display_control && !session_rdp->session_should_stop)
                 grd_rdp_display_control_maybe_init (display_control);
+              if (audio_input && !session_rdp->session_should_stop)
+                grd_rdp_audio_input_maybe_init (audio_input);
               g_mutex_unlock (&rdp_peer_context->channel_mutex);
               break;
             }
@@ -2221,6 +2228,7 @@ grd_session_rdp_stop (GrdSession *session)
     }
 
   g_mutex_lock (&rdp_peer_context->channel_mutex);
+  g_clear_object (&rdp_peer_context->audio_input);
   g_clear_object (&rdp_peer_context->clipboard_rdp);
   g_clear_object (&rdp_peer_context->audio_playback);
   g_clear_object (&rdp_peer_context->display_control);
@@ -2337,6 +2345,11 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
     {
       rdp_peer_context->audio_playback =
         grd_rdp_audio_playback_new (session_rdp, rdp_dvc, vcm, rdp_context);
+    }
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_AudioCapture))
+    {
+      rdp_peer_context->audio_input =
+        grd_rdp_audio_input_new (session_rdp, rdp_dvc, vcm, rdp_context);
     }
 }
 
