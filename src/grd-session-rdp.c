@@ -397,6 +397,8 @@ grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
     case GRD_RDP_CHANNEL_NONE:
       g_assert_not_reached ();
       break;
+    case GRD_RDP_CHANNEL_AUDIO_INPUT:
+      break;
     case GRD_RDP_CHANNEL_AUDIO_PLAYBACK:
       g_clear_object (&rdp_peer_context->audio_playback);
       break;

@@ -76,6 +76,8 @@ if have_rdp
     'grd-clipboard-rdp.h',
     'grd-hwaccel-nvidia.c',
     'grd-hwaccel-nvidia.h',
+    'grd-rdp-audio-input.c',
+    'grd-rdp-audio-input.h',
     'grd-rdp-audio-output-stream.c',
     'grd-rdp-audio-output-stream.h',
     'grd-rdp-audio-playback.c',

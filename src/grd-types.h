@@ -30,6 +30,7 @@ typedef struct _GrdContext GrdContext;
 typedef struct _GrdCredentials GrdCredentials;
 typedef struct _GrdEglThread GrdEglThread;
 typedef struct _GrdHwAccelNvidia GrdHwAccelNvidia;
+typedef struct _GrdRdpAudioInput GrdRdpAudioInput;
 typedef struct _GrdRdpAudioOutputStream GrdRdpAudioOutputStream;
 typedef struct _GrdRdpAudioPlayback GrdRdpAudioPlayback;
 typedef struct _GrdRdpAudioVolumeData GrdRdpAudioVolumeData;
