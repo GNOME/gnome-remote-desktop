@@ -35,8 +35,12 @@ typedef struct _GrdPipeWireSource
 {
   GSource base;
 
+  char *message_tag;
   struct pw_loop *pipewire_loop;
 } GrdPipeWireSource;
+
+GrdPipeWireSource *grd_attached_pipewire_source_new (const char  *message_tag,
+                                                     GError     **error);
 
 gboolean grd_pipewire_buffer_has_pointer_bitmap (struct pw_buffer *buffer);
 

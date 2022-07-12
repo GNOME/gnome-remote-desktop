@@ -24,6 +24,96 @@
 
 #include <drm_fourcc.h>
 #include <spa/param/video/raw.h>
+#include <spa/utils/result.h>
+
+static void pipewire_source_unref (GrdPipeWireSource *pipewire_source);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdPipeWireSource, pipewire_source_unref)
+
+static gboolean
+pipewire_loop_source_prepare (GSource *base,
+                              int     *timeout)
+{
+  *timeout = -1;
+
+  return FALSE;
+}
+
+static gboolean
+pipewire_loop_source_dispatch (GSource     *source,
+                               GSourceFunc  callback,
+                               gpointer     user_data)
+{
+  GrdPipeWireSource *pipewire_source = (GrdPipeWireSource *) source;
+  int result;
+
+  result = pw_loop_iterate (pipewire_source->pipewire_loop, 0);
+  if (result < 0)
+    {
+      g_warning ("%s pw_loop_iterate() failed: %s", pipewire_source->message_tag,
+                 spa_strerror (result));
+    }
+
+  return TRUE;
+}
+
+static void
+pipewire_loop_source_finalize (GSource *source)
+{
+  GrdPipeWireSource *pipewire_source = (GrdPipeWireSource *) source;
+
+  if (pipewire_source->pipewire_loop)
+    {
+      pw_loop_leave (pipewire_source->pipewire_loop);
+      pw_loop_destroy (pipewire_source->pipewire_loop);
+    }
+  g_clear_pointer (&pipewire_source->message_tag, g_free);
+}
+
+static GSourceFuncs pipewire_source_funcs =
+{
+  pipewire_loop_source_prepare,
+  NULL,
+  pipewire_loop_source_dispatch,
+  pipewire_loop_source_finalize,
+};
+
+GrdPipeWireSource *
+grd_attached_pipewire_source_new (const char  *message_tag,
+                                  GError     **error)
+{
+  g_autoptr (GrdPipeWireSource) pipewire_source = NULL;
+
+  g_assert (strlen (message_tag) > 0);
+
+  pipewire_source =
+    (GrdPipeWireSource *) g_source_new (&pipewire_source_funcs,
+                                        sizeof (GrdPipeWireSource));
+  pipewire_source->message_tag = g_strdup_printf ("[%s]", message_tag);
+
+  pipewire_source->pipewire_loop = pw_loop_new (NULL);
+  if (!pipewire_source->pipewire_loop)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create PipeWire loop");
+      return NULL;
+    }
+
+  g_source_add_unix_fd (&pipewire_source->base,
+                        pw_loop_get_fd (pipewire_source->pipewire_loop),
+                        G_IO_IN | G_IO_ERR);
+
+  pw_loop_enter (pipewire_source->pipewire_loop);
+  g_source_attach (&pipewire_source->base, NULL);
+
+  return g_steal_pointer (&pipewire_source);
+}
+
+static void
+pipewire_source_unref (GrdPipeWireSource *pipewire_source)
+{
+  g_source_unref (&pipewire_source->base);
+}
 
 gboolean
 grd_pipewire_buffer_has_pointer_bitmap (struct pw_buffer *buffer)
