@@ -26,7 +26,6 @@
 #include <pipewire/pipewire.h>
 #include <spa/param/props.h>
 #include <spa/param/format-utils.h>
-#include <spa/utils/result.h>
 #include <sys/mman.h>
 
 #include "grd-context.h"
@@ -97,71 +96,6 @@ G_DEFINE_TYPE (GrdVncPipeWireStream, grd_vnc_pipewire_stream,
 static void grd_vnc_frame_unref (GrdVncFrame *frame);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdVncFrame, grd_vnc_frame_unref)
-
-static gboolean
-pipewire_loop_source_prepare (GSource *base,
-                              int     *timeout)
-{
-  *timeout = -1;
-  return FALSE;
-}
-
-static gboolean
-pipewire_loop_source_dispatch (GSource     *source,
-                               GSourceFunc  callback,
-                               gpointer     user_data)
-{
-  GrdPipeWireSource *pipewire_source = (GrdPipeWireSource *) source;
-  int result;
-
-  result = pw_loop_iterate (pipewire_source->pipewire_loop, 0);
-  if (result < 0)
-    g_warning ("pipewire_loop_iterate failed: %s", spa_strerror (result));
-
-  return TRUE;
-}
-
-static void
-pipewire_loop_source_finalize (GSource *source)
-{
-  GrdPipeWireSource *pipewire_source = (GrdPipeWireSource *) source;
-
-  pw_loop_leave (pipewire_source->pipewire_loop);
-  pw_loop_destroy (pipewire_source->pipewire_loop);
-}
-
-static GSourceFuncs pipewire_source_funcs =
-{
-  pipewire_loop_source_prepare,
-  NULL,
-  pipewire_loop_source_dispatch,
-  pipewire_loop_source_finalize
-};
-
-static GrdPipeWireSource *
-create_pipewire_source (void)
-{
-  GrdPipeWireSource *pipewire_source;
-
-  pipewire_source =
-    (GrdPipeWireSource *) g_source_new (&pipewire_source_funcs,
-                                        sizeof (GrdPipeWireSource));
-  pipewire_source->pipewire_loop = pw_loop_new (NULL);
-  if (!pipewire_source->pipewire_loop)
-    {
-      g_source_destroy ((GSource *) pipewire_source);
-      return NULL;
-    }
-
-  g_source_add_unix_fd (&pipewire_source->base,
-                        pw_loop_get_fd (pipewire_source->pipewire_loop),
-                        G_IO_IN | G_IO_ERR);
-
-  pw_loop_enter (pipewire_source->pipewire_loop);
-  g_source_attach (&pipewire_source->base, NULL);
-
-  return pipewire_source;
-}
 
 static void
 on_stream_state_changed (void                 *user_data,
@@ -861,13 +795,10 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc               *session_vnc,
 
   pw_init (NULL, NULL);
 
-  pipewire_source = create_pipewire_source ();
+  pipewire_source = grd_attached_pipewire_source_new ("VNC", error);
   if (!pipewire_source)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to create PipeWire source");
-      return NULL;
-    }
+    return NULL;
+
   stream->pipewire_source = (GSource *) pipewire_source;
 
   stream->pipewire_context = pw_context_new (pipewire_source->pipewire_loop,
