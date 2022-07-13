@@ -343,7 +343,7 @@ track_round_trip_time (GrdRdpNetworkAutodetection *network_autodetection,
   RTTInfo *rtt_info;
 
   rtt_info = g_malloc0 (sizeof (RTTInfo));
-  rtt_info->round_trip_time_us = MIN (pong_time_us - ping_time_us, G_USEC_PER_SEC);
+  rtt_info->round_trip_time_us = pong_time_us - ping_time_us;
   rtt_info->response_time_us = pong_time_us;
 
   g_queue_push_tail (network_autodetection->round_trip_times, rtt_info);
