@@ -111,6 +111,7 @@ if have_vnc
     'grd-session-vnc.h',
     'grd-vnc-cursor.c',
     'grd-vnc-cursor.h',
+    'grd-vnc-monitor-config.h',
     'grd-vnc-pipewire-stream.c',
     'grd-vnc-pipewire-stream.h',
     'grd-vnc-server.c',

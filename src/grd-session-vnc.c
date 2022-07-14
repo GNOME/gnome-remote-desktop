@@ -212,6 +212,14 @@ grd_session_vnc_set_client_clipboard_text (GrdSessionVnc *session_vnc,
 }
 
 static void
+grd_vnc_monitor_config_free (GrdVncMonitorConfig *monitor_config)
+{
+  g_clear_pointer (&monitor_config->connectors, g_strfreev);
+  g_free (monitor_config->virtual_monitors);
+  g_free (monitor_config);
+}
+
+static void
 maybe_queue_close_session_idle (GrdSessionVnc *session_vnc)
 {
   if (session_vnc->close_session_idle_id)
