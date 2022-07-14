@@ -33,4 +33,10 @@ typedef enum
   GRD_VNC_AUTH_METHOD_PASSWORD
 } GrdVncAuthMethod;
 
+typedef enum
+{
+  GRD_VNC_SCREEN_SHARE_MODE_MIRROR_PRIMARY,
+  GRD_VNC_SCREEN_SHARE_MODE_EXTEND,
+} GrdVncScreenShareMode;
+
 #endif /* GRD_ENUMS_H */

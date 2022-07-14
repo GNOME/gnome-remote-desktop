@@ -90,5 +90,31 @@
          * password - by requiring the remote client to provide a known password
       </description>
     </key>
+    <key name='screen-share-mode' enum='org.gnome.desktop.remote-desktop.GrdVncScreenShareMode'>
+      <default>'mirror-primary'</default>
+      <summary>Screenshare mode of VNC connections</summary>
+      <description>
+        The screenshare mode specifies, whether the VNC backend mirrors the
+        primary screen, or whether a virtual monitor is created.
+
+        For the initial resolution of the virtual monitor, the VNC backend
+        uses a default size of 1920x1080 pixels.
+
+        When using a remote desktop session with a virtual monitor, clients can
+        resize the resolution of the virtual monitor during a session with the
+        setDesktopSize PDU.
+
+        Allowed screenshare modes include:
+
+         * mirror-primary - Record the primary monitor of the current user
+                            session.
+
+         * extend - Create a new virtual monitor and use it for the remote
+                    desktop session. The initial monitor resolution of this
+                    virtual monitor is set to 1920x1080 pixels. Clients can
+                    override the initial resolution with subsequent monitor
+                    configuration updates.
+      </description>
+    </key>
   </schema>
 </schemalist>

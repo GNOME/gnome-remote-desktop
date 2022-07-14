@@ -43,6 +43,7 @@ enum
   VNC_VIEW_ONLY_CHANGED,
   VNC_AUTH_METHOD_CHANGED,
   VNC_ENCRYPTION_CHANGED,
+  VNC_SCREEN_SHARE_MODE_CHANGED,
 
   N_SIGNALS
 };
@@ -69,6 +70,7 @@ struct _GrdSettings
     gboolean view_only;
     GrdVncAuthMethod auth_method;
     int port;
+    GrdVncScreenShareMode screen_share_mode;
   } vnc;
 };
 
@@ -104,6 +106,12 @@ GrdRdpScreenShareMode
 grd_settings_get_screen_share_mode (GrdSettings *settings)
 {
   return settings->rdp.screen_share_mode;
+}
+
+GrdVncScreenShareMode
+grd_settings_get_vnc_screen_share_mode (GrdSettings *settings)
+{
+  return settings->vnc.screen_share_mode;
 }
 
 char *
@@ -267,6 +275,13 @@ update_screen_share_mode (GrdSettings *settings)
 }
 
 static void
+update_vnc_screen_share_mode (GrdSettings *settings)
+{
+  settings->vnc.screen_share_mode =
+    g_settings_get_enum (settings->vnc.settings, "screen-share-mode");
+}
+
+static void
 update_rdp_enabled (GrdSettings *settings)
 {
   settings->rdp.is_enabled = g_settings_get_boolean (settings->rdp.settings,
@@ -359,6 +374,11 @@ on_vnc_settings_changed (GSettings   *vnc_settings,
       update_vnc_enabled (settings);
       g_signal_emit (settings, signals[VNC_ENABLED_CHANGED], 0);
     }
+  else if (strcmp (key, "screen-share-mode") == 0)
+    {
+      update_vnc_screen_share_mode (settings);
+      g_signal_emit (settings, signals[VNC_SCREEN_SHARE_MODE_CHANGED], 0);
+    }
   else if (strcmp (key, "view-only") == 0)
     {
       update_vnc_view_only (settings);
@@ -403,6 +423,7 @@ grd_settings_init (GrdSettings *settings)
   update_vnc_enabled (settings);
   update_vnc_view_only (settings);
   update_vnc_auth_method (settings);
+  update_vnc_screen_share_mode (settings);
 
   settings->rdp.port = GRD_RDP_SERVER_PORT;
   settings->vnc.port = GRD_VNC_SERVER_PORT;
@@ -466,6 +487,13 @@ grd_settings_class_init (GrdSettingsClass *klass)
                   G_TYPE_NONE, 0);
   signals[VNC_AUTH_METHOD_CHANGED] =
     g_signal_new ("vnc-auth-method-changed",
+                  G_TYPE_FROM_CLASS (klass),
+                  G_SIGNAL_RUN_LAST,
+                  0,
+                  NULL, NULL, NULL,
+                  G_TYPE_NONE, 0);
+  signals[VNC_SCREEN_SHARE_MODE_CHANGED] =
+    g_signal_new ("vnc-screen-share-mode-changed",
                   G_TYPE_FROM_CLASS (klass),
                   G_SIGNAL_RUN_LAST,
                   0,

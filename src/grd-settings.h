@@ -65,4 +65,6 @@ gboolean grd_settings_get_vnc_view_only (GrdSettings *settings);
 
 GrdVncAuthMethod grd_settings_get_vnc_auth_method (GrdSettings *settings);
 
+GrdVncScreenShareMode grd_settings_get_vnc_screen_share_mode (GrdSettings *settings);
+
 #endif /* GRD_SETTINGS_H */
