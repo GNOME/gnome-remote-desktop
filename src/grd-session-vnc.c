@@ -505,6 +505,35 @@ handle_pointer_event (int          button_mask,
   rfbDefaultPtrAddEvent (button_mask, x, y, rfb_client);
 }
 
+static int
+handle_set_desktop_size (int                         width,
+                         int                         height,
+                         int                         num_screens,
+                         struct rfbExtDesktopScreen *screens,
+                         rfbClientPtr                rfb_client)
+{
+  GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
+  GrdVncVirtualMonitor *monitor;
+
+  if (!session_vnc->monitor_config->is_virtual)
+    {
+      g_warning ("[VNC] Ignoring SetDesktopSize request, mirror-primary mode is used");
+      return rfbExtDesktopSize_ResizeProhibited;
+    }
+
+  g_debug ("[VNC] Trying to set new size %dx%d", width, height);
+
+  g_assert (session_vnc->monitor_config->monitor_count == 1);
+  g_assert (session_vnc->monitor_config->virtual_monitors);
+
+  monitor = session_vnc->monitor_config->virtual_monitors;
+  monitor->width = GRD_VNC_CLAMP_DESKTOP_SIZE (width);
+  monitor->height = GRD_VNC_CLAMP_DESKTOP_SIZE (height);
+  grd_vnc_pipewire_stream_resize (session_vnc->pipewire_stream, monitor);
+
+  return rfbExtDesktopSize_Success;
+}
+
 static rfbBool
 check_rfb_password (rfbClientPtr  rfb_client,
                     const char   *response_encrypted,
@@ -596,6 +625,7 @@ init_vnc_session (GrdSessionVnc *session_vnc)
   rfb_screen->kbdReleaseAllKeys = handle_release_all_keys;
   rfb_screen->setXCutText = handle_set_clipboard_text;
   rfb_screen->ptrAddEvent = handle_pointer_event;
+  rfb_screen->setDesktopSizeHook = handle_set_desktop_size;
 
   rfb_screen->frameBuffer = g_malloc0 (screen_width * screen_height * 4);
   memset (rfb_screen->frameBuffer, 0x1f, screen_width * screen_height * 4);

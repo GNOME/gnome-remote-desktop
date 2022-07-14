@@ -214,6 +214,9 @@ on_stream_param_changed (void                 *user_data,
   width = stream->spa_format.size.width;
   height = stream->spa_format.size.height;
 
+  g_debug ("[VNC] Stream parameters changed. New monitor size: [%u, %u]",
+           width, height);
+
   grd_session_vnc_queue_resize_framebuffer (stream->session, width, height);
 
   allowed_buffer_types = 1 << SPA_DATA_MemFd;
@@ -996,4 +999,28 @@ grd_vnc_pipewire_stream_class_init (GrdVncPipeWireStreamClass *klass)
                                   0,
                                   NULL, NULL, NULL,
                                   G_TYPE_NONE, 0);
+}
+
+void
+grd_vnc_pipewire_stream_resize (GrdVncPipeWireStream *stream,
+                                GrdVncVirtualMonitor *virtual_monitor)
+{
+  struct spa_rectangle virtual_monitor_rect;
+  uint8_t params_buffer[1024];
+  struct spa_pod_builder pod_builder;
+  const struct spa_pod *params[1];
+
+  virtual_monitor_rect = SPA_RECTANGLE (virtual_monitor->width,
+                                        virtual_monitor->height);
+
+  pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
+
+  params[0] = spa_pod_builder_add_object (
+    &pod_builder,
+    SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat,
+    SPA_FORMAT_VIDEO_size, SPA_POD_Rectangle (&virtual_monitor_rect),
+    0);
+
+  pw_stream_update_params (stream->pipewire_stream,
+                           params, G_N_ELEMENTS (params));
 }

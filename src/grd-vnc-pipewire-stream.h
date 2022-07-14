@@ -37,4 +37,8 @@ GrdVncPipeWireStream * grd_vnc_pipewire_stream_new (GrdSessionVnc              *
                                                     const GrdVncVirtualMonitor *virtual_monitor,
                                                     GError                    **error);
 
+void
+grd_vnc_pipewire_stream_resize (GrdVncPipeWireStream *stream,
+                                GrdVncVirtualMonitor *virtual_monitor);
+
 #endif /* GRD_VNC_PIPEWIRE_STREAM_H */
