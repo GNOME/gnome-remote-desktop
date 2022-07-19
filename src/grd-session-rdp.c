@@ -2206,6 +2206,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Failed to set path of SAM database");
+      g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
       freerdp_peer_context_free (peer);
       freerdp_peer_free (peer);
       return FALSE;
