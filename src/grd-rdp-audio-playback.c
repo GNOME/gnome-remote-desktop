@@ -24,6 +24,7 @@
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-audio-output-stream.h"
 #include "grd-rdp-dsp.h"
+#include "grd-rdp-dvc.h"
 #include "grd-session-rdp.h"
 
 #define PROTOCOL_TIMEOUT_MS (10 * 1000)
@@ -68,6 +69,7 @@ struct _GrdRdpAudioPlayback
   gboolean subscribed_status;
 
   GrdSessionRdp *session_rdp;
+  GrdRdpDvc *rdp_dvc;
 
   GMutex protocol_timeout_mutex;
   GSource *channel_teardown_source;
@@ -438,10 +440,10 @@ rdpsnd_channel_id_assigned (RdpsndServerContext *rdpsnd_context,
   audio_playback->channel_id = channel_id;
 
   audio_playback->dvc_subscription_id =
-    grd_session_rdp_subscribe_dvc_creation_status (audio_playback->session_rdp,
-                                                   channel_id,
-                                                   dvc_creation_status,
-                                                   audio_playback);
+    grd_rdp_dvc_subscribe_dvc_creation_status (audio_playback->rdp_dvc,
+                                               channel_id,
+                                               dvc_creation_status,
+                                               audio_playback);
   audio_playback->subscribed_status = TRUE;
 
   return TRUE;
@@ -640,6 +642,7 @@ encode_thread_func (gpointer data)
 
 GrdRdpAudioPlayback *
 grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
+                            GrdRdpDvc     *rdp_dvc,
                             HANDLE         vcm,
                             HANDLE         stop_event,
                             rdpContext    *rdp_context)
@@ -656,6 +659,7 @@ grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
   audio_playback->rdpsnd_context = rdpsnd_context;
   audio_playback->stop_event = stop_event;
   audio_playback->session_rdp = session_rdp;
+  audio_playback->rdp_dvc = rdp_dvc;
 
   rdpsnd_context->use_dynamic_virtual_channel = TRUE;
   rdpsnd_context->server_formats = server_formats;
@@ -706,9 +710,9 @@ grd_rdp_audio_playback_dispose (GObject *object)
     }
   if (audio_playback->subscribed_status)
     {
-      grd_session_rdp_unsubscribe_dvc_creation_status (audio_playback->session_rdp,
-                                                       audio_playback->channel_id,
-                                                       audio_playback->dvc_subscription_id);
+      grd_rdp_dvc_unsubscribe_dvc_creation_status (audio_playback->rdp_dvc,
+                                                   audio_playback->channel_id,
+                                                   audio_playback->dvc_subscription_id);
       audio_playback->subscribed_status = FALSE;
     }
 

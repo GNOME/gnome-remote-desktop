@@ -37,6 +37,7 @@ typedef struct _GrdRdpBuffer GrdRdpBuffer;
 typedef struct _GrdRdpBufferPool GrdRdpBufferPool;
 typedef struct _GrdRdpDamageDetector GrdRdpDamageDetector;
 typedef struct _GrdRdpDisplayControl GrdRdpDisplayControl;
+typedef struct _GrdRdpDvc GrdRdpDvc;
 typedef struct _GrdRdpEventQueue GrdRdpEventQueue;
 typedef struct _GrdRdpGfxFrameController GrdRdpGfxFrameController;
 typedef struct _GrdRdpGfxFrameLog GrdRdpGfxFrameLog;

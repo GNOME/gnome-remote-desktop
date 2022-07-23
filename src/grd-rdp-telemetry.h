@@ -30,6 +30,7 @@ G_DECLARE_FINAL_TYPE (GrdRdpTelemetry, grd_rdp_telemetry,
                       GRD, RDP_TELEMETRY, GObject)
 
 GrdRdpTelemetry *grd_rdp_telemetry_new (GrdSessionRdp *session_rdp,
+                                        GrdRdpDvc     *rdp_dvc,
                                         HANDLE         vcm,
                                         HANDLE         stop_event,
                                         rdpContext    *rdp_context);

@@ -87,6 +87,8 @@ if have_rdp
     'grd-rdp-display-control.h',
     'grd-rdp-dsp.c',
     'grd-rdp-dsp.h',
+    'grd-rdp-dvc.c',
+    'grd-rdp-dvc.h',
     'grd-rdp-event-queue.c',
     'grd-rdp-event-queue.h',
     'grd-rdp-frame-info.h',

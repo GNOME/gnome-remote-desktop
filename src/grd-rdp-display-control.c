@@ -21,6 +21,7 @@
 
 #include "grd-rdp-display-control.h"
 
+#include "grd-rdp-dvc.h"
 #include "grd-session-rdp.h"
 
 struct _GrdRdpDisplayControl
@@ -37,6 +38,7 @@ struct _GrdRdpDisplayControl
   gboolean subscribed_status;
 
   GrdSessionRdp *session_rdp;
+  GrdRdpDvc *rdp_dvc;
 
   GSource *channel_teardown_source;
 };
@@ -95,10 +97,10 @@ disp_channel_id_assigned (DispServerContext *disp_context,
   display_control->channel_id = channel_id;
 
   display_control->dvc_subscription_id =
-    grd_session_rdp_subscribe_dvc_creation_status (display_control->session_rdp,
-                                                   channel_id,
-                                                   dvc_creation_status,
-                                                   display_control);
+    grd_rdp_dvc_subscribe_dvc_creation_status (display_control->rdp_dvc,
+                                               channel_id,
+                                               dvc_creation_status,
+                                               display_control);
   display_control->subscribed_status = TRUE;
 
   return TRUE;
@@ -137,6 +139,7 @@ disp_monitor_layout (DispServerContext                        *disp_context,
 
 GrdRdpDisplayControl *
 grd_rdp_display_control_new (GrdSessionRdp *session_rdp,
+                             GrdRdpDvc     *rdp_dvc,
                              HANDLE         vcm,
                              HANDLE         stop_event,
                              uint32_t       max_monitor_count)
@@ -152,6 +155,7 @@ grd_rdp_display_control_new (GrdSessionRdp *session_rdp,
   display_control->disp_context = disp_context;
   display_control->stop_event = stop_event;
   display_control->session_rdp = session_rdp;
+  display_control->rdp_dvc = rdp_dvc;
 
   disp_context->MaxNumMonitors = max_monitor_count;
   disp_context->MaxMonitorAreaFactorA = 8192;
@@ -176,9 +180,9 @@ grd_rdp_display_control_dispose (GObject *object)
     }
   if (display_control->subscribed_status)
     {
-      grd_session_rdp_unsubscribe_dvc_creation_status (display_control->session_rdp,
-                                                       display_control->channel_id,
-                                                       display_control->dvc_subscription_id);
+      grd_rdp_dvc_unsubscribe_dvc_creation_status (display_control->rdp_dvc,
+                                                   display_control->channel_id,
+                                                   display_control->dvc_subscription_id);
       display_control->subscribed_status = FALSE;
     }
 

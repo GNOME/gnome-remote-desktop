@@ -21,6 +21,7 @@
 
 #include "grd-rdp-telemetry.h"
 
+#include "grd-rdp-dvc.h"
 #include "grd-session-rdp.h"
 
 #define PROTOCOL_TIMEOUT_MS (10 * 1000)
@@ -39,6 +40,7 @@ struct _GrdRdpTelemetry
   gboolean subscribed_status;
 
   GrdSessionRdp *session_rdp;
+  GrdRdpDvc *rdp_dvc;
 
   GMutex protocol_timeout_mutex;
   GSource *channel_teardown_source;
@@ -119,10 +121,10 @@ telemetry_channel_id_assigned (TelemetryServerContext *telemetry_context,
   telemetry->channel_id = channel_id;
 
   telemetry->dvc_subscription_id =
-    grd_session_rdp_subscribe_dvc_creation_status (telemetry->session_rdp,
-                                                   channel_id,
-                                                   dvc_creation_status,
-                                                   telemetry);
+    grd_rdp_dvc_subscribe_dvc_creation_status (telemetry->rdp_dvc,
+                                               channel_id,
+                                               dvc_creation_status,
+                                               telemetry);
   telemetry->subscribed_status = TRUE;
 
   return TRUE;
@@ -169,6 +171,7 @@ telemetry_rdp_telemetry (TelemetryServerContext            *telemetry_context,
 
 GrdRdpTelemetry *
 grd_rdp_telemetry_new (GrdSessionRdp *session_rdp,
+                       GrdRdpDvc     *rdp_dvc,
                        HANDLE         vcm,
                        HANDLE         stop_event,
                        rdpContext    *rdp_context)
@@ -184,6 +187,7 @@ grd_rdp_telemetry_new (GrdSessionRdp *session_rdp,
   telemetry->telemetry_context = telemetry_context;
   telemetry->stop_event = stop_event;
   telemetry->session_rdp = session_rdp;
+  telemetry->rdp_dvc = rdp_dvc;
 
   telemetry_context->ChannelIdAssigned = telemetry_channel_id_assigned;
   telemetry_context->RdpTelemetry = telemetry_rdp_telemetry;
@@ -205,9 +209,9 @@ grd_rdp_telemetry_dispose (GObject *object)
     }
   if (telemetry->subscribed_status)
     {
-      grd_session_rdp_unsubscribe_dvc_creation_status (telemetry->session_rdp,
-                                                       telemetry->channel_id,
-                                                       telemetry->dvc_subscription_id);
+      grd_rdp_dvc_unsubscribe_dvc_creation_status (telemetry->rdp_dvc,
+                                                   telemetry->channel_id,
+                                                   telemetry->dvc_subscription_id);
       telemetry->subscribed_status = FALSE;
     }
 

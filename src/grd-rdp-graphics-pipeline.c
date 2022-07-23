@@ -27,6 +27,7 @@
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-damage-detector.h"
+#include "grd-rdp-dvc.h"
 #include "grd-rdp-frame-info.h"
 #include "grd-rdp-gfx-frame-controller.h"
 #include "grd-rdp-gfx-surface.h"
@@ -82,6 +83,7 @@ struct _GrdRdpGraphicsPipeline
   gboolean subscribed_status;
 
   GrdSessionRdp *session_rdp;
+  GrdRdpDvc *rdp_dvc;
   GMainContext *pipeline_context;
   GrdRdpNetworkAutodetection *network_autodetection;
   wStream *encode_stream;
@@ -1128,16 +1130,15 @@ rdpgfx_channel_id_assigned (RdpgfxServerContext *rdpgfx_context,
                             uint32_t             channel_id)
 {
   GrdRdpGraphicsPipeline *graphics_pipeline = rdpgfx_context->custom;
-  GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
 
   g_debug ("[RDP.RDPGFX] DVC channel id assigned to id %u", channel_id);
   graphics_pipeline->channel_id = channel_id;
 
   graphics_pipeline->dvc_subscription_id =
-    grd_session_rdp_subscribe_dvc_creation_status (session_rdp,
-                                                   channel_id,
-                                                   dvc_creation_status,
-                                                   graphics_pipeline);
+    grd_rdp_dvc_subscribe_dvc_creation_status (graphics_pipeline->rdp_dvc,
+                                               channel_id,
+                                               dvc_creation_status,
+                                               graphics_pipeline);
   graphics_pipeline->subscribed_status = TRUE;
 
   return TRUE;
@@ -1488,6 +1489,7 @@ grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
 
 GrdRdpGraphicsPipeline *
 grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
+                               GrdRdpDvc                  *rdp_dvc,
                                GMainContext               *pipeline_context,
                                HANDLE                      vcm,
                                HANDLE                      stop_event,
@@ -1507,6 +1509,7 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
   graphics_pipeline->rdpgfx_context = rdpgfx_context;
   graphics_pipeline->stop_event = stop_event;
   graphics_pipeline->session_rdp = session_rdp;
+  graphics_pipeline->rdp_dvc = rdp_dvc;
   graphics_pipeline->pipeline_context = pipeline_context;
   graphics_pipeline->network_autodetection = network_autodetection;
   graphics_pipeline->encode_stream = encode_stream;
@@ -1579,9 +1582,9 @@ grd_rdp_graphics_pipeline_dispose (GObject *object)
     }
   if (graphics_pipeline->subscribed_status)
     {
-      grd_session_rdp_unsubscribe_dvc_creation_status (graphics_pipeline->session_rdp,
-                                                       graphics_pipeline->channel_id,
-                                                       graphics_pipeline->dvc_subscription_id);
+      grd_rdp_dvc_unsubscribe_dvc_creation_status (graphics_pipeline->rdp_dvc,
+                                                   graphics_pipeline->channel_id,
+                                                   graphics_pipeline->dvc_subscription_id);
       graphics_pipeline->subscribed_status = FALSE;
     }
 

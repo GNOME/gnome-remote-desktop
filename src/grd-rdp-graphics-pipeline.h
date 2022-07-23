@@ -30,6 +30,7 @@ G_DECLARE_FINAL_TYPE (GrdRdpGraphicsPipeline, grd_rdp_graphics_pipeline,
                       GRD, RDP_GRAPHICS_PIPELINE, GObject)
 
 GrdRdpGraphicsPipeline *grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
+                                                       GrdRdpDvc                  *rdp_dvc,
                                                        GMainContext               *pipeline_context,
                                                        HANDLE                      vcm,
                                                        HANDLE                      stop_event,

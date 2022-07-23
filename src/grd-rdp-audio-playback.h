@@ -30,6 +30,7 @@ G_DECLARE_FINAL_TYPE (GrdRdpAudioPlayback, grd_rdp_audio_playback,
                       GRD, RDP_AUDIO_PLAYBACK, GObject)
 
 GrdRdpAudioPlayback *grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
+                                                 GrdRdpDvc     *rdp_dvc,
                                                  HANDLE         vcm,
                                                  HANDLE         stop_event,
                                                  rdpContext    *rdp_context);

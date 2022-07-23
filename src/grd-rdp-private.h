@@ -41,6 +41,8 @@ typedef struct _RdpPeerContext
   /* Virtual Channel Manager */
   HANDLE vcm;
 
+  GrdRdpDvc *rdp_dvc;
+
   GMutex channel_mutex;
 
   GrdClipboardRdp *clipboard_rdp;
