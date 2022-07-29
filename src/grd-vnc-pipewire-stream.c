@@ -545,6 +545,18 @@ on_stream_process (void *user_data)
 
   while ((next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream)))
     {
+      struct spa_meta_header *spa_meta_header;
+
+      spa_meta_header = spa_buffer_find_meta_data (next_buffer->buffer,
+                                                   SPA_META_Header,
+                                                   sizeof (struct spa_meta_header));
+      if (spa_meta_header &&
+          spa_meta_header->flags & SPA_META_HEADER_FLAG_CORRUPTED)
+        {
+          pw_stream_queue_buffer (stream->pipewire_stream, next_buffer);
+          continue;
+        }
+
       maybe_consume_pointer_position (next_buffer, &cursor_moved,
                                       &cursor_x, &cursor_y);
 
