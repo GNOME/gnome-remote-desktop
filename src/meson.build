@@ -125,7 +125,6 @@ if have_rdp
     cuda_dep,
     dl_dep,
     freerdp_dep,
-    freerdp_client_dep,
     freerdp_server_dep,
     fuse_dep,
     winpr_dep,
