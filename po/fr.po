@@ -2,7 +2,7 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Titouan Bénard Le Bouffos <itotutona@evta.fr>, 2021
-# Claude Paroz <claude@2xlibre.net>, 2021
+# Claude Paroz <claude@2xlibre.net>, 2021-2022
 # Charles Monzat <charles.monzat@free.fr>, 2022.
 #
 msgid ""
@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
+"POT-Creation-Date: 2022-07-28 08:39+0000\n"
 "PO-Revision-Date: 2022-03-04 23:02+0100\n"
 "Last-Translator: Charles Monzat <charles.monzat@free.fr>\n"
 "Language-Team: GNOME French Team <gnomefr@traduc.org>\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Gtranslator 40.0\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:480
 msgid "GNOME Remote Desktop"
 msgstr "Bureau à distance de GNOME"
 
@@ -144,7 +144,7 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "Indique si le moteur RDP est activé ou non"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Si défini à « true », le moteur RDP sera initialisé."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
@@ -218,7 +218,7 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "Indique si le moteur VNC est activé ou non"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Si défini à « true », le moteur VNC sera initialisé."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
@@ -248,3 +248,34 @@ msgstr ""
 "connexion, exigeant qu’une personne ayant un accès physique au poste de "
 "travail approuve explicitement la nouvelle connexion. * mot de passe - en "
 "demandant au client distant de fournir un mot de passe connu"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Mode de partage d’écran des connexions VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"Le mode de partage d’écran spécifie si le moteur VNC clone l’écran principal "
+"ou si un moniteur virtuel est créé. Pour la résolution initiale du moniteur "
+"virtuel, le moteur VNC utilise une taille par défaut de 1920x1080 pixels. "
+"Lors de l’utilisation d’une session de bureau à distance avec un moniteur "
+"virtuel, les clients peuvent redimensionner la résolution du moniteur virtuel "
+"pendant une session avec le PDU setDesktopSize. Les modes de partage d’écran "
+"autorisés incluent : * mirror-primary - Enregistre le moniteur principal de "
+"la session utilisateur en cours. * extend - Crée un nouveau moniteur virtuel "
+"et l’utilise pour la session de bureau à distance. La résolution initiale de "
+"ce moniteur virtuel est définie à 1920x1080 pixels. Les clients peuvent "
+"remplacer la résolution initiale à l’aide de mises à jour de configurations "
+"de moniteurs subséquentes."
