@@ -6,8 +6,8 @@
 msgid ""
 msgstr "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2022-02-27 19:16+0000\n"
+"POT-Creation-Date: 2022-07-28 08:39+0000\n"
+"PO-Revision-Date: 2022-07-31 19:16+0000\n"
 "Last-Translator: Asier Sarasua Garmendia <asiersarasua@ni.eus>\n"
 "Language-Team: Basque <librezale@librezale.eus>\n"
 "Language: eu\n"
@@ -15,7 +15,7 @@ msgstr "Project-Id-Version: gnome-remote-desktop master\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:480
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Urruneko Mahaigaina"
 
@@ -124,8 +124,8 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "RDP motorra gaituta dagoen ala ez"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
-msgstr "Ezarri 'true' (egia), RDP motorra hasieratzeko"
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr "Ezarri 'true' (egia), RDP motorra hasieratzeko."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Screenshare mode of RDP connections"
@@ -145,7 +145,7 @@ msgid ""
 "new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
-msgstr "Pantaila partekatuko moduak zehazten du RDP motorrak pantaila nagusia ispilatukod uen, edo monitore birtual bat sortuko den. Monitore birtualaren hasierako bereizmenerako, RDP motorrak bezeroaren nukleoaren datuak ([MS-RDPBCGR] 2.2.1.3.2) edo bezeroaren monitorearen datuak ([MS-RDPBCGR] 2.2.1.3.6) erabiltzen ditu, erabilgarri zer dagoen kontuan hartuta. Urruneko mahaigaineko saio bat monitore birtual batekin erabiltzean, bezeroek monitore birtualaren bereizmena aldatu dezakete Display Control Channel ([MS-RDPEDISP]) hedapenarekin. Onartutako pantaila partekatuko moduak honakoak dira: * mirror-primary - Grabatu uneko erabiltzaile-saioaren monitore nagusia. * extend - Sortu monitore birtual berria urruneko mahaigaineko saiorako. Monitore birtual horren bereizmena urruneko mahaigaineko bezeroak bidalitako monitore-konfiguraziotik eratortzen da. "
+msgstr "Pantaila partekatuko moduak zehazten du RDP motorrak pantaila nagusia ispilatukod uen, edo monitore birtual bat sortuko den. Monitore birtualaren hasierako bereizmenerako, RDP motorrak bezeroaren nukleoaren datuak ([MS-RDPBCGR] 2.2.1.3.2) edo bezeroaren monitorearen datuak ([MS-RDPBCGR] 2.2.1.3.6) erabiltzen ditu, erabilgarri zer dagoen kontuan hartuta. Urruneko mahaigaineko saio bat monitore birtual batekin erabiltzean, bezeroek monitore birtualaren bereizmena aldatu dezakete Display Control Channel ([MS-RDPEDISP]) hedapenarekin. Onartutako pantaila partekatuko moduak honakoak dira: * mirror-primary - Grabatu uneko erabiltzaile-saioaren monitore nagusia. * extend - Sortu monitore birtual berria urruneko mahaigaineko saiorako. Monitore birtual horren bereizmena urruneko mahaigaineko bezeroak bidalitako monitore-konfiguraziotik eratortzen da."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
@@ -178,8 +178,8 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "VNC motorra gaituta dagoen ala ez"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
-msgstr "Ezarri 'true' (egia), VNC motorra hasieratzeko"
+msgid "If set to 'true' the VNC backend will be initialized."
+msgstr "Ezarri 'true' (egia), VNC motorra hasieratzeko."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
@@ -199,3 +199,22 @@ msgid ""
 "access to the workstation to explicitly approve the new connection. * "
 "password - by requiring the remote client to provide a known password"
 msgstr "VNC autentifikazio-metodoak urruneko konexio bat nola autentifikatzen den deskribatzen du. Bi modutara egin daiteke: * prompt - konexio berri bakoitzerako, erabiltzaileak baimena eskatzea eta ordenagailura sarbide fisikoa duen pertsona bateak esplizituki konexio berria onartzea. * password - urruneko bezeroak pasahitz ezagun bat ematea"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Pantaila partekatuko modua VNC konexioetan"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr "Pantaila partekatuko moduak zehazten du VNC motorrak pantaila nagusia ispilatuko duen ala monitore birtual bat sortuko den. Monitore birtualaren hasierako bereizmenerako, VNC motorrak 1920x1080 pixeletako tamaina lehenetsia erabiltzen ditu. Urruneko mahaigaineko saio bat monitore birtual batekin erabiltzean, bezeroek monitore birtualaren bereizmena aldatu dezakete setDesktopSize PDUrekin. Onartutako pantaila partekatuko moduak honakoak dira: * mirror-primary - Grabatu uneko erabiltzaile-saioaren monitore nagusia. * extend - Sortu monitore birtual berria urruneko mahaigaineko saiorako. Monitore birtual horren hasierako bereizmena 1920x1080 pixeletakoa da. Bezeroek hasierako bereizmena indargabetu dezakete geroago, monitore-konfigurazioa eguneratuz."
