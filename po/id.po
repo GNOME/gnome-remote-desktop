@@ -2,14 +2,14 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Andika Triwidada <atriwidada@gnome.org>, 2021.
-# ukuh Syafaat <kukuhsyafaat@gnome.org, 2021-2022.
+# Kukuh Syafaat <kukuhsyafaat@gnome.org, 2021-2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-05-30 16:31+0000\n"
-"PO-Revision-Date: 2022-07-10 16:16+0700\n"
+"POT-Creation-Date: 2022-07-28 08:39+0000\n"
+"PO-Revision-Date: 2022-08-01 13:17+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -238,3 +238,32 @@ msgstr ""
 "seseorang dengan akses fisik ke stasiun kerja untuk secara eksplisit "
 "menyetujui koneksi baru. * kata sandi - dengan mengharuskan klien jarak jauh "
 "untuk memberikan kata sandi yang diketahui"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Mode berbagi layar koneksi VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"Mode berbagi layar menentukan, apakah backend VNC mencerminkan layar utama, "
+"atau apakah monitor virtual dibuat. Untuk resolusi awal monitor virtual, "
+"backend VNC menggunakan ukuran bawaan 1920x1080 piksel. Saat menggunakan "
+"sesi destop jarak jauh dengan monitor virtual, klien dapat mengubah ukuran "
+"resolusi monitor virtual selama sesi dengan setDesktopSize PDU. Mode berbagi "
+"layar yang diizinkan meliputi: * mirror-primary - Rekam monitor utama sesi "
+"pengguna saat ini. * extend - Buat monitor virtual baru dan gunakan untuk "
+"sesi destop jarak jauh. Resolusi monitor awal monitor virtual ini diatur ke "
+"1920x1080 piksel. Klien dapat mengganti resolusi awal dengan pembaruan "
+"konfigurasi monitor berikutnya."
