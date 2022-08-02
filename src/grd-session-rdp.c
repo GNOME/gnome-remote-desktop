@@ -2138,13 +2138,21 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   username = grd_settings_get_rdp_username (settings, &error);
   if (!username)
     {
-      g_warning ("Couldn't retrieve RDP username: %s", error->message);
+      if (error)
+        g_warning ("[RDP] Couldn't retrieve RDP username: %s", error->message);
+      else
+        g_message ("[RDP] Username is not set, denying client");
+
       return NULL;
     }
   password = grd_settings_get_rdp_password (settings, &error);
   if (!password)
     {
-      g_warning ("Couldn't retrieve RDP password: %s", error->message);
+      if (error)
+        g_warning ("[RDP] Couldn't retrieve RDP password: %s", error->message);
+      else
+        g_message ("[RDP] Password is not set, denying client");
+
       g_free (username);
       return NULL;
     }
