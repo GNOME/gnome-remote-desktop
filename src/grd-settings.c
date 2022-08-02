@@ -135,11 +135,7 @@ grd_settings_get_rdp_username (GrdSettings  *settings,
                                                     NULL, error,
                                                     NULL);
   if (!credentials_string)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Credentials not set");
-      return NULL;
-    }
+    return NULL;
 
   credentials = g_variant_parse (NULL, credentials_string, NULL, NULL, NULL);
   if (!credentials)
@@ -177,11 +173,7 @@ grd_settings_get_rdp_password (GrdSettings  *settings,
                                                     NULL, error,
                                                     NULL);
   if (!credentials_string)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Credentials not set");
-      return NULL;
-    }
+    return NULL;
 
   credentials = g_variant_parse (NULL, credentials_string, NULL, NULL, NULL);
   if (!credentials)
@@ -217,11 +209,7 @@ grd_settings_get_vnc_password (GrdSettings  *settings,
                                           NULL, error,
                                           NULL);
   if (!password)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Password not set");
-      return NULL;
-    }
+    return NULL;
 
   return password;
 }
