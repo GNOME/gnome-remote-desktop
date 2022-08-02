@@ -2359,7 +2359,11 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                          &username, &password,
                                          &error))
     {
-      g_warning ("Couldn't retrieve RDP credentials: %s", error->message);
+      if (error)
+        g_warning ("[RDP] Couldn't retrieve RDP credentials: %s", error->message);
+      else
+        g_message ("[RDP] Credentials are not set, denying client");
+
       return NULL;
     }
 
