@@ -1397,9 +1397,6 @@ grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
 {
   RdpgfxServerContext *rdpgfx_context;
 
-  if (!graphics_pipeline)
-    return;
-
   if (graphics_pipeline->channel_opened)
     return;
 

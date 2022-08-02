@@ -137,9 +137,6 @@ grd_rdp_audio_playback_maybe_init (GrdRdpAudioPlayback *audio_playback)
 {
   RdpsndServerContext *rdpsnd_context;
 
-  if (!audio_playback)
-    return;
-
   if (audio_playback->channel_opened || audio_playback->channel_unavailable)
     return;
 

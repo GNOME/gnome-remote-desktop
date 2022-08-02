@@ -73,9 +73,6 @@ grd_rdp_display_control_maybe_init (GrdRdpDisplayControl *display_control)
 {
   DispServerContext *disp_context;
 
-  if (!display_control)
-    return;
-
   if (display_control->channel_opened || display_control->channel_unavailable)
     return;
 

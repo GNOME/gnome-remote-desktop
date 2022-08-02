@@ -2289,9 +2289,12 @@ socket_thread_func (gpointer data)
               audio_playback = rdp_peer_context->audio_playback;
               display_control = rdp_peer_context->display_control;
 
-              grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
-              grd_rdp_audio_playback_maybe_init (audio_playback);
-              grd_rdp_display_control_maybe_init (display_control);
+              if (graphics_pipeline)
+                grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
+              if (audio_playback)
+                grd_rdp_audio_playback_maybe_init (audio_playback);
+              if (display_control)
+                grd_rdp_display_control_maybe_init (display_control);
               g_mutex_unlock (&rdp_peer_context->channel_mutex);
               break;
             }
