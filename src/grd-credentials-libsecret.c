@@ -203,7 +203,8 @@ maybe_migrate_legacy_vnc_password (GrdCredentials *credentials)
       else
         {
           if (!secret_password_clear_sync (GRD_VNC_LEGACY_PASSWORD_SCHEMA,
-                                           NULL, &error, NULL))
+                                           NULL, &error, NULL) &&
+              error)
             {
               g_printerr ("Failed to clear VNC password from old schema: %s\n",
                           error->message);
