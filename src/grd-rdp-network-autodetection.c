@@ -308,8 +308,7 @@ grd_rdp_network_autodetection_bw_measure_stop (GrdRdpNetworkAutodetection *netwo
   locker = g_mutex_locker_new (&network_autodetection->bw_measure_mutex);
   ResetEvent (network_autodetection->bw_measure_stop_event);
 
-  if (network_autodetection->bw_measure_state != BW_MEASURE_STATE_PENDING_STOP &&
-      network_autodetection->bw_measure_state != BW_MEASURE_STATE_QUEUED_STOP)
+  if (network_autodetection->bw_measure_state != BW_MEASURE_STATE_QUEUED_STOP)
     return;
 
   network_autodetection->bw_measure_state = BW_MEASURE_STATE_PENDING_RESULTS;
