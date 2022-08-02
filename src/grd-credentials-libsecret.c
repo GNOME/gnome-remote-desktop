@@ -155,9 +155,20 @@ grd_credentials_libsecret_clear (GrdCredentials      *credentials,
                                  GrdCredentialsType   type,
                                  GError             **error)
 {
-  return secret_password_clear_sync (schema_from_type (type),
-                                     NULL, error,
-                                     NULL);
+  g_autoptr (GError) local_error = NULL;
+
+  secret_password_clear_sync (schema_from_type (type),
+                              NULL, &local_error,
+                              NULL);
+  if (local_error)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+  else
+    {
+      return TRUE;
+    }
 }
 
 GrdCredentialsLibsecret *
