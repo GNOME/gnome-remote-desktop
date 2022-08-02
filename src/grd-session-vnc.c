@@ -518,7 +518,11 @@ check_rfb_password (rfbClientPtr  rfb_client,
   password = grd_settings_get_vnc_password (settings, &error);
   if (!password)
     {
-      g_warning ("Couldn't retrieve VNC password: %s", error->message);
+      if (error)
+        g_warning ("[VNC] Couldn't retrieve VNC password: %s", error->message);
+      else
+        g_message ("[VNC] Password is not set, denying client");
+
       return FALSE;
     }
 
