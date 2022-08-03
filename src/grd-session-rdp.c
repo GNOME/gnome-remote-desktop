@@ -2477,8 +2477,7 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
 
       peer_is_on_ms_windows = rdp_settings->OsMajorType == OSMAJORTYPE_WINDOWS;
       rdp_peer_context->clipboard_rdp =
-        grd_clipboard_rdp_new (session_rdp, vcm, session_rdp->stop_event,
-                               !peer_is_on_ms_windows);
+        grd_clipboard_rdp_new (session_rdp, vcm, !peer_is_on_ms_windows);
     }
   if (rdp_settings->AudioPlayback && !rdp_settings->RemoteConsoleAudio)
     {

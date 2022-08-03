@@ -79,7 +79,6 @@ struct _GrdClipboardRdp
 
   CliprdrServerContext *cliprdr_context;
   gboolean protocol_stopped;
-  HANDLE stop_event;
 
   gboolean relieve_filename_restriction;
 
@@ -125,21 +124,24 @@ struct _GrdClipboardRdp
   unsigned int pending_server_formats_drop_id;
   unsigned int client_request_abort_id;
 
+  GCond completion_cond;
+  GMutex completion_mutex;
+
   GMutex clip_data_entry_mutex;
   unsigned int clipboard_retrieval_id;
   unsigned int clipboard_destruction_id;
-  HANDLE completed_clip_data_entry_event;
+  gboolean completed_clip_data_entry;
 
   GMutex server_format_list_update_mutex;
   unsigned int server_format_list_update_id;
-  HANDLE completed_format_list_event;
+  gboolean completed_format_list;
 
   GMutex client_format_list_response_mutex;
   unsigned int client_format_list_response_id;
 
   GMutex server_format_data_request_mutex;
   unsigned int server_format_data_request_id;
-  HANDLE completed_format_data_request_event;
+  gboolean completed_format_data_request;
 };
 
 G_DEFINE_TYPE (GrdClipboardRdp, grd_clipboard_rdp, GRD_TYPE_CLIPBOARD)
@@ -871,7 +873,10 @@ grd_clipboard_rdp_submit_requested_server_content (GrdClipboard *clipboard,
   g_free (dst_data);
   g_free (request_context);
 
-  SetEvent (clipboard_rdp->completed_format_data_request_event);
+  g_mutex_lock (&clipboard_rdp->completion_mutex);
+  clipboard_rdp->completed_format_data_request = TRUE;
+  g_cond_signal (&clipboard_rdp->completion_cond);
+  g_mutex_unlock (&clipboard_rdp->completion_mutex);
 }
 
 /**
@@ -1008,7 +1013,10 @@ update_server_format_list (gpointer user_data)
   clipboard_rdp->server_format_list_update_id = 0;
   g_mutex_unlock (&clipboard_rdp->server_format_list_update_mutex);
 
-  SetEvent (clipboard_rdp->completed_format_list_event);
+  g_mutex_lock (&clipboard_rdp->completion_mutex);
+  clipboard_rdp->completed_format_list = TRUE;
+  g_cond_signal (&clipboard_rdp->completion_cond);
+  g_mutex_unlock (&clipboard_rdp->completion_mutex);
 
   return G_SOURCE_REMOVE;
 }
@@ -1037,7 +1045,6 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
   GList *mime_type_tables = NULL;
   GrdMimeType mime_type;
   gboolean already_has_text_format = FALSE;
-  HANDLE events[2];
   uint32_t i;
 
   found_mime_types = g_hash_table_new (NULL, NULL);
@@ -1193,9 +1200,14 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
                "without being able to response to last update first");
     }
 
-  events[0] = clipboard_rdp->stop_event;
-  events[1] = clipboard_rdp->completed_format_list_event;
-  WaitForMultipleObjects (2, events, FALSE, INFINITE);
+  g_mutex_lock (&clipboard_rdp->completion_mutex);
+  while (!clipboard_rdp->protocol_stopped &&
+         !clipboard_rdp->completed_format_list)
+    {
+      g_cond_wait (&clipboard_rdp->completion_cond,
+                   &clipboard_rdp->completion_mutex);
+    }
+  g_mutex_unlock (&clipboard_rdp->completion_mutex);
 
   if (clipboard_rdp->protocol_stopped)
     {
@@ -1203,7 +1215,9 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
       return CHANNEL_RC_OK;
     }
 
-  ResetEvent (clipboard_rdp->completed_format_list_event);
+  g_assert (clipboard_rdp->completed_format_list);
+  clipboard_rdp->completed_format_list = FALSE;
+
   update_context = g_malloc0 (sizeof (ServerFormatListUpdateContext));
   update_context->clipboard_rdp = clipboard_rdp;
   update_context->mime_type_tables = mime_type_tables;
@@ -1306,7 +1320,10 @@ retrieve_current_clipboard (gpointer user_data)
   clipboard_rdp->clipboard_retrieval_id = 0;
   g_mutex_unlock (&clipboard_rdp->clip_data_entry_mutex);
 
-  SetEvent (clipboard_rdp->completed_clip_data_entry_event);
+  g_mutex_lock (&clipboard_rdp->completion_mutex);
+  clipboard_rdp->completed_clip_data_entry = TRUE;
+  g_cond_signal (&clipboard_rdp->completion_cond);
+  g_mutex_unlock (&clipboard_rdp->completion_mutex);
 
   return G_SOURCE_REMOVE;
 }
@@ -1332,7 +1349,6 @@ cliprdr_client_lock_clipboard_data (CliprdrServerContext              *cliprdr_c
   GrdClipboardRdp *clipboard_rdp = cliprdr_context->custom;
   uint32_t clip_data_id = lock_clipboard_data->clipDataId;
   g_autofree ClipDataEntry *entry = NULL;
-  HANDLE events[2];
 
   if (clipboard_rdp->protocol_stopped)
     return CHANNEL_RC_OK;
@@ -1352,7 +1368,9 @@ cliprdr_client_lock_clipboard_data (CliprdrServerContext              *cliprdr_c
       clipboard_rdp->clipboard_retrieval_context.entry_to_replace = entry;
     }
 
-  ResetEvent (clipboard_rdp->completed_clip_data_entry_event);
+  g_assert (clipboard_rdp->completed_clip_data_entry);
+  clipboard_rdp->completed_clip_data_entry = FALSE;
+
   entry = g_malloc0 (sizeof (ClipDataEntry));
   clipboard_rdp->clipboard_retrieval_context.entry = entry;
 
@@ -1361,12 +1379,19 @@ cliprdr_client_lock_clipboard_data (CliprdrServerContext              *cliprdr_c
     g_idle_add (retrieve_current_clipboard, clipboard_rdp);
   g_mutex_unlock (&clipboard_rdp->clip_data_entry_mutex);
 
-  events[0] = clipboard_rdp->stop_event;
-  events[1] = clipboard_rdp->completed_clip_data_entry_event;
-  WaitForMultipleObjects (2, events, FALSE, INFINITE);
+  g_mutex_lock (&clipboard_rdp->completion_mutex);
+  while (!clipboard_rdp->protocol_stopped &&
+         !clipboard_rdp->completed_clip_data_entry)
+    {
+      g_cond_wait (&clipboard_rdp->completion_cond,
+                   &clipboard_rdp->completion_mutex);
+    }
+  g_mutex_unlock (&clipboard_rdp->completion_mutex);
 
   if (clipboard_rdp->protocol_stopped)
     return CHANNEL_RC_OK;
+
+  g_assert (clipboard_rdp->completed_clip_data_entry);
 
   if (clipboard_rdp->clipboard_retrieval_context.serial_already_in_use)
     {
@@ -1409,7 +1434,10 @@ handle_clip_data_entry_destruction (gpointer user_data)
   clipboard_rdp->clipboard_destruction_id = 0;
   g_mutex_unlock (&clipboard_rdp->clip_data_entry_mutex);
 
-  SetEvent (clipboard_rdp->completed_clip_data_entry_event);
+  g_mutex_lock (&clipboard_rdp->completion_mutex);
+  clipboard_rdp->completed_clip_data_entry = TRUE;
+  g_cond_signal (&clipboard_rdp->completion_cond);
+  g_mutex_unlock (&clipboard_rdp->completion_mutex);
 
   return G_SOURCE_REMOVE;
 }
@@ -1425,7 +1453,6 @@ cliprdr_client_unlock_clipboard_data (CliprdrServerContext                *clipr
   GrdClipboardRdp *clipboard_rdp = cliprdr_context->custom;
   uint32_t clip_data_id = unlock_clipboard_data->clipDataId;
   ClipDataEntry *entry;
-  HANDLE events[2];
 
   if (clipboard_rdp->protocol_stopped)
     return CHANNEL_RC_OK;
@@ -1443,7 +1470,9 @@ cliprdr_client_unlock_clipboard_data (CliprdrServerContext                *clipr
 
   g_debug ("[RDP.CLIPRDR] Removing lock with clipDataId: %u", clip_data_id);
 
-  ResetEvent (clipboard_rdp->completed_clip_data_entry_event);
+  g_assert (clipboard_rdp->completed_clip_data_entry);
+  clipboard_rdp->completed_clip_data_entry = FALSE;
+
   clipboard_rdp->clipboard_destruction_context.entry = entry;
 
   g_mutex_lock (&clipboard_rdp->clip_data_entry_mutex);
@@ -1451,9 +1480,14 @@ cliprdr_client_unlock_clipboard_data (CliprdrServerContext                *clipr
     g_idle_add (handle_clip_data_entry_destruction, clipboard_rdp);
   g_mutex_unlock (&clipboard_rdp->clip_data_entry_mutex);
 
-  events[0] = clipboard_rdp->stop_event;
-  events[1] = clipboard_rdp->completed_clip_data_entry_event;
-  WaitForMultipleObjects (2, events, FALSE, INFINITE);
+  g_mutex_lock (&clipboard_rdp->completion_mutex);
+  while (!clipboard_rdp->protocol_stopped &&
+         !clipboard_rdp->completed_clip_data_entry)
+    {
+      g_cond_wait (&clipboard_rdp->completion_cond,
+                   &clipboard_rdp->completion_mutex);
+    }
+  g_mutex_unlock (&clipboard_rdp->completion_mutex);
 
   g_debug ("[RDP.CLIPRDR] Untracking lock with clipDataId %u", clip_data_id);
   g_hash_table_remove (clipboard_rdp->clip_data_table,
@@ -1491,7 +1525,10 @@ request_server_format_data (gpointer user_data)
       clipboard_rdp->server_format_data_request_id = 0;
       g_mutex_unlock (&clipboard_rdp->server_format_data_request_mutex);
 
-      SetEvent (clipboard_rdp->completed_format_data_request_event);
+      g_mutex_lock (&clipboard_rdp->completion_mutex);
+      clipboard_rdp->completed_format_data_request = TRUE;
+      g_cond_signal (&clipboard_rdp->completion_cond);
+      g_mutex_unlock (&clipboard_rdp->completion_mutex);
 
       return G_SOURCE_REMOVE;
     }
@@ -1521,7 +1558,6 @@ cliprdr_client_format_data_request (CliprdrServerContext              *cliprdr_c
   uint32_t dst_format_id;
   gboolean needs_null_terminator = FALSE;
   gboolean needs_conversion = FALSE;
-  HANDLE events[2];
 
   dst_format_id = format_data_request->requestedFormatId;
   switch (dst_format_id)
@@ -1584,16 +1620,23 @@ cliprdr_client_format_data_request (CliprdrServerContext              *cliprdr_c
                "yet.");
     }
 
-  events[0] = clipboard_rdp->stop_event;
-  events[1] = clipboard_rdp->completed_format_data_request_event;
-  WaitForMultipleObjects (2, events, FALSE, INFINITE);
+  g_mutex_lock (&clipboard_rdp->completion_mutex);
+  while (!clipboard_rdp->protocol_stopped &&
+         !clipboard_rdp->completed_format_data_request)
+    {
+      g_cond_wait (&clipboard_rdp->completion_cond,
+                   &clipboard_rdp->completion_mutex);
+    }
+  g_mutex_unlock (&clipboard_rdp->completion_mutex);
 
   if (clipboard_rdp->protocol_stopped)
     return CHANNEL_RC_OK;
 
   if (mime_type != GRD_MIME_TYPE_NONE)
     {
-      ResetEvent (clipboard_rdp->completed_format_data_request_event);
+      g_assert (clipboard_rdp->completed_format_data_request);
+      clipboard_rdp->completed_format_data_request = FALSE;
+
       request_context = g_malloc0 (sizeof (ServerFormatDataRequestContext));
       request_context->clipboard_rdp = clipboard_rdp;
       request_context->mime_type = mime_type;
@@ -2314,7 +2357,6 @@ create_new_winpr_clipboard (GrdClipboardRdp *clipboard_rdp)
 GrdClipboardRdp *
 grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
                        HANDLE         vcm,
-                       HANDLE         stop_event,
                        gboolean       relieve_filename_restriction)
 {
   g_autoptr (GrdClipboardRdp) clipboard_rdp = NULL;
@@ -2330,7 +2372,6 @@ grd_clipboard_rdp_new (GrdSessionRdp *session_rdp,
     }
 
   clipboard_rdp->cliprdr_context = cliprdr_context;
-  clipboard_rdp->stop_event = stop_event;
   clipboard_rdp->relieve_filename_restriction = relieve_filename_restriction;
 
   clipboard = GRD_CLIPBOARD (clipboard_rdp);
@@ -2402,7 +2443,11 @@ grd_clipboard_rdp_dispose (GObject *object)
   GrdClipboardRdp *clipboard_rdp = GRD_CLIPBOARD_RDP (object);
   GrdClipboard *clipboard = GRD_CLIPBOARD (clipboard_rdp);
 
+  g_mutex_lock (&clipboard_rdp->completion_mutex);
   clipboard_rdp->protocol_stopped = TRUE;
+  g_cond_signal (&clipboard_rdp->completion_cond);
+  g_mutex_unlock (&clipboard_rdp->completion_mutex);
+
   if (clipboard_rdp->cliprdr_context)
     {
       clipboard_rdp->cliprdr_context->Stop (clipboard_rdp->cliprdr_context);
@@ -2446,11 +2491,6 @@ grd_clipboard_rdp_dispose (GObject *object)
   g_clear_pointer (&clipboard_rdp->clip_data_table, g_hash_table_destroy);
   g_clear_pointer (&clipboard_rdp->serial_entry_table, g_hash_table_destroy);
   g_clear_pointer (&clipboard_rdp->allowed_server_formats, g_hash_table_destroy);
-  g_clear_pointer (&clipboard_rdp->completed_format_data_request_event,
-                   CloseHandle);
-  g_clear_pointer (&clipboard_rdp->completed_format_list_event, CloseHandle);
-  g_clear_pointer (&clipboard_rdp->completed_clip_data_entry_event,
-                   CloseHandle);
   g_clear_pointer (&clipboard_rdp->system, ClipboardDestroy);
   g_clear_pointer (&clipboard_rdp->cliprdr_context, cliprdr_server_context_free);
 
@@ -2471,6 +2511,8 @@ grd_clipboard_rdp_finalize (GObject *object)
 {
   GrdClipboardRdp *clipboard_rdp = GRD_CLIPBOARD_RDP (object);
 
+  g_cond_clear (&clipboard_rdp->completion_cond);
+  g_mutex_clear (&clipboard_rdp->completion_mutex);
   g_mutex_clear (&clipboard_rdp->server_format_data_request_mutex);
   g_mutex_clear (&clipboard_rdp->client_format_list_response_mutex);
   g_mutex_clear (&clipboard_rdp->server_format_list_update_mutex);
@@ -2529,12 +2571,9 @@ grd_clipboard_rdp_init (GrdClipboardRdp *clipboard_rdp)
   clipboard_rdp->delegate->basePath = NULL;
   clipboard_rdp->delegate->custom = clipboard_rdp;
 
-  clipboard_rdp->completed_clip_data_entry_event =
-    CreateEvent (NULL, TRUE, TRUE, NULL);
-  clipboard_rdp->completed_format_list_event =
-    CreateEvent (NULL, TRUE, TRUE, NULL);
-  clipboard_rdp->completed_format_data_request_event =
-    CreateEvent (NULL, TRUE, TRUE, NULL);
+  clipboard_rdp->completed_clip_data_entry = TRUE;
+  clipboard_rdp->completed_format_list = TRUE;
+  clipboard_rdp->completed_format_data_request = TRUE;
 
   clipboard_rdp->allowed_server_formats = g_hash_table_new (NULL, NULL);
   clipboard_rdp->serial_entry_table = g_hash_table_new_full (NULL, NULL, NULL,
@@ -2549,6 +2588,8 @@ grd_clipboard_rdp_init (GrdClipboardRdp *clipboard_rdp)
   g_mutex_init (&clipboard_rdp->server_format_list_update_mutex);
   g_mutex_init (&clipboard_rdp->client_format_list_response_mutex);
   g_mutex_init (&clipboard_rdp->server_format_data_request_mutex);
+  g_mutex_init (&clipboard_rdp->completion_mutex);
+  g_cond_init (&clipboard_rdp->completion_cond);
 
   clipboard_rdp->fuse_mount_path = g_steal_pointer (&template_path);
   clipboard_rdp->rdp_fuse_clipboard =
