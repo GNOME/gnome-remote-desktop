@@ -78,6 +78,7 @@ struct _GrdClipboardRdp
   GrdClipboard parent;
 
   CliprdrServerContext *cliprdr_context;
+  gboolean protocol_stopped;
   HANDLE stop_event;
 
   gboolean relieve_filename_restriction;
@@ -686,7 +687,7 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
 {
   GrdClipboardRdp *clipboard_rdp = GRD_CLIPBOARD_RDP (clipboard);
   GrdMimeType mime_type = mime_type_table->mime_type;
-  HANDLE completed_format_list_event = clipboard_rdp->completed_format_list_event;
+  gboolean pending_format_list_update;
   FormatData *format_data;
 
   if (mime_type == GRD_MIME_TYPE_NONE)
@@ -706,7 +707,11 @@ grd_clipboard_rdp_request_client_content_for_mime_type (GrdClipboard     *clipbo
       return;
     }
 
-  if (WaitForSingleObject (completed_format_list_event, 0) == WAIT_TIMEOUT)
+  g_mutex_lock (&clipboard_rdp->server_format_list_update_mutex);
+  pending_format_list_update = clipboard_rdp->server_format_list_update_id != 0;
+  g_mutex_unlock (&clipboard_rdp->server_format_list_update_mutex);
+
+  if (pending_format_list_update)
     {
       grd_clipboard_submit_client_content_for_mime_type (clipboard, serial,
                                                          NULL, 0);
@@ -1192,7 +1197,7 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
   events[1] = clipboard_rdp->completed_format_list_event;
   WaitForMultipleObjects (2, events, FALSE, INFINITE);
 
-  if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
+  if (clipboard_rdp->protocol_stopped)
     {
       g_list_free_full (mime_type_tables, g_free);
       return CHANNEL_RC_OK;
@@ -1326,10 +1331,10 @@ cliprdr_client_lock_clipboard_data (CliprdrServerContext              *cliprdr_c
 {
   GrdClipboardRdp *clipboard_rdp = cliprdr_context->custom;
   uint32_t clip_data_id = lock_clipboard_data->clipDataId;
-  ClipDataEntry *entry;
+  g_autofree ClipDataEntry *entry = NULL;
   HANDLE events[2];
 
-  if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
+  if (clipboard_rdp->protocol_stopped)
     return CHANNEL_RC_OK;
 
   g_debug ("[RDP.CLIPRDR] Client requested a lock with clipDataId: %u",
@@ -1360,7 +1365,7 @@ cliprdr_client_lock_clipboard_data (CliprdrServerContext              *cliprdr_c
   events[1] = clipboard_rdp->completed_clip_data_entry_event;
   WaitForMultipleObjects (2, events, FALSE, INFINITE);
 
-  if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
+  if (clipboard_rdp->protocol_stopped)
     return CHANNEL_RC_OK;
 
   if (clipboard_rdp->clipboard_retrieval_context.serial_already_in_use)
@@ -1383,7 +1388,7 @@ cliprdr_client_lock_clipboard_data (CliprdrServerContext              *cliprdr_c
   g_debug ("[RDP.CLIPRDR] Tracking lock with clipDataId %u", clip_data_id);
   g_hash_table_insert (clipboard_rdp->clip_data_table,
                        GUINT_TO_POINTER (clip_data_id),
-                       entry);
+                       g_steal_pointer (&entry));
 
   return CHANNEL_RC_OK;
 }
@@ -1422,7 +1427,7 @@ cliprdr_client_unlock_clipboard_data (CliprdrServerContext                *clipr
   ClipDataEntry *entry;
   HANDLE events[2];
 
-  if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
+  if (clipboard_rdp->protocol_stopped)
     return CHANNEL_RC_OK;
 
   g_debug ("[RDP.CLIPRDR] Client requested an unlock with clipDataId: %u",
@@ -1583,7 +1588,7 @@ cliprdr_client_format_data_request (CliprdrServerContext              *cliprdr_c
   events[1] = clipboard_rdp->completed_format_data_request_event;
   WaitForMultipleObjects (2, events, FALSE, INFINITE);
 
-  if (WaitForSingleObject (clipboard_rdp->stop_event, 0) == WAIT_OBJECT_0)
+  if (clipboard_rdp->protocol_stopped)
     return CHANNEL_RC_OK;
 
   if (mime_type != GRD_MIME_TYPE_NONE)
@@ -2397,6 +2402,7 @@ grd_clipboard_rdp_dispose (GObject *object)
   GrdClipboardRdp *clipboard_rdp = GRD_CLIPBOARD_RDP (object);
   GrdClipboard *clipboard = GRD_CLIPBOARD (clipboard_rdp);
 
+  clipboard_rdp->protocol_stopped = TRUE;
   if (clipboard_rdp->cliprdr_context)
     {
       clipboard_rdp->cliprdr_context->Stop (clipboard_rdp->cliprdr_context);
