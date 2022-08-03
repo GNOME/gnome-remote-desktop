@@ -33,7 +33,6 @@ GrdRdpGraphicsPipeline *grd_rdp_graphics_pipeline_new (GrdSessionRdp            
                                                        GrdRdpDvc                  *rdp_dvc,
                                                        GMainContext               *pipeline_context,
                                                        HANDLE                      vcm,
-                                                       HANDLE                      stop_event,
                                                        rdpContext                 *rdp_context,
                                                        GrdRdpNetworkAutodetection *network_autodetection,
                                                        wStream                    *encode_stream,

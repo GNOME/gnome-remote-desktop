@@ -32,7 +32,6 @@ G_DECLARE_FINAL_TYPE (GrdRdpDisplayControl, grd_rdp_display_control,
 GrdRdpDisplayControl *grd_rdp_display_control_new (GrdSessionRdp *session_rdp,
                                                    GrdRdpDvc     *rdp_dvc,
                                                    HANDLE         vcm,
-                                                   HANDLE         stop_event,
                                                    uint32_t       max_monitor_count);
 
 void grd_rdp_display_control_maybe_init (GrdRdpDisplayControl *display_control);

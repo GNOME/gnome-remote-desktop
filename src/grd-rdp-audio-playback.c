@@ -60,7 +60,6 @@ struct _GrdRdpAudioPlayback
   GObject parent;
 
   RdpsndServerContext *rdpsnd_context;
-  HANDLE stop_event;
   gboolean channel_opened;
   gboolean channel_unavailable;
 
@@ -140,9 +139,6 @@ grd_rdp_audio_playback_maybe_init (GrdRdpAudioPlayback *audio_playback)
   RdpsndServerContext *rdpsnd_context;
 
   if (audio_playback->channel_opened || audio_playback->channel_unavailable)
-    return;
-
-  if (WaitForSingleObject (audio_playback->stop_event, 0) != WAIT_TIMEOUT)
     return;
 
   rdpsnd_context = audio_playback->rdpsnd_context;
@@ -644,7 +640,6 @@ GrdRdpAudioPlayback *
 grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
                             GrdRdpDvc     *rdp_dvc,
                             HANDLE         vcm,
-                            HANDLE         stop_event,
                             rdpContext    *rdp_context)
 {
   g_autoptr (GrdRdpAudioPlayback) audio_playback = NULL;
@@ -657,7 +652,6 @@ grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
     g_error ("[RDP.AUDIO_PLAYBACK] Failed to create server context");
 
   audio_playback->rdpsnd_context = rdpsnd_context;
-  audio_playback->stop_event = stop_event;
   audio_playback->session_rdp = session_rdp;
   audio_playback->rdp_dvc = rdp_dvc;
 

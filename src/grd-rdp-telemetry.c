@@ -31,7 +31,6 @@ struct _GrdRdpTelemetry
   GObject parent;
 
   TelemetryServerContext *telemetry_context;
-  HANDLE stop_event;
   gboolean channel_opened;
   gboolean channel_unavailable;
 
@@ -72,9 +71,6 @@ grd_rdp_telemetry_maybe_init (GrdRdpTelemetry *telemetry)
   TelemetryServerContext *telemetry_context;
 
   if (telemetry->channel_opened || telemetry->channel_unavailable)
-    return;
-
-  if (WaitForSingleObject (telemetry->stop_event, 0) != WAIT_TIMEOUT)
     return;
 
   telemetry_context = telemetry->telemetry_context;
@@ -173,7 +169,6 @@ GrdRdpTelemetry *
 grd_rdp_telemetry_new (GrdSessionRdp *session_rdp,
                        GrdRdpDvc     *rdp_dvc,
                        HANDLE         vcm,
-                       HANDLE         stop_event,
                        rdpContext    *rdp_context)
 {
   GrdRdpTelemetry *telemetry;
@@ -185,7 +180,6 @@ grd_rdp_telemetry_new (GrdSessionRdp *session_rdp,
     g_error ("[RDP.TELEMETRY] Failed to allocate server context (OOM)");
 
   telemetry->telemetry_context = telemetry_context;
-  telemetry->stop_event = stop_event;
   telemetry->session_rdp = session_rdp;
   telemetry->rdp_dvc = rdp_dvc;
 

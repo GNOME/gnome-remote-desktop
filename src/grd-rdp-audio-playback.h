@@ -32,7 +32,6 @@ G_DECLARE_FINAL_TYPE (GrdRdpAudioPlayback, grd_rdp_audio_playback,
 GrdRdpAudioPlayback *grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
                                                  GrdRdpDvc     *rdp_dvc,
                                                  HANDLE         vcm,
-                                                 HANDLE         stop_event,
                                                  rdpContext    *rdp_context);
 
 void grd_rdp_audio_playback_maybe_init (GrdRdpAudioPlayback *audio_playback);

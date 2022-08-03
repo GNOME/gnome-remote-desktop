@@ -139,7 +139,7 @@ struct _GrdSessionRdp
   GrdRdpSAMFile *sam_file;
   uint32_t rdp_error_info;
   GrdRdpScreenShareMode screen_share_mode;
-  gboolean session_stopped;
+  gboolean session_should_stop;
 
   SessionMetrics session_metrics;
 
@@ -654,6 +654,7 @@ maybe_queue_close_session_idle (GrdSessionRdp *session_rdp)
     g_idle_add (close_session_idle, session_rdp);
   g_mutex_unlock (&session_rdp->close_session_mutex);
 
+  session_rdp->session_should_stop = TRUE;
   SetEvent (session_rdp->stop_event);
 }
 
@@ -2144,7 +2145,7 @@ socket_thread_func (gpointer data)
 
       WaitForMultipleObjects (n_events, events, FALSE, INFINITE);
 
-      if (WaitForSingleObject (session_rdp->stop_event, 0) == WAIT_OBJECT_0)
+      if (session_rdp->session_should_stop)
         break;
 
       if (!peer->CheckFileDescriptor (peer))
@@ -2177,19 +2178,19 @@ socket_thread_func (gpointer data)
               audio_playback = rdp_peer_context->audio_playback;
               display_control = rdp_peer_context->display_control;
 
-              if (telemetry)
+              if (telemetry && !session_rdp->session_should_stop)
                 grd_rdp_telemetry_maybe_init (telemetry);
-              if (graphics_pipeline)
+              if (graphics_pipeline && !session_rdp->session_should_stop)
                 grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
-              if (audio_playback)
+              if (audio_playback && !session_rdp->session_should_stop)
                 grd_rdp_audio_playback_maybe_init (audio_playback);
-              if (display_control)
+              if (display_control && !session_rdp->session_should_stop)
                 grd_rdp_display_control_maybe_init (display_control);
               g_mutex_unlock (&rdp_peer_context->channel_mutex);
               break;
             }
 
-          if (WaitForSingleObject (session_rdp->stop_event, 0) == WAIT_OBJECT_0)
+          if (session_rdp->session_should_stop)
             break;
         }
 
@@ -2225,7 +2226,7 @@ graphics_thread_func (gpointer data)
   if (session_rdp->hwaccel_nvidia)
     grd_hwaccel_nvidia_push_cuda_context (session_rdp->hwaccel_nvidia);
 
-  while (!session_rdp->session_stopped)
+  while (!session_rdp->session_should_stop)
     g_main_context_iteration (session_rdp->graphics_context, TRUE);
 
   if (session_rdp->hwaccel_nvidia)
@@ -2291,6 +2292,18 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   return g_steal_pointer (&session_rdp);
 }
 
+static gboolean
+has_session_close_queued (GrdSessionRdp *session_rdp)
+{
+  gboolean pending_session_closing;
+
+  g_mutex_lock (&session_rdp->close_session_mutex);
+  pending_session_closing = session_rdp->close_session_idle_id != 0;
+  g_mutex_unlock (&session_rdp->close_session_mutex);
+
+  return pending_session_closing;
+}
+
 static void
 clear_session_sources (GrdSessionRdp *session_rdp)
 {
@@ -2329,14 +2342,13 @@ grd_session_rdp_stop (GrdSession *session)
   g_debug ("Stopping RDP session");
 
   unset_rdp_peer_flag (session_rdp, RDP_PEER_ACTIVATED);
-  session_rdp->session_stopped = TRUE;
+  session_rdp->session_should_stop = TRUE;
+  SetEvent (session_rdp->stop_event);
 
-  if (WaitForSingleObject (session_rdp->stop_event, 0) == WAIT_TIMEOUT)
+  if (!has_session_close_queued (session_rdp))
     {
       freerdp_set_error_info (peer->context->rdp,
                               ERRINFO_RPC_INITIATED_DISCONNECT);
-
-      SetEvent (session_rdp->stop_event);
     }
   else if (session_rdp->rdp_error_info)
     {
@@ -2352,7 +2364,7 @@ grd_session_rdp_stop (GrdSession *session)
   if (session_rdp->graphics_thread)
     {
       g_assert (session_rdp->graphics_context);
-      g_assert (session_rdp->session_stopped);
+      g_assert (session_rdp->session_should_stop);
 
       g_main_context_wakeup (session_rdp->graphics_context);
       g_clear_pointer (&session_rdp->graphics_thread, g_thread_join);
@@ -2433,7 +2445,6 @@ maybe_initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
   telemetry = grd_rdp_telemetry_new (session_rdp,
                                      rdp_peer_context->rdp_dvc,
                                      rdp_peer_context->vcm,
-                                     session_rdp->stop_event,
                                      peer->context);
   rdp_peer_context->telemetry = telemetry;
 
@@ -2442,7 +2453,6 @@ maybe_initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
                                    rdp_peer_context->rdp_dvc,
                                    session_rdp->graphics_context,
                                    rdp_peer_context->vcm,
-                                   session_rdp->stop_event,
                                    peer->context,
                                    rdp_peer_context->network_autodetection,
                                    rdp_peer_context->encode_stream,
@@ -2473,8 +2483,7 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
   if (rdp_settings->AudioPlayback && !rdp_settings->RemoteConsoleAudio)
     {
       rdp_peer_context->audio_playback =
-        grd_rdp_audio_playback_new (session_rdp, rdp_dvc, vcm,
-                                    session_rdp->stop_event, peer->context);
+        grd_rdp_audio_playback_new (session_rdp, rdp_dvc, vcm, peer->context);
     }
 }
 
@@ -2573,7 +2582,6 @@ grd_session_rdp_stream_ready (GrdSession *session,
             grd_rdp_display_control_new (session_rdp,
                                          rdp_peer_context->rdp_dvc,
                                          rdp_peer_context->vcm,
-                                         session_rdp->stop_event,
                                          MAX_MONITOR_COUNT);
         }
     }

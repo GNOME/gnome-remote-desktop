@@ -72,7 +72,6 @@ struct _GrdRdpGraphicsPipeline
   GObject parent;
 
   RdpgfxServerContext *rdpgfx_context;
-  HANDLE stop_event;
   gboolean channel_opened;
   gboolean received_first_cap_sets;
   gboolean initialized;
@@ -1464,9 +1463,6 @@ grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
   if (graphics_pipeline->channel_opened)
     return;
 
-  if (WaitForSingleObject (graphics_pipeline->stop_event, 0) == WAIT_OBJECT_0)
-    return;
-
   rdpgfx_context = graphics_pipeline->rdpgfx_context;
   if (!rdpgfx_context->Open (rdpgfx_context))
     {
@@ -1492,7 +1488,6 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
                                GrdRdpDvc                  *rdp_dvc,
                                GMainContext               *pipeline_context,
                                HANDLE                      vcm,
-                               HANDLE                      stop_event,
                                rdpContext                 *rdp_context,
                                GrdRdpNetworkAutodetection *network_autodetection,
                                wStream                    *encode_stream,
@@ -1507,7 +1502,6 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
     g_error ("[RDP.RDPGFX] Failed to create server context");
 
   graphics_pipeline->rdpgfx_context = rdpgfx_context;
-  graphics_pipeline->stop_event = stop_event;
   graphics_pipeline->session_rdp = session_rdp;
   graphics_pipeline->rdp_dvc = rdp_dvc;
   graphics_pipeline->pipeline_context = pipeline_context;

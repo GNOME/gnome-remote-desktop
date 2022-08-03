@@ -29,7 +29,6 @@ struct _GrdRdpDisplayControl
   GObject parent;
 
   DispServerContext *disp_context;
-  HANDLE stop_event;
   gboolean channel_opened;
   gboolean channel_unavailable;
 
@@ -51,9 +50,6 @@ grd_rdp_display_control_maybe_init (GrdRdpDisplayControl *display_control)
   DispServerContext *disp_context;
 
   if (display_control->channel_opened || display_control->channel_unavailable)
-    return;
-
-  if (WaitForSingleObject (display_control->stop_event, 0) == WAIT_OBJECT_0)
     return;
 
   disp_context = display_control->disp_context;
@@ -141,7 +137,6 @@ GrdRdpDisplayControl *
 grd_rdp_display_control_new (GrdSessionRdp *session_rdp,
                              GrdRdpDvc     *rdp_dvc,
                              HANDLE         vcm,
-                             HANDLE         stop_event,
                              uint32_t       max_monitor_count)
 {
   GrdRdpDisplayControl *display_control;
@@ -153,7 +148,6 @@ grd_rdp_display_control_new (GrdSessionRdp *session_rdp,
     g_error ("[RDP.DISP] Failed to create server context");
 
   display_control->disp_context = disp_context;
-  display_control->stop_event = stop_event;
   display_control->session_rdp = session_rdp;
   display_control->rdp_dvc = rdp_dvc;
 
