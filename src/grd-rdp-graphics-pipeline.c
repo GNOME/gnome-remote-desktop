@@ -90,7 +90,7 @@ struct _GrdRdpGraphicsPipeline
   GHashTable *surface_table;
   GHashTable *codec_context_table;
 
-  /* Unacknowledged Frames ADM element */
+  /* Unacknowledged Frames ADM element ([MS-RDPEGFX] 3.2.1.2) */
   GHashTable *frame_serial_table;
 
   GHashTable *serial_surface_table;
