@@ -41,6 +41,8 @@ daemon_sources = files([
   'grd-daemon.h',
   'grd-damage-utils.c',
   'grd-damage-utils.h',
+  'grd-debug.c',
+  'grd-debug.h',
   'grd-egl-thread.c',
   'grd-egl-thread.h',
   'grd-mime-type.c',

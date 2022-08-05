@@ -36,12 +36,6 @@ typedef enum _GrdRuntimeMode
   GRD_RUNTIME_MODE_HEADLESS,
 } GrdRuntimeMode;
 
-typedef enum _GrdDebugFlags
-{
-  GRD_DEBUG_NONE = 0,
-  GRD_DEBUG_VNC = 1 << 0,
-} GrdDebugFlags;
-
 #define GRD_TYPE_CONTEXT (grd_context_get_type ())
 G_DECLARE_FINAL_TYPE (GrdContext, grd_context, GRD, CONTEXT, GObject)
 
@@ -63,8 +57,6 @@ GrdSettings * grd_context_get_settings (GrdContext *context);
 GrdCredentials * grd_context_get_credentials (GrdContext *context);
 
 GrdEglThread * grd_context_get_egl_thread (GrdContext *context);
-
-GrdDebugFlags grd_context_get_debug_flags (GrdContext *context);
 
 void grd_context_notify_daemon_ready (GrdContext *context);
 

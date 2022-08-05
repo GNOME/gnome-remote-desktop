@@ -32,10 +32,6 @@
 #include "grd-dbus-remote-desktop.h"
 #include "grd-dbus-screen-cast.h"
 
-static const GDebugKey grd_debug_keys[] = {
-  { "vnc", GRD_DEBUG_VNC },
-};
-
 struct _GrdContext
 {
   GObject parent;
@@ -47,8 +43,6 @@ struct _GrdContext
 
   GrdCredentials *credentials;
   GrdSettings *settings;
-
-  GrdDebugFlags debug_flags;
 };
 
 G_DEFINE_TYPE (GrdContext, grd_context, G_TYPE_OBJECT)
@@ -99,12 +93,6 @@ grd_context_get_egl_thread (GrdContext *context)
   return context->egl_thread;
 }
 
-GrdDebugFlags
-grd_context_get_debug_flags (GrdContext *context)
-{
-  return context->debug_flags;
-}
-
 void
 grd_context_notify_daemon_ready (GrdContext *context)
 {
@@ -118,21 +106,6 @@ grd_context_notify_daemon_ready (GrdContext *context)
     g_debug ("Failed to create EGL thread: %s", error->message);
 }
 
-static void
-init_debug_flags (GrdContext *context)
-{
-  const char *debug_env;
-
-  debug_env = g_getenv ("GNOME_REMOTE_DESKTOP_DEBUG");
-  if (debug_env)
-    {
-      context->debug_flags =
-        g_parse_debug_string (debug_env,
-                              grd_debug_keys,
-                              G_N_ELEMENTS (grd_debug_keys));
-    }
-}
-
 GrdContext *
 grd_context_new (GrdRuntimeMode   runtime_mode,
                  GError         **error)
@@ -140,8 +113,6 @@ grd_context_new (GrdRuntimeMode   runtime_mode,
   g_autoptr (GrdContext) context = NULL;
 
   context = g_object_new (GRD_TYPE_CONTEXT, NULL);
-
-  init_debug_flags (context);
 
   switch (runtime_mode)
     {

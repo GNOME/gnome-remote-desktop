@@ -28,8 +28,8 @@
 #include <rfb/rfb.h>
 
 #include "grd-context.h"
+#include "grd-debug.h"
 #include "grd-session-vnc.h"
-
 
 enum
 {
@@ -216,9 +216,7 @@ grd_vnc_server_dispose (GObject *object)
 static void
 grd_vnc_server_constructed (GObject *object)
 {
-  GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
-
-  if (grd_context_get_debug_flags (vnc_server->context) & GRD_DEBUG_VNC)
+  if (grd_get_debug_flags () & GRD_DEBUG_VNC)
     rfbLogEnable (1);
   else
     rfbLogEnable (0);
