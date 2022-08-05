@@ -32,6 +32,8 @@ G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 #include <tss2_tctildr.h>
 G_GNUC_END_IGNORE_DEPRECATIONS
 
+#include "grd-debug.h"
+
 struct _GrdTpm
 {
   GObject parent;
@@ -721,6 +723,9 @@ grd_tpm_new (GrdTpmMode   mode,
   g_autoptr (GrdTpm) tpm = NULL;
 
   tpm = g_object_new (GRD_TYPE_TPM, NULL);
+
+  if (!(grd_get_debug_flags () & GRD_DEBUG_TPM))
+    g_setenv ("TSS2_LOGFILE", "/dev/null", TRUE);
 
   if (!init_transmission_interface (tpm, error))
     return NULL;

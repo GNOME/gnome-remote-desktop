@@ -176,6 +176,8 @@ control_sources = ([
 
 ctl_sources = ([
   'grd-ctl.c',
+  'grd-debug.c',
+  'grd-debug.h',
   credentials_sources,
 ])
 

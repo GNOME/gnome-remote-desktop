@@ -72,6 +72,8 @@ tpm_test = executable(
   'tpm-test',
   sources: [
     'tpm-test.c',
+    '../src/grd-debug.c',
+    '../src/grd-debug.h',
     '../src/grd-tpm.c',
     '../src/grd-tpm.h',
   ],
