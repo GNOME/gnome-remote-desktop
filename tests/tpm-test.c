@@ -48,6 +48,24 @@ test_tpm_caps (void)
     }
 }
 
+static gboolean
+check_compatibility (GrdTpm *tpm)
+{
+  g_autoptr (GError) error = NULL;
+
+  if (!grd_tpm_check_capabilities (tpm, &error))
+    {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED))
+        return FALSE;
+      else
+        g_error ("Failed tocheck TPM 2.0 compatibility: %s", error->message);
+    }
+  else
+    {
+      return TRUE;
+    }
+}
+
 static void
 test_tpm_write (void)
 {
@@ -62,6 +80,12 @@ test_tpm_write (void)
   tpm = grd_tpm_new (GRD_TPM_MODE_WRITE, &error);
   if (!tpm)
     g_error ("Failed to create TPM credentials manager: %s", error->message);
+
+  if (!check_compatibility (tpm))
+    {
+      g_test_skip ("TPM module not compatible");
+      return;
+    }
 
   if (!grd_tpm_create_primary (tpm, &primary_handle, &error))
     g_error ("Failed to create primary: %s", error->message);
@@ -101,11 +125,17 @@ test_tpm_read (void)
   g_autofree TPML_DIGEST *pcr_digest = NULL;
   g_autofree char *secret = NULL;
 
-  g_assert_nonnull (secret_variant);
-
   tpm = grd_tpm_new (GRD_TPM_MODE_READ, &error);
   if (!tpm)
     g_error ("Failed to create TPM credentials reader: %s", error->message);
+
+  if (!check_compatibility (tpm))
+    {
+      g_test_skip ("TPM module not compatible");
+      return;
+    }
+
+  g_assert_nonnull (secret_variant);
 
   if (!grd_tpm_read_pcr (tpm, &pcr_selection, &pcr_digest, &error))
     g_error ("Failed to read PCR: %s", error->message);
