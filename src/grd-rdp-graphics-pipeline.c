@@ -1157,6 +1157,30 @@ static uint32_t cap_list[] =
   RDPGFX_CAPVERSION_8,   /* [MS-RDPEGFX] 2.2.3.1 */
 };
 
+static void
+search_and_list_unknown_cap_sets_versions (RDPGFX_CAPSET *cap_sets,
+                                           uint16_t       n_cap_sets)
+{
+  uint16_t i;
+  size_t j;
+
+  for (i = 0; i < n_cap_sets; ++i)
+    {
+      gboolean cap_found = FALSE;
+
+      for (j = 0; j < G_N_ELEMENTS (cap_list) && !cap_found; ++j)
+        {
+          if (cap_sets[i].version == cap_list[j])
+            cap_found = TRUE;
+        }
+      if (!cap_found)
+        {
+          g_debug ("[RDP.RDPGFX] Received unknown capability set with "
+                   "version 0x%08X", cap_sets[i].version);
+        }
+    }
+}
+
 static gboolean
 cap_sets_contains_supported_version (RDPGFX_CAPSET *cap_sets,
                                      uint16_t       n_cap_sets)
@@ -1233,6 +1257,8 @@ rdpgfx_caps_advertise (RdpgfxServerContext             *rdpgfx_context,
   GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
 
   g_debug ("[RDP.RDPGFX] Received a CapsAdvertise PDU");
+  search_and_list_unknown_cap_sets_versions (caps_advertise->capsSets,
+                                             caps_advertise->capsSetCount);
 
   if (graphics_pipeline->initialized &&
       graphics_pipeline->initial_version < RDPGFX_CAPVERSION_103)
