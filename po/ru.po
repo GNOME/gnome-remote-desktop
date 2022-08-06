@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-07-28 08:39+0000\n"
-"PO-Revision-Date: 2022-07-28 14:19+0300\n"
+"POT-Creation-Date: 2022-08-05 21:58+0000\n"
+"PO-Revision-Date: 2022-08-06 13:10+0300\n"
 "Last-Translator: Aleksandr Melman <Alexmelman88@gmail.com>\n"
 "Language-Team: Russian <gnome-cyr@gnome.org>\n"
 "Language: ru\n"
@@ -20,7 +20,7 @@ msgstr ""
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Poedit 3.1\n"
 
-#: src/grd-daemon.c:480
+#: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
 msgstr "Удаленный рабочий стол GNOME"
 
@@ -46,16 +46,16 @@ msgstr "Отказаться"
 msgid "Accept"
 msgstr "Принять"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:52
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Использование: %s [ОПЦИИ...] КОМАНДА [СУБКОМАНДА]...\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:444
 msgid "Commands:\n"
 msgstr "Команды:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:449
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -94,7 +94,7 @@ msgstr ""
 "                                               устройства\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:468
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -124,16 +124,20 @@ msgstr ""
 "                                               устройства\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:483
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Показать текущее состояние\n"
 "\n"
 "Опции:\n"
+"  --headless                                 - Использовать автономное "
+"хранилище учетных данных\n"
 "  --help                                     - Вывести текст справки\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
@@ -156,10 +160,10 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
@@ -170,11 +174,11 @@ msgstr ""
 "([MS-RDPBCGR] 2.2.1.3.6), в зависимости от того, что доступно. При "
 "использовании сеанса удаленного рабочего стола с виртуальным монитором "
 "клиенты могут изменять разрешение виртуального монитора во время сеанса с "
-"помощью расширения канала управления дисплеем ([MS-RDPEDISP]). Разрешенные "
-"режимы совместного доступа к экрану включают: * mirror-primary - Запись "
-"основного монитора текущего сеанса пользователя. * extend - Создать новый "
-"виртуальный монитор и использовать его для сеанса удаленного рабочего стола. "
-"Разрешение этого виртуального монитора определяется из конфигурации "
+"помощью расширения виртуального канала обновления дисплея ([MS-RDPEDISP]). "
+"Разрешенные режимы совместного доступа к экрану включают: * mirror-primary - "
+"Запись основного монитора текущего сеанса пользователя. * extend - Создать "
+"новый виртуальный монитор и использовать его для сеанса удаленного рабочего "
+"стола. Разрешение этого виртуального монитора определяется из конфигурации "
 "монитора, предоставленной клиентом удаленного рабочего стола."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
