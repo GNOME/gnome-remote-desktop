@@ -2140,15 +2140,15 @@ cliprdr_client_file_contents_request (CliprdrServerContext                *clipr
                                          NULL, (gpointer *) &entry))
         return send_file_contents_response_failure (cliprdr_context, stream_id);
 
-      if (!entry->requests_allowed)
+      delegate = entry->delegate;
+      has_file_list = entry->has_file_list;
+      requests_allowed = entry->requests_allowed;
+
+      if (!requests_allowed)
         {
           g_debug ("[RDP.CLIPRDR] ClipDataEntry with id %u is not eligible of "
                    "requesting file contents.", clip_data_id);
         }
-
-      delegate = entry->delegate;
-      has_file_list = entry->has_file_list;
-      requests_allowed = entry->requests_allowed;
     }
 
   if (!requests_allowed || !has_file_list)
