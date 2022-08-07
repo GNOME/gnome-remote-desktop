@@ -49,6 +49,25 @@ struct _GrdTpm
 G_DEFINE_TYPE (GrdTpm, grd_tpm, G_TYPE_OBJECT)
 
 static gboolean
+check_tpm_existence (GError **error)
+{
+  g_autoptr (GFile) tpm_dev = NULL;
+  g_autoptr (GFile) tpmrm_dev = NULL;
+
+  tpm_dev = g_file_new_for_path ("/dev/tpm0");
+  tpmrm_dev = g_file_new_for_path ("/dev/tpmrm0");
+  if (!g_file_query_exists (tpm_dev, NULL) ||
+      !g_file_query_exists (tpmrm_dev, NULL))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "No TPM device found");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
 init_transmission_interface (GrdTpm  *tpm,
                              GError **error)
 {
@@ -726,6 +745,9 @@ grd_tpm_new (GrdTpmMode   mode,
 
   if (!(grd_get_debug_flags () & GRD_DEBUG_TPM))
     g_setenv ("TSS2_LOGFILE", "/dev/null", TRUE);
+
+  if (!check_tpm_existence (error))
+    return NULL;
 
   if (!init_transmission_interface (tpm, error))
     return NULL;
