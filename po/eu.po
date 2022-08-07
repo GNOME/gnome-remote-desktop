@@ -6,8 +6,8 @@
 msgid ""
 msgstr "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues\n"
-"POT-Creation-Date: 2022-07-28 08:39+0000\n"
-"PO-Revision-Date: 2022-07-31 19:16+0000\n"
+"POT-Creation-Date: 2022-08-06 14:38+0000\n"
+"PO-Revision-Date: 2022-08-07 19:16+0000\n"
 "Last-Translator: Asier Sarasua Garmendia <asiersarasua@ni.eus>\n"
 "Language-Team: Basque <librezale@librezale.eus>\n"
 "Language: eu\n"
@@ -15,7 +15,7 @@ msgstr "Project-Id-Version: gnome-remote-desktop master\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/grd-daemon.c:480
+#: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Urruneko Mahaigaina"
 
@@ -39,16 +39,16 @@ msgstr "Ukatu"
 msgid "Accept"
 msgstr "Onartu"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:52
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Erabilera: %s [AUKERAK...] KOMANDOA [AZPIKOMANDOA]...\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:444
 msgid "Commands:\n"
 msgstr "Komandoak:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:449
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -81,7 +81,7 @@ msgstr "  rdp                                        - RDP azpikomandoak:\n"
 "                                               kontrola\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:468
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -108,15 +108,18 @@ msgstr "  vnc                                        - VNC azpikomandoak:\n"
 "                                               kontrola\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:483
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr "  status [--show-credentials]                - Erakutsi uneko egoera\n"
 "\n"
 "Aukerak:\n"
+"  --headless                                 - Erabili interfaze grafikorik gabeko kredentzial-biltegiratzea\n"
 "  --help                                     - Inprimatu laguntza-testu hau\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
@@ -139,13 +142,13 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
-msgstr "Pantaila partekatuko moduak zehazten du RDP motorrak pantaila nagusia ispilatukod uen, edo monitore birtual bat sortuko den. Monitore birtualaren hasierako bereizmenerako, RDP motorrak bezeroaren nukleoaren datuak ([MS-RDPBCGR] 2.2.1.3.2) edo bezeroaren monitorearen datuak ([MS-RDPBCGR] 2.2.1.3.6) erabiltzen ditu, erabilgarri zer dagoen kontuan hartuta. Urruneko mahaigaineko saio bat monitore birtual batekin erabiltzean, bezeroek monitore birtualaren bereizmena aldatu dezakete Display Control Channel ([MS-RDPEDISP]) hedapenarekin. Onartutako pantaila partekatuko moduak honakoak dira: * mirror-primary - Grabatu uneko erabiltzaile-saioaren monitore nagusia. * extend - Sortu monitore birtual berria urruneko mahaigaineko saiorako. Monitore birtual horren bereizmena urruneko mahaigaineko bezeroak bidalitako monitore-konfiguraziotik eratortzen da."
+msgstr "Pantaila partekatuko moduak zehazten du RDP motorrak pantaila nagusia ispilatukod uen, edo monitore birtual bat sortuko den. Monitore birtualaren hasierako bereizmenerako, RDP motorrak bezeroaren nukleoaren datuak ([MS-RDPBCGR] 2.2.1.3.2) edo bezeroaren monitorearen datuak ([MS-RDPBCGR] 2.2.1.3.6) erabiltzen ditu, erabilgarri zer dagoen kontuan hartuta. Urruneko mahaigaineko saio bat monitore birtual batekin erabiltzean, bezeroek monitore birtualaren bereizmena aldatu dezakete Display Update Virtual Channel ([MS-RDPEDISP]) hedapenarekin. Onartutako pantaila partekatuko moduak honakoak dira: * mirror-primary - Grabatu uneko erabiltzaile-saioaren monitore nagusia. * extend - Sortu monitore birtual berria urruneko mahaigaineko saiorako. Monitore birtual horren bereizmena urruneko mahaigaineko bezeroak bidalitako monitore-konfiguraziotik eratortzen da."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
