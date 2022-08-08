@@ -24,6 +24,7 @@
 #include <glib/gi18n.h>
 #include <stdio.h>
 
+#include "grd-credentials-file.h"
 #include "grd-credentials-libsecret.h"
 #include "grd-credentials-tpm.h"
 
@@ -101,6 +102,8 @@ static GrdCredentials *
 create_credentials (CredentialsType   credentials_type,
                     GError          **error)
 {
+  g_autoptr (GError) local_error = NULL;
+
   switch (credentials_type)
     {
     case CREDENTIALS_TYPE_SCREEN_SHARE:
@@ -108,12 +111,19 @@ create_credentials (CredentialsType   credentials_type,
     case CREDENTIALS_TYPE_HEADLESS:
       {
         GrdCredentialsTpm *credentials_tpm;
+        GrdCredentialsFile *credentials_file;
 
-        credentials_tpm = grd_credentials_tpm_new (error);
-        if (!credentials_tpm)
-          return NULL;
+        credentials_tpm = grd_credentials_tpm_new (&local_error);
+        if (credentials_tpm)
+          return GRD_CREDENTIALS (credentials_tpm);
 
-        return GRD_CREDENTIALS (credentials_tpm);
+        g_warning ("Init TPM credentials failed because %s, using GKeyFile as fallback",
+                   local_error->message);
+        credentials_file = grd_credentials_file_new (error);
+        if (credentials_file)
+          return GRD_CREDENTIALS (credentials_file);
+
+        return NULL;
       }
     }
 
