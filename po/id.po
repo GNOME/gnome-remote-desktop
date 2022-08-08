@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-07-28 08:39+0000\n"
-"PO-Revision-Date: 2022-08-01 13:17+0700\n"
+"POT-Creation-Date: 2022-08-06 14:38+0000\n"
+"PO-Revision-Date: 2022-08-08 11:05+0700\n"
 "Last-Translator: Kukuh Syafaat <kukuhsyafaat@gnome.org>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -19,7 +19,7 @@ msgstr ""
 "X-Generator: Poedit 3.1.1\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
-#: src/grd-daemon.c:480
+#: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Destop Jarak Jauh"
 
@@ -45,16 +45,16 @@ msgstr "Tolak"
 msgid "Accept"
 msgstr "Terima"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:52
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Penggunaan: %s [OPSI...] PERINTAH [SUBPERINTAH]...\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:444
 msgid "Commands:\n"
 msgstr "Perintah:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:449
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -92,7 +92,7 @@ msgstr ""
 "                                               masukan\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:468
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -122,16 +122,20 @@ msgstr ""
 "                                               masukan\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:483
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Tampilkan status saat ini\n"
 "\n"
 "Opsi:\n"
+"  --headless                                 - Gunakan penyimpanan "
+"kredensial headless\n"
 "  --help                                     - Cetak teks bantuan ini\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
@@ -154,25 +158,24 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
 "Mode berbagi layar menentukan, apakah backend RDP mencerminkan layar utama, "
-"atau apakah monitor virtual yang dibuat. Untuk resolusi awal monitor "
-"virtual, backend RDP menggunakan data inti klien ([MS-RDPBCGR] 2.2.1.3.2) "
-"atau data monitor klien ([MS-RDPBCGR] 2.2.1.3.6), tergantung pada apa yang "
-"tersedia. Saat menggunakan sesi destop jarak jauh dengan monitor virtual, "
-"klien dapat mengubah ukuran resolusi monitor virtual selama sesi dengan "
-"Ekstensi Saluran Kontrol Tampilan/Display Control Channel Extension ([MS-"
-"RDPEDISP]). Mode berbagi layar yang diizinkan meliputi: * mirror-primary - "
-"Rekam monitor utama sesi pengguna saat ini. * extend - Buat monitor virtual "
-"baru dan gunakan untuk sesi destop jarak jauh. Resolusi monitor virtual ini "
-"berasal dari konfigurasi monitor, yang dikirimkan oleh klien destop jarak "
-"jauh."
+"atau apakah monitor virtual dibuat. Untuk resolusi awal monitor virtual, "
+"backend RDP menggunakan data inti klien ([MS-RDPBCGR] 2.2.1.3.2) atau data "
+"monitor klien ([MS-RDPBCGR] 2.2.1.3.6), tergantung pada apa yang tersedia. "
+"Saat menggunakan sesi destop jarak jauh dengan monitor virtual, klien dapat "
+"mengubah ukuran resolusi monitor virtual selama sesi dengan Ekstensi Saluran "
+"Virtual Pembaruan Tampilan ([MS-RDPEDISP]). Mode berbagi layar yang "
+"diizinkan meliputi: * mirror-primary - Rekam monitor utama sesi pengguna "
+"saat ini. * extend - Buat monitor virtual baru dan gunakan untuk sesi destop "
+"jarak jauh. Resolusi monitor virtual ini berasal dari konfigurasi monitor, "
+"yang dikirimkan oleh klien destop jarak jauh."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
