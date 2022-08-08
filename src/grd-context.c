@@ -24,6 +24,7 @@
 
 #include "grd-context.h"
 
+#include "grd-credentials-file.h"
 #include "grd-credentials-libsecret.h"
 #include "grd-credentials-tpm.h"
 #include "grd-egl-thread.h"
@@ -111,13 +112,21 @@ grd_context_new (GrdRuntimeMode   runtime_mode,
                  GError         **error)
 {
   g_autoptr (GrdContext) context = NULL;
+  g_autoptr (GError) local_error = NULL;
 
   context = g_object_new (GRD_TYPE_CONTEXT, NULL);
 
   switch (runtime_mode)
     {
     case GRD_RUNTIME_MODE_HEADLESS:
-      context->credentials = GRD_CREDENTIALS (grd_credentials_tpm_new (error));
+      context->credentials = GRD_CREDENTIALS (grd_credentials_tpm_new (&local_error));
+      if (!context->credentials)
+        {
+          g_warning ("Init TPM credentials failed because %s, using GKeyFile as fallback",
+                     local_error->message);
+          context->credentials =
+            GRD_CREDENTIALS (grd_credentials_file_new (error));
+        }
       break;
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
       context->credentials = GRD_CREDENTIALS (grd_credentials_libsecret_new ());
