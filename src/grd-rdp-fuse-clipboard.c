@@ -580,6 +580,9 @@ is_fuse_file_parent (gpointer key,
   FuseFile *fuse_file = value;
   const char *parent_path = user_data;
 
+  if (!fuse_file->is_directory)
+    return FALSE;
+
   if (strcmp (parent_path, fuse_file->filename_with_root) == 0)
     return TRUE;
 
