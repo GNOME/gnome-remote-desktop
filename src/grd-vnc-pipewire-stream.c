@@ -97,6 +97,30 @@ static void grd_vnc_frame_unref (GrdVncFrame *frame);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdVncFrame, grd_vnc_frame_unref)
 
+void
+grd_vnc_pipewire_stream_resize (GrdVncPipeWireStream *stream,
+                                GrdVncVirtualMonitor *virtual_monitor)
+{
+  struct spa_rectangle virtual_monitor_rect;
+  uint8_t params_buffer[1024];
+  struct spa_pod_builder pod_builder;
+  const struct spa_pod *params[1];
+
+  virtual_monitor_rect = SPA_RECTANGLE (virtual_monitor->width,
+                                        virtual_monitor->height);
+
+  pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
+
+  params[0] = spa_pod_builder_add_object (
+    &pod_builder,
+    SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat,
+    SPA_FORMAT_VIDEO_size, SPA_POD_Rectangle (&virtual_monitor_rect),
+    0);
+
+  pw_stream_update_params (stream->pipewire_stream,
+                           params, G_N_ELEMENTS (params));
+}
+
 static void
 on_stream_state_changed (void                 *user_data,
                          enum pw_stream_state  old,
@@ -818,7 +842,7 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc               *session_vnc,
   if (!stream->pipewire_context)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to create pipewire context");
+                   "Failed to create PipeWire context");
       return NULL;
     }
 
@@ -826,7 +850,7 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc               *session_vnc,
   if (!stream->pipewire_core)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to connect pipewire context");
+                   "Failed to connect PipeWire context");
       return NULL;
     }
 
@@ -942,28 +966,4 @@ grd_vnc_pipewire_stream_class_init (GrdVncPipeWireStreamClass *klass)
                                   0,
                                   NULL, NULL, NULL,
                                   G_TYPE_NONE, 0);
-}
-
-void
-grd_vnc_pipewire_stream_resize (GrdVncPipeWireStream *stream,
-                                GrdVncVirtualMonitor *virtual_monitor)
-{
-  struct spa_rectangle virtual_monitor_rect;
-  uint8_t params_buffer[1024];
-  struct spa_pod_builder pod_builder;
-  const struct spa_pod *params[1];
-
-  virtual_monitor_rect = SPA_RECTANGLE (virtual_monitor->width,
-                                        virtual_monitor->height);
-
-  pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
-
-  params[0] = spa_pod_builder_add_object (
-    &pod_builder,
-    SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat,
-    SPA_FORMAT_VIDEO_size, SPA_POD_Rectangle (&virtual_monitor_rect),
-    0);
-
-  pw_stream_update_params (stream->pipewire_stream,
-                           params, G_N_ELEMENTS (params));
 }
