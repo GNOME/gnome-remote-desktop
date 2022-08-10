@@ -1628,6 +1628,23 @@ extract_format_data_response (GrdClipboardRdp               *clipboard_rdp,
   return response_ok && *data;
 }
 
+static gboolean
+filedescriptorw_filename_is_valid (const WCHAR *filename)
+{
+  uint16_t i;
+
+  if (filename[0] == L'\0')
+    return FALSE;
+
+  for (i = 1; i < 260; ++i)
+    {
+      if (filename[i] == L'\0')
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
 static uint8_t *
 get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
                                     uint8_t         *src_data,
@@ -1636,7 +1653,7 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
                                     gboolean         has_clip_data_id,
                                     uint32_t         clip_data_id)
 {
-  FILEDESCRIPTORW *files = NULL;
+  g_autofree FILEDESCRIPTORW *files = NULL;
   FILEDESCRIPTORW *file;
   uint32_t n_files = 0;
   g_autofree char *clip_data_dir_name = NULL;
@@ -1658,11 +1675,15 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
     {
       file = &files[i];
 
+      if (!filedescriptorw_filename_is_valid (file->cFileName))
+        {
+          g_array_free (dst_data, TRUE);
+          return NULL;
+        }
       if (ConvertFromUnicode (CP_UTF8, 0, file->cFileName, -1, &filename,
                               0, NULL, NULL) <= 0)
         {
           g_array_free (dst_data, TRUE);
-          g_free (files);
           return NULL;
         }
       if (strchr (filename, '\\'))
@@ -1685,8 +1706,6 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
     }
 
   *dst_size = dst_data->len;
-
-  g_free (files);
 
   return (uint8_t *) g_array_free (dst_data, FALSE);
 }
