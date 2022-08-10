@@ -2268,7 +2268,7 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   session_rdp->connection = g_object_ref (connection);
   session_rdp->hwaccel_nvidia = hwaccel_nvidia;
 
-  session_rdp->screen_share_mode = grd_settings_get_screen_share_mode (settings);
+  session_rdp->screen_share_mode = grd_settings_get_rdp_screen_share_mode (settings);
 
   if (!init_rdp_session (session_rdp, username, password, &error))
     {

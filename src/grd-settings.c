@@ -106,7 +106,7 @@ grd_settings_override_vnc_port (GrdSettings *settings,
 }
 
 GrdRdpScreenShareMode
-grd_settings_get_screen_share_mode (GrdSettings *settings)
+grd_settings_get_rdp_screen_share_mode (GrdSettings *settings)
 {
   return settings->rdp.screen_share_mode;
 }

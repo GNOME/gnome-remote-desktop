@@ -46,7 +46,9 @@ void grd_settings_override_rdp_port (GrdSettings *settings,
 void grd_settings_override_vnc_port (GrdSettings *settings,
                                      int          port);
 
-GrdRdpScreenShareMode grd_settings_get_screen_share_mode (GrdSettings *settings);
+GrdRdpScreenShareMode grd_settings_get_rdp_screen_share_mode (GrdSettings *settings);
+
+GrdVncScreenShareMode grd_settings_get_vnc_screen_share_mode (GrdSettings *settings);
 
 char * grd_settings_get_rdp_server_cert (GrdSettings *settings);
 
@@ -65,7 +67,5 @@ gboolean grd_settings_get_rdp_view_only (GrdSettings *settings);
 gboolean grd_settings_get_vnc_view_only (GrdSettings *settings);
 
 GrdVncAuthMethod grd_settings_get_vnc_auth_method (GrdSettings *settings);
-
-GrdVncScreenShareMode grd_settings_get_vnc_screen_share_mode (GrdSettings *settings);
 
 #endif /* GRD_SETTINGS_H */
