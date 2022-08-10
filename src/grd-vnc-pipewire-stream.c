@@ -31,6 +31,7 @@
 #include "grd-context.h"
 #include "grd-egl-thread.h"
 #include "grd-pipewire-utils.h"
+#include "grd-utils.h"
 #include "grd-vnc-cursor.h"
 
 enum
@@ -871,23 +872,13 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc               *session_vnc,
   return g_steal_pointer (&stream);
 }
 
-typedef struct
-{
-  GMutex mutex;
-  GCond cond;
-  gboolean done;
-} SyncData;
-
 static void
-on_sync_done (gboolean success,
-              gpointer user_data)
+on_sync_complete (gboolean success,
+                  gpointer user_data)
 {
-  SyncData *sync_data = user_data;
+  GrdSyncPoint *sync_point = user_data;
 
-  g_mutex_lock (&sync_data->mutex);
-  sync_data->done = TRUE;
-  g_cond_signal (&sync_data->cond);
-  g_mutex_unlock (&sync_data->mutex);
+  grd_sync_point_complete (sync_point, success);
 }
 
 static void
@@ -906,20 +897,13 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
   egl_thread = grd_context_get_egl_thread (context);
   if (egl_thread)
     {
-      SyncData sync_data = {};
+      GrdSyncPoint sync_point = {};
 
-      g_mutex_init (&sync_data.mutex);
-      g_cond_init (&sync_data.cond);
+      grd_sync_point_init (&sync_point);
+      grd_egl_thread_sync (egl_thread, on_sync_complete, &sync_point, NULL);
 
-      grd_egl_thread_sync (egl_thread, on_sync_done, &sync_data, NULL);
-
-      g_mutex_lock (&sync_data.mutex);
-      while (!sync_data.done)
-        g_cond_wait (&sync_data.cond, &sync_data.mutex);
-      g_mutex_unlock (&sync_data.mutex);
-
-      g_cond_clear (&sync_data.cond);
-      g_mutex_clear (&sync_data.mutex);
+      grd_sync_point_wait_for_completion (&sync_point);
+      grd_sync_point_clear (&sync_point);
     }
 
   /*
