@@ -32,7 +32,7 @@
 #include <stdlib.h>
 
 #include "grd-context.h"
-#include "grd-dbus-remote-desktop.h"
+#include "grd-dbus-mutter-remote-desktop.h"
 #include "grd-private.h"
 #include "grd-rdp-server.h"
 #include "grd-session.h"
@@ -46,8 +46,8 @@ struct _GrdDaemon
   GSource *sigterm_source;
 
   GCancellable *cancellable;
-  guint remote_desktop_watch_name_id;
-  guint screen_cast_watch_name_id;
+  guint mutter_remote_desktop_watch_name_id;
+  guint mutter_screen_cast_watch_name_id;
 
   GrdContext *context;
 
@@ -64,8 +64,8 @@ G_DEFINE_TYPE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
 static gboolean
 is_daemon_ready (GrdDaemon *daemon)
 {
-  if (!grd_context_get_remote_desktop_proxy (daemon->context) ||
-      !grd_context_get_screen_cast_proxy (daemon->context))
+  if (!grd_context_get_mutter_remote_desktop_proxy (daemon->context) ||
+      !grd_context_get_mutter_screen_cast_proxy (daemon->context))
     return FALSE;
 
   return TRUE;
@@ -179,15 +179,15 @@ disable_services (GrdDaemon *daemon)
 }
 
 static void
-on_remote_desktop_proxy_acquired (GObject      *object,
-                                  GAsyncResult *result,
-                                  gpointer      user_data)
+on_mutter_remote_desktop_proxy_acquired (GObject      *object,
+                                         GAsyncResult *result,
+                                         gpointer      user_data)
 {
   GrdDaemon *daemon = user_data;
-  GrdDBusRemoteDesktop *proxy;
+  GrdDBusMutterRemoteDesktop *proxy;
   GError *error = NULL;
 
-  proxy = grd_dbus_remote_desktop_proxy_new_for_bus_finish (result, &error);
+  proxy = grd_dbus_mutter_remote_desktop_proxy_new_for_bus_finish (result, &error);
   if (!proxy)
     {
       g_warning ("Failed to create remote desktop proxy: %s", error->message);
@@ -195,86 +195,86 @@ on_remote_desktop_proxy_acquired (GObject      *object,
       return;
     }
 
-  grd_context_set_remote_desktop_proxy (daemon->context, proxy);
+  grd_context_set_mutter_remote_desktop_proxy (daemon->context, proxy);
 
   maybe_enable_services (daemon);
 }
 
 static void
-on_screen_cast_proxy_acquired (GObject      *object,
-                               GAsyncResult *result,
-                               gpointer      user_data)
+on_mutter_screen_cast_proxy_acquired (GObject      *object,
+                                      GAsyncResult *result,
+                                      gpointer      user_data)
 {
   GrdDaemon *daemon = user_data;
-  GrdDBusScreenCast *proxy;
+  GrdDBusMutterScreenCast *proxy;
   GError *error = NULL;
 
-  proxy = grd_dbus_screen_cast_proxy_new_for_bus_finish (result, &error);
+  proxy = grd_dbus_mutter_screen_cast_proxy_new_for_bus_finish (result, &error);
   if (!proxy)
     {
       g_warning ("Failed to create screen cast proxy: %s", error->message);
       return;
     }
 
-  grd_context_set_screen_cast_proxy (daemon->context, proxy);
+  grd_context_set_mutter_screen_cast_proxy (daemon->context, proxy);
 
   maybe_enable_services (daemon);
 }
 
 static void
-on_remote_desktop_name_appeared (GDBusConnection *connection,
-                                 const char      *name,
-                                 const char      *name_owner,
-                                 gpointer         user_data)
+on_mutter_remote_desktop_name_appeared (GDBusConnection *connection,
+                                        const char      *name,
+                                        const char      *name_owner,
+                                        gpointer         user_data)
 {
   GrdDaemon *daemon = user_data;
 
-  grd_dbus_remote_desktop_proxy_new_for_bus (G_BUS_TYPE_SESSION,
-                                             G_DBUS_PROXY_FLAGS_NONE,
-                                             MUTTER_REMOTE_DESKTOP_BUS_NAME,
-                                             MUTTER_REMOTE_DESKTOP_OBJECT_PATH,
-                                             daemon->cancellable,
-                                             on_remote_desktop_proxy_acquired,
-                                             daemon);
+  grd_dbus_mutter_remote_desktop_proxy_new_for_bus (G_BUS_TYPE_SESSION,
+                                                    G_DBUS_PROXY_FLAGS_NONE,
+                                                    MUTTER_REMOTE_DESKTOP_BUS_NAME,
+                                                    MUTTER_REMOTE_DESKTOP_OBJECT_PATH,
+                                                    daemon->cancellable,
+                                                    on_mutter_remote_desktop_proxy_acquired,
+                                                    daemon);
 }
 
 static void
-on_remote_desktop_name_vanished (GDBusConnection *connection,
-                                 const char      *name,
-                                 gpointer         user_data)
+on_mutter_remote_desktop_name_vanished (GDBusConnection *connection,
+                                        const char      *name,
+                                        gpointer         user_data)
 {
   GrdDaemon *daemon = user_data;
 
   disable_services (daemon);
-  grd_context_set_remote_desktop_proxy (daemon->context, NULL);
+  grd_context_set_mutter_remote_desktop_proxy (daemon->context, NULL);
 }
 
 static void
-on_screen_cast_name_appeared (GDBusConnection *connection,
-                              const char      *name,
-                              const char      *name_owner,
-                              gpointer         user_data)
+on_mutter_screen_cast_name_appeared (GDBusConnection *connection,
+                                     const char      *name,
+                                     const char      *name_owner,
+                                     gpointer         user_data)
 {
   GrdDaemon *daemon = user_data;
 
-  grd_dbus_screen_cast_proxy_new_for_bus (G_BUS_TYPE_SESSION,
-                                          G_DBUS_PROXY_FLAGS_NONE,
-                                          MUTTER_SCREEN_CAST_BUS_NAME,
-                                          MUTTER_SCREEN_CAST_OBJECT_PATH,
-                                          daemon->cancellable,
-                                          on_screen_cast_proxy_acquired,
-                                          daemon);
+  grd_dbus_mutter_screen_cast_proxy_new_for_bus (G_BUS_TYPE_SESSION,
+                                                 G_DBUS_PROXY_FLAGS_NONE,
+                                                 MUTTER_SCREEN_CAST_BUS_NAME,
+                                                 MUTTER_SCREEN_CAST_OBJECT_PATH,
+                                                 daemon->cancellable,
+                                                 on_mutter_screen_cast_proxy_acquired,
+                                                 daemon);
 }
 
 static void
-on_screen_cast_name_vanished (GDBusConnection *connection,
-                              const char      *name,
-                              gpointer         user_data)
+on_mutter_screen_cast_name_vanished (GDBusConnection *connection,
+                                     const char      *name,
+                                     gpointer         user_data)
 {
   GrdDaemon *daemon = user_data;
 
   disable_services (daemon);
-  grd_context_set_screen_cast_proxy (daemon->context, NULL);
+  grd_context_set_mutter_screen_cast_proxy (daemon->context, NULL);
 }
 
 #ifdef HAVE_RDP
@@ -327,20 +327,20 @@ grd_daemon_startup (GApplication *app)
 {
   GrdDaemon *daemon = GRD_DAEMON (app);
 
-  daemon->remote_desktop_watch_name_id =
+  daemon->mutter_remote_desktop_watch_name_id =
     g_bus_watch_name (G_BUS_TYPE_SESSION,
                       MUTTER_REMOTE_DESKTOP_BUS_NAME,
                       G_BUS_NAME_WATCHER_FLAGS_NONE,
-                      on_remote_desktop_name_appeared,
-                      on_remote_desktop_name_vanished,
+                      on_mutter_remote_desktop_name_appeared,
+                      on_mutter_remote_desktop_name_vanished,
                       daemon, NULL);
 
-  daemon->screen_cast_watch_name_id =
+  daemon->mutter_screen_cast_watch_name_id =
     g_bus_watch_name (G_BUS_TYPE_SESSION,
                       MUTTER_SCREEN_CAST_BUS_NAME,
                       G_BUS_NAME_WATCHER_FLAGS_NONE,
-                      on_screen_cast_name_appeared,
-                      on_screen_cast_name_vanished,
+                      on_mutter_screen_cast_name_appeared,
+                      on_mutter_screen_cast_name_vanished,
                       daemon, NULL);
 
   daemon->cancellable = g_cancellable_new ();
@@ -361,13 +361,13 @@ grd_daemon_shutdown (GApplication *app)
 
   disable_services (daemon);
 
-  grd_context_set_remote_desktop_proxy (daemon->context, NULL);
-  g_bus_unwatch_name (daemon->remote_desktop_watch_name_id);
-  daemon->remote_desktop_watch_name_id = 0;
+  grd_context_set_mutter_remote_desktop_proxy (daemon->context, NULL);
+  g_bus_unwatch_name (daemon->mutter_remote_desktop_watch_name_id);
+  daemon->mutter_remote_desktop_watch_name_id = 0;
 
-  grd_context_set_screen_cast_proxy (daemon->context, NULL);
-  g_bus_unwatch_name (daemon->screen_cast_watch_name_id);
-  daemon->screen_cast_watch_name_id = 0;
+  grd_context_set_mutter_screen_cast_proxy (daemon->context, NULL);
+  g_bus_unwatch_name (daemon->mutter_screen_cast_watch_name_id);
+  daemon->mutter_screen_cast_watch_name_id = 0;
 
   g_clear_object (&daemon->context);
 

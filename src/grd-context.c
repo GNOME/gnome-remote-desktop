@@ -30,15 +30,15 @@
 #include "grd-egl-thread.h"
 #include "grd-settings.h"
 
-#include "grd-dbus-remote-desktop.h"
-#include "grd-dbus-screen-cast.h"
+#include "grd-dbus-mutter-remote-desktop.h"
+#include "grd-dbus-mutter-screen-cast.h"
 
 struct _GrdContext
 {
   GObject parent;
 
-  GrdDBusRemoteDesktop *remote_desktop_proxy;
-  GrdDBusScreenCast *screen_cast_proxy;
+  GrdDBusMutterRemoteDesktop *mutter_remote_desktop_proxy;
+  GrdDBusMutterScreenCast *mutter_screen_cast_proxy;
 
   GrdEglThread *egl_thread;
 
@@ -48,32 +48,32 @@ struct _GrdContext
 
 G_DEFINE_TYPE (GrdContext, grd_context, G_TYPE_OBJECT)
 
-GrdDBusRemoteDesktop *
-grd_context_get_remote_desktop_proxy (GrdContext *context)
+GrdDBusMutterRemoteDesktop *
+grd_context_get_mutter_remote_desktop_proxy (GrdContext *context)
 {
-  return context->remote_desktop_proxy;
+  return context->mutter_remote_desktop_proxy;
 }
 
-GrdDBusScreenCast *
-grd_context_get_screen_cast_proxy (GrdContext *context)
+GrdDBusMutterScreenCast *
+grd_context_get_mutter_screen_cast_proxy (GrdContext *context)
 {
-  return context->screen_cast_proxy;
-}
-
-void
-grd_context_set_remote_desktop_proxy (GrdContext           *context,
-                                      GrdDBusRemoteDesktop *proxy)
-{
-  g_clear_object (&context->remote_desktop_proxy);
-  context->remote_desktop_proxy = proxy;
+  return context->mutter_screen_cast_proxy;
 }
 
 void
-grd_context_set_screen_cast_proxy (GrdContext        *context,
-                                   GrdDBusScreenCast *proxy)
+grd_context_set_mutter_remote_desktop_proxy (GrdContext                 *context,
+                                             GrdDBusMutterRemoteDesktop *proxy)
 {
-  g_clear_object (&context->screen_cast_proxy);
-  context->screen_cast_proxy = proxy;
+  g_clear_object (&context->mutter_remote_desktop_proxy);
+  context->mutter_remote_desktop_proxy = proxy;
+}
+
+void
+grd_context_set_mutter_screen_cast_proxy (GrdContext              *context,
+                                          GrdDBusMutterScreenCast *proxy)
+{
+  g_clear_object (&context->mutter_screen_cast_proxy);
+  context->mutter_screen_cast_proxy = proxy;
 }
 
 GrdSettings *
@@ -146,8 +146,8 @@ grd_context_finalize (GObject *object)
 {
   GrdContext *context = GRD_CONTEXT (object);
 
-  g_clear_object (&context->remote_desktop_proxy);
-  g_clear_object (&context->screen_cast_proxy);
+  g_clear_object (&context->mutter_remote_desktop_proxy);
+  g_clear_object (&context->mutter_screen_cast_proxy);
   g_clear_pointer (&context->egl_thread, grd_egl_thread_free);
   g_clear_object (&context->settings);
   g_clear_object (&context->credentials);

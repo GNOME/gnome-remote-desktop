@@ -31,7 +31,7 @@
 #include <sys/mman.h>
 
 #include "grd-clipboard.h"
-#include "grd-dbus-remote-desktop.h"
+#include "grd-dbus-mutter-remote-desktop.h"
 #include "grd-context.h"
 #include "grd-private.h"
 #include "grd-stream.h"
@@ -71,8 +71,8 @@ typedef struct _GrdSessionPrivate
 {
   GrdContext *context;
 
-  GrdDBusRemoteDesktopSession *remote_desktop_session;
-  GrdDBusScreenCastSession *screen_cast_session;
+  GrdDBusMutterRemoteDesktopSession *remote_desktop_session;
+  GrdDBusMutterScreenCastSession *screen_cast_session;
 
   GHashTable *stream_table;
 
@@ -110,10 +110,10 @@ grd_session_stop (GrdSession *session)
 
   if (priv->remote_desktop_session && priv->started)
     {
-      GrdDBusRemoteDesktopSession *proxy = priv->remote_desktop_session;
+      GrdDBusMutterRemoteDesktopSession *proxy = priv->remote_desktop_session;
       GError *error = NULL;
 
-      if (!grd_dbus_remote_desktop_session_call_stop_sync (proxy, NULL, &error))
+      if (!grd_dbus_mutter_remote_desktop_session_call_stop_sync (proxy, NULL, &error))
         {
           g_warning ("Failed to stop: %s\n", error->message);
           g_error_free (error);
@@ -157,12 +157,12 @@ on_screen_cast_stream_start_finished (GObject      *object,
                                       GAsyncResult *result,
                                       gpointer      user_data)
 {
-  GrdDBusScreenCastStream *stream_proxy = GRD_DBUS_SCREEN_CAST_STREAM (object);
+  GrdDBusMutterScreenCastStream *stream_proxy = GRD_DBUS_MUTTER_SCREEN_CAST_STREAM (object);
   g_autoptr (GError) error = NULL;
 
-  if (!grd_dbus_screen_cast_stream_call_start_finish (stream_proxy,
-                                                      result,
-                                                      &error))
+  if (!grd_dbus_mutter_screen_cast_stream_call_start_finish (stream_proxy,
+                                                             result,
+                                                             &error))
     {
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
         return;
@@ -178,13 +178,13 @@ on_screen_cast_stream_proxy_acquired (GObject      *object,
                                       GAsyncResult *result,
                                       gpointer      user_data)
 {
-  GrdDBusScreenCastStream *stream_proxy;
+  GrdDBusMutterScreenCastStream *stream_proxy;
   GrdSession *session;
   GrdSessionPrivate *priv;
   g_autoptr (GError) error = NULL;
   GrdStream *stream;
 
-  stream_proxy = grd_dbus_screen_cast_stream_proxy_new_finish (result, &error);
+  stream_proxy = grd_dbus_mutter_screen_cast_stream_proxy_new_finish (result, &error);
   if (!stream_proxy)
     {
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
@@ -206,10 +206,10 @@ on_screen_cast_stream_proxy_acquired (GObject      *object,
 
   g_hash_table_add (priv->stream_table, stream);
 
-  grd_dbus_screen_cast_stream_call_start (stream_proxy,
-                                          priv->cancellable,
-                                          on_screen_cast_stream_start_finished,
-                                          session);
+  grd_dbus_mutter_screen_cast_stream_call_start (stream_proxy,
+                                                 priv->cancellable,
+                                                 on_screen_cast_stream_start_finished,
+                                                 session);
 }
 
 static const char *
@@ -237,7 +237,7 @@ on_record_finished (GObject      *object,
                     GAsyncResult *result,
                     gpointer      user_data)
 {
-  GrdDBusScreenCastSession *proxy = GRD_DBUS_SCREEN_CAST_SESSION (object);
+  GrdDBusMutterScreenCastSession *proxy = GRD_DBUS_MUTTER_SCREEN_CAST_SESSION (object);
   g_autofree AsyncDBusRecordCallContext *async_context = user_data;
   ScreenCastType screen_cast_type = async_context->screen_cast_type;
   GrdSession *session;
@@ -253,7 +253,7 @@ on_record_finished (GObject      *object,
       g_assert_not_reached ();
       break;
     case SCREEN_CAST_TYPE_MONITOR:
-      retval = grd_dbus_screen_cast_session_call_record_monitor_finish (
+      retval = grd_dbus_mutter_screen_cast_session_call_record_monitor_finish (
         proxy, &stream_path, result, &error);
       break;
     case SCREEN_CAST_TYPE_WINDOW:
@@ -261,7 +261,7 @@ on_record_finished (GObject      *object,
       g_assert_not_reached ();
       break;
     case SCREEN_CAST_TYPE_VIRTUAL:
-      retval = grd_dbus_screen_cast_session_call_record_virtual_finish (
+      retval = grd_dbus_mutter_screen_cast_session_call_record_virtual_finish (
         proxy, &stream_path, result, &error);
       break;
     }
@@ -281,13 +281,13 @@ on_record_finished (GObject      *object,
   priv = grd_session_get_instance_private (session);
   connection = g_dbus_proxy_get_connection (G_DBUS_PROXY (proxy));
 
-  grd_dbus_screen_cast_stream_proxy_new (connection,
-                                         G_DBUS_PROXY_FLAGS_NONE,
-                                         MUTTER_SCREEN_CAST_BUS_NAME,
-                                         stream_path,
-                                         priv->cancellable,
-                                         on_screen_cast_stream_proxy_acquired,
-                                         session);
+  grd_dbus_mutter_screen_cast_stream_proxy_new (connection,
+                                                G_DBUS_PROXY_FLAGS_NONE,
+                                                MUTTER_SCREEN_CAST_BUS_NAME,
+                                                stream_path,
+                                                priv->cancellable,
+                                                on_screen_cast_stream_proxy_acquired,
+                                                session);
 }
 
 void
@@ -307,12 +307,12 @@ grd_session_record_monitor (GrdSession              *session,
   g_variant_builder_add (&properties_builder, "{sv}",
                          "cursor-mode", g_variant_new_uint32 (cursor_mode));
 
-  grd_dbus_screen_cast_session_call_record_monitor (priv->screen_cast_session,
-                                                    connector ? connector : "",
-                                                    g_variant_builder_end (&properties_builder),
-                                                    priv->cancellable,
-                                                    on_record_finished,
-                                                    async_context);
+  grd_dbus_mutter_screen_cast_session_call_record_monitor (priv->screen_cast_session,
+                                                           connector ? connector : "",
+                                                           g_variant_builder_end (&properties_builder),
+                                                           priv->cancellable,
+                                                           on_record_finished,
+                                                           async_context);
 }
 
 void
@@ -334,11 +334,11 @@ grd_session_record_virtual (GrdSession              *session,
   g_variant_builder_add (&properties_builder, "{sv}",
                          "is-platform", g_variant_new_boolean (is_platform));
 
-  grd_dbus_screen_cast_session_call_record_virtual (priv->screen_cast_session,
-                                                    g_variant_builder_end (&properties_builder),
-                                                    priv->cancellable,
-                                                    on_record_finished,
-                                                    async_context);
+  grd_dbus_mutter_screen_cast_session_call_record_virtual (priv->screen_cast_session,
+                                                           g_variant_builder_end (&properties_builder),
+                                                           priv->cancellable,
+                                                           on_record_finished,
+                                                           async_context);
 }
 
 void
@@ -347,14 +347,14 @@ grd_session_notify_keyboard_keycode (GrdSession  *session,
                                      GrdKeyState  state)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
+  GrdDBusMutterRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
 
-  grd_dbus_remote_desktop_session_call_notify_keyboard_keycode (session_proxy,
-                                                                keycode,
-                                                                state,
-                                                                NULL,
-                                                                NULL,
-                                                                NULL);
+  grd_dbus_mutter_remote_desktop_session_call_notify_keyboard_keycode (session_proxy,
+                                                                       keycode,
+                                                                       state,
+                                                                       NULL,
+                                                                       NULL,
+                                                                       NULL);
 }
 
 void
@@ -363,14 +363,14 @@ grd_session_notify_keyboard_keysym (GrdSession *session,
                                     GrdKeyState state)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
+  GrdDBusMutterRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
 
-  grd_dbus_remote_desktop_session_call_notify_keyboard_keysym (session_proxy,
-                                                               keysym,
-                                                               state,
-                                                               NULL,
-                                                               NULL,
-                                                               NULL);
+  grd_dbus_mutter_remote_desktop_session_call_notify_keyboard_keysym (session_proxy,
+                                                                      keysym,
+                                                                      state,
+                                                                      NULL,
+                                                                      NULL,
+                                                                      NULL);
 }
 
 void
@@ -379,14 +379,14 @@ grd_session_notify_pointer_button (GrdSession     *session,
                                    GrdButtonState  state)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
+  GrdDBusMutterRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
 
-  grd_dbus_remote_desktop_session_call_notify_pointer_button (session_proxy,
-                                                              button,
-                                                              state,
-                                                              NULL,
-                                                              NULL,
-                                                              NULL);
+  grd_dbus_mutter_remote_desktop_session_call_notify_pointer_button (session_proxy,
+                                                                     button,
+                                                                     state,
+                                                                     NULL,
+                                                                     NULL,
+                                                                     NULL);
 }
 
 void
@@ -396,9 +396,9 @@ grd_session_notify_pointer_axis (GrdSession          *session,
                                  GrdPointerAxisFlags  flags)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
+  GrdDBusMutterRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
 
-  grd_dbus_remote_desktop_session_call_notify_pointer_axis (
+  grd_dbus_mutter_remote_desktop_session_call_notify_pointer_axis (
     session_proxy, dx, dy, flags, NULL, NULL, NULL);
 }
 
@@ -408,9 +408,9 @@ grd_session_notify_pointer_axis_discrete (GrdSession    *session,
                                           int            steps)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
+  GrdDBusMutterRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
 
-  grd_dbus_remote_desktop_session_call_notify_pointer_axis_discrete (
+  grd_dbus_mutter_remote_desktop_session_call_notify_pointer_axis_discrete (
     session_proxy, axis, steps, NULL, NULL, NULL);
 }
 
@@ -428,7 +428,7 @@ grd_session_notify_pointer_motion_absolute (GrdSession *session,
 
   stream_path = grd_stream_get_object_path (stream);
 
-  grd_dbus_remote_desktop_session_call_notify_pointer_motion_absolute (
+  grd_dbus_mutter_remote_desktop_session_call_notify_pointer_motion_absolute (
     priv->remote_desktop_session, stream_path, x, y, NULL, NULL, NULL);
 }
 
@@ -481,7 +481,7 @@ grd_session_enable_clipboard (GrdSession   *session,
     return FALSE;
 
   options_variant = serialize_clipboard_options (mime_type_tables);
-  if (!grd_dbus_remote_desktop_session_call_enable_clipboard_sync (
+  if (!grd_dbus_mutter_remote_desktop_session_call_enable_clipboard_sync (
          priv->remote_desktop_session, options_variant, NULL, &error))
     {
       g_warning ("Failed to enable clipboard: %s", error->message);
@@ -501,7 +501,7 @@ grd_session_disable_clipboard (GrdSession *session)
   if (!priv->remote_desktop_session)
     return;
 
-  grd_dbus_remote_desktop_session_call_disable_clipboard (
+  grd_dbus_mutter_remote_desktop_session_call_disable_clipboard (
     priv->remote_desktop_session, NULL, NULL, NULL);
 }
 
@@ -515,7 +515,7 @@ grd_session_set_selection (GrdSession *session,
 
   options_variant = serialize_clipboard_options (mime_type_tables);
 
-  if (!grd_dbus_remote_desktop_session_call_set_selection_sync (
+  if (!grd_dbus_mutter_remote_desktop_session_call_set_selection_sync (
          priv->remote_desktop_session, options_variant, NULL, &error))
     g_warning ("Failed to set selection: %s", error->message);
 }
@@ -571,12 +571,12 @@ grd_session_selection_write (GrdSession    *session,
 
   if (!data || !size)
     {
-      grd_dbus_remote_desktop_session_call_selection_write_done (
+      grd_dbus_mutter_remote_desktop_session_call_selection_write_done (
         priv->remote_desktop_session, serial, FALSE, NULL, NULL, NULL);
       return;
     }
 
-  if (!grd_dbus_remote_desktop_session_call_selection_write_sync (
+  if (!grd_dbus_mutter_remote_desktop_session_call_selection_write_sync (
          priv->remote_desktop_session, serial, NULL, &fd_variant, &fd_list,
          NULL, &error))
     {
@@ -596,14 +596,14 @@ grd_session_selection_write (GrdSession    *session,
 
   if (write (fd, data, size) < 0)
     {
-      grd_dbus_remote_desktop_session_call_selection_write_done (
+      grd_dbus_mutter_remote_desktop_session_call_selection_write_done (
         priv->remote_desktop_session, serial, FALSE, NULL, NULL, NULL);
 
       close (fd);
       return;
     }
 
-  grd_dbus_remote_desktop_session_call_selection_write_done (
+  grd_dbus_mutter_remote_desktop_session_call_selection_write_done (
     priv->remote_desktop_session, serial, TRUE, NULL, NULL, NULL);
 
   close (fd);
@@ -622,7 +622,7 @@ grd_session_selection_read (GrdSession  *session,
   const char *mime_type_string;
 
   mime_type_string = grd_mime_type_to_string (mime_type);
-  if (!grd_dbus_remote_desktop_session_call_selection_read_sync (
+  if (!grd_dbus_mutter_remote_desktop_session_call_selection_read_sync (
          priv->remote_desktop_session, mime_type_string, NULL, &fd_variant,
          &fd_list, NULL, &error))
     {
@@ -646,16 +646,16 @@ on_session_start_finished (GObject      *object,
                            GAsyncResult *result,
                            gpointer      user_data)
 {
-  GrdDBusRemoteDesktopSession *proxy;
+  GrdDBusMutterRemoteDesktopSession *proxy;
   GrdSession *session;
   GrdSessionPrivate *priv;
   GrdSessionClass *klass;
   g_autoptr (GError) error = NULL;
 
-  proxy = GRD_DBUS_REMOTE_DESKTOP_SESSION (object);
-  if (!grd_dbus_remote_desktop_session_call_start_finish (proxy,
-                                                          result,
-                                                          &error))
+  proxy = GRD_DBUS_MUTTER_REMOTE_DESKTOP_SESSION (object);
+  if (!grd_dbus_mutter_remote_desktop_session_call_start_finish (proxy,
+                                                                 result,
+                                                                 &error))
     {
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
         return;
@@ -679,12 +679,12 @@ static void
 start_session (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusRemoteDesktopSession *proxy = priv->remote_desktop_session;
+  GrdDBusMutterRemoteDesktopSession *proxy = priv->remote_desktop_session;
 
-  grd_dbus_remote_desktop_session_call_start (proxy,
-                                              priv->cancellable,
-                                              on_session_start_finished,
-                                              session);
+  grd_dbus_mutter_remote_desktop_session_call_start (proxy,
+                                                     priv->cancellable,
+                                                     on_session_start_finished,
+                                                     session);
 }
 
 static void
@@ -692,13 +692,13 @@ on_screen_cast_session_proxy_acquired (GObject      *object,
                                        GAsyncResult *result,
                                        gpointer      user_data)
 {
-  GrdDBusScreenCastSession *session_proxy;
+  GrdDBusMutterScreenCastSession *session_proxy;
   GrdSession *session;
   GrdSessionPrivate *priv;
   g_autoptr (GError) error = NULL;
 
   session_proxy =
-    grd_dbus_screen_cast_session_proxy_new_finish (result, &error);
+    grd_dbus_mutter_screen_cast_session_proxy_new_finish (result, &error);
   if (!session_proxy)
     {
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
@@ -723,18 +723,18 @@ on_screen_cast_session_created (GObject      *source_object,
                                 GAsyncResult *res,
                                 gpointer      user_data)
 {
-  GrdDBusScreenCast *screen_cast_proxy;
+  GrdDBusMutterScreenCast *screen_cast_proxy;
   GrdSession *session;
   GrdSessionPrivate *priv;
   GDBusConnection *connection;
   g_autofree char *session_path = NULL;
   g_autoptr (GError) error = NULL;
 
-  screen_cast_proxy = GRD_DBUS_SCREEN_CAST (source_object);
-  if (!grd_dbus_screen_cast_call_create_session_finish (screen_cast_proxy,
-                                                        &session_path,
-                                                        res,
-                                                        &error))
+  screen_cast_proxy = GRD_DBUS_MUTTER_SCREEN_CAST (source_object);
+  if (!grd_dbus_mutter_screen_cast_call_create_session_finish (screen_cast_proxy,
+                                                               &session_path,
+                                                               res,
+                                                               &error))
     {
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
         return;
@@ -748,18 +748,18 @@ on_screen_cast_session_created (GObject      *source_object,
   priv = grd_session_get_instance_private (session);
   connection = g_dbus_proxy_get_connection (G_DBUS_PROXY (screen_cast_proxy));
 
-  grd_dbus_screen_cast_session_proxy_new (connection,
-                                          G_DBUS_PROXY_FLAGS_NONE,
-                                          MUTTER_SCREEN_CAST_BUS_NAME,
-                                          session_path,
-                                          priv->cancellable,
-                                          on_screen_cast_session_proxy_acquired,
-                                          session);
+  grd_dbus_mutter_screen_cast_session_proxy_new (connection,
+                                                 G_DBUS_PROXY_FLAGS_NONE,
+                                                 MUTTER_SCREEN_CAST_BUS_NAME,
+                                                 session_path,
+                                                 priv->cancellable,
+                                                 on_screen_cast_session_proxy_acquired,
+                                                 session);
 }
 
 static void
-on_remote_desktop_session_closed (GrdDBusRemoteDesktopSession *session_proxy,
-                                  GrdSession                  *session)
+on_remote_desktop_session_closed (GrdDBusMutterRemoteDesktopSession *session_proxy,
+                                  GrdSession                        *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
@@ -775,9 +775,9 @@ on_remote_desktop_session_closed (GrdDBusRemoteDesktopSession *session_proxy,
 }
 
 static void
-on_remote_desktop_session_selection_owner_changed (GrdDBusRemoteDesktopSession *session_proxy,
-                                                   GVariant                    *options_variant,
-                                                   GrdSession                  *session)
+on_remote_desktop_session_selection_owner_changed (GrdDBusMutterRemoteDesktopSession *session_proxy,
+                                                   GVariant                          *options_variant,
+                                                   GrdSession                        *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GVariant *is_owner_variant, *mime_types_variant;
@@ -822,10 +822,10 @@ on_remote_desktop_session_selection_owner_changed (GrdDBusRemoteDesktopSession *
 }
 
 static void
-on_remote_desktop_session_selection_transfer (GrdDBusRemoteDesktopSession *session_proxy,
-                                              char                        *mime_type_string,
-                                              unsigned int                 serial,
-                                              GrdSession                  *session)
+on_remote_desktop_session_selection_transfer (GrdDBusMutterRemoteDesktopSession *session_proxy,
+                                              char                              *mime_type_string,
+                                              unsigned int                       serial,
+                                              GrdSession                        *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdMimeType mime_type;
@@ -836,7 +836,7 @@ on_remote_desktop_session_selection_transfer (GrdDBusRemoteDesktopSession *sessi
   mime_type = grd_mime_type_from_string (mime_type_string);
   if (mime_type == GRD_MIME_TYPE_NONE)
     {
-      grd_dbus_remote_desktop_session_call_selection_write_done (
+      grd_dbus_mutter_remote_desktop_session_call_selection_write_done (
         priv->remote_desktop_session, serial, FALSE, NULL, NULL, NULL);
       return;
     }
@@ -846,14 +846,14 @@ on_remote_desktop_session_selection_transfer (GrdDBusRemoteDesktopSession *sessi
 }
 
 static void
-on_caps_lock_state_changed (GrdDBusRemoteDesktopSession *session_proxy,
-                            GParamSpec                  *param_spec,
-                            GrdSession                  *session)
+on_caps_lock_state_changed (GrdDBusMutterRemoteDesktopSession *session_proxy,
+                            GParamSpec                        *param_spec,
+                            GrdSession                        *session)
 {
   GrdSessionClass *klass = GRD_SESSION_GET_CLASS (session);
   gboolean state;
 
-  state = grd_dbus_remote_desktop_session_get_caps_lock_state (session_proxy);
+  state = grd_dbus_mutter_remote_desktop_session_get_caps_lock_state (session_proxy);
   g_debug ("Caps lock state: %s", state ? "locked" : "unlocked");
 
   if (klass->on_caps_lock_state_changed)
@@ -861,14 +861,14 @@ on_caps_lock_state_changed (GrdDBusRemoteDesktopSession *session_proxy,
 }
 
 static void
-on_num_lock_state_changed (GrdDBusRemoteDesktopSession *session_proxy,
-                           GParamSpec                  *param_spec,
-                           GrdSession                  *session)
+on_num_lock_state_changed (GrdDBusMutterRemoteDesktopSession *session_proxy,
+                           GParamSpec                        *param_spec,
+                           GrdSession                        *session)
 {
   GrdSessionClass *klass = GRD_SESSION_GET_CLASS (session);
   gboolean state;
 
-  state = grd_dbus_remote_desktop_session_get_num_lock_state (session_proxy);
+  state = grd_dbus_mutter_remote_desktop_session_get_num_lock_state (session_proxy);
   g_debug ("Num lock state: %s", state ? "locked" : "unlocked");
 
   if (klass->on_num_lock_state_changed)
@@ -880,18 +880,18 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
                                           GAsyncResult *result,
                                           gpointer      user_data)
 {
-  GrdDBusRemoteDesktopSession *session_proxy;
+  GrdDBusMutterRemoteDesktopSession *session_proxy;
   GrdSession *session;
   GrdSessionPrivate *priv;
   GrdSessionClass *klass;
   g_autoptr (GError) error = NULL;
   const char *remote_desktop_session_id;
-  GrdDBusScreenCast *screen_cast_proxy;
+  GrdDBusMutterScreenCast *screen_cast_proxy;
   GVariantBuilder properties_builder;
   GVariant *properties_variant;
 
   session_proxy =
-    grd_dbus_remote_desktop_session_proxy_new_finish (result, &error);
+    grd_dbus_mutter_remote_desktop_session_proxy_new_finish (result, &error);
   if (!session_proxy)
     {
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
@@ -920,7 +920,7 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
   priv->remote_desktop_session = session_proxy;
 
   remote_desktop_session_id =
-    grd_dbus_remote_desktop_session_get_session_id (session_proxy);
+    grd_dbus_mutter_remote_desktop_session_get_session_id (session_proxy);
 
   g_variant_builder_init (&properties_builder, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&properties_builder, "{sv}",
@@ -931,12 +931,12 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
                          g_variant_new_boolean (TRUE));
   properties_variant = g_variant_builder_end (&properties_builder);
 
-  screen_cast_proxy = grd_context_get_screen_cast_proxy (priv->context);
-  grd_dbus_screen_cast_call_create_session (screen_cast_proxy,
-                                            properties_variant,
-                                            priv->cancellable,
-                                            on_screen_cast_session_created,
-                                            session);
+  screen_cast_proxy = grd_context_get_mutter_screen_cast_proxy (priv->context);
+  grd_dbus_mutter_screen_cast_call_create_session (screen_cast_proxy,
+                                                   properties_variant,
+                                                   priv->cancellable,
+                                                   on_screen_cast_session_created,
+                                                   session);
 
   priv->caps_lock_state_changed_id =
     g_signal_connect (session_proxy, "notify::caps-lock-state",
@@ -959,18 +959,18 @@ on_remote_desktop_session_created (GObject      *source_object,
                                    GAsyncResult *res,
                                    gpointer      user_data)
 {
-  GrdDBusRemoteDesktop *remote_desktop_proxy;
+  GrdDBusMutterRemoteDesktop *remote_desktop_proxy;
   GrdSession *session;
   GrdSessionPrivate *priv;
   GDBusConnection *connection;
   g_autofree char *session_path = NULL;
   g_autoptr (GError) error = NULL;
 
-  remote_desktop_proxy = GRD_DBUS_REMOTE_DESKTOP (source_object);
-  if (!grd_dbus_remote_desktop_call_create_session_finish (remote_desktop_proxy,
-                                                           &session_path,
-                                                           res,
-                                                           &error))
+  remote_desktop_proxy = GRD_DBUS_MUTTER_REMOTE_DESKTOP (source_object);
+  if (!grd_dbus_mutter_remote_desktop_call_create_session_finish (remote_desktop_proxy,
+                                                                  &session_path,
+                                                                  res,
+                                                                  &error))
     {
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
         return;
@@ -984,28 +984,28 @@ on_remote_desktop_session_created (GObject      *source_object,
   priv = grd_session_get_instance_private (session);
   connection = g_dbus_proxy_get_connection (G_DBUS_PROXY (remote_desktop_proxy));
 
-  grd_dbus_remote_desktop_session_proxy_new (connection,
-                                             G_DBUS_PROXY_FLAGS_NONE,
-                                             MUTTER_REMOTE_DESKTOP_BUS_NAME,
-                                             session_path,
-                                             priv->cancellable,
-                                             on_remote_desktop_session_proxy_acquired,
-                                             session);
+  grd_dbus_mutter_remote_desktop_session_proxy_new (connection,
+                                                    G_DBUS_PROXY_FLAGS_NONE,
+                                                    MUTTER_REMOTE_DESKTOP_BUS_NAME,
+                                                    session_path,
+                                                    priv->cancellable,
+                                                    on_remote_desktop_session_proxy_acquired,
+                                                    session);
 }
 
 void
 grd_session_start (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusRemoteDesktop *remote_desktop_proxy;
+  GrdDBusMutterRemoteDesktop *remote_desktop_proxy;
 
   priv->cancellable = g_cancellable_new ();
 
-  remote_desktop_proxy = grd_context_get_remote_desktop_proxy (priv->context);
-  grd_dbus_remote_desktop_call_create_session (remote_desktop_proxy,
-                                               priv->cancellable,
-                                               on_remote_desktop_session_created,
-                                               session);
+  remote_desktop_proxy = grd_context_get_mutter_remote_desktop_proxy (priv->context);
+  grd_dbus_mutter_remote_desktop_call_create_session (remote_desktop_proxy,
+                                                      priv->cancellable,
+                                                      on_remote_desktop_session_created,
+                                                      session);
 }
 
 static void

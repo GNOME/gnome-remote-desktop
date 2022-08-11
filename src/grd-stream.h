@@ -24,7 +24,7 @@
 #include <glib-object.h>
 #include <stdint.h>
 
-#include "grd-dbus-screen-cast.h"
+#include "grd-dbus-mutter-screen-cast.h"
 #include "grd-types.h"
 
 #define GRD_TYPE_STREAM (grd_stream_get_type ())
@@ -41,7 +41,7 @@ const char * grd_stream_get_object_path (GrdStream *stream);
 
 void grd_stream_disconnect_proxy_signals (GrdStream *stream);
 
-GrdStream * grd_stream_new (GrdContext              *context,
-                            GrdDBusScreenCastStream *proxy);
+GrdStream * grd_stream_new (GrdContext                    *context,
+                            GrdDBusMutterScreenCastStream *proxy);
 
 #endif /* GRD_STREAM_H */

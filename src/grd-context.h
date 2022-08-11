@@ -25,8 +25,8 @@
 
 #include <glib-object.h>
 
-#include "grd-dbus-remote-desktop.h"
-#include "grd-dbus-screen-cast.h"
+#include "grd-dbus-mutter-remote-desktop.h"
+#include "grd-dbus-mutter-screen-cast.h"
 #include "grd-settings.h"
 #include "grd-types.h"
 
@@ -42,15 +42,15 @@ G_DECLARE_FINAL_TYPE (GrdContext, grd_context, GRD, CONTEXT, GObject)
 GrdContext * grd_context_new (GrdRuntimeMode   runtime_mode,
                               GError         **error);
 
-GrdDBusRemoteDesktop * grd_context_get_remote_desktop_proxy (GrdContext *context);
+GrdDBusMutterRemoteDesktop * grd_context_get_mutter_remote_desktop_proxy (GrdContext *context);
 
-GrdDBusScreenCast * grd_context_get_screen_cast_proxy (GrdContext *context);
+GrdDBusMutterScreenCast * grd_context_get_mutter_screen_cast_proxy (GrdContext *context);
 
-void grd_context_set_remote_desktop_proxy (GrdContext           *context,
-                                           GrdDBusRemoteDesktop *proxy);
+void grd_context_set_mutter_remote_desktop_proxy (GrdContext                 *context,
+                                                  GrdDBusMutterRemoteDesktop *proxy);
 
-void grd_context_set_screen_cast_proxy (GrdContext        *context,
-                                        GrdDBusScreenCast *proxy);
+void grd_context_set_mutter_screen_cast_proxy (GrdContext              *context,
+                                               GrdDBusMutterScreenCast *proxy);
 
 GrdSettings * grd_context_get_settings (GrdContext *context);
 

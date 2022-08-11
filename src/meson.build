@@ -164,14 +164,14 @@ daemon_sources += credentials_sources
 
 gen_daemon_sources = []
 
-gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-screen-cast',
+gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-mutter-screen-cast',
                                           'org.gnome.Mutter.ScreenCast.xml',
                                           interface_prefix: 'org.gnome.Mutter.',
-                                          namespace: 'GrdDBus')
-gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-remote-desktop',
+                                          namespace: 'GrdDBusMutter')
+gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-mutter-remote-desktop',
                                           'org.gnome.Mutter.RemoteDesktop.xml',
                                           interface_prefix: 'org.gnome.Mutter.',
-                                          namespace: 'GrdDBus')
+                                          namespace: 'GrdDBusMutter')
 
 daemon_sources += gen_daemon_sources
 
