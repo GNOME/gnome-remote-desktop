@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Red Hat Inc.
+ * Copyright (C) 2022 Red Hat Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,13 +20,17 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_PRIVATE_H
-#define GRD_PRIVATE_H
+#ifndef GRD_DAEMON_USER_H
+#define GRD_DAEMON_USER_H
 
-#define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop.User"
-#define MUTTER_REMOTE_DESKTOP_BUS_NAME "org.gnome.Mutter.RemoteDesktop"
-#define MUTTER_REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/Mutter/RemoteDesktop"
-#define MUTTER_SCREEN_CAST_BUS_NAME "org.gnome.Mutter.ScreenCast"
-#define MUTTER_SCREEN_CAST_OBJECT_PATH "/org/gnome/Mutter/ScreenCast"
+#include "grd-daemon.h"
 
-#endif /* GRD_PRIVATE_H */
+#define GRD_TYPE_DAEMON_USER (grd_daemon_user_get_type ())
+G_DECLARE_FINAL_TYPE (GrdDaemonUser,
+                      grd_daemon_user,
+                      GRD, DAEMON_USER,
+                      GrdDaemon)
+
+GrdDaemonUser *grd_daemon_user_new (GrdRuntimeMode   runtime_mode,
+                                    GError         **error);
+#endif /* GRD_DAEMON_USER_H */

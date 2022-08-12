@@ -25,13 +25,25 @@
 
 #include <gio/gio.h>
 
-#include "grd-dbus-mutter-remote-desktop.h"
+#include "grd-context.h"
 
 typedef struct _GrdDaemon GrdDaemon;
 
 #define GRD_TYPE_DAEMON (grd_daemon_get_type ())
-G_DECLARE_FINAL_TYPE (GrdDaemon, grd_daemon, GRD, DAEMON, GApplication)
+G_DECLARE_DERIVABLE_TYPE (GrdDaemon, grd_daemon, GRD, DAEMON, GApplication)
 
-GrdDBusMutterRemoteDesktop *grd_daemon_get_dbus_proxy (GrdDaemon *daemon);
+struct _GrdDaemonClass
+{
+    GApplicationClass parent_class;
+
+    gboolean (*is_daemon_ready) (GrdDaemon *daemon);
+};
+
+GrdContext *grd_daemon_get_context (GrdDaemon *daemon);
+
+void grd_daemon_maybe_enable_services (GrdDaemon *daemon);
+
+void grd_daemon_acquire_mutter_dbus_proxies (GrdDaemon       *daemon,
+                                             GDBusConnection *connection);
 
 #endif /* GRD_DAEMON_H */

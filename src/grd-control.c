@@ -56,7 +56,7 @@ main (int argc, char **argv)
       return 1;
     }
 
-  app = g_application_new (GRD_DAEMON_APPLICATION_ID, 0);
+  app = g_application_new (GRD_DAEMON_USER_APPLICATION_ID, 0);
   if (!g_application_register (app, NULL, NULL))
     {
       g_warning ("Failed to register with application\n");

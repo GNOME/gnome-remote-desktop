@@ -32,16 +32,33 @@
 #include <stdlib.h>
 
 #include "grd-context.h"
+#include "grd-daemon-user.h"
 #include "grd-dbus-mutter-remote-desktop.h"
 #include "grd-private.h"
 #include "grd-rdp-server.h"
 #include "grd-session.h"
 #include "grd-vnc-server.h"
 
-struct _GrdDaemon
+enum
 {
-  GApplication parent;
+  PROP_0,
 
+  PROP_CONTEXT,
+};
+
+enum
+{
+  MUTTER_PROXY_ACQUIRED,
+  RDP_SERVER_STARTED,
+  RDP_SERVER_STOPPED,
+
+  N_SIGNALS,
+};
+
+static guint signals[N_SIGNALS];
+
+typedef struct _GrdDaemonPrivate
+{
   GSource *sigint_source;
   GSource *sigterm_source;
 
@@ -57,52 +74,55 @@ struct _GrdDaemon
 #ifdef HAVE_VNC
   GrdVncServer *vnc_server;
 #endif
-};
+} GrdDaemonPrivate;
 
-G_DEFINE_TYPE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
+G_DEFINE_TYPE_WITH_PRIVATE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
 
-static gboolean
-is_daemon_ready (GrdDaemon *daemon)
+GrdContext *
+grd_daemon_get_context (GrdDaemon *daemon)
 {
-  if (!grd_context_get_mutter_remote_desktop_proxy (daemon->context) ||
-      !grd_context_get_mutter_screen_cast_proxy (daemon->context))
-    return FALSE;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
-  return TRUE;
+  return priv->context;
 }
 
 #ifdef HAVE_RDP
 static void
 stop_rdp_server (GrdDaemon *daemon)
 {
-  if (!daemon->rdp_server)
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  if (!priv->rdp_server)
     return;
 
-  grd_rdp_server_stop (daemon->rdp_server);
-  g_clear_object (&daemon->rdp_server);
+  g_signal_emit (daemon, signals[RDP_SERVER_STOPPED], 0);
+  grd_rdp_server_stop (priv->rdp_server);
+  g_clear_object (&priv->rdp_server);
   g_message ("RDP server stopped");
 }
 
 static void
 start_rdp_server (GrdDaemon *daemon)
 {
-  GrdSettings *settings = grd_context_get_settings (daemon->context);
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdSettings *settings = grd_context_get_settings (priv->context);
   g_autoptr (GError) error = NULL;
 
-  if (daemon->rdp_server)
+  if (priv->rdp_server)
     return;
 
   if (!g_access (grd_settings_get_rdp_server_cert (settings), F_OK) &&
       !g_access (grd_settings_get_rdp_server_key (settings), F_OK))
     {
-      daemon->rdp_server = grd_rdp_server_new (daemon->context);
-      if (!grd_rdp_server_start (daemon->rdp_server, &error))
+      priv->rdp_server = grd_rdp_server_new (priv->context);
+      if (!grd_rdp_server_start (priv->rdp_server, &error))
         {
           g_warning ("Failed to start RDP server: %s\n", error->message);
           stop_rdp_server (daemon);
         }
       else
         {
+          g_signal_emit (daemon, signals[RDP_SERVER_STARTED], 0);
           g_message ("RDP server started");
         }
     }
@@ -117,24 +137,27 @@ start_rdp_server (GrdDaemon *daemon)
 static void
 stop_vnc_server (GrdDaemon *daemon)
 {
-  if (!daemon->vnc_server)
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  if (!priv->vnc_server)
     return;
 
-  grd_vnc_server_stop (daemon->vnc_server);
-  g_clear_object (&daemon->vnc_server);
+  grd_vnc_server_stop (priv->vnc_server);
+  g_clear_object (&priv->vnc_server);
   g_message ("VNC server stopped");
 }
 
 static void
 start_vnc_server (GrdDaemon *daemon)
 {
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   g_autoptr (GError) error = NULL;
 
-  if (daemon->vnc_server)
+  if (priv->vnc_server)
     return;
 
-  daemon->vnc_server = grd_vnc_server_new (daemon->context);
-  if (!grd_vnc_server_start (daemon->vnc_server, &error))
+  priv->vnc_server = grd_vnc_server_new (priv->context);
+  if (!grd_vnc_server_start (priv->vnc_server, &error))
     {
       g_warning ("Failed to initialize VNC server: %s\n", error->message);
       stop_vnc_server (daemon);
@@ -146,15 +169,16 @@ start_vnc_server (GrdDaemon *daemon)
 }
 #endif /* HAVE_VNC */
 
-static void
-maybe_enable_services (GrdDaemon *daemon)
+void
+grd_daemon_maybe_enable_services (GrdDaemon *daemon)
 {
-  GrdSettings *settings = grd_context_get_settings (daemon->context);
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdSettings *settings = grd_context_get_settings (priv->context);
 
-  if (!is_daemon_ready (daemon))
+  if (!GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
     return;
 
-  grd_context_notify_daemon_ready (daemon->context);
+  grd_context_notify_daemon_ready (priv->context);
 
 #ifdef HAVE_RDP
   if (grd_settings_is_rdp_enabled (settings))
@@ -184,6 +208,7 @@ on_mutter_remote_desktop_proxy_acquired (GObject      *object,
                                          gpointer      user_data)
 {
   GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdDBusMutterRemoteDesktop *proxy;
   GError *error = NULL;
 
@@ -195,9 +220,9 @@ on_mutter_remote_desktop_proxy_acquired (GObject      *object,
       return;
     }
 
-  grd_context_set_mutter_remote_desktop_proxy (daemon->context, proxy);
+  grd_context_set_mutter_remote_desktop_proxy (priv->context, proxy);
 
-  maybe_enable_services (daemon);
+  g_signal_emit (daemon, signals[MUTTER_PROXY_ACQUIRED], 0);
 }
 
 static void
@@ -206,6 +231,7 @@ on_mutter_screen_cast_proxy_acquired (GObject      *object,
                                       gpointer      user_data)
 {
   GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdDBusMutterScreenCast *proxy;
   GError *error = NULL;
 
@@ -216,9 +242,9 @@ on_mutter_screen_cast_proxy_acquired (GObject      *object,
       return;
     }
 
-  grd_context_set_mutter_screen_cast_proxy (daemon->context, proxy);
+  grd_context_set_mutter_screen_cast_proxy (priv->context, proxy);
 
-  maybe_enable_services (daemon);
+  g_signal_emit (daemon, signals[MUTTER_PROXY_ACQUIRED], 0);
 }
 
 static void
@@ -228,14 +254,15 @@ on_mutter_remote_desktop_name_appeared (GDBusConnection *connection,
                                         gpointer         user_data)
 {
   GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
-  grd_dbus_mutter_remote_desktop_proxy_new_for_bus (G_BUS_TYPE_SESSION,
-                                                    G_DBUS_PROXY_FLAGS_NONE,
-                                                    MUTTER_REMOTE_DESKTOP_BUS_NAME,
-                                                    MUTTER_REMOTE_DESKTOP_OBJECT_PATH,
-                                                    daemon->cancellable,
-                                                    on_mutter_remote_desktop_proxy_acquired,
-                                                    daemon);
+  grd_dbus_mutter_remote_desktop_proxy_new (connection,
+                                            G_DBUS_PROXY_FLAGS_NONE,
+                                            MUTTER_REMOTE_DESKTOP_BUS_NAME,
+                                            MUTTER_REMOTE_DESKTOP_OBJECT_PATH,
+                                            priv->cancellable,
+                                            on_mutter_remote_desktop_proxy_acquired,
+                                            daemon);
 }
 
 static void
@@ -244,9 +271,11 @@ on_mutter_remote_desktop_name_vanished (GDBusConnection *connection,
                                         gpointer         user_data)
 {
   GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
   disable_services (daemon);
-  grd_context_set_mutter_remote_desktop_proxy (daemon->context, NULL);
+
+  grd_context_set_mutter_remote_desktop_proxy (priv->context, NULL);
 }
 
 static void
@@ -256,14 +285,15 @@ on_mutter_screen_cast_name_appeared (GDBusConnection *connection,
                                      gpointer         user_data)
 {
   GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
-  grd_dbus_mutter_screen_cast_proxy_new_for_bus (G_BUS_TYPE_SESSION,
-                                                 G_DBUS_PROXY_FLAGS_NONE,
-                                                 MUTTER_SCREEN_CAST_BUS_NAME,
-                                                 MUTTER_SCREEN_CAST_OBJECT_PATH,
-                                                 daemon->cancellable,
-                                                 on_mutter_screen_cast_proxy_acquired,
-                                                 daemon);
+  grd_dbus_mutter_screen_cast_proxy_new (connection,
+                                         G_DBUS_PROXY_FLAGS_NONE,
+                                         MUTTER_SCREEN_CAST_BUS_NAME,
+                                         MUTTER_SCREEN_CAST_OBJECT_PATH,
+                                         priv->cancellable,
+                                         on_mutter_screen_cast_proxy_acquired,
+                                         daemon);
 }
 
 static void
@@ -272,9 +302,36 @@ on_mutter_screen_cast_name_vanished (GDBusConnection *connection,
                                      gpointer         user_data)
 {
   GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
   disable_services (daemon);
-  grd_context_set_mutter_screen_cast_proxy (daemon->context, NULL);
+
+  grd_context_set_mutter_screen_cast_proxy (priv->context, NULL);
+}
+
+void
+grd_daemon_acquire_mutter_dbus_proxies (GrdDaemon       *daemon,
+                                        GDBusConnection *connection)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  g_clear_handle_id (&priv->mutter_remote_desktop_watch_name_id, g_bus_unwatch_name);
+  priv->mutter_remote_desktop_watch_name_id =
+    g_bus_watch_name_on_connection (connection,
+                                    MUTTER_REMOTE_DESKTOP_BUS_NAME,
+                                    G_BUS_NAME_WATCHER_FLAGS_NONE,
+                                    on_mutter_remote_desktop_name_appeared,
+                                    on_mutter_remote_desktop_name_vanished,
+                                    daemon, NULL);
+
+  g_clear_handle_id (&priv->mutter_screen_cast_watch_name_id, g_bus_unwatch_name);
+  priv->mutter_screen_cast_watch_name_id =
+    g_bus_watch_name_on_connection (connection,
+                                    MUTTER_SCREEN_CAST_BUS_NAME,
+                                    G_BUS_NAME_WATCHER_FLAGS_NONE,
+                                    on_mutter_screen_cast_name_appeared,
+                                    on_mutter_screen_cast_name_vanished,
+                                    daemon, NULL);
 }
 
 #ifdef HAVE_RDP
@@ -282,12 +339,14 @@ static void
 on_rdp_enabled_changed (GrdSettings *settings,
                         GrdDaemon   *daemon)
 {
-  if (!is_daemon_ready (daemon))
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  if (!GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
     return;
 
   if (grd_settings_is_rdp_enabled (settings))
     {
-      g_return_if_fail (!daemon->rdp_server);
+      g_return_if_fail (!priv->rdp_server);
       start_rdp_server (daemon);
     }
   else
@@ -302,12 +361,14 @@ static void
 on_vnc_enabled_changed (GrdSettings *settings,
                         GrdDaemon   *daemon)
 {
-  if (!is_daemon_ready (daemon))
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  if (!GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
     return;
 
   if (grd_settings_is_vnc_enabled (settings))
     {
-      g_return_if_fail (!daemon->vnc_server);
+      g_return_if_fail (!priv->vnc_server);
       start_vnc_server (daemon);
     }
   else
@@ -320,30 +381,28 @@ on_vnc_enabled_changed (GrdSettings *settings,
 static void
 grd_daemon_init (GrdDaemon *daemon)
 {
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  priv->cancellable = g_cancellable_new ();
 }
 
 static void
 grd_daemon_startup (GApplication *app)
 {
   GrdDaemon *daemon = GRD_DAEMON (app);
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdSettings *settings = grd_context_get_settings (priv->context);
 
-  daemon->mutter_remote_desktop_watch_name_id =
-    g_bus_watch_name (G_BUS_TYPE_SESSION,
-                      MUTTER_REMOTE_DESKTOP_BUS_NAME,
-                      G_BUS_NAME_WATCHER_FLAGS_NONE,
-                      on_mutter_remote_desktop_name_appeared,
-                      on_mutter_remote_desktop_name_vanished,
-                      daemon, NULL);
-
-  daemon->mutter_screen_cast_watch_name_id =
-    g_bus_watch_name (G_BUS_TYPE_SESSION,
-                      MUTTER_SCREEN_CAST_BUS_NAME,
-                      G_BUS_NAME_WATCHER_FLAGS_NONE,
-                      on_mutter_screen_cast_name_appeared,
-                      on_mutter_screen_cast_name_vanished,
-                      daemon, NULL);
-
-  daemon->cancellable = g_cancellable_new ();
+#ifdef HAVE_RDP
+  g_signal_connect (settings, "rdp-enabled-changed",
+                    G_CALLBACK (on_rdp_enabled_changed),
+                    daemon);
+#endif
+#ifdef HAVE_VNC
+  g_signal_connect (settings, "vnc-enabled-changed",
+                    G_CALLBACK (on_vnc_enabled_changed),
+                    daemon);
+#endif
 
   /* Run indefinitely, until told to exit. */
   g_application_hold (app);
@@ -355,43 +414,113 @@ static void
 grd_daemon_shutdown (GApplication *app)
 {
   GrdDaemon *daemon = GRD_DAEMON (app);
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
-  g_cancellable_cancel (daemon->cancellable);
-  g_clear_object (&daemon->cancellable);
+  g_cancellable_cancel (priv->cancellable);
+  g_clear_object (&priv->cancellable);
 
   disable_services (daemon);
 
-  grd_context_set_mutter_remote_desktop_proxy (daemon->context, NULL);
-  g_bus_unwatch_name (daemon->mutter_remote_desktop_watch_name_id);
-  daemon->mutter_remote_desktop_watch_name_id = 0;
+  grd_context_set_mutter_remote_desktop_proxy (priv->context, NULL);
+  g_clear_handle_id (&priv->mutter_remote_desktop_watch_name_id, g_bus_unwatch_name);
 
-  grd_context_set_mutter_screen_cast_proxy (daemon->context, NULL);
-  g_bus_unwatch_name (daemon->mutter_screen_cast_watch_name_id);
-  daemon->mutter_screen_cast_watch_name_id = 0;
+  grd_context_set_mutter_screen_cast_proxy (priv->context, NULL);
+  g_clear_handle_id (&priv->mutter_screen_cast_watch_name_id, g_bus_unwatch_name);
 
-  g_clear_object (&daemon->context);
+  g_clear_object (&priv->context);
 
-  if (daemon->sigterm_source)
+  if (priv->sigterm_source)
     {
-      g_source_destroy (daemon->sigterm_source);
-      g_clear_pointer (&daemon->sigterm_source, g_source_unref);
+      g_source_destroy (priv->sigterm_source);
+      g_clear_pointer (&priv->sigterm_source, g_source_unref);
     }
-  if (daemon->sigint_source)
+  if (priv->sigint_source)
     {
-      g_source_destroy (daemon->sigint_source);
-      g_clear_pointer (&daemon->sigint_source, g_source_unref);
+      g_source_destroy (priv->sigint_source);
+      g_clear_pointer (&priv->sigint_source, g_source_unref);
     }
 
   G_APPLICATION_CLASS (grd_daemon_parent_class)->shutdown (app);
 }
 
 static void
+grd_daemon_get_property (GObject    *object,
+                         guint       prop_id,
+                         GValue     *value,
+                         GParamSpec *pspec)
+{
+  GrdDaemon *daemon = GRD_DAEMON (object);
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  switch (prop_id)
+    {
+    case PROP_CONTEXT:
+      g_value_set_object (value, priv->context);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    }
+}
+
+static void
+grd_daemon_set_property (GObject      *object,
+                         guint         prop_id,
+                         const GValue *value,
+                         GParamSpec   *pspec)
+{
+  GrdDaemon *daemon = GRD_DAEMON (object);
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  switch (prop_id)
+    {
+    case PROP_CONTEXT:
+      priv->context = g_value_get_object (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    }
+}
+
+static void
 grd_daemon_class_init (GrdDaemonClass *klass)
 {
   GApplicationClass *g_application_class = G_APPLICATION_CLASS (klass);
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   g_application_class->startup = grd_daemon_startup;
   g_application_class->shutdown = grd_daemon_shutdown;
+
+  object_class->get_property = grd_daemon_get_property;
+  object_class->set_property = grd_daemon_set_property;
+
+  g_object_class_install_property (object_class,
+                                   PROP_CONTEXT,
+                                   g_param_spec_object ("context",
+                                                        "GrdContext",
+                                                        "The GrdContext instance",
+                                                        GRD_TYPE_CONTEXT,
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  signals[MUTTER_PROXY_ACQUIRED] = g_signal_new ("mutter-proxy-acquired",
+                                                 G_TYPE_FROM_CLASS (klass),
+                                                 G_SIGNAL_RUN_LAST,
+                                                 0,
+                                                 NULL, NULL, NULL,
+                                                 G_TYPE_NONE, 0);
+  signals[RDP_SERVER_STARTED] = g_signal_new ("rdp-server-started",
+                                              G_TYPE_FROM_CLASS (klass),
+                                              G_SIGNAL_RUN_LAST,
+                                              0,
+                                              NULL, NULL, NULL,
+                                              G_TYPE_NONE, 0);
+  signals[RDP_SERVER_STOPPED] = g_signal_new ("rdp-server-stopped",
+                                              G_TYPE_FROM_CLASS (klass),
+                                              G_SIGNAL_RUN_LAST,
+                                              0,
+                                              NULL, NULL, NULL,
+                                              G_TYPE_NONE, 0);
 }
 
 static void
@@ -416,9 +545,10 @@ static gboolean
 sigint_terminate_daemon (gpointer user_data)
 {
   GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
   g_debug ("Received SIGINT signal. Exiting...");
-  g_clear_pointer (&daemon->sigint_source, g_source_unref);
+  g_clear_pointer (&priv->sigint_source, g_source_unref);
   g_application_release (G_APPLICATION (daemon));
 
   return G_SOURCE_REMOVE;
@@ -428,9 +558,10 @@ static gboolean
 sigterm_terminate_daemon (gpointer user_data)
 {
   GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
   g_debug ("Received SIGTERM signal. Exiting...");
-  g_clear_pointer (&daemon->sigterm_source, g_source_unref);
+  g_clear_pointer (&priv->sigterm_source, g_source_unref);
   g_application_release (G_APPLICATION (daemon));
 
   return G_SOURCE_REMOVE;
@@ -439,55 +570,23 @@ sigterm_terminate_daemon (gpointer user_data)
 static void
 register_signals (GrdDaemon *daemon)
 {
-  daemon->sigint_source = g_unix_signal_source_new (SIGINT);
-  g_source_set_callback (daemon->sigint_source, sigint_terminate_daemon,
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  priv->sigint_source = g_unix_signal_source_new (SIGINT);
+  g_source_set_callback (priv->sigint_source, sigint_terminate_daemon,
                          daemon, NULL);
-  g_source_attach (daemon->sigint_source, NULL);
+  g_source_attach (priv->sigint_source, NULL);
 
-  daemon->sigterm_source = g_unix_signal_source_new (SIGTERM);
-  g_source_set_callback (daemon->sigterm_source, sigterm_terminate_daemon,
+  priv->sigterm_source = g_unix_signal_source_new (SIGTERM);
+  g_source_set_callback (priv->sigterm_source, sigterm_terminate_daemon,
                          daemon, NULL);
-  g_source_attach (daemon->sigterm_source, NULL);
-}
-
-static GrdDaemon *
-grd_daemon_new (GrdRuntimeMode   runtime_mode,
-                GError         **error)
-{
-  GrdContext *context;
-  GrdDaemon *daemon;
-  GrdSettings *settings;
-
-  context = grd_context_new (runtime_mode, error);
-  if (!context)
-    return NULL;
-
-  daemon = g_object_new (GRD_TYPE_DAEMON,
-                         "application-id", GRD_DAEMON_APPLICATION_ID,
-                         "flags", G_APPLICATION_IS_SERVICE,
-                         NULL);
-
-  daemon->context = context;
-
-  settings = grd_context_get_settings (daemon->context);
-
-#ifdef HAVE_RDP
-  g_signal_connect (settings, "rdp-enabled-changed",
-                    G_CALLBACK (on_rdp_enabled_changed),
-                    daemon);
-#endif
-#ifdef HAVE_VNC
-  g_signal_connect (settings, "vnc-enabled-changed",
-                    G_CALLBACK (on_vnc_enabled_changed),
-                    daemon);
-#endif
-
-  return daemon;
+  g_source_attach (priv->sigterm_source, NULL);
 }
 
 int
 main (int argc, char **argv)
 {
+  GrdContext *context;
   GrdSettings *settings;
   gboolean print_version = FALSE;
   gboolean headless = FALSE;
@@ -505,16 +604,16 @@ main (int argc, char **argv)
       "VNC port", NULL },
     { NULL }
   };
-  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr (GOptionContext) option_context = NULL;
   g_autoptr (GrdDaemon) daemon = NULL;
   GError *error = NULL;
   GrdRuntimeMode runtime_mode;
 
   g_set_application_name (_("GNOME Remote Desktop"));
 
-  context = g_option_context_new (NULL);
-  g_option_context_add_main_entries (context, entries, GETTEXT_PACKAGE);
-  if (!g_option_context_parse (context, &argc, &argv, &error))
+  option_context = g_option_context_new (NULL);
+  g_option_context_add_main_entries (option_context, entries, GETTEXT_PACKAGE);
+  if (!g_option_context_parse (option_context, &argc, &argv, &error))
     {
       g_printerr ("Invalid option: %s\n", error->message);
       g_error_free (error);
@@ -532,7 +631,14 @@ main (int argc, char **argv)
   else
     runtime_mode = GRD_RUNTIME_MODE_SCREEN_SHARE;
 
-  daemon = grd_daemon_new (runtime_mode, &error);
+  switch (runtime_mode)
+    {
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+    case GRD_RUNTIME_MODE_HEADLESS:
+      daemon = GRD_DAEMON (grd_daemon_user_new (runtime_mode, &error));
+      break;
+    }
+
   if (!daemon)
     {
       g_printerr ("Failed to initialize: %s\n", error->message);
@@ -543,7 +649,8 @@ main (int argc, char **argv)
   add_actions (G_APPLICATION (daemon));
   register_signals (daemon);
 
-  settings = grd_context_get_settings (daemon->context);
+  context = grd_daemon_get_context (daemon);
+  settings = grd_context_get_settings (context);
   if (rdp_port != -1)
     grd_settings_override_rdp_port (settings, rdp_port);
   if (vnc_port != -1)
