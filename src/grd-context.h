@@ -58,6 +58,8 @@ GrdCredentials * grd_context_get_credentials (GrdContext *context);
 
 GrdEglThread * grd_context_get_egl_thread (GrdContext *context);
 
+GrdRuntimeMode grd_context_get_runtime_mode (GrdContext *context);
+
 void grd_context_notify_daemon_ready (GrdContext *context);
 
 #endif /* GRD_CONTEXT_H */

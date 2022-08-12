@@ -44,6 +44,8 @@ struct _GrdContext
 
   GrdCredentials *credentials;
   GrdSettings *settings;
+
+  GrdRuntimeMode runtime_mode;
 };
 
 G_DEFINE_TYPE (GrdContext, grd_context, G_TYPE_OBJECT)
@@ -94,6 +96,12 @@ grd_context_get_egl_thread (GrdContext *context)
   return context->egl_thread;
 }
 
+GrdRuntimeMode
+grd_context_get_runtime_mode (GrdContext *context)
+{
+  return context->runtime_mode;
+}
+
 void
 grd_context_notify_daemon_ready (GrdContext *context)
 {
@@ -115,6 +123,7 @@ grd_context_new (GrdRuntimeMode   runtime_mode,
   g_autoptr (GError) local_error = NULL;
 
   context = g_object_new (GRD_TYPE_CONTEXT, NULL);
+  context->runtime_mode = runtime_mode;
 
   switch (runtime_mode)
     {
