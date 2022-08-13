@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-03-02 15:35+0000\n"
-"PO-Revision-Date: 2022-03-28 18:29+0200\n"
+"POT-Creation-Date: 2022-08-05 21:58+0000\n"
+"PO-Revision-Date: 2022-08-13 17:31+0200\n"
 "Last-Translator: gogo <trebelnik2@gmail.com>\n"
 "Language-Team: Croatian <hr@li.org>\n"
 "Language: hr\n"
@@ -18,9 +18,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Udaljena radna površina"
 
@@ -46,16 +46,16 @@ msgstr "Uskrati"
 msgid "Accept"
 msgstr "Dopusti"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:52
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Upotreba: %s [MOGUĆNOSTI...] NAREDBA [PODNAREDBA]...\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:444
 msgid "Commands:\n"
 msgstr "Naredbe:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:449
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -97,7 +97,7 @@ msgstr ""
 "                                               unosa\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:468
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -129,16 +129,20 @@ msgstr ""
 "                                               unosa\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:483
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Prikaži trenutno stanje\n"
 "\n"
 "Mogućnosti:\n"
+"  --headless                                 - Koristi pohranu vjerodajnica "
+"bez sučelja\n"
 "  --help                                     - Prikaži ovu pomoć\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
@@ -146,7 +150,7 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "Treba li omogućiti RDP pozadinski program"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
 msgstr ""
 "Ako je postavljeno na 'istina' RDP pozadinski program biti će pokrenut."
 
@@ -162,14 +166,14 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
-"Način dijeljenja zaslona određuje, treba li RDP pozadinski program  zrcaliti "
+"Način dijeljenja zaslona određuje, treba li RDP pozadinski program zrcaliti "
 "glavni zaslon, ili stvoriti virtualni monitor. Za početnu razlučivost "
 "virtualnog monitora, RDP pozadinski program koristi ili podatke jezgre "
 "klijenta ([MS-RDPBCGR] 2.2.1.3.2) ili podatke klijenta monitora ([MS-"
@@ -217,7 +221,7 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "Treba li omogućiti VNC pozadinski program"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr ""
 "Ako je postavljeno na 'istina' VNC pozadinski program biti će pokrenut."
 
@@ -246,3 +250,33 @@ msgstr ""
 "povezivanje, potrebna je osoba s fizičkim pristupom računalu kako bi "
 "izričito odobrila novo povezivanje. * password - zahtjev udaljenog klijenta "
 "za poznatom lozinkom"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Način dijeljenja zaslona VNC povezivanja"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"Način dijeljenja zaslona određuje, treba li VNC pozadinski program zrcaliti "
+"glavni zaslon, ili stvoriti virtualni monitor. Za početnu razlučivost "
+"virtualnog monitora, VNC pozadinski program koristi zadanu razlučivost od "
+"1920x1080 piksela. Kada se koristi sesija udaljene radne površine s "
+"virtualnim monitorom, klijenti mogu promijeniti razlučivost virtualnog "
+"monitora tijekom sesije s proširenjem setDesktopSize PDU. Dopušteni načini "
+"dijeljenja zaslona uključuju: * mirror-primary - Snimanje glavnog monitora "
+"trenutne korisničke sesije. * extend - Stvaranje novog virtualnog monitora i "
+"korištenje za sesiju udaljene radne površine. Početna razlučivost ovog "
+"virtualnog monitora je postavljena na 1920x1080 piksela. Klijenti mogu "
+"zaobići početnu razlučivost s naknadnim podešavanjem razlučivosti monitora."
