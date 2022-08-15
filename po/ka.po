@@ -5,19 +5,19 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gnome-remote-desktop\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-05-10 16:53+0000\n"
-"PO-Revision-Date: 2022-05-13 06:48+0200\n"
+"POT-Creation-Date: 2022-08-07 20:41+0000\n"
+"PO-Revision-Date: 2022-08-15 21:31+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
-"Language-Team: Georgian <(nothing)>\n"
+"Language-Team: \n"
 "Language: ka\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.0.1\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: src/grd-daemon.c:480
 msgid "GNOME Remote Desktop"
@@ -50,11 +50,11 @@ msgstr "დასტური"
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "გამოყენება: %s [პარამეტრები...] ბრძანება [ქვებრძანება]...\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:405
 msgid "Commands:\n"
 msgstr "ბრძანებები:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:410
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -94,7 +94,7 @@ msgstr ""
 "უფლების მიცემა\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:429
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -124,7 +124,7 @@ msgstr ""
 "                                               უფლების მიცემა\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:444
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -141,7 +141,7 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "ჩართულია RDP უკანა ბოლო თუ არა"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to 'true' the RDP backend will be initialized."
+msgid "If set to to 'true' the RDP backend will be initialized."
 msgstr "თუ ჩართულია, გამოყენებული იქნება RDP უკანაბოლო."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
@@ -209,7 +209,7 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "ჩართულია VNC-ის უკანაბოლო თუ არა"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to 'true' the VNC backend will be initialized."
+msgid "If set to to 'true' the VNC backend will be initialized."
 msgstr "თუ ჩართულია, გამოყენებული იქნება VNC უკანაბოლო."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
