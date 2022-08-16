@@ -31,6 +31,7 @@
 #include "grd-clipboard-rdp.h"
 #include "grd-context.h"
 #include "grd-damage-utils.h"
+#include "grd-debug.h"
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-audio-playback.h"
 #include "grd-rdp-buffer.h"
@@ -1719,6 +1720,14 @@ rdp_peer_capabilities (freerdp_peer *peer)
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   rdpSettings *rdp_settings = peer->settings;
+
+  if (!rdp_settings->SupportGraphicsPipeline &&
+      !(grd_get_debug_flags () & GRD_DEBUG_RDP_LEGACY_GRAPHICS))
+    {
+      g_warning ("[RDP] Client did not advertise support for the Graphics "
+                 "Pipeline, closing connection");
+      return FALSE;
+    }
 
   if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND &&
       !rdp_settings->SupportGraphicsPipeline)
