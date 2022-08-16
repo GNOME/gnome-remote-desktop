@@ -2124,6 +2124,8 @@ socket_thread_func (gpointer data)
           events[n_events++] = bw_measure_stop_event;
         }
 
+      events[n_events++] = channel_event;
+
       n_freerdp_handles = peer->GetEventHandles (peer, &events[n_events],
                                                  32 - n_events);
       if (!n_freerdp_handles)
@@ -2133,8 +2135,6 @@ socket_thread_func (gpointer data)
           break;
         }
       n_events += n_freerdp_handles;
-
-      events[n_events++] = channel_event;
 
       WaitForMultipleObjects (n_events, events, FALSE, INFINITE);
 
