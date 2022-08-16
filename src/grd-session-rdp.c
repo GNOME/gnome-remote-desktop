@@ -2014,6 +2014,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
       freerdp_peer_free (peer);
       return FALSE;
     }
+  session_rdp->peer = peer;
 
   rdp_peer_context = (RdpPeerContext *) peer->context;
   rdp_peer_context->session_rdp = session_rdp;
@@ -2023,8 +2024,6 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Failed to create SAM database");
-      freerdp_peer_context_free (peer);
-      freerdp_peer_free (peer);
       return FALSE;
     }
 
@@ -2034,9 +2033,6 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Failed to set path of SAM database");
-      g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
-      freerdp_peer_context_free (peer);
-      freerdp_peer_free (peer);
       return FALSE;
     }
 
@@ -2085,13 +2081,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Failed to initialize peer");
-      g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
-      freerdp_peer_context_free (peer);
-      freerdp_peer_free (peer);
       return FALSE;
     }
-
-  session_rdp->peer = peer;
 
   return TRUE;
 }
@@ -2321,6 +2312,18 @@ clear_session_sources (GrdSessionRdp *session_rdp)
     }
 }
 
+static void
+clear_rdp_peer (GrdSessionRdp *session_rdp)
+{
+  g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
+
+  if (session_rdp->peer)
+    {
+      freerdp_peer_context_free (session_rdp->peer);
+      g_clear_pointer (&session_rdp->peer, freerdp_peer_free);
+    }
+}
+
 static gboolean
 clear_pointer_bitmap (gpointer key,
                       gpointer value,
@@ -2386,16 +2389,13 @@ grd_session_rdp_stop (GrdSession *session)
   peer->Close (peer);
   g_clear_object (&session_rdp->connection);
 
-  g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
-
   g_clear_object (&rdp_peer_context->network_autodetection);
 
   if (session_rdp->thread_pool)
     g_thread_pool_free (session_rdp->thread_pool, FALSE, TRUE);
 
   peer->Disconnect (peer);
-  freerdp_peer_context_free (peer);
-  freerdp_peer_free (peer);
+  clear_rdp_peer (session_rdp);
 
   g_hash_table_foreach_remove (session_rdp->pressed_keys,
                                notify_keycode_released,
@@ -2614,6 +2614,7 @@ grd_session_rdp_dispose (GObject *object)
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
 
   clear_session_sources (session_rdp);
+  clear_rdp_peer (session_rdp);
 
   g_assert (!session_rdp->graphics_thread);
   g_clear_pointer (&session_rdp->graphics_context, g_main_context_unref);
