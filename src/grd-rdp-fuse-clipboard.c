@@ -1470,7 +1470,7 @@ fuse_file_new_root (void)
   FuseFile *root_dir;
 
   root_dir = g_malloc0 (sizeof (FuseFile));
-  root_dir->filename_with_root = strdup ("/");
+  root_dir->filename_with_root = g_strdup ("/");
   root_dir->filename = root_dir->filename_with_root;
   root_dir->ino = FUSE_ROOT_ID;
   root_dir->is_directory = TRUE;
