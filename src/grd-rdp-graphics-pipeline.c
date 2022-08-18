@@ -204,7 +204,7 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
       uint16_t aligned_width_16;
       uint16_t aligned_height_16;
 
-      g_debug ("[RDP.RDPGFX] Creating NVENC session for surface %u", surface_id);
+      g_debug ("[RDP.RDPGFX] Created NVENC session for surface %u", surface_id);
 
       aligned_width_16 = grd_get_aligned_size (surface_width, 16);
       aligned_height_16 = grd_get_aligned_size (surface_height, 16);
