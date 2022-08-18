@@ -40,6 +40,8 @@ struct _GrdRdpGfxSurface
   uint16_t width;
   uint16_t height;
 
+  gboolean is_auxiliary_surface;
+
   GrdRdpGfxSurface *render_surface;
 
   GrdRdpGfxFrameController *frame_controller;
@@ -84,6 +86,12 @@ grd_rdp_gfx_surface_get_height (GrdRdpGfxSurface *gfx_surface)
 }
 
 gboolean
+grd_rdp_gfx_surface_is_auxiliary_surface (GrdRdpGfxSurface *gfx_surface)
+{
+  return gfx_surface->is_auxiliary_surface;
+}
+
+gboolean
 grd_rdp_gfx_surface_disallows_hwaccel_sessions (GrdRdpGfxSurface *gfx_surface)
 {
   return !!(gfx_surface->flags & GRD_RDP_GFX_SURFACE_FLAG_NO_HWACCEL_SESSIONS);
@@ -105,6 +113,7 @@ grd_rdp_gfx_surface_override_render_surface (GrdRdpGfxSurface *gfx_surface,
   g_assert (!gfx_surface->render_surface);
 
   gfx_surface->render_surface = render_surface;
+  render_surface->is_auxiliary_surface = TRUE;
 }
 
 GrdRdpGfxFrameController *
