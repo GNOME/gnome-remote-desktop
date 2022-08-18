@@ -589,7 +589,10 @@ maybe_send_next_mime_type_content_request (GrdClipboardRdp *clipboard_rdp)
       g_free (mime_type_table);
 
       maybe_send_next_mime_type_content_request (clipboard_rdp);
+      return;
     }
+
+  g_free (mime_type_table);
 }
 
 static gboolean
