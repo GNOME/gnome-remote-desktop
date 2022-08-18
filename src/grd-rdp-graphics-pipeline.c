@@ -1182,9 +1182,41 @@ static uint32_t cap_list[] =
   RDPGFX_CAPVERSION_8,   /* [MS-RDPEGFX] 2.2.3.1 */
 };
 
+static const char *
+rdpgfx_caps_version_to_string (uint32_t caps_version)
+{
+  switch (caps_version)
+    {
+    case RDPGFX_CAPVERSION_107:
+      return "RDPGFX_CAPVERSION_107";
+    case RDPGFX_CAPVERSION_106:
+      return "RDPGFX_CAPVERSION_106";
+    case RDPGFX_CAPVERSION_105:
+      return "RDPGFX_CAPVERSION_105";
+    case RDPGFX_CAPVERSION_104:
+      return "RDPGFX_CAPVERSION_104";
+    case RDPGFX_CAPVERSION_103:
+      return "RDPGFX_CAPVERSION_103";
+    case RDPGFX_CAPVERSION_102:
+      return "RDPGFX_CAPVERSION_102";
+    case RDPGFX_CAPVERSION_101:
+      return "RDPGFX_CAPVERSION_101";
+    case RDPGFX_CAPVERSION_10:
+      return "RDPGFX_CAPVERSION_10";
+    case RDPGFX_CAPVERSION_81:
+      return "RDPGFX_CAPVERSION_81";
+    case RDPGFX_CAPVERSION_8:
+      return "RDPGFX_CAPVERSION_8";
+    default:
+      g_assert_not_reached ();
+    }
+
+  return NULL;
+}
+
 static void
-search_and_list_unknown_cap_sets_versions (RDPGFX_CAPSET *cap_sets,
-                                           uint16_t       n_cap_sets)
+search_and_list_unknown_cap_sets_versions_and_flags (RDPGFX_CAPSET *cap_sets,
+                                                     uint16_t       n_cap_sets)
 {
   uint16_t i;
   size_t j;
@@ -1195,8 +1227,19 @@ search_and_list_unknown_cap_sets_versions (RDPGFX_CAPSET *cap_sets,
 
       for (j = 0; j < G_N_ELEMENTS (cap_list) && !cap_found; ++j)
         {
-          if (cap_sets[i].version == cap_list[j])
-            cap_found = TRUE;
+          const char *version_string;
+          gboolean has_flags_field;
+
+          if (cap_sets[i].version != cap_list[j])
+            continue;
+
+          cap_found = TRUE;
+          has_flags_field = cap_sets[i].version != RDPGFX_CAPVERSION_101;
+
+          version_string = rdpgfx_caps_version_to_string (cap_sets[i].version);
+          g_debug ("[RDP.RDPGFX] Client caps set %s flags: 0x%08X%s",
+                   version_string, cap_sets[i].flags,
+                   has_flags_field ? "" : " (invalid flags field)");
         }
       if (!cap_found)
         {
@@ -1282,8 +1325,8 @@ rdpgfx_caps_advertise (RdpgfxServerContext             *rdpgfx_context,
   GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
 
   g_debug ("[RDP.RDPGFX] Received a CapsAdvertise PDU");
-  search_and_list_unknown_cap_sets_versions (caps_advertise->capsSets,
-                                             caps_advertise->capsSetCount);
+  search_and_list_unknown_cap_sets_versions_and_flags (caps_advertise->capsSets,
+                                                       caps_advertise->capsSetCount);
 
   if (graphics_pipeline->initialized &&
       graphics_pipeline->initial_version < RDPGFX_CAPVERSION_103)
@@ -1689,38 +1732,6 @@ grd_rdp_graphics_pipeline_finalize (GObject *object)
   g_mutex_clear (&graphics_pipeline->caps_mutex);
 
   G_OBJECT_CLASS (grd_rdp_graphics_pipeline_parent_class)->finalize (object);
-}
-
-static const char *
-rdpgfx_caps_version_to_string (uint32_t caps_version)
-{
-  switch (caps_version)
-    {
-    case RDPGFX_CAPVERSION_107:
-      return "RDPGFX_CAPVERSION_107";
-    case RDPGFX_CAPVERSION_106:
-      return "RDPGFX_CAPVERSION_106";
-    case RDPGFX_CAPVERSION_105:
-      return "RDPGFX_CAPVERSION_105";
-    case RDPGFX_CAPVERSION_104:
-      return "RDPGFX_CAPVERSION_104";
-    case RDPGFX_CAPVERSION_103:
-      return "RDPGFX_CAPVERSION_103";
-    case RDPGFX_CAPVERSION_102:
-      return "RDPGFX_CAPVERSION_102";
-    case RDPGFX_CAPVERSION_101:
-      return "RDPGFX_CAPVERSION_101";
-    case RDPGFX_CAPVERSION_10:
-      return "RDPGFX_CAPVERSION_10";
-    case RDPGFX_CAPVERSION_81:
-      return "RDPGFX_CAPVERSION_81";
-    case RDPGFX_CAPVERSION_8:
-      return "RDPGFX_CAPVERSION_8";
-    default:
-      g_assert_not_reached ();
-    }
-
-  return NULL;
 }
 
 static gboolean
