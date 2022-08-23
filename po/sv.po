@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2022-03-03 13:53+0100\n"
+"POT-Creation-Date: 2022-08-05 21:58+0000\n"
+"PO-Revision-Date: 2022-08-23 21:38+0200\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -18,9 +18,9 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Fjärrskrivbord"
 
@@ -46,16 +46,16 @@ msgstr "Neka"
 msgid "Accept"
 msgstr "Acceptera"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:52
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Användning: %s [FLAGGOR…] KOMMANDO [UNDERKOMMANDO]…\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:444
 msgid "Commands:\n"
 msgstr "Kommandon:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:449
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -91,7 +91,7 @@ msgstr ""
 "                                               inmatningsenheter\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:468
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -119,16 +119,20 @@ msgstr ""
 "                                               inmatningsenheter\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:483
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Visa aktuell status\n"
 "\n"
 "Flaggor:\n"
+"  --headless                                 - Använd huvudlös lagring för "
+"uppgifter\n"
 "  --help                                     - Skriv ut denna hjälptext\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
@@ -136,7 +140,7 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "Huruvida RDP-bakänden är aktiverad eller inte"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Om inställd till ”true” (sant) kommer RDP-bakänden att initieras."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
@@ -151,10 +155,10 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
@@ -164,12 +168,12 @@ msgstr ""
 "RDPBCGR] 2.2.1.3.2) eller klientens skärmdata ([MS-RDPBCGR] 2.2.1.3.6), "
 "beroende på vad som är tillgängligt. Då en fjärrskrivbordssession används "
 "med en virtuell skärm kan klienter ändra storleken på den virtuella skärmen "
-"under en session med Display Control Channel Extension ([MS-RDPEDISP]). "
-"Tillåtna skärmdelningslägen inkluderar: * mirror-primary - Spela in den "
-"primära skärmen för den aktuella användarsessionen. * extend - Skapa en ny "
-"virtuell skärm och använd den för fjärrskrivbordssessionen. Upplösningen för "
-"denna virtuella skärm härleds från skärmkonfigurationen, som tillhandahålls "
-"av fjärrskrivbordsklienten."
+"under en session med Display Update Virtual Channel Extension ([MS-"
+"RDPEDISP]). Tillåtna skärmdelningslägen inkluderar: * mirror-primary - Spela "
+"in den primära skärmen för den aktuella användarsessionen. * extend - Skapa "
+"en ny virtuell skärm och använd den för fjärrskrivbordssessionen. "
+"Upplösningen för denna virtuella skärm härleds från skärmkonfigurationen som "
+"tillhandahålls av fjärrskrivbordsklienten."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
@@ -206,7 +210,7 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "Huruvida VNC-bakänden är aktiverad eller inte"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Om inställd till ”true” (sant) kommer VNC-bakänden att initieras."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
@@ -234,3 +238,33 @@ msgstr ""
 "användaren om varje ny anslutning, vilket kräver att en person med fysisk "
 "åtkomst till arbetsstationen uttryckligen godkänner den nya anslutningen. * "
 "password - genom att kräva att fjärrklienten anger ett känt lösenord"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Skärmdelningsläge för VNC-anslutningar"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"Skärmdelningsläget anger huruvida VNC-bakänden speglar den primära skärmen, "
+"eller huruvida en virtuell skärm skapas. För den initiala upplösningen för "
+"den virtuella skärmen använder VNC-bakänden en standardstorlek på 1920×1080 "
+"bildpunkter. Då en fjärrskrivbordssession används med en virtuell skärm kan "
+"klienter ändra storleken på den virtuella skärmen under en session med PDU:n "
+"setDesktopSize. Tillåtna skärmdelningslägen inkluderar: * mirror-primary - "
+"Spela in den primära skärmen för den aktuella användarsessionen. * extend - "
+"Skapa en ny virtuell skärm och använd den för fjärrskrivbordssessionen. Den "
+"initiala upplösningen för denna virtuella skärm är satt till 1920×1080 "
+"bildpunkter. Klienter kan åsidosätta den initiala upplösningen med "
+"efterföljande skärmkonfigurationsuppdateringar."
