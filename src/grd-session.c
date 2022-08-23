@@ -480,8 +480,6 @@ grd_session_enable_clipboard (GrdSession   *session,
   if (!priv->remote_desktop_session)
     return FALSE;
 
-  priv->clipboard = clipboard;
-
   options_variant = serialize_clipboard_options (mime_type_tables);
   if (!grd_dbus_remote_desktop_session_call_enable_clipboard_sync (
          priv->remote_desktop_session, options_variant, NULL, &error))
@@ -489,6 +487,7 @@ grd_session_enable_clipboard (GrdSession   *session,
       g_warning ("Failed to enable clipboard: %s", error->message);
       return FALSE;
     }
+  priv->clipboard = clipboard;
 
   return TRUE;
 }
