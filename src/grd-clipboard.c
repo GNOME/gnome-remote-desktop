@@ -311,8 +311,7 @@ grd_clipboard_request_server_content_for_mime_type_async (GrdClipboard *clipboar
 
   g_return_if_fail (klass->submit_requested_server_content);
 
-  if (!priv->enabled)
-    return;
+  g_assert (priv->enabled);
 
   g_debug ("Clipboard[SelectionRead]: Requesting data from servers clipboard"
            " (mime type: %s)", grd_mime_type_to_string (mime_type));
