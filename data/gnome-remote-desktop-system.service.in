@@ -1,0 +1,12 @@
+[Unit]
+Description=GNOME Remote Desktop
+
+[Service]
+Type=dbus
+User=@GRD_USERNAME@
+BusName=org.gnome.RemoteDesktop
+ExecStart=@libexecdir@/gnome-remote-desktop-daemon --system
+Restart=on-failure
+
+[Install]
+WantedBy=graphical.target

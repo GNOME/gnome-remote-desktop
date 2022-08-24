@@ -1,0 +1,11 @@
+[Unit]
+Description=GNOME Remote Desktop Handover
+
+[Service]
+Type=dbus
+BusName=org.gnome.RemoteDesktop.Handover
+ExecStart=@libexecdir@/gnome-remote-desktop-daemon --handover
+Restart=on-failure
+
+[Install]
+WantedBy=gnome-session.target
