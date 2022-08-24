@@ -75,6 +75,7 @@ bindir = join_paths(prefix, get_option('bindir'))
 datadir = join_paths(prefix, get_option('datadir'))
 mandir = join_paths(prefix, get_option('mandir'))
 schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
+desktopdir = join_paths(datadir, 'applications')
 dbus_sys_dir = (get_option('dbus_sys') != '') ? get_option('dbus_sys') : join_paths(datadir, 'dbus-1', 'system.d')
 
 grd_datadir = join_paths(datadir, 'gnome-remote-desktop')
@@ -98,14 +99,23 @@ configure_file(input: 'config.h.meson',
 
 configinc = include_directories('.')
 
-servicedir = get_option('systemd_user_unit_dir')
+userunitdir = get_option('systemd_user_unit_dir')
+systemunitdir = get_option('systemd_system_unit_dir')
 if systemd_dep.found()
-  if servicedir == ''
-    servicedir = systemd_dep.get_variable(pkgconfig: 'systemduserunitdir')
+  if userunitdir == ''
+    userunitdir = systemd_dep.get_variable(pkgconfig: 'systemduserunitdir')
   endif
 
-  if servicedir == ''
+  if userunitdir == ''
     error('Couldn\'t determine systemd user unit service directory')
+  endif
+
+  if systemunitdir == ''
+    systemunitdir = systemd_dep.get_variable(pkgconfig: 'systemdsystemunitdir')
+  endif
+
+  if systemunitdir == ''
+    error('Couldn\'t determine systemd system unit service directory')
   endif
 endif
 
@@ -138,7 +148,9 @@ output = [
   '    libexecdir................... ' + libexecdir,
   '    bindir....................... ' + bindir,
   '    datadir...................... ' + datadir,
-  '    systemd user unit dir........ ' + servicedir,
+  '    desktopdir................... ' + desktopdir,
+  '    systemd user unit dir........ ' + userunitdir,
+  '    systemd system unit dir...... ' + systemunitdir,
   '    GSettings schema dir......... ' + schemadir,
   '    System DBus dir.............. ' + dbus_sys_dir,
   '',

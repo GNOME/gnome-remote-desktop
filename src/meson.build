@@ -241,14 +241,6 @@ executable('grdctl',
            include_directories: [configinc],
            install: true)
 
-service_config = configuration_data()
-service_config.set('libexecdir', libexecdir)
-
-configure_file(input: 'gnome-remote-desktop.service.in',
-               output: 'gnome-remote-desktop.service',
-               configuration: service_config,
-               install_dir: servicedir)
-
 generated_enums_schema = custom_target('gsettings-enums',
               input: 'grd-enums.h',
               output: 'org.gnome.desktop.remote-desktop.enums.xml',
