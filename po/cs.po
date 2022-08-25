@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2022-03-01 11:38+0100\n"
+"POT-Creation-Date: 2022-08-05 21:58+0000\n"
+"PO-Revision-Date: 2022-08-25 15:56+0200\n"
 "Last-Translator: Marek Černocký <marek@manet.cz>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2\n"
 "X-Generator: Gtranslator 3.38.0\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
 msgstr "Vzdálená plocha GNOME"
 
@@ -46,16 +46,16 @@ msgstr "Zamítnout"
 msgid "Accept"
 msgstr "Přijmout"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:52
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Použití: %s [VOLBY…] PŘÍKAZ [PODPŘÍKAZ]…\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:444
 msgid "Commands:\n"
 msgstr "Příkaz:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:449
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -77,15 +77,20 @@ msgstr ""
 "  rdp                                       - Podpříkazy RDP:\n"
 "    enable                                  - Povolit podporu RDP\n"
 "    disable                                 - Zakázat podporu RDP\n"
-"    set-tls-cert <cesta-k-certifikátu>      - Nastavit cestu k certifikátu TLS\n"
+"    set-tls-cert <cesta-k-certifikátu>      - Nastavit cestu k certifikátu "
+"TLS\n"
 "    set-tls-key <cesta-ke-klíči>            - Nastavit cestu ke klíči TLS\n"
-"    set-credentials <jméno> <heslo>         - Nastavit pověřovací uživatelské jméno a heslo\n"
-"    clear-credentials                       - Smazat pověřovací uživatelské jméno a heslo\n"
-"    enable-view-only                        - Zakázat vzdálené ovládání vstupních zařízení\n"
-"    disable-view-only                       - Povolit vzdálené ovládání vstupních zařízení\n"
+"    set-credentials <jméno> <heslo>         - Nastavit pověřovací "
+"uživatelské jméno a heslo\n"
+"    clear-credentials                       - Smazat pověřovací uživatelské "
+"jméno a heslo\n"
+"    enable-view-only                        - Zakázat vzdálené ovládání "
+"vstupních zařízení\n"
+"    disable-view-only                       - Povolit vzdálené ovládání "
+"vstupních zařízení\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:468
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -107,20 +112,26 @@ msgstr ""
 "    set-password <heslo>                    - Nastavit heslo VNC\n"
 "    clear-password                          - Smazat heslo VNC\n"
 "    set-auth-method password|prompt         - Nastavit metodu ověřování\n"
-"    enable-view-only                        - Zakázat vzdálené ovládání vstupních zařízení\n"
-"    disable-view-only                       - Povolit vzdálené ovládání vstupních zařízební\n"
+"    enable-view-only                        - Zakázat vzdálené ovládání "
+"vstupních zařízení\n"
+"    disable-view-only                       - Povolit vzdálené ovládání "
+"vstupních zařízební\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:483
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]               - Zobrazit aktuální stav\n"
 "\n"
 "Volby:\n"
+"  --headless                                - Pro neinteraktivní zařízení "
+"používat úložiště s pověřeními\n"
 "  --help                                    - Vypsat tuto nápovědu\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
@@ -128,12 +139,12 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "Zda má, či nemá, být povolená podpora RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Když je zapnuto, bude zprovozněna podpora RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Screenshare mode of RDP connections"
-msgstr "Režim sdílení obrazovky připojení RDP"
+msgstr "Režim sdílení obrazovky pro připojení RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 msgid ""
@@ -143,10 +154,10 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
@@ -155,11 +166,11 @@ msgstr ""
 "monitoru se použijí buď základní údaje klienta ([MS-RDPBCGR] 2.2.1.3.2) nebo "
 "údaje monitoru klienta ([MS-RDPBCGR] 2.2.1.3.6), záleží, co je k dispozici. "
 "Když se používá sezení vzdálené plochy s virtuálním monitorem, může klient "
-"během sezení měnit rozlišení virtuálního monitoru pomocí Display Control "
-"Channel Extension ([MS-RDPEDISP]). Povolené režimy sdílení obrazovky jsou: • "
-"extend - Vytvoří nový virtuální monitor a použije jej pro sezení vzdálené "
-"plochy. Rozlišení virtuálního monitoru je odvozeno z nastavení monitoru "
-"zaslaného klientem zvdálené plochy."
+"během sezení měnit rozlišení virtuálního monitoru pomocí Display Update "
+"Virtual Channel Extension ([MS-RDPEDISP]). Povolené režimy sdílení obrazovky "
+"jsou: • extend - Vytvoří nový virtuální monitor a použije jej pro sezení "
+"vzdálené plochy. Rozlišení virtuálního monitoru je odvozeno z nastavení "
+"monitoru zaslaného klientem zvdálené plochy."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
@@ -196,7 +207,7 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "Zda má, či nemá, být povolená podpora VNC"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Když je zapnuto, bude zprovozněna podpora VNC"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
@@ -224,3 +235,31 @@ msgstr ""
 "uživateli při každém novém připojení, kdy je nutná uživatelova fyzická "
 "přítomnost u zařízení, aby připojení výslovně schválil. • password – "
 "požaduje po vzdáleném klientovi znalost hesla"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Režim sdílení obrazovky pro připojení VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"Režim sdílení obrazovky určuje, jestli podpora VNC zrcadlí hlavní obrazovku, "
+"nebo je vytvořen virtuální monitor. Pro počáteční rozlišení virtuálního "
+"monitoru používá server VNC výchozí rozlišení 1920×1080 pixelů. Když se "
+"používá sezení vzdálené plochy s virtuálním monitorem, může klient během "
+"sezení měnit rozlišení virtuálního monitoru pomocí setDesktopSize PDU. "
+"Povolené režimy sdílení obrazovky jsou: • extend - Vytvoří nový virtuální "
+"monitor a použije jej pro sezení vzdálené plochy. Počáteční rozlišení tohoto "
+"monitoru je nastaveno na 1920×1080 pixelů. Klient může přebít počáteční "
+"rozlišení dílčími aktualizacemi nastavení monitoru."
