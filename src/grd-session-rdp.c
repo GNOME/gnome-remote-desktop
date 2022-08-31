@@ -1749,6 +1749,13 @@ rdp_peer_capabilities (freerdp_peer *peer)
       session_rdp->monitor_config->monitor_count = 1;
     }
 
+  if (rdp_settings->SupportGraphicsPipeline || rdp_settings->RemoteFxCodec ||
+      rdp_settings->NSCodec)
+    {
+      g_debug ("[RDP] Fixing invalid colour depth set by client");
+      rdp_settings->ColorDepth = 32;
+    }
+
   switch (rdp_settings->ColorDepth)
     {
     case 32:
