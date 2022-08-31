@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2021-06-21 17:34+0000\n"
+"POT-Creation-Date: 2022-08-05 21:58+0000\n"
+"PO-Revision-Date: 2022-08-31 17:34+0000\n"
 "Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
 "Language-Team: Catalan <gnome@llistes.softcatala.org>\n"
 "Language: ca\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
 msgstr "Escriptori remot del GNOME"
 
@@ -40,16 +40,16 @@ msgstr "Rebutja"
 msgid "Accept"
 msgstr "Accepta"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:52
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Ús: %s [OPCIONS...] ORDRE [SUBORDRE]...\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:444
 msgid "Commands:\n"
 msgstr "Ordres:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:449
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -81,7 +81,7 @@ msgstr ""
 "                                               de dispositius\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:468
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -106,25 +106,26 @@ msgstr ""
 "    disable-view-only                        - Inhabilita el control remot de l'entrada\n"
 "                                               de dispositius\n"
 
-
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:483
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Mostra l'estat actual\n"
 "\n"
-"Options:\n"
-"  --help                                     - Mostra aquest text d'ajuda\n"
+"Opcions:\n"
+"  --headless                                 - Emmagatzema les credencials sense capçaleres  --help                                     - Mostra aquest text d'ajuda\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Si el rerefons RDP està habilitat o no"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+#| msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Si s'estableix a «true» s'inicialitzarà el rerefons RDP."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
@@ -139,26 +140,26 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
-"resolution of this virtual monitor is derived from the monitor "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend -"
+" Create a new virtual monitor and use it for the remote desktop session. The"
+" resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
-"El mode compartició de pantalla especifica, si el rerefons RDP fa mirall de la pantalla "
-"primària, o si es crea un monitor virtual. Per a la resolució inicial del "
-"monitor virtual, el rerefons RDP utilitza les dades del nucli del client "
-"([MS-RDPBCGR] 2.2.1.3.2) o les dades del monitor del client (MSMS-"
+"El mode compartició de pantalla especifica, si el rerefons RDP fa mirall de "
+"la pantalla primària, o si es crea un monitor virtual. Per a la resolució "
+"inicial del monitor virtual, el rerefons RDP utilitza les dades del nucli "
+"del client ([MS-RDPBCGR] 2.2.1.3.2) o les dades del monitor del client (MS-"
 "RDPBCGR. 2.2.1.3.6), depenent del que estigui disponible. Quan s'utilitza "
 "una sessió d'escriptori remot amb un monitor virtual, els clients poden "
 "canviar la mida de la resolució del monitor virtual durant una sessió amb "
-"l'extensió del canal de control de pantalla (MSMS-RDPEDISP). Els modes de "
+"l'extensió del canal de control de pantalla ([MS-RDPEDISP]). Els modes de "
 "compartició de pantalla permesos inclouen: * mirror-primary - Enregistra el "
-"monitor principal de la sessió d'usuari actual. * extend - Crea un monitor"
-" virtual nou i utilitzeu-lo per a la sessió d'escriptori remot. La resolució"
-" d'aquest monitor virtual es deriva de la configuració del monitor, presentada "
-"pel client d'escriptori remot."
+"monitor principal de la sessió d'usuari actual. * extend - Crea un monitor "
+"virtual nou que s'utilitza en la sessió d'escriptori remot. La resolució "
+"d'aquest monitor virtual es deriva de la configuració del monitor, "
+"presentada pel client d'escriptori remot."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
@@ -197,7 +198,7 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "Si el rerefons VNC està habilitat o no"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Si s'estableix a «true» s'inicialitzarà el rerefons VNC."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
@@ -226,3 +227,34 @@ msgstr ""
 " l'estació de treball que aprovi explícitament la nova connexió. * "
 "«password» - demanant al client remot que proporcioni una contrasenya "
 "coneguda"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Mode de compartició de pantalla de les connexions VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"El mode de compartició de pantalla especifica si el rerefons VNC reflecteix la"
+" pantalla primària o si es crea un monitor virtual. Per a la resolució "
+"inicial del monitor virtual, el dorsal VNC utilitza una mida predeterminada "
+"de 1920x1080 píxels. Quan s'utilitza una sessió d'escriptori remot amb un "
+"monitor virtual, els clients poden redimensionar la resolució del monitor "
+"virtual durant una sessió amb el setDesktopSize PDU. Els modes de "
+"compartició de pantalla permesos inclouen: * mirror-primary - Enregistra el "
+"monitor primari de la sessió d'usuari actual. * extend - Crea un monitor "
+"virtual nou que s'utilitza per a la sessió d'escriptori remot. La resolució "
+"inicial del monitor d'aquest monitor virtual s'estableix a 1920x1080 píxels."
+" Els clients poden anul·lar la resolució inicial amb actualitzacions de "
+"configuració posteriors del monitor."
