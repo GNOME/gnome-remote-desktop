@@ -137,7 +137,7 @@ output = [
   '',
   '        Support for audio output redirection using FDK AAC........' + have_fdk_aac.to_string(),
   '',
-  '  Now type \'ninja -C ' + meson.build_root() + '\' to build ' + meson.project_name(),
+  '  Now type \'ninja -C ' + meson.project_build_root() + '\' to build ' + meson.project_name(),
   '',
   '',
 ]
