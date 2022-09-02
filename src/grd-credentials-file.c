@@ -105,14 +105,30 @@ grd_credentials_file_clear (GrdCredentials      *credentials,
                             GError             **error)
 {
   GrdCredentialsFile *credentials_file = GRD_CREDENTIALS_FILE (credentials);
+  g_autoptr (GError) local_error = NULL;
   gboolean removed;
 
   removed = g_key_file_remove_key (credentials_file->key_file,
                                    group_name_from_type (type),
-                                   GRD_CREDENTIALS_FILE_KEY, error);
+                                   GRD_CREDENTIALS_FILE_KEY, &local_error);
+  if (!removed)
+    {
+      if (!g_error_matches (local_error,
+                            G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_GROUP_NOT_FOUND) &&
+          !g_error_matches (local_error,
+                            G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+      else
+        {
+          return TRUE;
+        }
+    }
 
-  return removed && g_key_file_save_to_file (credentials_file->key_file,
-                                             credentials_file->filename, error);
+  return g_key_file_save_to_file (credentials_file->key_file,
+                                  credentials_file->filename, error);
 }
 
 GrdCredentialsFile *
