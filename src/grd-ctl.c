@@ -112,13 +112,20 @@ create_credentials (CredentialsType   credentials_type,
       {
         GrdCredentialsTpm *credentials_tpm;
         GrdCredentialsFile *credentials_file;
+        static gboolean warned_once = FALSE;
 
         credentials_tpm = grd_credentials_tpm_new (&local_error);
         if (credentials_tpm)
           return GRD_CREDENTIALS (credentials_tpm);
 
-        g_warning ("Init TPM credentials failed because %s, using GKeyFile as fallback",
-                   local_error->message);
+        g_debug ("Failed to create TPM credentials backend: %s", local_error->message);
+
+        if (!warned_once)
+          {
+            g_printerr ("Init TPM credentials failed, using plain text fallback.\n");
+            warned_once = TRUE;
+          }
+
         credentials_file = grd_credentials_file_new (error);
         if (credentials_file)
           return GRD_CREDENTIALS (credentials_file);
