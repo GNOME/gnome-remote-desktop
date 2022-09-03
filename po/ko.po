@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2022-03-01 18:10+0900\n"
+"POT-Creation-Date: 2022-08-05 21:58+0000\n"
+"PO-Revision-Date: 2022-08-28 22:58+0900\n"
 "Last-Translator: Seong-ho Cho <shcho@gnome.org>\n"
 "Language-Team: Korean <gnome-kr@googlegroups.com>\n"
 "Language: ko\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 2.3.1\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
 msgstr "그놈 원격 데스크톱"
 
@@ -43,16 +43,16 @@ msgstr "거절"
 msgid "Accept"
 msgstr "수락"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:52
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "사용법: %s [<옵션>...] <명령> [<하위명령>]...\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:444
 msgid "Commands:\n"
 msgstr "명령:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:449
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -82,7 +82,7 @@ msgstr ""
 "    disable-view-only                        - 입력 장치 원격 제어 사용\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:468
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -108,16 +108,20 @@ msgstr ""
 "    disable-view-only                        - 원격 입력 장치 제어 사용\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:483
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - 현재 상태를 표시합니다\n"
 "\n"
 "옵션:\n"
+"  --headless                                 - 헤드리스 인증 저장소를 활용합"
+"니다.\n"
 "  --help                                     - 도움말 문구를 출력합니다\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
@@ -125,7 +129,7 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "RDP 백엔드 사용 여부"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "'true'로 설정하면 RDP 백엔드를 초기화합니다."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
@@ -140,22 +144,22 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
 "화면 공유 모드는 RDP 백엔드로 기본 화면을 복제할지, 가상 모니터를 만들지 지정"
 "합니다. 가상 모니터 초기 해상도는 RDP 백엔드에서 클라이언트 코어 데이터([MS-"
 "RDPBCGR] 2.2.1.3.2)를 활용하거나, 클라이언트 모니터 데이터([MS-RDPBCGR] "
-"2.2.1.3.6)를 사용 가능 여부에 따라 사용합니다. 원격 데스크톱 세션을 가상 모니"
-"터로 사용할 경우 클라이언트에서 디스플레이 제어 채널 확장([MS-RDPEDISP])으로 "
-"세션 실행 과정에서 가상 모니터 해상도를 조절할 수 있습니다. 사용할 수 있는 화"
-"면 공유 모드는 현재 사용자 세션의 주 모니터를 기록하는 mirror-primary, 원격 "
-"데스크톱 세션용 새 가상 모니터를 만들어 활용하는 extend가 있습니다. 이 가상 "
-"모니터의 해상도는 원격 데스크톱 클라이언트가 보낸 모니터 설정을 따릅니다."
+"2.2.1.3.6)의 사용 가능 여부를 따릅니다. 원격 데스크톱 세션을 가상 모니터로 사"
+"용할 경우 클라이언트에서 디스플레이 제어 채널 확장([MS-RDPEDISP])으로 세션 실"
+"행 과정에서 가상 모니터 해상도를 조절할 수 있습니다. 사용할 수 있는 화면 공"
+"유 모드는 현재 사용자 세션의 주 모니터를 기록하는 mirror-primary, 원격 데스크"
+"톱 세션용 새 가상 모니터를 만들어 활용하는 extend가 있습니다. 이 가상 모니터"
+"의 해상도는 원격 데스크톱 클라이언트가 보낸 모니터 설정을 따릅니다."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
@@ -192,7 +196,7 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "VNC 백엔드 사용 여부"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "'true'로 설정하면 VNC 백엔드를 초기화합니다."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
@@ -218,4 +222,32 @@ msgstr ""
 "VNC 인증 방식이란 원격 연결의 인증 방식을 말합니다. 현재 두가지 방식으로 가능"
 "합니다: * 질문 - 연결을 새로 할 때마다 질문하여 새 연결을 분명하게 허용할 수 "
 "있게 워크스테이션을 물리적으로 다룰 사람이 필요합니다. * 암호 - 이미 알고 있"
-"는 암호를 원격 클라이언트에서 입력합니다."
+"는 암호를 원격 클라이언트에서 입력합니다"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "VNC 연결 화면 공유 모드"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"화면 공유 모드는 VNC 백엔드로 기본 화면을 복제할지, 가상 모니터를 만들지 지정"
+"합니다. 가상 모니터 초기 해상도는 VNC 백엔드에서는 가상 모니터 초기 해상도 설"
+"정 값으로 1920x1080 기본 해상도를 활용합니다. 원격 데스크톱 세션을 가상 모니"
+"터로 사용할 경우, 클라이언트에서 setDesktopSize PDU 값으로 세션 실행 과정에"
+"서 가상 모니터 해상도를 조절할 수 있습니다. 사용할 수 있는 화면 공유 모드는 "
+"현재 사용자 세션의 주 모니터를 기록하는 mirror-primary, 원격 데스크톱 세션용 "
+"새 가상 모니터를 만들어 활용하는 extend가 있습니다. 이 가상 모니터의 초기 모"
+"니터 해상도는 1920x1080으로 설정합니다. 클라이언트에서는 모니터 설정을 업데"
+"이트할 때마다 해당 설정 값으로 초기 해상도 값을 대신할 수 있습니다."
