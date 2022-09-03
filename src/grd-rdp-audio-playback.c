@@ -173,6 +173,11 @@ prepare_volume_data (GrdRdpAudioVolumeData *volume_data)
       for (i = 0; i < volume_data->n_volumes; ++i)
         volume_data->volumes[i] = 0.0f;
     }
+  else if (volume_data->n_volumes == 0)
+    {
+      for (i = 0; i < N_CHANNELS; ++i)
+        volume_data->volumes[i] = 0.0f;
+    }
   else if (N_CHANNELS > volume_data->n_volumes)
     {
       g_assert (N_CHANNELS == 2);
