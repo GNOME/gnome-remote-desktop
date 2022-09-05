@@ -1,24 +1,24 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 #
-# Sveinn í Felli <sv1@fellsnet.is>, 2021.
+# Sveinn í Felli <sv1@fellsnet.is>, 2021, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issu"
 "es\n"
-"POT-Creation-Date: 2021-12-08 10:00+0000\n"
-"PO-Revision-Date: 2021-12-15 09:17+0000\n"
+"POT-Creation-Date: 2022-08-02 15:36+0000\n"
+"PO-Revision-Date: 2022-09-05 10:04+0000\n"
 "Last-Translator: Sveinn í Felli <sv1@fellsnet.is>\n"
-"Language-Team: Icelandic <translation-team-is@lists.sourceforge.org>\n"
+"Language-Team: Icelandic\n"
 "Language: is\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Lokalize 19.12.3\n"
+"X-Generator: Lokalize 21.12.3\n"
 
-#: src/grd-daemon.c:367
+#: src/grd-daemon.c:480
 msgid "GNOME Remote Desktop"
 msgstr "Fjartengt GNOME skjáborð"
 
@@ -33,8 +33,8 @@ msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
 "desktop."
 msgstr ""
-"Notandi á fjartengdu tölvunni '%s' er að reyna að skoða eða stýra skjáborðinu"
-" þínu."
+"Notandi á fjartengdu tölvunni '%s' er að reyna að skoða eða stýra "
+"skjáborðinu þínu."
 
 #: src/grd-prompt.c:131
 msgid "Refuse"
@@ -44,49 +44,139 @@ msgstr "Hafna"
 msgid "Accept"
 msgstr "Samþykkja"
 
+#: src/grd-ctl.c:44
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr ""
+
+#: src/grd-ctl.c:383
+msgid "Commands:\n"
+msgstr "Skipanir:\n"
+
+#: src/grd-ctl.c:388
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+
+#: src/grd-ctl.c:407
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+
+#: src/grd-ctl.c:422
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "Hvort RDP-bakendinn sé virkur eða ekki"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to to 'true' the RDP backend will be initialized."
+msgstr "Ef þetta er stillt á 'satt' verður RDP-bakendinn virkjaður."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "Skjádeilingarhamur RDP-tenginga"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Control Channel Extension "
+"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
 msgstr "Slóð að skilríkjaskránni"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
 msgstr ""
-"Til að geta notað RDP með TLS-öryggi, verður að gefa upp slóð á einkalykils-"
-" og skilríkjaskránna til RDP-þjónsins."
+"Til að geta notað RDP með TLS-öryggi, verður að gefa upp slóð á einkalykils- "
+"og skilríkjaskránna til RDP-þjónsins."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
 msgid "Path to the private key file"
 msgstr "Slóð að einkalykilskránni"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid "Only allow remote connections to view the screen content"
 msgstr "Einungis leyfa fjartengingum að skoða efni á skjánum"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"Þegar einungis-skoða er virkt, geta fjartengdir RDP-notendur ekki stjórnað"
-" inntakstækjum (t.d. mús og lyklaborði)."
+"Þegar einungis-skoða er virkt, geta fjartengdir RDP-notendur ekki stjórnað "
+"inntakstækjum (t.d. mús og lyklaborði)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "Hvort VNC-bakendinn sé virkur eða ekki"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to to 'true' the VNC backend will be initialized."
+msgstr "Ef þetta er stillt á 'satt' verður VNC-bakendinn virkjaður."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"Þegar einungis-skoða er virkt, geta fjartengdir VNC-notendur ekki stjórnað"
-" inntakstækjum (t.d. mús og lyklaborði)."
+"Þegar einungis-skoða er virkt, geta fjartengdir VNC-notendur ekki stjórnað "
+"inntakstækjum (t.d. mús og lyklaborði)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
 msgid "Method used to authenticate VNC connections"
 msgstr "Aðferð notuð við auðkenningu VNC-tenginga"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -94,9 +184,9 @@ msgid ""
 "access to the workstation to explicitly approve the new connection. * "
 "password - by requiring the remote client to provide a known password"
 msgstr ""
-"Aðferð við auðkenningu VNC-tenginga lýsir því hvernig fjartenging er"
-" auðkennd. Eins og er má gera það á tvo mismunandi vegu: * prompt - biðja"
-" notandann að staðfesta allar nýjar tengingar, sem krefst þess að raunveruleg"
-" manneskja hafi aðgang að viðkomandi tölvu og samþykki sérstakleg nýju"
-" tenginguna. * "
-"password - þar sem fjartengdi notandinn þarf að gefa upp þekkt lykilorð"
+"Aðferð við auðkenningu VNC-tenginga lýsir því hvernig fjartenging er "
+"auðkennd. Eins og er má gera það á tvo mismunandi vegu: * prompt - biðja "
+"notandann að staðfesta allar nýjar tengingar, sem krefst þess að raunveruleg "
+"manneskja hafi aðgang að viðkomandi tölvu og samþykki sérstakleg nýju "
+"tenginguna. * password - þar sem fjartengdi notandinn þarf að gefa upp þekkt "
+"lykilorð"
