@@ -6,11 +6,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Gnome Nepali Translation Project\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2022-05-02 10:47+0000\n"
-"PO-Revision-Date: 2022-05-09 13:23+0545\n"
-"Last-Translator: \n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues\n"
+"POT-Creation-Date: 2022-08-05 21:58+0000\n"
+"PO-Revision-Date: 2022-09-08 02:07+0545\n"
+"Last-Translator: Pawan Chitrakar <chautari@gmail.com>\n"
 "Language-Team: Nepali Team <chautari@gmail.com>\n"
 "Language: ne\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.0.1\n"
 
-#: src/grd-daemon.c:480
+#: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
 msgstr "जिनोम टाढाको डेस्कटप"
 
@@ -30,12 +29,9 @@ msgstr "तपाईँको डेस्कटप साझेदार गर
 
 #: src/grd-prompt.c:125
 #, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
+msgid "A user on the computer '%s' is trying to remotely view or control your desktop."
 msgstr ""
-"'%s' कम्प्युटरको एउटा प्रयोगकर्ताले टाढाबाट तपाईँको डेस्कटप हेर्ने वा नियन्त्रण गर्ने प्रयास "
-"गरिरहेको छ ।"
+"'%s' कम्प्युटरको एउटा प्रयोगकर्ताले टाढाबाट तपाईँको डेस्कटप हेर्ने वा नियन्त्रण गर्ने प्रयास गरिरहेको छ ।"
 
 #: src/grd-prompt.c:131
 msgid "Refuse"
@@ -45,16 +41,16 @@ msgstr "अस्वीकार गर्नुहोस्"
 msgid "Accept"
 msgstr "स्विकार गर्नुहोस्"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:52
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "उपयोग: %s [OPTIONS...] आदेश [SUBCOMMAND]...\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:444
 msgid "Commands:\n"
 msgstr "आदेशहरू:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:449
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -65,11 +61,9 @@ msgid ""
 "                                               credentials\n"
 "    clear-credentials                        - Clear username and password\n"
 "                                               credentials\n"
-"    enable-view-only                         - Disable remote control of "
-"input\n"
+"    enable-view-only                         - Disable remote control of input\n"
 "                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
-"input\n"
+"    disable-view-only                        - Enable remote control of input\n"
 "                                               devices\n"
 "\n"
 msgstr ""
@@ -88,7 +82,7 @@ msgstr ""
 "                                               यन्त्रहरू\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:468
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -96,11 +90,9 @@ msgid ""
 "    set-password <password>                  - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
-"    enable-view-only                         - Disable remote control of "
-"input\n"
+"    enable-view-only                         - Disable remote control of input\n"
 "                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
-"input\n"
+"    disable-view-only                        - Enable remote control of input\n"
 "                                               devices\n"
 "\n"
 msgstr ""
@@ -116,11 +108,12 @@ msgstr ""
 "                                               यन्त्रहरू\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:483
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials] - हालको वस्तुस्थिति देखाउनुहोस्\n"
@@ -133,7 +126,7 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "RDP ब्याकइन्ड सक्षम पारिएको छ या छैन"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "यदि 'सही' मा सेट गरेमा RDP ब्याकइन्ड सुरुआत हुनेछ ।"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
@@ -142,29 +135,26 @@ msgstr "RDP जडानको स्क्रिनसेयर मोड"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 msgid ""
-"The screenshare mode specifies, whether the RDP backend mirrors the primary "
-"screen, or whether a virtual monitor is created. For the initial resolution "
-"of the virtual monitor, the RDP backend uses either the client core data "
-"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
-"2.2.1.3.6), depending on what is available. When using a remote desktop "
-"session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
-"resolution of this virtual monitor is derived from the monitor "
-"configuration, submitted by the remote desktop client."
+"The screenshare mode specifies, whether the RDP backend mirrors the primary screen, or "
+"whether a virtual monitor is created. For the initial resolution of the virtual monitor, the "
+"RDP backend uses either the client core data ([MS-RDPBCGR] 2.2.1.3.2) or the client monitor "
+"data ([MS-RDPBCGR] 2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the virtual monitor "
+"during a session with the Display Update Virtual Channel Extension ([MS-RDPEDISP]). Allowed "
+"screenshare modes include: * mirror-primary - Record the primary monitor of the current user "
+"session. * extend - Create a new virtual monitor and use it for the remote desktop session. "
+"The resolution of this virtual monitor is derived from the monitor configuration, submitted "
+"by the remote desktop client."
 msgstr ""
-"स्क्रिनसेयर मोडले निर्दिष्ट गर्दछ, कि आरडीपी ब्याकइन्डले प्राथमिक पर्दा दर्पण गर्दछ, वा "
-"अवास्तविक मोनिटर सिर्जना गरिएको छ । वर्चुअल मोनिटरको प्रारम्भिक रिजोल्युसनका लागि, "
-"RDP ब्याकइन्डले या त क्लाइन्ट कोर डेटा ([MS-RDPBCGR] 2.2.1.3.2) वा क्लाइन्ट मोनिटर "
-"डेटा ([MS-RDPBCGR] 2.2.1.3.6) प्रयोग गर्दछ, जुन उपलब्ध छ त्यसको आधारमा। अवास्तविक "
-"मोनिटरसँग टाढाको डेस्कटप सत्र प्रयोग गर्दा, क्लाइन्टले प्रदर्शन नियन्त्रण च्यानल विस्तार "
-"([MS-RDPEDISP]) सँगको सत्रको दौडान अवास्तविक मोनिटरको रिजोल्युसन रिसाइज गर्न सक्दछ "
-"। अनुमति प्राप्त स्क्रिनसेयर मोडहरू समावेश छन्: * मिरर-प्राथमिक - हालको प्रयोगकर्ता "
-"सत्रको प्राथमिक मोनिटर रेकर्ड गर्नुहोस् । * विस्तार - नयाँ भर्चुअल मनिटर सिर्जना गर्नुहोस् "
-"र यसलाई टाढाको डेस्कटप सत्रका लागि प्रयोग गर्नुहोस्। यो अवास्तविक मोनिटरको रिजोल्युसन "
-"टाढाको डेस्कटप क्लाइन्टद्वारा पेश गरिएको, मोनिटर कन्फिगरेसनबाट लिइएको हो ।"
+"स्क्रिनशेयर मोडले निर्दिष्ट गर्दछ, आरडीपी ब्याकइन्डले प्राथमिक स्क्रिन दर्पण गर्दछ वा भर्चुअल मोनिटर सिर्जना "
+"गरिएको छ कि छैन । भर्चुअल मोनिटरको प्रारम्भिक रिजोलुसनको लागि, आरडीपी ब्याकइन्डले क्लाइन्ट कोर डेटा "
+"([एमएस-आरडीपीबीसीजीआर] २.२.१.३.२) वा क्लाइन्ट मोनिटर डेटा ([एमएस-आरडीपीबीसीजीआर] २.२.१.३.६) "
+"प्रयोग गर्दछ, जुन उपलब्ध छ भन्ने आधारमा निर्भर गर्दछ। भर्चुअल मोनिटरको साथ टाढाको डेस्कटप सत्र प्रयोग "
+"गर्दा, ग्राहकहरूले प्रदर्शन अद्यावधिक भर्चुअल च्यानल एक्सटेन्सन ([एमएस-आरडीपीईआईएसपी]) को साथ सत्रको दौडान "
+"भर्चुअल मोनिटरको रिजोलुसन पुन: साइज गर्न सक्दछन्। अनुमति प्राप्त स्क्रिनशेयर मोडमा समावेश छ: * दर्पण-"
+"प्राथमिक - हालको प्रयोगकर्ता सत्रको प्राथमिक मोनिटर रेकर्ड गर्नुहोस् । * विस्तार - नयाँ भर्चुअल मोनिटर "
+"सिर्जना गर्नुहोस् र यसलाई टाढाको डेस्कटप सत्रको लागि प्रयोग गर्नुहोस्। यो भर्चुअल मोनिटरको रिजोल्युसन "
+"टाढाको डेस्कटप क्लाइन्टद्वारा पेश गरिएको मोनिटर कन्फिगरेसनबाट लिइएको हो ।"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
@@ -173,11 +163,11 @@ msgstr "प्रमाणपत्र फाइलमा मार्ग"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
 msgid ""
-"In order to be able to use RDP with TLS Security, both the private key file "
-"and the certificate file need to be provided to the RDP server."
+"In order to be able to use RDP with TLS Security, both the private key file and the "
+"certificate file need to be provided to the RDP server."
 msgstr ""
-"TLS सुरक्षासँग RDP प्रयोग गर्न सक्षम हुनका लागि, दुबै निजी कुञ्जी फाइल र प्रमाणपत्र फाइल "
-"RDP सर्भरमा उपलब्ध गराउनु आवश्यक छ ।"
+"TLS सुरक्षासँग RDP प्रयोग गर्न सक्षम हुनका लागि, दुबै निजी कुञ्जी फाइल र प्रमाणपत्र फाइल RDP सर्भरमा उपलब्ध "
+"गराउनु आवश्यक छ ।"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
 msgid "Path to the private key file"
@@ -190,27 +180,27 @@ msgstr "पर्दा सामाग्री हेर्नका लाग
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 msgid ""
-"When view-only is true, remote RDP connections cannot manipulate input "
-"devices (e.g. mouse and keyboard)."
+"When view-only is true, remote RDP connections cannot manipulate input devices (e.g. mouse "
+"and keyboard)."
 msgstr ""
-"दृश्य मात्र सही भएको बेलामा, टाढाको RDP जडानले आगत यन्त्रहरू (उदाहरणका लागि माउस र "
-"कुञ्जीपाटी) मिलाउन सक्दैन ।"
+"दृश्य मात्र सही भएको बेलामा, टाढाको RDP जडानले आगत यन्त्रहरू (उदाहरणका लागि माउस र कुञ्जीपाटी) मिलाउन "
+"सक्दैन ।"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
 msgid "Whether the VNC backend is enabled or not"
 msgstr "भीएनसी ब्याकइन्ड सक्षम पारिएको छ वा छैन"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "यदि 'सही' मा सेट भयो भने भीएनसी ब्याकइन्ड सुरुआत हुनेछ ।"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
-"When view-only is true, remote VNC connections cannot manipulate input "
-"devices (e.g. mouse and keyboard)."
+"When view-only is true, remote VNC connections cannot manipulate input devices (e.g. mouse "
+"and keyboard)."
 msgstr ""
-"दृश्य मात्र सत्य भएको बेलामा, टाढाको भीएनसी जडानले आगत यन्त्रहरू (उदाहरणका लागि माउस "
-"र कुञ्जीपाटी) मिलाउन सक्दैन ।"
+"दृश्य मात्र सत्य भएको बेलामा, टाढाको भीएनसी जडानले आगत यन्त्रहरू (उदाहरणका लागि माउस र कुञ्जीपाटी) "
+"मिलाउन सक्दैन ।"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
 msgid "Method used to authenticate VNC connections"
@@ -218,13 +208,37 @@ msgstr "भीएनसी जडान प्रमाणिकरण गर्
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid ""
-"The VNC authentication method describes how a remote connection is "
-"authenticated. It can currently be done in two different ways: * prompt - by "
-"prompting the user for each new connection, requiring a person with physical "
-"access to the workstation to explicitly approve the new connection. * "
-"password - by requiring the remote client to provide a known password"
+"The VNC authentication method describes how a remote connection is authenticated. It can "
+"currently be done in two different ways: * prompt - by prompting the user for each new "
+"connection, requiring a person with physical access to the workstation to explicitly approve "
+"the new connection. * password - by requiring the remote client to provide a known password"
 msgstr ""
-"VNC प्रमाणीकरण विधिले कसरी टाढाको जडान प्रमाणिकरण हुन्छ वर्णन गर्दछ । यो हाल दुई फरक "
-"तरिकाले गर्न सकिन्छ: * प्रोम्प्ट - प्रत्येक नयाँ जडानका लागि प्रयोगकर्तालाई प्रेरित गरेर, "
-"नयाँ जडानलाई स्पष्ट रूपमा अनुमोदन गर्न कार्यस्थानमा भौतिक पहुँच भएको व्यक्तिको आवश्यकता "
-"पर्दछ । * पासवर्ड - ज्ञात पासवर्ड प्रदान गर्न टाढाको क्लाइन्ट आवश्यक द्वारा"
+"VNC प्रमाणीकरण विधिले कसरी टाढाको जडान प्रमाणिकरण हुन्छ वर्णन गर्दछ । यो हाल दुई फरक तरिकाले गर्न "
+"सकिन्छ: * प्रोम्प्ट - प्रत्येक नयाँ जडानका लागि प्रयोगकर्तालाई प्रेरित गरेर, नयाँ जडानलाई स्पष्ट रूपमा अनुमोदन "
+"गर्न कार्यस्थानमा भौतिक पहुँच भएको व्यक्तिको आवश्यकता पर्दछ । * पासवर्ड - ज्ञात पासवर्ड प्रदान गर्न टाढाको "
+"क्लाइन्ट आवश्यक द्वारा"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "भीएनसी जडानको स्क्रिनशेयर शैली"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary screen, or "
+"whether a virtual monitor is created. For the initial resolution of the virtual monitor, the "
+"VNC backend uses a default size of 1920x1080 pixels. When using a remote desktop session "
+"with a virtual monitor, clients can resize the resolution of the virtual monitor during a "
+"session with the setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a new virtual "
+"monitor and use it for the remote desktop session. The initial monitor resolution of this "
+"virtual monitor is set to 1920x1080 pixels. Clients can override the initial resolution with "
+"subsequent monitor configuration updates."
+msgstr ""
+"स्क्रिनशेयर मोडले निर्दिष्ट गर्दछ, के भीएनसी ब्याकइन्डले प्राथमिक स्क्रिन दर्पण गर्दछ, वा भर्चुअल मोनिटर "
+"सिर्जना गरिएको छ कि छैन । भर्चुअल मोनिटरको प्रारम्भिक रिजोलुसनका लागि, भीएनसी ब्याकइन्डले १९२०x१०८० "
+"पिक्सेलको पूर्वनिर्धारित साइज प्रयोग गर्दछ । भर्चुअल मोनिटरको साथ टाढाको डेस्कटप सत्र प्रयोग गर्दा, "
+"क्लाइन्टहरूले सेटडेष्टपसाइज पीडीयूको साथ सत्रको समयमा भर्चुअल मोनिटरको रिजोल्युसन पुन: साइज गर्न सक्दछन्। "
+"अनुमति प्राप्त स्क्रिनशेयर मोडमा समावेश छ: * दर्पण-प्राथमिक - हालको प्रयोगकर्ता सत्रको प्राथमिक मोनिटर "
+"रेकर्ड गर्नुहोस् । * विस्तार - नयाँ भर्चुअल मोनिटर सिर्जना गर्नुहोस् र यसलाई टाढाको डेस्कटप सत्रको लागि "
+"प्रयोग गर्नुहोस्। यो भर्चुअल मोनिटरको प्रारम्भिक मोनिटर रिजोलुसन १९२०x१०८० पिक्सेलमा सेट गरिएको छ । "
+"ग्राहकहरूले पछिको मोनिटर कन्फिगरेसन अद्यावधिकहरूको साथ प्रारम्भिक रिजोल्युसन ओभरराइड गर्न सक्दछन्।"
