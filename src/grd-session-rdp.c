@@ -1867,9 +1867,9 @@ rdp_peer_context_new (freerdp_peer   *peer,
   rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_RLE;
 
   rdp_peer_context->vcm = WTSOpenServerA ((LPSTR) peer->context);
-  if (!rdp_peer_context->vcm)
+  if (!rdp_peer_context->vcm || rdp_peer_context->vcm == INVALID_HANDLE_VALUE)
     {
-      g_warning ("[RDP] Failed to retrieve VCM handle");
+      g_warning ("[RDP] Failed to create virtual channel manager");
       rdp_peer_context_free (peer, rdp_peer_context);
       return FALSE;
     }
