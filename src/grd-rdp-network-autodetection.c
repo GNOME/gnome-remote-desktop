@@ -183,8 +183,10 @@ update_ping_source (GrdRdpNetworkAutodetection *network_autodetection)
   else
     new_ping_interval_type = PING_INTERVAL_LOW;
 
-  if (network_autodetection->ping_interval != new_ping_interval_type &&
-      network_autodetection->ping_source)
+  if (network_autodetection->ping_interval == new_ping_interval_type)
+    return;
+
+  if (network_autodetection->ping_source)
     {
       g_source_destroy (network_autodetection->ping_source);
       g_clear_pointer (&network_autodetection->ping_source, g_source_unref);
