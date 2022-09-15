@@ -317,6 +317,8 @@ initialize_egl_context (GrdEglThread  *egl_thread,
 
   if (!query_format_modifiers (egl_thread, egl_display, error))
     {
+      eglMakeCurrent (egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
+                      EGL_NO_CONTEXT);
       eglDestroyContext (egl_display, egl_context);
       eglTerminate (egl_display);
       return FALSE;
@@ -324,6 +326,8 @@ initialize_egl_context (GrdEglThread  *egl_thread,
 
   if (g_hash_table_size (egl_thread->modifiers) == 0)
     {
+      eglMakeCurrent (egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
+                      EGL_NO_CONTEXT);
       eglDestroyContext (egl_display, egl_context);
       eglTerminate (egl_display);
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -333,6 +337,8 @@ initialize_egl_context (GrdEglThread  *egl_thread,
 
   if (!is_hardware_accelerated ())
     {
+      eglMakeCurrent (egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
+                      EGL_NO_CONTEXT);
       eglDestroyContext (egl_display, egl_context);
       eglTerminate (egl_display);
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
