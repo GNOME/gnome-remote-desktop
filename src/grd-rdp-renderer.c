@@ -23,6 +23,7 @@
 
 #include "grd-encode-session.h"
 #include "grd-hwaccel-nvidia.h"
+#include "grd-hwaccel-vaapi.h"
 #include "grd-hwaccel-vulkan.h"
 #include "grd-rdp-frame.h"
 #include "grd-rdp-graphics-pipeline.h"
@@ -52,6 +53,7 @@ struct _GrdRdpRenderer
   GrdSessionRdp *session_rdp;
   GrdVkDevice *vk_device;
   GrdHwAccelNvidia *hwaccel_nvidia;
+  GrdHwAccelVaapi *hwaccel_vaapi;
 
   GrdRdpGraphicsPipeline *graphics_pipeline;
   rdpContext *rdp_context;
@@ -177,6 +179,11 @@ maybe_initialize_hardware_acceleration (GrdRdpRenderer   *renderer,
                  error->message);
       return FALSE;
     }
+
+  renderer->hwaccel_vaapi = grd_hwaccel_vaapi_new (renderer->vk_device,
+                                                   &error);
+  if (!renderer->hwaccel_vaapi)
+    g_message ("[RDP] Did not initialize VAAPI: %s", error->message);
 
   return TRUE;
 }
@@ -636,6 +643,7 @@ grd_rdp_renderer_dispose (GObject *object)
 
   g_assert (g_hash_table_size (renderer->surface_renderer_table) == 0);
 
+  g_clear_object (&renderer->hwaccel_vaapi);
   g_clear_object (&renderer->vk_device);
 
   G_OBJECT_CLASS (grd_rdp_renderer_parent_class)->dispose (object);
