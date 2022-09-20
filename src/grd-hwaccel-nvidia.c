@@ -116,13 +116,36 @@ grd_hwaccel_nvidia_get_cuda_damage_kernels (GrdHwAccelNvidia *hwaccel_nvidia,
   *cu_simplify_dmg_arr = hwaccel_nvidia->cu_simplify_dmg_arr;
 }
 
+static const char *
+get_cuda_error_string (GrdHwAccelNvidia *hwaccel_nvidia,
+                       CUresult          cu_result)
+{
+  CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+  const char *error_string = NULL;
+  CUresult local_cu_result;
+
+  g_assert (cuda_funcs);
+  g_assert (cuda_funcs->cuGetErrorString);
+
+  local_cu_result = cuda_funcs->cuGetErrorString (cu_result, &error_string);
+  if (G_UNLIKELY (local_cu_result != CUDA_SUCCESS))
+    g_warning ("[HWAccel.CUDA] cuGetErrorString() failed: %i", local_cu_result);
+
+  return error_string;
+}
+
 void
 grd_hwaccel_nvidia_push_cuda_context (GrdHwAccelNvidia *hwaccel_nvidia)
 {
   CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+  CUresult cu_result;
 
-  if (cuda_funcs->cuCtxPushCurrent (hwaccel_nvidia->cu_context) != CUDA_SUCCESS)
-    g_error ("[HWAccel.CUDA] Failed to push CUDA context");
+  cu_result = cuda_funcs->cuCtxPushCurrent (hwaccel_nvidia->cu_context);
+  if (cu_result != CUDA_SUCCESS)
+    {
+      g_error ("[HWAccel.CUDA] Failed to push CUDA context: %s",
+               get_cuda_error_string (hwaccel_nvidia, cu_result));
+    }
 }
 
 void
@@ -139,12 +162,15 @@ grd_hwaccel_nvidia_register_read_only_gl_buffer (GrdHwAccelNvidia   *hwaccel_nvi
                                                  uint32_t            buffer)
 {
   ExtraCudaFunctions *extra_cuda_funcs = hwaccel_nvidia->extra_cuda_funcs;
+  CUresult cu_result;
 
-  if (extra_cuda_funcs->cuGraphicsGLRegisterBuffer (
-        cuda_resource, buffer,
-        CU_GRAPHICS_REGISTER_FLAGS_READ_ONLY) != CUDA_SUCCESS)
+  cu_result =
+    extra_cuda_funcs->cuGraphicsGLRegisterBuffer (cuda_resource, buffer,
+                                                  CU_GRAPHICS_REGISTER_FLAGS_READ_ONLY);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to register GL buffer");
+      g_warning ("[HWAccel.CUDA] Failed to register GL buffer: %s",
+                 get_cuda_error_string (hwaccel_nvidia, cu_result));
       return FALSE;
     }
 
@@ -169,17 +195,22 @@ grd_hwaccel_nvidia_map_cuda_resource (GrdHwAccelNvidia   *hwaccel_nvidia,
 {
   CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
   ExtraCudaFunctions *extra_cuda_funcs = hwaccel_nvidia->extra_cuda_funcs;
+  CUresult cu_result;
 
-  if (cuda_funcs->cuGraphicsMapResources (1, &cuda_resource,
-                                          cuda_stream) != CUDA_SUCCESS)
+  cu_result = cuda_funcs->cuGraphicsMapResources (1, &cuda_resource,
+                                                  cuda_stream);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to map resources");
+      g_warning ("[HWAccel.CUDA] Failed to map resources: %s",
+                 get_cuda_error_string (hwaccel_nvidia, cu_result));
       return FALSE;
     }
-  if (extra_cuda_funcs->cuGraphicsResourceGetMappedPointer (dev_ptr, size,
-                                                            cuda_resource) != CUDA_SUCCESS)
+  cu_result = extra_cuda_funcs->cuGraphicsResourceGetMappedPointer (dev_ptr, size,
+                                                                    cuda_resource);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to get mapped pointer");
+      g_warning ("[HWAccel.CUDA] Failed to get mapped pointer: %s",
+                 get_cuda_error_string (hwaccel_nvidia, cu_result));
       cuda_funcs->cuGraphicsUnmapResources (1, &cuda_resource, cuda_stream);
       return FALSE;
     }
@@ -201,11 +232,13 @@ grd_hwaccel_nvidia_create_cuda_stream (GrdHwAccelNvidia *hwaccel_nvidia,
                                        CUstream         *cuda_stream)
 {
   CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+  CUresult cu_result;
 
-  if (cuda_funcs->cuStreamCreate (cuda_stream,
-                                  CU_STREAM_NON_BLOCKING) != CUDA_SUCCESS)
+  cu_result = cuda_funcs->cuStreamCreate (cuda_stream, CU_STREAM_NON_BLOCKING);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to create stream");
+      g_warning ("[HWAccel.CUDA] Failed to create stream: %s",
+                 get_cuda_error_string (hwaccel_nvidia, cu_result));
       return FALSE;
     }
 
@@ -226,10 +259,13 @@ grd_hwaccel_nvidia_alloc_mem (GrdHwAccelNvidia *hwaccel_nvidia,
                               size_t            size)
 {
   CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+  CUresult cu_result;
 
-  if (cuda_funcs->cuMemAlloc (device_ptr, size) != CUDA_SUCCESS)
+  cu_result = cuda_funcs->cuMemAlloc (device_ptr, size);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to allocate memory");
+      g_warning ("[HWAccel.CUDA] Failed to allocate memory: %s",
+                 get_cuda_error_string (hwaccel_nvidia, cu_result));
       return FALSE;
     }
 
@@ -422,6 +458,7 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia *hwaccel_nvidia,
                                              uint16_t          aligned_height,
                                              CUstream          cuda_stream)
 {
+  CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
   NvEncEncodeSession *encode_session;
   NV_ENC_REGISTER_RESOURCE register_res = {0};
   NV_ENC_MAP_INPUT_RESOURCE map_input_res = {0};
@@ -429,6 +466,7 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia *hwaccel_nvidia,
   unsigned int grid_dim_x, grid_dim_y, grid_dim_z;
   unsigned int block_dim_x, block_dim_y, block_dim_z;
   void *args[7];
+  CUresult cu_result;
 
   if (!g_hash_table_lookup_extended (hwaccel_nvidia->encode_sessions,
                                      GUINT_TO_POINTER (encode_session_id),
@@ -465,17 +503,22 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia *hwaccel_nvidia,
   args[5] = &aligned_height;
   args[6] = &aligned_width;
 
-  if (hwaccel_nvidia->cuda_funcs->cuLaunchKernel (
-        hwaccel_nvidia->cu_bgrx_to_yuv420, grid_dim_x, grid_dim_y, grid_dim_z,
-        block_dim_x, block_dim_y, block_dim_z, 0, cuda_stream, args, NULL) != CUDA_SUCCESS)
+  cu_result = cuda_funcs->cuLaunchKernel (hwaccel_nvidia->cu_bgrx_to_yuv420,
+                                          grid_dim_x, grid_dim_y, grid_dim_z,
+                                          block_dim_x, block_dim_y, block_dim_z,
+                                          0, cuda_stream, args, NULL);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to launch BGRX_TO_YUV420 kernel");
+      g_warning ("[HWAccel.CUDA] Failed to launch BGRX_TO_YUV420 kernel: %s",
+                 get_cuda_error_string (hwaccel_nvidia, cu_result));
       return FALSE;
     }
 
-  if (hwaccel_nvidia->cuda_funcs->cuStreamSynchronize (cuda_stream) != CUDA_SUCCESS)
+  cu_result = cuda_funcs->cuStreamSynchronize (cuda_stream);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to synchronize stream");
+      g_warning ("[HWAccel.CUDA] Failed to synchronize stream: %s",
+                 get_cuda_error_string (hwaccel_nvidia, cu_result));
       return FALSE;
     }
 
@@ -716,10 +759,13 @@ load_cuda_module (GrdHwAccelNvidia *hwaccel_nvidia,
                   const char       *ptx_instructions)
 {
   CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+  CUresult cu_result;
 
-  if (cuda_funcs->cuModuleLoadData (module, ptx_instructions) != CUDA_SUCCESS)
+  cu_result = cuda_funcs->cuModuleLoadData (module, ptx_instructions);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to load %s module", name);
+      g_warning ("[HWAccel.CUDA] Failed to load %s module: %s",
+                 name, get_cuda_error_string (hwaccel_nvidia, cu_result));
       return FALSE;
     }
 
@@ -733,10 +779,13 @@ load_cuda_function (GrdHwAccelNvidia *hwaccel_nvidia,
                     const char       *name)
 {
   CudaFunctions *cuda_funcs = hwaccel_nvidia->cuda_funcs;
+  CUresult cu_result;
 
-  if (cuda_funcs->cuModuleGetFunction (function, module, name) != CUDA_SUCCESS)
+  cu_result = cuda_funcs->cuModuleGetFunction (function, module, name);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to get kernel %s", name);
+      g_warning ("[HWAccel.CUDA] Failed to get kernel %s: %s",
+                 name, get_cuda_error_string (hwaccel_nvidia, cu_result));
       return FALSE;
     }
 
@@ -758,6 +807,7 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
   g_autofree char *avc_ptx_path = NULL;
   g_autofree char *avc_ptx_instructions = NULL;
   g_autoptr (GError) error = NULL;
+  CUresult cu_result;
   unsigned int i;
 
   hwaccel_nvidia = g_object_new (GRD_TYPE_HWACCEL_NVIDIA, NULL);
@@ -780,9 +830,11 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
   cuda_funcs = hwaccel_nvidia->cuda_funcs;
   nvenc_funcs = hwaccel_nvidia->nvenc_funcs;
 
-  if (cuda_funcs->cuInit (0) != CUDA_SUCCESS)
+  cu_result = cuda_funcs->cuInit (0);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_debug ("[HWAccel.CUDA] Failed to initialize CUDA");
+      g_debug ("[HWAccel.CUDA] Failed to initialize CUDA: %s",
+               get_cuda_error_string (hwaccel_nvidia, cu_result));
       return NULL;
     }
   if (!get_cuda_devices_from_gl_context (hwaccel_nvidia, egl_thread,
@@ -817,10 +869,12 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
     }
 
   hwaccel_nvidia->cu_device = cu_device;
-  if (cuda_funcs->cuDevicePrimaryCtxRetain (&hwaccel_nvidia->cu_context,
-                                            hwaccel_nvidia->cu_device) != CUDA_SUCCESS)
+  cu_result = cuda_funcs->cuDevicePrimaryCtxRetain (&hwaccel_nvidia->cu_context,
+                                                    hwaccel_nvidia->cu_device);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to retain CUDA context");
+      g_warning ("[HWAccel.CUDA] Failed to retain CUDA context: %s",
+                 get_cuda_error_string (hwaccel_nvidia, cu_result));
       return NULL;
     }
 
@@ -832,9 +886,11 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
       return NULL;
     }
 
-  if (cuda_funcs->cuCtxPushCurrent (hwaccel_nvidia->cu_context) != CUDA_SUCCESS)
+  cu_result = cuda_funcs->cuCtxPushCurrent (hwaccel_nvidia->cu_context);
+  if (cu_result != CUDA_SUCCESS)
     {
-      g_warning ("[HWAccel.CUDA] Failed to push CUDA context");
+      g_warning ("[HWAccel.CUDA] Failed to push CUDA context: %s",
+                 get_cuda_error_string (hwaccel_nvidia, cu_result));
       cuda_funcs->cuDevicePrimaryCtxRelease (hwaccel_nvidia->cu_device);
       return NULL;
     }
