@@ -147,7 +147,7 @@ verify_monitor_config (GrdRdpMonitorConfig *monitor_config)
   for (i = 0; i < monitor_config->monitor_count; ++i)
     {
       rect.x = monitor_config->virtual_monitors[i].pos_x;
-      rect.y = monitor_config->virtual_monitors[i].pos_x;
+      rect.y = monitor_config->virtual_monitors[i].pos_y;
       rect.width = monitor_config->virtual_monitors[i].width;
       rect.height = monitor_config->virtual_monitors[i].height;
 
