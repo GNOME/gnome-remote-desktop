@@ -261,6 +261,18 @@ get_next_free_encode_session_id (GrdHwAccelNvidia *hwaccel_nvidia)
   return encode_session_id;
 }
 
+static const char *
+get_last_nvenc_error_string (GrdHwAccelNvidia *hwaccel_nvidia,
+                             void             *encoder)
+{
+  NV_ENCODE_API_FUNCTION_LIST *nvenc_api = &hwaccel_nvidia->nvenc_api;
+
+  g_assert (nvenc_api);
+  g_assert (nvenc_api->nvEncGetLastErrorString);
+
+  return nvenc_api->nvEncGetLastErrorString (encoder);
+}
+
 gboolean
 grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
                                          uint32_t         *encode_session_id,
@@ -292,7 +304,8 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
   if (hwaccel_nvidia->nvenc_api.nvEncOpenEncodeSessionEx (
         &open_params, &encode_session->encoder) != NV_ENC_SUCCESS)
     {
-      g_debug ("[HWAccel.NVENC] Failed to open encode session");
+      g_debug ("[HWAccel.NVENC] Failed to open encode session: %s",
+               get_last_nvenc_error_string (hwaccel_nvidia, encode_session->encoder));
       g_free (encode_session);
       return FALSE;
     }
@@ -326,7 +339,8 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
     {
       NV_ENC_PIC_PARAMS pic_params = {0};
 
-      g_warning ("[HWAccel.NVENC] Failed to initialize encoder");
+      g_warning ("[HWAccel.NVENC] Failed to initialize encoder: %s",
+                 get_last_nvenc_error_string (hwaccel_nvidia, encode_session->encoder));
       pic_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
       hwaccel_nvidia->nvenc_api.nvEncEncodePicture (encode_session->encoder,
                                                     &pic_params);
@@ -342,7 +356,8 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
     {
       NV_ENC_PIC_PARAMS pic_params = {0};
 
-      g_warning ("[HWAccel.NVENC] Failed to create bitstream buffer");
+      g_warning ("[HWAccel.NVENC] Failed to create bitstream buffer: %s",
+                 get_last_nvenc_error_string (hwaccel_nvidia, encode_session->encoder));
       pic_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
       hwaccel_nvidia->nvenc_api.nvEncEncodePicture (encode_session->encoder,
                                                     &pic_params);
@@ -476,7 +491,8 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia *hwaccel_nvidia,
   if (hwaccel_nvidia->nvenc_api.nvEncRegisterResource (
         encode_session->encoder, &register_res) != NV_ENC_SUCCESS)
     {
-      g_warning ("[HWAccel.NVENC] Failed to register resource");
+      g_warning ("[HWAccel.NVENC] Failed to register resource: %s",
+                 get_last_nvenc_error_string (hwaccel_nvidia, encode_session->encoder));
       return FALSE;
     }
 
@@ -486,7 +502,8 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia *hwaccel_nvidia,
   if (hwaccel_nvidia->nvenc_api.nvEncMapInputResource (
         encode_session->encoder, &map_input_res) != NV_ENC_SUCCESS)
     {
-      g_warning ("[HWAccel.NVENC] Failed to map input resource");
+      g_warning ("[HWAccel.NVENC] Failed to map input resource: %s",
+                 get_last_nvenc_error_string (hwaccel_nvidia, encode_session->encoder));
       hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
                                                          register_res.registeredResource);
       return FALSE;
@@ -504,7 +521,8 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia *hwaccel_nvidia,
   if (hwaccel_nvidia->nvenc_api.nvEncEncodePicture (
         encode_session->encoder, &pic_params) != NV_ENC_SUCCESS)
     {
-      g_warning ("[HWAccel.NVENC] Failed to encode frame");
+      g_warning ("[HWAccel.NVENC] Failed to encode frame: %s",
+                 get_last_nvenc_error_string (hwaccel_nvidia, encode_session->encoder));
       hwaccel_nvidia->nvenc_api.nvEncUnmapInputResource (encode_session->encoder,
                                                          map_input_res.mappedResource);
       hwaccel_nvidia->nvenc_api.nvEncUnregisterResource (encode_session->encoder,
@@ -543,7 +561,8 @@ grd_hwaccel_nvidia_avc420_retrieve_bitstream (GrdHwAccelNvidia  *hwaccel_nvidia,
   if (nvenc_api->nvEncLockBitstream (encode_session->encoder,
                                      &lock_bitstream) != NV_ENC_SUCCESS)
     {
-      g_warning ("[HWAccel.NVENC] Failed to lock bitstream");
+      g_warning ("[HWAccel.NVENC] Failed to lock bitstream: %s",
+                 get_last_nvenc_error_string (hwaccel_nvidia, encode_session->encoder));
       goto out;
     }
 
