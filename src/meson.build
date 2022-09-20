@@ -95,6 +95,8 @@ if have_rdp
     'grd-image-view.h',
     'grd-image-view-nv12.c',
     'grd-image-view-nv12.h',
+    'grd-nal-writer.c',
+    'grd-nal-writer.h',
     'grd-rdp-audio-input.c',
     'grd-rdp-audio-input.h',
     'grd-rdp-audio-output-stream.c',
