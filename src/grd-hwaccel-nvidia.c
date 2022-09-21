@@ -397,15 +397,15 @@ grd_hwaccel_nvidia_free_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
 }
 
 gboolean
-grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia  *hwaccel_nvidia,
-                                             uint32_t           encode_session_id,
-                                             CUdeviceptr        src_data,
-                                             CUdeviceptr       *main_view_nv12,
-                                             uint16_t           src_width,
-                                             uint16_t           src_height,
-                                             uint16_t           aligned_width,
-                                             uint16_t           aligned_height,
-                                             CUstream           cuda_stream)
+grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia *hwaccel_nvidia,
+                                             uint32_t          encode_session_id,
+                                             CUdeviceptr       src_data,
+                                             CUdeviceptr      *main_view_nv12,
+                                             uint16_t          src_width,
+                                             uint16_t          src_height,
+                                             uint16_t          aligned_width,
+                                             uint16_t          aligned_height,
+                                             CUstream          cuda_stream)
 {
   NvEncEncodeSession *encode_session;
   NV_ENC_REGISTER_RESOURCE register_res = {0};
