@@ -29,6 +29,8 @@ credentials_sources = files([
   'grd-credentials-file.h',
   'grd-credentials-libsecret.c',
   'grd-credentials-libsecret.h',
+  'grd-credentials-one-time.c',
+  'grd-credentials-one-time.h',
   'grd-credentials-tpm.c',
   'grd-credentials-tpm.h',
   'grd-tpm.c',
