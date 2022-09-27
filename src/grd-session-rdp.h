@@ -91,4 +91,9 @@ void grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
 
 void grd_session_rdp_hide_pointer (GrdSessionRdp *session_rdp);
 
+void grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
+                                              const char    *routing_token,
+                                              const char    *user_name,
+                                              const char    *password);
+
 #endif /* GRD_SESSION_RDP_H */
