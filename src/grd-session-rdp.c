@@ -22,6 +22,7 @@
 #include "grd-session-rdp.h"
 
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/crypto/crypto.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
 #include <gio/gio.h>
@@ -53,6 +54,7 @@
 #define MAX_MONITOR_COUNT_HEADLESS 16
 #define MAX_MONITOR_COUNT_SCREEN_SHARE 1
 #define DISCRETE_SCROLL_STEP 10.0
+#define ELEMENT_TYPE_CERTIFICATE 32
 
 enum
 {
@@ -350,6 +352,177 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
     return;
 
   rdp_peer_refresh_region (session_rdp, rdp_surface, buffer);
+}
+
+static WCHAR *
+get_utf16_string (const char *str,
+                  size_t     *size)
+{
+  WCHAR *utf16_string;
+
+  *size = 0;
+
+  utf16_string = ConvertUtf8ToWCharAlloc (str, size);
+  if (!utf16_string)
+    return NULL;
+
+  *size = (*size + 1) * sizeof (WCHAR);
+
+  return utf16_string;
+}
+
+static WCHAR *
+generate_encoded_redirection_guid (size_t *size)
+{
+  BYTE redirection_guid[16] = {};
+  g_autofree char *redirection_guid_base_64 = NULL;
+  WCHAR *encoded_redirection_guid;
+
+  *size = 0;
+
+  if (winpr_RAND (redirection_guid, 16) == -1)
+    return NULL;
+
+  redirection_guid_base_64 = crypto_base64_encode (redirection_guid, 16);
+  if (!redirection_guid_base_64)
+    return NULL;
+
+  encoded_redirection_guid = get_utf16_string (redirection_guid_base_64, size);
+  if (!encoded_redirection_guid)
+    return NULL;
+
+  return encoded_redirection_guid;
+}
+
+static BYTE *
+get_certificate_container (const char *certificate,
+                           size_t     *size)
+{
+  BOOL free_buffer = TRUE;
+  g_autofree BYTE *der_certificate = NULL;
+  rdpCertificate *rdp_certificate = NULL;
+  BYTE *certificate_container = NULL;
+  size_t der_certificate_len = 0;
+  wStream *s;
+
+  s = Stream_New (NULL, 2048);
+  g_assert (s);
+
+  *size = 0;
+
+  rdp_certificate = freerdp_certificate_new_from_pem (certificate);
+  if (!rdp_certificate)
+    goto out;
+
+  der_certificate = freerdp_certificate_get_der (rdp_certificate,
+                                                 &der_certificate_len);
+  if (!der_certificate)
+    goto out;
+
+  if (!Stream_EnsureRemainingCapacity (s, 12))
+    g_assert_not_reached ();
+
+  Stream_Write_UINT32 (s, ELEMENT_TYPE_CERTIFICATE);
+  Stream_Write_UINT32 (s, ENCODING_TYPE_ASN1_DER);
+  Stream_Write_UINT32 (s, der_certificate_len);
+
+  if (!Stream_EnsureRemainingCapacity (s, der_certificate_len))
+    g_assert_not_reached ();
+
+  Stream_Write (s, der_certificate, der_certificate_len);
+
+  *size = Stream_GetPosition (s);
+  certificate_container = Stream_Buffer (s);
+  free_buffer = FALSE;
+
+out:
+  freerdp_certificate_free (rdp_certificate);
+  Stream_Free (s, free_buffer);
+  return certificate_container;
+}
+
+gboolean
+grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
+                                         const char    *routing_token,
+                                         const char    *user_name,
+                                         const char    *password,
+                                         const char    *certificate)
+{
+  freerdp_peer *peer = session_rdp->peer;
+  rdpRedirection *redirection;
+  g_autofree BYTE *certificate_container = NULL;
+  g_autofree WCHAR *utf16_password = NULL;
+  g_autofree WCHAR *utf16_encoded_redirection_guid = NULL;
+  gboolean success = FALSE;
+  size_t size = 0;
+  uint32_t redirection_flags = 0;
+  uint32_t redirection_incorrect_flags = 0;
+
+  g_assert (routing_token);
+  g_assert (user_name);
+  g_assert (password);
+  g_assert (certificate);
+
+  redirection = redirection_new ();
+  g_assert (redirection);
+
+  /* Load Balance Info */
+  redirection_flags |= LB_LOAD_BALANCE_INFO;
+  redirection_set_byte_option (redirection, LB_LOAD_BALANCE_INFO,
+                               (BYTE *) routing_token,
+                               strlen (routing_token));
+
+  /* Username */
+  redirection_flags |= LB_USERNAME;
+  redirection_set_string_option (redirection, LB_USERNAME,
+                                 user_name);
+
+  /* Password */
+  redirection_flags |= LB_PASSWORD;
+  utf16_password = get_utf16_string (password, &size);
+  g_assert (utf16_password);
+  redirection_set_byte_option (redirection, LB_PASSWORD,
+                               (BYTE *) utf16_password,
+                               size);
+
+  /* Redirection GUID */
+  redirection_flags |= LB_REDIRECTION_GUID;
+  utf16_encoded_redirection_guid = generate_encoded_redirection_guid (&size);
+  g_assert (utf16_encoded_redirection_guid);
+  redirection_set_byte_option (redirection, LB_REDIRECTION_GUID,
+                               (BYTE *) utf16_encoded_redirection_guid,
+                               size);
+
+  /* Target Certificate */
+  redirection_flags |= LB_TARGET_CERTIFICATE;
+  certificate_container = get_certificate_container (certificate, &size);
+  g_assert (certificate_container);
+  redirection_set_byte_option (redirection,
+                               LB_TARGET_CERTIFICATE,
+                               certificate_container,
+                               size);
+
+  redirection_set_flags (redirection, redirection_flags);
+
+  if (!redirection_settings_are_valid (redirection, &redirection_incorrect_flags))
+    {
+      g_warning ("[RDP] Something went wrong sending Server Redirection PDU. "
+                 "Incorrect flag/s: 0x%08x", redirection_incorrect_flags);
+      goto out;
+    }
+
+  g_message ("[RDP] Sending server redirection");
+  if (!peer->SendServerRedirection (peer, redirection))
+    {
+      g_warning ("[RDP] Error sending server Redirection");
+      goto out;
+    }
+
+  success = TRUE;
+
+out:
+  redirection_free (redirection);
+  return success;
 }
 
 static void
