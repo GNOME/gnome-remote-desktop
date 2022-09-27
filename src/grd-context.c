@@ -26,6 +26,7 @@
 
 #include "grd-credentials-file.h"
 #include "grd-credentials-libsecret.h"
+#include "grd-credentials-one-time.h"
 #include "grd-credentials-tpm.h"
 #include "grd-egl-thread.h"
 #include "grd-settings-user.h"
