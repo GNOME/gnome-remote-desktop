@@ -39,6 +39,16 @@ enum
   PROP_CONTEXT,
 };
 
+enum
+{
+  INCOMING_NEW_CONNECTION,
+  INCOMING_REDIRECTED_CONNECTION,
+
+  N_SIGNALS
+};
+
+static guint signals[N_SIGNALS];
+
 struct _GrdRdpServer
 {
   GSocketService parent;
@@ -288,4 +298,17 @@ grd_rdp_server_class_init (GrdRdpServerClass *klass)
                                                         G_PARAM_READWRITE |
                                                         G_PARAM_CONSTRUCT_ONLY |
                                                         G_PARAM_STATIC_STRINGS));
+  signals[INCOMING_NEW_CONNECTION] = g_signal_new ("incoming-new-connection",
+                                                   G_TYPE_FROM_CLASS (klass),
+                                                   G_SIGNAL_RUN_LAST,
+                                                   0,
+                                                   NULL, NULL, NULL,
+                                                   G_TYPE_NONE, 1, GRD_TYPE_SESSION);
+  signals[INCOMING_REDIRECTED_CONNECTION] = g_signal_new ("incoming-redirected-connection",
+                                                          G_TYPE_FROM_CLASS (klass),
+                                                          G_SIGNAL_RUN_LAST,
+                                                          0,
+                                                          NULL, NULL, NULL,
+                                                          G_TYPE_NONE, 2, G_TYPE_STRING,
+                                                          G_TYPE_SOCKET_CONNECTION);
 }
