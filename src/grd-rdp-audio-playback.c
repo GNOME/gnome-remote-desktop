@@ -228,6 +228,7 @@ set_other_streams_inactive (GrdRdpAudioPlayback *audio_playback)
   GHashTableIter iter;
 
   g_assert (audio_playback->has_stream_lock);
+  g_mutex_unlock (&audio_playback->stream_lock_mutex);
 
   g_mutex_lock (&audio_playback->streams_mutex);
   g_hash_table_iter_init (&iter, audio_playback->audio_streams);
@@ -240,6 +241,8 @@ set_other_streams_inactive (GrdRdpAudioPlayback *audio_playback)
         grd_rdp_audio_output_stream_set_active (audio_output_stream, FALSE);
     }
   g_mutex_unlock (&audio_playback->streams_mutex);
+
+  g_mutex_lock (&audio_playback->stream_lock_mutex);
 }
 
 static void
