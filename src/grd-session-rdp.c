@@ -1921,7 +1921,8 @@ rdp_peer_context_free (freerdp_peer   *peer,
 
   g_clear_object (&rdp_peer_context->rdp_dvc);
 
-  g_clear_pointer (&rdp_peer_context->vcm, WTSCloseServer);
+  if (rdp_peer_context->vcm != INVALID_HANDLE_VALUE)
+    g_clear_pointer (&rdp_peer_context->vcm, WTSCloseServer);
 
   if (rdp_peer_context->encode_stream)
     {
