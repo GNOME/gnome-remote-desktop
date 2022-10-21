@@ -27,6 +27,7 @@ GENERAL COMMANDS
 ----------------
 *status*::
 Show current status.
+ifdef::have_rdp[]
 
 RDP COMMANDS
 ------------
@@ -53,6 +54,8 @@ Disable remote control of input devices.
 
 *rdp* *disable-view-only*::
 Enable remote control of input devices.
+endif::[]
+ifdef::have_vnc[]
 
 VNC COMMANDS
 ------------
@@ -77,6 +80,7 @@ Disable remote control of input devices.
 
 *vnc* *disable-view-only*::
 Enable remote control of input devices.
+endif::[]
 
 BUGS
 ----
