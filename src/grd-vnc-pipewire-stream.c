@@ -87,8 +87,6 @@ struct _GrdVncPipeWireStream
   uint32_t src_node_id;
 
   struct spa_video_info_raw spa_format;
-
-  gboolean destroyed;
 };
 
 G_DEFINE_TYPE (GrdVncPipeWireStream, grd_vnc_pipewire_stream,
@@ -565,9 +563,6 @@ on_stream_process (void *user_data)
   int cursor_x = 0;
   int cursor_y = 0;
 
-  if (stream->destroyed)
-    return;
-
   while ((next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream)))
     {
       struct spa_meta_header *spa_meta_header;
@@ -889,10 +884,9 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
   GrdContext *context = grd_session_get_context (session);
   GrdEglThread *egl_thread;
 
-  stream->destroyed = TRUE;
-
+  /* Setting a PipeWire stream inactive will wait for the data thread to end */
   if (stream->pipewire_stream)
-    pw_stream_flush (stream->pipewire_stream, false);
+    pw_stream_set_active (stream->pipewire_stream, false);
 
   egl_thread = grd_context_get_egl_thread (context);
   if (egl_thread)
@@ -906,12 +900,7 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
       grd_sync_point_clear (&sync_point);
     }
 
-  /*
-   * We can't clear stream->pipewire_stream before destroying it, as the data
-   * thread in PipeWire might access the variable during destruction.
-   */
-  if (stream->pipewire_stream)
-    pw_stream_destroy (stream->pipewire_stream);
+  g_clear_pointer (&stream->pipewire_stream, pw_stream_destroy);
 
   g_clear_pointer (&stream->pipewire_core, pw_core_disconnect);
   g_clear_pointer (&stream->pipewire_context, pw_context_destroy);
