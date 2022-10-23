@@ -1,24 +1,25 @@
 # Serbian translation for gnome-remote-desktop.
-# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# Copyright © 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Марко Костић <marko.m.kostic@gmail.com>, 2021.
+# Мирослав Николић <miroslavnikolic@rocketmail.com>, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-08-05 21:58+0000\n"
-"PO-Revision-Date: 2022-08-06 16:38+0200\n"
-"Last-Translator: Марко М. Костић <marko.m.kostic@gmail.com>\n"
-"Language-Team: Serbian <gnome-sr@googlegroups.com>\n"
+"POT-Creation-Date: 2022-09-18 07:45+0000\n"
+"PO-Revision-Date: 2022-10-19 09:46+0200\n"
+"Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
+"Language-Team: Serbian <српски <gnome-sr@googlegroups.org>>\n"
 "Language: sr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=n==1? 3 : n%10==1 && n%100!=11 ? 0 : n"
-"%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Poedit 3.1.1\n"
+"%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2\n"
+"X-Generator: Gtranslator 3.36.0\n"
 
 #: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
@@ -46,16 +47,16 @@ msgstr "Одбиј"
 msgid "Accept"
 msgstr "Прихвати"
 
-#: src/grd-ctl.c:52
+#: src/grd-ctl.c:53
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
-msgstr "Употреба: %s [ОПЦИЈЕ...] НАРЕДБА [ПОДНАРЕДБА]...\n"
+msgstr "Коришћење: %s [ОПЦИЈЕ...] НАРЕДБА [ПОДНАРЕДБА]...\n"
 
-#: src/grd-ctl.c:444
+#: src/grd-ctl.c:461
 msgid "Commands:\n"
 msgstr "Наредбе:\n"
 
-#: src/grd-ctl.c:449
+#: src/grd-ctl.c:466
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -75,24 +76,25 @@ msgid ""
 "\n"
 msgstr ""
 "  rdp                                        - РДП поднаредбе:\n"
-"    enable                                   - Омогући РДП позадинца\n"
-"    disable                                  - Онемогући РДП позадинца\n"
-"    set-tls-cert <path-to-cert>              - Подеси путању до ТЛС "
+"    enable                                   - Омогућава РДП позадинца\n"
+"    disable                                  - Онемогућава РДП позадинца\n"
+"    set-tls-cert <path-to-cert>              - Подешава путању до ТЛС "
 "сертификата\n"
-"    set-tls-key <path-to-key>                - Подеси путању до ТЛС кључа\n"
-"    set-credentials <username> <password>    - Подеси акредитиве за "
+"    set-tls-key <path-to-key>                - Подешава путању до ТЛС кључа\n"
+"    set-credentials <username> <password>    - Подешава акредитиве за "
 "корисничко\n"
 "                                               име и лозинку\n"
-"    clear-credentials                        - Очисти акредитиве корисничког "
+"    clear-credentials                        - Чисти акредитиве корисничког "
 "имена и\n"
 "                                               лозинке\n"
-"    enable-view-only                         - Онемогући удаљено управљање\n"
+"    enable-view-only                         - Онемогућава удаљено "
+"управљање\n"
 "                                               улазних уређаја\n"
-"    disable-view-only                        - Омогући удаљено управљање\n"
+"    disable-view-only                        - Омогућава удаљено управљање\n"
 "                                               улазних уређаја\n"
 "\n"
 
-#: src/grd-ctl.c:468
+#: src/grd-ctl.c:485
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -109,19 +111,19 @@ msgid ""
 "\n"
 msgstr ""
 "  vnc                                        - ВНЦ поднаредбе:\n"
-"    enable                                   - Омогући ВНЦ позадинца\n"
-"    disable                                  - Онемогући ВНЦ позадинца\n"
-"    set-password <password>                  - Подеси ВНЦ лозинку\n"
-"    clear-password                           - Очисти ВНЦ лозинку\n"
-"    set-auth-method password|prompt          - Подеси начин ауторизације\n"
-"    enable-view-only                         - Онемогући удаљено управљање\n"
+"    enable                                   - Омогућава ВНЦ позадинца\n"
+"    disable                                  - Онемогућава ВНЦ позадинца\n"
+"    set-password <password>                  - Подешава ВНЦ лозинку\n"
+"    clear-password                           - Чисти ВНЦ лозинку\n"
+"    set-auth-method password|prompt          - Подешава начин ауторизације\n"
+"    enable-view-only                         - Онемогућава удаљено "
+"управљање\n"
 "                                               улазних уређаја\n"
-"    disable-view-only                        - Омогући удаљено управљање\n"
+"    disable-view-only                        - Омогућава удаљено управљање\n"
 "                                               улазних уређаја\n"
 "\n"
 
-#: src/grd-ctl.c:483
-#, fuzzy
+#: src/grd-ctl.c:500
 #| msgid ""
 #| "  status [--show-credentials]                - Show current status\n"
 #| "\n"
@@ -138,6 +140,8 @@ msgstr ""
 "  status [--show-credentials]                - Приказује тренутно стање\n"
 "\n"
 "Опције:\n"
+"  --headless                                 - Користи безглаво смештање "
+"опонумоћења\n"
 "  --help                                     - Приказује ову поруку помоћи\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
@@ -146,14 +150,13 @@ msgstr "Да ли је РДП позадинац омогућен или не"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
 msgid "If set to 'true' the RDP backend will be initialized."
-msgstr "Ако је подешено на „true“, РДП позадинац биће подешен."
+msgstr "Ако је изабрано, РДП позадинац биће покренут."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Screenshare mode of RDP connections"
 msgstr "Режим дељења екрана за РДП везе"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
-#, fuzzy
 #| msgid ""
 #| "The screenshare mode specifies, whether the RDP backend mirrors the "
 #| "primary screen, or whether a virtual monitor is created. For the initial "
@@ -181,17 +184,17 @@ msgid ""
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
-"Режим дељења екрана наводи да ли РДП позадинац пресликава примарни екран или "
-"се прави виртуелниекран. За почетну резолуцију виртуелног екрана, РДП "
+"Режим дељења екрана одређује да ли РДП позадинац пресликава примарни екран "
+"или се прави виртуелни екран. За почетну резолуцију виртуелног екрана, РДП "
 "позадинац користи или основне податке клијента ([MS-RDPBCGR] 2.2.1.3.2) или "
 "податке екрана клијента ([MS-RDPBCGR] 2.2.1.3.6), зависно од тога шта је "
-"доступно. Када се користи сесија удаљеног приступа за виртуелним екраном, "
-"клијенту могу променити величину виртуелног екрана у току сесије са Display "
-"Control Channel Extension ([MS-RDPEDISP]). Дозвољени режими дељења екрана "
-"садрже: * mirror-primary - снима примарни екран тренутне корисничке сесије. "
-"* extend - прави нови виртуелни екран и користи га током сесије удаљеног "
-"приступа. Резолуција овог виртуелног екрана се изводи из подешавања екрана "
-"коју шаље клијент удаљеног приступа."
+"доступно. Када се користи сесија удаљеног приступа са виртуелним екраном, "
+"клијенти могу променити резолуцију виртуелног екрана у току сесије са "
+"„Display Update Virtual Channel Extension“ ([MS-RDPEDISP]). Дозвољени режими "
+"дељења екрана садрже: * mirror-primary – снима примарни екран тренутне "
+"корисничке сесије. * extend – прави нови виртуелни екран и користи га током "
+"сесије удаљеног приступа. Резолуција овог виртуелног екрана се изводи из "
+"подешавања екрана, које шаље клијент удаљеног приступа."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
@@ -203,7 +206,7 @@ msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
 msgstr ""
-"Да бисте користили РДП са ТЛС безбедношћу, морате дати датотеку приватног "
+"Да бисте користили РДП са ТЛС безбедношћу, морате дати и датотеку приватног "
 "кључа и датотеку сертификата РДП серверу."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
@@ -262,7 +265,6 @@ msgid "Screenshare mode of VNC connections"
 msgstr "Режим дељења екрана за ВНЦ везе"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
-#, fuzzy
 #| msgid ""
 #| "The screenshare mode specifies, whether the RDP backend mirrors the "
 #| "primary screen, or whether a virtual monitor is created. For the initial "
@@ -290,13 +292,13 @@ msgid ""
 "configuration updates."
 msgstr ""
 "Режим дељења екрана наводи да ли РДП позадинац пресликава примарни екран или "
-"се прави виртуелниекран. За почетну резолуцију виртуелног екрана, РДП "
+"се прави виртуелни екран. За почетну резолуцију виртуелног екрана, РДП "
 "позадинац користи или основне податке клијента ([MS-RDPBCGR] 2.2.1.3.2) или "
 "податке екрана клијента ([MS-RDPBCGR] 2.2.1.3.6), зависно од тога шта је "
-"доступно. Када се користи сесија удаљеног приступа за виртуелним екраном, "
-"клијенту могу променити величину виртуелног екрана у току сесије са Display "
-"Control Channel Extension ([MS-RDPEDISP]). Дозвољени режими дељења екрана "
-"садрже: * mirror-primary - снима примарни екран тренутне корисничке сесије. "
-"* extend - прави нови виртуелни екран и користи га током сесије удаљеног "
-"приступа. Резолуција овог виртуелног екрана се изводи из подешавања екрана "
-"коју шаље клијент удаљеног приступа."
+"доступно. Када се користи сесија удаљеног приступа са виртуелним екраном, "
+"клијенти могу променити величину виртуелног екрана у току сесије са "
+"„setDesktopSize PDU“. Дозвољени режими дељења екрана садрже: * mirror-"
+"primary – снима примарни екран тренутне корисничке сесије. * extend – прави "
+"нови виртуелни екран и користи га током сесије удаљеног приступа. Резолуција "
+"овог виртуелног екрана се изводи из подешавања екрана, које шаље клијент "
+"удаљеног приступа."
