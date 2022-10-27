@@ -1746,7 +1746,7 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
           g_array_free (dst_data, TRUE);
           return NULL;
         }
-      if (strchr (filename, '\\'))
+      if (strchr (filename, '\\') || strchr (filename, '/'))
         {
           g_free (filename);
           continue;
@@ -1911,7 +1911,7 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
               g_free (dst_data);
               return NULL;
             }
-          if (strchr (filename, '\\'))
+          if (strchr (filename, '\\') || strchr (filename, '/'))
             {
               g_free (filename);
               continue;
