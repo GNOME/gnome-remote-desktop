@@ -83,6 +83,8 @@ if have_rdp
     'grd-clipboard-rdp.h',
     'grd-hwaccel-nvidia.c',
     'grd-hwaccel-nvidia.h',
+    'grd-hwaccel-vulkan.c',
+    'grd-hwaccel-vulkan.h',
     'grd-rdp-audio-input.c',
     'grd-rdp-audio-input.h',
     'grd-rdp-audio-output-stream.c',
@@ -158,6 +160,10 @@ if have_rdp
     'grd-session-rdp.h',
     'grd-shell-dialog.c',
     'grd-shell-dialog.h',
+    'grd-vk-device.c',
+    'grd-vk-device.h',
+    'grd-vk-queue.c',
+    'grd-vk-queue.h',
     'grd-vk-utils.c',
     'grd-vk-utils.h',
   ])
@@ -185,6 +191,7 @@ if have_rdp
     freerdp_server_dep,
     fuse_dep,
     opus_dep,
+    vulkan_dep,
     winpr_dep,
   ]
 endif

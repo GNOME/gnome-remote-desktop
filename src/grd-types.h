@@ -30,6 +30,7 @@ typedef struct _GrdContext GrdContext;
 typedef struct _GrdCredentials GrdCredentials;
 typedef struct _GrdEglThread GrdEglThread;
 typedef struct _GrdHwAccelNvidia GrdHwAccelNvidia;
+typedef struct _GrdHwAccelVulkan GrdHwAccelVulkan;
 typedef struct _GrdRdpAudioInput GrdRdpAudioInput;
 typedef struct _GrdRdpAudioOutputStream GrdRdpAudioOutputStream;
 typedef struct _GrdRdpAudioPlayback GrdRdpAudioPlayback;
@@ -63,6 +64,8 @@ typedef struct _GrdSession GrdSession;
 typedef struct _GrdSessionRdp GrdSessionRdp;
 typedef struct _GrdSessionVnc GrdSessionVnc;
 typedef struct _GrdStream GrdStream;
+typedef struct _GrdVkDevice GrdVkDevice;
+typedef struct _GrdVkQueue GrdVkQueue;
 typedef struct _GrdVncServer GrdVncServer;
 
 typedef enum _GrdPixelFormat
