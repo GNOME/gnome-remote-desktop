@@ -31,7 +31,6 @@
 #include "grd-hwaccel-nvidia.h"
 #include "grd-session-rdp.h"
 
-
 enum
 {
   PROP_0,
