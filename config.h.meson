@@ -29,3 +29,6 @@
 
 /* Username of system grd daemon */
 #mesondefine GRD_USERNAME
+
+/* Path of the shader dir */
+#mesondefine GRD_SHADER_DIR

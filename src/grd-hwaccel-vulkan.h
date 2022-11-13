@@ -29,6 +29,17 @@
 G_DECLARE_FINAL_TYPE (GrdHwAccelVulkan, grd_hwaccel_vulkan,
                       GRD, HWACCEL_VULKAN, GObject)
 
+struct _GrdVkSPIRVSource
+{
+  char *data;
+  size_t size;
+};
+
+struct _GrdVkSPIRVSources
+{
+  GrdVkSPIRVSource *avc_main_view;
+};
+
 GrdHwAccelVulkan *grd_hwaccel_vulkan_new (GrdEglThread  *egl_thread,
                                           GError       **error);
 

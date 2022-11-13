@@ -404,3 +404,5 @@ compiled_schemas = custom_target('compile-schemas',
     meson.current_build_dir(),
   ],
 )
+
+subdir('shaders')

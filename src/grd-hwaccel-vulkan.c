@@ -49,6 +49,8 @@ struct _GrdHwAccelVulkan
   /* Physical device features */
   gboolean supports_sampled_image_update_after_bind;
   gboolean supports_storage_image_update_after_bind;
+
+  GrdVkSPIRVSources spirv_sources;
 };
 
 G_DEFINE_TYPE (GrdHwAccelVulkan, grd_hwaccel_vulkan, G_TYPE_OBJECT)
@@ -65,7 +67,7 @@ grd_hwaccel_vulkan_acquire_device (GrdHwAccelVulkan  *hwaccel_vulkan,
     device_features |= GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_STORAGE_IMAGE;
 
   return grd_vk_device_new (hwaccel_vulkan->vk_physical_device, device_features,
-                            error);
+                            &hwaccel_vulkan->spirv_sources, error);
 }
 
 static gboolean
@@ -671,9 +673,26 @@ grd_hwaccel_vulkan_new (GrdEglThread  *egl_thread,
 }
 
 static void
+spirv_source_free (GrdVkSPIRVSource *spirv_source)
+{
+  g_free (spirv_source->data);
+  g_free (spirv_source);
+}
+
+static void
+free_spirv_sources (GrdHwAccelVulkan *hwaccel_vulkan)
+{
+  GrdVkSPIRVSources *spirv_sources = &hwaccel_vulkan->spirv_sources;
+
+  g_clear_pointer (&spirv_sources->avc_main_view, spirv_source_free);
+}
+
+static void
 grd_hwaccel_vulkan_dispose (GObject *object)
 {
   GrdHwAccelVulkan *hwaccel_vulkan = GRD_HWACCEL_VULKAN (object);
+
+  free_spirv_sources (hwaccel_vulkan);
 
   if (hwaccel_vulkan->vk_debug_messenger != VK_NULL_HANDLE)
     {
@@ -699,9 +718,45 @@ grd_hwaccel_vulkan_dispose (GObject *object)
   G_OBJECT_CLASS (grd_hwaccel_vulkan_parent_class)->dispose (object);
 }
 
+static gboolean
+load_spirv_source (const char        *path,
+                   GrdVkSPIRVSource **spirv_source,
+                   GError           **error)
+{
+  char *data = NULL;
+  size_t size = 0;
+
+  if (!g_file_get_contents (path, &data, &size, error))
+    return FALSE;
+
+  /* SPIR-V sources are always aligned to 32 bits */
+  g_assert (size % 4 == 0);
+
+  *spirv_source = g_new0 (GrdVkSPIRVSource, 1);
+  (*spirv_source)->data = data;
+  (*spirv_source)->size = size;
+
+  return TRUE;
+}
+
+static void
+load_spirv_sources (GrdHwAccelVulkan *hwaccel_vulkan)
+{
+  GrdVkSPIRVSources *spirv_sources = &hwaccel_vulkan->spirv_sources;
+  g_autofree char *avc_main_view_path = NULL;
+  g_autoptr (GError) error = NULL;
+
+  avc_main_view_path = g_strdup_printf ("%s/grd-avc-main-view_opt.spv",
+                                        GRD_SHADER_DIR);
+  if (!load_spirv_source (avc_main_view_path, &spirv_sources->avc_main_view,
+                          &error))
+    g_error ("[HWAccel.Vulkan] Failed to load shader: %s", error->message);
+}
+
 static void
 grd_hwaccel_vulkan_init (GrdHwAccelVulkan *hwaccel_vulkan)
 {
+  load_spirv_sources (hwaccel_vulkan);
 }
 
 static void

@@ -56,6 +56,7 @@ struct _GrdVkDevice
   int64_t drm_render_node;
 
   GrdVkDeviceFuncs device_funcs;
+  GrdVkShaderModules shader_modules;
 };
 
 G_DEFINE_TYPE (GrdVkDevice, grd_vk_device, G_TYPE_OBJECT)
@@ -100,6 +101,12 @@ GrdVkDeviceFuncs *
 grd_vk_device_get_device_funcs (GrdVkDevice *device)
 {
   return &device->device_funcs;
+}
+
+const GrdVkShaderModules *
+grd_vk_device_get_shader_modules (GrdVkDevice *device)
+{
+  return &device->shader_modules;
 }
 
 VkDeviceSize
@@ -283,6 +290,50 @@ load_device_funcs (GrdVkDevice  *device,
   return TRUE;
 }
 
+static gboolean
+create_shader_module (GrdVkDevice             *device,
+                      const GrdVkSPIRVSource  *spirv_source,
+                      VkShaderModule          *shader_module,
+                      GError                 **error)
+{
+  VkDevice vk_device = device->vk_device;
+  VkShaderModuleCreateInfo shader_module_create_info = {};
+  VkResult vk_result;
+
+  g_assert (shader_module);
+  g_assert (spirv_source->size % 4 == 0);
+
+  shader_module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  shader_module_create_info.codeSize = spirv_source->size;
+  shader_module_create_info.pCode = (const uint32_t *) spirv_source->data;
+
+  vk_result = vkCreateShaderModule (vk_device, &shader_module_create_info, NULL,
+                                    shader_module);
+  if (vk_result != VK_SUCCESS)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create shader module: %i", vk_result);
+      return FALSE;
+    }
+  g_assert (*shader_module != VK_NULL_HANDLE);
+
+  return TRUE;
+}
+
+static gboolean
+create_shader_modules (GrdVkDevice              *device,
+                       const GrdVkSPIRVSources  *spirv_sources,
+                       GError                  **error)
+{
+  GrdVkShaderModules *shader_modules = &device->shader_modules;
+
+  if (!create_shader_module (device, spirv_sources->avc_main_view,
+                             &shader_modules->create_avc_main_view, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 prepare_queue_pool (GrdVkDevice *device)
 {
@@ -327,9 +378,10 @@ fetch_device_properties (GrdVkDevice *device)
 }
 
 GrdVkDevice *
-grd_vk_device_new (VkPhysicalDevice      vk_physical_device,
-                   GrdVkDeviceFeatures   device_features,
-                   GError              **error)
+grd_vk_device_new (VkPhysicalDevice          vk_physical_device,
+                   GrdVkDeviceFeatures       device_features,
+                   const GrdVkSPIRVSources  *spirv_sources,
+                   GError                  **error)
 {
   g_autoptr (GrdVkDevice) device = NULL;
   VkDeviceCreateInfo device_create_info = {};
@@ -405,6 +457,8 @@ grd_vk_device_new (VkPhysicalDevice      vk_physical_device,
     return NULL;
   if (!load_device_funcs (device, error))
     return NULL;
+  if (!create_shader_modules (device, spirv_sources, error))
+    return NULL;
 
   prepare_queue_pool (device);
   fetch_device_properties (device);
@@ -416,11 +470,37 @@ grd_vk_device_new (VkPhysicalDevice      vk_physical_device,
 }
 
 static void
+clear_shader_module (GrdVkDevice    *device,
+                     VkShaderModule *vk_shader_module)
+{
+  VkDevice vk_device = device->vk_device;
+
+  g_assert (vk_device != VK_NULL_HANDLE);
+
+  if (*vk_shader_module == VK_NULL_HANDLE)
+    return;
+
+  vkDestroyShaderModule (vk_device, *vk_shader_module, NULL);
+  vk_shader_module = VK_NULL_HANDLE;
+}
+
+static void
+destroy_shader_modules (GrdVkDevice *device)
+{
+  GrdVkShaderModules *shader_modules = &device->shader_modules;
+
+  clear_shader_module (device, &shader_modules->create_avc_main_view);
+}
+
+static void
 grd_vk_device_dispose (GObject *object)
 {
   GrdVkDevice *device = GRD_VK_DEVICE (object);
 
   g_hash_table_remove_all (device->queue_table);
+
+  if (device->vk_device != VK_NULL_HANDLE)
+    destroy_shader_modules (device);
 
   if (device->vk_pipeline_cache != VK_NULL_HANDLE)
     {

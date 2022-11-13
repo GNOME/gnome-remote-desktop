@@ -46,9 +46,15 @@ typedef struct
   PFN_vkQueueSubmit2KHR vkQueueSubmit2KHR;
 } GrdVkDeviceFuncs;
 
-GrdVkDevice *grd_vk_device_new (VkPhysicalDevice      vk_physical_device,
-                                GrdVkDeviceFeatures   device_features,
-                                GError              **error);
+typedef struct
+{
+  VkShaderModule create_avc_main_view;
+} GrdVkShaderModules;
+
+GrdVkDevice *grd_vk_device_new (VkPhysicalDevice          vk_physical_device,
+                                GrdVkDeviceFeatures       device_features,
+                                const GrdVkSPIRVSources  *spirv_sources,
+                                GError                  **error);
 
 VkPhysicalDevice grd_vk_device_get_physical_device (GrdVkDevice *device);
 
@@ -63,6 +69,8 @@ float grd_vk_device_get_timestamp_period (GrdVkDevice *device);
 int64_t grd_vk_device_get_drm_render_node (GrdVkDevice *device);
 
 GrdVkDeviceFuncs *grd_vk_device_get_device_funcs (GrdVkDevice *device);
+
+const GrdVkShaderModules *grd_vk_device_get_shader_modules (GrdVkDevice *device);
 
 VkDeviceSize grd_vk_device_get_aligned_size (GrdVkDevice  *device,
                                              VkDeviceSize  size);

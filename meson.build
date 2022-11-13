@@ -86,6 +86,7 @@ dbus_system_services_dir = dbus_dep.get_variable(datadir / 'dbus-1' / 'system-se
                                                  pkgconfig_define: ['datadir', datadir])
 
 grd_datadir = join_paths(datadir, 'gnome-remote-desktop')
+grd_shaderdir = join_paths(grd_datadir, 'shaders')
 
 grd_confdir = get_option('conf_dir')
 if grd_confdir == ''
@@ -110,6 +111,7 @@ cdata.set_quoted('GRD_LIBEXEC_DIR', libexecdir)
 cdata.set_quoted('GRD_CUSTOM_CONF', grd_custom_conf)
 cdata.set_quoted('GRD_DEFAULT_CONF', grd_default_conf)
 cdata.set_quoted('GRD_USERNAME', grd_username)
+cdata.set_quoted('GRD_SHADER_DIR', grd_shaderdir)
 
 configure_file(input: 'config.h.meson',
                output: 'config.h',
