@@ -401,7 +401,7 @@ process_frame_data (GrdVncPipeWireStream *stream,
       if (map == MAP_FAILED)
         {
           g_warning ("Failed to mmap buffer: %s", g_strerror (errno));
-          callback (stream, NULL, FALSE, user_data);
+          callback (stream, g_steal_pointer (&frame), FALSE, user_data);
           return;
         }
 
