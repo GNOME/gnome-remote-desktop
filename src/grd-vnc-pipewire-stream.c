@@ -468,7 +468,7 @@ process_frame_data (GrdVncPipeWireStream *stream,
     }
   else
     {
-      callback (stream, NULL, FALSE, user_data);
+      g_assert_not_reached ();
     }
 }
 
