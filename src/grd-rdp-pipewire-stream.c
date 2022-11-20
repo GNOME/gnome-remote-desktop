@@ -765,7 +765,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
     }
   else
     {
-      callback (stream, g_steal_pointer (&frame), TRUE, user_data);
+      g_assert_not_reached ();
     }
 }
 
