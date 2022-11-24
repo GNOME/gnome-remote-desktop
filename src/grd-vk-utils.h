@@ -28,6 +28,24 @@
 void grd_vk_append_to_chain (void *chain,
                              void *element);
 
+void grd_vk_clear_command_pool (GrdVkDevice   *device,
+                                VkCommandPool *vk_command_pool);
+
+void grd_vk_clear_descriptor_pool (GrdVkDevice      *device,
+                                   VkDescriptorPool *vk_descriptor_pool);
+
+void grd_vk_clear_descriptor_set_layout (GrdVkDevice           *device,
+                                         VkDescriptorSetLayout *vk_descriptor_set_layout);
+
+void grd_vk_clear_fence (GrdVkDevice *device,
+                         VkFence     *vk_fence);
+
+void grd_vk_clear_query_pool (GrdVkDevice *device,
+                              VkQueryPool *vk_query_pool);
+
+void grd_vk_clear_sampler (GrdVkDevice *device,
+                           VkSampler   *vk_sampler);
+
 GrdVkImage *grd_vk_dma_buf_image_new (GrdVkDevice        *vk_device,
                                       VkFormat            vk_format,
                                       uint32_t            width,

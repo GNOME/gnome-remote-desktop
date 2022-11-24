@@ -23,6 +23,7 @@
 
 #include <drm_fourcc.h>
 
+#include "grd-vk-device.h"
 #include "grd-vk-image.h"
 
 typedef struct
@@ -42,6 +43,96 @@ grd_vk_append_to_chain (void *chain,
     tmp = (GrdVkBaseStruct *) tmp->next;
 
   tmp->next = element;
+}
+
+void
+grd_vk_clear_command_pool (GrdVkDevice   *device,
+                           VkCommandPool *vk_command_pool)
+{
+  VkDevice vk_device = grd_vk_device_get_device (device);
+
+  g_assert (vk_device != VK_NULL_HANDLE);
+
+  if (*vk_command_pool == VK_NULL_HANDLE)
+    return;
+
+  vkDestroyCommandPool (vk_device, *vk_command_pool, NULL);
+  *vk_command_pool = VK_NULL_HANDLE;
+}
+
+void
+grd_vk_clear_descriptor_pool (GrdVkDevice      *device,
+                              VkDescriptorPool *vk_descriptor_pool)
+{
+  VkDevice vk_device = grd_vk_device_get_device (device);
+
+  g_assert (vk_device != VK_NULL_HANDLE);
+
+  if (*vk_descriptor_pool == VK_NULL_HANDLE)
+    return;
+
+  vkDestroyDescriptorPool (vk_device, *vk_descriptor_pool, NULL);
+  *vk_descriptor_pool = VK_NULL_HANDLE;
+}
+
+void
+grd_vk_clear_descriptor_set_layout (GrdVkDevice           *device,
+                                    VkDescriptorSetLayout *vk_descriptor_set_layout)
+{
+  VkDevice vk_device = grd_vk_device_get_device (device);
+
+  g_assert (vk_device != VK_NULL_HANDLE);
+
+  if (*vk_descriptor_set_layout == VK_NULL_HANDLE)
+    return;
+
+  vkDestroyDescriptorSetLayout (vk_device, *vk_descriptor_set_layout, NULL);
+  *vk_descriptor_set_layout = VK_NULL_HANDLE;
+}
+
+void
+grd_vk_clear_fence (GrdVkDevice *device,
+                    VkFence     *vk_fence)
+{
+  VkDevice vk_device = grd_vk_device_get_device (device);
+
+  g_assert (vk_device != VK_NULL_HANDLE);
+
+  if (*vk_fence == VK_NULL_HANDLE)
+    return;
+
+  vkDestroyFence (vk_device, *vk_fence, NULL);
+  *vk_fence = VK_NULL_HANDLE;
+}
+
+void
+grd_vk_clear_query_pool (GrdVkDevice *device,
+                         VkQueryPool *vk_query_pool)
+{
+  VkDevice vk_device = grd_vk_device_get_device (device);
+
+  g_assert (vk_device != VK_NULL_HANDLE);
+
+  if (*vk_query_pool == VK_NULL_HANDLE)
+    return;
+
+  vkDestroyQueryPool (vk_device, *vk_query_pool, NULL);
+  *vk_query_pool = VK_NULL_HANDLE;
+}
+
+void
+grd_vk_clear_sampler (GrdVkDevice *device,
+                      VkSampler   *vk_sampler)
+{
+  VkDevice vk_device = grd_vk_device_get_device (device);
+
+  g_assert (vk_device != VK_NULL_HANDLE);
+
+  if (*vk_sampler == VK_NULL_HANDLE)
+    return;
+
+  vkDestroySampler (vk_device, *vk_sampler, NULL);
+  *vk_sampler = VK_NULL_HANDLE;
 }
 
 GrdVkImage *
