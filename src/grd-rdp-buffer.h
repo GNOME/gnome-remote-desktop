@@ -22,28 +22,8 @@
 
 #include <ffnvcodec/dynlink_cuda.h>
 #include <gio/gio.h>
-#include <stdint.h>
 
 #include "grd-types.h"
-
-struct _GrdRdpBuffer
-{
-  GrdRdpBufferPool *buffer_pool;
-
-  GrdEglThread *egl_thread;
-  GrdHwAccelNvidia *hwaccel_nvidia;
-
-  uint32_t width;
-  uint32_t height;
-
-  uint8_t *local_data;
-
-  uint32_t pbo;
-
-  CUgraphicsResource cuda_resource;
-  CUstream cuda_stream;
-  CUdeviceptr mapped_cuda_pointer;
-};
 
 GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
                                   GrdEglThread     *egl_thread,
@@ -54,7 +34,7 @@ GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
                                   uint32_t          stride,
                                   gboolean          preallocate_on_gpu);
 
-void grd_rdp_buffer_free (GrdRdpBuffer *buffer);
+void grd_rdp_buffer_free (GrdRdpBuffer *rdp_buffer);
 
 uint32_t grd_rdp_buffer_get_width (GrdRdpBuffer *rdp_buffer);
 
@@ -66,6 +46,8 @@ uint32_t grd_rdp_buffer_get_pbo (GrdRdpBuffer *rdp_buffer);
 
 CUdeviceptr grd_rdp_buffer_get_mapped_cuda_pointer (GrdRdpBuffer *rdp_buffer);
 
+void grd_rdp_buffer_release (GrdRdpBuffer *rdp_buffer);
+
 gboolean grd_rdp_buffer_register_read_only_gl_buffer (GrdRdpBuffer *rdp_buffer,
                                                       uint32_t      pbo);
 
@@ -75,6 +57,6 @@ void grd_rdp_buffer_unmap_cuda_resource (GrdRdpBuffer *rdp_buffer);
 
 void grd_rdp_buffer_queue_resource_unmap (GrdRdpBuffer *rdp_buffer);
 
-void grd_rdp_buffer_release (GrdRdpBuffer *buffer);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdRdpBuffer, grd_rdp_buffer_free)
 
 #endif /* GRD_RDP_BUFFER_H */
