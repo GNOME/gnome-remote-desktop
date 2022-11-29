@@ -222,6 +222,22 @@ grd_rdp_buffer_release (GrdRdpBuffer *buffer)
 }
 
 gboolean
+grd_rdp_buffer_register_read_only_gl_buffer (GrdRdpBuffer *rdp_buffer,
+                                             uint32_t      pbo)
+{
+  gboolean success;
+
+  success =
+    grd_hwaccel_nvidia_register_read_only_gl_buffer (rdp_buffer->hwaccel_nvidia,
+                                                     &rdp_buffer->cuda_resource,
+                                                     pbo);
+  if (success)
+    rdp_buffer->pbo = pbo;
+
+  return success;
+}
+
+gboolean
 grd_rdp_buffer_map_cuda_resource (GrdRdpBuffer *rdp_buffer)
 {
   size_t mapped_size = 0;
