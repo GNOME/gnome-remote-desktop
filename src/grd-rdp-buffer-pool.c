@@ -119,7 +119,7 @@ grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
 static gboolean
 buffer_has_mapped_data (GrdRdpBuffer *buffer)
 {
-  if (buffer->mapped_cuda_pointer)
+  if (grd_rdp_buffer_get_mapped_cuda_pointer (buffer))
     return TRUE;
 
   return FALSE;

@@ -123,6 +123,7 @@ submit_new_framebuffer (GrdRdpDamageDetector *detector,
     {
       for (x = 0; x < detector_memcmp->cols; ++x)
         {
+          GrdRdpBuffer *last_framebuffer = detector_memcmp->last_framebuffer;
           cairo_rectangle_int_t tile;
           uint8_t tile_damaged = 0;
 
@@ -133,9 +134,8 @@ submit_new_framebuffer (GrdRdpDamageDetector *detector,
           tile.height = surface_height - tile.y < TILE_HEIGHT ? surface_height - tile.y
                                                               : TILE_HEIGHT;
 
-          if (grd_is_tile_dirty (&tile,
-                                 buffer->local_data,
-                                 detector_memcmp->last_framebuffer->local_data,
+          if (grd_is_tile_dirty (&tile, grd_rdp_buffer_get_local_data (buffer),
+                                 grd_rdp_buffer_get_local_data (last_framebuffer),
                                  surface_width * 4, 4))
             {
               tile_damaged = 1;

@@ -82,19 +82,16 @@ struct _GrdRdpFrame
 
 typedef struct
 {
-  GrdHwAccelNvidia *hwaccel_nvidia;
   GrdRdpBuffer *rdp_buffer;
 } UnmapBufferData;
 
 typedef struct
 {
-  GrdHwAccelNvidia *hwaccel_nvidia;
   GrdRdpBuffer *rdp_buffer;
 } AllocateBufferData;
 
 typedef struct
 {
-  GrdHwAccelNvidia *hwaccel_nvidia;
   GrdRdpBuffer *rdp_buffer;
 } RealizeBufferData;
 
@@ -465,7 +462,7 @@ copy_frame_data (GrdRdpFrame *frame,
 
   for (y = 0; y < height; ++y)
     {
-      memcpy (((uint8_t *) buffer->local_data) + y * dst_stride,
+      memcpy (grd_rdp_buffer_get_local_data (buffer) + y * dst_stride,
               ((uint8_t *) src_data) + y * src_stride,
               width * 4);
     }
@@ -476,26 +473,18 @@ cuda_unmap_resource (gpointer user_data)
 {
   UnmapBufferData *data = user_data;
 
-  if (!data->rdp_buffer->mapped_cuda_pointer)
-    return TRUE;
-
-  grd_hwaccel_nvidia_unmap_cuda_resource (data->hwaccel_nvidia,
-                                          data->rdp_buffer->cuda_resource,
-                                          data->rdp_buffer->cuda_stream);
-  data->rdp_buffer->mapped_cuda_pointer = 0;
+  grd_rdp_buffer_unmap_cuda_resource (data->rdp_buffer);
 
   return TRUE;
 }
 
 static void
-unmap_cuda_resources (GrdEglThread     *egl_thread,
-                      GrdHwAccelNvidia *hwaccel_nvidia,
-                      GrdRdpBuffer     *rdp_buffer)
+unmap_cuda_resources (GrdEglThread *egl_thread,
+                      GrdRdpBuffer *rdp_buffer)
 {
   UnmapBufferData *data;
 
   data = g_new0 (UnmapBufferData, 1);
-  data->hwaccel_nvidia = hwaccel_nvidia;
   data->rdp_buffer = rdp_buffer;
 
   grd_egl_thread_run_custom_task (egl_thread,
@@ -509,15 +498,8 @@ cuda_allocate_buffer (gpointer user_data,
 {
   AllocateBufferData *data = user_data;
   GrdRdpBuffer *rdp_buffer = data->rdp_buffer;
-  gboolean success;
 
-  success = grd_hwaccel_nvidia_register_read_only_gl_buffer (data->hwaccel_nvidia,
-                                                             &rdp_buffer->cuda_resource,
-                                                             pbo);
-  if (success)
-    rdp_buffer->pbo = pbo;
-
-  return success;
+  return grd_rdp_buffer_register_read_only_gl_buffer (rdp_buffer, pbo);
 }
 
 static gboolean
@@ -534,13 +516,8 @@ cuda_map_resource (gpointer user_data)
 {
   RealizeBufferData *data = user_data;
   GrdRdpBuffer *rdp_buffer = data->rdp_buffer;
-  size_t mapped_size = 0;
 
-  return grd_hwaccel_nvidia_map_cuda_resource (data->hwaccel_nvidia,
-                                               rdp_buffer->cuda_resource,
-                                               &rdp_buffer->mapped_cuda_pointer,
-                                               &mapped_size,
-                                               rdp_buffer->cuda_stream);
+  return grd_rdp_buffer_map_cuda_resource (rdp_buffer);
 }
 
 static gboolean
@@ -621,7 +598,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
           return;
         }
       rdp_buffer = frame->buffer;
-      pbo = rdp_buffer->pbo;
+      pbo = grd_rdp_buffer_get_pbo (rdp_buffer);
 
       if (stream->rdp_surface->needs_no_local_data &&
           src_stride == dst_stride)
@@ -643,7 +620,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
 
           munmap (map, size);
 
-          data_to_upload = rdp_buffer->local_data;
+          data_to_upload = grd_rdp_buffer_get_local_data (rdp_buffer);
         }
 
       if (!hwaccel_nvidia)
@@ -652,14 +629,12 @@ process_frame_data (GrdRdpPipeWireStream *stream,
           return;
         }
 
-      unmap_cuda_resources (egl_thread, hwaccel_nvidia, rdp_buffer);
+      unmap_cuda_resources (egl_thread, rdp_buffer);
 
       allocate_buffer_data = g_new0 (AllocateBufferData, 1);
-      allocate_buffer_data->hwaccel_nvidia = hwaccel_nvidia;
       allocate_buffer_data->rdp_buffer = rdp_buffer;
 
       realize_buffer_data = g_new0 (RealizeBufferData, 1);
-      realize_buffer_data->hwaccel_nvidia = hwaccel_nvidia;
       realize_buffer_data->rdp_buffer = rdp_buffer;
 
       grd_egl_thread_upload (egl_thread,
@@ -724,27 +699,24 @@ process_frame_data (GrdRdpPipeWireStream *stream,
         }
 
       if (!stream->rdp_surface->needs_no_local_data)
-        dst_data = frame->buffer->local_data;
+        dst_data = grd_rdp_buffer_get_local_data (frame->buffer);
 
       if (hwaccel_nvidia)
         {
-          unmap_cuda_resources (egl_thread, hwaccel_nvidia, rdp_buffer);
+          unmap_cuda_resources (egl_thread, rdp_buffer);
 
           iface.allocate = allocate_buffer;
           iface.realize = realize_buffer;
 
           import_buffer_data = g_new0 (ImportBufferData, 1);
-          import_buffer_data->allocate.hwaccel_nvidia = hwaccel_nvidia;
           import_buffer_data->allocate.rdp_buffer = rdp_buffer;
-
-          import_buffer_data->realize.hwaccel_nvidia = hwaccel_nvidia;
           import_buffer_data->realize.rdp_buffer = rdp_buffer;
 
           import_buffer_data->rdp_buffer = rdp_buffer;
         }
 
       grd_egl_thread_download (egl_thread,
-                               rdp_buffer->pbo,
+                               grd_rdp_buffer_get_pbo (rdp_buffer),
                                height,
                                dst_stride,
                                hwaccel_nvidia ? &iface : NULL,

@@ -289,8 +289,8 @@ take_or_encode_frame (GrdSessionRdp *session_rdp,
                       GrdRdpBuffer  *buffer)
 {
   SessionMetrics *session_metrics = &session_rdp->session_metrics;
-  uint16_t width = buffer->width;
-  uint16_t height = buffer->height;
+  uint16_t width = grd_rdp_buffer_get_width (buffer);
+  uint16_t height = grd_rdp_buffer_get_height (buffer);
 
   if (!session_metrics->received_first_frame)
     {
@@ -779,7 +779,7 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   rdpSettings *rdp_settings = peer->settings;
   rdpUpdate *rdp_update = peer->update;
-  uint8_t *data = buffer->local_data;
+  uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
   uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
                                                               rdp_surface->width);
   SURFACE_BITS_COMMAND cmd = {0};
@@ -929,7 +929,7 @@ rdp_peer_refresh_nsc (GrdSessionRdp  *session_rdp,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   rdpSettings *rdp_settings = peer->settings;
   rdpUpdate *rdp_update = peer->update;
-  uint8_t *data = buffer->local_data;
+  uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
   uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
                                                               rdp_surface->width);
   NSCThreadPoolContext *thread_pool_context =
@@ -1174,7 +1174,7 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   rdpSettings *rdp_settings = peer->settings;
   rdpUpdate *rdp_update = peer->update;
-  uint8_t *data = buffer->local_data;
+  uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
   uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
                                                               rdp_surface->width);
   RawThreadPoolContext *thread_pool_context =

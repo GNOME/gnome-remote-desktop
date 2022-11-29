@@ -551,6 +551,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
     grd_rdp_gfx_surface_get_render_surface (gfx_surface);
   GrdRdpGfxFrameController *frame_controller =
     grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
+  CUdeviceptr src_data = grd_rdp_buffer_get_mapped_cuda_pointer (buffer);
   RDPGFX_SURFACE_COMMAND cmd = {0};
   RDPGFX_START_FRAME_PDU cmd_start = {0};
   RDPGFX_END_FRAME_PDU cmd_end = {0};
@@ -577,7 +578,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   if (!grd_hwaccel_nvidia_avc420_encode_bgrx_frame (graphics_pipeline->hwaccel_nvidia,
                                                     hwaccel_context->encode_session_id,
-                                                    buffer->mapped_cuda_pointer,
+                                                    src_data,
                                                     &rdp_surface->avc.main_view,
                                                     surface_width, surface_height,
                                                     aligned_width, aligned_height,
@@ -900,7 +901,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   rfx_message = rfx_encode_message (graphics_pipeline->rfx_context,
                                     rfx_rects,
                                     n_rects,
-                                    buffer->local_data,
+                                    grd_rdp_buffer_get_local_data (buffer),
                                     surface_width,
                                     surface_height,
                                     src_stride);

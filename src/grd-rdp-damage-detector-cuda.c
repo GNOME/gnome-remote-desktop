@@ -151,6 +151,8 @@ submit_new_framebuffer (GrdRdpDamageDetector *detector,
   CudaFunctions *cuda_funcs = detector_cuda->cuda_funcs;
   uint32_t surface_width = detector_cuda->surface_width;
   uint32_t surface_height = detector_cuda->surface_height;
+  CUdeviceptr current_data;
+  CUdeviceptr previous_data;
   unsigned int grid_dim_x, grid_dim_y, grid_dim_z;
   unsigned int block_dim_x, block_dim_y, block_dim_z;
   void *args[8];
@@ -181,6 +183,10 @@ submit_new_framebuffer (GrdRdpDamageDetector *detector,
       return FALSE;
     }
 
+  current_data = grd_rdp_buffer_get_mapped_cuda_pointer (buffer);
+  previous_data =
+    grd_rdp_buffer_get_mapped_cuda_pointer (detector_cuda->last_framebuffer);
+
   /* Threads per blocks */
   block_dim_x = 32;
   block_dim_y = 16;
@@ -194,8 +200,8 @@ submit_new_framebuffer (GrdRdpDamageDetector *detector,
 
   args[0] = &detector_cuda->damage_array;
   args[1] = &detector_cuda->region_is_damaged;
-  args[2] = &buffer->mapped_cuda_pointer;
-  args[3] = &detector_cuda->last_framebuffer->mapped_cuda_pointer;
+  args[2] = &current_data;
+  args[3] = &previous_data;
   args[4] = &surface_width;
   args[5] = &surface_width;
   args[6] = &surface_height;
