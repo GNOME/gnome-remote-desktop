@@ -53,6 +53,7 @@ typedef enum _GrdRdpChannel
 
 GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                     GSocketConnection *connection,
+                                    GrdHwAccelVulkan  *hwaccel_vulkan,
                                     GrdHwAccelNvidia  *hwaccel_nvidia);
 
 GrdRdpSessionMetrics *grd_session_rdp_get_session_metrics (GrdSessionRdp *session_rdp);

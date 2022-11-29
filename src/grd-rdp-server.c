@@ -30,6 +30,7 @@
 
 #include "grd-context.h"
 #include "grd-hwaccel-nvidia.h"
+#include "grd-hwaccel-vulkan.h"
 #include "grd-session-rdp.h"
 #include "grd-utils.h"
 
@@ -66,6 +67,7 @@ struct _GrdRdpServer
   GCancellable *cancellable;
 
   GrdContext *context;
+  GrdHwAccelVulkan *hwaccel_vulkan;
   GrdHwAccelNvidia *hwaccel_nvidia;
 
   uint32_t pending_binding_attempts;
@@ -85,22 +87,28 @@ grd_rdp_server_new (GrdContext *context)
 {
   GrdRdpServer *rdp_server;
   GrdEglThread *egl_thread;
+  g_autoptr (GError) error = NULL;
 
   rdp_server = g_object_new (GRD_TYPE_RDP_SERVER,
                              "context", context,
                              NULL);
 
   egl_thread = grd_context_get_egl_thread (rdp_server->context);
-  if (egl_thread &&
-      (rdp_server->hwaccel_nvidia = grd_hwaccel_nvidia_new (egl_thread)))
+  if (!egl_thread)
+    return rdp_server;
+
+  rdp_server->hwaccel_nvidia = grd_hwaccel_nvidia_new (egl_thread);
+  if (rdp_server->hwaccel_nvidia)
     {
-      g_message ("[RDP] Initialization of CUDA was successful");
+      g_message ("[HWAccel.CUDA] Initialization of CUDA was successful");
+      return rdp_server;
     }
+
+  rdp_server->hwaccel_vulkan = grd_hwaccel_vulkan_new (egl_thread, &error);
+  if (!rdp_server->hwaccel_vulkan)
+    g_debug ("[HWAccel.Vulkan] Could not initialize Vulkan: %s", error->message);
   else
-    {
-      g_debug ("[RDP] Initialization of CUDA failed. "
-               "No hardware acceleration available");
-    }
+    g_message ("[HWAccel.Vulkan] Initialization of Vulkan was successful");
 
   return rdp_server;
 }
@@ -181,6 +189,7 @@ on_routing_token_peeked (GObject      *source_object,
   else
     {
       if (!(session_rdp = grd_session_rdp_new (rdp_server, connection,
+                                               rdp_server->hwaccel_vulkan,
                                                rdp_server->hwaccel_nvidia)))
         return;
 
@@ -220,6 +229,7 @@ on_incoming (GSocketService    *service,
   g_debug ("New incoming RDP connection");
 
   if (!(session_rdp = grd_session_rdp_new (rdp_server, connection,
+                                           rdp_server->hwaccel_vulkan,
                                            rdp_server->hwaccel_nvidia)))
     return TRUE;
 
@@ -415,6 +425,7 @@ grd_rdp_server_stop (GrdRdpServer *rdp_server)
   g_clear_handle_id (&rdp_server->binding_timeout_source_id, g_source_remove);
 
   g_clear_object (&rdp_server->hwaccel_nvidia);
+  g_clear_object (&rdp_server->hwaccel_vulkan);
 }
 
 static void
@@ -466,6 +477,7 @@ grd_rdp_server_dispose (GObject *object)
   g_assert (!rdp_server->stopped_sessions);
 
   g_assert (!rdp_server->hwaccel_nvidia);
+  g_assert (!rdp_server->hwaccel_vulkan);
 
   G_OBJECT_CLASS (grd_rdp_server_parent_class)->dispose (object);
 }

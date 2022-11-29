@@ -22,6 +22,7 @@
 #include "grd-rdp-renderer.h"
 
 #include "grd-hwaccel-nvidia.h"
+#include "grd-hwaccel-vulkan.h"
 #include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-private.h"
 #include "grd-rdp-render-context.h"
@@ -46,6 +47,7 @@ struct _GrdRdpRenderer
   gboolean in_shutdown;
 
   GrdSessionRdp *session_rdp;
+  GrdVkDevice *vk_device;
   GrdHwAccelNvidia *hwaccel_nvidia;
 
   GrdRdpGraphicsPipeline *graphics_pipeline;
@@ -146,17 +148,42 @@ graphics_thread_func (gpointer data)
   return NULL;
 }
 
-void
-grd_rdp_renderer_notify_session_started (GrdRdpRenderer         *renderer,
-                                         GrdRdpGraphicsPipeline *graphics_pipeline,
-                                         rdpContext             *rdp_context)
+static gboolean
+maybe_initialize_hardware_acceleration (GrdRdpRenderer   *renderer,
+                                        GrdHwAccelVulkan *hwaccel_vulkan)
+{
+  g_autoptr (GError) error = NULL;
+
+  renderer->vk_device = grd_hwaccel_vulkan_acquire_device (hwaccel_vulkan,
+                                                           &error);
+  if (!renderer->vk_device)
+    {
+      g_warning ("[RDP] Failed to acquire Vulkan device: %s",
+                 error->message);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+grd_rdp_renderer_start (GrdRdpRenderer         *renderer,
+                        GrdHwAccelVulkan       *hwaccel_vulkan,
+                        GrdRdpGraphicsPipeline *graphics_pipeline,
+                        rdpContext             *rdp_context)
 {
   renderer->graphics_pipeline = graphics_pipeline;
   renderer->rdp_context = rdp_context;
 
+  if (hwaccel_vulkan &&
+      !maybe_initialize_hardware_acceleration (renderer, hwaccel_vulkan))
+    return FALSE;
+
   renderer->graphics_thread = g_thread_new ("RDP graphics thread",
                                             graphics_thread_func,
                                             renderer);
+
+  return TRUE;
 }
 
 void
@@ -528,6 +555,8 @@ grd_rdp_renderer_dispose (GObject *object)
   g_clear_pointer (&renderer->disposal_queue, g_async_queue_unref);
 
   g_assert (g_hash_table_size (renderer->surface_renderer_table) == 0);
+
+  g_clear_object (&renderer->vk_device);
 
   G_OBJECT_CLASS (grd_rdp_renderer_parent_class)->dispose (object);
 }
