@@ -221,6 +221,18 @@ grd_rdp_buffer_release (GrdRdpBuffer *buffer)
   grd_rdp_buffer_pool_release_buffer (buffer->buffer_pool, buffer);
 }
 
+gboolean
+grd_rdp_buffer_map_cuda_resource (GrdRdpBuffer *rdp_buffer)
+{
+  size_t mapped_size = 0;
+
+  return grd_hwaccel_nvidia_map_cuda_resource (rdp_buffer->hwaccel_nvidia,
+                                               rdp_buffer->cuda_resource,
+                                               &rdp_buffer->mapped_cuda_pointer,
+                                               &mapped_size,
+                                               rdp_buffer->cuda_stream);
+}
+
 void
 grd_rdp_buffer_unmap_cuda_resource (GrdRdpBuffer *rdp_buffer)
 {
