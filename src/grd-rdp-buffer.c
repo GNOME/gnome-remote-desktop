@@ -215,6 +215,12 @@ grd_rdp_buffer_get_mapped_cuda_pointer (GrdRdpBuffer *rdp_buffer)
   return rdp_buffer->mapped_cuda_pointer;
 }
 
+void
+grd_rdp_buffer_release (GrdRdpBuffer *buffer)
+{
+  grd_rdp_buffer_pool_release_buffer (buffer->buffer_pool, buffer);
+}
+
 static gboolean
 cuda_unmap_resource (gpointer user_data)
 {
@@ -228,31 +234,25 @@ cuda_unmap_resource (gpointer user_data)
 }
 
 void
-grd_rdp_buffer_unmap_resources (GrdRdpBuffer *buffer)
+grd_rdp_buffer_queue_resource_unmap (GrdRdpBuffer *rdp_buffer)
 {
-  if (buffer->mapped_cuda_pointer)
-    {
-      UnmapBufferData *data;
+  UnmapBufferData *data;
 
-      data = g_new0 (UnmapBufferData, 1);
-      data->hwaccel_nvidia = buffer->hwaccel_nvidia;
-      data->cuda_resource = buffer->cuda_resource;
-      data->cuda_stream = buffer->cuda_stream;
-      grd_egl_thread_run_custom_task (buffer->egl_thread,
-                                      cuda_unmap_resource,
-                                      data,
-                                      NULL, data, g_free);
+  if (!rdp_buffer->mapped_cuda_pointer)
+    return;
 
-      /*
-       * The mapped CUDA pointer indicates whether the resource is mapped, but
-       * it is itself not needed to unmap the resource.
-       */
-      buffer->mapped_cuda_pointer = 0;
-    }
-}
+  data = g_new0 (UnmapBufferData, 1);
+  data->hwaccel_nvidia = rdp_buffer->hwaccel_nvidia;
+  data->cuda_resource = rdp_buffer->cuda_resource;
+  data->cuda_stream = rdp_buffer->cuda_stream;
+  grd_egl_thread_run_custom_task (rdp_buffer->egl_thread,
+                                  cuda_unmap_resource,
+                                  data,
+                                  NULL, data, g_free);
 
-void
-grd_rdp_buffer_release (GrdRdpBuffer *buffer)
-{
-  grd_rdp_buffer_pool_release_buffer (buffer->buffer_pool, buffer);
+  /*
+   * The mapped CUDA pointer indicates whether the resource is mapped, but
+   * it is itself not needed to unmap the resource.
+   */
+  rdp_buffer->mapped_cuda_pointer = 0;
 }

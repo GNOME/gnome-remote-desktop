@@ -66,7 +66,7 @@ uint32_t grd_rdp_buffer_get_pbo (GrdRdpBuffer *rdp_buffer);
 
 CUdeviceptr grd_rdp_buffer_get_mapped_cuda_pointer (GrdRdpBuffer *rdp_buffer);
 
-void grd_rdp_buffer_unmap_resources (GrdRdpBuffer *buffer);
+void grd_rdp_buffer_queue_resource_unmap (GrdRdpBuffer *rdp_buffer);
 
 void grd_rdp_buffer_release (GrdRdpBuffer *buffer);
 

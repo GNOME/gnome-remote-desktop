@@ -250,7 +250,7 @@ unmap_untaken_buffers (gpointer user_data)
                                         (gpointer *) &buffer_info))
     {
       if (!buffer_info->buffer_taken)
-        grd_rdp_buffer_unmap_resources (buffer);
+        grd_rdp_buffer_queue_resource_unmap (buffer);
     }
   g_mutex_unlock (&buffer_pool->pool_mutex);
 
