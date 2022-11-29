@@ -221,6 +221,18 @@ grd_rdp_buffer_release (GrdRdpBuffer *buffer)
   grd_rdp_buffer_pool_release_buffer (buffer->buffer_pool, buffer);
 }
 
+void
+grd_rdp_buffer_unmap_cuda_resource (GrdRdpBuffer *rdp_buffer)
+{
+  if (!rdp_buffer->mapped_cuda_pointer)
+    return;
+
+  grd_hwaccel_nvidia_unmap_cuda_resource (rdp_buffer->hwaccel_nvidia,
+                                          rdp_buffer->cuda_resource,
+                                          rdp_buffer->cuda_stream);
+  rdp_buffer->mapped_cuda_pointer = 0;
+}
+
 static gboolean
 cuda_unmap_resource (gpointer user_data)
 {
