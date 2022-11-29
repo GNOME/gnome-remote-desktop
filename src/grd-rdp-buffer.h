@@ -56,6 +56,16 @@ GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
 
 void grd_rdp_buffer_free (GrdRdpBuffer *buffer);
 
+uint32_t grd_rdp_buffer_get_width (GrdRdpBuffer *rdp_buffer);
+
+uint32_t grd_rdp_buffer_get_height (GrdRdpBuffer *rdp_buffer);
+
+uint8_t *grd_rdp_buffer_get_local_data (GrdRdpBuffer *rdp_buffer);
+
+uint32_t grd_rdp_buffer_get_pbo (GrdRdpBuffer *rdp_buffer);
+
+CUdeviceptr grd_rdp_buffer_get_mapped_cuda_pointer (GrdRdpBuffer *rdp_buffer);
+
 void grd_rdp_buffer_unmap_resources (GrdRdpBuffer *buffer);
 
 void grd_rdp_buffer_release (GrdRdpBuffer *buffer);

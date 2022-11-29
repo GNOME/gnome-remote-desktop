@@ -185,6 +185,36 @@ grd_rdp_buffer_free (GrdRdpBuffer *buffer)
   g_free (buffer);
 }
 
+uint32_t
+grd_rdp_buffer_get_width (GrdRdpBuffer *rdp_buffer)
+{
+  return rdp_buffer->width;
+}
+
+uint32_t
+grd_rdp_buffer_get_height (GrdRdpBuffer *rdp_buffer)
+{
+  return rdp_buffer->height;
+}
+
+uint8_t *
+grd_rdp_buffer_get_local_data (GrdRdpBuffer *rdp_buffer)
+{
+  return rdp_buffer->local_data;
+}
+
+uint32_t
+grd_rdp_buffer_get_pbo (GrdRdpBuffer *rdp_buffer)
+{
+  return rdp_buffer->pbo;
+}
+
+CUdeviceptr
+grd_rdp_buffer_get_mapped_cuda_pointer (GrdRdpBuffer *rdp_buffer)
+{
+  return rdp_buffer->mapped_cuda_pointer;
+}
+
 static gboolean
 cuda_unmap_resource (gpointer user_data)
 {
