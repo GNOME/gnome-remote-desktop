@@ -7,8 +7,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issu"
 "es\n"
-"POT-Creation-Date: 2022-08-02 15:36+0000\n"
-"PO-Revision-Date: 2022-09-05 10:04+0000\n"
+"POT-Creation-Date: 2022-11-20 15:07+0000\n"
+"PO-Revision-Date: 2022-11-30 17:24+0000\n"
 "Last-Translator: Sveinn í Felli <sv1@fellsnet.is>\n"
 "Language-Team: Icelandic\n"
 "Language: is\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Lokalize 21.12.3\n"
 
-#: src/grd-daemon.c:480
+#: src/grd-daemon.c:503
 msgid "GNOME Remote Desktop"
 msgstr "Fjartengt GNOME skjáborð"
 
@@ -44,16 +44,16 @@ msgstr "Hafna"
 msgid "Accept"
 msgstr "Samþykkja"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:53
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr ""
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:461
 msgid "Commands:\n"
 msgstr "Skipanir:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:466
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -73,7 +73,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:485
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -90,11 +90,13 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:500
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 
@@ -103,7 +105,8 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "Hvort RDP-bakendinn sé virkur eða ekki"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+#| msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Ef þetta er stillt á 'satt' verður RDP-bakendinn virkjaður."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
@@ -118,10 +121,10 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
@@ -161,7 +164,8 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "Hvort VNC-bakendinn sé virkur eða ekki"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+#| msgid "If set to to 'true' the VNC backend will be initialized."
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Ef þetta er stillt á 'satt' verður VNC-bakendinn virkjaður."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
@@ -190,3 +194,23 @@ msgstr ""
 "manneskja hafi aðgang að viðkomandi tölvu og samþykki sérstakleg nýju "
 "tenginguna. * password - þar sem fjartengdi notandinn þarf að gefa upp þekkt "
 "lykilorð"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#| msgid "Screenshare mode of RDP connections"
+msgid "Screenshare mode of VNC connections"
+msgstr "Skjádeilingarhamur VNC-tenginga"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
