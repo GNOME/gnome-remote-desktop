@@ -55,15 +55,19 @@ struct _GrdVncFrame
   gatomicrefcount refcount;
 
   void *data;
-  rfbCursorPtr rfb_cursor;
-  gboolean cursor_moved;
-  int cursor_x;
-  int cursor_y;
 
   GrdVncPipeWireStream *stream;
   GrdVncFrameReadyCallback callback;
   gpointer callback_user_data;
 };
+
+typedef struct
+{
+  rfbCursorPtr rfb_cursor;
+  gboolean cursor_moved;
+  int cursor_x;
+  int cursor_y;
+} VncPointer;
 
 struct _GrdVncPipeWireStream
 {
@@ -81,6 +85,10 @@ struct _GrdVncPipeWireStream
   GrdVncFrame *pending_frame;
   GSource *pending_frame_source;
 
+  GMutex pointer_mutex;
+  VncPointer *pending_pointer;
+  GSource *pending_pointer_source;
+
   struct pw_stream *pipewire_stream;
   struct spa_hook pipewire_stream_listener;
 
@@ -95,6 +103,13 @@ G_DEFINE_TYPE (GrdVncPipeWireStream, grd_vnc_pipewire_stream,
 static void grd_vnc_frame_unref (GrdVncFrame *frame);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdVncFrame, grd_vnc_frame_unref)
+
+static void
+vnc_pointer_free (VncPointer *vnc_pointer)
+{
+  g_clear_pointer (&vnc_pointer->rfb_cursor, rfbFreeCursor);
+  g_free (vnc_pointer);
+}
 
 void
 grd_vnc_pipewire_stream_resize (GrdVncPipeWireStream *stream,
@@ -237,13 +252,12 @@ grd_vnc_frame_unref (GrdVncFrame *frame)
   if (g_atomic_ref_count_dec (&frame->refcount))
     {
       g_free (frame->data);
-      g_clear_pointer (&frame->rfb_cursor, rfbFreeCursor);
       g_free (frame);
     }
 }
 
 static gboolean
-do_render (gpointer user_data)
+render_frame (gpointer user_data)
 {
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
   GrdVncFrame *frame;
@@ -261,19 +275,6 @@ do_render (gpointer user_data)
       return G_SOURCE_CONTINUE;
     }
 
-  if (frame->rfb_cursor)
-    {
-      grd_session_vnc_set_cursor (stream->session,
-                                  g_steal_pointer (&frame->rfb_cursor));
-    }
-
-  if (frame->cursor_moved)
-    {
-      grd_session_vnc_move_cursor (stream->session,
-                                   frame->cursor_x,
-                                   frame->cursor_y);
-    }
-
   if (frame->data)
     {
       grd_session_vnc_take_buffer (stream->session,
@@ -289,10 +290,43 @@ do_render (gpointer user_data)
   return G_SOURCE_CONTINUE;
 }
 
+static gboolean
+render_mouse_pointer (gpointer user_data)
+{
+  GrdVncPipeWireStream *stream = user_data;
+  g_autoptr (GMutexLocker) locker = NULL;
+  VncPointer *vnc_pointer;
+
+  locker = g_mutex_locker_new (&stream->pointer_mutex);
+  if (!stream->pending_pointer)
+    return G_SOURCE_CONTINUE;
+
+  vnc_pointer = g_steal_pointer (&stream->pending_pointer);
+  g_clear_pointer (&locker, g_mutex_locker_free);
+
+  if (vnc_pointer->rfb_cursor)
+    {
+      grd_session_vnc_set_cursor (stream->session,
+                                  g_steal_pointer (&vnc_pointer->rfb_cursor));
+    }
+  if (vnc_pointer->cursor_moved)
+    {
+      grd_session_vnc_move_cursor (stream->session,
+                                   vnc_pointer->cursor_x,
+                                   vnc_pointer->cursor_y);
+    }
+
+  grd_session_vnc_flush (stream->session);
+
+  vnc_pointer_free (vnc_pointer);
+
+  return G_SOURCE_CONTINUE;
+}
+
 static void
-process_mouse_pointer_bitmap (GrdVncPipeWireStream *stream,
-                              struct spa_buffer    *buffer,
-                              GrdVncFrame          *frame)
+process_mouse_pointer_bitmap (GrdVncPipeWireStream  *stream,
+                              struct spa_buffer     *buffer,
+                              VncPointer           **vnc_pointer)
 {
   struct spa_meta_cursor *spa_meta_cursor;
   struct spa_meta_bitmap *spa_meta_bitmap;
@@ -327,12 +361,54 @@ process_mouse_pointer_bitmap (GrdVncPipeWireStream *stream,
       rfb_cursor->xhot = spa_meta_cursor->hotspot.x;
       rfb_cursor->yhot = spa_meta_cursor->hotspot.y;
 
-      frame->rfb_cursor = rfb_cursor;
+      if (!(*vnc_pointer))
+        *vnc_pointer = g_new0 (VncPointer, 1);
+      (*vnc_pointer)->rfb_cursor = rfb_cursor;
     }
   else if (spa_meta_bitmap)
     {
-      frame->rfb_cursor = grd_vnc_create_empty_cursor (1, 1);
+      if (!(*vnc_pointer))
+        *vnc_pointer = g_new0 (VncPointer, 1);
+      (*vnc_pointer)->rfb_cursor = grd_vnc_create_empty_cursor (1, 1);
     }
+}
+
+static void
+on_frame_ready (GrdVncPipeWireStream *stream,
+                GrdVncFrame          *frame,
+                gboolean              success,
+                gpointer              user_data)
+{
+  GrdVncFrame *pending_frame;
+  struct pw_buffer *buffer = user_data;
+
+  g_assert (frame);
+
+  if (!success)
+    goto out;
+
+  g_mutex_lock (&stream->frame_mutex);
+
+  pending_frame = g_steal_pointer (&stream->pending_frame);
+  if (pending_frame)
+    {
+      if (!frame->data && pending_frame->data)
+        frame->data = g_steal_pointer (&pending_frame->data);
+
+      grd_vnc_frame_unref (pending_frame);
+    }
+
+  stream->pending_frame = g_steal_pointer (&frame);
+
+  g_mutex_unlock (&stream->frame_mutex);
+
+out:
+  if (buffer)
+    pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+
+  g_source_set_ready_time (stream->pending_frame_source, 0);
+
+  g_clear_pointer (&frame, grd_vnc_frame_unref);
 }
 
 static void
@@ -369,11 +445,12 @@ on_dma_buf_downloaded (gboolean success,
 
 static void
 process_frame_data (GrdVncPipeWireStream *stream,
-                    struct spa_buffer    *buffer,
-                    GrdVncFrame          *frame)
+                    struct pw_buffer     *pw_buffer)
 {
-  GrdVncFrameReadyCallback callback = frame->callback;
-  gpointer user_data = frame->callback_user_data;
+  struct spa_buffer *buffer = pw_buffer->buffer;
+  g_autoptr (GrdVncFrame) frame = NULL;
+  GrdVncFrameReadyCallback callback;
+  gpointer user_data;
   int dst_stride;
   uint32_t drm_format;
   int bpp;
@@ -388,6 +465,10 @@ process_frame_data (GrdVncPipeWireStream *stream,
                                                      width);
   grd_get_spa_format_details (stream->spa_format.format,
                               &drm_format, &bpp);
+
+  frame = grd_vnc_frame_new (stream, on_frame_ready, pw_buffer);
+  callback = frame->callback;
+  user_data = frame->callback_user_data;
 
   if (buffer->datas[0].type == SPA_DATA_MemFd)
     {
@@ -473,65 +554,19 @@ process_frame_data (GrdVncPipeWireStream *stream,
 }
 
 static gboolean
-pending_frame_source_dispatch (GSource     *source,
-                               GSourceFunc  callback,
-                               gpointer     user_data)
+render_source_dispatch (GSource     *source,
+                        GSourceFunc  callback,
+                        gpointer     user_data)
 {
   g_source_set_ready_time (source, -1);
 
   return callback (user_data);
 }
 
-static GSourceFuncs pending_frame_source_funcs =
+static GSourceFuncs render_source_funcs =
 {
-  .dispatch = pending_frame_source_dispatch,
+  .dispatch = render_source_dispatch,
 };
-
-static void
-on_frame_ready (GrdVncPipeWireStream *stream,
-                GrdVncFrame          *frame,
-                gboolean              success,
-                gpointer              user_data)
-{
-  GrdVncFrame *pending_frame;
-  struct pw_buffer *buffer = user_data;
-
-  g_assert (frame);
-
-  if (!success)
-    goto out;
-
-  g_mutex_lock (&stream->frame_mutex);
-
-  pending_frame = g_steal_pointer (&stream->pending_frame);
-  if (pending_frame)
-    {
-      if (!frame->data && pending_frame->data)
-        frame->data = g_steal_pointer (&pending_frame->data);
-      if (!frame->rfb_cursor && pending_frame->rfb_cursor)
-        frame->rfb_cursor = g_steal_pointer (&pending_frame->rfb_cursor);
-      if (!frame->cursor_moved && pending_frame->cursor_moved)
-        {
-          frame->cursor_x = pending_frame->cursor_x;
-          frame->cursor_y = pending_frame->cursor_y;
-          frame->cursor_moved = TRUE;
-        }
-
-      grd_vnc_frame_unref (pending_frame);
-    }
-
-  stream->pending_frame = g_steal_pointer (&frame);
-
-  g_mutex_unlock (&stream->frame_mutex);
-
-out:
-  if (buffer)
-    pw_stream_queue_buffer (stream->pipewire_stream, buffer);
-
-  g_source_set_ready_time (stream->pending_frame_source, 0);
-
-  g_clear_pointer (&frame, grd_vnc_frame_unref);
-}
 
 static void
 maybe_consume_pointer_position (struct pw_buffer *buffer,
@@ -559,6 +594,7 @@ on_stream_process (void *user_data)
   struct pw_buffer *last_pointer_buffer = NULL;
   struct pw_buffer *last_frame_buffer = NULL;
   struct pw_buffer *next_buffer;
+  VncPointer *vnc_pointer = NULL;
   gboolean cursor_moved = FALSE;
   int cursor_x = 0;
   int cursor_y = 0;
@@ -606,29 +642,35 @@ on_stream_process (void *user_data)
   if (!last_pointer_buffer && !last_frame_buffer && !cursor_moved)
     return;
 
-  frame = grd_vnc_frame_new (stream, on_frame_ready, last_frame_buffer);
-  frame->cursor_moved = cursor_moved;
-  frame->cursor_x = cursor_x;
-  frame->cursor_y = cursor_y;
+  if (cursor_moved)
+    {
+      vnc_pointer = g_new0 (VncPointer, 1);
+      vnc_pointer->cursor_moved = cursor_moved;
+      vnc_pointer->cursor_x = cursor_x;
+      vnc_pointer->cursor_y = cursor_y;
+    }
 
   if (last_pointer_buffer)
     {
-      process_mouse_pointer_bitmap (stream, last_pointer_buffer->buffer, frame);
+      process_mouse_pointer_bitmap (stream, last_pointer_buffer->buffer,
+                                    &vnc_pointer);
       if (last_pointer_buffer != last_frame_buffer)
         pw_stream_queue_buffer (stream->pipewire_stream, last_pointer_buffer);
     }
-
-  if (!last_frame_buffer)
+  if (vnc_pointer)
     {
-      GrdVncFrameReadyCallback callback = frame->callback;
-      gpointer callback_user_data = frame->callback_user_data;
+      g_mutex_lock (&stream->pointer_mutex);
+      g_clear_pointer (&stream->pending_pointer, vnc_pointer_free);
 
-      callback (stream, g_steal_pointer (&frame), TRUE, callback_user_data);
-      return;
+      stream->pending_pointer = vnc_pointer;
+      g_mutex_unlock (&stream->pointer_mutex);
+
+      g_source_set_ready_time (stream->pending_pointer_source, 0);
     }
+  if (!last_frame_buffer)
+    return;
 
-  process_frame_data (stream, last_frame_buffer->buffer,
-                      g_steal_pointer (&frame));
+  process_frame_data (stream, last_frame_buffer);
 }
 
 static const struct pw_stream_events stream_events = {
@@ -850,9 +892,15 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc               *session_vnc,
       return NULL;
     }
 
-  source = g_source_new (&pending_frame_source_funcs, sizeof (GSource));
+  source = g_source_new (&render_source_funcs, sizeof (GSource));
   stream->pending_frame_source = source;
-  g_source_set_callback (source, do_render, stream, NULL);
+  g_source_set_callback (source, render_frame, stream, NULL);
+  g_source_attach (source, NULL);
+  g_source_unref (source);
+
+  source = g_source_new (&render_source_funcs, sizeof (GSource));
+  stream->pending_pointer_source = source;
+  g_source_set_callback (source, render_mouse_pointer, stream, NULL);
   g_source_attach (source, NULL);
   g_source_unref (source);
 
@@ -904,6 +952,7 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
 
   g_clear_pointer (&stream->pipewire_core, pw_core_disconnect);
   g_clear_pointer (&stream->pipewire_context, pw_context_destroy);
+  g_clear_pointer (&stream->pending_pointer_source, g_source_destroy);
   g_clear_pointer (&stream->pending_frame_source, g_source_destroy);
   if (stream->pipewire_source)
     {
@@ -911,8 +960,10 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
       g_clear_pointer (&stream->pipewire_source, g_source_unref);
     }
 
+  g_clear_pointer (&stream->pending_pointer, vnc_pointer_free);
   g_clear_pointer (&stream->pending_frame, grd_vnc_frame_unref);
 
+  g_mutex_clear (&stream->pointer_mutex);
   g_mutex_clear (&stream->frame_mutex);
 
   pw_deinit ();
@@ -924,6 +975,7 @@ static void
 grd_vnc_pipewire_stream_init (GrdVncPipeWireStream *stream)
 {
   g_mutex_init (&stream->frame_mutex);
+  g_mutex_init (&stream->pointer_mutex);
 }
 
 static void
