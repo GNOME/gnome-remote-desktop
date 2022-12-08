@@ -74,6 +74,7 @@ struct _GrdVncPipeWireStream
   GObject parent;
 
   GrdSessionVnc *session;
+  GrdEglThreadSlot egl_slot;
 
   GMutex dequeue_mutex;
   gboolean dequeuing_disallowed;
@@ -524,7 +525,7 @@ process_frame_data (GrdVncPipeWireStream *stream,
 
       frame->data = dst_data;
       grd_egl_thread_download (egl_thread,
-                               NULL,
+                               stream->egl_slot,
                                0, 0, 0,
                                NULL, NULL, NULL,
                                dst_data,
@@ -857,6 +858,9 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc               *session_vnc,
                              const GrdVncVirtualMonitor  *virtual_monitor,
                              GError                     **error)
 {
+  GrdSession *session = GRD_SESSION (session_vnc);
+  GrdContext *context = grd_session_get_context (session);
+  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
   g_autoptr (GrdVncPipeWireStream) stream = NULL;
   GrdPipeWireSource *pipewire_source;
   GSource *source;
@@ -864,6 +868,9 @@ grd_vnc_pipewire_stream_new (GrdSessionVnc               *session_vnc,
   stream = g_object_new (GRD_TYPE_VNC_PIPEWIRE_STREAM, NULL);
   stream->session = session_vnc;
   stream->src_node_id = src_node_id;
+
+  if (egl_thread)
+    stream->egl_slot = grd_egl_thread_acquire_slot (egl_thread);
 
   pw_init (NULL, NULL);
 
@@ -966,6 +973,9 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
   g_mutex_clear (&stream->dequeue_mutex);
 
   pw_deinit ();
+
+  if (egl_thread)
+    grd_egl_thread_release_slot (egl_thread, stream->egl_slot);
 
   G_OBJECT_CLASS (grd_vnc_pipewire_stream_parent_class)->finalize (object);
 }
