@@ -56,7 +56,6 @@ typedef struct _GrdEglTask
   GFunc func;
   GDestroyNotify destroy;
 
-  GMainContext *callback_context;
   GrdEglThreadCallback callback;
   gpointer callback_user_data;
   GDestroyNotify callback_destroy;
