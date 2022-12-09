@@ -139,9 +139,6 @@ typedef struct _GrdEglTaskDownload
   uint64_t *modifiers;
 } GrdEglTaskDownload;
 
-typedef void (* GrdEglFrameReady) (uint8_t  *data,
-                                   gpointer  user_data);
-
 static gboolean
 is_hardware_accelerated (void)
 {
