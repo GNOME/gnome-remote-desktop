@@ -28,6 +28,7 @@ static const GDebugKey grd_debug_keys[] = {
   { "vnc", GRD_DEBUG_VNC },
   { "tpm", GRD_DEBUG_TPM },
   { "vk-validation", GRD_DEBUG_VK_VALIDATION },
+  { "vk-times", GRD_DEBUG_VK_TIMES },
 };
 
 static GrdDebugFlags debug_flags;
