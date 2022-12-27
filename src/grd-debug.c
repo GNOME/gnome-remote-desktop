@@ -29,6 +29,7 @@ static const GDebugKey grd_debug_keys[] = {
   { "tpm", GRD_DEBUG_TPM },
   { "vk-validation", GRD_DEBUG_VK_VALIDATION },
   { "vk-times", GRD_DEBUG_VK_TIMES },
+  { "va-times", GRD_DEBUG_VA_TIMES },
 };
 
 static GrdDebugFlags debug_flags;

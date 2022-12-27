@@ -28,6 +28,7 @@ typedef enum _GrdDebugFlags
   GRD_DEBUG_TPM = 1 << 1,
   GRD_DEBUG_VK_VALIDATION = 1 << 2,
   GRD_DEBUG_VK_TIMES = 1 << 3,
+  GRD_DEBUG_VA_TIMES = 1 << 4,
 } GrdDebugFlags;
 
 GrdDebugFlags grd_get_debug_flags (void);
