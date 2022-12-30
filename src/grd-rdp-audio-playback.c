@@ -70,6 +70,9 @@ struct _GrdRdpAudioPlayback
   GrdSessionRdp *session_rdp;
   GrdRdpDvc *rdp_dvc;
 
+  gboolean prevent_dvc_initialization;
+  GSource *svc_setup_source;
+
   GMutex protocol_timeout_mutex;
   GSource *channel_teardown_source;
   GSource *protocol_timeout_source;
@@ -139,6 +142,9 @@ grd_rdp_audio_playback_maybe_init (GrdRdpAudioPlayback *audio_playback)
   RdpsndServerContext *rdpsnd_context;
 
   if (audio_playback->channel_opened || audio_playback->channel_unavailable)
+    return;
+
+  if (audio_playback->prevent_dvc_initialization)
     return;
 
   rdpsnd_context = audio_playback->rdpsnd_context;
@@ -428,9 +434,9 @@ dvc_creation_status (gpointer user_data,
   if (creation_status < 0)
     {
       g_message ("[RDP.AUDIO_PLAYBACK] Failed to open AUDIO_PLAYBACK_DVC "
-                 "channel (CreationStatus %i). Terminating protocol",
+                 "channel (CreationStatus %i). Trying SVC fallback",
                  creation_status);
-      g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+      g_source_set_ready_time (audio_playback->svc_setup_source, 0);
     }
 }
 
@@ -605,6 +611,12 @@ rdpsnd_training_confirm (RdpsndServerContext *rdpsnd_context,
     }
   g_mutex_unlock (&audio_playback->protocol_timeout_mutex);
 
+  if (audio_playback->svc_setup_source)
+    {
+      g_source_destroy (audio_playback->svc_setup_source);
+      g_clear_pointer (&audio_playback->svc_setup_source, g_source_unref);
+    }
+
   audio_playback->pending_training_confirm = FALSE;
 
   g_source_set_ready_time (audio_playback->pipewire_setup_source, 0);
@@ -765,6 +777,11 @@ grd_rdp_audio_playback_dispose (GObject *object)
       g_source_destroy (audio_playback->channel_teardown_source);
       g_clear_pointer (&audio_playback->channel_teardown_source, g_source_unref);
     }
+  if (audio_playback->svc_setup_source)
+    {
+      g_source_destroy (audio_playback->svc_setup_source);
+      g_clear_pointer (&audio_playback->svc_setup_source, g_source_unref);
+    }
 
   g_clear_pointer (&audio_playback->encode_context, g_main_context_unref);
 
@@ -796,6 +813,43 @@ grd_rdp_audio_playback_finalize (GObject *object)
   pw_deinit ();
 
   G_OBJECT_CLASS (grd_rdp_audio_playback_parent_class)->finalize (object);
+}
+
+static gboolean
+set_up_static_virtual_channel (gpointer user_data)
+{
+  GrdRdpAudioPlayback *audio_playback = user_data;
+  RdpsndServerContext *rdpsnd_context = audio_playback->rdpsnd_context;
+
+  g_clear_pointer (&audio_playback->svc_setup_source, g_source_unref);
+
+  g_assert (audio_playback->channel_opened);
+  audio_playback->prevent_dvc_initialization = TRUE;
+
+  rdpsnd_context->Stop (rdpsnd_context);
+  audio_playback->channel_opened = FALSE;
+
+  if (audio_playback->subscribed_status)
+    {
+      grd_rdp_dvc_unsubscribe_dvc_creation_status (audio_playback->rdp_dvc,
+                                                   audio_playback->channel_id,
+                                                   audio_playback->dvc_subscription_id);
+      audio_playback->subscribed_status = FALSE;
+    }
+
+  rdpsnd_context->use_dynamic_virtual_channel = FALSE;
+
+  if (rdpsnd_context->Start (rdpsnd_context))
+    {
+      g_warning ("[RDP.AUDIO_PLAYBACK] Failed to open RDPSND channel. "
+                 "Terminating protocol");
+      audio_playback->channel_unavailable = TRUE;
+      g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+      return G_SOURCE_REMOVE;
+    }
+  audio_playback->channel_opened = TRUE;
+
+  return G_SOURCE_REMOVE;
 }
 
 static gboolean
@@ -1274,6 +1328,7 @@ static GSourceFuncs source_funcs =
 static void
 grd_rdp_audio_playback_init (GrdRdpAudioPlayback *audio_playback)
 {
+  GSource *svc_setup_source;
   GSource *channel_teardown_source;
   GSource *encode_source;
   GSource *pipewire_setup_source;
@@ -1295,6 +1350,13 @@ grd_rdp_audio_playback_init (GrdRdpAudioPlayback *audio_playback)
   g_mutex_init (&audio_playback->pending_frames_mutex);
 
   audio_playback->encode_context = g_main_context_new ();
+
+  svc_setup_source = g_source_new (&source_funcs, sizeof (GSource));
+  g_source_set_callback (svc_setup_source, set_up_static_virtual_channel,
+                         audio_playback, NULL);
+  g_source_set_ready_time (svc_setup_source, -1);
+  g_source_attach (svc_setup_source, NULL);
+  audio_playback->svc_setup_source = svc_setup_source;
 
   channel_teardown_source = g_source_new (&source_funcs, sizeof (GSource));
   g_source_set_callback (channel_teardown_source, tear_down_channel,
