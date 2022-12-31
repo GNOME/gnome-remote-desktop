@@ -231,7 +231,7 @@ create_aac_encoder (GrdRdpDsp  *rdp_dsp,
   if (aac_error != AACENC_OK)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to aquire AAC encoder info. AAC error %i",
+                   "Failed to acquire AAC encoder info. AAC error %i",
                    aac_error);
       return FALSE;
     }
