@@ -1870,6 +1870,14 @@ rdp_peer_post_connect (freerdp_peer *peer)
                  "audio output redirection");
       rdp_settings->AudioPlayback = FALSE;
     }
+  if (rdp_settings->AudioPlayback &&
+      (rdp_settings->OsMajorType == OSMAJORTYPE_IOS ||
+       rdp_settings->OsMajorType == OSMAJORTYPE_ANDROID))
+    {
+      g_warning ("[RDP] Client cannot handle graphics and audio "
+                 "simultaneously. Disabling audio output redirection");
+      rdp_settings->AudioPlayback = FALSE;
+    }
 
   if (rdp_settings->NetworkAutoDetect)
     {
