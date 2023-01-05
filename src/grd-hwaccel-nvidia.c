@@ -52,10 +52,12 @@ typedef struct _DevRetrievalData
 
 typedef struct _NvEncEncodeSession
 {
+  GrdHwAccelNvidia *hwaccel_nvidia;
+
   void *encoder;
 
-  uint16_t enc_width;
-  uint16_t enc_height;
+  uint32_t encode_width;
+  uint32_t encode_height;
 
   NV_ENC_OUTPUT_PTR buffer_out;
 
@@ -95,6 +97,62 @@ struct _GrdHwAccelNvidia
 };
 
 G_DEFINE_TYPE (GrdHwAccelNvidia, grd_hwaccel_nvidia, G_TYPE_OBJECT)
+
+static void
+nvenc_encode_session_free (NvEncEncodeSession *encode_session);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (NvEncEncodeSession, nvenc_encode_session_free)
+
+static NvEncEncodeSession *
+nvenc_encode_session_new (GrdHwAccelNvidia *hwaccel_nvidia,
+                          uint32_t          encode_width,
+                          uint32_t          encode_height)
+{
+  NvEncEncodeSession *encode_session;
+
+  encode_session = g_new0 (NvEncEncodeSession, 1);
+  encode_session->hwaccel_nvidia = hwaccel_nvidia;
+  encode_session->encode_width = encode_width;
+  encode_session->encode_height = encode_height;
+
+  return encode_session;
+}
+
+static void
+nvenc_encode_session_free (NvEncEncodeSession *encode_session)
+{
+  GrdHwAccelNvidia *hwaccel_nvidia = encode_session->hwaccel_nvidia;
+  NV_ENCODE_API_FUNCTION_LIST *nvenc_api = &hwaccel_nvidia->nvenc_api;
+
+  if (encode_session->mapped_resource)
+    {
+      nvenc_api->nvEncUnmapInputResource (encode_session->encoder,
+                                          encode_session->mapped_resource);
+    }
+  if (encode_session->registered_resource)
+    {
+      nvenc_api->nvEncUnregisterResource (encode_session->encoder,
+                                          encode_session->registered_resource);
+    }
+
+  if (encode_session->buffer_out)
+    {
+      nvenc_api->nvEncDestroyBitstreamBuffer (encode_session->encoder,
+                                              encode_session->buffer_out);
+    }
+
+  if (encode_session->encoder)
+    {
+      NV_ENC_PIC_PARAMS pic_params = {};
+
+      pic_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
+      nvenc_api->nvEncEncodePicture (encode_session->encoder, &pic_params);
+
+      nvenc_api->nvEncDestroyEncoder (encode_session->encoder);
+    }
+
+  g_free (encode_session);
+}
 
 void
 grd_hwaccel_nvidia_get_cuda_functions (GrdHwAccelNvidia *hwaccel_nvidia,
@@ -318,7 +376,7 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
                                          uint16_t         *aligned_height,
                                          uint16_t          refresh_rate)
 {
-  NvEncEncodeSession *encode_session;
+  g_autoptr (NvEncEncodeSession) encode_session = NULL;
   NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS open_params = {0};
   NV_ENC_INITIALIZE_PARAMS init_params = {0};
   NV_ENC_CONFIG encode_config = {0};
@@ -328,9 +386,8 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
   *aligned_height = grd_get_aligned_size (surface_height, 64);
 
   *encode_session_id = get_next_free_encode_session_id (hwaccel_nvidia);
-  encode_session = g_malloc0 (sizeof (NvEncEncodeSession));
-  encode_session->enc_width = *aligned_width;
-  encode_session->enc_height = *aligned_height;
+  encode_session = nvenc_encode_session_new (hwaccel_nvidia,
+                                             *aligned_width, *aligned_height);
 
   open_params.version = NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER;
   open_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
@@ -342,7 +399,6 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
     {
       g_debug ("[HWAccel.NVENC] Failed to open encode session: %s",
                get_last_nvenc_error_string (hwaccel_nvidia, encode_session->encoder));
-      g_free (encode_session);
       return FALSE;
     }
 
@@ -373,16 +429,8 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
   if (hwaccel_nvidia->nvenc_api.nvEncInitializeEncoder (
         encode_session->encoder, &init_params) != NV_ENC_SUCCESS)
     {
-      NV_ENC_PIC_PARAMS pic_params = {0};
-
       g_warning ("[HWAccel.NVENC] Failed to initialize encoder: %s",
                  get_last_nvenc_error_string (hwaccel_nvidia, encode_session->encoder));
-      pic_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
-      hwaccel_nvidia->nvenc_api.nvEncEncodePicture (encode_session->encoder,
-                                                    &pic_params);
-      hwaccel_nvidia->nvenc_api.nvEncDestroyEncoder (encode_session->encoder);
-
-      g_free (encode_session);
       return FALSE;
     }
 
@@ -390,23 +438,15 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
   if (hwaccel_nvidia->nvenc_api.nvEncCreateBitstreamBuffer (
         encode_session->encoder, &create_bitstream_buffer) != NV_ENC_SUCCESS)
     {
-      NV_ENC_PIC_PARAMS pic_params = {0};
-
       g_warning ("[HWAccel.NVENC] Failed to create bitstream buffer: %s",
                  get_last_nvenc_error_string (hwaccel_nvidia, encode_session->encoder));
-      pic_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
-      hwaccel_nvidia->nvenc_api.nvEncEncodePicture (encode_session->encoder,
-                                                    &pic_params);
-      hwaccel_nvidia->nvenc_api.nvEncDestroyEncoder (encode_session->encoder);
-
-      g_free (encode_session);
       return FALSE;
     }
   encode_session->buffer_out = create_bitstream_buffer.bitstreamBuffer;
 
   g_hash_table_insert (hwaccel_nvidia->encode_sessions,
                        GUINT_TO_POINTER (*encode_session_id),
-                       encode_session);
+                       g_steal_pointer (&encode_session));
 
   return TRUE;
 }
@@ -415,36 +455,15 @@ void
 grd_hwaccel_nvidia_free_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
                                        uint32_t          encode_session_id)
 {
-  NV_ENCODE_API_FUNCTION_LIST *nvenc_api = &hwaccel_nvidia->nvenc_api;
-  NvEncEncodeSession *encode_session;
-  NV_ENC_PIC_PARAMS pic_params = {0};
+  NvEncEncodeSession *encode_session = NULL;
 
   if (!g_hash_table_steal_extended (hwaccel_nvidia->encode_sessions,
                                     GUINT_TO_POINTER (encode_session_id),
                                     NULL, (gpointer *) &encode_session))
-    return;
+    g_assert_not_reached ();
 
-  if (encode_session->mapped_resource)
-    {
-      nvenc_api->nvEncUnmapInputResource (encode_session->encoder,
-                                          encode_session->mapped_resource);
-      encode_session->mapped_resource = NULL;
-    }
-  if (encode_session->registered_resource)
-    {
-      nvenc_api->nvEncUnregisterResource (encode_session->encoder,
-                                          encode_session->registered_resource);
-      encode_session->registered_resource = NULL;
-    }
-
-  nvenc_api->nvEncDestroyBitstreamBuffer (encode_session->encoder,
-                                          encode_session->buffer_out);
-
-  pic_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
-  nvenc_api->nvEncEncodePicture (encode_session->encoder, &pic_params);
-  nvenc_api->nvEncDestroyEncoder (encode_session->encoder);
-
-  g_free (encode_session);
+  g_assert (encode_session);
+  nvenc_encode_session_free (encode_session);
 }
 
 gboolean
@@ -473,8 +492,8 @@ grd_hwaccel_nvidia_avc420_encode_bgrx_frame (GrdHwAccelNvidia *hwaccel_nvidia,
                                      NULL, (gpointer *) &encode_session))
     return FALSE;
 
-  g_assert (encode_session->enc_width == aligned_width);
-  g_assert (encode_session->enc_height == aligned_height);
+  g_assert (encode_session->encode_width == aligned_width);
+  g_assert (encode_session->encode_height == aligned_height);
 
   g_assert (encode_session->mapped_resource == NULL);
   g_assert (encode_session->registered_resource == NULL);
