@@ -1,0 +1,274 @@
+# Belarusian translation for gnome-remote-desktop.
+# Copyright (C) 2022 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Yuras Shumovich <shumovichy@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2022-10-25 16:05+0000\n"
+"PO-Revision-Date: 2023-01-08 22:48+0300\n"
+"Last-Translator: Yuras Shumovich <shumovichy@gmail.com>\n"
+"Language-Team: Belarusian <i18n-bel-gnome@googlegroups.com>\n"
+"Language: be\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: src/grd-daemon.c:503
+msgid "GNOME Remote Desktop"
+msgstr "Аддалены працоўны стол GNOME"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Хочаце даць доступ да свайго працоўнага стала?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Карыстальнік камп'ютара «%s» спрабуе аддалена праглядаць або кіраваць вашым "
+"працоўным столом."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Адхіліць"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Прыняць"
+
+#: src/grd-ctl.c:53
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "Выкарыстанне: %s [ПАРАМЕТРЫ...] КАМАНДА [ПАДКАМАНДА ]...\n"
+
+#: src/grd-ctl.c:461
+msgid "Commands:\n"
+msgstr "Каманды:\n"
+
+#: src/grd-ctl.c:466
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  rdp                                        - Падкаманды RDP:\n"
+"    enable                                   - Уключыць бэкэнд RDP\n"
+"    disable                                  - Адключыць бэкэнд RDP\n"
+"    set-tls-cert <path-to-cert>              - Задаць шлях да сертыфікату "
+"TLS\n"
+"    set-tls-key <path-to-key>                - Задаць шлях да ключа TLS\n"
+"    set-credentials <username> <password>    - Задаць імя карыстальніка і\n"
+"                                               пароль\n"
+"    clear-credentials                        - Ачысціць імя карыстальніка і\n"
+"                                               пароль\n"
+"    enable-view-only                         - Адключыць аддаленае кіраванне\n"
+"                                               прыладамі ўводу\n"
+"    disable-view-only                        - Уключыць аддаленае кіраванне\n"
+"                                               прыладамі ўводу\n"
+"\n"
+
+#: src/grd-ctl.c:485
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  vnc                                        - Падкаманды VNC:\n"
+"    enable                                   - Уключыць бэкэнд VNC\n"
+"    disable                                  - Адключыць бэкэнд VNC\n"
+"    set-password <password>                  - Задаць пароль VNC\n"
+"    clear-password                           - Ачысціць пароль VNC\n"
+"    set-auth-method password|prompt          - Задаць метад аўтарызацыі\n"
+"    enable-view-only                         - Адключыць аддаленае кіраванне\n"
+"                                               прыладамі ўводу\n"
+"    disable-view-only                        - Уключыць аддаленае кіраванне\n"
+"                                               прыладамі ўводу\n"
+"\n"
+
+#: src/grd-ctl.c:500
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  status [--show-credentials]                - Паказаць бягучы стан\n"
+"\n"
+"Параметры:\n"
+"  --headless                                 - Выкарыстоўваць сховішча "
+"ўліковых\n"
+"                                                даных без манітора\n"
+"  --help                                     - Вывесці гэту даведку\n"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "Ці ўключаны бэкэнд RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr "Калі значэнне «true», будзе ініцыялізаваны бэкэнд RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "Рэжым супольнага доступу да экрана для злучэнняў RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"Рэжым супольнага доступу да экрана вызначае, будзе бэкэнд RDP адлюстроўваць "
+"асноўны экран або будзе створаны віртуальны манітор. У залежнасці ад таго, "
+"што даступна, пачатковую раздзяляльную здольнасць для віртуальнага манітора "
+"бэкэнд RDP бярэ або з даных ядра кліента ([MS-RDPBCGR] 2.2.1.3.2), або з "
+"даных манітора кліента ([MS-RDPBCGR] 2.2.1.3.6). Пры выкарыстанні сеанса "
+"аддаленага працоўнага стала з віртуальным маніторам кліенты могуць змяняць "
+"падчас сеанса раздзяляльную здольнасць віртуальнага манітора праз Display "
+"Update Virtual Channel Extension ([MS-RDPEDISP]). Дазволеныя рэжымы "
+"супольнага доступу да экрана: * mirror-primary - запіс асноўнага манітора з "
+"бягучага сеанса карыстальніка, * extend - стварыць новы віртуальны манітор і "
+"выкарыстоўваць яго для сеанса аддаленага працоўнага стала. Раздзяляльная "
+"здольнасць гэтага віртуальнага манітора вызначаецца з канфігурацыі манітора, "
+"якая перадаецца кліентам аддаленага працоўнага стала."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Path to the certificate file"
+msgstr "Шлях да файла сертыфіката"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Каб мець магчымасць выкарыстоўваць RDP з TLS Security, для сервера RDP "
+"патрэбна ўказаць файл закрытага ключа і файл сертыфіката."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+msgid "Path to the private key file"
+msgstr "Шлях да файла закрытага ключа"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+msgid "Only allow remote connections to view the screen content"
+msgstr "Дазволіць аддаленым злучэнням толькі праглядаць змесціва экрана"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Калі значэнне ключа view-only (толькі для прагляду) мае значэнне «true», "
+"аддаленыя злучэнні RDP не могуць кіраваць прыладамі ўводу (напрыклад, мышшу "
+"і клавіятурай)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "Ці ўключаны бэкэнд VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to 'true' the VNC backend will be initialized."
+msgstr "Калі значэнне «true», будзе ініцыялізаваны бэкэнд VNC."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Калі значэнне ключа view-only (толькі для прагляду) мае значэнне «true», "
+"аддаленыя злучэнні VNC не могуць кіраваць прыладамі ўводу (напрыклад, мышшу "
+"і клавіятурай)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+msgid "Method used to authenticate VNC connections"
+msgstr "Метад аўтэнтыфікацыі для злучэнняў VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"Метад аўтэнтыфікацыі VNC апісвае, як выконваецца аўтэнтыфікацыя аддаленага "
+"злучэння. Зараз гэта можа быць зроблена двума спосабамі: * prompt - запыт "
+"пры кожным новым злучэнні, ад карыстальніка, які мае фізічны доступ да "
+"працоўнай станцыі, патрабуецца яўна ўхваліць новае злучэнне; * password - ад "
+"аддаленага кліента патрабуецца ўвесці вядомы яму пароль"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Рэжым супольнага доступу да экрана для злучэнняў VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"Рэжым супольнага доступу да экрана вызначае, будзе бэкэнд VNC адлюстроўваць "
+"асноўны экран або будзе створаны віртуальны манітор. Прадвызначаная "
+"пачатковая раздзяляльнасць для віртуальнага манітора 1920x1080 пікселяў. Пры "
+"выкарыстанні сеанса аддаленага працоўнага стала з віртуальным маніторам, "
+"кліенты могуць змяняць падчас сеанса раздзяляльную здольнасць віртуальнага "
+"манітора праз setDesktopSize PDU. Дазволеныя рэжымы супольнага доступу да "
+"экрана: * mirror-primary - запіс асноўнага манітора з бягучага сеанса "
+"карыстальніка, * extend - стварыць новы віртуальны манітор і выкарыстоўваць "
+"яго для сеанса аддаленага працоўнага стала. Пачатковая раздзяляльная "
+"здольнасць гэтага віртуальнага манітора 1920x1080 пікселяў. У далейшым "
+"кліенты могуць абнавіць канфігурацыю манітора і змяніць пачатковую "
+"раздзяляльную здольнасць."
