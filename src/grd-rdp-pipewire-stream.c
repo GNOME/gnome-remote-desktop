@@ -1126,6 +1126,11 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
   stream->rdp_surface = rdp_surface;
   stream->src_node_id = src_node_id;
 
+  stream->buffer_pool = grd_rdp_buffer_pool_new (egl_thread,
+                                                 hwaccel_nvidia,
+                                                 rdp_surface->cuda_stream,
+                                                 DEFAULT_BUFFER_POOL_SIZE);
+
   if (egl_thread && !hwaccel_nvidia)
     stream->egl_slot = grd_egl_thread_acquire_slot (egl_thread);
 
@@ -1173,13 +1178,6 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
                             &registry_events, stream);
 
   if (!connect_to_stream (stream, virtual_monitor, error))
-    return NULL;
-
-  stream->buffer_pool = grd_rdp_buffer_pool_new (egl_thread,
-                                                 hwaccel_nvidia,
-                                                 rdp_surface->cuda_stream,
-                                                 DEFAULT_BUFFER_POOL_SIZE);
-  if (!stream->buffer_pool)
     return NULL;
 
   return g_steal_pointer (&stream);
