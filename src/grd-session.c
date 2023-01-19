@@ -47,10 +47,10 @@ enum
 {
   STOPPED,
 
-  LAST_SIGNAL
+  N_SIGNALS
 };
 
-static guint signals[LAST_SIGNAL];
+static guint signals[N_SIGNALS];
 
 typedef enum _ScreenCastType
 {
