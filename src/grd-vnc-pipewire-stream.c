@@ -75,6 +75,9 @@ struct _GrdVncPipeWireStream
 
   GrdSessionVnc *session;
 
+  GMutex dequeue_mutex;
+  gboolean dequeuing_disallowed;
+
   GSource *pipewire_source;
   struct pw_context *pipewire_context;
   struct pw_core *pipewire_core;
@@ -590,6 +593,7 @@ static void
 on_stream_process (void *user_data)
 {
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
+  g_autoptr (GMutexLocker) locker = NULL;
   g_autoptr (GrdVncFrame) frame = NULL;
   struct pw_buffer *last_pointer_buffer = NULL;
   struct pw_buffer *last_frame_buffer = NULL;
@@ -598,6 +602,10 @@ on_stream_process (void *user_data)
   gboolean cursor_moved = FALSE;
   int cursor_x = 0;
   int cursor_y = 0;
+
+  locker = g_mutex_locker_new (&stream->dequeue_mutex);
+  if (stream->dequeuing_disallowed)
+    return;
 
   while ((next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream)))
     {
@@ -932,9 +940,9 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
   GrdContext *context = grd_session_get_context (session);
   GrdEglThread *egl_thread;
 
-  /* Setting a PipeWire stream inactive will wait for the data thread to end */
-  if (stream->pipewire_stream)
-    pw_stream_set_active (stream->pipewire_stream, false);
+  g_mutex_lock (&stream->dequeue_mutex);
+  stream->dequeuing_disallowed = TRUE;
+  g_mutex_unlock (&stream->dequeue_mutex);
 
   egl_thread = grd_context_get_egl_thread (context);
   if (egl_thread)
@@ -965,6 +973,7 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
 
   g_mutex_clear (&stream->pointer_mutex);
   g_mutex_clear (&stream->frame_mutex);
+  g_mutex_clear (&stream->dequeue_mutex);
 
   pw_deinit ();
 
@@ -974,6 +983,7 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
 static void
 grd_vnc_pipewire_stream_init (GrdVncPipeWireStream *stream)
 {
+  g_mutex_init (&stream->dequeue_mutex);
   g_mutex_init (&stream->frame_mutex);
   g_mutex_init (&stream->pointer_mutex);
 }
