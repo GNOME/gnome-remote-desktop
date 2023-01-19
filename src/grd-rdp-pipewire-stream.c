@@ -111,6 +111,9 @@ struct _GrdRdpPipeWireStream
   GrdSessionRdp *session_rdp;
   GrdRdpSurface *rdp_surface;
 
+  GMutex dequeue_mutex;
+  gboolean dequeuing_disallowed;
+
   GSource *pipewire_source;
   struct pw_context *pipewire_context;
   struct pw_core *pipewire_core;
@@ -840,9 +843,14 @@ static void
 on_stream_process (void *user_data)
 {
   GrdRdpPipeWireStream *stream = GRD_RDP_PIPEWIRE_STREAM (user_data);
+  g_autoptr (GMutexLocker) locker = NULL;
   struct pw_buffer *last_pointer_buffer = NULL;
   struct pw_buffer *last_frame_buffer = NULL;
   struct pw_buffer *next_buffer;
+
+  locker = g_mutex_locker_new (&stream->dequeue_mutex);
+  if (stream->dequeuing_disallowed)
+    return;
 
   while ((next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream)))
     {
@@ -1152,9 +1160,9 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
   GrdContext *context = grd_session_get_context (session);
   GrdEglThread *egl_thread;
 
-  /* Setting a PipeWire stream inactive will wait for the data thread to end */
-  if (stream->pipewire_stream)
-    pw_stream_set_active (stream->pipewire_stream, false);
+  g_mutex_lock (&stream->dequeue_mutex);
+  stream->dequeuing_disallowed = TRUE;
+  g_mutex_unlock (&stream->dequeue_mutex);
 
   egl_thread = grd_context_get_egl_thread (context);
   if (egl_thread && stream->pipewire_stream)
@@ -1190,6 +1198,7 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
 
   g_mutex_clear (&stream->pointer_mutex);
   g_mutex_clear (&stream->frame_mutex);
+  g_mutex_clear (&stream->dequeue_mutex);
 
   pw_deinit ();
 
@@ -1199,6 +1208,7 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
 static void
 grd_rdp_pipewire_stream_init (GrdRdpPipeWireStream *stream)
 {
+  g_mutex_init (&stream->dequeue_mutex);
   g_mutex_init (&stream->frame_mutex);
   g_mutex_init (&stream->pointer_mutex);
 }
