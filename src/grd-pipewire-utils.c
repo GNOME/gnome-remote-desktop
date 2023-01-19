@@ -26,7 +26,8 @@
 #include <spa/param/video/raw.h>
 #include <spa/utils/result.h>
 
-static void pipewire_source_unref (GrdPipeWireSource *pipewire_source);
+static void
+pipewire_source_unref (GrdPipeWireSource *pipewire_source);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdPipeWireSource, pipewire_source_unref)
 
@@ -54,7 +55,7 @@ pipewire_loop_source_dispatch (GSource     *source,
                  spa_strerror (result));
     }
 
-  return TRUE;
+  return G_SOURCE_CONTINUE;
 }
 
 static void
