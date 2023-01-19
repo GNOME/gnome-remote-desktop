@@ -382,7 +382,6 @@ on_frame_ready (GrdVncPipeWireStream *stream,
                 gboolean              success,
                 gpointer              user_data)
 {
-  GrdVncFrame *pending_frame;
   struct pw_buffer *buffer = user_data;
 
   g_assert (frame);
@@ -391,18 +390,9 @@ on_frame_ready (GrdVncPipeWireStream *stream,
     goto out;
 
   g_mutex_lock (&stream->frame_mutex);
-
-  pending_frame = g_steal_pointer (&stream->pending_frame);
-  if (pending_frame)
-    {
-      if (!frame->data && pending_frame->data)
-        frame->data = g_steal_pointer (&pending_frame->data);
-
-      grd_vnc_frame_unref (pending_frame);
-    }
+  g_clear_pointer (&stream->pending_frame, grd_vnc_frame_unref);
 
   stream->pending_frame = g_steal_pointer (&frame);
-
   g_mutex_unlock (&stream->frame_mutex);
 
   g_source_set_ready_time (stream->pending_frame_source, 0);
