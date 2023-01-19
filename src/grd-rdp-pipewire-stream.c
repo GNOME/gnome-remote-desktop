@@ -507,7 +507,6 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
                 gpointer              user_data)
 {
   struct pw_buffer *buffer = user_data;
-  GrdRdpFrame *pending_frame;
 
   g_assert (frame);
 
@@ -520,15 +519,11 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
   if (!success)
     goto out;
 
-  g_mutex_lock (&stream->frame_mutex);
-  pending_frame = g_steal_pointer (&stream->pending_frame);
-  if (pending_frame)
-    {
-      if (!frame->buffer && pending_frame->buffer)
-        frame->buffer = g_steal_pointer (&pending_frame->buffer);
+  g_assert (frame->buffer);
 
-      grd_rdp_frame_unref (pending_frame);
-    }
+  g_mutex_lock (&stream->frame_mutex);
+  g_clear_pointer (&stream->pending_frame, grd_rdp_frame_unref);
+
   stream->pending_frame = g_steal_pointer (&frame);
   g_mutex_unlock (&stream->frame_mutex);
 
