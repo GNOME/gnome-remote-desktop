@@ -405,11 +405,10 @@ on_frame_ready (GrdVncPipeWireStream *stream,
 
   g_mutex_unlock (&stream->frame_mutex);
 
+  g_source_set_ready_time (stream->pending_frame_source, 0);
 out:
   if (buffer)
     pw_stream_queue_buffer (stream->pipewire_stream, buffer);
-
-  g_source_set_ready_time (stream->pending_frame_source, 0);
 
   g_clear_pointer (&frame, grd_vnc_frame_unref);
 }
