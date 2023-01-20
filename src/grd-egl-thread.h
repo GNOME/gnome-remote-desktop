@@ -26,6 +26,8 @@
 
 #include "grd-types.h"
 
+typedef gpointer GrdEglThreadSlot;
+
 typedef void (* GrdEglThreadCallback) (gboolean success,
                                        gpointer user_data);
 typedef gboolean (* GrdEglThreadCustomFunc) (gpointer user_data);
@@ -43,7 +45,13 @@ GrdEglThread * grd_egl_thread_new (GError **error);
 
 void grd_egl_thread_free (GrdEglThread *egl_thread);
 
+void * grd_egl_thread_acquire_slot (GrdEglThread *egl_thread);
+
+void grd_egl_thread_release_slot (GrdEglThread     *egl_thread,
+                                  GrdEglThreadSlot  slot);
+
 void grd_egl_thread_download (GrdEglThread                  *egl_thread,
+                              GrdEglThreadSlot               slot,
                               uint32_t                       pbo,
                               uint32_t                       pbo_height,
                               uint32_t                       pbo_stride,
@@ -82,6 +90,7 @@ void grd_egl_thread_deallocate (GrdEglThread                  *egl_thread,
                                 GDestroyNotify                 destroy);
 
 void grd_egl_thread_upload (GrdEglThread                *egl_thread,
+                            GrdEglThreadSlot             slot,
                             uint32_t                     pbo,
                             uint32_t                     height,
                             uint32_t                     stride,
@@ -112,5 +121,7 @@ gboolean grd_egl_thread_get_modifiers_for_format (GrdEglThread  *egl_thread,
                                                   uint32_t       format,
                                                   int           *out_n_modifiers,
                                                   uint64_t     **out_modifiers);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdEglThread, grd_egl_thread_free)
 
 #endif /* GRD_EGL_THREAD_H */

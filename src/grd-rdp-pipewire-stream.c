@@ -730,6 +730,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
       realize_buffer_data->rdp_buffer = rdp_buffer;
 
       grd_egl_thread_upload (egl_thread,
+                             NULL,
                              pbo,
                              height,
                              dst_stride,
@@ -808,6 +809,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
         }
 
       grd_egl_thread_download (egl_thread,
+                               NULL,
                                grd_rdp_buffer_get_pbo (rdp_buffer),
                                height,
                                dst_stride,

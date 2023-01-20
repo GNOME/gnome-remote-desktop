@@ -524,6 +524,7 @@ process_frame_data (GrdVncPipeWireStream *stream,
 
       frame->data = dst_data;
       grd_egl_thread_download (egl_thread,
+                               NULL,
                                0, 0, 0,
                                NULL, NULL, NULL,
                                dst_data,
