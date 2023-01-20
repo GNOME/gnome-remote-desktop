@@ -110,6 +110,7 @@ struct _GrdRdpPipeWireStream
 
   GrdSessionRdp *session_rdp;
   GrdRdpSurface *rdp_surface;
+  GrdEglThreadSlot egl_slot;
 
   GMutex dequeue_mutex;
   gboolean dequeuing_disallowed;
@@ -730,7 +731,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
       realize_buffer_data->rdp_buffer = rdp_buffer;
 
       grd_egl_thread_upload (egl_thread,
-                             NULL,
+                             stream->egl_slot,
                              pbo,
                              height,
                              dst_stride,
@@ -809,7 +810,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
         }
 
       grd_egl_thread_download (egl_thread,
-                               NULL,
+                               stream->egl_slot,
                                grd_rdp_buffer_get_pbo (rdp_buffer),
                                height,
                                dst_stride,
@@ -1103,6 +1104,9 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
   stream->rdp_surface = rdp_surface;
   stream->src_node_id = src_node_id;
 
+  if (egl_thread && !hwaccel_nvidia)
+    stream->egl_slot = grd_egl_thread_acquire_slot (egl_thread);
+
   pw_init (NULL, NULL);
 
   create_render_sources (stream, render_context);
@@ -1197,6 +1201,9 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
   g_mutex_clear (&stream->dequeue_mutex);
 
   pw_deinit ();
+
+  if (egl_thread)
+    grd_egl_thread_release_slot (egl_thread, stream->egl_slot);
 
   G_OBJECT_CLASS (grd_rdp_pipewire_stream_parent_class)->finalize (object);
 }
