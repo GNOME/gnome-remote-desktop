@@ -346,10 +346,8 @@ grd_rdp_audio_output_stream_dispose (GObject *object)
 
   if (audio_output_stream->pipewire_stream)
     {
-      pw_stream_set_active (audio_output_stream->pipewire_stream, false);
-
-      spa_hook_remove (&audio_output_stream->pipewire_stream_listener);
-      g_clear_pointer (&audio_output_stream->pipewire_stream, pw_stream_destroy);
+      pw_stream_destroy (audio_output_stream->pipewire_stream);
+      audio_output_stream->pipewire_stream = NULL;
     }
   if (audio_output_stream->pipewire_node)
     {
