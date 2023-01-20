@@ -385,6 +385,7 @@ on_frame_ready (GrdVncPipeWireStream *stream,
   struct pw_buffer *buffer = user_data;
 
   g_assert (frame);
+  g_assert (buffer);
 
   if (!success)
     goto out;
@@ -397,8 +398,7 @@ on_frame_ready (GrdVncPipeWireStream *stream,
 
   g_source_set_ready_time (stream->pending_frame_source, 0);
 out:
-  if (buffer)
-    pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+  pw_stream_queue_buffer (stream->pipewire_stream, buffer);
 
   g_clear_pointer (&frame, grd_vnc_frame_unref);
 }
