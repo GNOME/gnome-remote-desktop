@@ -509,6 +509,7 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
   struct pw_buffer *buffer = user_data;
 
   g_assert (frame);
+  g_assert (buffer);
 
   if (frame->has_map)
     {
@@ -529,8 +530,7 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
 
   g_source_set_ready_time (stream->frame_render_source, 0);
 out:
-  if (buffer)
-    pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+  pw_stream_queue_buffer (stream->pipewire_stream, buffer);
 
   g_clear_pointer (&frame, grd_rdp_frame_unref);
 }
