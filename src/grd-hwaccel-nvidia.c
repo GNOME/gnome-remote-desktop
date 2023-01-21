@@ -850,7 +850,26 @@ grd_hwaccel_nvidia_new (GrdEglThread *egl_thread)
       int cc_major = 0, cc_minor = 0;
 
       cu_device = cu_devices[i];
-      cuda_funcs->cuDeviceComputeCapability (&cc_major, &cc_minor, cu_device);
+      cu_result =
+        cuda_funcs->cuDeviceGetAttribute (&cc_major,
+                                          CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR,
+                                          cu_device);
+      if (cu_result != CUDA_SUCCESS)
+        {
+          g_warning ("[HWAccel.CUDA] Failed to get device attribute: %s",
+                     get_cuda_error_string (hwaccel_nvidia, cu_result));
+          continue;
+        }
+      cu_result =
+        cuda_funcs->cuDeviceGetAttribute (&cc_minor,
+                                          CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR,
+                                          cu_device);
+      if (cu_result != CUDA_SUCCESS)
+        {
+          g_warning ("[HWAccel.CUDA] Failed to get device attribute: %s",
+                     get_cuda_error_string (hwaccel_nvidia, cu_result));
+          continue;
+        }
 
       g_debug ("[HWAccel.CUDA] Device %u compute capability: [%i, %i]",
                i, cc_major, cc_minor);
