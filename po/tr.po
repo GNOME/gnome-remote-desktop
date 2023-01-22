@@ -1,15 +1,16 @@
 # Turkish translation for gnome-remote-desktop.
-# Copyright (C) 2021-2022 gnome-remote-desktop's COPYRIGHT HOLDER
+# Copyright (C) 2021-2023 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 #
 # Emin Tufan Çetin <etcetin@gmail.com>, 2021, 2022.
+# Sabri Ünal <libreajans@gmail.com>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-09-05 10:19+0000\n"
+"POT-Creation-Date: 2022-10-30 11:45+0000\n"
 "PO-Revision-Date: 2022-09-01 20:32+0300\n"
 "Last-Translator: Emin Tufan Çetin <etcetin@gmail.com>\n"
 "Language-Team: Turkish <gnometurk@gnome.org>\n"
@@ -172,7 +173,7 @@ msgid ""
 "configuration, submitted by the remote desktop client."
 msgstr ""
 "Ekran paylaşım kipi RDP arka ucunun birincil ekranı aynalayacağını mı "
-"yoksasanal monitör mü yaratacağını belirler. RDP arka ucu sanal monitörün "
+"yoksa sanal monitör mü oluşturacağını belirler. RDP arka ucu sanal monitörün "
 "ilk çözünürlüğü için; uygunluğa bağlı olarak, istemci çekirdek verisini ([MS-"
 "RDPBCGR] 2.2.1.3.2) veya istemci monitör verisini ([MS-RDPBCGR] 2.2.1.3.6) "
 "kullanır. İstemciler bir uzaktan  masaüstü oturumunu sanal monitörle "
@@ -266,7 +267,7 @@ msgid ""
 "configuration updates."
 msgstr ""
 "Ekran paylaşım kipi VNC arka ucunun birincil ekranı aynalayacağını mı yoksa "
-"sanal monitör mü yaratacağını belirler. VNC arka ucu, sanal monitörün ilk "
+"sanal monitör mü oluşturacağını belirler. VNC arka ucu, sanal monitörün ilk "
 "çözünürlüğü için öntanımlı olarak 1920x1080 piksel boyut kullanır.İstemciler "
 "bir uzaktan  masaüstü oturumunu sanal monitörle kullanırken, setDesktopSize "
 "PDU ile oturum sırasında sanal monitörün çözünürlüğünü değiştirebilir. İzin "
