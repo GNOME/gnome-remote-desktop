@@ -21,6 +21,7 @@
 #define GRD_RDP_MONITOR_CONFIG_H
 
 #include <freerdp/channels/disp.h>
+#include <freerdp/freerdp.h>
 #include <gio/gio.h>
 
 typedef enum _GrdRdpMonitorOrientation

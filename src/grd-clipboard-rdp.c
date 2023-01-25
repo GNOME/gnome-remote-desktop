@@ -362,7 +362,7 @@ send_mime_type_list (GrdClipboardRdp *clipboard_rdp,
         g_list_append (clipboard_rdp->pending_server_formats, l->data);
     }
 
-  format_list.msgType = CB_FORMAT_LIST;
+  format_list.common.msgType = CB_FORMAT_LIST;
   format_list.formats = cliprdr_formats;
   format_list.numFormats = n_formats;
 
@@ -433,7 +433,7 @@ grd_clipboard_rdp_lock_remote_clipboard_data (GrdClipboardRdp *clipboard_rdp,
   g_debug ("[RDP.CLIPRDR] Locking clients clipboard data with clipDataId %u",
            clip_data_id);
 
-  lock_clipboard_data.msgType = CB_LOCK_CLIPDATA;
+  lock_clipboard_data.common.msgType = CB_LOCK_CLIPDATA;
   lock_clipboard_data.clipDataId = clip_data_id;
 
   cliprdr_context->ServerLockClipboardData (cliprdr_context,
@@ -450,7 +450,7 @@ grd_clipboard_rdp_unlock_remote_clipboard_data (GrdClipboardRdp *clipboard_rdp,
   g_debug ("[RDP.CLIPRDR] Unlocking clients clipboard data associated to "
            "clipDataId %u", clip_data_id);
 
-  unlock_clipboard_data.msgType = CB_UNLOCK_CLIPDATA;
+  unlock_clipboard_data.common.msgType = CB_UNLOCK_CLIPDATA;
   unlock_clipboard_data.clipDataId = clip_data_id;
 
   cliprdr_context->ServerUnlockClipboardData (cliprdr_context,
@@ -467,7 +467,7 @@ grd_clipboard_rdp_request_remote_file_size_async (GrdClipboardRdp *clipboard_rdp
   CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
   CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = {0};
 
-  file_contents_request.msgType = CB_FILECONTENTS_REQUEST;
+  file_contents_request.common.msgType = CB_FILECONTENTS_REQUEST;
   file_contents_request.streamId = stream_id;
   file_contents_request.listIndex = list_index;
   file_contents_request.dwFlags = FILECONTENTS_SIZE;
@@ -491,7 +491,7 @@ grd_clipboard_rdp_request_remote_file_range_async (GrdClipboardRdp *clipboard_rd
   CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
   CLIPRDR_FILE_CONTENTS_REQUEST file_contents_request = {0};
 
-  file_contents_request.msgType = CB_FILECONTENTS_REQUEST;
+  file_contents_request.common.msgType = CB_FILECONTENTS_REQUEST;
   file_contents_request.streamId = stream_id;
   file_contents_request.listIndex = list_index;
   file_contents_request.dwFlags = FILECONTENTS_RANGE;
@@ -673,8 +673,8 @@ send_mime_type_content_request (GrdClipboardRdp  *clipboard_rdp,
       request_context->has_clip_data_id = TRUE;
     }
 
-  format_data_request.msgType = CB_FORMAT_DATA_REQUEST;
-  format_data_request.dataLen = 4;
+  format_data_request.common.msgType = CB_FORMAT_DATA_REQUEST;
+  format_data_request.common.dataLen = 4;
   format_data_request.requestedFormatId = mime_type_table->rdp.format_id;
 
   g_mutex_lock (&clipboard_rdp->client_request_mutex);
@@ -886,9 +886,10 @@ grd_clipboard_rdp_submit_requested_server_content (GrdClipboard *clipboard,
         }
     }
 
-  format_data_response.msgType = CB_FORMAT_DATA_RESPONSE;
-  format_data_response.msgFlags = dst_data ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
-  format_data_response.dataLen = dst_size;
+  format_data_response.common.msgType = CB_FORMAT_DATA_RESPONSE;
+  format_data_response.common.msgFlags = dst_data ? CB_RESPONSE_OK
+                                                  : CB_RESPONSE_FAIL;
+  format_data_response.common.dataLen = dst_size;
   format_data_response.requestedFormatData = dst_data;
 
   cliprdr_context->ServerFormatDataResponse (cliprdr_context,
@@ -1020,8 +1021,8 @@ update_server_format_list (gpointer user_data)
   abort_all_client_requests (clipboard_rdp);
   grd_clipboard_update_server_mime_type_list (clipboard, mime_type_tables);
 
-  format_list_response.msgType = CB_FORMAT_LIST_RESPONSE;
-  format_list_response.msgFlags = CB_RESPONSE_OK;
+  format_list_response.common.msgType = CB_FORMAT_LIST_RESPONSE;
+  format_list_response.common.msgFlags = CB_RESPONSE_OK;
 
   cliprdr_context->ServerFormatListResponse (cliprdr_context,
                                              &format_list_response);
@@ -1307,7 +1308,8 @@ cliprdr_client_format_list_response (CliprdrServerContext               *cliprdr
       return CHANNEL_RC_OK;
     }
 
-  clipboard_rdp->format_list_response_msg_flags = format_list_response->msgFlags;
+  clipboard_rdp->format_list_response_msg_flags =
+    format_list_response->common.msgFlags;
 
   clipboard_rdp->client_format_list_response_id =
     g_idle_add (handle_format_list_response, clipboard_rdp);
@@ -1548,8 +1550,8 @@ request_server_format_data (gpointer user_data)
     {
       CLIPRDR_FORMAT_DATA_RESPONSE format_data_response = {0};
 
-      format_data_response.msgType = CB_FORMAT_DATA_RESPONSE;
-      format_data_response.msgFlags = CB_RESPONSE_FAIL;
+      format_data_response.common.msgType = CB_FORMAT_DATA_RESPONSE;
+      format_data_response.common.msgFlags = CB_RESPONSE_FAIL;
 
       cliprdr_context->ServerFormatDataResponse (cliprdr_context,
                                                  &format_data_response);
@@ -1691,9 +1693,9 @@ cliprdr_client_format_data_request (CliprdrServerContext              *cliprdr_c
       return CHANNEL_RC_OK;
     }
 
-  format_data_response.msgType = CB_FORMAT_DATA_RESPONSE;
-  format_data_response.msgFlags = CB_RESPONSE_FAIL;
-  format_data_response.dataLen = 0;
+  format_data_response.common.msgType = CB_FORMAT_DATA_RESPONSE;
+  format_data_response.common.msgFlags = CB_RESPONSE_FAIL;
+  format_data_response.common.dataLen = 0;
   format_data_response.requestedFormatData = NULL;
 
   return cliprdr_context->ServerFormatDataResponse (cliprdr_context,
@@ -1709,9 +1711,9 @@ extract_format_data_response (GrdClipboardRdp               *clipboard_rdp,
   gboolean response_ok;
 
   *data = (uint8_t *) format_data_response->requestedFormatData;
-  *size = format_data_response->dataLen;
+  *size = format_data_response->common.dataLen;
 
-  response_ok = format_data_response->msgFlags & CB_RESPONSE_OK;
+  response_ok = format_data_response->common.msgFlags & CB_RESPONSE_OK;
   *size = response_ok && *data ? *size : 0;
 
   if (!response_ok)
@@ -1772,8 +1774,9 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
           g_array_free (dst_data, TRUE);
           return NULL;
         }
-      if (ConvertFromUnicode (CP_UTF8, 0, file->cFileName, -1, &filename,
-                              0, NULL, NULL) <= 0)
+
+      filename = ConvertWCharToUtf8Alloc (file->cFileName, NULL);
+      if (!filename)
         {
           g_array_free (dst_data, TRUE);
           return NULL;
@@ -1936,8 +1939,8 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
         {
           file = &files[i];
 
-          if (ConvertFromUnicode (CP_UTF8, 0, file->cFileName, -1, &filename,
-                                  0, NULL, NULL) <= 0)
+          filename = ConvertWCharToUtf8Alloc (file->cFileName, NULL);
+          if (!filename)
             {
               g_array_free (data_nautilus, TRUE);
               grd_rdp_fuse_clipboard_clear_no_cdi_selection (rdp_fuse_clipboard);
@@ -2162,7 +2165,7 @@ cliprdr_client_format_data_response (CliprdrServerContext               *cliprdr
                sizeof (CLIPRDR_FORMAT_DATA_RESPONSE));
   clipboard_rdp->format_data_response->requestedFormatData =
     g_memdup2 (format_data_response->requestedFormatData,
-               format_data_response->dataLen);
+               format_data_response->common.dataLen);
 
   if (!clipboard_rdp->client_format_data_response_id)
     {
@@ -2207,8 +2210,8 @@ send_file_contents_response_failure (CliprdrServerContext *cliprdr_context,
 {
   CLIPRDR_FILE_CONTENTS_RESPONSE file_contents_response = {0};
 
-  file_contents_response.msgType = CB_FILECONTENTS_RESPONSE;
-  file_contents_response.msgFlags = CB_RESPONSE_FAIL;
+  file_contents_response.common.msgType = CB_FILECONTENTS_RESPONSE;
+  file_contents_response.common.msgFlags = CB_RESPONSE_FAIL;
   file_contents_response.streamId = stream_id;
 
   return cliprdr_context->ServerFileContentsResponse (cliprdr_context,
@@ -2301,7 +2304,7 @@ cliprdr_client_file_contents_response (CliprdrServerContext                 *cli
 
   grd_rdp_fuse_clipboard_submit_file_contents_response (
     rdp_fuse_clipboard, file_contents_response->streamId,
-    file_contents_response->msgFlags & CB_RESPONSE_OK,
+    file_contents_response->common.msgFlags & CB_RESPONSE_OK,
     file_contents_response->requestedData,
     file_contents_response->cbRequested);
 
@@ -2317,8 +2320,8 @@ cliprdr_file_size_success (wClipboardDelegate              *delegate,
   CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
   CLIPRDR_FILE_CONTENTS_RESPONSE file_contents_response = {0};
 
-  file_contents_response.msgType = CB_FILECONTENTS_RESPONSE;
-  file_contents_response.msgFlags = CB_RESPONSE_OK;
+  file_contents_response.common.msgType = CB_FILECONTENTS_RESPONSE;
+  file_contents_response.common.msgFlags = CB_RESPONSE_OK;
   file_contents_response.streamId = file_size_request->streamId;
   file_contents_response.cbRequested = sizeof (uint64_t);
   file_contents_response.requestedData = (uint8_t *) &file_size;
@@ -2348,8 +2351,8 @@ cliprdr_file_range_success (wClipboardDelegate               *delegate,
   CliprdrServerContext *cliprdr_context = clipboard_rdp->cliprdr_context;
   CLIPRDR_FILE_CONTENTS_RESPONSE file_contents_response = {0};
 
-  file_contents_response.msgType = CB_FILECONTENTS_RESPONSE;
-  file_contents_response.msgFlags = CB_RESPONSE_OK;
+  file_contents_response.common.msgType = CB_FILECONTENTS_RESPONSE;
+  file_contents_response.common.msgFlags = CB_RESPONSE_OK;
   file_contents_response.streamId = file_range_request->streamId;
   file_contents_response.cbRequested = size;
   file_contents_response.requestedData = data;

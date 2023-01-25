@@ -21,7 +21,7 @@
 
 #include "grd-session-rdp.h"
 
-#include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/drdynvc.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
 #include <gio/gio.h>
@@ -478,14 +478,14 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
   cairo_rectangle_int_t cairo_rect;
   RFX_RECT *rfx_rects, *rfx_rect;
   int n_rects;
-  RFX_MESSAGE *rfx_messages;
+  RFX_MESSAGE_LIST *rfx_messages;
   size_t n_messages;
   BOOL first, last;
   size_t i;
 
   surface_mapping = grd_rdp_surface_get_mapping (rdp_surface);
 
-  rdp_peer_context->rfx_context->mode = RLGR3;
+  rfx_context_set_mode (rdp_peer_context->rfx_context, RLGR3);
   if (!rdp_surface->valid)
     {
       rfx_context_reset (rdp_peer_context->rfx_context,
@@ -506,15 +506,15 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
       rfx_rect->height = cairo_rect.height;
     }
 
-  rfx_messages = rfx_encode_messages_ex (rdp_peer_context->rfx_context,
-                                         rfx_rects,
-                                         n_rects,
-                                         data,
-                                         surface_width,
-                                         surface_height,
-                                         src_stride,
-                                         &n_messages,
-                                         multifrag_max_request_size);
+  rfx_messages = rfx_encode_messages (rdp_peer_context->rfx_context,
+                                      rfx_rects,
+                                      n_rects,
+                                      data,
+                                      surface_width,
+                                      surface_height,
+                                      src_stride,
+                                      &n_messages,
+                                      multifrag_max_request_size);
 
   cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
   cmd.bmp.codecID = remote_fx_codec_id;
@@ -529,21 +529,18 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
 
   for (i = 0; i < n_messages; ++i)
     {
+      const RFX_MESSAGE *rfx_message = rfx_message_list_get (rfx_messages, i);
+
       Stream_SetPosition (rdp_peer_context->encode_stream, 0);
 
       if (!rfx_write_message (rdp_peer_context->rfx_context,
                               rdp_peer_context->encode_stream,
-                              &rfx_messages[i]))
+                              rfx_message))
         {
-          g_warning ("rfx_write_message failed");
-
-          for (; i < n_messages; ++i)
-            rfx_message_free (rdp_peer_context->rfx_context, &rfx_messages[i]);
-
+          g_warning ("[RDP] Failed to write RFX message");
           break;
         }
 
-      rfx_message_free (rdp_peer_context->rfx_context, &rfx_messages[i]);
       cmd.bmp.bitmapDataLength = Stream_GetPosition (rdp_peer_context->encode_stream);
       cmd.bmp.bitmapData = Stream_Buffer (rdp_peer_context->encode_stream);
       first = i == 0 ? TRUE : FALSE;
@@ -556,7 +553,7 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
                                       rdp_peer_context->frame_id);
     }
 
-  g_free (rfx_messages);
+  g_clear_pointer (&rfx_messages, rfx_message_list_free);
   g_free (rfx_rects);
 
   return TRUE;
@@ -965,7 +962,7 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
    */
   max_update_size = multifrag_max_request_size - 2;
 
-  bitmap_update.count = bitmap_update.number = 0;
+  bitmap_update.number = 0;
   bitmap_update.rectangles = bitmap_data;
   bitmap_update.skipCompression = FALSE;
 
@@ -981,7 +978,6 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
        */
       update_size += bitmap_data[i].bitmapLength + 26;
 
-      ++bitmap_update.count;
       ++bitmap_update.number;
 
       next_size = i + 1 < n_bitmaps ? bitmap_data[i + 1].bitmapLength + 26
@@ -990,8 +986,8 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
         {
           rdp_update->BitmapUpdate (rdp_context, &bitmap_update);
 
-          bitmap_update.rectangles += bitmap_update.count;
-          bitmap_update.count = bitmap_update.number = 0;
+          bitmap_update.rectangles += bitmap_update.number;
+          bitmap_update.number = 0;
           update_size = 0;
         }
     }
@@ -1253,7 +1249,7 @@ is_pause_key_sequence (GrdSessionRdp *session_rdp,
     {
     case PAUSE_KEY_STATE_NONE:
       if (vkcode == VK_LCONTROL &&
-          flags & KBD_FLAGS_DOWN &&
+          !(flags & KBD_FLAGS_RELEASE) &&
           flags & KBD_FLAGS_EXTENDED1)
         {
           session_rdp->pause_key_state = PAUSE_KEY_STATE_CTRL_DOWN;
@@ -1262,7 +1258,7 @@ is_pause_key_sequence (GrdSessionRdp *session_rdp,
       return FALSE;
     case PAUSE_KEY_STATE_CTRL_DOWN:
       if (vkcode == VK_NUMLOCK &&
-          flags & KBD_FLAGS_DOWN)
+          !(flags & KBD_FLAGS_RELEASE))
         {
           session_rdp->pause_key_state = PAUSE_KEY_STATE_NUMLOCK_DOWN;
           return TRUE;
@@ -1270,7 +1266,7 @@ is_pause_key_sequence (GrdSessionRdp *session_rdp,
       break;
     case PAUSE_KEY_STATE_NUMLOCK_DOWN:
       if (vkcode == VK_LCONTROL &&
-          !(flags & KBD_FLAGS_DOWN) &&
+          flags & KBD_FLAGS_RELEASE &&
           flags & KBD_FLAGS_EXTENDED1)
         {
           session_rdp->pause_key_state = PAUSE_KEY_STATE_CTRL_UP;
@@ -1279,7 +1275,7 @@ is_pause_key_sequence (GrdSessionRdp *session_rdp,
       break;
     case PAUSE_KEY_STATE_CTRL_UP:
       if (vkcode == VK_NUMLOCK &&
-          !(flags & KBD_FLAGS_DOWN))
+          flags & KBD_FLAGS_RELEASE)
         {
           session_rdp->pause_key_state = PAUSE_KEY_STATE_NONE;
           grd_rdp_event_queue_add_input_event_keyboard_keysym (
@@ -1301,12 +1297,13 @@ is_pause_key_sequence (GrdSessionRdp *session_rdp,
 static BOOL
 rdp_input_keyboard_event (rdpInput *rdp_input,
                           uint16_t  flags,
-                          uint16_t  code)
+                          uint8_t   code)
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
   GrdKeyState key_state;
+  uint16_t scancode;
   uint16_t fullcode;
   uint16_t vkcode;
   uint16_t keycode;
@@ -1315,22 +1312,19 @@ rdp_input_keyboard_event (rdpInput *rdp_input,
       session_rdp->is_view_only)
     return TRUE;
 
-  fullcode = flags & KBD_FLAGS_EXTENDED ? code | KBDEXT : code;
+  scancode = code;
+  fullcode = flags & KBD_FLAGS_EXTENDED ? scancode | KBDEXT : scancode;
   vkcode = GetVirtualKeyCodeFromVirtualScanCode (fullcode, 4);
   vkcode = flags & KBD_FLAGS_EXTENDED ? vkcode | KBDEXT : vkcode;
-  /**
-   * Although the type is declared as an evdev keycode, FreeRDP actually returns
-   * a XKB keycode
-   */
-  keycode = GetKeycodeFromVirtualKeyCode (vkcode, KEYCODE_TYPE_EVDEV) - 8;
+  keycode = GetKeycodeFromVirtualKeyCode (vkcode, WINPR_KEYCODE_TYPE_EVDEV);
 
-  key_state = flags & KBD_FLAGS_DOWN ? GRD_KEY_STATE_PRESSED
-                                     : GRD_KEY_STATE_RELEASED;
+  key_state = flags & KBD_FLAGS_RELEASE ? GRD_KEY_STATE_RELEASED
+                                        : GRD_KEY_STATE_PRESSED;
 
   if (is_pause_key_sequence (session_rdp, vkcode, flags))
     return TRUE;
 
-  if (flags & KBD_FLAGS_DOWN)
+  if (key_state == GRD_KEY_STATE_PRESSED)
     {
       if (!g_hash_table_add (session_rdp->pressed_keys,
                              GUINT_TO_POINTER (keycode)))
@@ -1372,10 +1366,10 @@ rdp_input_unicode_keyboard_event (rdpInput *rdp_input,
   keysym = xkb_utf32_to_keysym (*code_utf32);
   g_free (code_utf32);
 
-  key_state = flags & KBD_FLAGS_DOWN ? GRD_KEY_STATE_PRESSED
-                                     : GRD_KEY_STATE_RELEASED;
+  key_state = flags & KBD_FLAGS_RELEASE ? GRD_KEY_STATE_RELEASED
+                                        : GRD_KEY_STATE_PRESSED;
 
-  if (flags & KBD_FLAGS_DOWN)
+  if (key_state == GRD_KEY_STATE_PRESSED)
     {
       if (!g_hash_table_add (session_rdp->pressed_unicode_keys,
                              GUINT_TO_POINTER (keysym)))
@@ -1698,7 +1692,6 @@ rdp_peer_context_new (freerdp_peer   *peer,
   if (!rdp_peer_context->rfx_context)
     {
       g_warning ("[RDP] Failed to create RFX context");
-      rdp_peer_context_free (peer, rdp_peer_context);
       return FALSE;
     }
   rfx_context_set_pixel_format (rdp_peer_context->rfx_context,
@@ -1708,7 +1701,6 @@ rdp_peer_context_new (freerdp_peer   *peer,
   if (!rdp_peer_context->encode_stream)
     {
       g_warning ("[RDP] Failed to create encode stream");
-      rdp_peer_context_free (peer, rdp_peer_context);
       return FALSE;
     }
 
@@ -1721,7 +1713,6 @@ rdp_peer_context_new (freerdp_peer   *peer,
   if (!rdp_peer_context->vcm || rdp_peer_context->vcm == INVALID_HANDLE_VALUE)
     {
       g_warning ("[RDP] Failed to create virtual channel manager");
-      rdp_peer_context_free (peer, rdp_peer_context);
       return FALSE;
     }
 
@@ -1747,12 +1738,14 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
   GrdSettings *settings = grd_context_get_settings (context);
   GSocket *socket = g_socket_connection_get_socket (session_rdp->connection);
+  g_autofree char *server_cert = NULL;
+  g_autofree char *server_key = NULL;
   freerdp_peer *peer;
   rdpInput *rdp_input;
   RdpPeerContext *rdp_peer_context;
   rdpSettings *rdp_settings;
-  char *server_cert;
-  char *server_key;
+  rdpCertificate *rdp_certificate;
+  rdpPrivateKey *rdp_private_key;
 
   g_debug ("Initialize RDP session");
 
@@ -1801,8 +1794,29 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
                 "rdp-server-key", &server_key,
                 NULL);
 
-  rdp_settings->CertificateFile = server_cert;
-  rdp_settings->PrivateKeyFile = server_key;
+  rdp_certificate = freerdp_certificate_new_from_file (server_cert);
+  if (!rdp_certificate)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create certificate from file");
+      return FALSE;
+    }
+  if (!freerdp_settings_set_pointer_len (rdp_settings,
+                                         FreeRDP_RdpServerCertificate,
+                                         rdp_certificate, 1))
+    g_assert_not_reached ();
+
+  rdp_private_key = freerdp_key_new_from_file (server_key);
+  if (!rdp_private_key)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create private key from file");
+      return FALSE;
+    }
+  if (!freerdp_settings_set_pointer_len (rdp_settings,
+                                         FreeRDP_RdpServerRsaKey,
+                                         rdp_private_key, 1))
+    g_assert_not_reached ();
 
   freerdp_settings_set_bool (rdp_settings, FreeRDP_RdpSecurity, FALSE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_TlsSecurity, FALSE);
@@ -1836,6 +1850,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
 
   freerdp_settings_set_bool (rdp_settings, FreeRDP_HasExtendedMouseEvent, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_HasHorizontalWheel, TRUE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_HasRelativeMouseEvent, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_HasQoeEvent, FALSE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_UnicodeInput, TRUE);
 
   freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, TRUE);
@@ -1925,7 +1941,8 @@ socket_thread_func (gpointer data)
           break;
         }
 
-      if (WTSVirtualChannelManagerIsChannelJoined (vcm, "drdynvc"))
+      if (peer->connected &&
+          WTSVirtualChannelManagerIsChannelJoined (vcm, DRDYNVC_SVC_CHANNEL_NAME))
         {
           GrdRdpTelemetry *telemetry;
           GrdRdpGraphicsPipeline *graphics_pipeline;
@@ -2248,7 +2265,7 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
                                      rdp_peer_context->vcm,
                                      get_max_monitor_count (session_rdp));
     }
-  if (WTSVirtualChannelManagerIsChannelJoined (vcm, "cliprdr"))
+  if (WTSVirtualChannelManagerIsChannelJoined (vcm, CLIPRDR_SVC_CHANNEL_NAME))
     {
       uint32_t os_major_type =
         freerdp_settings_get_uint32 (rdp_settings, FreeRDP_OsMajorType);

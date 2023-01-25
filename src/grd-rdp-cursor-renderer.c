@@ -270,15 +270,8 @@ submit_cursor_fastpath (GrdRdpCursorRenderer *cursor_renderer,
       pointer_new.xorBpp = 32;
       pointer_color = &pointer_new.colorPtrAttr;
       pointer_color->cacheIndex = cache_index;
-      /*
-       * xPos and yPos actually represent the hotspot coordinates of the pointer
-       * instead of the actual pointer position.
-       * FreeRDP just uses a confusing naming convention here.
-       * See also 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
-       * for reference
-       */
-      pointer_color->xPos = cursor_update->hotspot_x;
-      pointer_color->yPos = cursor_update->hotspot_y;
+      pointer_color->hotSpotX = cursor_update->hotspot_x;
+      pointer_color->hotSpotY = cursor_update->hotspot_y;
       pointer_color->width = cursor_update->width;
       pointer_color->height = cursor_update->height;
       pointer_color->lengthAndMask = 0;

@@ -221,7 +221,7 @@ create_monitor_config_from_client_monitor_data (rdpSettings  *rdp_settings,
 {
   g_autoptr (GrdRdpMonitorConfig) monitor_config = NULL;
   const rdpMonitor *monitors =
-    freerdp_settings_get_pointer (rdp_settings, FreeRDP_MonitorDefArray);
+    freerdp_settings_get_pointer_array (rdp_settings, FreeRDP_MonitorDefArray, 0);
   uint32_t monitor_count =
     freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MonitorCount);
   gboolean found_primary_monitor = FALSE;

@@ -632,8 +632,8 @@ set_selection_for_clip_data_entry (GrdRdpFuseClipboard *rdp_fuse_clipboard,
       if (!(file->dwFlags & FD_ATTRIBUTES))
         g_warning ("[RDP.CLIPRDR] Client did not set the FD_ATTRIBUTES flag");
 
-      if (ConvertFromUnicode (CP_UTF8, 0, file->cFileName, -1, &filename,
-                              0, NULL, NULL) <= 0)
+      filename = ConvertWCharToUtf8Alloc (file->cFileName, NULL);
+      if (!filename)
         {
           g_warning ("[RDP.CLIPRDR] Failed to convert filename. Aborting "
                      "SelectionTransfer");
@@ -683,7 +683,7 @@ set_selection_for_clip_data_entry (GrdRdpFuseClipboard *rdp_fuse_clipboard,
                             file->nFileSizeLow;
           fuse_file->has_size = TRUE;
         }
-      if (file->dwFlags & FD_WRITETIME)
+      if (file->dwFlags & FD_WRITESTIME)
         {
           uint64_t filetime;
 

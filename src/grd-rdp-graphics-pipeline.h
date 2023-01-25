@@ -20,6 +20,7 @@
 #ifndef GRD_RDP_GRAPHICS_PIPELINE_H
 #define GRD_RDP_GRAPHICS_PIPELINE_H
 
+#include <freerdp/freerdp.h>
 #include <freerdp/server/rdpgfx.h>
 #include <glib-object.h>
 

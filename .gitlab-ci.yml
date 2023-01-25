@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 39
-    BASE_TAG: '2023-12-13.1.libei'
+    BASE_TAG: '2023-12-13.2.freerdp3'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -29,6 +29,9 @@ stages:
                      'pkgconfig(tss2-tctildr)' &&
       dnf install -y asciidoc &&
       dnf builddep -y mutter --setopt=install_weak_deps=False &&
+      dnf install -y git cmake gcc-c++ libusb1-devel &&
+      dnf install -y pkcs11-helper-devel 'pkgconfig(krb5)' 'pkgconfig(libcjson)' \
+                     ffmpeg-free-devel &&
 
       # To test
       dnf install -y openssl &&
@@ -41,6 +44,19 @@ stages:
       ./.gitlab-ci/install-meson-project.sh \
         https://gitlab.gnome.org/GNOME/mutter.git \
         main . 7454287d3b2a9b3dbb15ecbf07a99c6272826d6e &&
+
+      ./.gitlab-ci/install-cmake-project.sh \
+          -DCMAKE_BUILD_TYPE='None' \
+          -DWITH_ICU=ON \
+          -DWITH_SERVER=ON \
+          -DWITH_CUPS=OFF \
+          -DWITH_SHADOW=OFF \
+          -DWITH_PROXY=OFF \
+          -DWITH_CHANNELS=ON \
+          -DWITH_CLIENT_CHANNELS=ON \
+          -DWITH_SERVER_CHANNELS=ON \
+          https://github.com/FreeRDP/FreeRDP \
+          3.0.0 . &&
 
       dnf clean all
 

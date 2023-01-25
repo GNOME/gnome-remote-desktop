@@ -6,7 +6,7 @@ project('gnome-remote-desktop', 'c',
 
 cuda_req = '>= 11.1.5.0'
 epoxy_req = '>= 1.4'
-freerdp_req = '>= 2.10.0'
+freerdp_req = '>= 3.0.0'
 fuse_req = '>= 3.9.1'
 xkbcommon_req = '>= 1.0.0'
 libei_req = '>= 1.2.0'
@@ -51,11 +51,11 @@ if have_rdp
   dl_dep = cc.find_library('dl', required: true)
 
   cuda_dep = dependency('ffnvcodec', version: cuda_req)
-  freerdp_dep = dependency('freerdp2', version: freerdp_req)
-  freerdp_client_dep = dependency('freerdp-client2', version: freerdp_req)
-  freerdp_server_dep = dependency('freerdp-server2', version: freerdp_req)
+  freerdp_dep = dependency('freerdp3', version: freerdp_req)
+  freerdp_client_dep = dependency('freerdp-client3', version: freerdp_req)
+  freerdp_server_dep = dependency('freerdp-server3', version: freerdp_req)
   fuse_dep = dependency('fuse3', version: fuse_req)
-  winpr_dep = dependency('winpr2', version: freerdp_req)
+  winpr_dep = dependency('winpr3', version: freerdp_req)
   xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
 
   if have_fdk_aac
