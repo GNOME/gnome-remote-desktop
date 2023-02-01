@@ -23,7 +23,7 @@
 
 #define FUSE_USE_VERSION 35
 
-#include <fuse3/fuse_lowlevel.h>
+#include <fuse_lowlevel.h>
 #include <unistd.h>
 
 #include "grd-clipboard-rdp.h"

@@ -21,7 +21,7 @@
 #define GRD_RDP_FUSE_CLIPBOARD_H
 
 #include <glib-object.h>
-#include <winpr2/winpr/shell.h>
+#include <winpr/shell.h>
 
 #include "grd-types.h"
 
