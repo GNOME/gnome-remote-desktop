@@ -254,6 +254,8 @@ read_mime_type_content_in_thread (GTask        *task,
   priv->read_result = read_result;
   g_cond_signal (&priv->pending_read_cond);
   g_mutex_unlock (&priv->pending_read_mutex);
+
+  g_task_return_pointer (task, NULL, NULL);
 }
 
 static gboolean
