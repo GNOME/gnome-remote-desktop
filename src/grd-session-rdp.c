@@ -2086,6 +2086,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdp_settings->RefreshRect = TRUE;
   rdp_settings->RemoteConsoleAudio = TRUE;
   rdp_settings->RemoteFxCodec = TRUE;
+  rdp_settings->RemoteFxImageCodec = TRUE;
   rdp_settings->SupportGraphicsPipeline = TRUE;
   rdp_settings->NSCodec = TRUE;
   rdp_settings->FrameMarkerCommandEnabled = TRUE;
