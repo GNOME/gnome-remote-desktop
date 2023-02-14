@@ -31,6 +31,7 @@ struct _GrdRdpDisplayControl
   DispServerContext *disp_context;
   gboolean channel_opened;
   gboolean channel_unavailable;
+  gboolean pending_caps;
 
   uint32_t channel_id;
   uint32_t dvc_subscription_id;
@@ -80,6 +81,7 @@ dvc_creation_status (gpointer user_data,
 
   g_debug ("[RDP.DISP] Channel opened successfully. "
            "Ready for receiving new monitor layouts");
+  display_control->pending_caps = FALSE;
   disp_context->DisplayControlCaps (disp_context);
 }
 
@@ -110,6 +112,15 @@ disp_monitor_layout (DispServerContext                        *disp_context,
   GrdSessionRdp *session_rdp = display_control->session_rdp;
   GrdRdpMonitorConfig *monitor_config;
   g_autoptr (GError) error = NULL;
+
+  if (display_control->pending_caps)
+    {
+      g_warning ("[RDP.DISP] Protocol violation: Received monitor layout PDU "
+                 "before being able to send capabilities. Terminating session");
+      grd_session_rdp_notify_error (session_rdp,
+                                    GRD_SESSION_RDP_ERROR_BAD_MONITOR_DATA);
+      return CHANNEL_RC_OK;
+    }
 
   if (monitor_layout_pdu->NumMonitors > disp_context->MaxNumMonitors)
     {
@@ -232,6 +243,8 @@ static void
 grd_rdp_display_control_init (GrdRdpDisplayControl *display_control)
 {
   GSource *channel_teardown_source;
+
+  display_control->pending_caps = TRUE;
 
   channel_teardown_source = g_source_new (&source_funcs, sizeof (GSource));
   g_source_set_callback (channel_teardown_source, tear_down_channel,
