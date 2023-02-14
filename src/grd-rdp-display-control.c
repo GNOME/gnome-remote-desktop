@@ -109,24 +109,31 @@ disp_monitor_layout (DispServerContext                        *disp_context,
   GrdRdpDisplayControl *display_control = disp_context->custom;
   GrdSessionRdp *session_rdp = display_control->session_rdp;
   GrdRdpMonitorConfig *monitor_config;
+  g_autoptr (GError) error = NULL;
 
   if (monitor_layout_pdu->NumMonitors > disp_context->MaxNumMonitors)
     {
-      g_warning ("[RDP.DISP] Received invalid monitor layout pdu "
-                 "(exceeded maximum monitor count). Ignoring PDU...");
+      g_warning ("[RDP.DISP] Protocol violation: Invalid monitor layout: "
+                 "(exceeded maximum monitor count). Terminating session");
+      grd_session_rdp_notify_error (session_rdp,
+                                    GRD_SESSION_RDP_ERROR_BAD_MONITOR_DATA);
+      return CHANNEL_RC_OK;
+    }
+
+  monitor_config =
+    grd_rdp_monitor_config_new_from_disp_monitor_layout (monitor_layout_pdu,
+                                                         &error);
+  if (!monitor_config)
+    {
+      g_warning ("[RDP.DISP] Received invalid monitor layout from client: %s. "
+                 "Terminating session", error->message);
+      grd_session_rdp_notify_error (session_rdp,
+                                    GRD_SESSION_RDP_ERROR_BAD_MONITOR_DATA);
       return CHANNEL_RC_OK;
     }
 
   g_debug ("[RDP.DISP] Received new monitor layout. PDU contains %i monitors",
            monitor_layout_pdu->NumMonitors);
-
-  monitor_config =
-    grd_rdp_monitor_config_new_from_disp_monitor_layout (monitor_layout_pdu);
-  if (!monitor_config)
-    {
-      g_warning ("[RDP.DISP] Monitor layout PDU is invalid. Ignoring PDU...");
-      return CHANNEL_RC_OK;
-    }
 
   grd_session_rdp_submit_new_monitor_config (session_rdp, monitor_config);
 

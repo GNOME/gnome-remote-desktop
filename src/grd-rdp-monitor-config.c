@@ -59,18 +59,28 @@ transform_monitor_orientation (uint32_t value)
   g_assert_not_reached ();
 }
 
-static void
-write_sanitized_monitor_data (GrdRdpVirtualMonitor *monitor,
-                              int32_t               pos_x,
-                              int32_t               pos_y,
-                              uint32_t              width,
-                              uint32_t              height,
-                              gboolean              is_primary,
-                              uint32_t              physical_width,
-                              uint32_t              physical_height,
-                              uint32_t              orientation,
-                              uint32_t              scale)
+static gboolean
+write_sanitized_monitor_data (GrdRdpVirtualMonitor  *monitor,
+                              int32_t                pos_x,
+                              int32_t                pos_y,
+                              uint32_t               width,
+                              uint32_t               height,
+                              gboolean               is_primary,
+                              uint32_t               physical_width,
+                              uint32_t               physical_height,
+                              uint32_t               orientation,
+                              uint32_t               scale,
+                              GError               **error)
 {
+  if (width % 2 ||
+      width < 200 || height < 200 ||
+      width > 8192 || height > 8192)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Invalid monitor dimensions");
+      return FALSE;
+    }
+
   monitor->pos_x = pos_x;
   monitor->pos_y = pos_y;
   monitor->width = CLAMP_DESKTOP_SIZE (width);
@@ -84,6 +94,8 @@ write_sanitized_monitor_data (GrdRdpVirtualMonitor *monitor,
 
   monitor->orientation = transform_monitor_orientation (orientation);
   monitor->scale = sanitize_value (scale, 100, 500);
+
+  return TRUE;
 }
 
 /**
@@ -91,9 +103,10 @@ write_sanitized_monitor_data (GrdRdpVirtualMonitor *monitor,
  * ([MS-RDPBCGR] 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE))
  */
 static GrdRdpMonitorConfig *
-create_monitor_config_from_client_core_data (rdpSettings *rdp_settings)
+create_monitor_config_from_client_core_data (rdpSettings  *rdp_settings,
+                                             GError      **error)
 {
-  GrdRdpMonitorConfig *monitor_config;
+  g_autoptr (GrdRdpMonitorConfig) monitor_config = NULL;
 
   monitor_config = g_malloc0 (sizeof (GrdRdpMonitorConfig));
   monitor_config->is_virtual = TRUE;
@@ -101,20 +114,22 @@ create_monitor_config_from_client_core_data (rdpSettings *rdp_settings)
   monitor_config->virtual_monitors = g_new0 (GrdRdpVirtualMonitor, 1);
 
   /* Ignore the DeviceScaleFactor. It is deprecated (Win 8.1 only) */
-  write_sanitized_monitor_data (&monitor_config->virtual_monitors[0],
-                                0, 0,
-                                rdp_settings->DesktopWidth,
-                                rdp_settings->DesktopHeight,
-                                TRUE,
-                                rdp_settings->DesktopPhysicalWidth,
-                                rdp_settings->DesktopPhysicalHeight,
-                                rdp_settings->DesktopOrientation,
-                                rdp_settings->DesktopScaleFactor);
+  if (!write_sanitized_monitor_data (&monitor_config->virtual_monitors[0],
+                                     0, 0,
+                                     rdp_settings->DesktopWidth,
+                                     rdp_settings->DesktopHeight,
+                                     TRUE,
+                                     rdp_settings->DesktopPhysicalWidth,
+                                     rdp_settings->DesktopPhysicalHeight,
+                                     rdp_settings->DesktopOrientation,
+                                     rdp_settings->DesktopScaleFactor,
+                                     error))
+    return NULL;
 
   monitor_config->gpo_width = monitor_config->virtual_monitors[0].width;
   monitor_config->gpo_height = monitor_config->virtual_monitors[0].height;
 
-  return monitor_config;
+  return g_steal_pointer (&monitor_config);
 }
 
 static void
@@ -136,7 +151,8 @@ determine_primary_monitor (GrdRdpMonitorConfig *monitor_config)
 }
 
 static gboolean
-verify_monitor_config (GrdRdpMonitorConfig *monitor_config)
+verify_monitor_config (GrdRdpMonitorConfig  *monitor_config,
+                       GError              **error)
 {
   cairo_region_t *region;
   cairo_rectangle_int_t rect;
@@ -153,6 +169,8 @@ verify_monitor_config (GrdRdpMonitorConfig *monitor_config)
 
       if (cairo_region_contains_rectangle (region, &rect) != CAIRO_REGION_OVERLAP_OUT)
         {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Monitor overlaps other monitor in layout");
           cairo_region_destroy (region);
           return FALSE;
         }
@@ -173,9 +191,10 @@ verify_monitor_config (GrdRdpMonitorConfig *monitor_config)
  * ([MS-RDPBCGR] 2.2.1.3.6 Client Monitor Data (TS_UD_CS_MONITOR))
  */
 static GrdRdpMonitorConfig *
-create_monitor_config_from_client_monitor_data (rdpSettings *rdp_settings)
+create_monitor_config_from_client_monitor_data (rdpSettings  *rdp_settings,
+                                                GError      **error)
 {
-  GrdRdpMonitorConfig *monitor_config;
+  g_autoptr (GrdRdpMonitorConfig) monitor_config = NULL;
   uint32_t monitor_count = rdp_settings->MonitorCount;
   gboolean found_primary_monitor = FALSE;
   uint32_t i;
@@ -212,38 +231,38 @@ create_monitor_config_from_client_monitor_data (rdpSettings *rdp_settings)
         }
 
       /* Ignore the DeviceScaleFactor. It is deprecated (Win 8.1 only) */
-      write_sanitized_monitor_data (&monitor_config->virtual_monitors[i],
-                                    monitor->x,
-                                    monitor->y,
-                                    monitor->width,
-                                    monitor->height,
-                                    is_primary,
-                                    physical_width,
-                                    physical_height,
-                                    orientation,
-                                    scale);
+      if (!write_sanitized_monitor_data (&monitor_config->virtual_monitors[i],
+                                         monitor->x,
+                                         monitor->y,
+                                         monitor->width,
+                                         monitor->height,
+                                         is_primary,
+                                         physical_width,
+                                         physical_height,
+                                         orientation,
+                                         scale,
+                                         error))
+        return NULL;
     }
   if (!found_primary_monitor)
     determine_primary_monitor (monitor_config);
 
-  if (!verify_monitor_config (monitor_config))
-    {
-      grd_rdp_monitor_config_free (monitor_config);
-      return NULL;
-    }
+  if (!verify_monitor_config (monitor_config, error))
+    return NULL;
 
-  return monitor_config;
+  return g_steal_pointer (&monitor_config);
 }
 
 GrdRdpMonitorConfig *
-grd_rdp_monitor_config_new_from_client_data (rdpSettings *rdp_settings,
-                                             uint32_t     max_monitor_count)
+grd_rdp_monitor_config_new_from_client_data (rdpSettings  *rdp_settings,
+                                             uint32_t      max_monitor_count,
+                                             GError      **error)
 {
   if (rdp_settings->MonitorCount == 0 ||
       rdp_settings->MonitorCount > max_monitor_count)
-    return create_monitor_config_from_client_core_data (rdp_settings);
+    return create_monitor_config_from_client_core_data (rdp_settings, error);
 
-  return create_monitor_config_from_client_monitor_data (rdp_settings);
+  return create_monitor_config_from_client_monitor_data (rdp_settings, error);
 }
 
 /**
@@ -251,9 +270,10 @@ grd_rdp_monitor_config_new_from_client_data (rdpSettings *rdp_settings,
  * ([MS-RDPEDISP] 2.2.2.2.1 DISPLAYCONTROL_MONITOR_LAYOUT)
  */
 GrdRdpMonitorConfig *
-grd_rdp_monitor_config_new_from_disp_monitor_layout (const DISPLAY_CONTROL_MONITOR_LAYOUT_PDU *monitor_layout)
+grd_rdp_monitor_config_new_from_disp_monitor_layout (const DISPLAY_CONTROL_MONITOR_LAYOUT_PDU  *monitor_layout,
+                                                     GError                                   **error)
 {
-  GrdRdpMonitorConfig *monitor_config;
+  g_autoptr (GrdRdpMonitorConfig) monitor_config = NULL;
   uint32_t monitor_count = monitor_layout->NumMonitors;
   gboolean found_primary_monitor = FALSE;
   uint32_t i;
@@ -278,27 +298,26 @@ grd_rdp_monitor_config_new_from_disp_monitor_layout (const DISPLAY_CONTROL_MONIT
         found_primary_monitor = TRUE;
 
       /* Ignore the DeviceScaleFactor. It is deprecated (Win 8.1 only) */
-      write_sanitized_monitor_data (&monitor_config->virtual_monitors[i],
-                                    monitor->Left,
-                                    monitor->Top,
-                                    monitor->Width,
-                                    monitor->Height,
-                                    is_primary,
-                                    monitor->PhysicalWidth,
-                                    monitor->PhysicalHeight,
-                                    monitor->Orientation,
-                                    monitor->DesktopScaleFactor);
+      if (!write_sanitized_monitor_data (&monitor_config->virtual_monitors[i],
+                                         monitor->Left,
+                                         monitor->Top,
+                                         monitor->Width,
+                                         monitor->Height,
+                                         is_primary,
+                                         monitor->PhysicalWidth,
+                                         monitor->PhysicalHeight,
+                                         monitor->Orientation,
+                                         monitor->DesktopScaleFactor,
+                                         error))
+        return NULL;
     }
   if (!found_primary_monitor)
     determine_primary_monitor (monitor_config);
 
-  if (!verify_monitor_config (monitor_config))
-    {
-      grd_rdp_monitor_config_free (monitor_config);
-      return NULL;
-    }
+  if (!verify_monitor_config (monitor_config, error))
+    return NULL;
 
-  return monitor_config;
+  return g_steal_pointer (&monitor_config);
 }
 
 void

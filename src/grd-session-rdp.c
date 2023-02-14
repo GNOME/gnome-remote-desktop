@@ -1723,6 +1723,7 @@ rdp_peer_capabilities (freerdp_peer *peer)
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   rdpSettings *rdp_settings = peer->settings;
+  g_autoptr (GError) error = NULL;
 
   if (!rdp_settings->SupportGraphicsPipeline &&
       !(grd_get_debug_flags () & GRD_DEBUG_RDP_LEGACY_GRAPHICS))
@@ -1744,7 +1745,7 @@ rdp_peer_capabilities (freerdp_peer *peer)
     {
       session_rdp->monitor_config =
         grd_rdp_monitor_config_new_from_client_data (rdp_settings,
-                                                     MAX_MONITOR_COUNT);
+                                                     MAX_MONITOR_COUNT, &error);
     }
   else
     {
@@ -1759,6 +1760,12 @@ rdp_peer_capabilities (freerdp_peer *peer)
 
       session_rdp->monitor_config->connectors = connectors;
       session_rdp->monitor_config->monitor_count = 1;
+    }
+  if (!session_rdp->monitor_config)
+    {
+      g_warning ("[RDP] Received invalid monitor layout from client: %s, "
+                 "closing connection", error->message);
+      return FALSE;
     }
 
   if ((rdp_settings->SupportGraphicsPipeline || rdp_settings->RemoteFxCodec ||

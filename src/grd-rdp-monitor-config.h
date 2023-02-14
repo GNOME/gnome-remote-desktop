@@ -70,11 +70,15 @@ typedef struct _GrdRdpMonitorConfig
   uint32_t gpo_height;
 } GrdRdpMonitorConfig;
 
-GrdRdpMonitorConfig *grd_rdp_monitor_config_new_from_client_data (rdpSettings *rdp_settings,
-                                                                  uint32_t     max_monitor_count);
+GrdRdpMonitorConfig *grd_rdp_monitor_config_new_from_client_data (rdpSettings  *rdp_settings,
+                                                                  uint32_t      max_monitor_count,
+                                                                  GError      **error);
 
-GrdRdpMonitorConfig *grd_rdp_monitor_config_new_from_disp_monitor_layout (const DISPLAY_CONTROL_MONITOR_LAYOUT_PDU *monitor_layout);
+GrdRdpMonitorConfig *grd_rdp_monitor_config_new_from_disp_monitor_layout (const DISPLAY_CONTROL_MONITOR_LAYOUT_PDU  *monitor_layout,
+                                                                          GError                                   **error);
 
 void grd_rdp_monitor_config_free (GrdRdpMonitorConfig *monitor_config);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdRdpMonitorConfig, grd_rdp_monitor_config_free)
 
 #endif /* GRD_RDP_MONITOR_CONFIG_H */
