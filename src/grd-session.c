@@ -764,6 +764,8 @@ on_remote_desktop_session_closed (GrdDBusMutterRemoteDesktopSession *session_pro
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
+  g_debug ("Remote desktop session closed, stopping session");
+
   g_clear_signal_handler (&priv->caps_lock_state_changed_id,
                           priv->remote_desktop_session);
   g_clear_signal_handler (&priv->num_lock_state_changed_id,
