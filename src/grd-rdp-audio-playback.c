@@ -257,7 +257,7 @@ acquire_stream_lock (GrdRdpAudioPlayback *audio_playback,
 {
   g_assert (!audio_playback->has_stream_lock);
 
-  g_debug ("[RDP.AUDIO_PLAYBACK] Locking audio stream to node id: %u", node_id);
+  g_debug ("[RDP.AUDIO_PLAYBACK] Locking audio stream to node id %u", node_id);
 
   audio_playback->locked_node_id = node_id;
   audio_playback->has_stream_lock = TRUE;
