@@ -30,6 +30,19 @@
 #define CLIPRDR_FILEDESCRIPTOR_SIZE (4 + 32 + 4 + 16 + 8 + 4 + 4 + 520)
 #define MAX_WAIT_TIME_MS 4000
 
+/* Format strings of formats with dynamically assigned ids */
+#define GRD_CFSTR_MIME_HTML "HTML Format"
+#define GRD_CFSTR_MIME_TEXT_HTML "text/html"
+#define GRD_CFSTR_MIME_PNG "image/png"
+#define GRD_CFSTR_MIME_JPEG "image/jpeg"
+#define GRD_CFSTR_MIME_GIF "image/gif"
+
+#define GRD_CF_HTML 0xD010
+#define GRD_CF_PNG 0xD011
+#define GRD_CF_JPEG 0xD012
+#define GRD_CF_GIF 0xD013
+#define GRD_CF_TEXT_URILIST 0xD014
+
 typedef struct _ServerFormatListUpdateContext
 {
   GrdClipboardRdp *clipboard_rdp;
@@ -300,8 +313,8 @@ send_mime_type_list (GrdClipboardRdp *clipboard_rdp,
           clipboard_rdp->which_unicode_format = mime_type;
           break;
         case GRD_MIME_TYPE_TEXT_HTML:
-          cliprdr_formats[i].formatId = CB_FORMAT_HTML;
-          cliprdr_formats[i].formatName = "HTML Format";
+          cliprdr_formats[i].formatId = GRD_CF_HTML;
+          cliprdr_formats[i].formatName = GRD_CFSTR_MIME_HTML;
           break;
         case GRD_MIME_TYPE_IMAGE_BMP:
           cliprdr_formats[i].formatId = CF_DIB;
@@ -310,25 +323,29 @@ send_mime_type_list (GrdClipboardRdp *clipboard_rdp,
           cliprdr_formats[i].formatId = CF_TIFF;
           break;
         case GRD_MIME_TYPE_IMAGE_GIF:
-          cliprdr_formats[i].formatId = CB_FORMAT_GIF;
+          cliprdr_formats[i].formatId = GRD_CF_GIF;
+          cliprdr_formats[i].formatName = GRD_CFSTR_MIME_GIF;
           break;
         case GRD_MIME_TYPE_IMAGE_JPEG:
-          cliprdr_formats[i].formatId = CB_FORMAT_JPEG;
+          cliprdr_formats[i].formatId = GRD_CF_JPEG;
+          cliprdr_formats[i].formatName = GRD_CFSTR_MIME_JPEG;
           break;
         case GRD_MIME_TYPE_IMAGE_PNG:
-          cliprdr_formats[i].formatId = CB_FORMAT_PNG;
+          cliprdr_formats[i].formatId = GRD_CF_PNG;
+          cliprdr_formats[i].formatName = GRD_CFSTR_MIME_PNG;
           break;
         case GRD_MIME_TYPE_TEXT_URILIST:
           /**
-           * FileGroupDescriptorW does not have a consistent format id. It is
-           * identified by its name.
-           * When the client requests the content, it MUST use the id that we
-           * told the client before when the clipboard format with the name
-           * "FileGroupDescriptorW" was advertised.
+           * Most formats don't have a consistent format id, but a dynamically
+           * assigned one. These formats are identified by their name.
+           *
+           * When the client requests the content of file lists, it MUST use the
+           * id that we told the client before when the clipboard format with
+           * the name "FileGroupDescriptorW" was advertised.
            *
            * See also 1.3.1.2 Clipboard Format
            */
-          cliprdr_formats[i].formatId = CB_FORMAT_TEXTURILIST;
+          cliprdr_formats[i].formatId = GRD_CF_TEXT_URILIST;
           cliprdr_formats[i].formatName = "FileGroupDescriptorW";
           clipboard_rdp->server_file_contents_requests_allowed = FALSE;
           grd_rdp_fuse_clipboard_clear_no_cdi_selection (rdp_fuse_clipboard);
@@ -1096,8 +1113,8 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
       mime_type = GRD_MIME_TYPE_NONE;
 
       /**
-       * FileGroupDescriptorW does not have a consistent id. The name however,
-       * is always the same.
+       * First check formats with dynamically assigned format ids. These formats
+       * don't have consistent ids. Their name, however, is always the same.
        *
        * If the client uses short format names, the formatName is truncated to
        * either 32 ASCII 8 characters or 16 UTF-16 characters.
@@ -1126,9 +1143,28 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
           mime_type = GRD_MIME_TYPE_TEXT_URILIST;
         }
       else if (format_list->formats[i].formatName &&
-               strcmp (format_list->formats[i].formatName, "HTML Format") == 0)
+               strcmp (format_list->formats[i].formatName,
+                       GRD_CFSTR_MIME_HTML) == 0)
         {
           mime_type = GRD_MIME_TYPE_TEXT_HTML;
+        }
+      else if (format_list->formats[i].formatName &&
+               strcmp (format_list->formats[i].formatName,
+                       GRD_CFSTR_MIME_GIF) == 0)
+        {
+          mime_type = GRD_MIME_TYPE_IMAGE_GIF;
+        }
+      else if (format_list->formats[i].formatName &&
+               strcmp (format_list->formats[i].formatName,
+                       GRD_CFSTR_MIME_PNG) == 0)
+        {
+          mime_type = GRD_MIME_TYPE_IMAGE_PNG;
+        }
+      else if (format_list->formats[i].formatName &&
+               strcmp (format_list->formats[i].formatName,
+                       GRD_CFSTR_MIME_JPEG) == 0)
+        {
+          mime_type = GRD_MIME_TYPE_IMAGE_JPEG;
         }
       else
         {
@@ -1165,15 +1201,6 @@ cliprdr_client_format_list (CliprdrServerContext      *cliprdr_context,
               break;
             case CF_TIFF:
               mime_type = GRD_MIME_TYPE_IMAGE_TIFF;
-              break;
-            case CB_FORMAT_GIF:
-              mime_type = GRD_MIME_TYPE_IMAGE_GIF;
-              break;
-            case CB_FORMAT_JPEG:
-              mime_type = GRD_MIME_TYPE_IMAGE_JPEG;
-              break;
-            case CB_FORMAT_PNG:
-              mime_type = GRD_MIME_TYPE_IMAGE_PNG;
               break;
             default:
               g_debug ("[RDP.CLIPRDR] Client advertised unknown format: id: %u, "
@@ -1582,16 +1609,16 @@ cliprdr_client_format_data_request (CliprdrServerContext              *cliprdr_c
       needs_null_terminator = TRUE;
       needs_conversion = TRUE;
       src_format_id = ClipboardGetFormatId (clipboard_rdp->system,
-                                            "UTF8_STRING");
+                                            "text/plain");
       break;
-    case CB_FORMAT_HTML:
+    case GRD_CF_HTML:
       mime_type = GRD_MIME_TYPE_TEXT_HTML;
       needs_null_terminator = TRUE;
       needs_conversion = TRUE;
       src_format_id = ClipboardGetFormatId (clipboard_rdp->system,
-                                            "text/html");
+                                            GRD_CFSTR_MIME_TEXT_HTML);
       dst_format_id = ClipboardGetFormatId (clipboard_rdp->system,
-                                            "HTML Format");
+                                            GRD_CFSTR_MIME_HTML);
       break;
     case CF_DIB:
       mime_type = GRD_MIME_TYPE_IMAGE_BMP;
@@ -1602,16 +1629,16 @@ cliprdr_client_format_data_request (CliprdrServerContext              *cliprdr_c
     case CF_TIFF:
       mime_type = GRD_MIME_TYPE_IMAGE_TIFF;
       break;
-    case CB_FORMAT_GIF:
+    case GRD_CF_GIF:
       mime_type = GRD_MIME_TYPE_IMAGE_GIF;
       break;
-    case CB_FORMAT_JPEG:
+    case GRD_CF_JPEG:
       mime_type = GRD_MIME_TYPE_IMAGE_JPEG;
       break;
-    case CB_FORMAT_PNG:
+    case GRD_CF_PNG:
       mime_type = GRD_MIME_TYPE_IMAGE_PNG;
       break;
-    case CB_FORMAT_TEXTURILIST:
+    case GRD_CF_TEXT_URILIST:
       mime_type = GRD_MIME_TYPE_TEXT_URILIST;
       needs_conversion = TRUE;
       src_format_id = ClipboardGetFormatId (clipboard_rdp->system,
@@ -1799,14 +1826,14 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
     case GRD_MIME_TYPE_TEXT_UTF8_STRING:
       is_null_terminated = TRUE;
       dst_format_id = ClipboardGetFormatId (clipboard_rdp->system,
-                                            "UTF8_STRING");
+                                            "text/plain");
       break;
     case GRD_MIME_TYPE_TEXT_HTML:
       is_null_terminated = TRUE;
       src_format_id = ClipboardGetFormatId (clipboard_rdp->system,
-                                            "HTML Format");
+                                            GRD_CFSTR_MIME_HTML);
       dst_format_id = ClipboardGetFormatId (clipboard_rdp->system,
-                                            "text/html");
+                                            GRD_CFSTR_MIME_TEXT_HTML);
       break;
     case GRD_MIME_TYPE_IMAGE_BMP:
       dst_format_id = ClipboardGetFormatId (clipboard_rdp->system,
