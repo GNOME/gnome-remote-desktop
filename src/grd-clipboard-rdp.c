@@ -823,7 +823,12 @@ grd_clipboard_rdp_submit_requested_server_content (GrdClipboard *clipboard,
 
           success = ClipboardSetData (clipboard_rdp->system,
                                       src_format_id, src_data, src_size);
-          if (success)
+          if (!success)
+            {
+              g_warning ("[RDP.CLIPRDR] Converting clipboard content failed: "
+                         "Failed to set data to convert");
+            }
+          else
             {
               dst_data = ClipboardGetData (clipboard_rdp->system,
                                            dst_format_id, &dst_size);
@@ -851,10 +856,10 @@ grd_clipboard_rdp_submit_requested_server_content (GrdClipboard *clipboard,
                     entry->has_file_list = TRUE;
                 }
             }
-          if (!success || !dst_data)
+          if (!dst_data)
             {
               g_warning ("[RDP.CLIPRDR] Converting clipboard content for "
-                         "client failed");
+                         "client failed: Failed to get converted data");
             }
         }
       else
@@ -1822,7 +1827,8 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
                               src_format_id, src_data, src_size);
   if (!success)
     {
-      g_warning ("[RDP.CLIPRDR] Converting clipboard content failed");
+      g_warning ("[RDP.CLIPRDR] Converting clipboard content failed: "
+                 "Failed to set data to convert");
       return NULL;
     }
 
@@ -1841,7 +1847,8 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
     }
   if (!dst_data)
     {
-      g_warning ("[RDP.CLIPRDR] Converting clipboard content failed");
+      g_warning ("[RDP.CLIPRDR] Converting clipboard content failed: "
+                 "Failed to get converted data");
       return NULL;
     }
 
