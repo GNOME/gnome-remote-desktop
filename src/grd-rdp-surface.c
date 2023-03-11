@@ -99,6 +99,18 @@ grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
   g_free (rdp_surface);
 }
 
+uint32_t
+grd_rdp_surface_get_width (GrdRdpSurface *rdp_surface)
+{
+  return rdp_surface->width;
+}
+
+uint32_t
+grd_rdp_surface_get_height (GrdRdpSurface *rdp_surface)
+{
+  return rdp_surface->height;
+}
+
 void
 grd_rdp_surface_reset (GrdRdpSurface *rdp_surface)
 {

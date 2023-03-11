@@ -59,6 +59,10 @@ GrdRdpSurface *grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia,
 
 void grd_rdp_surface_free (GrdRdpSurface *rdp_surface);
 
+uint32_t grd_rdp_surface_get_width (GrdRdpSurface *rdp_surface);
+
+uint32_t grd_rdp_surface_get_height (GrdRdpSurface *rdp_surface);
+
 void grd_rdp_surface_reset (GrdRdpSurface *rdp_surface);
 
 #endif /* GRD_RDP_SURFACE_H */
