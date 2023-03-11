@@ -191,9 +191,9 @@ static gboolean
 close_session_idle (gpointer user_data);
 
 static void
-rdp_peer_refresh_region (GrdSessionRdp  *session_rdp,
-                         GrdRdpSurface  *rdp_surface,
-                         GrdRdpBuffer   *buffer);
+rdp_peer_refresh_region (GrdSessionRdp *session_rdp,
+                         GrdRdpSurface *rdp_surface,
+                         GrdRdpBuffer  *buffer);
 
 static gboolean
 are_pointer_bitmaps_equal (gconstpointer a,
@@ -1317,9 +1317,9 @@ print_session_metrics (SessionMetrics *session_metrics)
 }
 
 static void
-rdp_peer_refresh_region (GrdSessionRdp  *session_rdp,
-                         GrdRdpSurface  *rdp_surface,
-                         GrdRdpBuffer   *buffer)
+rdp_peer_refresh_region (GrdSessionRdp *session_rdp,
+                         GrdRdpSurface *rdp_surface,
+                         GrdRdpBuffer  *buffer)
 {
   SessionMetrics *session_metrics = &session_rdp->session_metrics;
   freerdp_peer *peer = session_rdp->peer;
