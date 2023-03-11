@@ -50,11 +50,12 @@ struct _GrdRdpSurface
   gboolean valid;
 
   GrdRdpGfxSurface *gfx_surface;
-  uint16_t refresh_rate;
+  uint32_t refresh_rate;
   gboolean encoding_suspended;
 };
 
-GrdRdpSurface *grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia);
+GrdRdpSurface *grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia,
+                                    uint32_t          refresh_rate);
 
 void grd_rdp_surface_free (GrdRdpSurface *rdp_surface);
 

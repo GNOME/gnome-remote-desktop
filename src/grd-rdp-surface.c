@@ -42,12 +42,14 @@ destroy_hwaccel_util_objects (GrdRdpSurface *rdp_surface)
 }
 
 GrdRdpSurface *
-grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia)
+grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia,
+                     uint32_t          refresh_rate)
 {
   g_autofree GrdRdpSurface *rdp_surface = NULL;
 
   rdp_surface = g_malloc0 (sizeof (GrdRdpSurface));
   rdp_surface->hwaccel_nvidia = hwaccel_nvidia;
+  rdp_surface->refresh_rate = refresh_rate;
 
   if (hwaccel_nvidia &&
       !grd_hwaccel_nvidia_create_cuda_stream (hwaccel_nvidia,
