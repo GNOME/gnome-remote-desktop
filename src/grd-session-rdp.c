@@ -1438,12 +1438,13 @@ rdp_input_mouse_event (rdpInput *rdp_input,
       is_view_only (session_rdp))
     return TRUE;
 
-  if (flags & PTR_FLAGS_MOVE)
+  if (flags & PTR_FLAGS_MOVE && session_rdp->stream)
     {
-      GrdStream *stream = session_rdp->stream;
+      const char *stream_path;
 
+      stream_path = grd_stream_get_object_path (session_rdp->stream);
       grd_rdp_event_queue_add_input_event_pointer_motion_abs (rdp_event_queue,
-                                                              stream, x, y);
+                                                              stream_path, x, y);
     }
 
   button_state = flags & PTR_FLAGS_DOWN ? GRD_BUTTON_STATE_PRESSED

@@ -453,11 +453,13 @@ handle_pointer_event (int          button_mask,
   if (is_view_only (session_vnc))
     return;
 
-  if (x != session_vnc->prev_x || y != session_vnc->prev_y)
+  if (session_vnc->stream &&
+      (x != session_vnc->prev_x || y != session_vnc->prev_y))
     {
-      GrdStream *stream = session_vnc->stream;
+      const char *stream_path;
 
-      grd_session_notify_pointer_motion_absolute (session, stream, x, y);
+      stream_path = grd_stream_get_object_path (session_vnc->stream);
+      grd_session_notify_pointer_motion_absolute (session, stream_path, x, y);
 
       session_vnc->prev_x = x;
       session_vnc->prev_y = y;
