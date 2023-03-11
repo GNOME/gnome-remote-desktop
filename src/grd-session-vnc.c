@@ -780,6 +780,11 @@ grd_session_vnc_stop (GrdSession *session)
   g_debug ("Stopping VNC session");
 
   g_clear_object (&session_vnc->pipewire_stream);
+  if (session_vnc->stream)
+    {
+      grd_stream_disconnect_proxy_signals (session_vnc->stream);
+      g_clear_object (&session_vnc->stream);
+    }
 
   grd_session_vnc_detach_source (session_vnc);
 
@@ -819,7 +824,7 @@ grd_session_vnc_remote_desktop_session_started (GrdSession *session)
 
   if (session_vnc->monitor_config->is_virtual)
     {
-      grd_session_record_virtual (session,
+      grd_session_record_virtual (session, 0,
                                   GRD_SCREEN_CAST_CURSOR_MODE_METADATA,
                                   TRUE);
     }
@@ -828,7 +833,7 @@ grd_session_vnc_remote_desktop_session_started (GrdSession *session)
       const char *connector;
 
       connector = session_vnc->monitor_config->connectors[0];
-      grd_session_record_monitor (session, connector,
+      grd_session_record_monitor (session, 0, connector,
                                   GRD_SCREEN_CAST_CURSOR_MODE_METADATA);
     }
 }
@@ -843,10 +848,9 @@ on_pipewire_stream_closed (GrdVncPipeWireStream *stream,
 }
 
 static void
-grd_session_vnc_stream_ready (GrdSession *session,
-                              GrdStream  *stream)
+on_stream_ready (GrdStream     *stream,
+                 GrdSessionVnc *session_vnc)
 {
-  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
   uint32_t pipewire_node_id;
   GrdVncVirtualMonitor *virtual_monitor;
   g_autoptr (GError) error = NULL;
@@ -863,13 +867,26 @@ grd_session_vnc_stream_ready (GrdSession *session,
       return;
     }
 
-  session_vnc->stream = stream;
   g_signal_connect (session_vnc->pipewire_stream, "closed",
                     G_CALLBACK (on_pipewire_stream_closed),
                     session_vnc);
 
   if (!session_vnc->source)
     grd_session_vnc_attach_source (session_vnc);
+}
+
+static void
+grd_session_vnc_on_stream_created (GrdSession *session,
+                                   uint32_t    stream_id,
+                                   GrdStream  *stream)
+{
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
+
+  g_assert (!session_vnc->stream);
+
+  session_vnc->stream = stream;
+  g_signal_connect (stream, "ready", G_CALLBACK (on_stream_ready),
+                    session_vnc);
 }
 
 static void
@@ -889,5 +906,5 @@ grd_session_vnc_class_init (GrdSessionVncClass *klass)
   session_class->stop = grd_session_vnc_stop;
   session_class->remote_desktop_session_started =
     grd_session_vnc_remote_desktop_session_started;
-  session_class->stream_ready = grd_session_vnc_stream_ready;
+  session_class->on_stream_created = grd_session_vnc_on_stream_created;
 }

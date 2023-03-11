@@ -64,6 +64,7 @@ typedef enum _ScreenCastType
 typedef struct _AsyncDBusRecordCallContext
 {
   GrdSession *session;
+  uint32_t stream_id;
   ScreenCastType screen_cast_type;
 } AsyncDBusRecordCallContext;
 
@@ -73,8 +74,6 @@ typedef struct _GrdSessionPrivate
 
   GrdDBusMutterRemoteDesktopSession *remote_desktop_session;
   GrdDBusMutterScreenCastSession *screen_cast_session;
-
-  GHashTable *stream_table;
 
   GrdClipboard *clipboard;
 
@@ -100,8 +99,6 @@ void
 grd_session_stop (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GHashTableIter iter;
-  GrdStream *stream;
 
   if (priv->cancellable && g_cancellable_is_cancelled (priv->cancellable))
     return;
@@ -124,10 +121,6 @@ grd_session_stop (GrdSession *session)
   if (priv->cancellable)
     g_cancellable_cancel (priv->cancellable);
 
-  g_hash_table_iter_init (&iter, priv->stream_table);
-  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &stream))
-    grd_stream_disconnect_proxy_signals (stream);
-
   g_clear_signal_handler (&priv->caps_lock_state_changed_id,
                           priv->remote_desktop_session);
   g_clear_signal_handler (&priv->num_lock_state_changed_id,
@@ -137,20 +130,6 @@ grd_session_stop (GrdSession *session)
   g_clear_object (&priv->screen_cast_session);
 
   g_signal_emit (session, signals[STOPPED], 0);
-}
-
-static void
-on_stream_ready (GrdStream  *stream,
-                 GrdSession *session)
-{
-  GRD_SESSION_GET_CLASS (session)->stream_ready (session, stream);
-}
-
-static void
-on_stream_closed (GrdStream  *stream,
-                  GrdSession *session)
-{
-  grd_session_stop (session);
 }
 
 static void
@@ -179,9 +158,11 @@ on_screen_cast_stream_proxy_acquired (GObject      *object,
                                       GAsyncResult *result,
                                       gpointer      user_data)
 {
+  g_autofree AsyncDBusRecordCallContext *async_context = user_data;
   GrdDBusMutterScreenCastStream *stream_proxy;
   GrdSession *session;
   GrdSessionPrivate *priv;
+  GrdSessionClass *klass;
   g_autoptr (GError) error = NULL;
   GrdStream *stream;
 
@@ -192,20 +173,16 @@ on_screen_cast_stream_proxy_acquired (GObject      *object,
         return;
 
       g_warning ("Failed to acquire stream proxy: %s", error->message);
-      grd_session_stop (GRD_SESSION (user_data));
+      grd_session_stop (async_context->session);
       return;
     }
 
-  session = GRD_SESSION (user_data);
+  session = async_context->session;
   priv = grd_session_get_instance_private (session);
+  klass = GRD_SESSION_GET_CLASS (session);
 
   stream = grd_stream_new (priv->context, stream_proxy);
-  g_signal_connect (stream, "ready", G_CALLBACK (on_stream_ready),
-                    session);
-  g_signal_connect (stream, "closed", G_CALLBACK (on_stream_closed),
-                    session);
-
-  g_hash_table_add (priv->stream_table, stream);
+  klass->on_stream_created (session, async_context->stream_id, stream);
 
   grd_dbus_mutter_screen_cast_stream_call_start (stream_proxy,
                                                  priv->cancellable,
@@ -288,20 +265,25 @@ on_record_finished (GObject      *object,
                                                 stream_path,
                                                 priv->cancellable,
                                                 on_screen_cast_stream_proxy_acquired,
-                                                session);
+                                                g_steal_pointer (&async_context));
 }
 
 void
 grd_session_record_monitor (GrdSession              *session,
+                            uint32_t                 stream_id,
                             const char              *connector,
                             GrdScreenCastCursorMode  cursor_mode)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  GrdSessionClass *klass = GRD_SESSION_GET_CLASS (session);
   GVariantBuilder properties_builder;
   AsyncDBusRecordCallContext *async_context;
 
+  g_assert (klass->on_stream_created);
+
   async_context = g_malloc0 (sizeof (AsyncDBusRecordCallContext));
   async_context->session = session;
+  async_context->stream_id = stream_id;
   async_context->screen_cast_type = SCREEN_CAST_TYPE_MONITOR;
 
   g_variant_builder_init (&properties_builder, G_VARIANT_TYPE ("a{sv}"));
@@ -318,15 +300,20 @@ grd_session_record_monitor (GrdSession              *session,
 
 void
 grd_session_record_virtual (GrdSession              *session,
+                            uint32_t                 stream_id,
                             GrdScreenCastCursorMode  cursor_mode,
                             gboolean                 is_platform)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  GrdSessionClass *klass = GRD_SESSION_GET_CLASS (session);
   GVariantBuilder properties_builder;
   AsyncDBusRecordCallContext *async_context;
 
+  g_assert (klass->on_stream_created);
+
   async_context = g_malloc0 (sizeof (AsyncDBusRecordCallContext));
   async_context->session = session;
+  async_context->stream_id = stream_id;
   async_context->screen_cast_type = SCREEN_CAST_TYPE_VIRTUAL;
 
   g_variant_builder_init (&properties_builder, G_VARIANT_TYPE ("a{sv}"));
@@ -1012,17 +999,6 @@ grd_session_start (GrdSession *session)
 }
 
 static void
-grd_session_dispose (GObject *object)
-{
-  GrdSession *session = GRD_SESSION (object);
-  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-
-  g_hash_table_remove_all (priv->stream_table);
-
-  G_OBJECT_CLASS (grd_session_parent_class)->dispose (object);
-}
-
-static void
 grd_session_finalize (GObject *object)
 {
   GrdSession *session = GRD_SESSION (object);
@@ -1033,9 +1009,6 @@ grd_session_finalize (GObject *object)
   if (priv->cancellable)
     g_assert (g_cancellable_is_cancelled (priv->cancellable));
   g_clear_object (&priv->cancellable);
-
-  g_assert (g_hash_table_size (priv->stream_table) == 0);
-  g_clear_pointer (&priv->stream_table, g_hash_table_unref);
 
   G_OBJECT_CLASS (grd_session_parent_class)->finalize (object);
 }
@@ -1082,9 +1055,6 @@ grd_session_get_property (GObject    *object,
 static void
 grd_session_init (GrdSession *session)
 {
-  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-
-  priv->stream_table = g_hash_table_new_full (NULL, NULL, NULL, g_object_unref);
 }
 
 static void
@@ -1092,7 +1062,6 @@ grd_session_class_init (GrdSessionClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->dispose = grd_session_dispose;
   object_class->finalize = grd_session_finalize;
   object_class->set_property = grd_session_set_property;
   object_class->get_property = grd_session_get_property;

@@ -2443,6 +2443,11 @@ grd_session_rdp_stop (GrdSession *session)
                                notify_keysym_released,
                                session_rdp);
   grd_rdp_event_queue_flush (session_rdp->rdp_event_queue);
+  if (session_rdp->stream)
+    {
+      grd_stream_disconnect_proxy_signals (session_rdp->stream);
+      g_clear_object (&session_rdp->stream);
+    }
 
   g_clear_pointer (&session_rdp->rdp_surface, grd_rdp_surface_free);
   g_clear_pointer (&session_rdp->monitor_config, grd_rdp_monitor_config_free);
@@ -2556,7 +2561,7 @@ grd_session_rdp_remote_desktop_session_started (GrdSession *session)
 
   if (session_rdp->monitor_config->is_virtual)
     {
-      grd_session_record_virtual (session,
+      grd_session_record_virtual (session, 0,
                                   GRD_SCREEN_CAST_CURSOR_MODE_METADATA,
                                   TRUE);
     }
@@ -2565,7 +2570,7 @@ grd_session_rdp_remote_desktop_session_started (GrdSession *session)
       const char *connector;
 
       connector = session_rdp->monitor_config->connectors[0];
-      grd_session_record_monitor (session, connector,
+      grd_session_record_monitor (session, 0, connector,
                                   GRD_SCREEN_CAST_CURSOR_MODE_METADATA);
     }
 }
@@ -2580,10 +2585,9 @@ on_pipewire_stream_closed (GrdRdpPipeWireStream *stream,
 }
 
 static void
-grd_session_rdp_stream_ready (GrdSession *session,
-                              GrdStream  *stream)
+on_stream_ready (GrdStream     *stream,
+                 GrdSessionRdp *session_rdp)
 {
-  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
   GMainContext *graphics_context = session_rdp->graphics_context;
   GrdRdpSurface *rdp_surface;
   uint32_t pipewire_node_id;
@@ -2606,7 +2610,6 @@ grd_session_rdp_stream_ready (GrdSession *session,
       return;
     }
 
-  session_rdp->stream = stream;
   g_signal_connect (session_rdp->pipewire_stream, "closed",
                     G_CALLBACK (on_pipewire_stream_closed),
                     session_rdp);
@@ -2625,6 +2628,20 @@ grd_session_rdp_stream_ready (GrdSession *session,
                                          MAX_MONITOR_COUNT);
         }
     }
+}
+
+static void
+grd_session_rdp_on_stream_created (GrdSession *session,
+                                   uint32_t    stream_id,
+                                   GrdStream  *stream)
+{
+  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
+
+  g_assert (!session_rdp->stream);
+
+  session_rdp->stream = stream;
+  g_signal_connect (stream, "ready", G_CALLBACK (on_stream_ready),
+                    session_rdp);
 }
 
 static void
@@ -2806,7 +2823,7 @@ grd_session_rdp_class_init (GrdSessionRdpClass *klass)
   session_class->remote_desktop_session_started =
     grd_session_rdp_remote_desktop_session_started;
   session_class->stop = grd_session_rdp_stop;
-  session_class->stream_ready = grd_session_rdp_stream_ready;
+  session_class->on_stream_created = grd_session_rdp_on_stream_created;
   session_class->on_caps_lock_state_changed =
     grd_session_rdp_on_caps_lock_state_changed;
   session_class->on_num_lock_state_changed =
