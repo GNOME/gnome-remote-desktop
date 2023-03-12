@@ -119,6 +119,8 @@ if have_rdp
     'grd-rdp-sam.h',
     'grd-rdp-server.c',
     'grd-rdp-server.h',
+    'grd-rdp-stream-owner.c',
+    'grd-rdp-stream-owner.h',
     'grd-rdp-surface.c',
     'grd-rdp-surface.h',
     'grd-rdp-telemetry.c',
