@@ -712,6 +712,9 @@ grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
     case GRD_SESSION_RDP_ERROR_BAD_MONITOR_DATA:
       session_rdp->rdp_error_info = ERRINFO_BAD_MONITOR_DATA;
       break;
+    case GRD_SESSION_RDP_ERROR_CLOSE_STACK_ON_DRIVER_FAILURE:
+      session_rdp->rdp_error_info = ERRINFO_CLOSE_STACK_ON_DRIVER_FAILURE;
+      break;
     case GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED:
       session_rdp->rdp_error_info = ERRINFO_GRAPHICS_SUBSYSTEM_FAILED;
       break;
