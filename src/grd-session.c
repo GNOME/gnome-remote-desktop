@@ -181,7 +181,7 @@ on_screen_cast_stream_proxy_acquired (GObject      *object,
   priv = grd_session_get_instance_private (session);
   klass = GRD_SESSION_GET_CLASS (session);
 
-  stream = grd_stream_new (stream_proxy);
+  stream = grd_stream_new (async_context->stream_id, stream_proxy);
   klass->on_stream_created (session, async_context->stream_id, stream);
 
   grd_dbus_mutter_screen_cast_stream_call_start (stream_proxy,

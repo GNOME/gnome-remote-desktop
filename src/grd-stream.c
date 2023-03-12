@@ -34,6 +34,7 @@ static guint signals[N_SIGNALS];
 
 typedef struct _GrdStreamPrivate
 {
+  uint32_t stream_id;
   uint32_t pipewire_node_id;
 
   GrdDBusMutterScreenCastStream *proxy;
@@ -42,6 +43,14 @@ typedef struct _GrdStreamPrivate
 } GrdStreamPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdStream, grd_stream, G_TYPE_OBJECT)
+
+uint32_t
+grd_stream_get_stream_id (GrdStream *stream)
+{
+  GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
+
+  return priv->stream_id;
+}
 
 uint32_t
 grd_stream_get_pipewire_node_id (GrdStream *stream)
@@ -80,7 +89,8 @@ on_pipewire_stream_added (GrdDBusMutterScreenCastStream *proxy,
 }
 
 GrdStream *
-grd_stream_new (GrdDBusMutterScreenCastStream *proxy)
+grd_stream_new (uint32_t                       stream_id,
+                GrdDBusMutterScreenCastStream *proxy)
 {
   GrdStream *stream;
   GrdStreamPrivate *priv;
@@ -88,6 +98,7 @@ grd_stream_new (GrdDBusMutterScreenCastStream *proxy)
   stream = g_object_new (GRD_TYPE_STREAM, NULL);
   priv = grd_stream_get_instance_private (stream);
 
+  priv->stream_id = stream_id;
   priv->proxy = proxy;
   priv->pipewire_stream_added_id =
     g_signal_connect (proxy, "pipewire-stream-added",
