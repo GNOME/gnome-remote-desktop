@@ -22,8 +22,6 @@
 
 #include "grd-stream.h"
 
-#include "grd-context.h"
-
 enum
 {
   READY,
@@ -36,8 +34,6 @@ static guint signals[N_SIGNALS];
 
 typedef struct _GrdStreamPrivate
 {
-  GrdContext *context;
-
   uint32_t pipewire_node_id;
 
   GrdDBusMutterScreenCastStream *proxy;
@@ -84,8 +80,7 @@ on_pipewire_stream_added (GrdDBusMutterScreenCastStream *proxy,
 }
 
 GrdStream *
-grd_stream_new (GrdContext                    *context,
-                GrdDBusMutterScreenCastStream *proxy)
+grd_stream_new (GrdDBusMutterScreenCastStream *proxy)
 {
   GrdStream *stream;
   GrdStreamPrivate *priv;
@@ -93,7 +88,6 @@ grd_stream_new (GrdContext                    *context,
   stream = g_object_new (GRD_TYPE_STREAM, NULL);
   priv = grd_stream_get_instance_private (stream);
 
-  priv->context = context;
   priv->proxy = proxy;
   priv->pipewire_stream_added_id =
     g_signal_connect (proxy, "pipewire-stream-added",
