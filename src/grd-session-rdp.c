@@ -174,6 +174,8 @@ struct _GrdSessionRdp
 
   GSource *pending_encode_source;
 
+  GHashTable *stream_table;
+
   GMutex close_session_mutex;
   unsigned int close_session_idle_id;
 
@@ -183,6 +185,8 @@ struct _GrdSessionRdp
   GSource *update_monitor_layout_source;
   GMutex monitor_config_mutex;
   GrdRdpMonitorConfig *monitor_config;
+
+  uint32_t next_stream_id;
 };
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION)
@@ -259,6 +263,40 @@ grd_session_rdp_notify_graphics_pipeline_ready (GrdSessionRdp *session_rdp)
   unset_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
 
   g_source_set_ready_time (session_rdp->pending_encode_source, 0);
+}
+
+static uint32_t
+get_next_free_stream_id (GrdSessionRdp *session_rdp)
+{
+  uint32_t stream_id = session_rdp->next_stream_id;
+
+  while (g_hash_table_contains (session_rdp->stream_table,
+                                GUINT_TO_POINTER (stream_id)))
+    ++stream_id;
+
+  session_rdp->next_stream_id = stream_id + 1;
+
+  return stream_id;
+}
+
+uint32_t
+grd_session_rdp_acquire_stream_id (GrdSessionRdp     *session_rdp,
+                                   GrdRdpStreamOwner *stream_owner)
+{
+  uint32_t stream_id;
+
+  stream_id = get_next_free_stream_id (session_rdp);
+  g_hash_table_insert (session_rdp->stream_table,
+                       GUINT_TO_POINTER (stream_id), stream_owner);
+
+  return stream_id;
+}
+
+void
+grd_session_rdp_release_stream_id (GrdSessionRdp *session_rdp,
+                                   uint32_t       stream_id)
+{
+  g_hash_table_remove (session_rdp->stream_table, GUINT_TO_POINTER (stream_id));
 }
 
 static void
@@ -2677,6 +2715,7 @@ grd_session_rdp_dispose (GObject *object)
 
   g_clear_object (&session_rdp->rdp_event_queue);
 
+  g_clear_pointer (&session_rdp->stream_table, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pressed_unicode_keys, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pressed_keys, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pointer_cache, g_hash_table_unref);
@@ -2782,6 +2821,7 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
   session_rdp->pointer_cache = g_hash_table_new (NULL, are_pointer_bitmaps_equal);
   session_rdp->pressed_keys = g_hash_table_new (NULL, NULL);
   session_rdp->pressed_unicode_keys = g_hash_table_new (NULL, NULL);
+  session_rdp->stream_table = g_hash_table_new (NULL, NULL);
 
   g_cond_init (&session_rdp->pending_jobs_cond);
   g_mutex_init (&session_rdp->pending_jobs_mutex);
