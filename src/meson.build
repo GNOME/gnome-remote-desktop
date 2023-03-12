@@ -108,6 +108,8 @@ if have_rdp
     'grd-rdp-gfx-surface.h',
     'grd-rdp-graphics-pipeline.c',
     'grd-rdp-graphics-pipeline.h',
+    'grd-rdp-layout-manager.c',
+    'grd-rdp-layout-manager.h',
     'grd-rdp-monitor-config.c',
     'grd-rdp-monitor-config.h',
     'grd-rdp-network-autodetection.c',
