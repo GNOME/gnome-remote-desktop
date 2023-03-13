@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Pascal Nowack
+ * Copyright (C) 2021-2023 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -22,6 +22,7 @@
 #include "grd-rdp-display-control.h"
 
 #include "grd-rdp-dvc.h"
+#include "grd-rdp-layout-manager.h"
 #include "grd-rdp-monitor-config.h"
 #include "grd-session-rdp.h"
 
@@ -38,6 +39,7 @@ struct _GrdRdpDisplayControl
   uint32_t dvc_subscription_id;
   gboolean subscribed_status;
 
+  GrdRdpLayoutManager *layout_manager;
   GrdSessionRdp *session_rdp;
   GrdRdpDvc *rdp_dvc;
 
@@ -111,6 +113,7 @@ disp_monitor_layout (DispServerContext                        *disp_context,
 {
   GrdRdpDisplayControl *display_control = disp_context->custom;
   GrdSessionRdp *session_rdp = display_control->session_rdp;
+  GrdRdpLayoutManager *layout_manager = display_control->layout_manager;
   GrdRdpMonitorConfig *monitor_config;
   g_autoptr (GError) error = NULL;
 
@@ -147,16 +150,18 @@ disp_monitor_layout (DispServerContext                        *disp_context,
   g_debug ("[RDP.DISP] Received new monitor layout. PDU contains %i monitors",
            monitor_layout_pdu->NumMonitors);
 
-  grd_session_rdp_submit_new_monitor_config (session_rdp, monitor_config);
+  grd_rdp_layout_manager_submit_new_monitor_config (layout_manager,
+                                                    monitor_config);
 
   return CHANNEL_RC_OK;
 }
 
 GrdRdpDisplayControl *
-grd_rdp_display_control_new (GrdSessionRdp *session_rdp,
-                             GrdRdpDvc     *rdp_dvc,
-                             HANDLE         vcm,
-                             uint32_t       max_monitor_count)
+grd_rdp_display_control_new (GrdRdpLayoutManager *layout_manager,
+                             GrdSessionRdp       *session_rdp,
+                             GrdRdpDvc           *rdp_dvc,
+                             HANDLE               vcm,
+                             uint32_t             max_monitor_count)
 {
   GrdRdpDisplayControl *display_control;
   DispServerContext *disp_context;
@@ -167,6 +172,7 @@ grd_rdp_display_control_new (GrdSessionRdp *session_rdp,
     g_error ("[RDP.DISP] Failed to create server context");
 
   display_control->disp_context = disp_context;
+  display_control->layout_manager = layout_manager;
   display_control->session_rdp = session_rdp;
   display_control->rdp_dvc = rdp_dvc;
 

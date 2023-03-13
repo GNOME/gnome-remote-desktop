@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Pascal Nowack
+ * Copyright (C) 2020-2023 Pascal Nowack
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -49,8 +49,6 @@ typedef enum _GrdRdpChannel
   GRD_RDP_CHANNEL_TELEMETRY,
 } GrdRdpChannel;
 
-typedef struct _GrdRdpMonitorConfig GrdRdpMonitorConfig;
-
 GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                     GSocketConnection *connection,
                                     GrdHwAccelNvidia  *hwaccel_nvidia);
@@ -60,9 +58,6 @@ void grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
 
 void grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
                                         GrdRdpChannel  channel);
-
-void grd_session_rdp_submit_new_monitor_config (GrdSessionRdp       *session_rdp,
-                                                GrdRdpMonitorConfig *new_monitor_config);
 
 void grd_session_rdp_notify_graphics_pipeline_reset (GrdSessionRdp *session_rdp);
 
