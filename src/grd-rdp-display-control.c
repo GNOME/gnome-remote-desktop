@@ -22,6 +22,7 @@
 #include "grd-rdp-display-control.h"
 
 #include "grd-rdp-dvc.h"
+#include "grd-rdp-monitor-config.h"
 #include "grd-session-rdp.h"
 
 struct _GrdRdpDisplayControl

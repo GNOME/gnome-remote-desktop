@@ -23,7 +23,6 @@
 #include <gio/gio.h>
 #include <glib-object.h>
 
-#include "grd-rdp-monitor-config.h"
 #include "grd-session.h"
 #include "grd-types.h"
 
@@ -49,6 +48,8 @@ typedef enum _GrdRdpChannel
   GRD_RDP_CHANNEL_DISPLAY_CONTROL,
   GRD_RDP_CHANNEL_TELEMETRY,
 } GrdRdpChannel;
+
+typedef struct _GrdRdpMonitorConfig GrdRdpMonitorConfig;
 
 GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                     GSocketConnection *connection,
