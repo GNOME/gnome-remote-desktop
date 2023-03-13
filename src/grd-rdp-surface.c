@@ -111,6 +111,26 @@ grd_rdp_surface_get_height (GrdRdpSurface *rdp_surface)
   return rdp_surface->height;
 }
 
+gboolean
+grd_rdp_surface_is_rendering_inhibited (GrdRdpSurface *rdp_surface)
+{
+  return rdp_surface->rendering_inhibited;
+}
+
+void
+grd_rdp_surface_inhibit_rendering (GrdRdpSurface *rdp_surface)
+{
+  g_mutex_lock (&rdp_surface->surface_mutex);
+  rdp_surface->rendering_inhibited = TRUE;
+  g_mutex_unlock (&rdp_surface->surface_mutex);
+}
+
+void
+grd_rdp_surface_uninhibit_rendering (GrdRdpSurface *rdp_surface)
+{
+  rdp_surface->rendering_inhibited = FALSE;
+}
+
 void
 grd_rdp_surface_reset (GrdRdpSurface *rdp_surface)
 {

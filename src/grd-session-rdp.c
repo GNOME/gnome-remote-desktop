@@ -370,6 +370,7 @@ take_or_encode_frame (GrdSessionRdp *session_rdp,
   if (is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) &&
       is_rdp_peer_flag_set (session_rdp, RDP_PEER_OUTPUT_ENABLED) &&
       !is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT) &&
+      !grd_rdp_surface_is_rendering_inhibited (rdp_surface) &&
       !rdp_surface->encoding_suspended)
     {
       if (!grd_rdp_damage_detector_submit_new_framebuffer (rdp_surface->detector,
@@ -420,7 +421,8 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
   g_mutex_lock (&rdp_surface->surface_mutex);
   g_assert (!rdp_surface->new_framebuffer);
 
-  if (!rdp_surface->pending_framebuffer)
+  if (grd_rdp_surface_is_rendering_inhibited (rdp_surface) ||
+      !rdp_surface->pending_framebuffer)
     {
       g_mutex_unlock (&rdp_surface->surface_mutex);
       return;

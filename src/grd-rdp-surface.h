@@ -52,6 +52,7 @@ struct _GrdRdpSurface
   GrdRdpGfxSurface *gfx_surface;
   uint32_t refresh_rate;
   gboolean encoding_suspended;
+  gboolean rendering_inhibited;
 };
 
 GrdRdpSurface *grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia,
@@ -62,6 +63,12 @@ void grd_rdp_surface_free (GrdRdpSurface *rdp_surface);
 uint32_t grd_rdp_surface_get_width (GrdRdpSurface *rdp_surface);
 
 uint32_t grd_rdp_surface_get_height (GrdRdpSurface *rdp_surface);
+
+gboolean grd_rdp_surface_is_rendering_inhibited (GrdRdpSurface *rdp_surface);
+
+void grd_rdp_surface_inhibit_rendering (GrdRdpSurface *rdp_surface);
+
+void grd_rdp_surface_uninhibit_rendering (GrdRdpSurface *rdp_surface);
 
 void grd_rdp_surface_reset (GrdRdpSurface *rdp_surface);
 
