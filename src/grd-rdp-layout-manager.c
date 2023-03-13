@@ -26,6 +26,8 @@
 #include "grd-session-rdp.h"
 #include "grd-stream.h"
 
+#define LAYOUT_RECREATION_TIMEOUT_MS 50
+
 typedef enum
 {
   UPDATE_STATE_FATAL_ERROR,
@@ -75,6 +77,9 @@ struct _GrdRdpLayoutManager
   GMutex monitor_config_mutex;
   GrdRdpMonitorConfig *current_monitor_config;
   GrdRdpMonitorConfig *pending_monitor_config;
+
+  unsigned int layout_destruction_id;
+  unsigned int layout_recreation_id;
 };
 
 G_DEFINE_TYPE (GrdRdpLayoutManager, grd_rdp_layout_manager,
@@ -208,6 +213,82 @@ on_pipewire_stream_error (GrdRdpPipeWireStream *pipewire_stream,
   transition_to_state (layout_manager, UPDATE_STATE_FATAL_ERROR);
 }
 
+static gboolean
+is_virtual_stream (GrdRdpLayoutManager  *layout_manager,
+                   GrdRdpPipeWireStream *pipewire_stream)
+{
+  SurfaceContext *surface_context = NULL;
+  GHashTableIter iter;
+
+  g_hash_table_iter_init (&iter, layout_manager->surface_table);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
+    {
+      if (surface_context->pipewire_stream == pipewire_stream)
+        return surface_context->virtual_monitor != NULL;
+    }
+
+  g_assert_not_reached ();
+}
+
+static gboolean
+maybe_invoke_layout_recreation (gpointer user_data)
+{
+  GrdRdpLayoutManager *layout_manager = user_data;
+
+  g_mutex_lock (&layout_manager->monitor_config_mutex);
+  if (!layout_manager->pending_monitor_config)
+    {
+      g_debug ("[RDP] Layout manager: Trying to restore last config.");
+
+      layout_manager->pending_monitor_config =
+        g_steal_pointer (&layout_manager->current_monitor_config);
+
+      g_source_set_ready_time (layout_manager->layout_update_source, 0);
+    }
+  g_mutex_unlock (&layout_manager->monitor_config_mutex);
+
+  layout_manager->layout_recreation_id = 0;
+
+  return G_SOURCE_REMOVE;
+}
+
+static gboolean
+destroy_layout (gpointer user_data)
+{
+  GrdRdpLayoutManager *layout_manager = user_data;
+
+  g_debug ("[RDP] Layout manager: Monitor stream closed. "
+           "Setting timeout for recreation");
+
+  g_hash_table_remove_all (layout_manager->surface_table);
+
+  g_assert (!layout_manager->layout_recreation_id);
+  layout_manager->layout_recreation_id =
+    g_timeout_add (LAYOUT_RECREATION_TIMEOUT_MS, maybe_invoke_layout_recreation,
+                   layout_manager);
+
+  layout_manager->layout_destruction_id = 0;
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+on_pipewire_stream_closed (GrdRdpPipeWireStream *pipewire_stream,
+                           GrdRdpLayoutManager  *layout_manager)
+{
+  if (layout_manager->state == UPDATE_STATE_FATAL_ERROR)
+    return;
+
+  if (is_virtual_stream (layout_manager, pipewire_stream))
+    return;
+
+  if (layout_manager->layout_destruction_id)
+    return;
+
+  layout_manager->layout_destruction_id = g_idle_add (destroy_layout,
+                                                      layout_manager);
+}
+
 static void
 on_stream_ready (GrdStream           *stream,
                  GrdRdpLayoutManager *layout_manager)
@@ -248,6 +329,9 @@ on_stream_ready (GrdStream           *stream,
 
   g_signal_connect (surface_context->pipewire_stream, "error",
                     G_CALLBACK (on_pipewire_stream_error),
+                    layout_manager);
+  g_signal_connect (surface_context->pipewire_stream, "closed",
+                    G_CALLBACK (on_pipewire_stream_closed),
                     layout_manager);
 
   g_hash_table_remove (layout_manager->pending_streams,
@@ -468,6 +552,9 @@ grd_rdp_layout_manager_dispose (GObject *object)
   if (layout_manager->surface_table)
     g_hash_table_remove_all (layout_manager->surface_table);
 
+  g_clear_handle_id (&layout_manager->layout_destruction_id, g_source_remove);
+  g_clear_handle_id (&layout_manager->layout_recreation_id, g_source_remove);
+
   if (layout_manager->surface_disposal_source)
     {
       g_source_destroy (layout_manager->surface_disposal_source);
@@ -523,6 +610,9 @@ maybe_pick_up_queued_monitor_config (GrdRdpLayoutManager *layout_manager)
                    grd_rdp_monitor_config_free);
   layout_manager->current_monitor_config =
     g_steal_pointer (&layout_manager->pending_monitor_config);
+
+  g_assert (!layout_manager->layout_destruction_id);
+  g_clear_handle_id (&layout_manager->layout_recreation_id, g_source_remove);
 
   return TRUE;
 }
