@@ -1578,49 +1578,6 @@ grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
                    graphics_pipeline->pipeline_context);
 }
 
-GrdRdpGraphicsPipeline *
-grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
-                               GrdRdpDvc                  *rdp_dvc,
-                               GMainContext               *pipeline_context,
-                               HANDLE                      vcm,
-                               rdpContext                 *rdp_context,
-                               GrdRdpNetworkAutodetection *network_autodetection,
-                               wStream                    *encode_stream,
-                               RFX_CONTEXT                *rfx_context)
-{
-  GrdRdpGraphicsPipeline *graphics_pipeline;
-  RdpgfxServerContext *rdpgfx_context;
-
-  graphics_pipeline = g_object_new (GRD_TYPE_RDP_GRAPHICS_PIPELINE, NULL);
-  rdpgfx_context = rdpgfx_server_context_new (vcm);
-  if (!rdpgfx_context)
-    g_error ("[RDP.RDPGFX] Failed to create server context");
-
-  graphics_pipeline->rdpgfx_context = rdpgfx_context;
-  graphics_pipeline->session_rdp = session_rdp;
-  graphics_pipeline->rdp_dvc = rdp_dvc;
-  graphics_pipeline->pipeline_context = pipeline_context;
-  graphics_pipeline->network_autodetection = network_autodetection;
-  graphics_pipeline->encode_stream = encode_stream;
-  graphics_pipeline->rfx_context = rfx_context;
-
-  rdpgfx_context->ChannelIdAssigned = rdpgfx_channel_id_assigned;
-  rdpgfx_context->CapsAdvertise = rdpgfx_caps_advertise;
-  rdpgfx_context->CacheImportOffer = rdpgfx_cache_import_offer;
-  rdpgfx_context->FrameAcknowledge = rdpgfx_frame_acknowledge;
-  rdpgfx_context->QoeFrameAcknowledge = rdpgfx_qoe_frame_acknowledge;
-  rdpgfx_context->rdpcontext = rdp_context;
-  rdpgfx_context->custom = graphics_pipeline;
-
-  g_mutex_lock (&graphics_pipeline->gfx_mutex);
-  if (rdp_context->settings->NetworkAutoDetect &&
-      !graphics_pipeline->rtt_pause_source)
-    ensure_rtt_receivement (graphics_pipeline);
-  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
-
-  return graphics_pipeline;
-}
-
 static void
 reset_graphics_pipeline (GrdRdpGraphicsPipeline *graphics_pipeline)
 {
@@ -1660,79 +1617,6 @@ reset_graphics_pipeline (GrdRdpGraphicsPipeline *graphics_pipeline)
   g_assert (g_hash_table_size (graphics_pipeline->serial_surface_table) == 0);
   g_assert (g_queue_get_length (graphics_pipeline->encoded_frames) == 0);
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
-}
-
-static void
-grd_rdp_graphics_pipeline_dispose (GObject *object)
-{
-  GrdRdpGraphicsPipeline *graphics_pipeline = GRD_RDP_GRAPHICS_PIPELINE (object);
-
-  if (graphics_pipeline->channel_opened)
-    {
-      reset_graphics_pipeline (graphics_pipeline);
-      graphics_pipeline->rdpgfx_context->Close (graphics_pipeline->rdpgfx_context);
-      graphics_pipeline->channel_opened = FALSE;
-    }
-  if (graphics_pipeline->subscribed_status)
-    {
-      grd_rdp_dvc_unsubscribe_dvc_creation_status (graphics_pipeline->rdp_dvc,
-                                                   graphics_pipeline->channel_id,
-                                                   graphics_pipeline->dvc_subscription_id);
-      graphics_pipeline->subscribed_status = FALSE;
-    }
-
-  if (graphics_pipeline->protocol_timeout_source)
-    {
-      g_source_destroy (graphics_pipeline->protocol_timeout_source);
-      g_clear_pointer (&graphics_pipeline->protocol_timeout_source, g_source_unref);
-    }
-  if (graphics_pipeline->rtt_pause_source)
-    {
-      g_source_destroy (graphics_pipeline->rtt_pause_source);
-      g_clear_pointer (&graphics_pipeline->rtt_pause_source, g_source_unref);
-    }
-  if (graphics_pipeline->protocol_reset_source)
-    {
-      g_source_destroy (graphics_pipeline->protocol_reset_source);
-      g_clear_pointer (&graphics_pipeline->protocol_reset_source, g_source_unref);
-    }
-
-  if (graphics_pipeline->enc_times)
-    {
-      g_queue_free_full (graphics_pipeline->enc_times, g_free);
-      graphics_pipeline->enc_times = NULL;
-    }
-
-  if (graphics_pipeline->encoded_frames)
-    {
-      g_assert (g_queue_get_length (graphics_pipeline->encoded_frames) == 0);
-      g_clear_pointer (&graphics_pipeline->encoded_frames, g_queue_free);
-    }
-
-  g_assert (g_hash_table_size (graphics_pipeline->surface_hwaccel_table) == 0);
-  g_clear_pointer (&graphics_pipeline->surface_hwaccel_table, g_hash_table_destroy);
-
-  g_clear_pointer (&graphics_pipeline->cap_sets, g_free);
-
-  g_assert (g_hash_table_size (graphics_pipeline->serial_surface_table) == 0);
-  g_clear_pointer (&graphics_pipeline->serial_surface_table, g_hash_table_destroy);
-  g_clear_pointer (&graphics_pipeline->frame_serial_table, g_hash_table_destroy);
-  g_clear_pointer (&graphics_pipeline->codec_context_table, g_hash_table_destroy);
-  g_clear_pointer (&graphics_pipeline->surface_table, g_hash_table_destroy);
-  g_clear_pointer (&graphics_pipeline->rdpgfx_context, rdpgfx_server_context_free);
-
-  G_OBJECT_CLASS (grd_rdp_graphics_pipeline_parent_class)->dispose (object);
-}
-
-static void
-grd_rdp_graphics_pipeline_finalize (GObject *object)
-{
-  GrdRdpGraphicsPipeline *graphics_pipeline = GRD_RDP_GRAPHICS_PIPELINE (object);
-
-  g_mutex_clear (&graphics_pipeline->gfx_mutex);
-  g_mutex_clear (&graphics_pipeline->caps_mutex);
-
-  G_OBJECT_CLASS (grd_rdp_graphics_pipeline_parent_class)->finalize (object);
 }
 
 static gboolean
@@ -1867,11 +1751,134 @@ static GSourceFuncs protocol_reset_source_funcs =
   .dispatch = protocol_reset_source_dispatch,
 };
 
+GrdRdpGraphicsPipeline *
+grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
+                               GrdRdpDvc                  *rdp_dvc,
+                               GMainContext               *pipeline_context,
+                               HANDLE                      vcm,
+                               rdpContext                 *rdp_context,
+                               GrdRdpNetworkAutodetection *network_autodetection,
+                               wStream                    *encode_stream,
+                               RFX_CONTEXT                *rfx_context)
+{
+  GrdRdpGraphicsPipeline *graphics_pipeline;
+  RdpgfxServerContext *rdpgfx_context;
+  GSource *protocol_reset_source;
+
+  graphics_pipeline = g_object_new (GRD_TYPE_RDP_GRAPHICS_PIPELINE, NULL);
+  rdpgfx_context = rdpgfx_server_context_new (vcm);
+  if (!rdpgfx_context)
+    g_error ("[RDP.RDPGFX] Failed to create server context");
+
+  graphics_pipeline->rdpgfx_context = rdpgfx_context;
+  graphics_pipeline->session_rdp = session_rdp;
+  graphics_pipeline->rdp_dvc = rdp_dvc;
+  graphics_pipeline->pipeline_context = pipeline_context;
+  graphics_pipeline->network_autodetection = network_autodetection;
+  graphics_pipeline->encode_stream = encode_stream;
+  graphics_pipeline->rfx_context = rfx_context;
+
+  rdpgfx_context->ChannelIdAssigned = rdpgfx_channel_id_assigned;
+  rdpgfx_context->CapsAdvertise = rdpgfx_caps_advertise;
+  rdpgfx_context->CacheImportOffer = rdpgfx_cache_import_offer;
+  rdpgfx_context->FrameAcknowledge = rdpgfx_frame_acknowledge;
+  rdpgfx_context->QoeFrameAcknowledge = rdpgfx_qoe_frame_acknowledge;
+  rdpgfx_context->rdpcontext = rdp_context;
+  rdpgfx_context->custom = graphics_pipeline;
+
+  protocol_reset_source = g_source_new (&protocol_reset_source_funcs,
+                                        sizeof (GSource));
+  g_source_set_callback (protocol_reset_source, reset_protocol,
+                         graphics_pipeline, NULL);
+  g_source_set_ready_time (protocol_reset_source, -1);
+  g_source_attach (protocol_reset_source, pipeline_context);
+  graphics_pipeline->protocol_reset_source = protocol_reset_source;
+
+  g_mutex_lock (&graphics_pipeline->gfx_mutex);
+  if (rdp_context->settings->NetworkAutoDetect &&
+      !graphics_pipeline->rtt_pause_source)
+    ensure_rtt_receivement (graphics_pipeline);
+  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
+
+  return graphics_pipeline;
+}
+
+static void
+grd_rdp_graphics_pipeline_dispose (GObject *object)
+{
+  GrdRdpGraphicsPipeline *graphics_pipeline = GRD_RDP_GRAPHICS_PIPELINE (object);
+
+  if (graphics_pipeline->channel_opened)
+    {
+      reset_graphics_pipeline (graphics_pipeline);
+      graphics_pipeline->rdpgfx_context->Close (graphics_pipeline->rdpgfx_context);
+      graphics_pipeline->channel_opened = FALSE;
+    }
+  if (graphics_pipeline->subscribed_status)
+    {
+      grd_rdp_dvc_unsubscribe_dvc_creation_status (graphics_pipeline->rdp_dvc,
+                                                   graphics_pipeline->channel_id,
+                                                   graphics_pipeline->dvc_subscription_id);
+      graphics_pipeline->subscribed_status = FALSE;
+    }
+
+  if (graphics_pipeline->protocol_timeout_source)
+    {
+      g_source_destroy (graphics_pipeline->protocol_timeout_source);
+      g_clear_pointer (&graphics_pipeline->protocol_timeout_source, g_source_unref);
+    }
+  if (graphics_pipeline->rtt_pause_source)
+    {
+      g_source_destroy (graphics_pipeline->rtt_pause_source);
+      g_clear_pointer (&graphics_pipeline->rtt_pause_source, g_source_unref);
+    }
+  if (graphics_pipeline->protocol_reset_source)
+    {
+      g_source_destroy (graphics_pipeline->protocol_reset_source);
+      g_clear_pointer (&graphics_pipeline->protocol_reset_source, g_source_unref);
+    }
+
+  if (graphics_pipeline->enc_times)
+    {
+      g_queue_free_full (graphics_pipeline->enc_times, g_free);
+      graphics_pipeline->enc_times = NULL;
+    }
+
+  if (graphics_pipeline->encoded_frames)
+    {
+      g_assert (g_queue_get_length (graphics_pipeline->encoded_frames) == 0);
+      g_clear_pointer (&graphics_pipeline->encoded_frames, g_queue_free);
+    }
+
+  g_assert (g_hash_table_size (graphics_pipeline->surface_hwaccel_table) == 0);
+  g_clear_pointer (&graphics_pipeline->surface_hwaccel_table, g_hash_table_destroy);
+
+  g_clear_pointer (&graphics_pipeline->cap_sets, g_free);
+
+  g_assert (g_hash_table_size (graphics_pipeline->serial_surface_table) == 0);
+  g_clear_pointer (&graphics_pipeline->serial_surface_table, g_hash_table_destroy);
+  g_clear_pointer (&graphics_pipeline->frame_serial_table, g_hash_table_destroy);
+  g_clear_pointer (&graphics_pipeline->codec_context_table, g_hash_table_destroy);
+  g_clear_pointer (&graphics_pipeline->surface_table, g_hash_table_destroy);
+  g_clear_pointer (&graphics_pipeline->rdpgfx_context, rdpgfx_server_context_free);
+
+  G_OBJECT_CLASS (grd_rdp_graphics_pipeline_parent_class)->dispose (object);
+}
+
+static void
+grd_rdp_graphics_pipeline_finalize (GObject *object)
+{
+  GrdRdpGraphicsPipeline *graphics_pipeline = GRD_RDP_GRAPHICS_PIPELINE (object);
+
+  g_mutex_clear (&graphics_pipeline->gfx_mutex);
+  g_mutex_clear (&graphics_pipeline->caps_mutex);
+
+  G_OBJECT_CLASS (grd_rdp_graphics_pipeline_parent_class)->finalize (object);
+}
+
 static void
 grd_rdp_graphics_pipeline_init (GrdRdpGraphicsPipeline *graphics_pipeline)
 {
-  GSource *protocol_reset_source;
-
   graphics_pipeline->surface_table = g_hash_table_new (NULL, NULL);
   graphics_pipeline->codec_context_table = g_hash_table_new (NULL, NULL);
 
@@ -1884,14 +1891,6 @@ grd_rdp_graphics_pipeline_init (GrdRdpGraphicsPipeline *graphics_pipeline)
 
   g_mutex_init (&graphics_pipeline->caps_mutex);
   g_mutex_init (&graphics_pipeline->gfx_mutex);
-
-  protocol_reset_source = g_source_new (&protocol_reset_source_funcs,
-                                        sizeof (GSource));
-  g_source_set_callback (protocol_reset_source, reset_protocol,
-                         graphics_pipeline, NULL);
-  g_source_set_ready_time (protocol_reset_source, -1);
-  g_source_attach (protocol_reset_source, graphics_pipeline->pipeline_context);
-  graphics_pipeline->protocol_reset_source = protocol_reset_source;
 }
 
 static void
