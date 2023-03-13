@@ -66,6 +66,10 @@ uint32_t grd_rdp_surface_get_height (GrdRdpSurface *rdp_surface);
 
 gboolean grd_rdp_surface_is_rendering_inhibited (GrdRdpSurface *rdp_surface);
 
+void grd_rdp_surface_set_size (GrdRdpSurface *rdp_surface,
+                               uint32_t       width,
+                               uint32_t       height);
+
 void grd_rdp_surface_inhibit_rendering (GrdRdpSurface *rdp_surface);
 
 void grd_rdp_surface_uninhibit_rendering (GrdRdpSurface *rdp_surface);
