@@ -1886,7 +1886,9 @@ rdp_peer_post_connect (freerdp_peer *peer)
   rdp_settings->PointerCacheSize = MIN (rdp_settings->PointerCacheSize, 100);
 
   session_rdp->rdp_surface =
-    grd_rdp_surface_new (session_rdp->hwaccel_nvidia,
+    grd_rdp_surface_new (session_rdp,
+                         session_rdp->hwaccel_nvidia,
+                         session_rdp->graphics_context,
                          rdp_settings->SupportGraphicsPipeline ? 60 : 30);
   if (!session_rdp->rdp_surface)
     {

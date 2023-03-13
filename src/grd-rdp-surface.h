@@ -33,6 +33,9 @@ struct _GrdRdpSurface
   uint16_t width;
   uint16_t height;
 
+  GSource *pending_render_source;
+  GrdSessionRdp *session_rdp;
+
   GMutex surface_mutex;
   GrdRdpBuffer *new_framebuffer;
   GrdRdpBuffer *pending_framebuffer;
@@ -55,7 +58,9 @@ struct _GrdRdpSurface
   gboolean rendering_inhibited;
 };
 
-GrdRdpSurface *grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia,
+GrdRdpSurface *grd_rdp_surface_new (GrdSessionRdp    *session_rdp,
+                                    GrdHwAccelNvidia *hwaccel_nvidia,
+                                    GMainContext     *render_context,
                                     uint32_t          refresh_rate);
 
 void grd_rdp_surface_free (GrdRdpSurface *rdp_surface);
@@ -73,6 +78,8 @@ void grd_rdp_surface_set_size (GrdRdpSurface *rdp_surface,
 void grd_rdp_surface_inhibit_rendering (GrdRdpSurface *rdp_surface);
 
 void grd_rdp_surface_uninhibit_rendering (GrdRdpSurface *rdp_surface);
+
+void grd_rdp_surface_trigger_render_source (GrdRdpSurface *rdp_surface);
 
 void grd_rdp_surface_reset (GrdRdpSurface *rdp_surface);
 

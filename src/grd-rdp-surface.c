@@ -24,6 +24,7 @@
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-damage-detector-cuda.h"
 #include "grd-rdp-damage-detector-memcmp.h"
+#include "grd-session-rdp.h"
 
 static void
 destroy_hwaccel_util_objects (GrdRdpSurface *rdp_surface)
@@ -41,13 +42,43 @@ destroy_hwaccel_util_objects (GrdRdpSurface *rdp_surface)
     }
 }
 
+static gboolean
+maybe_render_pending_frame (gpointer user_data)
+{
+  GrdRdpSurface *rdp_surface = user_data;
+
+  grd_session_rdp_maybe_encode_pending_frame (rdp_surface->session_rdp,
+                                              rdp_surface);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean
+pending_render_source_dispatch (GSource     *source,
+                                GSourceFunc  callback,
+                                gpointer     user_data)
+{
+  g_source_set_ready_time (source, -1);
+
+  return callback (user_data);
+}
+
+static GSourceFuncs pending_render_source_funcs =
+{
+  .dispatch = pending_render_source_dispatch,
+};
+
 GrdRdpSurface *
-grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia,
+grd_rdp_surface_new (GrdSessionRdp    *session_rdp,
+                     GrdHwAccelNvidia *hwaccel_nvidia,
+                     GMainContext     *render_context,
                      uint32_t          refresh_rate)
 {
   g_autofree GrdRdpSurface *rdp_surface = NULL;
+  GSource *pending_render_source;
 
   rdp_surface = g_malloc0 (sizeof (GrdRdpSurface));
+  rdp_surface->session_rdp = session_rdp;
   rdp_surface->hwaccel_nvidia = hwaccel_nvidia;
   rdp_surface->refresh_rate = refresh_rate;
 
@@ -80,6 +111,14 @@ grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia,
 
   g_mutex_init (&rdp_surface->surface_mutex);
 
+  pending_render_source = g_source_new (&pending_render_source_funcs,
+                                        sizeof (GSource));
+  g_source_set_callback (pending_render_source, maybe_render_pending_frame,
+                         rdp_surface, NULL);
+  g_source_set_ready_time (pending_render_source, -1);
+  g_source_attach (pending_render_source, render_context);
+  rdp_surface->pending_render_source = pending_render_source;
+
   return g_steal_pointer (&rdp_surface);
 }
 
@@ -90,6 +129,12 @@ grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
 
   g_assert (!rdp_surface->new_framebuffer);
   g_assert (!rdp_surface->pending_framebuffer);
+
+  if (rdp_surface->pending_render_source)
+    {
+      g_source_destroy (rdp_surface->pending_render_source);
+      g_clear_pointer (&rdp_surface->pending_render_source, g_source_unref);
+    }
 
   g_mutex_clear (&rdp_surface->surface_mutex);
 
@@ -138,6 +183,12 @@ void
 grd_rdp_surface_uninhibit_rendering (GrdRdpSurface *rdp_surface)
 {
   rdp_surface->rendering_inhibited = FALSE;
+}
+
+void
+grd_rdp_surface_trigger_render_source (GrdRdpSurface *rdp_surface)
+{
+  g_source_set_ready_time (rdp_surface->pending_render_source, 0);
 }
 
 void
