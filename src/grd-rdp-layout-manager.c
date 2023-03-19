@@ -639,6 +639,32 @@ uninhibit_surface_rendering (GrdRdpLayoutManager *layout_manager)
     grd_rdp_surface_uninhibit_rendering (surface_context->rdp_surface);
 }
 
+static void
+dispose_unneeded_surfaces (GrdRdpLayoutManager *layout_manager)
+{
+  GrdRdpMonitorConfig *monitor_config = layout_manager->current_monitor_config;
+  uint32_t n_target_surfaces = monitor_config->monitor_count;
+  uint32_t n_surfaces_to_dispose;
+  SurfaceContext *surface_context = NULL;
+  GHashTableIter iter;
+
+  if (g_hash_table_size (layout_manager->surface_table) <= n_target_surfaces)
+    return;
+
+  n_surfaces_to_dispose = g_hash_table_size (layout_manager->surface_table) -
+                          n_target_surfaces;
+
+  g_hash_table_iter_init (&iter, layout_manager->surface_table);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context) &&
+         n_surfaces_to_dispose > 0)
+    {
+      g_hash_table_iter_remove (&iter);
+      --n_surfaces_to_dispose;
+    }
+  g_assert (g_hash_table_size (layout_manager->surface_table) <= n_target_surfaces);
+  g_assert (n_surfaces_to_dispose == 0);
+}
+
 static gboolean
 prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
                           GError              **error)
@@ -648,15 +674,6 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
   SurfaceContext *surface_context = NULL;
   GHashTableIter iter;
   uint32_t i = 0;
-
-  /*
-   * Multimonitor support is not implemented yet, no need to handle surface
-   * reduction yet.
-   * Also, we always have only either virtual streams per config or monitor
-   * streams per config, and no occurrences of alternating virtual-monitor
-   * configurations.
-   */
-  g_assert (n_target_surfaces == 1);
 
   while (g_hash_table_size (layout_manager->surface_table) < n_target_surfaces)
     {
@@ -776,12 +793,13 @@ update_monitor_layout (gpointer user_data)
         {
           inhibit_surface_rendering (layout_manager);
 
-          g_assert (layout_manager->current_monitor_config->monitor_count == 1);
           transition_to_state (layout_manager, UPDATE_STATE_PREPARE_SURFACES);
           return update_monitor_layout (layout_manager);
         }
       break;
     case UPDATE_STATE_PREPARE_SURFACES:
+      dispose_unneeded_surfaces (layout_manager);
+
       if (!prepare_surface_contexts (layout_manager, &error))
         {
           g_warning ("[RDP] Layout manager: Failed to prepare surface contexts: %s",
