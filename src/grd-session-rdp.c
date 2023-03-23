@@ -2414,11 +2414,13 @@ grd_session_rdp_stop (GrdSession *session)
 
   g_clear_object (&session_rdp->pipewire_stream);
 
+  g_mutex_lock (&rdp_peer_context->channel_mutex);
   g_clear_object (&rdp_peer_context->clipboard_rdp);
   g_clear_object (&rdp_peer_context->audio_playback);
   g_clear_object (&rdp_peer_context->display_control);
   g_clear_object (&rdp_peer_context->graphics_pipeline);
   g_clear_object (&rdp_peer_context->telemetry);
+  g_mutex_unlock (&rdp_peer_context->channel_mutex);
 
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
   clear_session_sources (session_rdp);
