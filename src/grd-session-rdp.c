@@ -1452,7 +1452,7 @@ rdp_input_mouse_event (rdpInput *rdp_input,
       is_view_only (session_rdp))
     return TRUE;
 
-  if (flags & PTR_FLAGS_MOVE &&
+  if (!(flags & PTR_FLAGS_WHEEL) && !(flags & PTR_FLAGS_HWHEEL) &&
       grd_rdp_layout_manager_transform_position (session_rdp->layout_manager,
                                                  x, y,
                                                  &stream_path,
@@ -1526,8 +1526,7 @@ rdp_input_extended_mouse_event (rdpInput *rdp_input,
       is_view_only (session_rdp))
     return TRUE;
 
-  if (flags & PTR_FLAGS_MOVE)
-    rdp_input_mouse_event (rdp_input, PTR_FLAGS_MOVE, x, y);
+  rdp_input_mouse_event (rdp_input, PTR_FLAGS_MOVE, x, y);
 
   button_state = flags & PTR_XFLAGS_DOWN ? GRD_BUTTON_STATE_PRESSED
                                          : GRD_BUTTON_STATE_RELEASED;
