@@ -278,7 +278,12 @@ grd_rdp_monitor_config_new_from_disp_monitor_layout (const DISPLAY_CONTROL_MONIT
   gboolean found_primary_monitor = FALSE;
   uint32_t i;
 
-  g_assert (monitor_count > 0);
+  if (monitor_count == 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Monitor Layout PDU contains no monitors");
+      return NULL;
+    }
 
   monitor_config = g_malloc0 (sizeof (GrdRdpMonitorConfig));
   monitor_config->is_virtual = TRUE;
