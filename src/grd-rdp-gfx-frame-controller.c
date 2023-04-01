@@ -42,8 +42,6 @@ struct _GrdRdpGfxFrameController
   GrdSessionRdp *session_rdp;
   GrdRdpSurface *rdp_surface;
 
-  GSource *pending_encode_source;
-
   GrdRdpGfxFrameLog *frame_log;
 
   int64_t nw_auto_last_rtt_us;
@@ -200,7 +198,7 @@ grd_rdp_gfx_frame_controller_ack_frame (GrdRdpGfxFrameController *frame_controll
     }
 
   if (encoding_was_suspended && !rdp_surface->encoding_suspended)
-    g_source_set_ready_time (frame_controller->pending_encode_source, 0);
+    grd_rdp_surface_trigger_render_source (rdp_surface);
 }
 
 static void
@@ -268,7 +266,7 @@ grd_rdp_gfx_frame_controller_clear_all_unacked_frames (GrdRdpGfxFrameController 
   rdp_surface->encoding_suspended = FALSE;
 
   if (encoding_was_suspended)
-    g_source_set_ready_time (frame_controller->pending_encode_source, 0);
+    grd_rdp_surface_trigger_render_source (rdp_surface);
 }
 
 void
@@ -278,35 +276,8 @@ grd_rdp_gfx_frame_controller_notify_new_round_trip_time (GrdRdpGfxFrameControlle
   frame_controller->nw_auto_last_rtt_us = round_trip_time_us;
 }
 
-static gboolean
-maybe_encode_pending_frame (gpointer user_data)
-{
-  GrdRdpGfxFrameController *frame_controller = user_data;
-
-  grd_session_rdp_maybe_encode_pending_frame (frame_controller->session_rdp,
-                                              frame_controller->rdp_surface);
-
-  return G_SOURCE_CONTINUE;
-}
-
-static gboolean
-pending_encode_source_dispatch (GSource     *source,
-                                GSourceFunc  callback,
-                                gpointer     user_data)
-{
-  g_source_set_ready_time (source, -1);
-
-  return callback (user_data);
-}
-
-static GSourceFuncs pending_encode_source_funcs =
-{
-  .dispatch = pending_encode_source_dispatch,
-};
-
 GrdRdpGfxFrameController *
 grd_rdp_gfx_frame_controller_new (GrdSessionRdp *session_rdp,
-                                  GMainContext  *pipeline_context,
                                   GrdRdpSurface *rdp_surface)
 {
   GrdRdpGfxFrameController *frame_controller;
@@ -315,13 +286,6 @@ grd_rdp_gfx_frame_controller_new (GrdSessionRdp *session_rdp,
   frame_controller->session_rdp = session_rdp;
   frame_controller->rdp_surface = rdp_surface;
 
-  frame_controller->pending_encode_source =
-    g_source_new (&pending_encode_source_funcs, sizeof (GSource));
-  g_source_set_callback (frame_controller->pending_encode_source,
-                         maybe_encode_pending_frame, frame_controller, NULL);
-  g_source_set_ready_time (frame_controller->pending_encode_source, -1);
-  g_source_attach (frame_controller->pending_encode_source, pipeline_context);
-
   return frame_controller;
 }
 
@@ -329,12 +293,6 @@ static void
 grd_rdp_gfx_frame_controller_dispose (GObject *object)
 {
   GrdRdpGfxFrameController *frame_controller = GRD_RDP_GFX_FRAME_CONTROLLER (object);
-
-  if (frame_controller->pending_encode_source)
-    {
-      g_source_destroy (frame_controller->pending_encode_source);
-      g_clear_pointer (&frame_controller->pending_encode_source, g_source_unref);
-    }
 
   g_clear_object (&frame_controller->frame_log);
 

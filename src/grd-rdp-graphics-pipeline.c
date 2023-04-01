@@ -1096,10 +1096,8 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
 
       rdp_surface->gfx_surface = grd_rdp_gfx_surface_new (graphics_pipeline,
                                                           &surface_descriptor);
-      frame_controller =
-        grd_rdp_gfx_frame_controller_new (session_rdp,
-                                          graphics_pipeline->pipeline_context,
-                                          rdp_surface);
+      frame_controller = grd_rdp_gfx_frame_controller_new (session_rdp,
+                                                           rdp_surface);
       grd_rdp_gfx_surface_attach_frame_controller (rdp_surface->gfx_surface,
                                                    g_steal_pointer (&frame_controller));
       map_surface_to_output (graphics_pipeline, rdp_surface->gfx_surface);

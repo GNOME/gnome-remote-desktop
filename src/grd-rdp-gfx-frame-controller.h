@@ -30,7 +30,6 @@ G_DECLARE_FINAL_TYPE (GrdRdpGfxFrameController, grd_rdp_gfx_frame_controller,
                       GRD, RDP_GFX_FRAME_CONTROLLER, GObject)
 
 GrdRdpGfxFrameController *grd_rdp_gfx_frame_controller_new (GrdSessionRdp *session_rdp,
-                                                            GMainContext  *pipeline_context,
                                                             GrdRdpSurface *rdp_surface);
 
 void grd_rdp_gfx_frame_controller_unack_frame (GrdRdpGfxFrameController *frame_controller,
