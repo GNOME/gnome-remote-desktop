@@ -179,8 +179,8 @@ verify_monitor_config (GrdRdpMonitorConfig  *monitor_config,
 
   /* Calculate the size of the desktop and Graphics Output Buffer ADM element */
   cairo_region_get_extents (region, &rect);
-  monitor_config->desktop_width = rect.width - rect.x;
-  monitor_config->desktop_height = rect.height - rect.y;
+  monitor_config->desktop_width = rect.width;
+  monitor_config->desktop_height = rect.height;
   cairo_region_destroy (region);
 
   return TRUE;
