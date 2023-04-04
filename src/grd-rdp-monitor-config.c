@@ -126,8 +126,8 @@ create_monitor_config_from_client_core_data (rdpSettings  *rdp_settings,
                                      error))
     return NULL;
 
-  monitor_config->gpo_width = monitor_config->virtual_monitors[0].width;
-  monitor_config->gpo_height = monitor_config->virtual_monitors[0].height;
+  monitor_config->desktop_width = monitor_config->virtual_monitors[0].width;
+  monitor_config->desktop_height = monitor_config->virtual_monitors[0].height;
 
   return g_steal_pointer (&monitor_config);
 }
@@ -177,10 +177,10 @@ verify_monitor_config (GrdRdpMonitorConfig  *monitor_config,
       cairo_region_union_rectangle (region, &rect);
     }
 
-  /* Calculate size of Graphics Output Buffer ADM element */
+  /* Calculate the size of the desktop and Graphics Output Buffer ADM element */
   cairo_region_get_extents (region, &rect);
-  monitor_config->gpo_width = rect.width - rect.x;
-  monitor_config->gpo_height = rect.height - rect.y;
+  monitor_config->desktop_width = rect.width - rect.x;
+  monitor_config->desktop_height = rect.height - rect.y;
   cairo_region_destroy (region);
 
   return TRUE;

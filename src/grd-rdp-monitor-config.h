@@ -65,9 +65,9 @@ typedef struct _GrdRdpMonitorConfig
   /* Count of items in connectors or virtual_monitors */
   uint32_t monitor_count;
 
-  /* Size of the Graphics Output Buffer ADM element */
-  uint32_t gpo_width;
-  uint32_t gpo_height;
+  /* Size of the Desktop (and the Graphics Output Buffer ADM element) */
+  uint32_t desktop_width;
+  uint32_t desktop_height;
 } GrdRdpMonitorConfig;
 
 GrdRdpMonitorConfig *grd_rdp_monitor_config_new_from_client_data (rdpSettings  *rdp_settings,
