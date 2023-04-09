@@ -567,6 +567,16 @@ autodetect_network_characteristics_sync (rdpAutoDetect      *rdp_autodetect,
   return TRUE;
 }
 
+static FREERDP_AUTODETECT_STATE
+autodetect_on_connect_time_autodetect_progress (rdpAutoDetect *rdp_autodetect)
+{
+  GrdRdpNetworkAutodetection *network_autodetection = rdp_autodetect->custom;
+  GrdRdpConnectTimeAutodetection *ct_autodetection =
+    grd_rdp_network_autodetection_get_ct_handler (network_autodetection);
+
+  return detect_network_characteristics (ct_autodetection);
+}
+
 GrdRdpConnectTimeAutodetection *
 grd_rdp_connect_time_autodetection_new (GrdRdpNetworkAutodetection *network_autodetection,
                                         rdpAutoDetect              *rdp_autodetect)
@@ -578,6 +588,7 @@ grd_rdp_connect_time_autodetection_new (GrdRdpNetworkAutodetection *network_auto
   ct_autodetection->rdp_autodetect = rdp_autodetect;
 
   rdp_autodetect->NetworkCharacteristicsSync = autodetect_network_characteristics_sync;
+  rdp_autodetect->OnConnectTimeAutoDetectProgress = autodetect_on_connect_time_autodetect_progress;
 
   return ct_autodetection;
 }
@@ -618,7 +629,7 @@ grd_rdp_connect_time_autodetection_finalize (GObject *object)
 static void
 grd_rdp_connect_time_autodetection_init (GrdRdpConnectTimeAutodetection *ct_autodetection)
 {
-  ct_autodetection->state = CT_AUTODETECT_STATE_COMPLETE;
+  ct_autodetection->state = CT_AUTODETECT_STATE_NONE;
 
   ct_autodetection->pending_pings = CT_N_PINGS;
 

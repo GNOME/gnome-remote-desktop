@@ -1435,14 +1435,17 @@ rdp_autodetect_on_connecttime_autodetect_begin (rdpAutoDetect *rdp_autodetect)
   rdpContext *rdp_context = rdp_autodetect->context;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   rdpSettings *rdp_settings = rdp_context->settings;
+  GrdRdpNetworkAutodetection *network_autodetection;
 
   g_assert (freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect));
   g_assert (!rdp_peer_context->network_autodetection);
 
-  rdp_peer_context->network_autodetection =
-    grd_rdp_network_autodetection_new (rdp_context);
+  network_autodetection = grd_rdp_network_autodetection_new (rdp_context);
+  rdp_peer_context->network_autodetection = network_autodetection;
 
-  return FREERDP_AUTODETECT_STATE_COMPLETE;
+  grd_rdp_network_autodetection_start_connect_time_autodetection (network_autodetection);
+
+  return FREERDP_AUTODETECT_STATE_REQUEST;
 }
 
 static uint32_t
