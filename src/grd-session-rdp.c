@@ -1429,6 +1429,22 @@ rdp_suppress_output (rdpContext         *rdp_context,
   return TRUE;
 }
 
+static FREERDP_AUTODETECT_STATE
+rdp_autodetect_on_connecttime_autodetect_begin (rdpAutoDetect *rdp_autodetect)
+{
+  rdpContext *rdp_context = rdp_autodetect->context;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
+  rdpSettings *rdp_settings = rdp_context->settings;
+
+  g_assert (freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect));
+  g_assert (!rdp_peer_context->network_autodetection);
+
+  rdp_peer_context->network_autodetection =
+    grd_rdp_network_autodetection_new (rdp_context);
+
+  return FREERDP_AUTODETECT_STATE_COMPLETE;
+}
+
 static uint32_t
 get_max_monitor_count (GrdSessionRdp *session_rdp)
 {
@@ -1647,12 +1663,6 @@ rdp_peer_post_connect (freerdp_peer *peer)
       freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, FALSE);
     }
 
-  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect))
-    {
-      rdp_peer_context->network_autodetection =
-        grd_rdp_network_autodetection_new (peer->context);
-    }
-
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
 
@@ -1771,6 +1781,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   gboolean use_client_configs;
   freerdp_peer *peer;
   rdpInput *rdp_input;
+  rdpAutoDetect *rdp_autodetect;
   RdpPeerContext *rdp_peer_context;
   rdpSettings *rdp_settings;
   rdpCertificate *rdp_certificate;
@@ -1906,6 +1917,10 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdp_input->ExtendedMouseEvent = rdp_input_extended_mouse_event;
   rdp_input->KeyboardEvent = rdp_input_keyboard_event;
   rdp_input->UnicodeKeyboardEvent = rdp_input_unicode_keyboard_event;
+
+  rdp_autodetect = peer->context->autodetect;
+  rdp_autodetect->OnConnectTimeAutoDetectBegin =
+    rdp_autodetect_on_connecttime_autodetect_begin;
 
   if (!peer->Initialize (peer))
     {
