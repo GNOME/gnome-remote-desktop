@@ -84,6 +84,8 @@ if have_rdp
     'grd-rdp-buffer.h',
     'grd-rdp-buffer-pool.c',
     'grd-rdp-buffer-pool.h',
+    'grd-rdp-connect-time-autodetection.c',
+    'grd-rdp-connect-time-autodetection.h',
     'grd-rdp-cursor-renderer.c',
     'grd-rdp-cursor-renderer.h',
     'grd-rdp-damage-detector.c',

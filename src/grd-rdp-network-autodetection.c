@@ -21,6 +21,7 @@
 
 #include "grd-rdp-network-autodetection.h"
 
+#include "grd-rdp-connect-time-autodetection.h"
 #include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-private.h"
 
@@ -65,6 +66,8 @@ struct _GrdRdpNetworkAutodetection
   GMutex shutdown_mutex;
   gboolean in_shutdown;
 
+  GrdRdpConnectTimeAutodetection *ct_autodetection;
+
   GMutex consumer_mutex;
   GrdRdpNwAutodetectRTTConsumer rtt_consumers;
   GrdRdpNwAutodetectRTTConsumer rtt_high_nec_consumers;
@@ -91,12 +94,84 @@ G_DEFINE_TYPE (GrdRdpNetworkAutodetection,
                grd_rdp_network_autodetection,
                G_TYPE_OBJECT)
 
+GrdRdpConnectTimeAutodetection *
+grd_rdp_network_autodetection_get_ct_handler (GrdRdpNetworkAutodetection *network_autodetection)
+{
+  return network_autodetection->ct_autodetection;
+}
+
+void
+grd_rdp_network_autodetection_start_connect_time_autodetection (GrdRdpNetworkAutodetection *network_autodetection)
+{
+  GrdRdpConnectTimeAutodetection *ct_autodetection =
+    network_autodetection->ct_autodetection;
+
+  grd_rdp_connect_time_autodetection_start_detection (ct_autodetection);
+}
+
 void
 grd_rdp_network_autodetection_invoke_shutdown (GrdRdpNetworkAutodetection *network_autodetection)
 {
+  GrdRdpConnectTimeAutodetection *ct_autodetection =
+    network_autodetection->ct_autodetection;
+
   g_mutex_lock (&network_autodetection->shutdown_mutex);
   network_autodetection->in_shutdown = TRUE;
   g_mutex_unlock (&network_autodetection->shutdown_mutex);
+
+  grd_rdp_connect_time_autodetection_invoke_shutdown (ct_autodetection);
+}
+
+static uint16_t
+get_next_free_sequence_number (GrdRdpNetworkAutodetection *network_autodetection)
+{
+  uint16_t sequence_number = network_autodetection->next_sequence_number;
+
+  while (sequence_number == BW_MEASURE_SEQUENCE_NUMBER ||
+         g_hash_table_contains (network_autodetection->sequences,
+                                GUINT_TO_POINTER (sequence_number)))
+    ++sequence_number;
+
+  network_autodetection->next_sequence_number = sequence_number + 1;
+
+  return sequence_number;
+}
+
+static void
+emit_ping_with_callback (GrdRdpNetworkAutodetection                    *network_autodetection,
+                         GrdRdpNwAutodetectSequenceNumberReadyCallback  callback,
+                         gpointer                                       callback_user_data)
+{
+  rdpAutoDetect *rdp_autodetect = network_autodetection->rdp_autodetect;
+  uint16_t sequence_number;
+  PingInfo *ping_info;
+
+  ping_info = g_new0 (PingInfo, 1);
+
+  g_mutex_lock (&network_autodetection->sequence_mutex);
+  sequence_number = get_next_free_sequence_number (network_autodetection);
+
+  ping_info->sequence_number = sequence_number;
+  ping_info->ping_time_us = g_get_monotonic_time ();
+
+  g_hash_table_add (network_autodetection->sequences,
+                    GUINT_TO_POINTER (sequence_number));
+  g_queue_push_tail (network_autodetection->pings, ping_info);
+  g_mutex_unlock (&network_autodetection->sequence_mutex);
+
+  if (callback)
+    callback (callback_user_data, sequence_number);
+
+  rdp_autodetect->RTTMeasureRequest (rdp_autodetect, RDP_TRANSPORT_TCP,
+                                     sequence_number);
+}
+
+void
+grd_rdp_network_autodetection_emit_ping (GrdRdpNetworkAutodetection                    *network_autodetection,
+                                         GrdRdpNwAutodetectSequenceNumberReadyCallback  callback,
+                                         gpointer                                       callback_user_data)
+{
+  emit_ping_with_callback (network_autodetection, callback, callback_user_data);
 }
 
 static gboolean
@@ -130,41 +205,12 @@ has_active_high_nec_rtt_consumers (GrdRdpNetworkAutodetection *network_autodetec
   return FALSE;
 }
 
-static uint16_t
-get_next_free_sequence_number (GrdRdpNetworkAutodetection *network_autodetection)
-{
-  uint16_t sequence_number = network_autodetection->next_sequence_number;
-
-  while (sequence_number == BW_MEASURE_SEQUENCE_NUMBER ||
-         g_hash_table_contains (network_autodetection->sequences,
-                                GUINT_TO_POINTER (sequence_number)))
-    ++sequence_number;
-
-  network_autodetection->next_sequence_number = sequence_number + 1;
-
-  return sequence_number;
-}
-
 static gboolean
 emit_ping (gpointer user_data)
 {
   GrdRdpNetworkAutodetection *network_autodetection = user_data;
-  rdpAutoDetect *rdp_autodetect = network_autodetection->rdp_autodetect;
-  PingInfo *ping_info;
 
-  ping_info = g_malloc0 (sizeof (PingInfo));
-
-  g_mutex_lock (&network_autodetection->sequence_mutex);
-  ping_info->sequence_number = get_next_free_sequence_number (network_autodetection);
-  ping_info->ping_time_us = g_get_monotonic_time ();
-
-  g_hash_table_add (network_autodetection->sequences,
-                    GUINT_TO_POINTER (ping_info->sequence_number));
-  g_queue_push_tail (network_autodetection->pings, ping_info);
-  g_mutex_unlock (&network_autodetection->sequence_mutex);
-
-  rdp_autodetect->RTTMeasureRequest (rdp_autodetect, RDP_TRANSPORT_TCP,
-                                     ping_info->sequence_number);
+  emit_ping_with_callback (network_autodetection, NULL, NULL);
 
   return G_SOURCE_CONTINUE;
 }
@@ -445,6 +491,8 @@ autodetect_rtt_measure_response (rdpAutoDetect      *rdp_autodetect,
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_autodetect->context;
   GrdRdpNetworkAutodetection *network_autodetection = rdp_autodetect->custom;
+  GrdRdpConnectTimeAutodetection *ct_autodetection =
+    network_autodetection->ct_autodetection;
   g_autofree PingInfo *ping_info = NULL;
   int64_t pong_time_us;
   int64_t ping_time_us;
@@ -486,6 +534,15 @@ autodetect_rtt_measure_response (rdpAutoDetect      *rdp_autodetect,
                                  &base_round_trip_time_us,
                                  &avg_round_trip_time_us);
 
+  if (!grd_rdp_connect_time_autodetection_is_complete (ct_autodetection))
+    {
+      grd_rdp_connect_time_autodetection_notify_rtt_measure_response (ct_autodetection,
+                                                                      sequence_number,
+                                                                      base_round_trip_time_us,
+                                                                      avg_round_trip_time_us);
+      return TRUE;
+    }
+
   g_mutex_lock (&network_autodetection->consumer_mutex);
   has_rtt_consumer_rdpgfx = has_rtt_consumer (
     network_autodetection, GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX);
@@ -510,24 +567,41 @@ autodetect_rtt_measure_response (rdpAutoDetect      *rdp_autodetect,
 }
 
 static BOOL
-autodetect_bw_measure_results (rdpAutoDetect      *rdp_autodetect,
-                               RDP_TRANSPORT_TYPE  transport_type,
-                               uint16_t            sequence_number,
-                               uint16_t            response_type,
-                               uint32_t            time_delta_ms,
-                               uint32_t            byte_count)
+handle_bw_measure_results_connect_time (GrdRdpNetworkAutodetection *network_autodetection,
+                                        RDP_TRANSPORT_TYPE          transport_type,
+                                        uint32_t                    time_delta_ms,
+                                        uint32_t                    byte_count)
 {
-  GrdRdpNetworkAutodetection *network_autodetection = rdp_autodetect->custom;
-  g_autoptr (GMutexLocker) locker = NULL;
-  int64_t base_round_trip_time_us;
-  int64_t avg_round_trip_time_us;
+  GrdRdpConnectTimeAutodetection *ct_autodetection =
+    network_autodetection->ct_autodetection;
   uint64_t bit_count;
   uint32_t bandwidth_kbits;
 
   g_assert (transport_type == RDP_TRANSPORT_TCP);
 
-  if (response_type != RDP_BW_RESULTS_RESPONSE_TYPE_CONTINUOUS)
-    return TRUE;
+  if (!grd_rdp_connect_time_autodetection_notify_bw_measure_results (ct_autodetection,
+                                                                     time_delta_ms,
+                                                                     byte_count))
+    return FALSE;
+
+  bit_count = ((uint64_t) byte_count) * UINT64_C (8);
+  bandwidth_kbits = bit_count / MAX (time_delta_ms, 1);
+
+  network_autodetection->bandwidth_kbits = bandwidth_kbits;
+
+  return TRUE;
+}
+
+static BOOL
+handle_bw_measure_results_continuous (GrdRdpNetworkAutodetection *network_autodetection,
+                                      uint32_t                    time_delta_ms,
+                                      uint32_t                    byte_count)
+{
+  g_autoptr (GMutexLocker) locker = NULL;
+  int64_t base_round_trip_time_us;
+  int64_t avg_round_trip_time_us;
+  uint64_t bit_count;
+  uint32_t bandwidth_kbits;
 
   locker = g_mutex_locker_new (&network_autodetection->bw_measure_mutex);
   if (network_autodetection->bw_measure_state != BW_MEASURE_STATE_PENDING_RESULTS)
@@ -553,6 +627,29 @@ autodetect_bw_measure_results (rdpAutoDetect      *rdp_autodetect,
   return TRUE;
 }
 
+static BOOL
+autodetect_bw_measure_results (rdpAutoDetect      *rdp_autodetect,
+                               RDP_TRANSPORT_TYPE  transport_type,
+                               uint16_t            sequence_number,
+                               uint16_t            response_type,
+                               uint32_t            time_delta_ms,
+                               uint32_t            byte_count)
+{
+  GrdRdpNetworkAutodetection *network_autodetection = rdp_autodetect->custom;
+  GrdRdpConnectTimeAutodetection *ct_autodetection =
+    network_autodetection->ct_autodetection;
+
+  if (!grd_rdp_connect_time_autodetection_is_complete (ct_autodetection))
+    {
+      return handle_bw_measure_results_connect_time (network_autodetection,
+                                                     transport_type,
+                                                     time_delta_ms, byte_count);
+    }
+
+  return handle_bw_measure_results_continuous (network_autodetection,
+                                               time_delta_ms, byte_count);
+}
+
 GrdRdpNetworkAutodetection *
 grd_rdp_network_autodetection_new (rdpContext *rdp_context)
 {
@@ -567,6 +664,10 @@ grd_rdp_network_autodetection_new (rdpContext *rdp_context)
   rdp_autodetect->BandwidthMeasureResults = autodetect_bw_measure_results;
   rdp_autodetect->custom = network_autodetection;
 
+  network_autodetection->ct_autodetection =
+    grd_rdp_connect_time_autodetection_new (network_autodetection,
+                                            rdp_autodetect);
+
   return network_autodetection;
 }
 
@@ -575,6 +676,8 @@ grd_rdp_network_autodetection_dispose (GObject *object)
 {
   GrdRdpNetworkAutodetection *network_autodetection =
     GRD_RDP_NETWORK_AUTODETECTION (object);
+
+  g_clear_object (&network_autodetection->ct_autodetection);
 
   if (network_autodetection->ping_source)
     {

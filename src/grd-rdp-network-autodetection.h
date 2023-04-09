@@ -23,6 +23,8 @@
 #include <freerdp/freerdp.h>
 #include <glib-object.h>
 
+#include "grd-types.h"
+
 #define GRD_TYPE_RDP_NETWORK_AUTODETECTION (grd_rdp_network_autodetection_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpNetworkAutodetection, grd_rdp_network_autodetection,
                       GRD, RDP_NETWORK_AUTODETECTION, GObject)
@@ -39,9 +41,20 @@ typedef enum _GrdRdpNwAutodetectRTTNecessity
   GRD_RDP_NW_AUTODETECT_RTT_NEC_LOW,
 } GrdRdpNwAutodetectRTTNecessity;
 
+typedef void (* GrdRdpNwAutodetectSequenceNumberReadyCallback) (gpointer user_data,
+                                                                uint16_t sequence_number);
+
 GrdRdpNetworkAutodetection *grd_rdp_network_autodetection_new (rdpContext *rdp_context);
 
+GrdRdpConnectTimeAutodetection *grd_rdp_network_autodetection_get_ct_handler (GrdRdpNetworkAutodetection *network_autodetection);
+
+void grd_rdp_network_autodetection_start_connect_time_autodetection (GrdRdpNetworkAutodetection *network_autodetection);
+
 void grd_rdp_network_autodetection_invoke_shutdown (GrdRdpNetworkAutodetection *network_autodetection);
+
+void grd_rdp_network_autodetection_emit_ping (GrdRdpNetworkAutodetection                    *network_autodetection,
+                                              GrdRdpNwAutodetectSequenceNumberReadyCallback  callback,
+                                              gpointer                                       callback_user_data);
 
 void grd_rdp_network_autodetection_ensure_rtt_consumer (GrdRdpNetworkAutodetection    *network_autodetection,
                                                         GrdRdpNwAutodetectRTTConsumer  rtt_consumer);

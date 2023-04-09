@@ -35,6 +35,7 @@ typedef struct _GrdRdpAudioPlayback GrdRdpAudioPlayback;
 typedef struct _GrdRdpAudioVolumeData GrdRdpAudioVolumeData;
 typedef struct _GrdRdpBuffer GrdRdpBuffer;
 typedef struct _GrdRdpBufferPool GrdRdpBufferPool;
+typedef struct _GrdRdpConnectTimeAutodetection GrdRdpConnectTimeAutodetection;
 typedef struct _GrdRdpCursorRenderer GrdRdpCursorRenderer;
 typedef struct _GrdRdpDamageDetector GrdRdpDamageDetector;
 typedef struct _GrdRdpDisplayControl GrdRdpDisplayControl;
