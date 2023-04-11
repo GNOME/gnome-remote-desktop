@@ -1847,6 +1847,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   freerdp_settings_set_bool (rdp_settings, FreeRDP_FastPathOutput, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_NetworkAutoDetect, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_RefreshRect, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_SupportMultitransport, FALSE);
 
   freerdp_settings_set_bool (rdp_settings, FreeRDP_HasExtendedMouseEvent, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_HasHorizontalWheel, TRUE);
