@@ -1451,6 +1451,8 @@ rdp_peer_capabilities (freerdp_peer *peer)
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   rdpSettings *rdp_settings = peer->context->settings;
+  uint16_t supported_color_depths =
+    freerdp_settings_get_uint16 (rdp_settings, FreeRDP_SupportedColorDepths);
   GrdRdpMonitorConfig *monitor_config;
   g_autoptr (GError) error = NULL;
 
@@ -1473,9 +1475,21 @@ rdp_peer_capabilities (freerdp_peer *peer)
   if ((freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) ||
        freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteFxCodec) ||
        freerdp_settings_get_bool (rdp_settings, FreeRDP_NSCodec)) &&
+      !(supported_color_depths & RNS_UD_32BPP_SUPPORT))
+    {
+      g_warning ("[RDP] Protocol violation: Client advertised support for "
+                 "codecs or the Graphics Pipeline, but does not support 32-bit "
+                 "colour depth");
+      return FALSE;
+    }
+  if ((freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) ||
+       freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteFxCodec) ||
+       freerdp_settings_get_bool (rdp_settings, FreeRDP_NSCodec)) &&
       freerdp_settings_get_uint32 (rdp_settings, FreeRDP_ColorDepth) != 32)
     {
-      g_debug ("[RDP] Fixing invalid colour depth set by client");
+      g_debug ("[RDP] Client prefers colour depth %u, invalidated by support "
+               "of codecs or graphics pipeline",
+               freerdp_settings_get_uint32 (rdp_settings, FreeRDP_ColorDepth));
       freerdp_settings_set_uint32 (rdp_settings, FreeRDP_ColorDepth, 32);
     }
 
