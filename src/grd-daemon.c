@@ -73,6 +73,17 @@ is_daemon_ready (GrdDaemon *daemon)
 
 #ifdef HAVE_RDP
 static void
+stop_rdp_server (GrdDaemon *daemon)
+{
+  if (!daemon->rdp_server)
+    return;
+
+  grd_rdp_server_stop (daemon->rdp_server);
+  g_clear_object (&daemon->rdp_server);
+  g_message ("RDP server stopped");
+}
+
+static void
 start_rdp_server (GrdDaemon *daemon)
 {
   GrdSettings *settings = grd_context_get_settings (daemon->context);
@@ -86,29 +97,34 @@ start_rdp_server (GrdDaemon *daemon)
     {
       daemon->rdp_server = grd_rdp_server_new (daemon->context);
       if (!grd_rdp_server_start (daemon->rdp_server, &error))
-        g_warning ("Failed to start RDP server: %s\n", error->message);
+        {
+          g_warning ("Failed to start RDP server: %s\n", error->message);
+          stop_rdp_server (daemon);
+        }
       else
-        g_message ("RDP server started");
+        {
+          g_message ("RDP server started");
+        }
     }
   else
     {
       g_warning ("RDP TLS certificate and key not configured properly");
     }
 }
-
-static void
-stop_rdp_server (GrdDaemon *daemon)
-{
-  if (!daemon->rdp_server)
-    return;
-
-  grd_rdp_server_stop (daemon->rdp_server);
-  g_clear_object (&daemon->rdp_server);
-  g_message ("RDP server stopped");
-}
 #endif /* HAVE_RDP */
 
 #ifdef HAVE_VNC
+static void
+stop_vnc_server (GrdDaemon *daemon)
+{
+  if (!daemon->vnc_server)
+    return;
+
+  grd_vnc_server_stop (daemon->vnc_server);
+  g_clear_object (&daemon->vnc_server);
+  g_message ("VNC server stopped");
+}
+
 static void
 start_vnc_server (GrdDaemon *daemon)
 {
@@ -119,20 +135,14 @@ start_vnc_server (GrdDaemon *daemon)
 
   daemon->vnc_server = grd_vnc_server_new (daemon->context);
   if (!grd_vnc_server_start (daemon->vnc_server, &error))
-    g_warning ("Failed to initialize VNC server: %s\n", error->message);
+    {
+      g_warning ("Failed to initialize VNC server: %s\n", error->message);
+      stop_vnc_server (daemon);
+    }
   else
-    g_message ("VNC server started");
-}
-
-static void
-stop_vnc_server (GrdDaemon *daemon)
-{
-  if (!daemon->vnc_server)
-    return;
-
-  grd_vnc_server_stop (daemon->vnc_server);
-  g_clear_object (&daemon->vnc_server);
-  g_message ("VNC server stopped");
+    {
+      g_message ("VNC server started");
+    }
 }
 #endif /* HAVE_VNC */
 
