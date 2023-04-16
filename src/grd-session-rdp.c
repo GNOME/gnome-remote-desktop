@@ -1793,12 +1793,6 @@ rdp_peer_capabilities (freerdp_peer *peer)
       return FALSE;
     }
 
-  if (rdp_settings->PointerCacheSize <= 0)
-    {
-      g_warning ("Client doesn't have a pointer cache, closing connection");
-      return FALSE;
-    }
-
   if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND)
     {
       monitor_config =
@@ -1845,6 +1839,12 @@ rdp_peer_post_connect (freerdp_peer *peer)
   SessionMetrics *session_metrics = &session_rdp->session_metrics;
   rdpSettings *rdp_settings = peer->settings;
 
+  if (rdp_settings->PointerCacheSize <= 0)
+    {
+      g_warning ("Client doesn't have a pointer cache, closing connection");
+      return FALSE;
+    }
+
   g_debug ("New RDP client: [OS major type, OS minor type]: [%s, %s]",
            freerdp_peer_os_major_type_string (peer),
            freerdp_peer_os_minor_type_string (peer));
@@ -1865,8 +1865,6 @@ rdp_peer_post_connect (freerdp_peer *peer)
                  "result in heavy performance and heavy bandwidth usage "
                  "regressions. The legacy path is deprecated!");
     }
-
-  rdp_settings->PointerCacheSize = MIN (rdp_settings->PointerCacheSize, 100);
 
   if (rdp_settings->SupportGraphicsPipeline &&
       !rdp_settings->NetworkAutoDetect)
@@ -2108,6 +2106,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdp_settings->HasExtendedMouseEvent = TRUE;
   rdp_settings->HasHorizontalWheel = TRUE;
   rdp_settings->NetworkAutoDetect = TRUE;
+  rdp_settings->PointerCacheSize = 100;
   rdp_settings->RefreshRect = TRUE;
   rdp_settings->RemoteConsoleAudio = TRUE;
   rdp_settings->RemoteFxCodec = TRUE;
