@@ -24,9 +24,7 @@
 
 #include "grd-daemon-user.h"
 
-#include "grd-daemon.h"
 #include "grd-private.h"
-#include "grd-types.h"
 
 struct _GrdDaemonUser
 {
