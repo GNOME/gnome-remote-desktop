@@ -127,6 +127,13 @@ get_next_free_sequence_number (GrdRdpNetworkAutodetection *network_autodetection
 {
   uint16_t sequence_number = network_autodetection->next_sequence_number;
 
+  if (g_hash_table_size (network_autodetection->sequences) > UINT16_MAX >> 2)
+    {
+      g_warning ("[RDP] Network Autodetect: Protocol violation: Client leaves "
+                 "requests unanswered");
+      g_hash_table_remove_all (network_autodetection->sequences);
+    }
+
   while (sequence_number == BW_MEASURE_SEQUENCE_NUMBER ||
          g_hash_table_contains (network_autodetection->sequences,
                                 GUINT_TO_POINTER (sequence_number)))
