@@ -1586,6 +1586,12 @@ rdp_peer_post_connect (freerdp_peer *peer)
            freerdp_peer_os_major_type_string (peer),
            freerdp_peer_os_minor_type_string (peer));
 
+  g_debug ("[RDP] Virtual Channels: compression flags: %u, "
+           "compression level: %u, chunk size: %u",
+           freerdp_settings_get_uint32 (rdp_settings, FreeRDP_VCFlags),
+           freerdp_settings_get_uint32 (rdp_settings, FreeRDP_CompressionLevel),
+           freerdp_settings_get_uint32 (rdp_settings, FreeRDP_VCChunkSize));
+
   if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) &&
       !freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteFxCodec) &&
       freerdp_settings_get_bool (rdp_settings, FreeRDP_NSCodec) &&
@@ -1862,6 +1868,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   freerdp_settings_set_bool (rdp_settings, FreeRDP_NetworkAutoDetect, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_RefreshRect, FALSE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_SupportMultitransport, FALSE);
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_VCFlags, VCCAPS_COMPR_SC);
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_VCChunkSize, 16256);
 
   freerdp_settings_set_bool (rdp_settings, FreeRDP_HasExtendedMouseEvent, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_HasHorizontalWheel, TRUE);
