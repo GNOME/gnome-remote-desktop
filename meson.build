@@ -64,6 +64,7 @@ endif
 
 prefix = get_option('prefix')
 libexecdir = join_paths(prefix, get_option('libexecdir'))
+bindir = join_paths(prefix, get_option('bindir'))
 datadir = join_paths(prefix, get_option('datadir'))
 mandir = join_paths(prefix, get_option('mandir'))
 schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
@@ -89,6 +90,7 @@ cdata.set('HAVE_VNC', have_vnc)
 
 cdata.set_quoted('GRD_DATA_DIR', grd_datadir)
 cdata.set_quoted('GRD_CONF', grd_conf)
+cdata.set_quoted('GRD_USERNAME', grd_username)
 
 configure_file(input: 'config.h.meson',
                output: 'config.h',
@@ -143,6 +145,7 @@ output = [
   '',
   '    Prefix....................... ' + prefix,
   '    libexecdir................... ' + libexecdir,
+  '    bindir....................... ' + bindir,
   '    datadir...................... ' + datadir,
   '    desktopdir................... ' + desktopdir,
   '    systemd user unit dir........ ' + userunitdir,

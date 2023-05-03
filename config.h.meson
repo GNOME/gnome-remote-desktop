@@ -17,3 +17,6 @@
 
 /* Path of the system daemon settings */
 #mesondefine GRD_CONF
+
+/* Username of system grd daemon */
+#mesondefine GRD_USERNAME

@@ -230,6 +230,8 @@ ctl_sources = ([
   'grd-debug.h',
   'grd-settings.c',
   'grd-settings.h',
+  'grd-settings-system.c',
+  'grd-settings-system.h',
   'grd-settings-user.c',
   'grd-settings-user.h',
   credentials_sources,

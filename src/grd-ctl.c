@@ -22,11 +22,16 @@
 
 #include <gio/gio.h>
 #include <glib/gi18n.h>
+#include <pwd.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <sysexits.h>
 
 #include "grd-enums.h"
+#include "grd-settings-system.h"
 #include "grd-settings-user.h"
+
+#define GRD_SYSTEMD_SERVICE "gnome-remote-desktop.service"
 
 typedef struct _SubCommand
 {
@@ -64,10 +69,7 @@ process_options (GrdSettings       *settings,
   int i;
 
   if (argc <= 0)
-    {
-      print_usage ();
-      return EXIT_FAILURE;
-    }
+    return EX_USAGE;
 
   for (i = 0; i < n_subcommands; i++)
     {
@@ -80,7 +82,7 @@ process_options (GrdSettings       *settings,
         {
           g_printerr ("Wrong number of arguments for subcommand '%s'\n",
                       argv[0]);
-          return EXIT_FAILURE;
+          return EX_USAGE;
         }
 
       if (!subcommands[i].process (settings,
@@ -90,12 +92,127 @@ process_options (GrdSettings       *settings,
           return EXIT_FAILURE;
         }
 
-      g_settings_sync ();
+      if (!GRD_IS_SETTINGS_SYSTEM (settings))
+        g_settings_sync ();
+
       return EXIT_SUCCESS;
     }
 
   g_printerr ("Unknown subcommand '%s'\n", argv[0]);
-  return EXIT_FAILURE;
+  return EX_USAGE;
+}
+
+gboolean
+start_systemd_unit (GBusType     bus_type,
+                    const char  *unit,
+                    GError     **error)
+{
+  g_autoptr (GDBusConnection) connection = NULL;
+  g_autoptr (GVariant) reply = NULL;
+  const char *mode = "replace";
+
+  connection = g_bus_get_sync (bus_type, NULL, error);
+  if (!connection)
+    return FALSE;
+
+  reply = g_dbus_connection_call_sync (connection,
+                                       "org.freedesktop.systemd1",
+                                       "/org/freedesktop/systemd1",
+                                       "org.freedesktop.systemd1.Manager",
+                                       "StartUnit",
+                                       g_variant_new ("(ss)",
+                                                      unit, mode),
+                                       NULL,
+                                       G_DBUS_CALL_FLAGS_NO_AUTO_START,
+                                       -1, NULL, error);
+
+  return reply != NULL;
+}
+
+gboolean
+stop_systemd_unit (GBusType     bus_type,
+                   const char  *unit,
+                   GError     **error)
+{
+  g_autoptr (GDBusConnection) connection = NULL;
+  g_autoptr (GVariant) reply = NULL;
+  const char *mode = "replace";
+
+  connection = g_bus_get_sync (bus_type, NULL, error);
+  if (!connection)
+    return FALSE;
+
+  reply = g_dbus_connection_call_sync (connection,
+                                       "org.freedesktop.systemd1",
+                                       "/org/freedesktop/systemd1",
+                                       "org.freedesktop.systemd1.Manager",
+                                       "StopUnit",
+                                       g_variant_new ("(ss)",
+                                                      unit, mode),
+                                       NULL,
+                                       G_DBUS_CALL_FLAGS_NO_AUTO_START,
+                                       -1, NULL, error);
+
+  return reply != NULL;
+}
+
+static gboolean
+systemd_unit_is_active (GBusType     bus_type,
+                        const char  *unit,
+                        GError     **error)
+{
+  g_autoptr (GDBusProxy) proxy = NULL;
+  g_autoptr (GVariant) result = NULL;
+  g_autofree char *object_path = NULL;
+  g_autofree char *active_state = NULL;
+  g_autoptr (GDBusProxy) unit_proxy = NULL;
+
+  proxy = g_dbus_proxy_new_for_bus_sync (bus_type,
+                                         G_DBUS_PROXY_FLAGS_NONE,
+                                         NULL,
+                                         "org.freedesktop.systemd1",
+                                         "/org/freedesktop/systemd1",
+                                         "org.freedesktop.systemd1.Manager",
+                                         NULL,
+                                         error);
+  if (!proxy)
+    return FALSE;
+
+  result = g_dbus_proxy_call_sync (proxy,
+                                   "GetUnit",
+                                   g_variant_new ("(s)", unit),
+                                   G_DBUS_CALL_FLAGS_NONE,
+                                   -1,
+                                   NULL,
+                                   error);
+  if (!result)
+    return FALSE;
+
+  g_variant_get (result, "(o)", &object_path);
+  g_clear_pointer (&result, g_variant_unref);
+
+  unit_proxy = g_dbus_proxy_new_for_bus_sync (bus_type,
+                                              G_DBUS_PROXY_FLAGS_NONE,
+                                              NULL,
+                                              "org.freedesktop.systemd1",
+                                              object_path,
+                                              "org.freedesktop.systemd1.Unit",
+                                              NULL,
+                                              error);
+  if (!unit_proxy)
+    return FALSE;
+
+  result = g_dbus_proxy_get_cached_property (unit_proxy, "ActiveState");
+  if (!result)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_PROPERTY,
+                   "Error getting ActiveState property");
+      return FALSE;
+    }
+
+  g_variant_get (result, "s", &active_state);
+
+  return g_str_equal (active_state, "active");
 }
 
 #ifdef HAVE_RDP
@@ -118,6 +235,13 @@ rdp_enable (GrdSettings  *settings,
             char        **argv,
             GError      **error)
 {
+  if (GRD_IS_SETTINGS_SYSTEM (settings))
+    {
+      return start_systemd_unit (G_BUS_TYPE_SYSTEM,
+                                 GRD_SYSTEMD_SERVICE,
+                                 error);
+    }
+
   g_object_set (G_OBJECT (settings), "rdp-enabled", TRUE, NULL);
   return TRUE;
 }
@@ -128,6 +252,13 @@ rdp_disable (GrdSettings  *settings,
              char        **argv,
              GError      **error)
 {
+  if (GRD_IS_SETTINGS_SYSTEM (settings))
+    {
+      return stop_systemd_unit (G_BUS_TYPE_SYSTEM,
+                                GRD_SYSTEMD_SERVICE,
+                                error);
+    }
+
   g_object_set (G_OBJECT (settings), "rdp-enabled", FALSE, NULL);
   return TRUE;
 }
@@ -471,6 +602,7 @@ print_help (void)
       "\n"
       "Options:\n"
       "  --headless                                 - Use headless credentials storage\n"
+      "  --system                                   - Configure system daemon\n"
       "  --help                                     - Print this help text\n");
 
   print_usage ();
@@ -501,6 +633,7 @@ create_settings (GrdRuntimeMode runtime_mode)
     case GRD_RUNTIME_MODE_HEADLESS:
       return GRD_SETTINGS (grd_settings_user_new (runtime_mode));
     case GRD_RUNTIME_MODE_SYSTEM:
+      return GRD_SETTINGS (grd_settings_system_new ());
     case GRD_RUNTIME_MODE_HANDOVER:
       g_assert_not_reached ();
     }
@@ -554,13 +687,17 @@ print_rdp_status (GrdSettings *settings,
                 NULL);
 
   printf ("RDP:\n");
-  printf ("\tStatus: %s\n", status_to_string (enabled, use_colors));
+  if (!GRD_IS_SETTINGS_SYSTEM (settings))
+    printf ("\tStatus: %s\n", status_to_string (enabled, use_colors));
 
   printf ("\tPort: %u\n", port);
   printf ("\tTLS certificate: %s\n", tls_cert);
   printf ("\tTLS key: %s\n", tls_key);
-  printf ("\tView-only: %s\n", view_only ? "yes" : "no");
-  printf ("\tNegotiate port: %s\n", negotiate_port ? "yes" : "no");
+  if (!GRD_IS_SETTINGS_SYSTEM (settings))
+    {
+      printf ("\tView-only: %s\n", view_only ? "yes" : "no");
+      printf ("\tNegotiate port: %s\n", negotiate_port ? "yes" : "no");
+    }
 
   grd_settings_get_rdp_credentials (settings,
                                     &username, &password,
@@ -637,6 +774,50 @@ print_vnc_status (GrdSettings *settings,
 }
 #endif /* HAVE_VNC */
 
+static const char *
+unit_status_to_string (gboolean running,
+                       gboolean use_colors)
+{
+  if (use_colors)
+    {
+      if (running)
+        return "\x1b[1mactive\033[m";
+      else
+        return "\x1b[1minactive\033[m";
+    }
+  else
+    {
+      if (running)
+        return "active";
+      else
+        return "inactive";
+    }
+}
+
+static void
+print_service_status (GrdSettings *settings,
+                      gboolean    use_colors)
+{
+  GBusType bus_type;
+  gboolean service_running;
+  g_autoptr (GError) error = NULL;
+
+  if (GRD_IS_SETTINGS_SYSTEM (settings))
+      bus_type = G_BUS_TYPE_SYSTEM;
+  else
+      bus_type = G_BUS_TYPE_SESSION;
+
+  service_running = systemd_unit_is_active (bus_type,
+                                            GRD_SYSTEMD_SERVICE,
+                                            &error);
+  if (error)
+    return;
+
+  printf ("Overall:\n");
+  printf ("\tUnit status: %s\n", unit_status_to_string (service_running,
+                                                        use_colors));
+}
+
 static int
 print_status (GrdSettings  *settings,
               int           argc,
@@ -647,8 +828,7 @@ print_status (GrdSettings  *settings,
 
   if (argc > 1)
     {
-      print_usage ();
-      return EXIT_FAILURE;
+      return EX_USAGE;
     }
   else if (argc == 1)
     {
@@ -658,18 +838,20 @@ print_status (GrdSettings  *settings,
         }
       else
         {
-          print_usage ();
-          return EXIT_FAILURE;
+          return EX_USAGE;
         }
     }
 
   use_colors = isatty (fileno (stdout));
 
+  print_service_status (settings, use_colors);
+
 #ifdef HAVE_RDP
   print_rdp_status (settings, use_colors, show_credentials);
 #endif /* HAVE_RDP */
 #ifdef HAVE_VNC
-  print_vnc_status (settings, use_colors, show_credentials);
+  if (!GRD_IS_SETTINGS_SYSTEM (settings))
+    print_vnc_status (settings, use_colors, show_credentials);
 #endif /* HAVE_VNC */
 
   return EXIT_SUCCESS;
@@ -683,25 +865,31 @@ main (int   argc,
   GrdRuntimeMode runtime_mode;
   int i;
   int arg_shift;
+  int exit_code = EX_USAGE;
+  gboolean is_switching_rdp = FALSE;
+  struct passwd *pw;
 
   g_set_prgname (argv[0]);
   g_log_set_handler (NULL, G_LOG_LEVEL_WARNING, log_handler, NULL);
 
   if (argc < 2)
-    {
-      print_usage ();
-      return EXIT_FAILURE;
-    }
+    goto done;
 
   if (argc == 2 && strcmp (argv[1], "--help") == 0)
     {
       print_help ();
-      return EXIT_SUCCESS;
+      exit_code = EXIT_SUCCESS;
+      goto done;
     }
 
   if (argc > 2 && strcmp (argv[1], "--headless") == 0)
     {
       runtime_mode = GRD_RUNTIME_MODE_HEADLESS;
+      i = 2;
+    }
+  else if (argc > 1 && strcmp (argv[1], "--system") == 0)
+    {
+      runtime_mode = GRD_RUNTIME_MODE_SYSTEM;
       i = 2;
     }
   else
@@ -712,34 +900,102 @@ main (int   argc,
 
   arg_shift = i + 1;
 
+  if (argc > i + 1)
+    {
+      is_switching_rdp = (strcmp (argv[i], "rdp") == 0 &&
+                          strcmp (argv[i + 1], "enable") == 0) ||
+                         (strcmp (argv[i], "rdp") == 0 &&
+                          strcmp (argv[i + 1], "disable") == 0);
+    }
+
+  if (runtime_mode == GRD_RUNTIME_MODE_SYSTEM && !is_switching_rdp)
+    {
+      g_autoptr (GStrvBuilder) builder = NULL;
+      g_auto (GStrv) new_argv = NULL;
+      g_autoptr (GError) error = NULL;
+      int wait_status;
+      int j;
+
+      builder = g_strv_builder_new ();
+
+      g_strv_builder_add (builder, "pkexec");
+      g_strv_builder_add (builder, "--user");
+      g_strv_builder_add (builder, GRD_USERNAME);
+      g_strv_builder_add (builder, argv[0]);
+
+      for (j = 2; j < argc; j++)
+        g_strv_builder_add (builder, argv[j]);
+
+      new_argv = g_strv_builder_end (builder);
+
+      g_spawn_sync (NULL,
+                    new_argv,
+                    NULL,
+                    G_SPAWN_SEARCH_PATH
+                    | G_SPAWN_CHILD_INHERITS_STDOUT,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &wait_status,
+                    &error);
+      if (error)
+        {
+          fprintf (stderr, "Failed to start the configuration of the system daemon: %s\n",
+                   error->message);
+
+          if (WIFEXITED (wait_status))
+            exit_code = WEXITSTATUS (wait_status);
+          else
+            exit_code = EX_SOFTWARE;
+        }
+      else
+        {
+          exit_code = EXIT_SUCCESS;
+        }
+
+      goto done;
+    }
+
+  pw = getpwnam (GRD_USERNAME);
+  if (geteuid () == pw->pw_uid)
+    runtime_mode = GRD_RUNTIME_MODE_SYSTEM;
+
   settings = create_settings (runtime_mode);
   if (!settings)
     {
       fprintf (stderr, "Failed to initialize settings.\n");
-      return EXIT_FAILURE;
+      exit_code = EXIT_FAILURE;
+      goto done;
     }
 
 #ifdef HAVE_RDP
   if (strcmp (argv[i], "rdp") == 0)
     {
-      return process_rdp_options (settings,
-                                  argc - arg_shift, argv + arg_shift);
+      exit_code = process_rdp_options (settings,
+                                       argc - arg_shift, argv + arg_shift);
+      goto done;
     }
 #endif
 #ifdef HAVE_VNC
   if (strcmp (argv[i], "vnc") == 0)
     {
-      return process_vnc_options (settings,
-                                  argc - arg_shift, argv + arg_shift);
+      exit_code = process_vnc_options (settings,
+                                       argc - arg_shift, argv + arg_shift);
+      goto done;
     }
 #endif
 
   if (strcmp (argv[i], "status") == 0)
     {
-      return print_status (settings,
-                           argc - arg_shift, argv + arg_shift);
+      exit_code = print_status (settings,
+                                argc - arg_shift, argv + arg_shift);
+      goto done;
     }
 
-  print_usage ();
-  return EXIT_FAILURE;
+done:
+  if (exit_code == EX_USAGE)
+    print_usage ();
+
+  return exit_code;
 }

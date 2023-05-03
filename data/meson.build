@@ -60,3 +60,10 @@ if get_option('systemd')
                    install_dir: userunitdir)
   endif
 endif
+
+configure_file(input: 'org.gnome.remotedesktop.configure-system-daemon.policy.in',
+               output: 'org.gnome.remotedesktop.configure-system-daemon.policy',
+               configuration: {
+                 'bindir': bindir,
+               },
+               install_dir: join_paths(datadir, 'polkit-1', 'actions'))
