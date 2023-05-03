@@ -22,7 +22,9 @@
 
 #include <gio/gio.h>
 #include <glib/gi18n.h>
+#include <pwd.h>
 #include <stdio.h>
+#include <sysexits.h>
 
 #include "grd-credentials-file.h"
 #include "grd-credentials-libsecret.h"
@@ -30,11 +32,13 @@
 
 #define GRD_RDP_SETTINGS_SCHEMA "org.gnome.desktop.remote-desktop.rdp"
 #define GRD_VNC_SETTINGS_SCHEMA "org.gnome.desktop.remote-desktop.vnc"
+#define GRD_SYSTEMD_SERVICE "gnome-remote-desktop.service"
 
 typedef enum _CredentialsType
 {
   CREDENTIALS_TYPE_HEADLESS,
   CREDENTIALS_TYPE_SCREEN_SHARE,
+  CREDENTIALS_TYPE_SYSTEM,
 } CredentialsType;
 
 typedef struct _SubCommand
@@ -64,10 +68,7 @@ process_options (CredentialsType    credentials_type,
   int i;
 
   if (argc <= 0)
-    {
-      print_usage ();
-      return EXIT_FAILURE;
-    }
+    return EX_USAGE;
 
   for (i = 0; i < n_subcommands; i++)
     {
@@ -80,7 +81,7 @@ process_options (CredentialsType    credentials_type,
         {
           g_printerr ("Wrong number of arguments for subcommand '%s'\n",
                       argv[0]);
-          return EXIT_FAILURE;
+          return EX_USAGE;
         }
 
       if (!subcommands[i].process (credentials_type,
@@ -90,12 +91,139 @@ process_options (CredentialsType    credentials_type,
           return EXIT_FAILURE;
         }
 
-      g_settings_sync ();
+      if (credentials_type != CREDENTIALS_TYPE_SYSTEM)
+        g_settings_sync ();
+
       return EXIT_SUCCESS;
     }
 
+  if (credentials_type == CREDENTIALS_TYPE_SYSTEM)
+    return EXIT_SUCCESS;
+
   g_printerr ("Unknown subcommand '%s'\n", argv[0]);
-  return EXIT_FAILURE;
+  return EX_USAGE;
+}
+
+gboolean
+start_systemd_unit (GBusType     bus_type,
+                    const char  *unit,
+                    GError     **error)
+{
+  g_autoptr (GDBusConnection) connection = NULL;
+  g_autoptr (GVariant) reply = NULL;
+  const char *mode = "replace";
+
+  connection = g_bus_get_sync (bus_type, NULL, error);
+  if (!connection)
+    return FALSE;
+
+  reply = g_dbus_connection_call_sync (connection,
+                                       "org.freedesktop.systemd1",
+                                       "/org/freedesktop/systemd1",
+                                       "org.freedesktop.systemd1.Manager",
+                                       "StartUnit",
+                                       g_variant_new ("(ss)",
+                                                      unit, mode),
+                                       NULL,
+                                       G_DBUS_CALL_FLAGS_NO_AUTO_START,
+                                       -1, NULL, error);
+
+  return reply != NULL;
+}
+
+gboolean
+stop_systemd_unit (GBusType     bus_type,
+                    const char  *unit,
+                    GError     **error)
+{
+  g_autoptr (GDBusConnection) connection = NULL;
+  g_autoptr (GVariant) reply = NULL;
+  const char *mode = "replace";
+
+  connection = g_bus_get_sync (bus_type, NULL, error);
+  if (!connection)
+    return FALSE;
+
+  reply = g_dbus_connection_call_sync (connection,
+                                       "org.freedesktop.systemd1",
+                                       "/org/freedesktop/systemd1",
+                                       "org.freedesktop.systemd1.Manager",
+                                       "StopUnit",
+                                       g_variant_new ("(ss)",
+                                                      unit, mode),
+                                       NULL,
+                                       G_DBUS_CALL_FLAGS_NO_AUTO_START,
+                                       -1, NULL, error);
+
+  return reply != NULL;
+}
+
+static gboolean
+systemd_unit_is_active (GBusType     bus_type,
+                        const char  *unit,
+                        GError     **error)
+{
+  g_autoptr (GDBusProxy) proxy = NULL;
+  g_autoptr (GVariant) result = NULL;
+  g_autofree char *object_path = NULL;
+  g_autofree char *active_state = NULL;
+  g_autoptr (GDBusProxy) unit_proxy = NULL;
+
+  proxy = g_dbus_proxy_new_for_bus_sync (bus_type,
+                                         G_DBUS_PROXY_FLAGS_NONE,
+                                         NULL,
+                                         "org.freedesktop.systemd1",
+                                         "/org/freedesktop/systemd1",
+                                         "org.freedesktop.systemd1.Manager",
+                                         NULL,
+                                         error);
+  if (!proxy)
+    return FALSE;
+
+  result = g_dbus_proxy_call_sync (proxy,
+                                   "GetUnit",
+                                   g_variant_new ("(s)", unit),
+                                   G_DBUS_CALL_FLAGS_NONE,
+                                   -1,
+                                   NULL,
+                                   error);
+  if (!result)
+    {
+      if (error && *error)
+        {
+          g_autofree char *remote_error = g_dbus_error_get_remote_error (*error);
+
+          if (g_strcmp0 (remote_error, "org.freedesktop.systemd1.NoSuchUnit") == 0)
+            g_clear_error (error);
+        }
+      return FALSE;
+    }
+
+  g_variant_get (result, "(o)", &object_path);
+  g_clear_pointer (&result, g_variant_unref);
+
+  unit_proxy = g_dbus_proxy_new_for_bus_sync (bus_type,
+                                              G_DBUS_PROXY_FLAGS_NONE,
+                                              NULL,
+                                              "org.freedesktop.systemd1",
+                                              object_path,
+                                              "org.freedesktop.systemd1.Unit",
+                                              NULL,
+                                              error);
+  if (!unit_proxy)
+    return FALSE;
+
+  result = g_dbus_proxy_get_cached_property (unit_proxy, "ActiveState");
+  if (!result)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_PROPERTY,
+                   "Error getting ActiveState property");
+      return FALSE;
+    }
+
+  g_variant_get (result, "s", &active_state);
+
+  return g_str_equal (active_state, "active");
 }
 
 static GrdCredentials *
@@ -109,6 +237,7 @@ create_credentials (CredentialsType   credentials_type,
     case CREDENTIALS_TYPE_SCREEN_SHARE:
       return GRD_CREDENTIALS (grd_credentials_libsecret_new ());
     case CREDENTIALS_TYPE_HEADLESS:
+    case CREDENTIALS_TYPE_SYSTEM:
       {
         GrdCredentialsTpm *credentials_tpm;
         GrdCredentialsFile *credentials_file;
@@ -184,8 +313,17 @@ rdp_enable (CredentialsType   credentials_type,
 {
   g_autoptr (GSettings) rdp_settings = NULL;
 
-  rdp_settings = g_settings_new (GRD_RDP_SETTINGS_SCHEMA);
-  g_settings_set_boolean (rdp_settings, "enable", TRUE);
+  switch (credentials_type)
+    {
+    case CREDENTIALS_TYPE_SYSTEM:
+        return start_systemd_unit (G_BUS_TYPE_SYSTEM, GRD_SYSTEMD_SERVICE, error);
+    case CREDENTIALS_TYPE_SCREEN_SHARE:
+    case CREDENTIALS_TYPE_HEADLESS:
+        rdp_settings = g_settings_new (GRD_RDP_SETTINGS_SCHEMA);
+        g_settings_set_boolean (rdp_settings, "enable", TRUE);
+        break;
+    }
+
   return TRUE;
 }
 
@@ -197,8 +335,17 @@ rdp_disable (CredentialsType   credentials_type,
 {
   g_autoptr (GSettings) rdp_settings = NULL;
 
-  rdp_settings = g_settings_new (GRD_RDP_SETTINGS_SCHEMA);
-  g_settings_set_boolean (rdp_settings, "enable", FALSE);
+  switch (credentials_type)
+    {
+    case CREDENTIALS_TYPE_SYSTEM:
+        return stop_systemd_unit (G_BUS_TYPE_SYSTEM, GRD_SYSTEMD_SERVICE, error);
+    case CREDENTIALS_TYPE_SCREEN_SHARE:
+    case CREDENTIALS_TYPE_HEADLESS:
+        rdp_settings = g_settings_new (GRD_RDP_SETTINGS_SCHEMA);
+        g_settings_set_boolean (rdp_settings, "enable", FALSE);
+        break;
+    }
+
   return TRUE;
 }
 
@@ -271,6 +418,9 @@ rdp_enable_view_only (CredentialsType   credentials_type,
 {
   g_autoptr (GSettings) rdp_settings = NULL;
 
+  if (credentials_type == CREDENTIALS_TYPE_SYSTEM)
+    return TRUE;
+
   rdp_settings = g_settings_new (GRD_RDP_SETTINGS_SCHEMA);
   g_settings_set_boolean (rdp_settings, "view-only", TRUE);
   return TRUE;
@@ -283,6 +433,9 @@ rdp_disable_view_only (CredentialsType   credentials_type,
                        GError          **error)
 {
   g_autoptr (GSettings) rdp_settings = NULL;
+
+  if (credentials_type == CREDENTIALS_TYPE_SYSTEM)
+    return TRUE;
 
   rdp_settings = g_settings_new (GRD_RDP_SETTINGS_SCHEMA);
   g_settings_set_boolean (rdp_settings, "view-only", FALSE);
@@ -321,6 +474,9 @@ vnc_enable (CredentialsType   credentials_type,
 {
   g_autoptr (GSettings) vnc_settings = NULL;
 
+  if (credentials_type == CREDENTIALS_TYPE_SYSTEM)
+    return TRUE;
+
   vnc_settings = g_settings_new (GRD_VNC_SETTINGS_SCHEMA);
   g_settings_set_boolean (vnc_settings, "enable", TRUE);
   return TRUE;
@@ -333,6 +489,9 @@ vnc_disable (CredentialsType   credentials_type,
              GError          **error)
 {
   g_autoptr (GSettings) vnc_settings = NULL;
+
+  if (credentials_type == CREDENTIALS_TYPE_SYSTEM)
+    return TRUE;
 
   vnc_settings = g_settings_new (GRD_VNC_SETTINGS_SCHEMA);
   g_settings_set_boolean (vnc_settings, "enable", FALSE);
@@ -349,6 +508,9 @@ vnc_set_credentials (CredentialsType   credentials_type,
 {
   g_autoptr (GrdCredentials) credentials = NULL;
   char *password;
+
+  if (credentials_type == CREDENTIALS_TYPE_SYSTEM)
+    return TRUE;
 
   password = argv[0];
   if (strlen (password) > MAX_VNC_PASSWORD_SIZE)
@@ -376,6 +538,9 @@ vnc_clear_credentials (CredentialsType   credentials_type,
 {
   g_autoptr (GrdCredentials) credentials = NULL;
 
+  if (credentials_type == CREDENTIALS_TYPE_SYSTEM)
+    return TRUE;
+
   credentials = create_credentials (credentials_type, error);
   if (!credentials)
     return FALSE;
@@ -391,6 +556,9 @@ vnc_set_auth_method (CredentialsType   credentials,
 {
   char *auth_method = argv[0];
   g_autoptr (GSettings) vnc_settings = NULL;
+
+  if (credentials == CREDENTIALS_TYPE_SYSTEM)
+    return TRUE;
 
   if (strcmp (auth_method, "prompt") != 0 &&
       strcmp (auth_method, "password") != 0)
@@ -413,6 +581,9 @@ vnc_enable_view_only (CredentialsType   credentials,
 {
   g_autoptr (GSettings) vnc_settings = NULL;
 
+  if (credentials == CREDENTIALS_TYPE_SYSTEM)
+    return TRUE;
+
   vnc_settings = g_settings_new (GRD_VNC_SETTINGS_SCHEMA);
   g_settings_set_boolean (vnc_settings, "view-only", TRUE);
   return TRUE;
@@ -425,6 +596,9 @@ vnc_disable_view_only (CredentialsType   credentials,
                        GError          **error)
 {
   g_autoptr (GSettings) vnc_settings = NULL;
+
+  if (credentials == CREDENTIALS_TYPE_SYSTEM)
+    return TRUE;
 
   vnc_settings = g_settings_new (GRD_VNC_SETTINGS_SCHEMA);
   g_settings_set_boolean (vnc_settings, "view-only", FALSE);
@@ -501,6 +675,7 @@ print_help (void)
       "\n"
       "Options:\n"
       "  --headless                                 - Use headless credentials storage\n"
+      "  --system                                   - Configure system daemon\n"
       "  --help                                     - Print this help text\n");
 
   print_usage ();
@@ -665,6 +840,35 @@ print_vnc_status (CredentialsType credentials_type,
 }
 #endif /* HAVE_VNC */
 
+static void
+print_service_status (CredentialsType credentials_type,
+                      gboolean        use_colors)
+{
+  GBusType bus_type;
+  gboolean service_running;
+  g_autoptr (GError) error = NULL;
+
+  switch (credentials_type)
+    {
+    case CREDENTIALS_TYPE_SYSTEM:
+      bus_type = G_BUS_TYPE_SYSTEM;
+      break;
+    case CREDENTIALS_TYPE_HEADLESS:
+    case CREDENTIALS_TYPE_SCREEN_SHARE:
+      bus_type = G_BUS_TYPE_SESSION;
+      break;
+    }
+
+  service_running = systemd_unit_is_active (bus_type,
+                                            GRD_SYSTEMD_SERVICE,
+                                            &error);
+  if (error)
+    return;
+
+  printf ("Overall:\n");
+  printf ("\tUnit status: %s\n", status_to_string (service_running, use_colors));
+}
+
 static int
 print_status (CredentialsType   credentials_type,
               int               argc,
@@ -675,8 +879,7 @@ print_status (CredentialsType   credentials_type,
 
   if (argc > 1)
     {
-      print_usage ();
-      return EXIT_FAILURE;
+      return EX_USAGE;
     }
   else if (argc == 1)
     {
@@ -686,18 +889,20 @@ print_status (CredentialsType   credentials_type,
         }
       else
         {
-          print_usage ();
-          return EXIT_FAILURE;
+          return EX_USAGE;
         }
     }
 
   use_colors = isatty (fileno (stdout));
 
+  print_service_status (credentials_type, use_colors);
+
 #ifdef HAVE_RDP
   print_rdp_status (credentials_type, use_colors, show_credentials);
 #endif /* HAVE_RDP */
 #ifdef HAVE_VNC
-  print_vnc_status (credentials_type, use_colors, show_credentials);
+  if (credentials_type != CREDENTIALS_TYPE_SYSTEM)
+    print_vnc_status (credentials_type, use_colors, show_credentials);
 #endif /* HAVE_VNC */
 
   return EXIT_SUCCESS;
@@ -710,24 +915,29 @@ main (int   argc,
   CredentialsType credentials_type;
   int i;
   int arg_shift;
+  int exit_code = EX_USAGE;
+  struct passwd* pw;
 
   g_set_prgname (argv[0]);
 
   if (argc < 2)
-    {
-      print_usage ();
-      return EXIT_FAILURE;
-    }
+    goto done;
 
   if (argc == 2 && strcmp (argv[1], "--help") == 0)
     {
       print_help ();
-      return EXIT_SUCCESS;
+      exit_code = EXIT_SUCCESS;
+      goto done;
     }
 
   if (argc > 2 && strcmp (argv[1], "--headless") == 0)
     {
       credentials_type = CREDENTIALS_TYPE_HEADLESS;
+      i = 2;
+    }
+  else if (argc > 1 && strcmp (argv[1], "--system") == 0)
+    {
+      credentials_type = CREDENTIALS_TYPE_SYSTEM;
       i = 2;
     }
   else
@@ -738,27 +948,89 @@ main (int   argc,
 
   arg_shift = i + 1;
 
+  if (credentials_type == CREDENTIALS_TYPE_SYSTEM)
+    {
+      g_autoptr (GError) error = NULL;
+      int wait_status;
+      int j;
+      g_autoptr (GStrvBuilder) builder = NULL;
+      g_auto (GStrv) new_argv = NULL;
+
+      builder = g_strv_builder_new ();
+
+      g_strv_builder_add (builder, "pkexec");
+      g_strv_builder_add (builder, "--user");
+      g_strv_builder_add (builder, GRD_USERNAME);
+      g_strv_builder_add (builder, "dbus-run-session");
+      g_strv_builder_add (builder, "--");
+      g_strv_builder_add (builder, argv[0]);
+      g_strv_builder_add (builder, "--headless");
+
+      for (j = 2; j < argc; j++)
+        g_strv_builder_add (builder, argv[j]);
+
+      new_argv = g_strv_builder_end (builder);
+
+      g_spawn_sync (NULL,
+                    new_argv,
+                    NULL,
+                    G_SPAWN_SEARCH_PATH
+                    | G_SPAWN_CHILD_INHERITS_STDOUT,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &wait_status,
+                    &error);
+      if (error)
+        {
+          fprintf (stderr, "Failed to start the configuration of the system daemon: %s\n",
+                   error->message);
+
+          if (WIFEXITED (wait_status))
+            exit_code = WEXITSTATUS (wait_status);
+          else
+            exit_code = EX_SOFTWARE;
+        }
+      else
+        {
+          exit_code = EXIT_SUCCESS;
+        }
+
+      goto done;
+    }
+
+  pw = getpwnam (GRD_USERNAME);
+  if (geteuid () == pw->pw_uid)
+      credentials_type = CREDENTIALS_TYPE_SYSTEM;
+
+  if (strcmp (argv[i], "status") == 0)
+    {
+      exit_code = print_status (credentials_type,
+                                argc - arg_shift, argv + arg_shift);
+      goto done;
+    }
+
 #ifdef HAVE_RDP
   if (strcmp (argv[i], "rdp") == 0)
     {
-      return process_rdp_options (credentials_type,
-                                  argc - arg_shift, argv + arg_shift);
+      exit_code = process_rdp_options (credentials_type,
+                                       argc - arg_shift, argv + arg_shift);
+      goto done;
     }
 #endif
 #ifdef HAVE_VNC
   if (strcmp (argv[i], "vnc") == 0)
     {
-      return process_vnc_options (credentials_type,
-                                  argc - arg_shift, argv + arg_shift);
+      exit_code = process_vnc_options (credentials_type,
+                                       argc - arg_shift, argv + arg_shift);
+      goto done;
     }
 #endif
 
-  if (strcmp (argv[i], "status") == 0)
-    {
-      return print_status (credentials_type,
-                           argc - arg_shift, argv + arg_shift);
-    }
+done:
+  if (exit_code == EX_USAGE)
+    print_usage ();
 
-  print_usage ();
-  return EXIT_FAILURE;
+  return exit_code;
 }

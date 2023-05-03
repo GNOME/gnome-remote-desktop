@@ -13,3 +13,10 @@ if have_rdp
                  },
                  install_dir: dbus_sys_dir)
 endif
+
+configure_file(input: 'org.gnome.remotedesktop.configure-system-daemon.policy.in',
+               output: 'org.gnome.remotedesktop.configure-system-daemon.policy',
+               configuration: {
+                 'bindir': bindir,
+               },
+               install_dir: join_paths(datadir, 'polkit-1', 'actions'))

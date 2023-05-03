@@ -17,3 +17,6 @@
 
 /* Path of the data dir */
 #mesondefine GRD_DATA_DIR
+
+/* Username of system grd daemon */
+#mesondefine GRD_USERNAME
