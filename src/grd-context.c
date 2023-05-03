@@ -28,7 +28,7 @@
 #include "grd-credentials-libsecret.h"
 #include "grd-credentials-tpm.h"
 #include "grd-egl-thread.h"
-#include "grd-settings.h"
+#include "grd-settings-user.h"
 
 #include "grd-dbus-mutter-remote-desktop.h"
 #include "grd-dbus-mutter-screen-cast.h"
@@ -136,7 +136,7 @@ grd_context_new (GrdRuntimeMode   runtime_mode,
   if (!context->credentials)
     return NULL;
 
-  context->settings = grd_settings_new (context);
+  context->settings = GRD_SETTINGS (grd_settings_user_new (context));
 
   return g_steal_pointer (&context);
 }
