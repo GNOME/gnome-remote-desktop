@@ -38,6 +38,7 @@
 #include "grd-private.h"
 #include "grd-rdp-server.h"
 #include "grd-session.h"
+#include "grd-settings-user.h"
 #include "grd-vnc-server.h"
 
 enum
@@ -603,14 +604,20 @@ grd_daemon_startup (GApplication *app)
   export_services_status (daemon);
 
 #ifdef HAVE_RDP
-  g_signal_connect (settings, "notify::rdp-enabled",
-                    G_CALLBACK (on_rdp_enabled_changed),
-                    daemon);
+  if (GRD_IS_SETTINGS_USER (settings))
+    {
+      g_signal_connect (settings, "notify::rdp-enabled",
+                        G_CALLBACK (on_rdp_enabled_changed),
+                        daemon);
+    }
 #endif
 #ifdef HAVE_VNC
-  g_signal_connect (settings, "notify::vnc-enabled",
-                    G_CALLBACK (on_vnc_enabled_changed),
-                    daemon);
+  if (GRD_IS_SETTINGS_USER (settings))
+    {
+      g_signal_connect (settings, "notify::vnc-enabled",
+                        G_CALLBACK (on_vnc_enabled_changed),
+                        daemon);
+    }
 #endif
 
   /* Run indefinitely, until told to exit. */
