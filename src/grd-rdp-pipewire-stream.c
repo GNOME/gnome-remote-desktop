@@ -57,6 +57,12 @@ typedef void (* GrdRdpFrameReadyCallback) (GrdRdpPipeWireStream *stream,
                                            gboolean              success,
                                            gpointer              user_data);
 
+typedef struct
+{
+  GMutex buffer_mutex;
+  gboolean is_locked;
+} BufferContext;
+
 struct _GrdRdpFrame
 {
   gatomicrefcount refcount;
@@ -134,6 +140,8 @@ struct _GrdRdpPipeWireStream
   struct pw_stream *pipewire_stream;
   struct spa_hook pipewire_stream_listener;
 
+  GHashTable *pipewire_buffers;
+
   uint32_t src_node_id;
 
   struct spa_video_info_raw spa_format;
@@ -145,6 +153,61 @@ G_DEFINE_TYPE (GrdRdpPipeWireStream, grd_rdp_pipewire_stream,
 static void grd_rdp_frame_unref (GrdRdpFrame *frame);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdRdpFrame, grd_rdp_frame_unref)
+
+static BufferContext *
+buffer_context_new (void)
+{
+  BufferContext *buffer_context;
+
+  buffer_context = g_new0 (BufferContext, 1);
+  g_mutex_init (&buffer_context->buffer_mutex);
+
+  return buffer_context;
+}
+
+static void
+buffer_context_free (BufferContext *buffer_context)
+{
+  /* Ensure buffer is not locked any more */
+  g_mutex_lock (&buffer_context->buffer_mutex);
+  g_mutex_unlock (&buffer_context->buffer_mutex);
+
+  g_mutex_clear (&buffer_context->buffer_mutex);
+
+  g_free (buffer_context);
+}
+
+static void
+acquire_pipewire_buffer_lock (GrdRdpPipeWireStream *stream,
+                              struct pw_buffer     *buffer)
+{
+  BufferContext *buffer_context = NULL;
+
+  if (!g_hash_table_lookup_extended (stream->pipewire_buffers, buffer,
+                                     NULL, (gpointer *) &buffer_context))
+    g_assert_not_reached ();
+
+  g_mutex_lock (&buffer_context->buffer_mutex);
+  g_assert (!buffer_context->is_locked);
+  buffer_context->is_locked = TRUE;
+}
+
+static void
+maybe_release_pipewire_buffer_lock (GrdRdpPipeWireStream *stream,
+                                    struct pw_buffer     *buffer)
+{
+  BufferContext *buffer_context = NULL;
+
+  if (!g_hash_table_lookup_extended (stream->pipewire_buffers, buffer,
+                                     NULL, (gpointer *) &buffer_context))
+    g_assert_not_reached ();
+
+  if (!buffer_context->is_locked)
+    return;
+
+  buffer_context->is_locked = FALSE;
+  g_mutex_unlock (&buffer_context->buffer_mutex);
+}
 
 static GrdRdpFrame *
 grd_rdp_frame_new (GrdRdpPipeWireStream     *stream,
@@ -447,6 +510,24 @@ on_stream_param_changed (void                 *user_data,
 }
 
 static void
+on_stream_add_buffer (void             *user_data,
+                      struct pw_buffer *buffer)
+{
+  GrdRdpPipeWireStream *stream = user_data;
+
+  g_hash_table_insert (stream->pipewire_buffers, buffer, buffer_context_new ());
+}
+
+static void
+on_stream_remove_buffer (void             *user_data,
+                         struct pw_buffer *buffer)
+{
+  GrdRdpPipeWireStream *stream = user_data;
+
+  g_hash_table_remove (stream->pipewire_buffers, buffer);
+}
+
+static void
 process_mouse_pointer_bitmap (GrdRdpPipeWireStream *stream,
                               struct spa_buffer    *buffer)
 {
@@ -532,6 +613,7 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
   g_source_set_ready_time (stream->frame_render_source, 0);
 out:
   pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+  maybe_release_pipewire_buffer_lock (stream, buffer);
 
   g_clear_pointer (&frame, grd_rdp_frame_unref);
 }
@@ -730,6 +812,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
       realize_buffer_data = g_new0 (RealizeBufferData, 1);
       realize_buffer_data->rdp_buffer = rdp_buffer;
 
+      acquire_pipewire_buffer_lock (stream, pw_buffer);
       grd_egl_thread_upload (egl_thread,
                              stream->egl_slot,
                              pbo,
@@ -809,6 +892,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
           import_buffer_data->rdp_buffer = rdp_buffer;
         }
 
+      acquire_pipewire_buffer_lock (stream, pw_buffer);
       grd_egl_thread_download (egl_thread,
                                stream->egl_slot,
                                grd_rdp_buffer_get_pbo (rdp_buffer),
@@ -905,6 +989,8 @@ static const struct pw_stream_events stream_events = {
   PW_VERSION_STREAM_EVENTS,
   .state_changed = on_stream_state_changed,
   .param_changed = on_stream_param_changed,
+  .add_buffer = on_stream_add_buffer,
+  .remove_buffer = on_stream_remove_buffer,
   .process = on_stream_process,
 };
 
@@ -1200,6 +1286,8 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
   g_mutex_clear (&stream->frame_mutex);
   g_mutex_clear (&stream->dequeue_mutex);
 
+  g_clear_pointer (&stream->pipewire_buffers, g_hash_table_unref);
+
   pw_deinit ();
 
   if (egl_thread)
@@ -1211,6 +1299,10 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
 static void
 grd_rdp_pipewire_stream_init (GrdRdpPipeWireStream *stream)
 {
+  stream->pipewire_buffers =
+    g_hash_table_new_full (NULL, NULL,
+                           NULL, (GDestroyNotify) buffer_context_free);
+
   g_mutex_init (&stream->dequeue_mutex);
   g_mutex_init (&stream->frame_mutex);
   g_mutex_init (&stream->pointer_mutex);
