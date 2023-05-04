@@ -23,6 +23,7 @@
 #include "grd-vnc-pipewire-stream.h"
 
 #include <drm_fourcc.h>
+#include <pipewire-0.3/pipewire/stream.h>
 #include <pipewire/pipewire.h>
 #include <spa/param/props.h>
 #include <spa/param/format-utils.h>
@@ -49,6 +50,12 @@ typedef void (* GrdVncFrameReadyCallback) (GrdVncPipeWireStream *stream,
                                            GrdVncFrame          *frame,
                                            gboolean              success,
                                            gpointer              user_data);
+
+typedef struct
+{
+  GMutex buffer_mutex;
+  gboolean is_locked;
+} BufferContext;
 
 struct _GrdVncFrame
 {
@@ -84,6 +91,8 @@ struct _GrdVncPipeWireStream
   struct pw_stream *pipewire_stream;
   struct spa_hook pipewire_stream_listener;
 
+  GHashTable *pipewire_buffers;
+
   uint32_t src_node_id;
 
   struct spa_video_info_raw spa_format;
@@ -117,6 +126,61 @@ pipewire_loop_source_dispatch (GSource     *source,
     g_warning ("pipewire_loop_iterate failed: %s", spa_strerror (result));
 
   return TRUE;
+}
+
+static BufferContext *
+buffer_context_new (void)
+{
+  BufferContext *buffer_context;
+
+  buffer_context = g_new0 (BufferContext, 1);
+  g_mutex_init (&buffer_context->buffer_mutex);
+
+  return buffer_context;
+}
+
+static void
+buffer_context_free (BufferContext *buffer_context)
+{
+  /* Ensure buffer is not locked any more */
+  g_mutex_lock (&buffer_context->buffer_mutex);
+  g_mutex_unlock (&buffer_context->buffer_mutex);
+
+  g_mutex_clear (&buffer_context->buffer_mutex);
+
+  g_free (buffer_context);
+}
+
+static void
+acquire_pipewire_buffer_lock (GrdVncPipeWireStream *stream,
+                              struct pw_buffer     *buffer)
+{
+  BufferContext *buffer_context = NULL;
+
+  if (!g_hash_table_lookup_extended (stream->pipewire_buffers, buffer,
+                                     NULL, (gpointer *) &buffer_context))
+    g_assert_not_reached ();
+
+  g_mutex_lock (&buffer_context->buffer_mutex);
+  g_assert (!buffer_context->is_locked);
+  buffer_context->is_locked = TRUE;
+}
+
+static void
+maybe_release_pipewire_buffer_lock (GrdVncPipeWireStream *stream,
+                                    struct pw_buffer     *buffer)
+{
+  BufferContext *buffer_context = NULL;
+
+  if (!g_hash_table_lookup_extended (stream->pipewire_buffers, buffer,
+                                     NULL, (gpointer *) &buffer_context))
+    g_assert_not_reached ();
+
+  if (!buffer_context->is_locked)
+    return;
+
+  buffer_context->is_locked = FALSE;
+  g_mutex_unlock (&buffer_context->buffer_mutex);
 }
 
 static void
@@ -243,6 +307,24 @@ on_stream_param_changed (void                 *user_data,
 
   pw_stream_update_params (stream->pipewire_stream,
                            params, G_N_ELEMENTS (params));
+}
+
+static void
+on_stream_add_buffer (void             *user_data,
+                      struct pw_buffer *buffer)
+{
+  GrdVncPipeWireStream *stream = user_data;
+
+  g_hash_table_insert (stream->pipewire_buffers, buffer, buffer_context_new ());
+}
+
+static void
+on_stream_remove_buffer (void             *user_data,
+                         struct pw_buffer *buffer)
+{
+  GrdVncPipeWireStream *stream = user_data;
+
+  g_hash_table_remove (stream->pipewire_buffers, buffer);
 }
 
 static GrdVncFrame *
@@ -407,9 +489,10 @@ on_dma_buf_downloaded (gboolean success,
 
 static void
 process_frame_data (GrdVncPipeWireStream *stream,
-                    struct spa_buffer    *buffer,
+                    struct pw_buffer     *pw_buffer,
                     GrdVncFrame          *frame)
 {
+  struct spa_buffer *buffer = pw_buffer->buffer;
   GrdVncFrameReadyCallback callback = frame->callback;
   gpointer user_data = frame->callback_user_data;
   int dst_stride;
@@ -486,8 +569,9 @@ process_frame_data (GrdVncPipeWireStream *stream,
             modifiers[i] = stream->spa_format.modifier;
         }
       dst_data = g_malloc0 (height * dst_stride);
-
       frame->data = dst_data;
+
+      acquire_pipewire_buffer_lock (stream, pw_buffer);
       grd_egl_thread_download (egl_thread,
                                0, 0, 0,
                                NULL, NULL, NULL,
@@ -582,6 +666,7 @@ out:
     pw_stream_queue_buffer (stream->pipewire_stream, buffer);
 
   g_source_set_ready_time (stream->pending_frame_source, 0);
+  maybe_release_pipewire_buffer_lock (stream, buffer);
 
   g_clear_pointer (&frame, grd_vnc_frame_unref);
 }
@@ -668,7 +753,7 @@ on_stream_process (void *user_data)
       return;
     }
 
-  process_frame_data (stream, last_frame_buffer->buffer,
+  process_frame_data (stream, last_frame_buffer,
                       g_steal_pointer (&frame));
 }
 
@@ -676,6 +761,8 @@ static const struct pw_stream_events stream_events = {
   PW_VERSION_STREAM_EVENTS,
   .state_changed = on_stream_state_changed,
   .param_changed = on_stream_param_changed,
+  .add_buffer = on_stream_add_buffer,
+  .remove_buffer = on_stream_remove_buffer,
   .process = on_stream_process,
 };
 
@@ -958,12 +1045,18 @@ grd_vnc_pipewire_stream_finalize (GObject *object)
 
   g_mutex_clear (&stream->frame_mutex);
 
+  g_clear_pointer (&stream->pipewire_buffers, g_hash_table_unref);
+
   G_OBJECT_CLASS (grd_vnc_pipewire_stream_parent_class)->finalize (object);
 }
 
 static void
 grd_vnc_pipewire_stream_init (GrdVncPipeWireStream *stream)
 {
+  stream->pipewire_buffers =
+    g_hash_table_new_full (NULL, NULL,
+                           NULL, (GDestroyNotify) buffer_context_free);
+
   g_mutex_init (&stream->frame_mutex);
 }
 
