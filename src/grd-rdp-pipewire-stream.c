@@ -127,6 +127,9 @@ struct _GrdRdpPipeWireStream
 
   struct spa_hook pipewire_core_listener;
 
+  struct pw_registry *pipewire_registry;
+  struct spa_hook pipewire_registry_listener;
+
   GrdRdpBufferPool *buffer_pool;
 
   GSource *frame_render_source;
@@ -1175,6 +1178,25 @@ static const struct pw_core_events core_events = {
   .error = on_core_error,
 };
 
+static void
+registry_event_global_remove (void     *user_data,
+                              uint32_t  id)
+{
+  GrdRdpPipeWireStream *stream = user_data;
+
+  if (id != stream->src_node_id)
+    return;
+
+  g_debug ("[RDP] PipeWire stream with node id %u closed", id);
+  g_signal_emit (stream, signals[CLOSED], 0);
+}
+
+static const struct pw_registry_events registry_events =
+{
+  .version = PW_VERSION_REGISTRY_EVENTS,
+  .global_remove = registry_event_global_remove,
+};
+
 GrdRdpPipeWireStream *
 grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
                              GrdHwAccelNvidia            *hwaccel_nvidia,
@@ -1230,6 +1252,19 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
                         &core_events,
                         stream);
 
+  stream->pipewire_registry = pw_core_get_registry (stream->pipewire_core,
+                                                    PW_VERSION_REGISTRY, 0);
+  if (!stream->pipewire_registry)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to retrieve PipeWire registry");
+      return NULL;
+    }
+
+  pw_registry_add_listener (stream->pipewire_registry,
+                            &stream->pipewire_registry_listener,
+                            &registry_events, stream);
+
   if (!connect_to_stream (stream, virtual_monitor, rdp_surface->refresh_rate, error))
     return NULL;
 
@@ -1260,6 +1295,13 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
     sync_egl_thread (egl_thread);
 
   g_clear_pointer (&stream->pipewire_stream, pw_stream_destroy);
+
+  if (stream->pipewire_registry)
+    {
+      spa_hook_remove (&stream->pipewire_registry_listener);
+      pw_proxy_destroy ((struct pw_proxy *) stream->pipewire_registry);
+      stream->pipewire_registry = NULL;
+    }
 
   g_clear_pointer (&stream->pipewire_core, pw_core_disconnect);
   g_clear_pointer (&stream->pipewire_context, pw_context_destroy);
