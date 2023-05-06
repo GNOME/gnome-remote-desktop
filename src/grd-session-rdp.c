@@ -2150,7 +2150,7 @@ socket_thread_func (gpointer data)
   RdpPeerContext *rdp_peer_context;
   HANDLE vcm;
   HANDLE channel_event;
-  HANDLE events[32];
+  HANDLE events[32] = {};
   uint32_t n_events;
   uint32_t n_freerdp_handles;
 
