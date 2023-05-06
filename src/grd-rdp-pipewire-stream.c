@@ -43,6 +43,7 @@
 
 enum
 {
+  ERROR,
   CLOSED,
 
   N_SIGNALS
@@ -1170,7 +1171,7 @@ on_core_error (void       *user_data,
   g_warning ("PipeWire core error: id:%u %s", id, message);
 
   if (id == PW_ID_CORE && res == -EPIPE)
-    g_signal_emit (stream, signals[CLOSED], 0);
+    g_signal_emit (stream, signals[ERROR], 0);
 }
 
 static const struct pw_core_events core_events = {
@@ -1362,6 +1363,12 @@ grd_rdp_pipewire_stream_class_init (GrdRdpPipeWireStreamClass *klass)
 
   object_class->finalize = grd_rdp_pipewire_stream_finalize;
 
+  signals[ERROR] = g_signal_new ("error",
+                                  G_TYPE_FROM_CLASS (klass),
+                                  G_SIGNAL_RUN_LAST,
+                                  0,
+                                  NULL, NULL, NULL,
+                                  G_TYPE_NONE, 0);
   signals[CLOSED] = g_signal_new ("closed",
                                   G_TYPE_FROM_CLASS (klass),
                                   G_SIGNAL_RUN_LAST,
