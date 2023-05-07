@@ -25,7 +25,6 @@
 enum
 {
   READY,
-  CLOSED,
 
   N_SIGNALS
 };
@@ -137,10 +136,4 @@ grd_stream_class_init (GrdStreamClass *klass)
                                  0,
                                  NULL, NULL, NULL,
                                  G_TYPE_NONE, 0);
-  signals[CLOSED] = g_signal_new ("closed",
-                                  G_TYPE_FROM_CLASS (klass),
-                                  G_SIGNAL_RUN_LAST,
-                                  0,
-                                  NULL, NULL, NULL,
-                                  G_TYPE_NONE, 0);
 }
