@@ -28,7 +28,7 @@
 #include "grd-session-rdp.h"
 
 #define CLIPRDR_FILEDESCRIPTOR_SIZE (4 + 32 + 4 + 16 + 8 + 4 + 4 + 520)
-#define MAX_WAIT_TIME 4000
+#define MAX_WAIT_TIME_MS 4000
 
 typedef struct _ServerFormatListUpdateContext
 {
@@ -397,7 +397,7 @@ grd_clipboard_rdp_update_client_mime_type_list (GrdClipboard *clipboard,
       if (!clipboard_rdp->pending_server_formats_drop_id)
         {
           clipboard_rdp->pending_server_formats_drop_id =
-            g_timeout_add (MAX_WAIT_TIME, drop_pending_server_formats, clipboard_rdp);
+            g_timeout_add (MAX_WAIT_TIME_MS, drop_pending_server_formats, clipboard_rdp);
         }
 
       return;
@@ -680,7 +680,7 @@ send_mime_type_content_request (GrdClipboardRdp  *clipboard_rdp,
   g_mutex_unlock (&clipboard_rdp->client_request_mutex);
 
   clipboard_rdp->client_request_abort_id =
-    g_timeout_add (MAX_WAIT_TIME, abort_current_client_request, clipboard_rdp);
+    g_timeout_add (MAX_WAIT_TIME_MS, abort_current_client_request, clipboard_rdp);
 
   return TRUE;
 }
