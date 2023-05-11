@@ -111,12 +111,13 @@ grd_session_stop (GrdSession *session)
   if (priv->remote_desktop_session && priv->started)
     {
       GrdDBusMutterRemoteDesktopSession *proxy = priv->remote_desktop_session;
-      GError *error = NULL;
+      g_autoptr (GError) error = NULL;
 
       if (!grd_dbus_mutter_remote_desktop_session_call_stop_sync (proxy, NULL, &error))
         {
-          g_warning ("Failed to stop: %s\n", error->message);
-          g_error_free (error);
+          if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CLOSED) &&
+              !g_error_matches (error, G_IO_ERROR, G_IO_ERROR_TIMED_OUT))
+            g_warning ("Failed to stop: %s", error->message);
         }
     }
 
