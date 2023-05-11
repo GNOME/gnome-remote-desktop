@@ -26,7 +26,7 @@
 
 #include "grd-session.h"
 
-#define MAX_READ_TIME 4000
+#define MAX_READ_TIME_MS 4000
 
 typedef struct _ReadMimeTypeContentContext
 {
@@ -300,7 +300,7 @@ read_mime_type_content_async (GrdClipboard *clipboard,
   g_object_unref (task);
 
   priv->abort_read_source_id =
-    g_timeout_add (MAX_READ_TIME, abort_mime_type_content_read, clipboard);
+    g_timeout_add (MAX_READ_TIME_MS, abort_mime_type_content_read, clipboard);
 }
 
 void
