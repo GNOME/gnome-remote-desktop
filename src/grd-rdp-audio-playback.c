@@ -730,7 +730,8 @@ grd_rdp_audio_playback_dispose (GObject *object)
       audio_playback->subscribed_status = FALSE;
     }
 
-  audio_playback->rdpsnd_context->server_formats = NULL;
+  if (audio_playback->rdpsnd_context)
+    audio_playback->rdpsnd_context->server_formats = NULL;
 
   g_mutex_lock (&audio_playback->streams_mutex);
   g_hash_table_remove_all (audio_playback->audio_streams);
