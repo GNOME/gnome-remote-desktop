@@ -36,7 +36,7 @@
 
 #define N_CHANNELS 2
 #define N_SAMPLES_PER_SEC 44100
-#define N_BYTES_PER_SAMPLE_PCM sizeof (uint16_t)
+#define N_BYTES_PER_SAMPLE_PCM sizeof (int16_t)
 #define N_BLOCK_ALIGN_PCM (N_CHANNELS * N_BYTES_PER_SAMPLE_PCM)
 
 #define TRAINING_PACKSIZE 1024
@@ -44,7 +44,7 @@
 
 typedef struct _AudioData
 {
-  uint16_t *data;
+  int16_t *data;
   uint32_t size;
   int64_t timestamp_us;
 } AudioData;
