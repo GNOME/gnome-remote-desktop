@@ -33,10 +33,24 @@ typedef enum _GrdRdpDspCodec
   GRD_RDP_DSP_CODEC_AAC,
 } GrdRdpDspCodec;
 
-GrdRdpDsp *grd_rdp_dsp_new (uint32_t   n_samples_per_sec,
-                            uint32_t   n_channels,
-                            uint32_t   bitrate_aac,
-                            GError   **error);
+typedef enum
+{
+  GRD_RDP_DSP_CREATE_FLAG_NONE = 0,
+  GRD_RDP_DSP_CREATE_FLAG_ENCODER = 1 << 0,
+} GrdRdpDspCreateFlag;
+
+typedef struct
+{
+  GrdRdpDspCreateFlag create_flags;
+
+  /* Encoder */
+  uint32_t n_samples_per_sec;
+  uint32_t n_channels;
+  uint32_t bitrate_aac;
+} GrdRdpDspDescriptor;
+
+GrdRdpDsp *grd_rdp_dsp_new (const GrdRdpDspDescriptor  *dsp_descriptor,
+                            GError                    **error);
 
 gboolean grd_rdp_dsp_encode (GrdRdpDsp       *rdp_dsp,
                              GrdRdpDspCodec   codec,

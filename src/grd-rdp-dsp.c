@@ -246,21 +246,34 @@ create_aac_encoder (GrdRdpDsp  *rdp_dsp,
 }
 #endif /* HAVE_FDK_AAC */
 
+static gboolean
+create_encoders (GrdRdpDsp                  *rdp_dsp,
+                 const GrdRdpDspDescriptor  *dsp_descriptor,
+                 GError                    **error)
+{
+#ifdef HAVE_FDK_AAC
+  if (!create_aac_encoder (rdp_dsp,
+                           dsp_descriptor->n_samples_per_sec,
+                           dsp_descriptor->n_channels,
+                           dsp_descriptor->bitrate_aac,
+                           error))
+    return FALSE;
+#endif /* HAVE_FDK_AAC */
+
+  return TRUE;
+}
+
 GrdRdpDsp *
-grd_rdp_dsp_new (uint32_t   n_samples_per_sec,
-                 uint32_t   n_channels,
-                 uint32_t   bitrate_aac,
-                 GError   **error)
+grd_rdp_dsp_new (const GrdRdpDspDescriptor  *dsp_descriptor,
+                 GError                    **error)
 {
   g_autoptr (GrdRdpDsp) rdp_dsp = NULL;
 
   rdp_dsp = g_object_new (GRD_TYPE_RDP_DSP, NULL);
 
-#ifdef HAVE_FDK_AAC
-  if (!create_aac_encoder (rdp_dsp, n_samples_per_sec, n_channels, bitrate_aac,
-                           error))
+  if (dsp_descriptor->create_flags & GRD_RDP_DSP_CREATE_FLAG_ENCODER &&
+      !create_encoders (rdp_dsp, dsp_descriptor, error))
     return NULL;
-#endif /* HAVE_FDK_AAC */
 
   return g_steal_pointer (&rdp_dsp);
 }

@@ -664,6 +664,7 @@ grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
 {
   g_autoptr (GrdRdpAudioPlayback) audio_playback = NULL;
   RdpsndServerContext *rdpsnd_context;
+  GrdRdpDspDescriptor dsp_descriptor = {};
   g_autoptr (GError) error = NULL;
 
   audio_playback = g_object_new (GRD_TYPE_RDP_AUDIO_PLAYBACK, NULL);
@@ -688,9 +689,12 @@ grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
 
   pw_init (NULL, NULL);
 
-  audio_playback->rdp_dsp = grd_rdp_dsp_new (N_SAMPLES_PER_SEC, N_CHANNELS,
-                                             audio_format_aac.nAvgBytesPerSec * 8,
-                                             &error);
+  dsp_descriptor.create_flags = GRD_RDP_DSP_CREATE_FLAG_ENCODER;
+  dsp_descriptor.n_samples_per_sec = N_SAMPLES_PER_SEC;
+  dsp_descriptor.n_channels = N_CHANNELS;
+  dsp_descriptor.bitrate_aac = audio_format_aac.nAvgBytesPerSec * 8;
+
+  audio_playback->rdp_dsp = grd_rdp_dsp_new (&dsp_descriptor, &error);
   if (!audio_playback->rdp_dsp)
     {
       g_warning ("[RDP.AUDIO_PLAYBACK] Failed to create DSP instance: %s",
