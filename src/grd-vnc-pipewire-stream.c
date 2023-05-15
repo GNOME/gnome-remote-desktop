@@ -130,10 +130,6 @@ buffer_context_new (void)
 static void
 buffer_context_free (BufferContext *buffer_context)
 {
-  /* Ensure buffer is not locked any more */
-  g_mutex_lock (&buffer_context->buffer_mutex);
-  g_mutex_unlock (&buffer_context->buffer_mutex);
-
   g_mutex_clear (&buffer_context->buffer_mutex);
 
   g_free (buffer_context);
@@ -303,6 +299,15 @@ on_stream_remove_buffer (void             *user_data,
                          struct pw_buffer *buffer)
 {
   GrdVncPipeWireStream *stream = user_data;
+  BufferContext *buffer_context = NULL;
+
+  if (!g_hash_table_lookup_extended (stream->pipewire_buffers, buffer,
+                                     NULL, (gpointer *) &buffer_context))
+    g_assert_not_reached ();
+
+  /* Ensure buffer is not locked any more */
+  g_mutex_lock (&buffer_context->buffer_mutex);
+  g_mutex_unlock (&buffer_context->buffer_mutex);
 
   g_hash_table_remove (stream->pipewire_buffers, buffer);
 }
