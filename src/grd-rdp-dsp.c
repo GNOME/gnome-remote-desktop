@@ -143,7 +143,7 @@ create_aac_encoder (GrdRdpDsp  *rdp_dsp,
   g_assert (n_channels == 2);
 
   aac_error = aacEncOpen (&rdp_dsp->aac_encoder, 0, n_channels);
-  if (!rdp_dsp->aac_encoder)
+  if (aac_error != AACENC_OK)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Failed to create AAC encoder. AAC error %i", aac_error);
