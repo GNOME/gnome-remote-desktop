@@ -24,8 +24,6 @@
 #include "grd-rdp-dvc.h"
 #include "grd-session-rdp.h"
 
-#define PROTOCOL_TIMEOUT_MS (10 * 1000)
-
 struct _GrdRdpTelemetry
 {
   GObject parent;
@@ -41,29 +39,10 @@ struct _GrdRdpTelemetry
   GrdSessionRdp *session_rdp;
   GrdRdpDvc *rdp_dvc;
 
-  GMutex protocol_timeout_mutex;
   GSource *channel_teardown_source;
-  GSource *protocol_timeout_source;
 };
 
 G_DEFINE_TYPE (GrdRdpTelemetry, grd_rdp_telemetry, G_TYPE_OBJECT)
-
-static gboolean
-initiate_channel_teardown (gpointer user_data)
-{
-  GrdRdpTelemetry *telemetry = user_data;
-
-  g_debug ("[RDP.TELEMETRY] Client did not respond to protocol initiation. "
-           "Terminating protocol");
-
-  g_mutex_lock (&telemetry->protocol_timeout_mutex);
-  g_clear_pointer (&telemetry->protocol_timeout_source, g_source_unref);
-  g_mutex_unlock (&telemetry->protocol_timeout_mutex);
-
-  g_source_set_ready_time (telemetry->channel_teardown_source, 0);
-
-  return G_SOURCE_REMOVE;
-}
 
 void
 grd_rdp_telemetry_maybe_init (GrdRdpTelemetry *telemetry)
@@ -83,14 +62,6 @@ grd_rdp_telemetry_maybe_init (GrdRdpTelemetry *telemetry)
       return;
     }
   telemetry->channel_opened = TRUE;
-
-  g_assert (!telemetry->protocol_timeout_source);
-
-  telemetry->protocol_timeout_source =
-    g_timeout_source_new (PROTOCOL_TIMEOUT_MS);
-  g_source_set_callback (telemetry->protocol_timeout_source,
-                         initiate_channel_teardown, telemetry, NULL);
-  g_source_attach (telemetry->protocol_timeout_source, NULL);
 }
 
 static void
@@ -152,14 +123,6 @@ telemetry_rdp_telemetry (TelemetryServerContext            *telemetry_context,
            rdp_telemetry->FirstGraphicsReceivedMillis -
            rdp_telemetry->PromptForCredentialsDoneMillis);
 
-  g_mutex_lock (&telemetry->protocol_timeout_mutex);
-  if (telemetry->protocol_timeout_source)
-    {
-      g_source_destroy (telemetry->protocol_timeout_source);
-      g_clear_pointer (&telemetry->protocol_timeout_source, g_source_unref);
-    }
-  g_mutex_unlock (&telemetry->protocol_timeout_mutex);
-
   g_source_set_ready_time (telemetry->channel_teardown_source, 0);
 
   return CHANNEL_RC_OK;
@@ -209,11 +172,6 @@ grd_rdp_telemetry_dispose (GObject *object)
       telemetry->subscribed_status = FALSE;
     }
 
-  if (telemetry->protocol_timeout_source)
-    {
-      g_source_destroy (telemetry->protocol_timeout_source);
-      g_clear_pointer (&telemetry->protocol_timeout_source,  g_source_unref);
-    }
   if (telemetry->channel_teardown_source)
     {
       g_source_destroy (telemetry->channel_teardown_source);
@@ -224,16 +182,6 @@ grd_rdp_telemetry_dispose (GObject *object)
                    telemetry_server_context_free);
 
   G_OBJECT_CLASS (grd_rdp_telemetry_parent_class)->dispose (object);
-}
-
-static void
-grd_rdp_telemetry_finalize (GObject *object)
-{
-  GrdRdpTelemetry *telemetry = GRD_RDP_TELEMETRY (object);
-
-  g_mutex_clear (&telemetry->protocol_timeout_mutex);
-
-  G_OBJECT_CLASS (grd_rdp_telemetry_parent_class)->finalize (object);
 }
 
 static gboolean
@@ -271,8 +219,6 @@ grd_rdp_telemetry_init (GrdRdpTelemetry *telemetry)
 {
   GSource *channel_teardown_source;
 
-  g_mutex_init (&telemetry->protocol_timeout_mutex);
-
   channel_teardown_source = g_source_new (&source_funcs, sizeof (GSource));
   g_source_set_callback (channel_teardown_source, tear_down_channel,
                          telemetry, NULL);
@@ -287,5 +233,4 @@ grd_rdp_telemetry_class_init (GrdRdpTelemetryClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->dispose = grd_rdp_telemetry_dispose;
-  object_class->finalize = grd_rdp_telemetry_finalize;
 }
