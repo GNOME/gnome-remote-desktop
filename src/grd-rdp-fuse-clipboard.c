@@ -551,7 +551,6 @@ clip_data_dir_new (GrdRdpFuseClipboard *rdp_fuse_clipboard,
   FuseFile *clip_data_dir;
 
   clip_data_dir = g_malloc0 (sizeof (FuseFile));
-  clip_data_dir->parent = rdp_fuse_clipboard->root_dir;
   clip_data_dir->filename_with_root =
     has_clip_data_id ? g_strdup_printf ("/%u", clip_data_id)
                      : g_strdup_printf ("/%lu", GRD_RDP_FUSE_CLIPBOARD_NO_CLIP_DATA_ID);
