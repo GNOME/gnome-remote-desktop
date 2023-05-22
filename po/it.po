@@ -3,24 +3,25 @@
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Davide Ferracin <davide.ferracin@protonmail.com>, 2021.
 # Milo Casagrande <milo@milo.name>, 2022.
+# Gianvito Cavasoli <gianvito@gmx.it>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2022-03-18 09:48+0100\n"
-"Last-Translator: Milo Casagrande <milo@milo.name>\n"
+"POT-Creation-Date: 2023-05-05 14:01+0000\n"
+"PO-Revision-Date: 2023-05-21 02:46+0200\n"
+"Last-Translator: Gianvito Cavasoli <gianvito@gmx.it>\n"
 "Language-Team: Italian <gnome-it-list@gnome.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"X-Generator: Gtranslator 42.0\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:513
 msgid "GNOME Remote Desktop"
 msgstr "Computer remoto GNOME"
 
@@ -46,16 +47,16 @@ msgstr "Rifiuta"
 msgid "Accept"
 msgstr "Accetta"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:53
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Uso: %s [OPZIONI...] COMANDO [SOTTOCOMANDO]...\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:461
 msgid "Commands:\n"
 msgstr "Comandi:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:466
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -93,7 +94,7 @@ msgstr ""
 "                                               dispositivi di ingresso\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:485
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -124,16 +125,20 @@ msgstr ""
 "                                               dispositivi di ingresso\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:500
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Mostra lo stato attuale\n"
 "\n"
 "Opzioni:\n"
+"  --headless                                 - Usa l'archiviazione delle "
+"credenziali headless\n"
 "  --help                                     - Stampa questo aiuto\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
@@ -141,7 +146,7 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "Indica se il motore RDP è abilitato o meno"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Se impostato a VERO, il motore RDP verrà inizializzato."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
@@ -156,10 +161,10 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
@@ -175,7 +180,7 @@ msgstr ""
 "primary - Registra il monitor principale della sessione utente corrente. * "
 "extend - Crea un nuovo monitor virtuale e lo utilizza per la sessione di "
 "computer remoto. La risoluzione di questo monitor virtuale deriva dalla "
-"configurazione del monitor, inviata dal client."
+"configurazione del monitor, inviata dal client del computer remoto."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
@@ -215,7 +220,7 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "Indica se il motore VNC è abilitato o meno"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Se impostato a VERO, il motore VNC verrà inizializzato."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
@@ -244,3 +249,35 @@ msgstr ""
 "una persona che possa accedere fisicamente alla postazione per poter "
 "approvare esplicitamente le nuove richieste; * con password - richiedendo al "
 "client remoto di fornire una password prestabilita."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Modalità di condivisione dello schermo delle connessioni VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"La modalità di condivisione dello schermo specifica se il motore VNC "
+"rispecchia lo schermo principale o se viene creato uno monitor virtuale. Per "
+"la risoluzione iniziale del monitor virtuale, il motore VNC utilizza una "
+"dimensione predefinita di 1920x1080 pixel. Quando si utilizza una sessione "
+"di computer remoto con un monitor virtuale, i client possono ridimensionare "
+"la risoluzione del monitor virtuale durante una sessione tramite "
+"setDesktopSize PDU. Le modalità di condivisione dello schermo consentite "
+"includono: * mirror-primary - Registra il monitor principale della sessione "
+"utente corrente. * extend - Crea un nuovo monitor virtuale e lo utilizza per "
+"la sessione di computer remoto. La risoluzione iniziale di questo monitor "
+"virtuale è impostata su 1920x1080 pixel. I client possono sovrascrivere la "
+"risoluzione iniziale con successivi aggiornamenti della configurazione del "
+"monitor."
