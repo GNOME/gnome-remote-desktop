@@ -841,6 +841,19 @@ grd_rdp_fuse_clipboard_submit_file_contents_response (GrdRdpFuseClipboard *rdp_f
       return;
     }
 
+  if ((rdp_fuse_request->operation_type == FUSE_LL_OPERATION_LOOKUP ||
+       rdp_fuse_request->operation_type == FUSE_LL_OPERATION_GETATTR) &&
+      size != sizeof (uint64_t))
+    {
+      g_warning ("[RDP.CLIPRDR] Received invalid file size for file \"%s\" "
+                 "from the client", rdp_fuse_request->fuse_file->filename);
+      g_mutex_unlock (&rdp_fuse_clipboard->filesystem_mutex);
+
+      fuse_reply_err (rdp_fuse_request->fuse_req, EIO);
+      g_free (rdp_fuse_request);
+      return;
+    }
+
   maybe_queue_clip_data_entry_timeout_reset (rdp_fuse_clipboard,
                                              rdp_fuse_request->fuse_file->entry);
 
