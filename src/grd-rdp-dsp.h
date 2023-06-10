@@ -31,12 +31,14 @@ typedef enum _GrdRdpDspCodec
 {
   GRD_RDP_DSP_CODEC_NONE,
   GRD_RDP_DSP_CODEC_AAC,
+  GRD_RDP_DSP_CODEC_ALAW,
 } GrdRdpDspCodec;
 
 typedef enum
 {
   GRD_RDP_DSP_CREATE_FLAG_NONE = 0,
   GRD_RDP_DSP_CREATE_FLAG_ENCODER = 1 << 0,
+  GRD_RDP_DSP_CREATE_FLAG_DECODER = 1 << 1,
 } GrdRdpDspCreateFlag;
 
 typedef struct
@@ -58,6 +60,13 @@ gboolean grd_rdp_dsp_encode (GrdRdpDsp       *rdp_dsp,
                              uint32_t         input_size,
                              uint32_t         input_elem_size,
                              uint8_t        **output_data,
+                             uint32_t        *output_size);
+
+gboolean grd_rdp_dsp_decode (GrdRdpDsp       *rdp_dsp,
+                             GrdRdpDspCodec   codec,
+                             uint8_t         *input_data,
+                             uint32_t         input_size,
+                             int16_t        **output_data,
                              uint32_t        *output_size);
 
 #endif /* GRD_RDP_DSP_H */

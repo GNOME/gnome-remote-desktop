@@ -27,9 +27,15 @@
 #include <fdk-aac/aacenc_lib.h>
 #endif /* HAVE_FDK_AAC */
 
+#define G711_QUANT_MASK 0xF
+#define G711_SEG_MASK 0x70
+#define G711_SEG_SHIFT 4
+
 struct _GrdRdpDsp
 {
   GObject parent;
+
+  GrdRdpDspCreateFlag create_flags;
 
 #ifdef HAVE_FDK_AAC
   HANDLE_AACENCODER aac_encoder;
@@ -105,6 +111,8 @@ grd_rdp_dsp_encode (GrdRdpDsp       *rdp_dsp,
                     uint8_t        **output_data,
                     uint32_t        *output_size)
 {
+  g_assert (rdp_dsp->create_flags & GRD_RDP_DSP_CREATE_FLAG_ENCODER);
+
   switch (codec)
     {
     case GRD_RDP_DSP_CODEC_NONE:
@@ -118,6 +126,80 @@ grd_rdp_dsp_encode (GrdRdpDsp       *rdp_dsp,
       g_assert_not_reached ();
       return FALSE;
 #endif /* HAVE_FDK_AAC */
+    case GRD_RDP_DSP_CODEC_ALAW:
+      g_assert_not_reached ();
+      return FALSE;
+    }
+
+  g_assert_not_reached ();
+
+  return FALSE;
+}
+
+static int16_t
+alaw_to_s16 (uint8_t alaw_value)
+{
+  int16_t segment;
+  int16_t temp;
+
+  alaw_value ^= 0x55;
+
+  temp = (alaw_value & G711_QUANT_MASK) << 4;
+  temp += 8;
+
+  segment = (alaw_value & G711_SEG_MASK) >> G711_SEG_SHIFT;
+
+  if (segment > 0)
+    temp += 0x100;
+  if (segment > 1)
+    temp <<= segment - 1;
+
+  return alaw_value > 127 ? temp : -temp;
+}
+
+static gboolean
+decode_alaw (GrdRdpDsp  *rdp_dsp,
+             uint8_t    *input_data,
+             uint32_t    input_size,
+             int16_t   **output_data,
+             uint32_t   *output_size)
+{
+  uint32_t i;
+
+  g_assert (output_data);
+  g_assert (output_size);
+
+  g_assert (input_data);
+  g_assert (input_size > 0);
+
+  *output_size = input_size / sizeof (uint8_t) * sizeof (int16_t);
+  *output_data = g_malloc0 (*output_size);
+
+  for (i = 0; i < input_size; ++i)
+    (*output_data)[i] = alaw_to_s16 (input_data[i]);
+
+  return TRUE;
+}
+
+gboolean
+grd_rdp_dsp_decode (GrdRdpDsp       *rdp_dsp,
+                    GrdRdpDspCodec   codec,
+                    uint8_t         *input_data,
+                    uint32_t         input_size,
+                    int16_t        **output_data,
+                    uint32_t        *output_size)
+{
+  g_assert (rdp_dsp->create_flags & GRD_RDP_DSP_CREATE_FLAG_DECODER);
+
+  switch (codec)
+    {
+    case GRD_RDP_DSP_CODEC_NONE:
+    case GRD_RDP_DSP_CODEC_AAC:
+      g_assert_not_reached ();
+      return FALSE;
+    case GRD_RDP_DSP_CODEC_ALAW:
+      return decode_alaw (rdp_dsp, input_data, input_size,
+                          output_data, output_size);
     }
 
   g_assert_not_reached ();
@@ -270,6 +352,7 @@ grd_rdp_dsp_new (const GrdRdpDspDescriptor  *dsp_descriptor,
   g_autoptr (GrdRdpDsp) rdp_dsp = NULL;
 
   rdp_dsp = g_object_new (GRD_TYPE_RDP_DSP, NULL);
+  rdp_dsp->create_flags = dsp_descriptor->create_flags;
 
   if (dsp_descriptor->create_flags & GRD_RDP_DSP_CREATE_FLAG_ENCODER &&
       !create_encoders (rdp_dsp, dsp_descriptor, error))

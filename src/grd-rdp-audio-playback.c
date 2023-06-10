@@ -1066,6 +1066,7 @@ maybe_send_frames (GrdRdpAudioPlayback         *audio_playback,
       success = TRUE;
       break;
     case GRD_RDP_DSP_CODEC_AAC:
+    case GRD_RDP_DSP_CODEC_ALAW:
       success = grd_rdp_dsp_encode (audio_playback->rdp_dsp, codec,
                                     (int16_t *) raw_data, copied_data,
                                     sizeof (int16_t), &out_data, &out_size);
