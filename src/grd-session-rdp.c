@@ -300,9 +300,9 @@ maybe_resize_graphics_output_buffer (GrdSessionRdp *session_rdp,
 }
 
 static void
-take_or_encode_frame (GrdSessionRdp *session_rdp,
-                      GrdRdpSurface *rdp_surface,
-                      GrdRdpBuffer  *buffer)
+take_or_encode_frame_surface_mutex_locked (GrdSessionRdp *session_rdp,
+                                           GrdRdpSurface *rdp_surface,
+                                           GrdRdpBuffer  *buffer)
 {
   SessionMetrics *session_metrics = &session_rdp->session_metrics;
   uint16_t width = grd_rdp_buffer_get_width (buffer);
@@ -373,6 +373,8 @@ void
 grd_session_rdp_maybe_encode_new_frame (GrdSessionRdp *session_rdp,
                                         GrdRdpSurface *rdp_surface)
 {
+  GrdRdpBuffer *new_framebuffer;
+
   g_mutex_lock (&rdp_surface->surface_mutex);
   if (!rdp_surface->new_framebuffer)
     {
@@ -380,8 +382,9 @@ grd_session_rdp_maybe_encode_new_frame (GrdSessionRdp *session_rdp,
       return;
     }
 
-  take_or_encode_frame (session_rdp, rdp_surface,
-                        g_steal_pointer (&rdp_surface->new_framebuffer));
+  new_framebuffer = g_steal_pointer (&rdp_surface->new_framebuffer);
+  take_or_encode_frame_surface_mutex_locked (session_rdp, rdp_surface,
+                                             new_framebuffer);
   g_mutex_unlock (&rdp_surface->surface_mutex);
 }
 
@@ -389,6 +392,8 @@ void
 grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
                                             GrdRdpSurface *rdp_surface)
 {
+  GrdRdpBuffer *pending_framebuffer;
+
   g_assert (session_rdp->peer);
 
   if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) ||
@@ -405,8 +410,9 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
       return;
     }
 
-  take_or_encode_frame (session_rdp, rdp_surface,
-                        g_steal_pointer (&rdp_surface->pending_framebuffer));
+  pending_framebuffer = g_steal_pointer (&rdp_surface->pending_framebuffer);
+  take_or_encode_frame_surface_mutex_locked (session_rdp, rdp_surface,
+                                             pending_framebuffer);
   g_mutex_unlock (&rdp_surface->surface_mutex);
 }
 
