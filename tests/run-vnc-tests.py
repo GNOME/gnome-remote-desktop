@@ -30,7 +30,7 @@ def run_vnc_test_client():
   vnc_test_client = subprocess.Popen([vnc_test_client_path, 'localhost:5912'],
                                      stderr=subprocess.STDOUT)
   vnc_test_client.wait()
-  if vnc_test_client.wait() != 0:
+  if vnc_test_client.returncode != 0:
     print("VNC test client exited incorrectly")
     vnc_client_failed = True
   else:

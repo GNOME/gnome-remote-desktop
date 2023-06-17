@@ -31,7 +31,7 @@ def run_rdp_test_client():
   rdp_test_client = subprocess.Popen([rdp_test_client_path, '/v:127.0.0.1:3395', '/u:TestU', '/p:TestPw'],
                                      stderr=subprocess.STDOUT)
   rdp_test_client.wait()
-  if rdp_test_client.wait() != 0:
+  if rdp_test_client.returncode != 0:
     print("RDP test client exited incorrectly")
     rdp_client_failed = True
   else:
