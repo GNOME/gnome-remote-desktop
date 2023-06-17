@@ -31,7 +31,7 @@ def run_vnc_test_client():
                                      stderr=subprocess.STDOUT)
   vnc_test_client.wait()
   if vnc_test_client.returncode != 0:
-    print("VNC test client exited incorrectly")
+    print("VNC test client exited incorrectly: %d"%(vnc_test_client.returncode))
     vnc_client_failed = True
   else:
     vnc_client_failed = False

@@ -32,7 +32,7 @@ def run_rdp_test_client():
                                      stderr=subprocess.STDOUT)
   rdp_test_client.wait()
   if rdp_test_client.returncode != 0:
-    print("RDP test client exited incorrectly")
+    print("RDP test client exited incorrectly: %d"%(rdp_test_client.returncode))
     rdp_client_failed = True
   else:
     rdp_client_failed = False
