@@ -130,6 +130,7 @@ surface_context_free (SurfaceContext *surface_context)
                       surface_context->rdp_surface);
   g_source_set_ready_time (layout_manager->surface_disposal_source, 0);
 
+  g_clear_pointer (&surface_context->virtual_monitor, g_free);
   g_free (surface_context);
 }
 
@@ -697,6 +698,7 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
     {
       grd_rdp_surface_set_size (surface_context->rdp_surface, 0, 0);
+      g_clear_pointer (&surface_context->virtual_monitor, g_free);
 
       if (monitor_config->is_virtual)
         {
@@ -705,7 +707,9 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
           virtual_monitor = &monitor_config->virtual_monitors[i++];
           surface_context->output_origin_x = virtual_monitor->pos_x;
           surface_context->output_origin_y = virtual_monitor->pos_y;
-          surface_context->virtual_monitor = virtual_monitor;
+
+          surface_context->virtual_monitor =
+            g_memdup2 (virtual_monitor, sizeof (GrdRdpVirtualMonitor));
         }
       else
         {
