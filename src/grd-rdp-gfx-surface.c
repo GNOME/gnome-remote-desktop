@@ -156,8 +156,8 @@ grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline           *graphics_pipeline,
     }
   else
     {
-      gfx_surface->width = gfx_surface->rdp_surface->width;
-      gfx_surface->height = gfx_surface->rdp_surface->height;
+      gfx_surface->width = grd_rdp_surface_get_width (gfx_surface->rdp_surface);
+      gfx_surface->height = grd_rdp_surface_get_height (gfx_surface->rdp_surface);
     }
 
   grd_rdp_graphics_pipeline_create_surface (graphics_pipeline, gfx_surface);
