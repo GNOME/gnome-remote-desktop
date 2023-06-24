@@ -65,6 +65,10 @@ typedef struct _GrdRdpMonitorConfig
   /* Count of items in connectors or virtual_monitors */
   uint32_t monitor_count;
 
+  /* Offset between monitor layout, and input- and output-region */
+  int32_t layout_offset_x;
+  int32_t layout_offset_y;
+
   /* Size of the Desktop (and the Graphics Output Buffer ADM element) */
   uint32_t desktop_width;
   uint32_t desktop_height;

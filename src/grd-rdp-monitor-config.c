@@ -188,6 +188,14 @@ verify_monitor_config (GrdRdpMonitorConfig  *monitor_config,
   cairo_region_get_extents (region, &rect);
   monitor_config->desktop_width = rect.width;
   monitor_config->desktop_height = rect.height;
+
+  /* We already checked, that the primary monitor is at (0, 0) */
+  g_assert (rect.x <= 0);
+  g_assert (rect.y <= 0);
+
+  /* Determine monitor offset in input- and output-region */
+  monitor_config->layout_offset_x = rect.x;
+  monitor_config->layout_offset_y = rect.y;
   cairo_region_destroy (region);
 
   return TRUE;
