@@ -49,8 +49,8 @@
 #include "grd-rdp-telemetry.h"
 #include "grd-settings.h"
 
-/* TODO: Set this to 16, as soon as Multimonitor support is implemented */
-#define MAX_MONITOR_COUNT 1
+#define MAX_MONITOR_COUNT_HEADLESS 16
+#define MAX_MONITOR_COUNT_SCREEN_SHARE 1
 #define DISCRETE_SCROLL_STEP 10.0
 
 typedef enum _RdpPeerFlag
@@ -1689,6 +1689,22 @@ rdp_suppress_output (rdpContext         *rdp_context,
   return TRUE;
 }
 
+static uint32_t
+get_max_monitor_count (GrdSessionRdp *session_rdp)
+{
+  GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
+
+  switch (grd_context_get_runtime_mode (context))
+    {
+    case GRD_RUNTIME_MODE_HEADLESS:
+      return MAX_MONITOR_COUNT_HEADLESS;
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      return MAX_MONITOR_COUNT_SCREEN_SHARE;
+    }
+
+  g_assert_not_reached ();
+}
+
 static BOOL
 rdp_peer_capabilities (freerdp_peer *peer)
 {
@@ -1749,9 +1765,12 @@ rdp_peer_capabilities (freerdp_peer *peer)
 
   if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND)
     {
+      uint32_t max_monitor_count;
+
+      max_monitor_count = get_max_monitor_count (session_rdp);
       monitor_config =
         grd_rdp_monitor_config_new_from_client_data (rdp_settings,
-                                                     MAX_MONITOR_COUNT, &error);
+                                                     max_monitor_count, &error);
     }
   else
     {
@@ -2449,7 +2468,7 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
                                      session_rdp,
                                      rdp_peer_context->rdp_dvc,
                                      rdp_peer_context->vcm,
-                                     MAX_MONITOR_COUNT);
+                                     get_max_monitor_count (session_rdp));
     }
   if (WTSVirtualChannelManagerIsChannelJoined (vcm, "cliprdr"))
     {
