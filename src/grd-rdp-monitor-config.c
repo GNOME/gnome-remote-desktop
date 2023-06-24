@@ -107,14 +107,17 @@ create_monitor_config_from_client_core_data (rdpSettings  *rdp_settings,
                                              GError      **error)
 {
   g_autoptr (GrdRdpMonitorConfig) monitor_config = NULL;
+  GrdRdpVirtualMonitor *virtual_monitor;
 
   monitor_config = g_malloc0 (sizeof (GrdRdpMonitorConfig));
   monitor_config->is_virtual = TRUE;
   monitor_config->monitor_count = 1;
   monitor_config->virtual_monitors = g_new0 (GrdRdpVirtualMonitor, 1);
 
+  virtual_monitor = &monitor_config->virtual_monitors[0];
+
   /* Ignore the DeviceScaleFactor. It is deprecated (Win 8.1 only) */
-  if (!write_sanitized_monitor_data (&monitor_config->virtual_monitors[0],
+  if (!write_sanitized_monitor_data (virtual_monitor,
                                      0, 0,
                                      rdp_settings->DesktopWidth,
                                      rdp_settings->DesktopHeight,
@@ -126,8 +129,8 @@ create_monitor_config_from_client_core_data (rdpSettings  *rdp_settings,
                                      error))
     return NULL;
 
-  monitor_config->desktop_width = monitor_config->virtual_monitors[0].width;
-  monitor_config->desktop_height = monitor_config->virtual_monitors[0].height;
+  monitor_config->desktop_width = virtual_monitor->width;
+  monitor_config->desktop_height = virtual_monitor->height;
 
   return g_steal_pointer (&monitor_config);
 }
