@@ -387,11 +387,22 @@ grd_rdp_layout_manager_get_current_layout (GrdRdpLayoutManager  *layout_manager,
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
     {
       GrdRdpSurface *rdp_surface = surface_context->rdp_surface;
-      uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
-      uint32_t surface_height = grd_rdp_surface_get_height (rdp_surface);
+      int32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
+      int32_t surface_height = grd_rdp_surface_get_height (rdp_surface);
 
-      (*monitors)[i].left = surface_context->output_origin_x;
-      (*monitors)[i].top = surface_context->output_origin_y;
+      if (surface_context->virtual_monitor)
+        {
+          (*monitors)[i].left = surface_context->virtual_monitor->pos_x;
+          (*monitors)[i].top = surface_context->virtual_monitor->pos_y;
+        }
+      if (surface_context->connector)
+        {
+          g_assert (*n_monitors == 1);
+
+          (*monitors)[i].left = 0;
+          (*monitors)[i].top = 0;
+        }
+
       (*monitors)[i].right = (*monitors)[i].left + surface_width - 1;
       (*monitors)[i].bottom = (*monitors)[i].top + surface_height - 1;
 
@@ -703,10 +714,17 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
       if (monitor_config->is_virtual)
         {
           GrdRdpVirtualMonitor *virtual_monitor;
+          int32_t surface_pos_x;
+          int32_t surface_pos_y;
 
           virtual_monitor = &monitor_config->virtual_monitors[i++];
-          surface_context->output_origin_x = virtual_monitor->pos_x;
-          surface_context->output_origin_y = virtual_monitor->pos_y;
+          surface_pos_x = virtual_monitor->pos_x - monitor_config->layout_offset_x;
+          surface_pos_y = virtual_monitor->pos_y - monitor_config->layout_offset_y;
+          g_assert (surface_pos_x >= 0);
+          g_assert (surface_pos_y >= 0);
+
+          surface_context->output_origin_x = surface_pos_x;
+          surface_context->output_origin_y = surface_pos_y;
 
           surface_context->virtual_monitor =
             g_memdup2 (virtual_monitor, sizeof (GrdRdpVirtualMonitor));
