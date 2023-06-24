@@ -285,7 +285,7 @@ render_frame (gpointer user_data)
   g_mutex_lock (&stream->frame_mutex);
   frame = g_steal_pointer (&stream->pending_frame);
 
-  if (frame && frame->buffer)
+  if (frame)
     {
       g_mutex_lock (&stream->rdp_surface->surface_mutex);
       g_assert (!stream->rdp_surface->new_framebuffer);
