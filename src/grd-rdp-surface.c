@@ -136,6 +136,8 @@ grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
       g_clear_pointer (&rdp_surface->pending_render_source, g_source_unref);
     }
 
+  g_clear_pointer (&rdp_surface->surface_mapping, g_free);
+
   g_mutex_clear (&rdp_surface->surface_mutex);
 
   g_clear_object (&rdp_surface->detector);
@@ -156,6 +158,12 @@ grd_rdp_surface_get_height (GrdRdpSurface *rdp_surface)
   return rdp_surface->height;
 }
 
+GrdRdpSurfaceMapping *
+grd_rdp_surface_get_mapping (GrdRdpSurface *rdp_surface)
+{
+  return rdp_surface->surface_mapping;
+}
+
 gboolean
 grd_rdp_surface_is_rendering_inhibited (GrdRdpSurface *rdp_surface)
 {
@@ -169,6 +177,14 @@ grd_rdp_surface_set_size (GrdRdpSurface *rdp_surface,
 {
   rdp_surface->width = width;
   rdp_surface->height = height;
+}
+
+void
+grd_rdp_surface_set_mapping (GrdRdpSurface        *rdp_surface,
+                             GrdRdpSurfaceMapping *surface_mapping)
+{
+  g_clear_pointer (&rdp_surface->surface_mapping, g_free);
+  rdp_surface->surface_mapping = surface_mapping;
 }
 
 void
