@@ -708,6 +708,8 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
   g_hash_table_iter_init (&iter, layout_manager->surface_table);
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
     {
+      g_autofree GrdRdpSurfaceMapping *surface_mapping = NULL;
+
       grd_rdp_surface_set_size (surface_context->rdp_surface, 0, 0);
       g_clear_pointer (&surface_context->virtual_monitor, g_free);
 
@@ -733,6 +735,14 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
         {
           surface_context->connector = monitor_config->connectors[i++];
         }
+
+      surface_mapping = g_new0 (GrdRdpSurfaceMapping, 1);
+      surface_mapping->mapping_type = GRD_RDP_SURFACE_MAPPING_TYPE_MAP_TO_OUTPUT;
+      surface_mapping->output_origin_x = surface_context->output_origin_x;
+      surface_mapping->output_origin_y = surface_context->output_origin_y;
+
+      grd_rdp_surface_set_mapping (surface_context->rdp_surface,
+                                   g_steal_pointer (&surface_mapping));
     }
 
   return TRUE;
