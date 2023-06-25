@@ -983,18 +983,37 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
 
 static void
 map_surface_to_output (GrdRdpGraphicsPipeline *graphics_pipeline,
-                       GrdRdpGfxSurface       *gfx_surface)
+                       GrdRdpGfxSurface       *gfx_surface,
+                       GrdRdpSurfaceMapping   *surface_mapping)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
-  RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU map_surface_to_output = {0};
-  GrdRdpSurface *rdp_surface = grd_rdp_gfx_surface_get_rdp_surface (gfx_surface);
+  GrdRdpSurfaceMappingType mapping_type = surface_mapping->mapping_type;
   uint16_t surface_id = grd_rdp_gfx_surface_get_surface_id (gfx_surface);
+  RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU map_surface_to_output = {};
+
+  g_assert (mapping_type == GRD_RDP_SURFACE_MAPPING_TYPE_MAP_TO_OUTPUT);
 
   map_surface_to_output.surfaceId = surface_id;
-  map_surface_to_output.outputOriginX = rdp_surface->output_origin_x;
-  map_surface_to_output.outputOriginY = rdp_surface->output_origin_y;
+  map_surface_to_output.outputOriginX = surface_mapping->output_origin_x;
+  map_surface_to_output.outputOriginY = surface_mapping->output_origin_y;
 
   rdpgfx_context->MapSurfaceToOutput (rdpgfx_context, &map_surface_to_output);
+}
+
+static void
+map_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
+             GrdRdpGfxSurface       *gfx_surface)
+{
+  GrdRdpSurface *rdp_surface = grd_rdp_gfx_surface_get_rdp_surface (gfx_surface);
+  GrdRdpSurfaceMapping *surface_mapping;
+
+  surface_mapping = grd_rdp_surface_get_mapping (rdp_surface);
+  switch (surface_mapping->mapping_type)
+    {
+    case GRD_RDP_SURFACE_MAPPING_TYPE_MAP_TO_OUTPUT:
+      map_surface_to_output (graphics_pipeline, gfx_surface, surface_mapping);
+      break;
+    }
 }
 
 static void
@@ -1100,7 +1119,7 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
                                                            rdp_surface);
       grd_rdp_gfx_surface_attach_frame_controller (rdp_surface->gfx_surface,
                                                    g_steal_pointer (&frame_controller));
-      map_surface_to_output (graphics_pipeline, rdp_surface->gfx_surface);
+      map_surface (graphics_pipeline, rdp_surface->gfx_surface);
     }
 
   surface_id = grd_rdp_gfx_surface_get_surface_id (rdp_surface->gfx_surface);
