@@ -45,6 +45,7 @@ enum
 {
   ERROR,
   CLOSED,
+  VIDEO_RESIZED,
 
   N_SIGNALS
 };
@@ -478,6 +479,7 @@ on_stream_param_changed (void                 *user_data,
 
   grd_rdp_surface_set_size (stream->rdp_surface, width, height);
   stream->rdp_surface->valid = FALSE;
+  g_signal_emit (stream, signals[VIDEO_RESIZED], 0, width, height);
 
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
@@ -1378,4 +1380,11 @@ grd_rdp_pipewire_stream_class_init (GrdRdpPipeWireStreamClass *klass)
                                   0,
                                   NULL, NULL, NULL,
                                   G_TYPE_NONE, 0);
+  signals[VIDEO_RESIZED] = g_signal_new ("video-resized",
+                                         G_TYPE_FROM_CLASS (klass),
+                                         G_SIGNAL_RUN_LAST,
+                                         0,
+                                         NULL, NULL, NULL,
+                                         G_TYPE_NONE, 2,
+                                         G_TYPE_UINT, G_TYPE_UINT);
 }
