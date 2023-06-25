@@ -135,8 +135,9 @@ create_monitor_config_from_client_core_data (rdpSettings  *rdp_settings,
   return g_steal_pointer (&monitor_config);
 }
 
-static void
-determine_primary_monitor (GrdRdpMonitorConfig *monitor_config)
+static gboolean
+determine_primary_monitor (GrdRdpMonitorConfig  *monitor_config,
+                           GError              **error)
 {
   uint32_t i;
 
@@ -146,11 +147,14 @@ determine_primary_monitor (GrdRdpMonitorConfig *monitor_config)
           monitor_config->virtual_monitors[i].pos_y == 0)
         {
           monitor_config->virtual_monitors[i].is_primary = TRUE;
-          return;
+          return TRUE;
         }
     }
 
-  monitor_config->virtual_monitors[0].is_primary = TRUE;
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+               "No suitable primary monitor in monitor layout");
+
+  return FALSE;
 }
 
 static gboolean
@@ -220,7 +224,7 @@ create_monitor_config_from_client_monitor_data (rdpSettings  *rdp_settings,
       uint32_t orientation = 0;
       uint32_t scale = 0;
 
-      if (found_primary_monitor)
+      if (found_primary_monitor || monitor->x != 0 || monitor->y != 0)
         is_primary = FALSE;
       if (!found_primary_monitor && is_primary)
         found_primary_monitor = TRUE;
@@ -247,8 +251,10 @@ create_monitor_config_from_client_monitor_data (rdpSettings  *rdp_settings,
                                          error))
         return NULL;
     }
-  if (!found_primary_monitor)
-    determine_primary_monitor (monitor_config);
+
+  if (!found_primary_monitor &&
+      !determine_primary_monitor (monitor_config, error))
+    return NULL;
 
   if (!verify_monitor_config (monitor_config, error))
     return NULL;
@@ -300,7 +306,7 @@ grd_rdp_monitor_config_new_from_disp_monitor_layout (const DISPLAY_CONTROL_MONIT
       gboolean is_primary;
 
       is_primary = !!(monitor->Flags & DISPLAY_CONTROL_MONITOR_PRIMARY);
-      if (found_primary_monitor)
+      if (found_primary_monitor || monitor->Left != 0 || monitor->Top != 0)
         is_primary = FALSE;
       if (!found_primary_monitor && is_primary)
         found_primary_monitor = TRUE;
@@ -319,8 +325,10 @@ grd_rdp_monitor_config_new_from_disp_monitor_layout (const DISPLAY_CONTROL_MONIT
                                          error))
         return NULL;
     }
-  if (!found_primary_monitor)
-    determine_primary_monitor (monitor_config);
+
+  if (!found_primary_monitor &&
+      !determine_primary_monitor (monitor_config, error))
+    return NULL;
 
   if (!verify_monitor_config (monitor_config, error))
     return NULL;
