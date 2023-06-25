@@ -720,6 +720,12 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
           int32_t surface_pos_y;
 
           virtual_monitor = &monitor_config->virtual_monitors[i++];
+
+          g_debug ("[RDP] Layout manager: Preparing virtual monitor with "
+                   "geometry [x, y, w, h] = [%i, %i, %u, %u]",
+                   virtual_monitor->pos_x, virtual_monitor->pos_y,
+                   virtual_monitor->width, virtual_monitor->height);
+
           surface_pos_x = virtual_monitor->pos_x - monitor_config->layout_offset_x;
           surface_pos_y = virtual_monitor->pos_y - monitor_config->layout_offset_y;
           g_assert (surface_pos_x >= 0);
