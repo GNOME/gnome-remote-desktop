@@ -1931,27 +1931,8 @@ rdp_peer_activate (freerdp_peer *peer)
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
-  rdpSettings *rdp_settings = peer->settings;
 
   g_debug ("Activating client");
-
-  if ((rdp_peer_context->graphics_pipeline ||
-       is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT)) &&
-      !rdp_settings->SupportGraphicsPipeline)
-    {
-      g_warning ("Client disabled support for the graphics pipeline during the "
-                 "Deactivation-Reactivation sequence. This is not supported. "
-                 "Closing connection");
-      return FALSE;
-    }
-  if (rdp_peer_context->network_autodetection &&
-      !rdp_settings->NetworkAutoDetect)
-    {
-      g_warning ("Client disabled support for network autodetection during the "
-                 "Deactivation-Reactivation sequence. This is not supported. "
-                 "Closing connection");
-      return FALSE;
-    }
 
   set_rdp_peer_flag (session_rdp, RDP_PEER_ALL_SURFACES_INVALID);
 
