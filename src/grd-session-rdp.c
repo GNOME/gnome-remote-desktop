@@ -793,9 +793,12 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   rdpSettings *rdp_settings = peer->settings;
   rdpUpdate *rdp_update = peer->update;
+  GrdRdpSurfaceMapping *surface_mapping;
   uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
+  uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
+  uint32_t surface_height = grd_rdp_surface_get_height (rdp_surface);
   uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
-                                                              rdp_surface->width);
+                                                              surface_width);
   SURFACE_BITS_COMMAND cmd = {0};
   cairo_rectangle_int_t cairo_rect;
   RFX_RECT *rfx_rects, *rfx_rect;
@@ -805,11 +808,13 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
   BOOL first, last;
   size_t i;
 
+  surface_mapping = grd_rdp_surface_get_mapping (rdp_surface);
+
   rdp_peer_context->rfx_context->mode = RLGR3;
   if (!rdp_surface->valid)
     {
       rfx_context_reset (rdp_peer_context->rfx_context,
-                         rdp_surface->width, rdp_surface->height);
+                         surface_width, surface_height);
       rdp_surface->valid = TRUE;
     }
 
@@ -830,22 +835,22 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
                                          rfx_rects,
                                          n_rects,
                                          data,
-                                         rdp_surface->width,
-                                         rdp_surface->height,
+                                         surface_width,
+                                         surface_height,
                                          src_stride,
                                          &n_messages,
                                          rdp_settings->MultifragMaxRequestSize);
 
   cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
   cmd.bmp.codecID = rdp_settings->RemoteFxCodecId;
-  cmd.destLeft = rdp_surface->output_origin_x;
-  cmd.destTop = rdp_surface->output_origin_y;
-  cmd.destRight = cmd.destLeft + rdp_surface->width;
-  cmd.destBottom = cmd.destTop + rdp_surface->height;
+  cmd.destLeft = surface_mapping->output_origin_x;
+  cmd.destTop = surface_mapping->output_origin_y;
+  cmd.destRight = cmd.destLeft + surface_width;
+  cmd.destBottom = cmd.destTop + surface_height;
   cmd.bmp.bpp = 32;
   cmd.bmp.flags = 0;
-  cmd.bmp.width = rdp_surface->width;
-  cmd.bmp.height = rdp_surface->height;
+  cmd.bmp.width = surface_width;
+  cmd.bmp.height = surface_height;
 
   for (i = 0; i < n_messages; ++i)
     {
@@ -943,9 +948,11 @@ rdp_peer_refresh_nsc (GrdSessionRdp  *session_rdp,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   rdpSettings *rdp_settings = peer->settings;
   rdpUpdate *rdp_update = peer->update;
+  GrdRdpSurfaceMapping *surface_mapping;
   uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
+  uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
   uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
-                                                              rdp_surface->width);
+                                                              surface_width);
   NSCThreadPoolContext *thread_pool_context =
     &session_rdp->nsc_thread_pool_context;
   g_autoptr (GError) error = NULL;
@@ -956,6 +963,8 @@ rdp_peer_refresh_nsc (GrdSessionRdp  *session_rdp,
   SURFACE_BITS_COMMAND cmd = {0};
   BOOL first, last;
   int i;
+
+  surface_mapping = grd_rdp_surface_get_mapping (rdp_surface);
 
   rdp_surface->valid = TRUE;
 
@@ -1007,8 +1016,8 @@ rdp_peer_refresh_nsc (GrdSessionRdp  *session_rdp,
       encode_context = &encode_contexts[i];
       cairo_rect = &encode_context->cairo_rect;
 
-      cmd.destLeft = rdp_surface->output_origin_x + cairo_rect->x;
-      cmd.destTop = rdp_surface->output_origin_y + cairo_rect->y;
+      cmd.destLeft = surface_mapping->output_origin_x + cairo_rect->x;
+      cmd.destTop = surface_mapping->output_origin_y + cairo_rect->y;
       cmd.destRight = cmd.destLeft + cairo_rect->width;
       cmd.destBottom = cmd.destTop + cairo_rect->height;
       cmd.bmp.width = cairo_rect->width;
@@ -1124,9 +1133,12 @@ rdp_peer_refresh_raw_rect (freerdp_peer          *peer,
 {
   rdpSettings *rdp_settings = peer->settings;
   uint32_t dst_bits_per_pixel = rdp_settings->ColorDepth;
+  GrdRdpSurfaceMapping *surface_mapping;
   uint32_t cols, rows;
   uint32_t x, y;
   BITMAP_DATA *bitmap;
+
+  surface_mapping = grd_rdp_surface_get_mapping (rdp_surface);
 
   cols = cairo_rect->width / 64 + (cairo_rect->width % 64 ? 1 : 0);
   rows = cairo_rect->height / 64 + (cairo_rect->height % 64 ? 1 : 0);
@@ -1156,8 +1168,8 @@ rdp_peer_refresh_raw_rect (freerdp_peer          *peer,
           bitmap = &bitmap_data[(*n_bitmaps)++];
           bitmap->width = 64;
           bitmap->height = 64;
-          bitmap->destLeft = rdp_surface->output_origin_x + cairo_rect->x + x * 64;
-          bitmap->destTop = rdp_surface->output_origin_y + cairo_rect->y + y * 64;
+          bitmap->destLeft = surface_mapping->output_origin_x + cairo_rect->x + x * 64;
+          bitmap->destTop = surface_mapping->output_origin_y + cairo_rect->y + y * 64;
 
           if (bitmap->destLeft + bitmap->width > cairo_rect->x + cairo_rect->width)
             bitmap->width = cairo_rect->x + cairo_rect->width - bitmap->destLeft;
@@ -1189,8 +1201,9 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
   rdpSettings *rdp_settings = peer->settings;
   rdpUpdate *rdp_update = peer->update;
   uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
+  uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
   uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
-                                                              rdp_surface->width);
+                                                              surface_width);
   RawThreadPoolContext *thread_pool_context =
     &session_rdp->raw_thread_pool_context;
   g_autoptr (GError) error = NULL;
