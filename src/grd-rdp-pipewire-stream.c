@@ -476,6 +476,9 @@ on_stream_param_changed (void                 *user_data,
       return;
     }
 
+  grd_rdp_surface_set_size (stream->rdp_surface, width, height);
+  stream->rdp_surface->valid = FALSE;
+
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
   allowed_buffer_types = 1 << SPA_DATA_MemFd;

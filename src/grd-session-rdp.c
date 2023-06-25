@@ -327,14 +327,6 @@ take_or_encode_frame_surface_mutex_locked (GrdSessionRdp *session_rdp,
       unset_rdp_peer_flag (session_rdp, RDP_PEER_ALL_SURFACES_INVALID);
     }
 
-  if (rdp_surface->width != width || rdp_surface->height != height)
-    {
-      rdp_surface->width = width;
-      rdp_surface->height = height;
-
-      rdp_surface->valid = FALSE;
-    }
-
   if (!rdp_surface->valid &&
       !grd_rdp_damage_detector_invalidate_surface (rdp_surface->detector))
     {
