@@ -329,7 +329,6 @@ take_or_encode_frame_surface_mutex_locked (GrdSessionRdp *session_rdp,
 
   if (rdp_surface->width != width || rdp_surface->height != height)
     {
-      rdp_surface->output_origin_x = rdp_surface->output_origin_y = 0;
       rdp_surface->width = width;
       rdp_surface->height = height;
 

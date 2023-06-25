@@ -43,8 +43,6 @@ typedef struct
 
 struct _GrdRdpSurface
 {
-  uint16_t output_origin_x;
-  uint16_t output_origin_y;
   uint16_t width;
   uint16_t height;
 
