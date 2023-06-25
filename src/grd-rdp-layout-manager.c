@@ -34,6 +34,7 @@ typedef enum
   UPDATE_STATE_AWAIT_CONFIG,
   UPDATE_STATE_PREPARE_SURFACES,
   UPDATE_STATE_AWAIT_STREAMS,
+  UPDATE_STATE_AWAIT_VIDEO_SIZES,
   UPDATE_STATE_START_RENDERING,
 } UpdateState;
 
@@ -70,6 +71,7 @@ struct _GrdRdpLayoutManager
   GHashTable *surface_table;
 
   GHashTable *pending_streams;
+  GHashTable *pending_video_sizes;
 
   GSource *surface_disposal_source;
   GAsyncQueue *disposal_queue;
@@ -147,6 +149,8 @@ update_state_to_string (UpdateState state)
       return "PREPARE_SURFACES";
     case UPDATE_STATE_AWAIT_STREAMS:
       return "AWAIT_STREAMS";
+    case UPDATE_STATE_AWAIT_VIDEO_SIZES:
+      return "AWAIT_VIDEO_SIZES";
     case UPDATE_STATE_START_RENDERING:
       return "START_RENDERING";
     }
@@ -197,6 +201,7 @@ transition_to_state (GrdRdpLayoutManager *layout_manager,
       break;
     case UPDATE_STATE_PREPARE_SURFACES:
     case UPDATE_STATE_AWAIT_STREAMS:
+    case UPDATE_STATE_AWAIT_VIDEO_SIZES:
       break;
     case UPDATE_STATE_START_RENDERING:
       g_source_set_ready_time (layout_manager->layout_update_source, 0);
@@ -291,6 +296,74 @@ on_pipewire_stream_closed (GrdRdpPipeWireStream *pipewire_stream,
                                                       layout_manager);
 }
 
+static SurfaceContext *
+get_surface_context_from_pipewire_stream (GrdRdpLayoutManager  *layout_manager,
+                                          GrdRdpPipeWireStream *pipewire_stream)
+{
+  SurfaceContext *surface_context = NULL;
+  GHashTableIter iter;
+
+  g_hash_table_iter_init (&iter, layout_manager->surface_table);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
+    {
+      if (surface_context->pipewire_stream == pipewire_stream)
+        return surface_context;
+    }
+
+  g_assert_not_reached ();
+}
+
+static void
+on_pipewire_stream_video_resized (GrdRdpPipeWireStream *pipewire_stream,
+                                  uint32_t              width,
+                                  uint32_t              height,
+                                  GrdRdpLayoutManager  *layout_manager)
+{
+  SurfaceContext *surface_context;
+  GrdRdpVirtualMonitor *virtual_monitor;
+  uint32_t stream_id;
+
+  if (layout_manager->state == UPDATE_STATE_FATAL_ERROR)
+    return;
+
+  surface_context = get_surface_context_from_pipewire_stream (layout_manager,
+                                                              pipewire_stream);
+
+  virtual_monitor = surface_context->virtual_monitor;
+  if (virtual_monitor &&
+      (virtual_monitor->width != width || virtual_monitor->height != height))
+    {
+      g_warning ("[RDP] Layout manager: Unexpected video size change of PipeWire "
+                 "stream (Expected: %ux%u, Got: %ux%u). Terminating session",
+                 virtual_monitor->width, virtual_monitor->height, width, height);
+      transition_to_state (layout_manager, UPDATE_STATE_FATAL_ERROR);
+      return;
+    }
+
+  if (surface_context->connector)
+    {
+      g_assert (!layout_manager->current_monitor_config->is_virtual);
+      g_assert (layout_manager->current_monitor_config->monitor_count == 1);
+      g_assert (g_hash_table_size (layout_manager->surface_table) == 1);
+
+      grd_session_rdp_notify_new_desktop_size (layout_manager->session_rdp,
+                                               width, height);
+    }
+
+  stream_id = grd_stream_get_stream_id (surface_context->stream);
+  if (!g_hash_table_remove (layout_manager->pending_video_sizes,
+                            GUINT_TO_POINTER (stream_id)))
+    return;
+
+  g_assert (layout_manager->state == UPDATE_STATE_AWAIT_STREAMS ||
+            layout_manager->state == UPDATE_STATE_AWAIT_VIDEO_SIZES);
+  g_assert (g_hash_table_size (layout_manager->pending_streams) <=
+            g_hash_table_size (layout_manager->pending_video_sizes));
+
+  if (g_hash_table_size (layout_manager->pending_video_sizes) == 0)
+    transition_to_state (layout_manager, UPDATE_STATE_START_RENDERING);
+}
+
 static void
 on_stream_ready (GrdStream           *stream,
                  GrdRdpLayoutManager *layout_manager)
@@ -310,6 +383,8 @@ on_stream_ready (GrdStream           *stream,
                                      GUINT_TO_POINTER (stream_id),
                                      NULL, (gpointer *) &surface_context))
     g_assert_not_reached ();
+
+  g_assert (!surface_context->pipewire_stream);
 
   g_debug ("[RDP] Layout manager: Creating PipeWire stream for node id %u",
            pipewire_node_id);
@@ -335,11 +410,19 @@ on_stream_ready (GrdStream           *stream,
   g_signal_connect (surface_context->pipewire_stream, "closed",
                     G_CALLBACK (on_pipewire_stream_closed),
                     layout_manager);
+  g_signal_connect (surface_context->pipewire_stream, "video-resized",
+                    G_CALLBACK (on_pipewire_stream_video_resized),
+                    layout_manager);
 
   g_hash_table_remove (layout_manager->pending_streams,
                        GUINT_TO_POINTER (stream_id));
+
+  g_assert (g_hash_table_size (layout_manager->pending_streams) <
+            g_hash_table_size (layout_manager->pending_video_sizes));
+  g_assert (g_hash_table_size (layout_manager->pending_video_sizes) > 0);
+
   if (g_hash_table_size (layout_manager->pending_streams) == 0)
-    transition_to_state (layout_manager, UPDATE_STATE_START_RENDERING);
+    transition_to_state (layout_manager, UPDATE_STATE_AWAIT_VIDEO_SIZES);
 }
 
 static void
@@ -594,6 +677,7 @@ grd_rdp_layout_manager_dispose (GObject *object)
   g_clear_pointer (&layout_manager->pending_monitor_config,
                    grd_rdp_monitor_config_free);
 
+  g_clear_pointer (&layout_manager->pending_video_sizes, g_hash_table_unref);
   g_clear_pointer (&layout_manager->pending_streams, g_hash_table_unref);
   g_clear_pointer (&layout_manager->surface_table, g_hash_table_unref);
 
@@ -765,10 +849,16 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
 }
 
 static void
-update_stream_params (SurfaceContext *surface_context)
+update_stream_params (SurfaceContext *surface_context,
+                      uint32_t        stream_id)
 {
+  GrdRdpLayoutManager *layout_manager = surface_context->layout_manager;
+
   g_assert (surface_context->stream);
   g_assert (surface_context->pipewire_stream);
+
+  g_hash_table_add (layout_manager->pending_video_sizes,
+                    GUINT_TO_POINTER (stream_id));
 
   grd_rdp_pipewire_stream_resize (surface_context->pipewire_stream,
                                   surface_context->virtual_monitor);
@@ -784,6 +874,8 @@ create_stream (SurfaceContext *surface_context,
   g_assert (surface_context->virtual_monitor || surface_context->connector);
 
   g_hash_table_add (layout_manager->pending_streams,
+                    GUINT_TO_POINTER (stream_id));
+  g_hash_table_add (layout_manager->pending_video_sizes,
                     GUINT_TO_POINTER (stream_id));
 
   if (surface_context->virtual_monitor)
@@ -803,6 +895,7 @@ create_stream (SurfaceContext *surface_context,
 static UpdateState
 create_or_update_streams (GrdRdpLayoutManager *layout_manager)
 {
+  GrdRdpMonitorConfig *monitor_config = layout_manager->current_monitor_config;
   SurfaceContext *surface_context = NULL;
   GHashTableIter iter;
   gpointer key;
@@ -813,13 +906,22 @@ create_or_update_streams (GrdRdpLayoutManager *layout_manager)
       uint32_t stream_id = GPOINTER_TO_UINT (key);
 
       if (surface_context->stream)
-        update_stream_params (surface_context);
+        update_stream_params (surface_context, stream_id);
       else
         create_stream (surface_context, stream_id);
     }
 
+  if (monitor_config->is_virtual)
+    {
+      grd_session_rdp_notify_new_desktop_size (layout_manager->session_rdp,
+                                               monitor_config->desktop_width,
+                                               monitor_config->desktop_height);
+    }
+
   if (g_hash_table_size (layout_manager->pending_streams) > 0)
     return UPDATE_STATE_AWAIT_STREAMS;
+  if (g_hash_table_size (layout_manager->pending_video_sizes) > 0)
+    return UPDATE_STATE_AWAIT_VIDEO_SIZES;
 
   return UPDATE_STATE_START_RENDERING;
 }
@@ -861,6 +963,7 @@ update_monitor_layout (gpointer user_data)
                            create_or_update_streams (layout_manager));
       break;
     case UPDATE_STATE_AWAIT_STREAMS:
+    case UPDATE_STATE_AWAIT_VIDEO_SIZES:
       break;
     case UPDATE_STATE_START_RENDERING:
       uninhibit_surface_rendering (layout_manager);
@@ -883,6 +986,7 @@ grd_rdp_layout_manager_init (GrdRdpLayoutManager *layout_manager)
     g_hash_table_new_full (NULL, NULL,
                            NULL, (GDestroyNotify) surface_context_free);
   layout_manager->pending_streams = g_hash_table_new (NULL, NULL);
+  layout_manager->pending_video_sizes = g_hash_table_new (NULL, NULL);
   layout_manager->disposal_queue = g_async_queue_new ();
 
   g_mutex_init (&layout_manager->state_mutex);
