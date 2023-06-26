@@ -368,6 +368,34 @@ grd_rdp_layout_manager_on_stream_created (GrdRdpStreamOwner *stream_owner,
                     layout_manager);
 }
 
+static void
+write_virtual_monitor_data (GrdRdpVirtualMonitor *virtual_monitor,
+                            MONITOR_DEF          *monitor)
+{
+  monitor->left = virtual_monitor->pos_x;
+  monitor->top = virtual_monitor->pos_y;
+  monitor->right = monitor->left + virtual_monitor->width - 1;
+  monitor->bottom = monitor->top + virtual_monitor->height - 1;
+
+  if (virtual_monitor->is_primary)
+    monitor->flags = MONITOR_PRIMARY;
+}
+
+static void
+write_connector_data (GrdRdpSurface *rdp_surface,
+                      MONITOR_DEF   *monitor)
+{
+  int32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
+  int32_t surface_height = grd_rdp_surface_get_height (rdp_surface);
+
+  monitor->left = 0;
+  monitor->top = 0;
+  monitor->right = monitor->left + surface_width - 1;
+  monitor->bottom = monitor->top + surface_height - 1;
+
+  monitor->flags = MONITOR_PRIMARY;
+}
+
 void
 grd_rdp_layout_manager_get_current_layout (GrdRdpLayoutManager  *layout_manager,
                                            MONITOR_DEF         **monitors,
@@ -386,33 +414,15 @@ grd_rdp_layout_manager_get_current_layout (GrdRdpLayoutManager  *layout_manager,
   g_hash_table_iter_init (&iter, layout_manager->surface_table);
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
     {
-      GrdRdpSurface *rdp_surface = surface_context->rdp_surface;
-      int32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
-      int32_t surface_height = grd_rdp_surface_get_height (rdp_surface);
-
       if (surface_context->virtual_monitor)
         {
-          (*monitors)[i].left = surface_context->virtual_monitor->pos_x;
-          (*monitors)[i].top = surface_context->virtual_monitor->pos_y;
+          write_virtual_monitor_data (surface_context->virtual_monitor,
+                                      &(*monitors)[i]);
         }
       if (surface_context->connector)
         {
           g_assert (*n_monitors == 1);
-
-          (*monitors)[i].left = 0;
-          (*monitors)[i].top = 0;
-        }
-
-      (*monitors)[i].right = (*monitors)[i].left + surface_width - 1;
-      (*monitors)[i].bottom = (*monitors)[i].top + surface_height - 1;
-
-      if (surface_context->virtual_monitor &&
-          surface_context->virtual_monitor->is_primary)
-        (*monitors)[i].flags = MONITOR_PRIMARY;
-      if (surface_context->connector)
-        {
-          g_assert (*n_monitors == 1);
-          (*monitors)[i].flags = MONITOR_PRIMARY;
+          write_connector_data (surface_context->rdp_surface, &(*monitors)[i]);
         }
 
       ++i;
