@@ -226,6 +226,29 @@ unset_rdp_peer_flag (GrdSessionRdp *session_rdp,
 }
 
 void
+grd_session_rdp_notify_new_desktop_size (GrdSessionRdp *session_rdp,
+                                         uint32_t       desktop_width,
+                                         uint32_t       desktop_height)
+{
+  rdpContext *rdp_context = session_rdp->peer->context;
+  rdpSettings *rdp_settings = rdp_context->settings;
+
+  set_rdp_peer_flag (session_rdp, RDP_PEER_ALL_SURFACES_INVALID);
+
+  if (rdp_settings->SupportGraphicsPipeline)
+    set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
+
+  if (rdp_settings->DesktopWidth == desktop_width &&
+      rdp_settings->DesktopHeight == desktop_height)
+    return;
+
+  rdp_settings->DesktopWidth = desktop_width;
+  rdp_settings->DesktopHeight = desktop_height;
+  if (!rdp_settings->SupportGraphicsPipeline)
+    rdp_context->update->DesktopResize (rdp_context);
+}
+
+void
 grd_session_rdp_notify_graphics_pipeline_reset (GrdSessionRdp *session_rdp)
 {
   set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
