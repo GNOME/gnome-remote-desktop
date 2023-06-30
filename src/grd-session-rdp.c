@@ -57,9 +57,8 @@ typedef enum _RdpPeerFlag
 {
   RDP_PEER_ACTIVATED                  = 1 << 0,
   RDP_PEER_OUTPUT_ENABLED             = 1 << 1,
-  RDP_PEER_ALL_SURFACES_INVALID       = 1 << 2,
-  RDP_PEER_PENDING_GFX_INIT           = 1 << 3,
-  RDP_PEER_PENDING_GFX_GRAPHICS_RESET = 1 << 4,
+  RDP_PEER_PENDING_GFX_INIT           = 1 << 2,
+  RDP_PEER_PENDING_GFX_GRAPHICS_RESET = 1 << 3,
 } RdpPeerFlag;
 
 typedef enum _PointerType
@@ -233,8 +232,6 @@ grd_session_rdp_notify_new_desktop_size (GrdSessionRdp *session_rdp,
   rdpContext *rdp_context = session_rdp->peer->context;
   rdpSettings *rdp_settings = rdp_context->settings;
 
-  set_rdp_peer_flag (session_rdp, RDP_PEER_ALL_SURFACES_INVALID);
-
   if (rdp_settings->SupportGraphicsPipeline)
     set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
 
@@ -259,10 +256,10 @@ grd_session_rdp_notify_graphics_pipeline_ready (GrdSessionRdp *session_rdp)
 {
   GrdRdpLayoutManager *layout_manager = session_rdp->layout_manager;
 
-  set_rdp_peer_flag (session_rdp, RDP_PEER_ALL_SURFACES_INVALID);
   set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
   unset_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
 
+  grd_rdp_layout_manager_invalidate_surfaces (layout_manager);
   grd_rdp_layout_manager_maybe_trigger_render_sources (layout_manager);
 }
 
@@ -317,13 +314,6 @@ take_or_encode_frame_surface_mutex_locked (GrdSessionRdp *session_rdp,
     ++session_metrics->skipped_frames;
 
   g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_release);
-
-  if (is_rdp_peer_flag_set (session_rdp, RDP_PEER_ALL_SURFACES_INVALID))
-    {
-      rdp_surface->valid = FALSE;
-
-      unset_rdp_peer_flag (session_rdp, RDP_PEER_ALL_SURFACES_INVALID);
-    }
 
   if (!rdp_surface->valid &&
       !grd_rdp_damage_detector_invalidate_surface (rdp_surface->detector))
@@ -1927,12 +1917,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
 static BOOL
 rdp_peer_activate (freerdp_peer *peer)
 {
-  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
-  GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
-
   g_debug ("Activating client");
-
-  set_rdp_peer_flag (session_rdp, RDP_PEER_ALL_SURFACES_INVALID);
 
   return TRUE;
 }
