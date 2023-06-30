@@ -870,12 +870,9 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
     }
 
   graphics_pipeline->rfx_context->mode = RLGR1;
-  if (!rdp_surface->valid)
-    {
-      rfx_context_reset (graphics_pipeline->rfx_context,
-                         surface_width, surface_height);
-      rdp_surface->valid = TRUE;
-    }
+  rfx_context_reset (graphics_pipeline->rfx_context,
+                     surface_width, surface_height);
+  rdp_surface->valid = TRUE;
 
   codec_context_id = grd_rdp_gfx_surface_get_codec_context_id (gfx_surface);
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
