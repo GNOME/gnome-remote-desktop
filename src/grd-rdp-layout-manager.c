@@ -541,6 +541,22 @@ grd_rdp_layout_manager_submit_new_monitor_config (GrdRdpLayoutManager *layout_ma
 }
 
 void
+grd_rdp_layout_manager_invalidate_surfaces (GrdRdpLayoutManager *layout_manager)
+{
+  g_autoptr (GMutexLocker) locker = NULL;
+  SurfaceContext *surface_context = NULL;
+  GHashTableIter iter;
+
+  locker = g_mutex_locker_new (&layout_manager->state_mutex);
+  if (layout_manager->state != UPDATE_STATE_AWAIT_CONFIG)
+    return;
+
+  g_hash_table_iter_init (&iter, layout_manager->surface_table);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
+    grd_rdp_surface_invalidate_surface (surface_context->rdp_surface);
+}
+
+void
 grd_rdp_layout_manager_maybe_trigger_render_sources (GrdRdpLayoutManager *layout_manager)
 {
   g_autoptr (GMutexLocker) locker = NULL;

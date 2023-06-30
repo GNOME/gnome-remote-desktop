@@ -43,6 +43,8 @@ void grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager *layout_
 void grd_rdp_layout_manager_submit_new_monitor_config (GrdRdpLayoutManager *layout_manager,
                                                        GrdRdpMonitorConfig *monitor_config);
 
+void grd_rdp_layout_manager_invalidate_surfaces (GrdRdpLayoutManager *layout_manager);
+
 void grd_rdp_layout_manager_maybe_trigger_render_sources (GrdRdpLayoutManager *layout_manager);
 
 gboolean grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager  *layout_manager,
