@@ -570,8 +570,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
   gboolean pending_bw_measure_stop = FALSE;
   int i;
 
-  if (!rdp_surface->valid)
-    rdp_surface->valid = TRUE;
+  rdp_surface->valid = TRUE;
 
   aligned_width = surface_width + (surface_width % 16 ? 16 - surface_width % 16 : 0);
   aligned_height = surface_height + (surface_height % 64 ? 64 - surface_height % 64 : 0);
