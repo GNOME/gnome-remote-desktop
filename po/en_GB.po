@@ -2,15 +2,15 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Zander Brown <zbrown@gnome.org>, 2021.
-# Bruce Cowan <bruce@bcowan.me.uk>, 2022.
+# Bruce Cowan <bruce@bcowan.me.uk>, 2022-2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2022-04-14 22:01+0100\n"
+"POT-Creation-Date: 2023-05-05 14:01+0000\n"
+"PO-Revision-Date: 2023-06-30 19:59+0100\n"
 "Last-Translator: Bruce Cowan <bruce@bcowan.me.uk>\n"
 "Language-Team: English - United Kingdom <en@li.org>\n"
 "Language: en_GB\n"
@@ -18,14 +18,14 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Gtranslator 42.0\n"
+"X-Generator: Poedit 3.3.1\n"
 "X-DL-Team: en_GB\n"
 "X-DL-Module: gnome-remote-desktop\n"
 "X-DL-Branch: master\n"
 "X-DL-Domain: po\n"
 "X-DL-State: Translating\n"
 
-#: src/grd-daemon.c:423
+#: src/grd-daemon.c:513
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Remote Desktop"
 
@@ -51,16 +51,16 @@ msgstr "Refuse"
 msgid "Accept"
 msgstr "Accept"
 
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:53
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:461
 msgid "Commands:\n"
 msgstr "Commands:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:466
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    enable                                   - Enable the RDP backend\n"
@@ -96,7 +96,7 @@ msgstr ""
 "                                               devices\n"
 "\n"
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:485
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    enable                                   - Enable the VNC backend\n"
@@ -126,16 +126,25 @@ msgstr ""
 "                                               devices\n"
 "\n"
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:500
+#| msgid ""
+#| "  status [--show-credentials]                - Show current status\n"
+#| "\n"
+#| "Options:\n"
+#| "  --help                                     - Print this help text\n"
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
@@ -143,14 +152,28 @@ msgid "Whether the RDP backend is enabled or not"
 msgstr "Whether the RDP backend is enabled or not"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
-msgstr "If set to to 'true' the RDP backend will be initialised."
+#| msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr "If set to 'true' the RDP backend will be initialised."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Screenshare mode of RDP connections"
 msgstr "Screenshare mode of RDP connections"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#| msgid ""
+#| "The screenshare mode specifies, whether the RDP backend mirrors the "
+#| "primary screen, or whether a virtual monitor is created. For the initial "
+#| "resolution of the virtual monitor, the RDP backend uses either the client "
+#| "core data ([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-"
+#| "RDPBCGR] 2.2.1.3.6), depending on what is available. When using a remote "
+#| "desktop session with a virtual monitor, clients can resize the resolution "
+#| "of the virtual monitor during a session with the Display Control Channel "
+#| "Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+#| "primary - Record the primary monitor of the current user session. * "
+#| "extend - Create a new virtual monitor and use it for the remote desktop "
+#| "session. The resolution of this virtual monitor is derived from the "
+#| "monitor configuration, submitted by the remote desktop client."
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -158,10 +181,10 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
@@ -171,10 +194,10 @@ msgstr ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 
@@ -213,8 +236,8 @@ msgid "Whether the VNC backend is enabled or not"
 msgstr "Whether the VNC backend is enabled or not"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
-msgstr "If set to to 'true' the VNC backend will be initialised."
+msgid "If set to 'true' the VNC backend will be initialized."
+msgstr "If set to 'true' the VNC backend will be initialised."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
@@ -241,3 +264,46 @@ msgstr ""
 "prompting the user for each new connection, requiring a person with physical "
 "access to the workstation to explicitly approve the new connection. * "
 "password - by requiring the remote client to provide a known password"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Screenshare mode of VNC connections"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#| msgid ""
+#| "The screenshare mode specifies, whether the RDP backend mirrors the "
+#| "primary screen, or whether a virtual monitor is created. For the initial "
+#| "resolution of the virtual monitor, the RDP backend uses either the client "
+#| "core data ([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-"
+#| "RDPBCGR] 2.2.1.3.6), depending on what is available. When using a remote "
+#| "desktop session with a virtual monitor, clients can resize the resolution "
+#| "of the virtual monitor during a session with the Display Control Channel "
+#| "Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+#| "primary - Record the primary monitor of the current user session. * "
+#| "extend - Create a new virtual monitor and use it for the remote desktop "
+#| "session. The resolution of this virtual monitor is derived from the "
+#| "monitor configuration, submitted by the remote desktop client."
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
