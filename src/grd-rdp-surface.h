@@ -95,6 +95,8 @@ void grd_rdp_surface_set_size (GrdRdpSurface *rdp_surface,
 void grd_rdp_surface_set_mapping (GrdRdpSurface        *rdp_surface,
                                   GrdRdpSurfaceMapping *surface_mapping);
 
+void grd_rdp_surface_invalidate_surface (GrdRdpSurface *rdp_surface);
+
 void grd_rdp_surface_inhibit_rendering (GrdRdpSurface *rdp_surface);
 
 void grd_rdp_surface_uninhibit_rendering (GrdRdpSurface *rdp_surface);
