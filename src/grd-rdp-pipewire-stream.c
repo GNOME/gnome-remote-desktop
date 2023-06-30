@@ -478,7 +478,6 @@ on_stream_param_changed (void                 *user_data,
     }
 
   grd_rdp_surface_set_size (stream->rdp_surface, width, height);
-  stream->rdp_surface->valid = FALSE;
   g_signal_emit (stream, signals[VIDEO_RESIZED], 0, width, height);
 
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
