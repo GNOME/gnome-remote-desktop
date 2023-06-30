@@ -301,35 +301,11 @@ grd_session_rdp_release_stream_id (GrdSessionRdp *session_rdp,
 }
 
 static void
-maybe_resize_graphics_output_buffer (GrdSessionRdp *session_rdp,
-                                     uint32_t       width,
-                                     uint32_t       height)
-{
-  freerdp_peer *peer = session_rdp->peer;
-  rdpSettings *rdp_settings = peer->settings;
-
-  if (rdp_settings->DesktopWidth == width &&
-      rdp_settings->DesktopHeight == height)
-    return;
-
-  rdp_settings->DesktopWidth = width;
-  rdp_settings->DesktopHeight = height;
-  if (rdp_settings->SupportGraphicsPipeline)
-    set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
-  else
-    peer->update->DesktopResize (peer->context);
-
-  set_rdp_peer_flag (session_rdp, RDP_PEER_ALL_SURFACES_INVALID);
-}
-
-static void
 take_or_encode_frame_surface_mutex_locked (GrdSessionRdp *session_rdp,
                                            GrdRdpSurface *rdp_surface,
                                            GrdRdpBuffer  *buffer)
 {
   SessionMetrics *session_metrics = &session_rdp->session_metrics;
-  uint16_t width = grd_rdp_buffer_get_width (buffer);
-  uint16_t height = grd_rdp_buffer_get_height (buffer);
 
   if (!session_metrics->received_first_frame)
     {
@@ -341,7 +317,6 @@ take_or_encode_frame_surface_mutex_locked (GrdSessionRdp *session_rdp,
     ++session_metrics->skipped_frames;
 
   g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_release);
-  maybe_resize_graphics_output_buffer (session_rdp, width, height);
 
   if (is_rdp_peer_flag_set (session_rdp, RDP_PEER_ALL_SURFACES_INVALID))
     {
