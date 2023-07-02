@@ -52,7 +52,6 @@ struct _GrdRdpSurface
   GrdSessionRdp *session_rdp;
 
   GMutex surface_mutex;
-  GrdRdpBuffer *new_framebuffer;
   GrdRdpBuffer *pending_framebuffer;
   GrdRdpDamageDetector *detector;
 

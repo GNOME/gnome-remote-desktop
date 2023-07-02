@@ -313,102 +313,48 @@ grd_session_rdp_release_stream_id (GrdSessionRdp *session_rdp,
   g_hash_table_remove (session_rdp->stream_table, GUINT_TO_POINTER (stream_id));
 }
 
-static void
-take_or_encode_frame_surface_mutex_locked (GrdSessionRdp *session_rdp,
-                                           GrdRdpSurface *rdp_surface,
-                                           GrdRdpBuffer  *buffer)
-{
-  SessionMetrics *session_metrics = &session_rdp->session_metrics;
-
-  if (!session_metrics->received_first_frame)
-    {
-      session_metrics->first_frame_ready_us = g_get_monotonic_time ();
-      session_metrics->received_first_frame = TRUE;
-      g_debug ("[RDP] Received first frame");
-    }
-  if (!session_metrics->sent_first_frame && rdp_surface->pending_framebuffer)
-    ++session_metrics->skipped_frames;
-
-  g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_release);
-
-  if (!rdp_surface->valid &&
-      !grd_rdp_damage_detector_invalidate_surface (rdp_surface->detector))
-    {
-      grd_rdp_buffer_release (buffer);
-      grd_session_rdp_notify_error (
-        session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
-      return;
-    }
-
-  if (is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) &&
-      is_rdp_peer_flag_set (session_rdp, RDP_PEER_OUTPUT_ENABLED) &&
-      !is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT) &&
-      !grd_rdp_surface_is_rendering_inhibited (rdp_surface) &&
-      !rdp_surface->encoding_suspended)
-    {
-      if (!grd_rdp_damage_detector_submit_new_framebuffer (rdp_surface->detector,
-                                                           buffer))
-        {
-          grd_rdp_buffer_release (buffer);
-          grd_session_rdp_notify_error (
-            session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
-          return;
-        }
-
-      if (grd_rdp_damage_detector_is_region_damaged (rdp_surface->detector))
-        rdp_peer_refresh_region (session_rdp, rdp_surface, buffer);
-    }
-  else
-    {
-      rdp_surface->pending_framebuffer = buffer;
-    }
-}
-
-void
-grd_session_rdp_maybe_encode_new_frame (GrdSessionRdp *session_rdp,
-                                        GrdRdpSurface *rdp_surface)
-{
-  GrdRdpBuffer *new_framebuffer;
-
-  g_mutex_lock (&rdp_surface->surface_mutex);
-  if (!rdp_surface->new_framebuffer)
-    {
-      g_mutex_unlock (&rdp_surface->surface_mutex);
-      return;
-    }
-
-  new_framebuffer = g_steal_pointer (&rdp_surface->new_framebuffer);
-  take_or_encode_frame_surface_mutex_locked (session_rdp, rdp_surface,
-                                             new_framebuffer);
-  g_mutex_unlock (&rdp_surface->surface_mutex);
-}
-
 void
 grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
                                             GrdRdpSurface *rdp_surface)
 {
-  GrdRdpBuffer *pending_framebuffer;
+  g_autoptr (GMutexLocker) locker = NULL;
+  GrdRdpBuffer *buffer;
 
   g_assert (session_rdp->peer);
 
-  if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) ||
-      !is_rdp_peer_flag_set (session_rdp, RDP_PEER_OUTPUT_ENABLED) ||
-      is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT))
+  locker = g_mutex_locker_new (&rdp_surface->surface_mutex);
+  if (!rdp_surface->pending_framebuffer)
     return;
 
-  g_mutex_lock (&rdp_surface->surface_mutex);
-  g_assert (!rdp_surface->new_framebuffer);
+  if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) ||
+      !is_rdp_peer_flag_set (session_rdp, RDP_PEER_OUTPUT_ENABLED) ||
+      is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT) ||
+      grd_rdp_surface_is_rendering_inhibited (rdp_surface) ||
+      rdp_surface->encoding_suspended)
+    return;
 
-  if (!rdp_surface->pending_framebuffer)
+  if (!rdp_surface->valid &&
+      !grd_rdp_damage_detector_invalidate_surface (rdp_surface->detector))
     {
-      g_mutex_unlock (&rdp_surface->surface_mutex);
+      grd_session_rdp_notify_error (session_rdp,
+                                    GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
       return;
     }
 
-  pending_framebuffer = g_steal_pointer (&rdp_surface->pending_framebuffer);
-  take_or_encode_frame_surface_mutex_locked (session_rdp, rdp_surface,
-                                             pending_framebuffer);
-  g_mutex_unlock (&rdp_surface->surface_mutex);
+  buffer = g_steal_pointer (&rdp_surface->pending_framebuffer);
+  if (!grd_rdp_damage_detector_submit_new_framebuffer (rdp_surface->detector,
+                                                       buffer))
+    {
+      grd_rdp_buffer_release (buffer);
+      grd_session_rdp_notify_error (session_rdp,
+                                    GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+      return;
+    }
+
+  if (!grd_rdp_damage_detector_is_region_damaged (rdp_surface->detector))
+    return;
+
+  rdp_peer_refresh_region (session_rdp, rdp_surface, buffer);
 }
 
 static gboolean

@@ -127,7 +127,6 @@ grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
 {
   g_assert (!rdp_surface->gfx_surface);
 
-  g_assert (!rdp_surface->new_framebuffer);
   g_assert (!rdp_surface->pending_framebuffer);
 
   if (rdp_surface->pending_render_source)

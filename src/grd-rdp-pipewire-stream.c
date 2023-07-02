@@ -281,6 +281,8 @@ static gboolean
 render_frame (gpointer user_data)
 {
   GrdRdpPipeWireStream *stream = GRD_RDP_PIPEWIRE_STREAM (user_data);
+  GrdRdpSurface *rdp_surface = stream->rdp_surface;
+  gboolean had_frame = FALSE;
   GrdRdpFrame *frame;
 
   g_mutex_lock (&stream->frame_mutex);
@@ -288,19 +290,21 @@ render_frame (gpointer user_data)
 
   if (frame)
     {
-      g_mutex_lock (&stream->rdp_surface->surface_mutex);
-      g_assert (!stream->rdp_surface->new_framebuffer);
+      g_mutex_lock (&rdp_surface->surface_mutex);
+      had_frame = !!rdp_surface->pending_framebuffer;
+      g_clear_pointer (&rdp_surface->pending_framebuffer,
+                       grd_rdp_buffer_release);
 
-      stream->rdp_surface->new_framebuffer = g_steal_pointer (&frame->buffer);
-      g_mutex_unlock (&stream->rdp_surface->surface_mutex);
+      rdp_surface->pending_framebuffer = g_steal_pointer (&frame->buffer);
+      g_mutex_unlock (&rdp_surface->surface_mutex);
     }
   g_mutex_unlock (&stream->frame_mutex);
 
   if (!frame)
     return G_SOURCE_CONTINUE;
 
-  grd_session_rdp_maybe_encode_new_frame (stream->session_rdp,
-                                          stream->rdp_surface);
+  grd_session_rdp_notify_frame (stream->session_rdp, had_frame);
+  grd_session_rdp_maybe_encode_pending_frame (stream->session_rdp, rdp_surface);
 
   grd_rdp_frame_unref (frame);
 
@@ -427,8 +431,6 @@ release_all_buffers (GrdRdpPipeWireStream *stream)
   g_mutex_unlock (&stream->frame_mutex);
 
   g_mutex_lock (&stream->rdp_surface->surface_mutex);
-  g_clear_pointer (&stream->rdp_surface->new_framebuffer,
-                   grd_rdp_buffer_release);
   g_clear_pointer (&stream->rdp_surface->pending_framebuffer,
                    grd_rdp_buffer_release);
   g_mutex_unlock (&stream->rdp_surface->surface_mutex);
