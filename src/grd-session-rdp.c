@@ -246,6 +246,22 @@ grd_session_rdp_notify_new_desktop_size (GrdSessionRdp *session_rdp,
 }
 
 void
+grd_session_rdp_notify_frame (GrdSessionRdp *session_rdp,
+                              gboolean       replaced_previous_frame)
+{
+  SessionMetrics *session_metrics = &session_rdp->session_metrics;
+
+  if (!session_metrics->received_first_frame)
+    {
+      session_metrics->first_frame_ready_us = g_get_monotonic_time ();
+      session_metrics->received_first_frame = TRUE;
+      g_debug ("[RDP] Received first frame");
+    }
+  if (!session_metrics->sent_first_frame && replaced_previous_frame)
+    ++session_metrics->skipped_frames;
+}
+
+void
 grd_session_rdp_notify_graphics_pipeline_reset (GrdSessionRdp *session_rdp)
 {
   set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
