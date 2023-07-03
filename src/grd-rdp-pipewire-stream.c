@@ -65,6 +65,12 @@ typedef struct
   gboolean is_locked;
 } BufferContext;
 
+typedef struct
+{
+  GMutex stream_mutex;
+  GrdRdpPipeWireStream *stream;
+} StreamContext;
+
 struct _GrdRdpFrame
 {
   gatomicrefcount refcount;
@@ -133,6 +139,9 @@ struct _GrdRdpPipeWireStream
   struct spa_hook pipewire_registry_listener;
 
   GrdRdpBufferPool *buffer_pool;
+
+  StreamContext *frame_context;
+  StreamContext *pointer_context;
 
   GSource *frame_render_source;
   GMutex frame_mutex;
@@ -210,6 +219,37 @@ maybe_release_pipewire_buffer_lock (GrdRdpPipeWireStream *stream,
   g_mutex_unlock (&buffer_context->buffer_mutex);
 }
 
+static StreamContext *
+stream_context_new (GrdRdpPipeWireStream *stream)
+{
+  StreamContext *stream_context;
+
+  stream_context = g_new0 (StreamContext, 1);
+  stream_context->stream = stream;
+
+  g_mutex_init (&stream_context->stream_mutex);
+
+  return stream_context;
+}
+
+static void
+stream_context_free (gpointer data)
+{
+  StreamContext *stream_context = data;
+
+  g_mutex_clear (&stream_context->stream_mutex);
+
+  g_free (stream_context);
+}
+
+static void
+stream_context_release_stream (StreamContext *stream_context)
+{
+  g_mutex_lock (&stream_context->stream_mutex);
+  stream_context->stream = NULL;
+  g_mutex_unlock (&stream_context->stream_mutex);
+}
+
 static GrdRdpFrame *
 grd_rdp_frame_new (GrdRdpPipeWireStream     *stream,
                    GrdRdpFrameReadyCallback  callback,
@@ -280,10 +320,19 @@ grd_rdp_pipewire_stream_resize (GrdRdpPipeWireStream *stream,
 static gboolean
 render_frame (gpointer user_data)
 {
-  GrdRdpPipeWireStream *stream = GRD_RDP_PIPEWIRE_STREAM (user_data);
-  GrdRdpSurface *rdp_surface = stream->rdp_surface;
+  StreamContext *stream_context = user_data;
+  g_autoptr (GMutexLocker) locker = NULL;
+  GrdRdpPipeWireStream *stream;
+  GrdRdpSurface *rdp_surface;
   gboolean had_frame = FALSE;
   GrdRdpFrame *frame;
+
+  locker = g_mutex_locker_new (&stream_context->stream_mutex);
+  if (!stream_context->stream)
+    return G_SOURCE_REMOVE;
+
+  stream = stream_context->stream;
+  rdp_surface = stream->rdp_surface;
 
   g_mutex_lock (&stream->frame_mutex);
   frame = g_steal_pointer (&stream->pending_frame);
@@ -314,16 +363,25 @@ render_frame (gpointer user_data)
 static gboolean
 render_mouse_pointer (gpointer user_data)
 {
-  GrdRdpPipeWireStream *stream = user_data;
+  StreamContext *stream_context = user_data;
   g_autoptr (GMutexLocker) locker = NULL;
+  GrdRdpPipeWireStream *stream;
   RdpPointer *rdp_pointer;
 
-  locker = g_mutex_locker_new (&stream->pointer_mutex);
+  locker = g_mutex_locker_new (&stream_context->stream_mutex);
+  if (!stream_context->stream)
+    return G_SOURCE_REMOVE;
+
+  stream = stream_context->stream;
+  g_mutex_lock (&stream->pointer_mutex);
   if (!stream->pending_pointer)
-    return G_SOURCE_CONTINUE;
+    {
+      g_mutex_unlock (&stream->pointer_mutex);
+      return G_SOURCE_CONTINUE;
+    }
 
   rdp_pointer = g_steal_pointer (&stream->pending_pointer);
-  g_clear_pointer (&locker, g_mutex_locker_free);
+  g_mutex_unlock (&stream->pointer_mutex);
 
   if (rdp_pointer->pointer_bitmap)
     {
@@ -363,17 +421,25 @@ static void
 create_render_sources (GrdRdpPipeWireStream *stream,
                        GMainContext         *render_context)
 {
+  StreamContext *frame_context, *pointer_context;
+
+  frame_context = stream_context_new (stream);
+  stream->frame_context = frame_context;
+
   stream->frame_render_source = g_source_new (&render_source_funcs,
                                               sizeof (GSource));
-  g_source_set_callback (stream->frame_render_source,
-                         render_frame, stream, NULL);
+  g_source_set_callback (stream->frame_render_source, render_frame,
+                         frame_context, stream_context_free);
   g_source_set_ready_time (stream->frame_render_source, -1);
   g_source_attach (stream->frame_render_source, render_context);
 
+  pointer_context = stream_context_new (stream);
+  stream->pointer_context = pointer_context;
+
   stream->pointer_render_source = g_source_new (&render_source_funcs,
                                                 sizeof (GSource));
-  g_source_set_callback (stream->pointer_render_source,
-                         render_mouse_pointer, stream, NULL);
+  g_source_set_callback (stream->pointer_render_source, render_mouse_pointer,
+                         pointer_context, stream_context_free);
   g_source_set_ready_time (stream->pointer_render_source, -1);
   g_source_attach (stream->pointer_render_source, render_context);
 }
@@ -1317,6 +1383,9 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
       g_source_destroy (stream->pipewire_source);
       g_clear_pointer (&stream->pipewire_source, g_source_unref);
     }
+
+  stream_context_release_stream (stream->pointer_context);
+  stream_context_release_stream (stream->frame_context);
 
   if (stream->pointer_render_source)
     {
