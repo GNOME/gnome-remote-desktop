@@ -23,8 +23,6 @@
 
 #include <cairo/cairo.h>
 
-#define CLAMP_DESKTOP_SIZE(value) MAX (MIN (value, 8192), 200)
-
 static uint32_t
 sanitize_value (uint32_t value,
                 uint32_t lower_bound,
@@ -83,8 +81,8 @@ write_sanitized_monitor_data (GrdRdpVirtualMonitor  *monitor,
 
   monitor->pos_x = pos_x;
   monitor->pos_y = pos_y;
-  monitor->width = CLAMP_DESKTOP_SIZE (width);
-  monitor->height = CLAMP_DESKTOP_SIZE (height);
+  monitor->width = width;
+  monitor->height = height;
   monitor->is_primary = is_primary;
 
   monitor->physical_width = sanitize_value (physical_width, 10, 10000);
