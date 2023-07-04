@@ -1548,6 +1548,14 @@ rdp_peer_capabilities (freerdp_peer *peer)
       return FALSE;
     }
 
+  if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND)
+    {
+      freerdp_settings_set_uint32 (rdp_settings, FreeRDP_DesktopWidth,
+                                   monitor_config->desktop_width);
+      freerdp_settings_set_uint32 (rdp_settings, FreeRDP_DesktopHeight,
+                                   monitor_config->desktop_height);
+    }
+
   if (monitor_config->is_virtual)
     g_debug ("[RDP] Remote Desktop session will use virtual monitors");
   else
@@ -1760,12 +1768,16 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   GSocket *socket = g_socket_connection_get_socket (session_rdp->connection);
   g_autofree char *server_cert = NULL;
   g_autofree char *server_key = NULL;
+  gboolean use_client_configs;
   freerdp_peer *peer;
   rdpInput *rdp_input;
   RdpPeerContext *rdp_peer_context;
   rdpSettings *rdp_settings;
   rdpCertificate *rdp_certificate;
   rdpPrivateKey *rdp_private_key;
+
+  use_client_configs = session_rdp->screen_share_mode ==
+                       GRD_RDP_SCREEN_SHARE_MODE_EXTEND;
 
   g_debug ("Initialize RDP session");
 
@@ -1867,6 +1879,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   freerdp_settings_set_bool (rdp_settings, FreeRDP_FastPathOutput, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_NetworkAutoDetect, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_RefreshRect, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_SupportMonitorLayoutPdu,
+                             use_client_configs);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_SupportMultitransport, FALSE);
   freerdp_settings_set_uint32 (rdp_settings, FreeRDP_VCFlags, VCCAPS_COMPR_SC);
   freerdp_settings_set_uint32 (rdp_settings, FreeRDP_VCChunkSize, 16256);
