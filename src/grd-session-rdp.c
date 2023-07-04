@@ -1743,7 +1743,7 @@ rdp_peer_capabilities (freerdp_peer *peer)
 
   if (!rdp_settings->DesktopResize)
     {
-      g_warning ("Client doesn't support resizing, closing connection");
+      g_warning ("Client doesn't support desktop resizing, closing connection");
       return FALSE;
     }
 
