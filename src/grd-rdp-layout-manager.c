@@ -776,6 +776,8 @@ dispose_unneeded_surfaces (GrdRdpLayoutManager *layout_manager)
 
   n_surfaces_to_dispose = g_hash_table_size (layout_manager->surface_table) -
                           n_target_surfaces;
+  g_debug ("[RDP] Layout manager: Disposing %u virtual monitor(s)",
+           n_surfaces_to_dispose);
 
   g_hash_table_iter_init (&iter, layout_manager->surface_table);
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context) &&
