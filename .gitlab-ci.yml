@@ -100,13 +100,7 @@ test-gnome-remote-desktop:
   stage: test
   dependencies:
     - build-gnome-remote-desktop
-  variables:
-    XDG_RUNTIME_DIR: "$CI_PROJECT_DIR/runtime-dir"
-    GSETTINGS_SCHEMA_DIR: "$CI_PROJECT_DIR/build/src"
-    GSETTINGS_BACKEND: "keyfile"
   script:
-    - mkdir -m 700 $XDG_RUNTIME_DIR
-    - glib-compile-schemas $GSETTINGS_SCHEMA_DIR
-    - dbus-run-session -- ./.gitlab-ci/run-tests.sh
+    - meson test -C build --no-rebuild --verbose --no-stdsplit -t 10
   needs:
     - build-gnome-remote-desktop
