@@ -1,4 +1,50 @@
+sh = find_program('sh', required: true)
+prepare_test_environment = find_program('prepare-test-environment.sh', required: true)
+dbus_run_session = find_program('dbus-run-session', required: true)
+
+add_test_setup('default',
+  is_default: true,
+  exe_wrapper: prepare_test_environment,
+  env: {
+    'TEST_SRCDIR': top_srcdir,
+    'TEST_BUILDDIR': builddir,
+    'NO_AT_BRIDGE': '1',
+    'DBUS_RUN_SESSION_BIN': dbus_run_session.full_path(),
+  },
+)
+
+assert(have_rdp or have_vnc)
+
+
+pipewire_test_runner = find_program('pipewire-test-runner.sh', required: true)
+pipewire = find_program('pipewire', required: true)
+wireplumber = find_program('wireplumber', required: true)
+mutter = find_program('mutter', required: true)
+
+integration_tests_env = environment()
+integration_tests_env.set('PIPEWIRE_BIN', pipewire.full_path())
+integration_tests_env.set('WIREPLUMBER_BIN', wireplumber.full_path())
+integration_tests_env.set('MUTTER_BIN', mutter.full_path())
+integration_tests_env.set('GSETTINGS_SCHEMA_DIR', fs.parent(compiled_schemas.full_path()))
+
+test_depends = [compiled_schemas]
+
 if have_rdp
+  test_rsa_data = custom_target('test-rsa-data',
+    output: [
+      'tls.crt',
+      'tls.key',
+    ],
+    command: [
+      find_program('openssl'),
+      'req', '-new', '-newkey', 'rsa:4096',
+      '-days', '720', '-nodes', '-x509',
+      '-subj', '/C=DE/ST=NONE/L=NONE/O=GNOME/CN=gnome.org',
+      '-out', '@OUTPUT0@',
+      '-keyout', '@OUTPUT1@',
+    ],
+  )
+
   test_client_rdp = executable(
     'test-client-rdp',
     files(['test-client-rdp.c']),
@@ -9,17 +55,29 @@ if have_rdp
     include_directories: [configinc],
     install: false)
 
-  test_runner = find_program('rdp-test-runner.sh')
+  test_env = integration_tests_env
+  test_env.set('WLOG_LEVEL', 'DEBUG')
+  test_env.set('G_MESSAGES_DEBUG', 'all')
+  test_file = find_program('run-rdp-tests.py')
 
-  test_env = environment()
-  test_env.set('TEST_SRCDIR', top_srcdir)
-  test_env.set('TEST_BUILDDIR', builddir)
-  test_env.set('NO_AT_BRIDGE', '1')
-
-  test('gnome-remote-desktop/rdp', test_runner,
+  test('gnome-remote-desktop/rdp', sh,
+    args: [
+      pipewire_test_runner.full_path(),
+      '--enable-rdp',
+      '--rdp-tls-cert', test_rsa_data[0].full_path(),
+      '--rdp-tls-key', test_rsa_data[1].full_path(),
+      '--',
+      dbus_run_session.full_path(),
+      '--',
+      test_file.full_path(),
+    ],
     env: test_env,
+    depends: [
+      test_depends,
+      test_rsa_data,
+    ],
     is_parallel: false,
-    timeout: 10,
+    timeout: 20,
   )
 endif
 
@@ -32,17 +90,21 @@ if have_vnc
     include_directories: [configinc],
     install: false)
 
-  test_runner = find_program('vnc-test-runner.sh')
+  test_file = find_program('run-vnc-tests.py')
 
-  test_env = environment()
-  test_env.set('TEST_SRCDIR', top_srcdir)
-  test_env.set('TEST_BUILDDIR', builddir)
-  test_env.set('NO_AT_BRIDGE', '1')
-
-  test('gnome-remote-desktop/vnc', test_runner,
-    env: test_env,
+  test('gnome-remote-desktop/vnc', sh,
+    args: [
+      pipewire_test_runner.full_path(),
+      '--enable-vnc',
+      '--',
+      dbus_run_session.full_path(),
+      '--',
+      test_file.full_path(),
+    ],
+    env: integration_tests_env,
+    depends: test_depends,
     is_parallel: false,
-    timeout: 10,
+    timeout: 20,
   )
 endif
 

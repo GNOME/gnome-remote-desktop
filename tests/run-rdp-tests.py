@@ -70,7 +70,8 @@ def remote_desktop_name_appeared_cb(name):
 def start_mutter():
   global mutter
   print("Starting mutter")
-  mutter = subprocess.Popen(['mutter', '--headless', '--wayland', '--no-x11'],
+  mutter_path = os.getenv('MUTTER_BIN', 'mutter')
+  mutter = subprocess.Popen([mutter_path, '--headless', '--wayland', '--no-x11'],
                             stderr=subprocess.STDOUT)
 
 def stop_mutter():

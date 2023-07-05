@@ -12,6 +12,7 @@ xkbcommon_req = '>= 1.0.0'
 
 gnome = import('gnome')
 i18n  = import('i18n')
+fs  = import('fs')
 
 cc = meson.get_compiler('c')
 
