@@ -191,6 +191,7 @@ transition_to_state (GrdRdpLayoutManager *layout_manager,
       break;
     case UPDATE_STATE_AWAIT_CONFIG:
       g_debug ("[RDP] Layout manager: Finished applying new monitor config");
+      grd_rdp_layout_manager_maybe_trigger_render_sources (layout_manager);
       g_source_set_ready_time (layout_manager->layout_update_source, 0);
       break;
     case UPDATE_STATE_PREPARE_SURFACES:
@@ -815,7 +816,6 @@ update_monitor_layout (gpointer user_data)
       break;
     case UPDATE_STATE_START_RENDERING:
       uninhibit_surface_rendering (layout_manager);
-      grd_rdp_layout_manager_maybe_trigger_render_sources (layout_manager);
 
       transition_to_state (layout_manager, UPDATE_STATE_AWAIT_CONFIG);
       break;
