@@ -1052,7 +1052,9 @@ out:
     pw_stream_queue_buffer (stream->pipewire_stream, buffer);
 
   g_source_set_ready_time (stream->render_source, 0);
-  maybe_release_pipewire_buffer_lock (stream, buffer);
+
+  if (buffer)
+    maybe_release_pipewire_buffer_lock (stream, buffer);
 
   g_clear_pointer (&frame, grd_rdp_frame_unref);
 }
