@@ -1661,6 +1661,9 @@ rdp_suppress_output (rdpContext         *rdp_context,
   GrdRdpLayoutManager *layout_manager = session_rdp->layout_manager;
   rdpSettings *rdp_settings = session_rdp->peer->settings;
 
+  if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED))
+    return TRUE;
+
   if (allow)
     set_rdp_peer_flag (session_rdp, RDP_PEER_OUTPUT_ENABLED);
   else
