@@ -2059,7 +2059,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdp_settings->HasHorizontalWheel = TRUE;
   rdp_settings->NetworkAutoDetect = TRUE;
   rdp_settings->PointerCacheSize = 100;
-  rdp_settings->RefreshRect = TRUE;
+  rdp_settings->RefreshRect = FALSE;
   rdp_settings->RemoteConsoleAudio = TRUE;
   rdp_settings->RemoteFxCodec = TRUE;
   rdp_settings->RemoteFxImageCodec = TRUE;
