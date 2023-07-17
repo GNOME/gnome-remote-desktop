@@ -212,7 +212,7 @@ on_mutter_remote_desktop_proxy_acquired (GObject      *object,
   GrdDBusMutterRemoteDesktop *proxy;
   GError *error = NULL;
 
-  proxy = grd_dbus_mutter_remote_desktop_proxy_new_for_bus_finish (result, &error);
+  proxy = grd_dbus_mutter_remote_desktop_proxy_new_finish (result, &error);
   if (!proxy)
     {
       g_warning ("Failed to create remote desktop proxy: %s", error->message);
@@ -235,7 +235,7 @@ on_mutter_screen_cast_proxy_acquired (GObject      *object,
   GrdDBusMutterScreenCast *proxy;
   GError *error = NULL;
 
-  proxy = grd_dbus_mutter_screen_cast_proxy_new_for_bus_finish (result, &error);
+  proxy = grd_dbus_mutter_screen_cast_proxy_new_finish (result, &error);
   if (!proxy)
     {
       g_warning ("Failed to create screen cast proxy: %s", error->message);
