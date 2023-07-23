@@ -106,11 +106,14 @@ builddir = meson.current_build_dir()
 
 subdir('data')
 subdir('src')
-subdir('tests')
 subdir('po')
 
 if get_option('man')
   subdir('man')
+endif
+
+if get_option('tests')
+  subdir('tests')
 endif
 
 gnome.post_install(
