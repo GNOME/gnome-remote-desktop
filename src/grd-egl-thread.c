@@ -866,7 +866,7 @@ download_in_impl (gpointer data,
 {
   GrdEglThread *egl_thread = data;
   GrdEglTaskDownload *task = user_data;
-  EGLImageKHR egl_image;
+  EGLImageKHR egl_image = EGL_NO_IMAGE;
   gboolean success = FALSE;
   uint32_t buffer_size;
   GLuint tex = 0;
