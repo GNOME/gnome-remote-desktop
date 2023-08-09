@@ -221,6 +221,20 @@ grd_settings_get_rdp_server_key (GrdSettings *settings)
   return GRD_SETTINGS_GET_CLASS (settings)->get_rdp_server_key (settings);
 }
 
+void
+grd_settings_override_rdp_server_cert (GrdSettings *settings,
+                                       const char  *cert)
+{
+  GRD_SETTINGS_GET_CLASS (settings)->override_rdp_server_cert (settings, cert);
+}
+
+void
+grd_settings_override_rdp_server_key (GrdSettings *settings,
+                                      const char  *key)
+{
+  GRD_SETTINGS_GET_CLASS (settings)->override_rdp_server_key (settings, key);
+}
+
 GrdVncAuthMethod
 grd_settings_get_vnc_auth_method (GrdSettings *settings)
 {

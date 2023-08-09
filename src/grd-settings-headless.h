@@ -27,6 +27,7 @@
 G_DECLARE_FINAL_TYPE (GrdSettingsHeadless, grd_settings_headless,
                       GRD, SETTINGS_HEADLESS, GrdSettings)
 
-GrdSettingsHeadless *grd_settings_headless_new (GrdContext *context);
+GrdSettingsHeadless *grd_settings_headless_new (GrdContext *context,
+                                                gboolean    use_gsettings);
 
 #endif /* GRD_SETTINGS_HEADLESS_H */

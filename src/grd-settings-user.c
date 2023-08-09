@@ -97,17 +97,31 @@ update_rdp_screen_share_mode (GrdSettingsUser *settings)
 static void
 update_rdp_tls_cert (GrdSettingsUser *settings)
 {
+  g_autoptr (GError) error = NULL;
+  g_autofree char *cert_file = NULL;
+
+  cert_file = g_settings_get_string (settings->rdp.settings,
+                                     "tls-cert");
+
   g_clear_pointer (&settings->rdp.server_cert, g_free);
-  settings->rdp.server_cert = g_settings_get_string (settings->rdp.settings,
-                                                     "tls-cert");
+
+  if (!g_file_get_contents (cert_file, &settings->rdp.server_cert, NULL, &error))
+    g_warning ("Error reading server certificate: %s", error->message);
 }
 
 static void
 update_rdp_tls_key (GrdSettingsUser *settings)
 {
+  g_autoptr (GError) error = NULL;
+  g_autofree char *key_file = NULL;
+
+  key_file = g_settings_get_string (settings->rdp.settings,
+                                    "tls-key");
+
   g_clear_pointer (&settings->rdp.server_key, g_free);
-  settings->rdp.server_key = g_settings_get_string (settings->rdp.settings,
-                                                    "tls-key");
+
+  if (!g_file_get_contents (key_file, &settings->rdp.server_key, NULL, &error))
+    g_warning ("Error reading server key: %s", error->message);
 }
 
 static void
@@ -184,6 +198,20 @@ static char *
 grd_settings_user_get_rdp_server_cert (GrdSettings *settings)
 {
   return GRD_SETTINGS_USER (settings)->rdp.server_cert;
+}
+
+static void
+grd_settings_user_override_rdp_server_key (GrdSettings *settings,
+                                           const char  *cert)
+{
+  g_assert_not_reached ();
+}
+
+static void
+grd_settings_user_override_rdp_server_cert (GrdSettings *settings,
+                                            const char  *key)
+{
+  g_assert_not_reached ();
 }
 
 static GrdVncAuthMethod
@@ -312,6 +340,8 @@ grd_settings_user_class_init (GrdSettingsUserClass *klass)
   settings_class->get_vnc_screen_share_mode = grd_settings_user_get_vnc_screen_share_mode;
   settings_class->get_rdp_server_key = grd_settings_user_get_rdp_server_key;
   settings_class->get_rdp_server_cert = grd_settings_user_get_rdp_server_cert;
+  settings_class->override_rdp_server_key = grd_settings_user_override_rdp_server_key;
+  settings_class->override_rdp_server_cert = grd_settings_user_override_rdp_server_cert;
   settings_class->get_vnc_auth_method = grd_settings_user_get_vnc_auth_method;
 
   signals[RDP_ENABLED_CHANGED] =

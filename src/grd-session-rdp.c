@@ -2036,9 +2036,9 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
       return FALSE;
     }
 
-  rdp_settings->CertificateFile =
+  rdp_settings->CertificateContent =
     g_strdup (grd_settings_get_rdp_server_cert (settings));
-  rdp_settings->PrivateKeyFile =
+  rdp_settings->PrivateKeyContent =
     g_strdup (grd_settings_get_rdp_server_key (settings));
   rdp_settings->RdpSecurity = FALSE;
   rdp_settings->TlsSecurity = FALSE;

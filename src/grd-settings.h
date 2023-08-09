@@ -55,6 +55,12 @@ struct _GrdSettingsClass
 
   char * (* get_rdp_server_key) (GrdSettings *settings);
 
+  void (* override_rdp_server_cert) (GrdSettings *settings,
+                                     const char  *cert);
+
+  void (* override_rdp_server_key) (GrdSettings *settings,
+                                    const char  *key);
+
   GrdVncAuthMethod (* get_vnc_auth_method) (GrdSettings *settings);
 };
 
@@ -91,6 +97,12 @@ GrdVncScreenShareMode grd_settings_get_vnc_screen_share_mode (GrdSettings *setti
 char *grd_settings_get_rdp_server_cert (GrdSettings *settings);
 
 char *grd_settings_get_rdp_server_key (GrdSettings *settings);
+
+void grd_settings_override_rdp_server_cert (GrdSettings *settings,
+                                            const char  *cert);
+
+void grd_settings_override_rdp_server_key (GrdSettings *settings,
+                                           const char  *key);
 
 GrdVncAuthMethod grd_settings_get_vnc_auth_method (GrdSettings *settings);
 
