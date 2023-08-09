@@ -62,10 +62,10 @@ grd_settings_user_constructed (GObject *object)
                    settings, "rdp-enabled",
                    G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->rdp_settings, "tls-cert",
-                   settings, "rdp-server-cert",
+                   settings, "rdp-server-cert-path",
                    G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->rdp_settings, "tls-key",
-                   settings, "rdp-server-key",
+                   settings, "rdp-server-key-path",
                    G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->vnc_settings, "port",
                    settings, "vnc-port",

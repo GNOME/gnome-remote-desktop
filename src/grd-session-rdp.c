@@ -1844,7 +1844,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
                 "rdp-server-key", &server_key,
                 NULL);
 
-  rdp_certificate = freerdp_certificate_new_from_file (server_cert);
+  rdp_certificate = freerdp_certificate_new_from_pem (server_cert);
   if (!rdp_certificate)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -1856,7 +1856,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
                                          rdp_certificate, 1))
     g_assert_not_reached ();
 
-  rdp_private_key = freerdp_key_new_from_file (server_key);
+  rdp_private_key = freerdp_key_new_from_pem (server_key);
   if (!rdp_private_key)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,

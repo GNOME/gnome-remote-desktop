@@ -49,6 +49,8 @@ enum
   PROP_VNC_SCREEN_SHARE_MODE,
   PROP_RDP_SERVER_CERT,
   PROP_RDP_SERVER_KEY,
+  PROP_RDP_SERVER_CERT_PATH,
+  PROP_RDP_SERVER_KEY_PATH,
   PROP_VNC_AUTH_METHOD,
 };
 
@@ -65,6 +67,8 @@ typedef struct _GrdSettingsPrivate
     GrdRdpScreenShareMode screen_share_mode;
     char *server_cert;
     char *server_key;
+    char *server_cert_path;
+    char *server_key_path;
   } rdp;
   struct {
     int port;
@@ -301,6 +305,8 @@ grd_settings_finalize (GObject *object)
 
   g_clear_pointer (&priv->rdp.server_cert, g_free);
   g_clear_pointer (&priv->rdp.server_key, g_free);
+  g_clear_pointer (&priv->rdp.server_cert_path, g_free);
+  g_clear_pointer (&priv->rdp.server_key_path, g_free);
   g_clear_object (&priv->credentials);
 
   G_OBJECT_CLASS (grd_settings_parent_class)->finalize (object);
@@ -356,6 +362,12 @@ grd_settings_get_property (GObject    *object,
     case PROP_RDP_SERVER_KEY:
       g_value_set_string (value, priv->rdp.server_key);
       break;
+    case PROP_RDP_SERVER_CERT_PATH:
+      g_value_set_string (value, priv->rdp.server_cert_path);
+      break;
+    case PROP_RDP_SERVER_KEY_PATH:
+      g_value_set_string (value, priv->rdp.server_key_path);
+      break;
     case PROP_VNC_AUTH_METHOD:
       if (g_getenv ("GNOME_REMOTE_DESKTOP_TEST_VNC_PASSWORD"))
         g_value_set_enum (value, GRD_VNC_AUTH_METHOD_PASSWORD);
@@ -365,6 +377,36 @@ grd_settings_get_property (GObject    *object,
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
+}
+
+static void
+update_rdp_server_cert (GrdSettings *settings)
+{
+  GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
+  g_autofree char *server_cert = NULL;
+
+  if (!priv->rdp.server_cert_path)
+    return;
+
+  g_file_get_contents (priv->rdp.server_cert_path,
+                       &server_cert,
+                       NULL, NULL);
+  g_object_set (G_OBJECT (settings), "rdp-server-cert", server_cert, NULL);
+}
+
+static void
+update_rdp_server_key (GrdSettings *settings)
+{
+  GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
+  g_autofree char *server_key = NULL;
+
+  if (!priv->rdp.server_key_path)
+    return;
+
+  g_file_get_contents (priv->rdp.server_key_path,
+                       &server_key,
+                       NULL, NULL);
+  g_object_set (G_OBJECT (settings), "rdp-server-key", server_key, NULL);
 }
 
 static void
@@ -418,6 +460,16 @@ grd_settings_set_property (GObject      *object,
     case PROP_RDP_SERVER_KEY:
       g_clear_pointer (&priv->rdp.server_key, g_free);
       priv->rdp.server_key = g_strdup (g_value_get_string (value));
+      break;
+    case PROP_RDP_SERVER_CERT_PATH:
+      g_clear_pointer (&priv->rdp.server_cert_path, g_free);
+      priv->rdp.server_cert_path = g_strdup (g_value_get_string (value));
+      update_rdp_server_cert (settings);
+      break;
+    case PROP_RDP_SERVER_KEY_PATH:
+      g_clear_pointer (&priv->rdp.server_key_path, g_free);
+      priv->rdp.server_key_path = g_strdup (g_value_get_string (value));
+      update_rdp_server_key (settings);
       break;
     case PROP_VNC_AUTH_METHOD:
       priv->vnc.auth_method = g_value_get_enum (value);
@@ -562,6 +614,24 @@ grd_settings_class_init (GrdSettingsClass *klass)
                                    g_param_spec_string ("rdp-server-key",
                                                         "rdp server key",
                                                         "rdp server key",
+                                                        NULL,
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_CONSTRUCT |
+                                                        G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_RDP_SERVER_CERT_PATH,
+                                   g_param_spec_string ("rdp-server-cert-path",
+                                                        "rdp server cert path",
+                                                        "rdp server cert path",
+                                                        NULL,
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_CONSTRUCT |
+                                                        G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_RDP_SERVER_KEY_PATH,
+                                   g_param_spec_string ("rdp-server-key-path",
+                                                        "rdp server key path",
+                                                        "rdp server key path",
                                                         NULL,
                                                         G_PARAM_READWRITE |
                                                         G_PARAM_CONSTRUCT |

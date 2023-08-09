@@ -148,10 +148,10 @@ export_rdp_server_interface (GrdDaemon *daemon)
   g_object_bind_property (settings, "rdp-negotiate-port",
                           rdp_server_interface, "negotiate-port",
                           G_BINDING_SYNC_CREATE);
-  g_object_bind_property (settings, "rdp-server-cert",
+  g_object_bind_property (settings, "rdp-server-cert-path",
                           rdp_server_interface, "tls-cert",
                           G_BINDING_SYNC_CREATE);
-  g_object_bind_property (settings, "rdp-server-key",
+  g_object_bind_property (settings, "rdp-server-key-path",
                           rdp_server_interface, "tls-key",
                           G_BINDING_SYNC_CREATE);
   g_object_bind_property (settings, "rdp-view-only",
@@ -211,7 +211,7 @@ start_rdp_server (GrdDaemon *daemon)
                 "rdp-server-key", &key,
                 NULL);
 
-  if (!g_access (certificate, F_OK) && !g_access (key, F_OK))
+  if (certificate && key)
     {
       priv->rdp_server = grd_rdp_server_new (priv->context);
       if (!grd_rdp_server_start (priv->rdp_server, &error))

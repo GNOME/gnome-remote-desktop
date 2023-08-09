@@ -147,7 +147,7 @@ rdp_set_tls_cert (GrdSettings  *settings,
       return FALSE;
     }
 
-  g_object_set (G_OBJECT (settings), "rdp-server-cert", argv[0], NULL);
+  g_object_set (G_OBJECT (settings), "rdp-server-cert-path", argv[0], NULL);
   return TRUE;
 }
 
@@ -166,7 +166,7 @@ rdp_set_tls_key (GrdSettings  *settings,
       return FALSE;
     }
 
-  g_object_set (G_OBJECT (settings), "rdp-server-key", argv[0], NULL);
+  g_object_set (G_OBJECT (settings), "rdp-server-key-path", argv[0], NULL);
   return TRUE;
 }
 
@@ -544,8 +544,8 @@ print_rdp_status (GrdSettings *settings,
   g_object_get (G_OBJECT (settings),
                 "rdp-port", &port,
                 "rdp-enabled", &enabled,
-                "rdp-server-key", &tls_key,
-                "rdp-server-cert", &tls_cert,
+                "rdp-server-key-path", &tls_key,
+                "rdp-server-cert-path", &tls_cert,
                 "rdp-view-only", &view_only,
                 "rdp-negotiate-port", &negotiate_port,
                 NULL);
