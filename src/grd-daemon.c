@@ -82,6 +82,14 @@ typedef struct _GrdDaemonPrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
 
+GCancellable *
+grd_daemon_get_cancellable (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  return priv->cancellable;
+}
+
 GrdContext *
 grd_daemon_get_context (GrdDaemon *daemon)
 {
@@ -89,6 +97,16 @@ grd_daemon_get_context (GrdDaemon *daemon)
 
   return priv->context;
 }
+
+#ifdef HAVE_RDP
+GrdRdpServer *
+grd_daemon_get_rdp_server (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  return priv->rdp_server;
+}
+#endif /* HAVE_RDP */
 
 static void
 export_remote_desktop_interface (GrdDaemon *daemon)
