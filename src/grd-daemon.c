@@ -32,6 +32,7 @@
 #include <stdlib.h>
 
 #include "grd-context.h"
+#include "grd-daemon-system.h"
 #include "grd-daemon-user.h"
 #include "grd-dbus-mutter-remote-desktop.h"
 #include "grd-private.h"
@@ -208,8 +209,8 @@ grd_daemon_maybe_enable_services (GrdDaemon *daemon)
 #endif
 }
 
-static void
-disable_services (GrdDaemon *daemon)
+void
+grd_daemon_disable_services (GrdDaemon *daemon)
 {
 #ifdef HAVE_RDP
   stop_rdp_server (daemon);
@@ -290,7 +291,7 @@ on_mutter_remote_desktop_name_vanished (GDBusConnection *connection,
   GrdDaemon *daemon = user_data;
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
-  disable_services (daemon);
+  grd_daemon_disable_services (daemon);
 
   grd_context_set_mutter_remote_desktop_proxy (priv->context, NULL);
 }
@@ -321,7 +322,7 @@ on_mutter_screen_cast_name_vanished (GDBusConnection *connection,
   GrdDaemon *daemon = user_data;
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
-  disable_services (daemon);
+  grd_daemon_disable_services (daemon);
 
   grd_context_set_mutter_screen_cast_proxy (priv->context, NULL);
 }
@@ -441,7 +442,7 @@ grd_daemon_shutdown (GApplication *app)
   g_cancellable_cancel (priv->cancellable);
   g_clear_object (&priv->cancellable);
 
-  disable_services (daemon);
+  grd_daemon_disable_services (daemon);
 
   grd_context_set_mutter_remote_desktop_proxy (priv->context, NULL);
   g_clear_handle_id (&priv->mutter_remote_desktop_watch_name_id, g_bus_unwatch_name);
@@ -605,6 +606,20 @@ register_signals (GrdDaemon *daemon)
   g_source_attach (priv->sigterm_source, NULL);
 }
 
+static int
+count_trues (int n_args, ...)
+{
+  va_list booleans;
+  int booleans_count = 0;
+
+  va_start (booleans, n_args);
+
+  for (int i = 0; i < n_args; ++i)
+    booleans_count += va_arg (booleans, gboolean) ? 1 : 0;
+
+  return booleans_count;
+}
+
 int
 main (int argc, char **argv)
 {
@@ -612,6 +627,7 @@ main (int argc, char **argv)
   GrdSettings *settings;
   gboolean print_version = FALSE;
   gboolean headless = FALSE;
+  gboolean system = FALSE;
   int rdp_port = -1;
   int vnc_port = -1;
 
@@ -620,6 +636,10 @@ main (int argc, char **argv)
       "Print version", NULL },
     { "headless", 0, 0, G_OPTION_ARG_NONE, &headless,
       "Run in headless mode", NULL },
+#ifdef HAVE_RDP
+    { "system", 0, 0, G_OPTION_ARG_NONE, &system,
+      "Run in headless mode as a system g-r-d service", NULL },
+#endif
     { "rdp-port", 0, 0, G_OPTION_ARG_INT, &rdp_port,
       "RDP port", NULL },
     { "vnc-port", 0, 0, G_OPTION_ARG_INT, &vnc_port,
@@ -648,8 +668,16 @@ main (int argc, char **argv)
       return EXIT_SUCCESS;
     }
 
+  if (count_trues (2, headless, system) > 1)
+    {
+      g_printerr ("Invalid option: use only one runtime mode");
+      return EXIT_FAILURE;
+    }
+
   if (headless)
     runtime_mode = GRD_RUNTIME_MODE_HEADLESS;
+  else if (system)
+    runtime_mode = GRD_RUNTIME_MODE_SYSTEM;
   else
     runtime_mode = GRD_RUNTIME_MODE_SCREEN_SHARE;
 
@@ -658,6 +686,9 @@ main (int argc, char **argv)
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
     case GRD_RUNTIME_MODE_HEADLESS:
       daemon = GRD_DAEMON (grd_daemon_user_new (runtime_mode, &error));
+      break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      daemon = GRD_DAEMON (grd_daemon_system_new (&error));
       break;
     }
 

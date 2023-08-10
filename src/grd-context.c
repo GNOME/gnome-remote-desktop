@@ -29,6 +29,7 @@
 #include "grd-credentials-one-time.h"
 #include "grd-credentials-tpm.h"
 #include "grd-egl-thread.h"
+#include "grd-settings-headless.h"
 #include "grd-settings-user.h"
 
 #include "grd-dbus-mutter-remote-desktop.h"
@@ -108,7 +109,7 @@ grd_context_notify_daemon_ready (GrdContext *context)
 {
   g_autoptr (GError) error = NULL;
 
-  if (context->egl_thread)
+  if (context->egl_thread || context->runtime_mode == GRD_RUNTIME_MODE_SYSTEM)
     return;
 
   context->egl_thread = grd_egl_thread_new (&error);
@@ -116,12 +117,29 @@ grd_context_notify_daemon_ready (GrdContext *context)
     g_debug ("Failed to create EGL thread: %s", error->message);
 }
 
+static GrdCredentials *
+create_headless_credentials (GError **error)
+{
+  GrdCredentials *credentials;
+  g_autoptr (GError) local_error = NULL;
+
+  credentials = GRD_CREDENTIALS (grd_credentials_tpm_new (&local_error));
+  if (!credentials)
+    {
+      g_warning ("Init TPM credentials failed because %s, using GKeyFile as fallback",
+                 local_error->message);
+      credentials = GRD_CREDENTIALS (grd_credentials_file_new (error));
+    }
+  g_assert (credentials);
+
+  return credentials;
+}
+
 GrdContext *
 grd_context_new (GrdRuntimeMode   runtime_mode,
                  GError         **error)
 {
   g_autoptr (GrdContext) context = NULL;
-  g_autoptr (GError) local_error = NULL;
 
   context = g_object_new (GRD_TYPE_CONTEXT, NULL);
   context->runtime_mode = runtime_mode;
@@ -129,24 +147,21 @@ grd_context_new (GrdRuntimeMode   runtime_mode,
   switch (runtime_mode)
     {
     case GRD_RUNTIME_MODE_HEADLESS:
-      context->credentials = GRD_CREDENTIALS (grd_credentials_tpm_new (&local_error));
-      if (!context->credentials)
-        {
-          g_warning ("Init TPM credentials failed because %s, using GKeyFile as fallback",
-                     local_error->message);
-          context->credentials =
-            GRD_CREDENTIALS (grd_credentials_file_new (error));
-        }
+      context->credentials = create_headless_credentials (error);
+      context->settings = GRD_SETTINGS (grd_settings_user_new (context));
+      break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      context->credentials = create_headless_credentials (error);
+      context->settings = GRD_SETTINGS (grd_settings_headless_new (context, TRUE));
       break;
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
       context->credentials = GRD_CREDENTIALS (grd_credentials_libsecret_new ());
+      context->settings = GRD_SETTINGS (grd_settings_user_new (context));
       break;
     }
 
-  if (!context->credentials)
+  if (!context->credentials || !context->settings)
     return NULL;
-
-  context->settings = GRD_SETTINGS (grd_settings_user_new (context));
 
   return g_steal_pointer (&context);
 }

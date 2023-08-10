@@ -34,6 +34,7 @@ typedef enum _GrdRuntimeMode
 {
   GRD_RUNTIME_MODE_SCREEN_SHARE,
   GRD_RUNTIME_MODE_HEADLESS,
+  GRD_RUNTIME_MODE_SYSTEM,
 } GrdRuntimeMode;
 
 #define GRD_TYPE_CONTEXT (grd_context_get_type ())
