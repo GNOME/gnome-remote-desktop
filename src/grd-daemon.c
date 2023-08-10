@@ -79,6 +79,14 @@ typedef struct _GrdDaemonPrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
 
+GCancellable *
+grd_daemon_get_cancellable (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  return priv->cancellable;
+}
+
 GrdContext *
 grd_daemon_get_context (GrdDaemon *daemon)
 {
@@ -131,6 +139,14 @@ start_rdp_server (GrdDaemon *daemon)
     {
       g_warning ("RDP TLS certificate and key not configured properly");
     }
+}
+
+GrdRdpServer *
+grd_daemon_get_rdp_server (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  return priv->rdp_server;
 }
 #endif /* HAVE_RDP */
 

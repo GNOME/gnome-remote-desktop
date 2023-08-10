@@ -39,6 +39,10 @@ struct _GrdDaemonClass
     gboolean (*is_daemon_ready) (GrdDaemon *daemon);
 };
 
+GrdRdpServer *grd_daemon_get_rdp_server (GrdDaemon *daemon);
+
+GCancellable *grd_daemon_get_cancellable (GrdDaemon *daemon);
+
 GrdContext *grd_daemon_get_context (GrdDaemon *daemon);
 
 void grd_daemon_maybe_enable_services (GrdDaemon *daemon);
