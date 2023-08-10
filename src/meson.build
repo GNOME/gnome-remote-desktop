@@ -80,6 +80,8 @@ if have_rdp
   daemon_sources += files([
     'grd-clipboard-rdp.c',
     'grd-clipboard-rdp.h',
+    'grd-daemon-system.c',
+    'grd-daemon-system.h',
     'grd-hwaccel-nvidia.c',
     'grd-hwaccel-nvidia.h',
     'grd-rdp-audio-input.c',
@@ -195,6 +197,13 @@ gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-remote-desktop',
                                           'org.gnome.RemoteDesktop.xml',
                                           interface_prefix: 'org.gnome.RemoteDesktop.',
                                           namespace: 'GrdDBusRemoteDesktop')
+if have_rdp
+  gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-gdm',
+                                            'org.gnome.DisplayManager.xml',
+                                            object_manager: true,
+                                            interface_prefix: 'org.gnome.DisplayManager.',
+                                            namespace: 'GrdDBusGdm')
+endif
 
 gen_enum_types = gnome.mkenums('grd-enum-types',
   h_template: 'grd-enum-types.h.in',

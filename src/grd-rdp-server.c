@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include "grd-rdp-routing-token.h"
 #include "grd-rdp-server.h"
 
 #include <freerdp/channels/channels.h>
@@ -57,6 +58,8 @@ struct _GrdRdpServer
 
   GList *stopped_sessions;
   guint cleanup_sessions_idle_id;
+
+  GCancellable *cancellable;
 
   GrdContext *context;
   GrdHwAccelNvidia *hwaccel_nvidia;
@@ -128,6 +131,76 @@ on_session_stopped (GrdSession   *session,
     }
 }
 
+static void
+on_session_post_connect (GrdSessionRdp *session_rdp,
+                         GrdRdpServer  *rdp_server)
+{
+  g_signal_emit (rdp_server, signals[INCOMING_NEW_CONNECTION], 0, session_rdp);
+}
+
+static void
+on_routing_token_peeked (GObject      *source_object,
+                         GAsyncResult *result,
+                         gpointer      user_data)
+{
+  GrdRdpServer *rdp_server;
+  GSocketConnection *connection;
+  GrdSessionRdp *session_rdp;
+  GCancellable *server_cancellable;
+  g_autofree char *routing_token = NULL;
+  g_autoptr (GError) error = NULL;
+
+  routing_token = grd_routing_token_peek_finish (result,
+                                                 &rdp_server,
+                                                 &connection,
+                                                 &server_cancellable,
+                                                 &error);
+  if (g_cancellable_is_cancelled (server_cancellable))
+    return;
+
+  if (error)
+    {
+      g_warning ("Error peeking routing token: %s", error->message);
+      return;
+    }
+
+  if (routing_token)
+    {
+      g_signal_emit (rdp_server, signals[INCOMING_REDIRECTED_CONNECTION],
+                     0, routing_token, connection);
+    }
+  else
+    {
+      if (!(session_rdp = grd_session_rdp_new (rdp_server, connection,
+                                               rdp_server->hwaccel_nvidia)))
+        return;
+
+      rdp_server->sessions = g_list_append (rdp_server->sessions, session_rdp);
+
+      g_signal_connect (session_rdp, "stopped",
+                        G_CALLBACK (on_session_stopped),
+                        rdp_server);
+
+      g_signal_connect (session_rdp, "post-connected",
+                        G_CALLBACK (on_session_post_connect),
+                        rdp_server);
+    }
+}
+
+static gboolean
+on_incoming_as_system_headless (GSocketService    *service,
+                                GSocketConnection *connection)
+{
+  GrdRdpServer *rdp_server = GRD_RDP_SERVER (service);
+
+  grd_routing_token_peek_async (rdp_server,
+                                connection,
+                                rdp_server->cancellable,
+                                on_routing_token_peeked);
+
+  return TRUE;
+}
+
 static gboolean
 on_incoming (GSocketService    *service,
              GSocketConnection *connection)
@@ -155,6 +228,7 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
                       GError       **error)
 {
   GrdSettings *settings = grd_context_get_settings (rdp_server->context);
+  GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (rdp_server->context);
   uint16_t rdp_port;
   uint16_t selected_rdp_port = 0;
   gboolean negotiate_port;
@@ -174,7 +248,20 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
 
   g_assert (selected_rdp_port != 0);
 
-  g_signal_connect (rdp_server, "incoming", G_CALLBACK (on_incoming), NULL);
+  switch (runtime_mode)
+    {
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+    case GRD_RUNTIME_MODE_HEADLESS:
+      g_signal_connect (rdp_server, "incoming", G_CALLBACK (on_incoming), NULL);
+      break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      g_signal_connect (rdp_server, "incoming",
+                        G_CALLBACK (on_incoming_as_system_headless), NULL);
+
+      g_assert (!rdp_server->cancellable);
+      rdp_server->cancellable = g_cancellable_new ();
+      break;
+    }
 
   rdp_server_iface = grd_context_get_rdp_server_interface (rdp_server->context);
   grd_dbus_remote_desktop_rdp_server_set_enabled (rdp_server_iface, TRUE);
@@ -205,6 +292,12 @@ grd_rdp_server_stop (GrdRdpServer *rdp_server)
 
   g_clear_handle_id (&rdp_server->cleanup_sessions_idle_id, g_source_remove);
   grd_rdp_server_cleanup_stopped_sessions (rdp_server);
+
+  if (rdp_server->cancellable)
+    {
+      g_cancellable_cancel (rdp_server->cancellable);
+      g_clear_object (&rdp_server->cancellable);
+    }
 
   g_clear_object (&rdp_server->hwaccel_nvidia);
 }

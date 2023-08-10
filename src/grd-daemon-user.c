@@ -53,6 +53,8 @@ grd_daemon_user_new (GrdRuntimeMode   runtime_mode,
     case GRD_RUNTIME_MODE_HEADLESS:
       application_id = GRD_DAEMON_HEADLESS_APPLICATION_ID;
       break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      g_assert_not_reached ();
     }
 
   daemon_user = g_object_new (GRD_TYPE_DAEMON_USER,

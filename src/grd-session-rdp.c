@@ -564,6 +564,9 @@ grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
     case GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED:
       session_rdp->rdp_error_info = ERRINFO_GRAPHICS_SUBSYSTEM_FAILED;
       break;
+    case GRD_SESSION_RDP_ERROR_SERVER_REDIRECTION:
+      session_rdp->rdp_error_info = ERRINFO_CB_CONNECTION_CANCELLED;
+      break;
     }
 
   unset_rdp_peer_flag (session_rdp, RDP_PEER_ACTIVATED);
@@ -1645,6 +1648,7 @@ get_max_monitor_count (GrdSessionRdp *session_rdp)
   switch (grd_context_get_runtime_mode (context))
     {
     case GRD_RUNTIME_MODE_HEADLESS:
+    case GRD_RUNTIME_MODE_SYSTEM:
       return MAX_MONITOR_COUNT_HEADLESS;
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
       return MAX_MONITOR_COUNT_SCREEN_SHARE;
@@ -1780,13 +1784,15 @@ notify_post_connected (gpointer user_data)
 {
   GrdSessionRdp *session_rdp = user_data;
   SessionMetrics *session_metrics = &session_rdp->session_metrics;
+  GrdContext *grd_context = grd_session_get_context (GRD_SESSION (session_rdp));
 
   g_mutex_lock (&session_rdp->notify_post_connected_mutex);
   session_rdp->notify_post_connected_source_id = 0;
   g_mutex_unlock (&session_rdp->notify_post_connected_mutex);
 
   session_metrics->rd_session_start_init_us = g_get_monotonic_time ();
-  grd_session_start (GRD_SESSION (session_rdp));
+  if (grd_context_get_runtime_mode (grd_context) != GRD_RUNTIME_MODE_SYSTEM)
+    grd_session_start (GRD_SESSION (session_rdp));
 
   g_signal_emit (session_rdp, signals[POST_CONNECTED], 0);
 }

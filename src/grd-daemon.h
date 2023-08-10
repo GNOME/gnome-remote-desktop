@@ -47,6 +47,8 @@ GrdRdpServer *grd_daemon_get_rdp_server (GrdDaemon *daemon);
 
 void grd_daemon_maybe_enable_services (GrdDaemon *daemon);
 
+void grd_daemon_disable_services (GrdDaemon *daemon);
+
 void grd_daemon_acquire_mutter_dbus_proxies (GrdDaemon *daemon);
 
 #endif /* GRD_DAEMON_H */

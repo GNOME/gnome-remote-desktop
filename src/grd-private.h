@@ -25,12 +25,16 @@
 
 #define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop.User"
 #define GRD_DAEMON_HEADLESS_APPLICATION_ID "org.gnome.RemoteDesktop.Headless"
+#define GRD_DAEMON_SYSTEM_APPLICATION_ID "org.gnome.RemoteDesktop"
 #define REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/RemoteDesktop"
+#define REMOTE_DESKTOP_CLIENT_OBJECT_PATH "/org/gnome/RemoteDesktop/Client"
 #define GRD_RDP_SERVER_OBJECT_PATH "/org/gnome/RemoteDesktop/Rdp/Server"
 #define GRD_VNC_SERVER_OBJECT_PATH "/org/gnome/RemoteDesktop/Vnc/Server"
 #define MUTTER_REMOTE_DESKTOP_BUS_NAME "org.gnome.Mutter.RemoteDesktop"
 #define MUTTER_REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/Mutter/RemoteDesktop"
 #define MUTTER_SCREEN_CAST_BUS_NAME "org.gnome.Mutter.ScreenCast"
 #define MUTTER_SCREEN_CAST_OBJECT_PATH "/org/gnome/Mutter/ScreenCast"
+#define GDM_BUS_NAME "org.gnome.DisplayManager"
+#define GDM_REMOTE_DISPLAY_FACTORY_OBJECT_PATH "/org/gnome/DisplayManager/RemoteDisplayFactory"
 
 #endif /* GRD_PRIVATE_H */

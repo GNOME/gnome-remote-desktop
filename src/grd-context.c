@@ -25,6 +25,7 @@
 #include "grd-context.h"
 
 #include "grd-egl-thread.h"
+#include "grd-settings-system.h"
 #include "grd-settings-user.h"
 
 #include "grd-dbus-mutter-remote-desktop.h"
@@ -130,7 +131,8 @@ grd_context_notify_daemon_ready (GrdContext *context)
 {
   g_autoptr (GError) error = NULL;
 
-  if (context->egl_thread)
+  if (context->egl_thread ||
+      context->runtime_mode == GRD_RUNTIME_MODE_SYSTEM)
     return;
 
   context->egl_thread = grd_egl_thread_new (&error);
@@ -152,6 +154,9 @@ grd_context_new (GrdRuntimeMode   runtime_mode,
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
     case GRD_RUNTIME_MODE_HEADLESS:
       context->settings = GRD_SETTINGS (grd_settings_user_new (runtime_mode));
+      break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      context->settings = GRD_SETTINGS (grd_settings_system_new ());
       break;
     }
 

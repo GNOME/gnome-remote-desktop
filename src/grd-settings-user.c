@@ -104,6 +104,8 @@ grd_settings_user_constructed (GObject *object)
                        settings, "vnc-screen-share-mode",
                        G_SETTINGS_BIND_DEFAULT);
       break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      g_assert_not_reached ();
     }
 
   G_OBJECT_CLASS (grd_settings_user_parent_class)->constructed (object);

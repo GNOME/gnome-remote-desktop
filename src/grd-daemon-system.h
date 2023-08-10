@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Red Hat Inc.
+ * Copyright (C) 2023 SUSE Software Solutions Germany GmbH
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -16,34 +16,19 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
  *
+ * Written by:
+ *     Joan Torres <joan.torres@suse.com>
  */
 
-#ifndef GRD_ENUMS_H
-#define GRD_ENUMS_H
+#ifndef GRD_DAEMON_SYSTEM_H
+#define GRD_DAEMON_SYSTEM_H
 
-typedef enum
-{
-  GRD_RDP_SCREEN_SHARE_MODE_MIRROR_PRIMARY,
-  GRD_RDP_SCREEN_SHARE_MODE_EXTEND,
-} GrdRdpScreenShareMode;
+#include "grd-daemon.h"
 
-typedef enum
-{
-  GRD_VNC_AUTH_METHOD_PROMPT,
-  GRD_VNC_AUTH_METHOD_PASSWORD
-} GrdVncAuthMethod;
+#define GRD_TYPE_DAEMON_SYSTEM (grd_daemon_system_get_type ())
+G_DECLARE_FINAL_TYPE (GrdDaemonSystem, grd_daemon_system,
+                      GRD, DAEMON_SYSTEM, GrdDaemon)
 
-typedef enum
-{
-  GRD_VNC_SCREEN_SHARE_MODE_MIRROR_PRIMARY,
-  GRD_VNC_SCREEN_SHARE_MODE_EXTEND,
-} GrdVncScreenShareMode;
+GrdDaemonSystem *grd_daemon_system_new (GError **error);
 
-typedef enum
-{
-  GRD_RUNTIME_MODE_SCREEN_SHARE,
-  GRD_RUNTIME_MODE_HEADLESS,
-  GRD_RUNTIME_MODE_SYSTEM,
-} GrdRuntimeMode;
-
-#endif /* GRD_ENUMS_H */
+#endif /* GRD_DAEMON_SYSTEM_H */
