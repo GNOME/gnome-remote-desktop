@@ -25,6 +25,8 @@
 
 #define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop.User"
 #define GRD_DAEMON_SYSTEM_APPLICATION_ID "org.gnome.RemoteDesktop.System"
+#define REMOTE_DESKTOP_BUS_NAME "org.gnome.RemoteDesktop"
+#define REMOTE_DESKTOP_HANDOVER_OBJECT_PATH "/org/gnome/RemoteDesktop/Handover"
 #define REMOTE_DESKTOP_CLIENT_OBJECT_PATH "/org/gnome/RemoteDesktop/Client"
 #define MUTTER_REMOTE_DESKTOP_BUS_NAME "org.gnome.Mutter.RemoteDesktop"
 #define MUTTER_REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/Mutter/RemoteDesktop"
@@ -32,5 +34,6 @@
 #define MUTTER_SCREEN_CAST_OBJECT_PATH "/org/gnome/Mutter/ScreenCast"
 #define GDM_BUS_NAME "org.gnome.DisplayManager"
 #define GDM_REMOTE_DISPLAY_FACTORY_OBJECT_PATH "/org/gnome/DisplayManager/RemoteDisplayFactory"
+#define GDM_OBJECT_MANAGER_OBJECT_PATH "/org/gnome/DisplayManager/Displays"
 
 #endif /* GRD_PRIVATE_H */

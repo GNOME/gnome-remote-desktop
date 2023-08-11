@@ -32,3 +32,13 @@ option('systemd_user_unit_dir',
        type: 'string',
        value: '',
        description: 'systemd user service directory')
+
+option('dbus_sys',
+       type: 'string',
+       value: '',
+       description: 'Where system D-Bus conf directory is')
+
+option('user',
+       type: 'string',
+       value: 'gnome-remote-desktop',
+       description: 'gnome-remote-desktop system service username')

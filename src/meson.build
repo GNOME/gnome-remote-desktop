@@ -191,6 +191,10 @@ gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-mutter-remote-desktop',
                                           namespace: 'GrdDBusMutter')
 
 if have_rdp
+  gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-remote-desktop',
+                                            'org.gnome.RemoteDesktop.xml',
+                                            interface_prefix: 'org.gnome.RemoteDesktop.',
+                                            namespace: 'GrdDBusRemoteDesktop')
   gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-gdm',
                                             'org.gnome.DisplayManager.xml',
                                             object_manager: true,

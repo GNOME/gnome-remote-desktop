@@ -73,8 +73,11 @@ libexecdir = join_paths(prefix, get_option('libexecdir'))
 datadir = join_paths(prefix, get_option('datadir'))
 mandir = join_paths(prefix, get_option('mandir'))
 schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
+dbus_sys_dir = (get_option('dbus_sys') != '') ? get_option('dbus_sys') : join_paths(datadir, 'dbus-1', 'system.d')
 
 grd_datadir = join_paths(datadir, 'gnome-remote-desktop')
+
+grd_username = get_option('user')
 
 cdata = configuration_data()
 cdata.set_quoted('GETTEXT_PACKAGE', 'gnome-remote-desktop')
@@ -133,6 +136,7 @@ output = [
   '    datadir...................... ' + datadir,
   '    systemd user unit dir........ ' + servicedir,
   '    GSettings schema dir......... ' + schemadir,
+  '    System DBus dir.............. ' + dbus_sys_dir,
   '',
   '    Backends:',
   '',
