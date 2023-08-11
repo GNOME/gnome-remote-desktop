@@ -29,6 +29,7 @@
 #define REMOTE_DESKTOP_BUS_NAME "org.gnome.RemoteDesktop"
 #define REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/RemoteDesktop"
 #define REMOTE_DESKTOP_CLIENT_OBJECT_PATH "/org/gnome/RemoteDesktop/Client"
+#define REMOTE_DESKTOP_DISPATCHER_OBJECT_PATH "/org/gnome/RemoteDesktop/Rdp/Dispatcher"
 #define REMOTE_DESKTOP_HANDOVERS_OBJECT_PATH "/org/gnome/RemoteDesktop/Rdp/Handovers"
 #define GRD_RDP_SERVER_OBJECT_PATH "/org/gnome/RemoteDesktop/Rdp/Server"
 #define GRD_VNC_SERVER_OBJECT_PATH "/org/gnome/RemoteDesktop/Vnc/Server"
