@@ -24,6 +24,7 @@
 
 #include "grd-daemon-system.h"
 
+#include <gio/gunixfdlist.h>
 #include <systemd/sd-login.h>
 
 #include "grd-context.h"
@@ -34,6 +35,9 @@
 #include "grd-private.h"
 #include "grd-rdp-server.h"
 #include "grd-session-rdp.h"
+#include "grd-settings.h"
+
+#define MAX_HANDOVER_WAIT_TIME_MS (30 * 1000)
 
 typedef struct
 {
@@ -42,12 +46,16 @@ typedef struct
   char *id;
 
   GrdSession *session;
+  GSocketConnection *socket_connection;
 
   GDBusObjectSkeleton *handover_skeleton;
   GrdDBusRemoteDesktopRdpHandover *handover_interface;
   char *dbus_object_path;
 
   gboolean is_registered;
+  gboolean is_being_redirected;
+
+  unsigned int abort_handover_source_id;
 } GrdRemoteClient;
 
 struct _GrdDaemonSystem
@@ -105,11 +113,98 @@ grd_daemon_system_is_ready (GrdDaemon *daemon)
   return TRUE;
 }
 
+static gboolean
+on_handle_take_client (GrdDBusRemoteDesktopRdpHandover *interface,
+                       GDBusMethodInvocation           *invocation,
+                       GUnixFDList                     *list,
+                       GrdRemoteClient                 *remote_client)
+{
+  GSocket *socket = NULL;
+  GVariant *fd_variant = NULL;
+  g_autoptr (GUnixFDList) fd_list = NULL;
+  int fd;
+  int fd_idx;
+
+  socket = g_socket_connection_get_socket (remote_client->socket_connection);
+  fd = g_socket_get_fd (socket);
+
+  fd_list = g_unix_fd_list_new ();
+  fd_idx = g_unix_fd_list_append (fd_list, fd, NULL);
+  fd_variant = g_variant_new_handle (fd_idx);
+
+  grd_dbus_remote_desktop_rdp_handover_complete_take_client (interface,
+                                                             invocation,
+                                                             fd_list,
+                                                             fd_variant);
+  remote_client->is_being_redirected = FALSE;
+
+  g_clear_object (&remote_client->socket_connection);
+  g_clear_handle_id (&remote_client->abort_handover_source_id, g_source_remove);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
 static char *
 get_id_from_routing_token (uint32_t routing_token)
 {
   return g_strdup_printf (REMOTE_DESKTOP_CLIENT_OBJECT_PATH "/%u",
                           routing_token);
+}
+
+static char *
+get_routing_token_from_id (const char *id)
+{
+  g_assert (strlen (id) > strlen (REMOTE_DESKTOP_CLIENT_OBJECT_PATH "/"));
+
+  return g_strdup (id + strlen (REMOTE_DESKTOP_CLIENT_OBJECT_PATH "/"));
+}
+
+static gboolean
+on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
+                          GDBusMethodInvocation           *invocation,
+                          const char                      *user_name,
+                          const char                      *password,
+                          GrdRemoteClient                 *remote_client)
+{
+  GrdDaemon *daemon = GRD_DAEMON (remote_client->daemon_system);
+  GrdContext *context = grd_daemon_get_context (daemon);
+  GrdSettings *settings = grd_context_get_settings (context);
+  g_autofree char *key = NULL;
+  g_autofree char *certificate = NULL;
+  g_autofree char *routing_token = NULL;
+
+  g_debug ("[DaemonSystem] Received StartHandover call");
+
+  remote_client->is_being_redirected = TRUE;
+
+  routing_token = get_routing_token_from_id (remote_client->id);
+
+  g_object_get (G_OBJECT (settings),
+                "rdp-server-cert", &certificate,
+                "rdp-server-key", &key,
+                NULL);
+
+  if (!grd_session_rdp_send_server_redirection (
+         GRD_SESSION_RDP (remote_client->session),
+         routing_token,
+         user_name,
+         password,
+         certificate))
+    goto err;
+
+  grd_dbus_remote_desktop_rdp_handover_complete_start_handover (interface,
+                                                                invocation,
+                                                                certificate,
+                                                                key);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+
+err:
+  g_dbus_method_invocation_return_error (invocation,
+                                         G_DBUS_ERROR,
+                                         G_DBUS_ERROR_UNKNOWN_OBJECT,
+                                         "Failed to start handover");
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
 static void
@@ -164,15 +259,39 @@ unregister_handover_iface (GrdRemoteClient *remote_client)
   remote_client->is_registered = FALSE;
 }
 
+static gboolean
+abort_handover (gpointer user_data)
+{
+  GrdRemoteClient *remote_client = user_data;
+  GrdDaemonSystem *daemon_system = remote_client->daemon_system;
+
+  g_warning ("[DaemonSystem] Aborting handover, RDP client wasn't handovered "
+             "(Timeout reached)");
+
+  remote_client->abort_handover_source_id = 0;
+
+  if (!remote_client->is_being_redirected)
+    {
+      grd_session_rdp_notify_error (GRD_SESSION_RDP (remote_client->session),
+                                    GRD_SESSION_RDP_ERROR_SERVER_REDIRECTION);
+    }
+
+  g_hash_table_remove (daemon_system->remote_clients, remote_client->id);
+
+  return G_SOURCE_REMOVE;
+}
+
 static void
 grd_remote_client_free (GrdRemoteClient *remote_client)
 {
   unregister_handover_iface (remote_client);
 
   g_clear_pointer (&remote_client->id, g_free);
+  g_clear_object (&remote_client->socket_connection);
   g_clear_object (&remote_client->handover_skeleton);
   g_clear_object (&remote_client->handover_interface);
   g_clear_pointer (&remote_client->dbus_object_path, g_free);
+  g_clear_handle_id (&remote_client->abort_handover_source_id, g_source_remove);
 
   g_free (remote_client);
 }
@@ -214,13 +333,21 @@ remote_client_new (GrdDaemonSystem *daemon_system,
   remote_client->id = get_next_available_id (daemon_system);
   remote_client->daemon_system = daemon_system;
   remote_client->is_registered = FALSE;
+  remote_client->is_being_redirected = FALSE;
   remote_client->session = session;
   g_object_weak_ref (G_OBJECT (session),
                      (GWeakNotify) session_disposed,
                      remote_client);
 
+  remote_client->abort_handover_source_id =
+    g_timeout_add (MAX_HANDOVER_WAIT_TIME_MS, abort_handover, remote_client);
+
   remote_client->handover_interface =
     grd_dbus_remote_desktop_rdp_handover_skeleton_new ();
+  g_signal_connect (remote_client->handover_interface, "handle-start-handover",
+                    G_CALLBACK (on_handle_start_handover), remote_client);
+  g_signal_connect (remote_client->handover_interface, "handle-take-client",
+                    G_CALLBACK (on_handle_take_client), remote_client);
 
   return remote_client;
 }
@@ -249,6 +376,39 @@ on_create_remote_display_finished (GObject      *object,
       g_hash_table_remove (remote_client->daemon_system->remote_clients,
                            remote_client->id);
     }
+}
+
+static void
+on_incoming_redirected_connection (GrdRdpServer      *rdp_server,
+                                   const char        *routing_token_str,
+                                   GSocketConnection *connection,
+                                   GrdDaemonSystem   *daemon_system)
+{
+  uint64_t routing_token;
+  GrdRemoteClient *remote_client;
+  g_autofree char *remote_id = NULL;
+
+  g_debug ("[DaemonSystem] Incoming connection with routing token: %s",
+           routing_token_str);
+
+  routing_token = strtoul (routing_token_str, NULL, 10);
+  remote_id = get_id_from_routing_token (routing_token);
+  if (!g_hash_table_lookup_extended (daemon_system->remote_clients,
+                                     remote_id, NULL,
+                                     (gpointer *) &remote_client))
+    {
+      g_warning ("[DaemonSystem] Not found routing token on "
+                 "remote_clients list");
+      return;
+    }
+
+  remote_client->socket_connection = g_object_ref (connection);
+
+  g_debug ("[DaemonSystem] Found routing token on remote_clients list, "
+           "emitting signal TakeClientReady");
+
+  grd_dbus_remote_desktop_rdp_handover_emit_take_client_ready (
+    remote_client->handover_interface);
 }
 
 static void
@@ -288,6 +448,9 @@ on_rdp_server_started (GrdDaemonSystem *daemon_system)
   g_signal_connect (rdp_server, "incoming-new-connection",
                     G_CALLBACK (on_incoming_new_connection),
                     daemon_system);
+  g_signal_connect (rdp_server, "incoming-redirected-connection",
+                    G_CALLBACK (on_incoming_redirected_connection),
+                    daemon_system);
 }
 
 static void
@@ -298,6 +461,9 @@ on_rdp_server_stopped (GrdDaemonSystem *daemon_system)
 
   g_signal_handlers_disconnect_by_func (rdp_server,
                                         G_CALLBACK (on_incoming_new_connection),
+                                        daemon_system);
+  g_signal_handlers_disconnect_by_func (rdp_server,
+                                        G_CALLBACK (on_incoming_redirected_connection),
                                         daemon_system);
 }
 
@@ -618,6 +784,12 @@ unregister_handover_for_display (GrdDaemonSystem         *daemon_system,
     {
       g_debug ("[DaemonSystem] GDM removed a remote display with remote id "
                "%s we didn't know about", remote_id);
+      return;
+    }
+
+  if (!remote_client->is_being_redirected)
+    {
+      g_hash_table_remove (daemon_system->remote_clients, remote_id);
       return;
     }
 

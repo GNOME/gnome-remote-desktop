@@ -84,6 +84,40 @@
       No compatibility between versions is promised.
   -->
   <interface name="org.gnome.RemoteDesktop.Rdp.Handover">
+
+    <!--
+        StartHandover:
+
+        The new server is ready and starts the handover process, sending its
+        one time username/password and getting the certificate and key used
+        by the system server.
+    -->
+    <method name="StartHandover">
+      <arg name="username" direction="in" type="s"/>
+      <arg name="password" direction="in" type="s"/>
+      <arg name="certificate" direction="out" type="s"/>
+      <arg name="key" direction="out" type="s"/>
+    </method>
+
+    <!--
+        TakeClientReady:
+
+        Signal to make the new server aware that the client was redirected
+        successfully and is ready to be taken.
+    -->
+    <signal name="TakeClientReady" />
+
+    <!--
+        TakeClient:
+
+        The new server takes the file descriptor which has the active
+        connection of the redirected client.
+    -->
+    <method name="TakeClient">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
+      <arg name="fd" direction="out" type="h"/>
+    </method>
+
   </interface>
 
 </node>
