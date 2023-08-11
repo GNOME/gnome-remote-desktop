@@ -42,3 +42,8 @@ option('user',
         type: 'string',
         value: 'gnome-remote-desktop',
         description: 'Username for the GNOME Remote Desktop system service')
+
+option('dbus_sys_dir',
+       type: 'string',
+       value: '',
+       description: 'System D-Bus conf directory')

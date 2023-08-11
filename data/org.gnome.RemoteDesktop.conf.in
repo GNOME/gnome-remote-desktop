@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE busconfig PUBLIC
+ "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+
+  <!-- Only @GRD_USERNAME@ user can own the service -->
+  <policy user="@GRD_USERNAME@">
+    <allow own="org.gnome.RemoteDesktop"/>
+  </policy>
+
+  <!-- Anyone can send messages to the interfaces of the service -->
+  <policy context="default">
+    <allow send_destination="org.gnome.RemoteDesktop"
+           send_interface="org.gnome.RemoteDesktop.Rdp.Handover"/>
+    <allow send_destination="org.gnome.RemoteDesktop"
+           send_interface="org.freedesktop.DBus.Properties"/>
+    <allow send_destination="org.gnome.RemoteDesktop"
+           send_interface="org.freedesktop.DBus.Introspectable"/>
+    <allow send_destination="org.gnome.RemoteDesktop"
+           send_interface="org.freedesktop.DBus.ObjectManager"/>
+  </policy>
+
+</busconfig>

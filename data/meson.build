@@ -10,4 +10,11 @@ if have_rdp
     install_mode: ['rw-r--r--', grd_username, grd_username],
     install_dir: grd_confdir,
   )
+
+  configure_file(input: 'org.gnome.RemoteDesktop.conf.in',
+                 output: 'org.gnome.RemoteDesktop.conf',
+                 configuration: {
+                   'GRD_USERNAME': grd_username,
+                 },
+                 install_dir: dbus_sys_dir)
 endif
