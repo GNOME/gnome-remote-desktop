@@ -4,6 +4,29 @@
 <node>
 
   <!--
+      org.gnome.RemoteDesktop.Dispatcher:
+      @short_description: Dispatcher interface
+
+      This API is intended to be used to dispatch remote
+      desktop client connections from the system to a specific
+      session.
+      No compatibility between versions is promised.
+  -->
+  <interface name="org.gnome.RemoteDesktop.Dispatcher">
+
+    <!--
+        RequestHandover:
+
+        Looks if there is an active client waiting to be handed over to
+        the session.
+    -->
+    <method name="RequestHandover">
+      <arg name="handover" direction="out" type="o"/>
+    </method>
+
+  </interface>
+
+  <!--
       org.gnome.RemoteDesktop.Handover:
       @short_description: Handover interface
 

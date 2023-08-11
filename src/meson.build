@@ -16,6 +16,7 @@ deps = [
   pipewire_dep,
   libei_dep,
   libnotify_dep,
+  libsystemd_dep,
   epoxy_dep,
   drm_dep,
 

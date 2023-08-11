@@ -24,6 +24,8 @@
 
 #include "grd-daemon-system.h"
 
+#include <systemd/sd-login.h>
+
 #include "grd-context.h"
 #include "grd-daemon.h"
 #include "grd-dbus-gdm.h"
@@ -31,6 +33,7 @@
 #include "grd-private.h"
 #include "grd-rdp-server.h"
 #include "grd-session-rdp.h"
+#include "grd-utils.h"
 
 typedef struct _GrdRemoteClient
 {
@@ -55,6 +58,7 @@ struct _GrdDaemonSystem
   GDBusObjectManager *display_objects;
 
   unsigned int system_grd_name_id;
+  GrdDBusRemoteDesktopDispatcher *dispatcher_skeleton;
   GDBusObjectManagerServer *handover_manager_server;
 
   GHashTable *remote_clients;
@@ -69,10 +73,12 @@ grd_daemon_system_is_ready (GrdDaemon *daemon)
   g_autofree const char *gdm_remote_display_factory_name_owner = NULL;
   g_autofree const char *gdm_display_objects_name_owner = NULL;
   g_autoptr (GDBusConnection) manager_connection = NULL;
+  GDBusConnection *dispatcher_connection = NULL;
 
   if (!daemon_system->remote_display_factory_proxy ||
       !daemon_system->display_objects ||
-      !daemon_system->handover_manager_server)
+      !daemon_system->handover_manager_server ||
+      !daemon_system->dispatcher_skeleton)
     return FALSE;
 
   g_object_get (G_OBJECT (daemon_system->remote_display_factory_proxy),
@@ -85,10 +91,14 @@ grd_daemon_system_is_ready (GrdDaemon *daemon)
 
   manager_connection = g_dbus_object_manager_server_get_connection (
                          daemon_system->handover_manager_server);
+  dispatcher_connection =
+    g_dbus_interface_skeleton_get_connection (
+      G_DBUS_INTERFACE_SKELETON (daemon_system->dispatcher_skeleton));
 
   if (!gdm_remote_display_factory_name_owner ||
       !gdm_display_objects_name_owner ||
-      !manager_connection)
+      !manager_connection ||
+      !dispatcher_connection)
     return FALSE;
 
   return TRUE;
@@ -290,6 +300,168 @@ on_rdp_server_stopped (GrdDaemonSystem *daemon_system)
                                         daemon_system);
 }
 
+static char *
+get_session_id_of_sender (GDBusConnection  *connection,
+                          const char       *name,
+                          GCancellable     *cancellable,
+                          GError          **error)
+{
+  pid_t pid = 0;
+  uid_t uid = 0;
+  gboolean success;
+  char *session_id = NULL;
+
+  success = grd_get_pid_of_sender_sync (connection,
+                                        name,
+                                        &pid,
+                                        cancellable,
+                                        error);
+  if (!success)
+    return NULL;
+
+  session_id = grd_get_session_id_from_pid (pid);
+  if (session_id)
+    return session_id;
+
+  success = grd_get_uid_of_sender_sync (connection,
+                                        name,
+                                        &uid,
+                                        cancellable,
+                                        error);
+  if (!success)
+    return NULL;
+
+  session_id = grd_get_session_id_from_uid (uid);
+  if (!session_id)
+    {
+      g_set_error (error,
+                   G_IO_ERROR,
+                   G_IO_ERROR_NOT_FOUND,
+                   "Could not find a session for user %d",
+                   (int) uid);
+    }
+
+  return session_id;
+}
+
+static char *
+get_handover_object_path_for_call (GrdDaemonSystem        *daemon_system,
+                                   GDBusMethodInvocation  *invocation,
+                                   GError                **error)
+{
+  g_autofree char *session_id = NULL;
+  g_autofree char *object_path = NULL;
+  g_autoptr (GDBusObject) object = NULL;
+  GDBusConnection *connection = NULL;
+  const char *sender = NULL;
+  GCancellable *cancellable;
+
+  connection = g_dbus_method_invocation_get_connection (invocation);
+  sender = g_dbus_method_invocation_get_sender (invocation);
+  cancellable = grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
+
+  session_id = get_session_id_of_sender (connection,
+                                         sender,
+                                         cancellable,
+                                         error);
+  if (!session_id)
+      return NULL;
+
+  object_path = g_strdup_printf ("%s/session%s",
+                                 REMOTE_DESKTOP_HANDOVER_OBJECT_PATH,
+                                 session_id);
+
+  object = g_dbus_object_manager_get_object (
+             G_DBUS_OBJECT_MANAGER (daemon_system->handover_manager_server),
+             object_path);
+  if (!object)
+    {
+      g_set_error (error,
+                   G_DBUS_ERROR,
+                   G_DBUS_ERROR_UNKNOWN_OBJECT,
+                   "No connection waiting for handover");
+      return NULL;
+    }
+
+  return g_steal_pointer (&object_path);
+}
+
+static void
+get_handover_object_path_for_call_in_thread (GTask        *task,
+                                             gpointer      source_object,
+                                             gpointer      task_data,
+                                             GCancellable *cancellable)
+{
+  GDBusMethodInvocation *invocation = task_data;
+  GrdDaemonSystem *daemon_system = source_object;
+  GError *error = NULL;
+  char *object_path;
+
+  object_path = get_handover_object_path_for_call (daemon_system,
+                                                   invocation,
+                                                   &error);
+  if (error)
+    {
+      g_task_return_error (task, error);
+      return;
+    }
+
+  g_task_return_pointer (task, object_path, g_free);
+}
+
+static void
+get_handover_object_path_for_call_async (gpointer            source_object,
+                                         gpointer            user_data,
+                                         GAsyncReadyCallback on_finished_callback)
+{
+  GrdDaemonSystem *daemon_system = source_object;
+  GCancellable *cancellable =
+    grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
+  GTask *task;
+
+  task = g_task_new (daemon_system, cancellable, on_finished_callback, user_data);
+  g_task_set_task_data (task, user_data, NULL);
+  g_task_run_in_thread (task, get_handover_object_path_for_call_in_thread);
+  g_object_unref (task);
+}
+
+static void
+on_get_handover_object_path_finished (GObject      *source_object,
+                                      GAsyncResult *result,
+                                      gpointer      user_data)
+{
+  GrdDaemonSystem *daemon_system = GRD_DAEMON_SYSTEM (source_object);
+  GDBusMethodInvocation *invocation = user_data;
+  g_autofree char *object_path = NULL;
+  g_autoptr (GError) error = NULL;
+
+  object_path = g_task_propagate_pointer (G_TASK (result), &error);
+  if (error)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return;
+    }
+
+  grd_dbus_remote_desktop_dispatcher_complete_request_handover (
+    daemon_system->dispatcher_skeleton,
+    invocation,
+    object_path);
+}
+
+static gboolean
+on_handle_request_handover (GrdDBusRemoteDesktopDispatcher *skeleton,
+                            GDBusMethodInvocation          *invocation,
+                            gpointer                        user_data)
+{
+  GrdDaemonSystem *daemon_system = user_data;
+
+  get_handover_object_path_for_call_async (daemon_system,
+                                           invocation,
+                                           on_get_handover_object_path_finished);
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
 static void
 on_system_grd_bus_acquired (GDBusConnection *connection,
                             const char      *name,
@@ -302,6 +474,12 @@ on_system_grd_bus_acquired (GDBusConnection *connection,
   g_dbus_object_manager_server_set_connection (
     daemon_system->handover_manager_server,
     connection);
+
+  g_dbus_interface_skeleton_export (
+    G_DBUS_INTERFACE_SKELETON (daemon_system->dispatcher_skeleton),
+    connection,
+    REMOTE_DESKTOP_OBJECT_PATH,
+    NULL);
 
   grd_daemon_maybe_enable_services (GRD_DAEMON (daemon_system));
 }
@@ -555,6 +733,13 @@ grd_daemon_system_startup (GApplication *app)
   GCancellable *cancellable =
     grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
 
+  daemon_system->dispatcher_skeleton =
+    grd_dbus_remote_desktop_dispatcher_skeleton_new ();
+  g_signal_connect (daemon_system->dispatcher_skeleton,
+                    "handle-request-handover",
+                    G_CALLBACK (on_handle_request_handover),
+                    daemon_system);
+
   daemon_system->handover_manager_server =
     g_dbus_object_manager_server_new (REMOTE_DESKTOP_HANDOVER_OBJECT_PATH);
 
@@ -605,6 +790,10 @@ grd_daemon_system_shutdown (GApplication *app)
 
   g_clear_object (&daemon_system->display_objects);
   g_clear_object (&daemon_system->remote_display_factory_proxy);
+
+  g_dbus_interface_skeleton_unexport (
+    G_DBUS_INTERFACE_SKELETON (daemon_system->dispatcher_skeleton));
+  g_clear_object (&daemon_system->dispatcher_skeleton);
 
   g_clear_object (&daemon_system->handover_manager_server);
   g_clear_handle_id (&daemon_system->system_grd_name_id,

@@ -32,6 +32,7 @@ tss2_esys_dep = dependency('tss2-esys')
 tss2_mu_dep = dependency('tss2-mu')
 tss2_rc_dep = dependency('tss2-rc')
 tss2_tctildr_dep = dependency('tss2-tctildr')
+libsystemd_dep = dependency('libsystemd', required: false)
 
 have_fdk_aac = get_option('fdk_aac')
 have_rdp = get_option('rdp')

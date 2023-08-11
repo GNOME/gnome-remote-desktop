@@ -12,6 +12,8 @@
   <!-- Anyone can send messages to the interfaces of the service -->
   <policy context="default">
     <allow send_destination="org.gnome.RemoteDesktop"
+           send_interface="org.gnome.RemoteDesktop.Dispatcher"/>
+    <allow send_destination="org.gnome.RemoteDesktop"
            send_interface="org.gnome.RemoteDesktop.Handover"/>
     <allow send_destination="org.gnome.RemoteDesktop"
            send_interface="org.freedesktop.DBus.Properties"/>
