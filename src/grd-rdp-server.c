@@ -220,6 +220,10 @@ on_incoming (GSocketService    *service,
                     G_CALLBACK (on_session_stopped),
                     rdp_server);
 
+  g_signal_connect (session_rdp, "post-connected",
+                    G_CALLBACK (on_session_post_connect),
+                    rdp_server);
+
   return TRUE;
 }
 

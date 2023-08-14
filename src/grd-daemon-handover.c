@@ -29,10 +29,13 @@
 
 #include "grd-context.h"
 #include "grd-daemon.h"
+#include "grd-daemon-utils.h"
 #include "grd-dbus-remote-desktop.h"
 #include "grd-private.h"
 #include "grd-rdp-server.h"
 #include "grd-settings.h"
+
+#define MAX_HANDOVER_WAIT_TIME_MS (20 * 1000)
 
 struct _GrdDaemonHandover
 {
@@ -40,6 +43,8 @@ struct _GrdDaemonHandover
 
   GrdDBusRemoteDesktopRdpDispatcher *remote_desktop_dispatcher;
   GrdDBusRemoteDesktopRdpHandover *remote_desktop_handover;
+
+  unsigned int logout_source_id;
 };
 
 G_DEFINE_TYPE (GrdDaemonHandover, grd_daemon_handover, GRD_TYPE_DAEMON)
@@ -104,6 +109,8 @@ on_take_client_finished (GObject      *object,
   rdp_server = grd_daemon_get_rdp_server (GRD_DAEMON (daemon_handover));
   grd_rdp_server_notify_incoming (G_SOCKET_SERVICE (rdp_server),
                                   socket_connection);
+
+  g_clear_handle_id (&daemon_handover->logout_source_id, g_source_remove);
 }
 
 static void
@@ -146,6 +153,7 @@ on_start_handover_finished (GObject      *object,
     {
       g_warning ("[DaemonHandover] Failed to start handover: %s",
                  error->message);
+      grd_session_manager_call_logout_sync ();
       return;
     }
 
@@ -153,6 +161,19 @@ on_start_handover_finished (GObject      *object,
                 "rdp-server-cert", certificate,
                 "rdp-server-key", key,
                 NULL);
+}
+
+static gboolean
+logout (gpointer user_data)
+{
+  GrdDaemonHandover *daemon_handover = user_data;
+
+  g_warning ("[DaemonHandover] Logging out, handover timeout reached");
+
+  daemon_handover->logout_source_id = 0;
+  grd_session_manager_call_logout_sync ();
+
+  return G_SOURCE_REMOVE;
 }
 
 static void
@@ -163,6 +184,8 @@ start_handover (GrdDaemonHandover *daemon_handover,
   GCancellable *cancellable =
     grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
   const char *object_path;
+
+  g_assert (!daemon_handover->logout_source_id);
 
   object_path = g_dbus_proxy_get_object_path (
                   G_DBUS_PROXY (daemon_handover->remote_desktop_handover));
@@ -176,6 +199,24 @@ start_handover (GrdDaemonHandover *daemon_handover,
     cancellable,
     on_start_handover_finished,
     daemon_handover);
+
+  daemon_handover->logout_source_id =
+    g_timeout_add (MAX_HANDOVER_WAIT_TIME_MS, logout, daemon_handover);
+}
+
+static void
+on_session_stopped (GrdSession *session)
+{
+  grd_session_manager_call_logout_sync ();
+}
+
+static void
+on_incoming_new_connection (GrdRdpServer *rdp_server,
+                            GrdSession   *session)
+{
+  g_signal_connect (session, "stopped",
+                    G_CALLBACK (on_session_stopped),
+                    NULL);
 }
 
 static void
@@ -184,6 +225,7 @@ on_rdp_server_started (GrdDaemonHandover *daemon_handover)
   GrdDaemon *daemon = GRD_DAEMON (daemon_handover);
   GrdContext *context = grd_daemon_get_context (daemon);
   GrdSettings *settings = grd_context_get_settings (context);
+  GrdRdpServer *rdp_server = grd_daemon_get_rdp_server (daemon);
   g_autofree char *user_name = NULL;
   g_autofree char *password = NULL;
 
@@ -197,11 +239,18 @@ on_rdp_server_started (GrdDaemonHandover *daemon_handover)
                     daemon_handover);
 
   start_handover (daemon_handover, user_name, password);
+
+  g_signal_connect (rdp_server, "incoming-new-connection",
+                    G_CALLBACK (on_incoming_new_connection),
+                    NULL);
 }
 
 static void
 on_rdp_server_stopped (GrdDaemonHandover *daemon_handover)
 {
+  GrdRdpServer *rdp_server =
+    grd_daemon_get_rdp_server (GRD_DAEMON (daemon_handover));
+
   if (daemon_handover->remote_desktop_handover)
     {
       g_signal_handlers_disconnect_by_func (
@@ -209,6 +258,10 @@ on_rdp_server_stopped (GrdDaemonHandover *daemon_handover)
         G_CALLBACK (on_take_client_ready),
         daemon_handover);
     }
+
+  g_signal_handlers_disconnect_by_func (rdp_server,
+                                        G_CALLBACK (on_incoming_new_connection),
+                                        NULL);
 }
 
 static void
@@ -361,6 +414,8 @@ grd_daemon_handover_shutdown (GApplication *app)
 
   g_clear_object (&daemon_handover->remote_desktop_handover);
   g_clear_object (&daemon_handover->remote_desktop_dispatcher);
+
+  g_clear_handle_id (&daemon_handover->logout_source_id, g_source_remove);
 
   G_APPLICATION_CLASS (grd_daemon_handover_parent_class)->shutdown (app);
 }

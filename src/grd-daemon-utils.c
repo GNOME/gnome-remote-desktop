@@ -23,6 +23,13 @@
 
 #include <systemd/sd-login.h>
 
+enum
+{
+  GSM_LOGOUT_MODE_NORMAL = 0,
+  GSM_LOGOUT_MODE_NO_CONFIRMATION,
+  GSM_LOGOUT_MODE_FORCE,
+};
+
 gboolean
 grd_get_pid_of_sender_sync (GDBusConnection  *connection,
                             const char       *name,
@@ -160,4 +167,32 @@ grd_get_session_id_from_uid (uid_t uid)
     }
 
   return g_strdup (session_id);
+}
+
+void
+grd_session_manager_call_logout_sync (void)
+{
+  g_autoptr (GDBusConnection) connection = NULL;
+  g_autoptr (GError) error = NULL;
+
+  connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
+  if (!connection)
+    {
+      g_warning ("Couldn't get session bus to logout: %s", error->message);
+      return;
+    }
+
+  g_dbus_connection_call_sync (connection,
+                               "org.gnome.SessionManager",
+                               "/org/gnome/SessionManager",
+                               "org.gnome.SessionManager",
+                               "Logout",
+                               g_variant_new ("(u)",
+                               GSM_LOGOUT_MODE_NO_CONFIRMATION),
+                               NULL,
+                               G_DBUS_CALL_FLAGS_NONE,
+                               -1,
+                               NULL, &error);
+  if (error)
+    g_warning ("Couldn't logout of session: %s", error->message);
 }
