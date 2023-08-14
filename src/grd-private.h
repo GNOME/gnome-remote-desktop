@@ -25,6 +25,7 @@
 
 #define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop.User"
 #define GRD_DAEMON_SYSTEM_APPLICATION_ID "org.gnome.RemoteDesktop.System"
+#define GRD_DAEMON_HANDOVER_APPLICATION_ID "org.gnome.RemoteDesktop.Handover"
 #define REMOTE_DESKTOP_BUS_NAME "org.gnome.RemoteDesktop"
 #define REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/RemoteDesktop"
 #define REMOTE_DESKTOP_HANDOVER_OBJECT_PATH "/org/gnome/RemoteDesktop/Handover"

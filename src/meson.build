@@ -79,6 +79,8 @@ if have_rdp
   daemon_sources += files([
     'grd-clipboard-rdp.c',
     'grd-clipboard-rdp.h',
+    'grd-daemon-handover.c',
+    'grd-daemon-handover.h',
     'grd-daemon-system.c',
     'grd-daemon-system.h',
     'grd-hwaccel-nvidia.c',

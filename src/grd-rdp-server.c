@@ -229,6 +229,9 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
   GrdSettings *settings = grd_context_get_settings (rdp_server->context);
   GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (rdp_server->context);
 
+  if (runtime_mode == GRD_RUNTIME_MODE_HANDOVER)
+    return TRUE;
+
   if (!g_socket_listener_add_inet_port (G_SOCKET_LISTENER (rdp_server),
                                         grd_settings_get_rdp_port (settings),
                                         NULL,
@@ -248,6 +251,8 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
       g_assert (!rdp_server->cancellable);
       rdp_server->cancellable = g_cancellable_new ();
       break;
+    case GRD_RUNTIME_MODE_HANDOVER:
+      g_assert_not_reached ();
     }
 
   return TRUE;

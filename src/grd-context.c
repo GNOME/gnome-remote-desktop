@@ -154,6 +154,10 @@ grd_context_new (GrdRuntimeMode   runtime_mode,
       context->credentials = create_headless_credentials (error);
       context->settings = GRD_SETTINGS (grd_settings_headless_new (context, TRUE));
       break;
+    case GRD_RUNTIME_MODE_HANDOVER:
+      context->credentials = GRD_CREDENTIALS (grd_credentials_one_time_new ());
+      context->settings = GRD_SETTINGS (grd_settings_headless_new (context, FALSE));
+      break;
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
       context->credentials = GRD_CREDENTIALS (grd_credentials_libsecret_new ());
       context->settings = GRD_SETTINGS (grd_settings_user_new (context));
