@@ -222,6 +222,13 @@ on_incoming (GSocketService    *service,
   return TRUE;
 }
 
+void
+grd_rdp_server_notify_incoming (GSocketService    *service,
+                                GSocketConnection *connection)
+{
+  on_incoming (service, connection);
+}
+
 gboolean
 grd_rdp_server_start (GrdRdpServer  *rdp_server,
                       GError       **error)

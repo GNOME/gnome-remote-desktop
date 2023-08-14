@@ -122,8 +122,9 @@ start_rdp_server (GrdDaemon *daemon)
   if (priv->rdp_server)
     return;
 
-  if (grd_settings_get_rdp_server_cert (settings) &&
-      grd_settings_get_rdp_server_key (settings))
+  if ((grd_settings_get_rdp_server_cert (settings) &&
+      grd_settings_get_rdp_server_key (settings)) ||
+      grd_context_get_runtime_mode (priv->context) == GRD_RUNTIME_MODE_HANDOVER)
     {
       priv->rdp_server = grd_rdp_server_new (priv->context);
       if (!grd_rdp_server_start (priv->rdp_server, &error))
