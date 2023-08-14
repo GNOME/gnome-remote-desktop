@@ -1649,6 +1649,7 @@ get_max_monitor_count (GrdSessionRdp *session_rdp)
     {
     case GRD_RUNTIME_MODE_HEADLESS:
     case GRD_RUNTIME_MODE_SYSTEM:
+    case GRD_RUNTIME_MODE_HANDOVER:
       return MAX_MONITOR_COUNT_HEADLESS;
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
       return MAX_MONITOR_COUNT_SCREEN_SHARE;

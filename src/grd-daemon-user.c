@@ -54,6 +54,7 @@ grd_daemon_user_new (GrdRuntimeMode   runtime_mode,
       application_id = GRD_DAEMON_HEADLESS_APPLICATION_ID;
       break;
     case GRD_RUNTIME_MODE_SYSTEM:
+    case GRD_RUNTIME_MODE_HANDOVER:
       g_assert_not_reached ();
     }
 

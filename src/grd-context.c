@@ -25,6 +25,7 @@
 #include "grd-context.h"
 
 #include "grd-egl-thread.h"
+#include "grd-settings-handover.h"
 #include "grd-settings-system.h"
 #include "grd-settings-user.h"
 
@@ -157,6 +158,9 @@ grd_context_new (GrdRuntimeMode   runtime_mode,
       break;
     case GRD_RUNTIME_MODE_SYSTEM:
       context->settings = GRD_SETTINGS (grd_settings_system_new ());
+      break;
+    case GRD_RUNTIME_MODE_HANDOVER:
+      context->settings = GRD_SETTINGS (grd_settings_handover_new ());
       break;
     }
 

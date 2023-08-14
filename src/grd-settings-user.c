@@ -105,6 +105,7 @@ grd_settings_user_constructed (GObject *object)
                        G_SETTINGS_BIND_DEFAULT);
       break;
     case GRD_RUNTIME_MODE_SYSTEM:
+    case GRD_RUNTIME_MODE_HANDOVER:
       g_assert_not_reached ();
     }
 

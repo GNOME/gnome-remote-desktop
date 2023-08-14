@@ -32,6 +32,7 @@
 #include <stdlib.h>
 
 #include "grd-context.h"
+#include "grd-daemon-handover.h"
 #include "grd-daemon-system.h"
 #include "grd-daemon-user.h"
 #include "grd-dbus-mutter-remote-desktop.h"
@@ -133,6 +134,10 @@ export_remote_desktop_interface (GrdDaemon *daemon)
       grd_dbus_remote_desktop_org_gnome_remote_desktop_set_runtime_mode (
         priv->remote_desktop_interface, "system");
       break;
+    case GRD_RUNTIME_MODE_HANDOVER:
+      grd_dbus_remote_desktop_org_gnome_remote_desktop_set_runtime_mode (
+        priv->remote_desktop_interface, "handover");
+      break;
   }
 
   g_dbus_interface_skeleton_export (
@@ -232,7 +237,8 @@ start_rdp_server (GrdDaemon *daemon)
                 "rdp-server-key", &key,
                 NULL);
 
-  if (certificate && key)
+  if ((certificate && key) ||
+      grd_context_get_runtime_mode (priv->context) == GRD_RUNTIME_MODE_HANDOVER)
     {
       priv->rdp_server = grd_rdp_server_new (priv->context);
       if (!grd_rdp_server_start (priv->rdp_server, &error))
@@ -865,6 +871,7 @@ main (int argc, char **argv)
   gboolean print_version = FALSE;
   gboolean headless = FALSE;
   gboolean system = FALSE;
+  gboolean handover = FALSE;
   int rdp_port = -1;
   int vnc_port = -1;
 
@@ -876,6 +883,8 @@ main (int argc, char **argv)
 #ifdef HAVE_RDP
     { "system", 0, 0, G_OPTION_ARG_NONE, &system,
       "Run in headless mode as a system g-r-d service", NULL },
+    { "handover", 0, 0, G_OPTION_ARG_NONE, &handover,
+      "Run in headless mode taking a connection from system g-r-d service", NULL },
 #endif
     { "rdp-port", 0, 0, G_OPTION_ARG_INT, &rdp_port,
       "RDP port", NULL },
@@ -905,7 +914,7 @@ main (int argc, char **argv)
       return EXIT_SUCCESS;
     }
 
-  if (count_trues (2, headless, system) > 1)
+  if (count_trues (3, headless, system, handover) > 1)
     {
       g_printerr ("Invalid option: More than one runtime mode specified");
       return EXIT_FAILURE;
@@ -915,6 +924,8 @@ main (int argc, char **argv)
     runtime_mode = GRD_RUNTIME_MODE_HEADLESS;
   else if (system)
     runtime_mode = GRD_RUNTIME_MODE_SYSTEM;
+  else if (handover)
+    runtime_mode = GRD_RUNTIME_MODE_HANDOVER;
   else
     runtime_mode = GRD_RUNTIME_MODE_SCREEN_SHARE;
 
@@ -926,6 +937,9 @@ main (int argc, char **argv)
       break;
     case GRD_RUNTIME_MODE_SYSTEM:
       daemon = GRD_DAEMON (grd_daemon_system_new (&error));
+      break;
+    case GRD_RUNTIME_MODE_HANDOVER:
+      daemon = GRD_DAEMON (grd_daemon_handover_new (&error));
       break;
     }
 

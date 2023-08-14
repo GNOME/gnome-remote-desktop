@@ -501,6 +501,7 @@ create_settings (GrdRuntimeMode runtime_mode)
     case GRD_RUNTIME_MODE_HEADLESS:
       return GRD_SETTINGS (grd_settings_user_new (runtime_mode));
     case GRD_RUNTIME_MODE_SYSTEM:
+    case GRD_RUNTIME_MODE_HANDOVER:
       g_assert_not_reached ();
     }
 

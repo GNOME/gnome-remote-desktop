@@ -33,6 +33,7 @@ GrdSettingsHandover *
 grd_settings_handover_new (void)
 {
   return g_object_new (GRD_TYPE_SETTINGS_HANDOVER,
+                       "runtime-mode", GRD_RUNTIME_MODE_HANDOVER,
                        "rdp-enabled", TRUE,
                        "rdp-view-only", FALSE,
                        "rdp-screen-share-mode", GRD_RDP_SCREEN_SHARE_MODE_EXTEND,

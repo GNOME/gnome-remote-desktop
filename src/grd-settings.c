@@ -26,6 +26,7 @@
 
 #include "grd-credentials-file.h"
 #include "grd-credentials-libsecret.h"
+#include "grd-credentials-one-time.h"
 #include "grd-credentials-tpm.h"
 #include "grd-enum-types.h"
 
@@ -283,6 +284,8 @@ create_credentials (GrdRuntimeMode runtime_mode)
       return create_headless_credentials ();
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
       return GRD_CREDENTIALS (grd_credentials_libsecret_new ());
+    case GRD_RUNTIME_MODE_HANDOVER:
+      return GRD_CREDENTIALS (grd_credentials_one_time_new ());
     }
 
   g_assert_not_reached ();

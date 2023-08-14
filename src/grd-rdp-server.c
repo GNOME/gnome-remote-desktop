@@ -229,10 +229,17 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
 {
   GrdSettings *settings = grd_context_get_settings (rdp_server->context);
   GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (rdp_server->context);
+  GrdDBusRemoteDesktopRdpServer *rdp_server_iface =
+    grd_context_get_rdp_server_interface (rdp_server->context);
   uint16_t rdp_port;
   uint16_t selected_rdp_port = 0;
   gboolean negotiate_port;
-  GrdDBusRemoteDesktopRdpServer *rdp_server_iface;
+
+  if (runtime_mode == GRD_RUNTIME_MODE_HANDOVER)
+    {
+      grd_dbus_remote_desktop_rdp_server_set_enabled (rdp_server_iface, TRUE);
+      return TRUE;
+    }
 
   g_object_get (G_OBJECT (settings),
                 "rdp-port", &rdp_port,
@@ -261,9 +268,10 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
       g_assert (!rdp_server->cancellable);
       rdp_server->cancellable = g_cancellable_new ();
       break;
+    case GRD_RUNTIME_MODE_HANDOVER:
+      g_assert_not_reached ();
     }
 
-  rdp_server_iface = grd_context_get_rdp_server_interface (rdp_server->context);
   grd_dbus_remote_desktop_rdp_server_set_enabled (rdp_server_iface, TRUE);
   grd_dbus_remote_desktop_rdp_server_set_port (rdp_server_iface,
                                                selected_rdp_port);
