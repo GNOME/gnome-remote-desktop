@@ -24,8 +24,8 @@
 
 #include <gio/gio.h>
 
-#define GRD_USER_RDP_SERVER_PORT 3390
-#define GRD_USER_VNC_SERVER_PORT 5901
+#define GRD_USER_RDP_SERVER_PORT 3389
+#define GRD_USER_VNC_SERVER_PORT 5900
 
 enum
 {
