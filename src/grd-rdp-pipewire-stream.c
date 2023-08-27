@@ -1386,7 +1386,8 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
   if (egl_thread && stream->pipewire_stream)
     sync_egl_thread (egl_thread);
 
-  g_clear_pointer (&stream->pipewire_stream, pw_stream_destroy);
+  if (stream->pipewire_stream)
+    pw_stream_destroy (stream->pipewire_stream);
 
   g_clear_pointer (&stream->pipewire_core, pw_core_disconnect);
   g_clear_pointer (&stream->pipewire_context, pw_context_destroy);
