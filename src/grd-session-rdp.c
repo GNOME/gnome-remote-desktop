@@ -1394,7 +1394,7 @@ rdp_input_mouse_event (rdpInput *rdp_input,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
-  const char *stream_path = NULL;
+  GrdStream *stream = NULL;
   double stream_x = 0.0;
   double stream_y = 0.0;
   GrdButtonState button_state;
@@ -1409,11 +1409,11 @@ rdp_input_mouse_event (rdpInput *rdp_input,
   if (!(flags & PTR_FLAGS_WHEEL) && !(flags & PTR_FLAGS_HWHEEL) &&
       grd_rdp_layout_manager_transform_position (session_rdp->layout_manager,
                                                  x, y,
-                                                 &stream_path,
+                                                 &stream,
                                                  &stream_x, &stream_y))
     {
       grd_rdp_event_queue_add_input_event_pointer_motion_abs (rdp_event_queue,
-                                                              stream_path,
+                                                              stream,
                                                               stream_x,
                                                               stream_y);
     }

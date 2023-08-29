@@ -122,7 +122,7 @@ surface_context_free (SurfaceContext *surface_context)
       uint32_t stream_id = grd_stream_get_stream_id (surface_context->stream);
 
       grd_stream_disconnect_proxy_signals (surface_context->stream);
-      g_clear_object (&surface_context->stream);
+      g_clear_pointer (&surface_context->stream, grd_stream_destroy);
 
       grd_session_rdp_release_stream_id (layout_manager->session_rdp,
                                          stream_id);
@@ -576,7 +576,7 @@ gboolean
 grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager  *layout_manager,
                                            uint32_t              x,
                                            uint32_t              y,
-                                           const char          **stream_path,
+                                           GrdStream           **stream,
                                            double               *stream_x,
                                            double               *stream_y)
 {
@@ -604,7 +604,7 @@ grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager  *layout_manager,
           y >= surface_context->output_origin_y + surface_height)
         continue;
 
-      *stream_path = grd_stream_get_object_path (surface_context->stream);
+      *stream = g_object_ref (surface_context->stream);
       *stream_x = x - surface_context->output_origin_x;
       *stream_y = y - surface_context->output_origin_y;
       return TRUE;

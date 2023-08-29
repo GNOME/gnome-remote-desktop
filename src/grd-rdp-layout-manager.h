@@ -50,7 +50,7 @@ void grd_rdp_layout_manager_maybe_trigger_render_sources (GrdRdpLayoutManager *l
 gboolean grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager  *layout_manager,
                                                     uint32_t              x,
                                                     uint32_t              y,
-                                                    const char          **stream_path,
+                                                    GrdStream           **stream,
                                                     double               *stream_x,
                                                     double               *stream_y);
 

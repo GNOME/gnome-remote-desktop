@@ -118,7 +118,7 @@ void grd_session_notify_pointer_axis_discrete (GrdSession     *session,
                                                int             steps);
 
 void grd_session_notify_pointer_motion_absolute (GrdSession *session,
-                                                 const char *stream_path,
+                                                 GrdStream  *stream,
                                                  double      x,
                                                  double      y);
 

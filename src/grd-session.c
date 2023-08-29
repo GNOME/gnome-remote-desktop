@@ -404,11 +404,16 @@ grd_session_notify_pointer_axis_discrete (GrdSession    *session,
 
 void
 grd_session_notify_pointer_motion_absolute (GrdSession *session,
-                                            const char *stream_path,
+                                            GrdStream  *stream,
                                             double      x,
                                             double      y)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  const char *stream_path;
+
+  stream_path = grd_stream_get_object_path (stream);
+  if (!stream_path)
+    return;
 
   grd_dbus_mutter_remote_desktop_session_call_notify_pointer_motion_absolute (
     priv->remote_desktop_session, stream_path, x, y, NULL, NULL, NULL);
