@@ -28,13 +28,17 @@
 #include <gio/gunixfdlist.h>
 #include <glib-object.h>
 #include <glib-unix.h>
+#include <libei.h>
+#include <linux/input-event-codes.h>
 #include <sys/mman.h>
+#include <xkbcommon/xkbcommon.h>
 
 #include "grd-clipboard.h"
 #include "grd-dbus-mutter-remote-desktop.h"
 #include "grd-context.h"
 #include "grd-private.h"
 #include "grd-stream.h"
+#include "grd-utils.h"
 
 enum
 {
@@ -52,6 +56,13 @@ enum
 
 static guint signals[N_SIGNALS];
 
+typedef enum _EvdevButtonType
+{
+  EVDEV_BUTTON_TYPE_NONE,
+  EVDEV_BUTTON_TYPE_KEY,
+  EVDEV_BUTTON_TYPE_BUTTON,
+} EvdevButtonType;
+
 typedef enum _ScreenCastType
 {
   SCREEN_CAST_TYPE_NONE,
@@ -68,6 +79,12 @@ typedef struct _AsyncDBusRecordCallContext
   ScreenCastType screen_cast_type;
 } AsyncDBusRecordCallContext;
 
+typedef struct _GrdRegion
+{
+  struct ei_device *ei_device;
+  struct ei_region *ei_region;
+} GrdRegion;
+
 typedef struct _GrdSessionPrivate
 {
   GrdContext *context;
@@ -76,6 +93,18 @@ typedef struct _GrdSessionPrivate
   GrdDBusMutterScreenCastSession *screen_cast_session;
 
   GrdClipboard *clipboard;
+
+  struct ei *ei;
+  struct ei_seat *ei_seat;
+  struct ei_device *ei_abs_pointer;
+  struct ei_device *ei_keyboard;
+  uint32_t ei_sequence;
+  GSource *ei_source;
+  GHashTable *regions;
+
+  struct xkb_context *xkb_context;
+  struct xkb_keymap *xkb_keymap;
+  struct xkb_state *xkb_state;
 
   GCancellable *cancellable;
 
@@ -159,7 +188,7 @@ on_screen_cast_stream_proxy_acquired (GObject      *object,
                                       gpointer      user_data)
 {
   g_autofree AsyncDBusRecordCallContext *async_context = user_data;
-  GrdDBusMutterScreenCastStream *stream_proxy;
+  g_autoptr (GrdDBusMutterScreenCastStream) stream_proxy = NULL;
   GrdSession *session;
   GrdSessionPrivate *priv;
   GrdSessionClass *klass;
@@ -181,7 +210,14 @@ on_screen_cast_stream_proxy_acquired (GObject      *object,
   priv = grd_session_get_instance_private (session);
   klass = GRD_SESSION_GET_CLASS (session);
 
-  stream = grd_stream_new (async_context->stream_id, stream_proxy);
+  stream = grd_stream_new (async_context->stream_id, stream_proxy, &error);
+  if (!stream)
+    {
+      g_warning ("Failed create stream: %s", error->message);
+      grd_session_stop (async_context->session);
+      return;
+    }
+
   klass->on_stream_created (session, async_context->stream_id, stream);
 
   grd_dbus_mutter_screen_cast_stream_call_start (stream_proxy,
@@ -335,14 +371,136 @@ grd_session_notify_keyboard_keycode (GrdSession  *session,
                                      GrdKeyState  state)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusMutterRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
 
-  grd_dbus_mutter_remote_desktop_session_call_notify_keyboard_keycode (session_proxy,
-                                                                       keycode,
-                                                                       state,
-                                                                       NULL,
-                                                                       NULL,
-                                                                       NULL);
+  if (!priv->ei_keyboard)
+    return;
+
+  ei_device_keyboard_key (priv->ei_keyboard, keycode, state);
+  ei_device_frame (priv->ei_keyboard, g_get_monotonic_time ());
+}
+
+static gboolean
+pick_keycode_for_keysym_in_current_group (GrdSession *session,
+                                          uint32_t    keysym,
+                                          uint32_t   *keycode_out,
+                                          uint32_t   *level_out)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  struct xkb_keymap *xkb_keymap;
+  struct xkb_state  *xkb_state;
+  uint32_t keycode, layout;
+  xkb_keycode_t min_keycode, max_keycode;
+
+  xkb_keymap = priv->xkb_keymap;
+  xkb_state = priv->xkb_state;
+
+  layout = xkb_state_serialize_layout (xkb_state, XKB_STATE_LAYOUT_EFFECTIVE);
+  min_keycode = xkb_keymap_min_keycode (xkb_keymap);
+  max_keycode = xkb_keymap_max_keycode (xkb_keymap);
+  for (keycode = min_keycode; keycode < max_keycode; keycode++)
+    {
+      int num_levels, level;
+
+      num_levels = xkb_keymap_num_levels_for_key (xkb_keymap, keycode, layout);
+      for (level = 0; level < num_levels; level++)
+        {
+          const xkb_keysym_t *syms;
+          int num_syms, sym;
+
+          num_syms = xkb_keymap_key_get_syms_by_level (xkb_keymap, keycode,
+                                                       layout, level, &syms);
+          for (sym = 0; sym < num_syms; sym++)
+            {
+              if (syms[sym] == keysym)
+                {
+                  *keycode_out = keycode;
+                  if (level_out)
+                    *level_out = level;
+                  return TRUE;
+                }
+            }
+        }
+    }
+
+  return FALSE;
+}
+
+uint32_t
+xkb_keycode_to_evdev (uint32_t xkb_keycode)
+{
+  return xkb_keycode - 8;
+}
+
+static void
+apply_level_modifiers (GrdSession *session,
+                       uint64_t    time_us,
+                       uint32_t    level,
+                       uint32_t    key_state)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  uint32_t keysym, keycode, evcode;
+
+  if (level == 0)
+    return;
+
+  if (level == 1)
+    {
+      keysym = XKB_KEY_Shift_L;
+    }
+  else if (level == 2)
+    {
+      keysym = XKB_KEY_ISO_Level3_Shift;
+    }
+  else
+    {
+      g_warning ("Unhandled level: %d", level);
+      return;
+    }
+
+  if (!pick_keycode_for_keysym_in_current_group (session, keysym,
+                                                 &keycode, NULL))
+    return;
+
+  evcode = xkb_keycode_to_evdev (keycode);
+
+  ei_device_keyboard_key (priv->ei_keyboard, evcode, key_state);
+  ei_device_frame (priv->ei_keyboard, time_us);
+}
+
+static EvdevButtonType
+get_button_type (uint16_t code)
+{
+  switch (code)
+    {
+    case BTN_TOOL_PEN:
+    case BTN_TOOL_RUBBER:
+    case BTN_TOOL_BRUSH:
+    case BTN_TOOL_PENCIL:
+    case BTN_TOOL_AIRBRUSH:
+    case BTN_TOOL_MOUSE:
+    case BTN_TOOL_LENS:
+    case BTN_TOOL_QUINTTAP:
+    case BTN_TOOL_DOUBLETAP:
+    case BTN_TOOL_TRIPLETAP:
+    case BTN_TOOL_QUADTAP:
+    case BTN_TOOL_FINGER:
+    case BTN_TOUCH:
+      return EVDEV_BUTTON_TYPE_NONE;
+    }
+
+  if (code >= KEY_ESC && code <= KEY_MICMUTE)
+    return EVDEV_BUTTON_TYPE_KEY;
+  if (code >= BTN_MISC && code <= BTN_GEAR_UP)
+    return EVDEV_BUTTON_TYPE_BUTTON;
+  if (code >= KEY_OK && code <= KEY_LIGHTS_TOGGLE)
+    return EVDEV_BUTTON_TYPE_KEY;
+  if (code >= BTN_DPAD_UP && code <= BTN_DPAD_RIGHT)
+    return EVDEV_BUTTON_TYPE_BUTTON;
+  if (code >= KEY_ALS_TOGGLE && code <= KEY_KBDINPUTASSIST_CANCEL)
+    return EVDEV_BUTTON_TYPE_KEY;
+  if (code >= BTN_TRIGGER_HAPPY && code <= BTN_TRIGGER_HAPPY40)
+    return EVDEV_BUTTON_TYPE_BUTTON;
+  return EVDEV_BUTTON_TYPE_NONE;
 }
 
 void
@@ -351,14 +509,38 @@ grd_session_notify_keyboard_keysym (GrdSession *session,
                                     GrdKeyState state)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusMutterRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
+  int64_t now_us;
+  uint32_t keycode = 0, level = 0, evcode = 0;
 
-  grd_dbus_mutter_remote_desktop_session_call_notify_keyboard_keysym (session_proxy,
-                                                                      keysym,
-                                                                      state,
-                                                                      NULL,
-                                                                      NULL,
-                                                                      NULL);
+  if (!priv->xkb_state)
+    return;
+
+  now_us = g_get_monotonic_time ();
+
+  if (!pick_keycode_for_keysym_in_current_group (session,
+                                                 keysym,
+                                                 &keycode, &level))
+    {
+      g_warning ("No keycode found for keyval %x in current group", keysym);
+      return;
+    }
+
+  evcode = xkb_keycode_to_evdev (keycode);
+
+  if (get_button_type (evcode) != EVDEV_BUTTON_TYPE_KEY)
+    {
+      g_warning ("Unknown/invalid key 0x%x pressed", evcode);
+      return;
+    }
+
+  if (state)
+    apply_level_modifiers (session, now_us, level, state);
+
+  ei_device_keyboard_key (priv->ei_keyboard, evcode, state);
+  ei_device_frame (priv->ei_keyboard, now_us);
+
+  if (!state)
+    apply_level_modifiers (session, now_us, level, state);
 }
 
 void
@@ -367,14 +549,12 @@ grd_session_notify_pointer_button (GrdSession     *session,
                                    GrdButtonState  state)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusMutterRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
 
-  grd_dbus_mutter_remote_desktop_session_call_notify_pointer_button (session_proxy,
-                                                                     button,
-                                                                     state,
-                                                                     NULL,
-                                                                     NULL,
-                                                                     NULL);
+  if (!priv->ei_abs_pointer)
+    return;
+
+  ei_device_button_button (priv->ei_abs_pointer, button, state);
+  ei_device_frame (priv->ei_abs_pointer, g_get_monotonic_time ());
 }
 
 void
@@ -384,10 +564,19 @@ grd_session_notify_pointer_axis (GrdSession          *session,
                                  GrdPointerAxisFlags  flags)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusMutterRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
 
-  grd_dbus_mutter_remote_desktop_session_call_notify_pointer_axis (
-    session_proxy, dx, dy, flags, NULL, NULL, NULL);
+  if (!priv->ei_abs_pointer)
+    return;
+
+  if (flags & GRD_POINTER_AXIS_FLAGS_FINISH)
+    {
+      ei_device_scroll_stop (priv->ei_abs_pointer, true, true);
+    }
+  else
+    {
+      ei_device_scroll_delta (priv->ei_abs_pointer, dx, dy);
+    }
+  ei_device_frame (priv->ei_abs_pointer, g_get_monotonic_time ());
 }
 
 void
@@ -396,10 +585,14 @@ grd_session_notify_pointer_axis_discrete (GrdSession    *session,
                                           int            steps)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  GrdDBusMutterRemoteDesktopSession *session_proxy = priv->remote_desktop_session;
 
-  grd_dbus_mutter_remote_desktop_session_call_notify_pointer_axis_discrete (
-    session_proxy, axis, steps, NULL, NULL, NULL);
+  if (!priv->ei_abs_pointer)
+    return;
+
+  ei_device_scroll_discrete (priv->ei_abs_pointer,
+                             axis == GRD_POINTER_AXIS_HORIZONTAL ? steps * 120 : 0,
+                             axis == GRD_POINTER_AXIS_VERTICAL ? steps * 120 : 0);
+  ei_device_frame (priv->ei_abs_pointer, g_get_monotonic_time ());
 }
 
 void
@@ -409,14 +602,16 @@ grd_session_notify_pointer_motion_absolute (GrdSession *session,
                                             double      y)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  const char *stream_path;
+  GrdRegion *region;
 
-  stream_path = grd_stream_get_object_path (stream);
-  if (!stream_path)
+  region = g_hash_table_lookup (priv->regions, grd_stream_get_mapping_id (stream));
+  if (!region)
     return;
 
-  grd_dbus_mutter_remote_desktop_session_call_notify_pointer_motion_absolute (
-    priv->remote_desktop_session, stream_path, x, y, NULL, NULL, NULL);
+  ei_device_pointer_motion_absolute (region->ei_device,
+                                     ei_region_get_x (region->ei_region) + x,
+                                     ei_region_get_y (region->ei_region) + y);
+  ei_device_frame (region->ei_device, g_get_monotonic_time ());
 }
 
 static GVariant *
@@ -864,29 +1059,271 @@ on_num_lock_state_changed (GrdDBusMutterRemoteDesktopSession *session_proxy,
     klass->on_num_lock_state_changed (session, state);
 }
 
-static void
-on_remote_desktop_session_proxy_acquired (GObject      *object,
-                                          GAsyncResult *result,
-                                          gpointer      user_data)
+static gboolean
+grd_ei_source_prepare (gpointer user_data)
 {
-  GrdDBusMutterRemoteDesktopSession *session_proxy;
+  GrdSession *session = GRD_SESSION (user_data);
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  return !!ei_peek_event (priv->ei);
+}
+
+static gboolean
+setup_xkb_keymap (GrdSession        *session,
+                  struct ei_keymap  *keymap,
+                  GError           **error)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  struct xkb_context *xkb_context = NULL;
+  struct xkb_keymap *xkb_keymap = NULL;
+  struct xkb_state *xkb_state = NULL;
+  size_t keymap_size;
+  g_autofree char *buf = NULL;
+
+  g_clear_pointer (&priv->xkb_state, xkb_state_unref);
+  g_clear_pointer (&priv->xkb_keymap, xkb_keymap_unref);
+  g_clear_pointer (&priv->xkb_context, xkb_context_unref);
+
+  xkb_context = xkb_context_new (XKB_CONTEXT_NO_FLAGS);
+  if (!xkb_context)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create XKB context");
+      goto err;
+    }
+
+  keymap_size = ei_keymap_get_size (keymap);
+  buf = g_malloc0 (keymap_size + 1);
+  while (TRUE)
+    {
+      int ret;
+
+      ret = read (ei_keymap_get_fd (keymap), buf, keymap_size);
+      if (ret > 0)
+        {
+          break;
+        }
+      else if (ret == 0)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Keyboard layout was empty");
+          goto err;
+        }
+      else if (errno == EINTR)
+        {
+          continue;
+        }
+      else
+        {
+          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                       "Failed to read layout: %s", g_strerror (errno));
+          goto err;
+        }
+    }
+
+  xkb_keymap = xkb_keymap_new_from_string (xkb_context, buf,
+                                           XKB_KEYMAP_FORMAT_TEXT_V1,
+                                           XKB_KEYMAP_COMPILE_NO_FLAGS);
+  if (!xkb_keymap)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create XKB keymap");
+      goto err;
+    }
+
+  xkb_state = xkb_state_new (xkb_keymap);
+  if (!xkb_state)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create XKB state");
+      goto err;
+    }
+
+  priv->xkb_context = xkb_context;
+  priv->xkb_keymap = xkb_keymap;
+  priv->xkb_state = xkb_state;
+  return TRUE;
+
+err:
+  g_clear_pointer (&xkb_state, xkb_state_unref);
+  g_clear_pointer (&xkb_keymap, xkb_keymap_unref);
+  g_clear_pointer (&xkb_context, xkb_context_unref);
+  return FALSE;
+}
+
+static gboolean
+process_keymap (GrdSession        *session,
+                struct ei_device  *device,
+                GError           **error)
+{
+  struct ei_keymap *keymap;
+  enum ei_keymap_type type;
+
+  keymap = ei_device_keyboard_get_keymap (device);
+  if (!keymap)
+    return TRUE;
+
+  type = ei_keymap_get_type (keymap);
+  switch (type)
+    {
+    case EI_KEYMAP_TYPE_XKB:
+      return setup_xkb_keymap (session, keymap, error);
+    default:
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Unknown keyboard layout type");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static void
+grd_region_free (GrdRegion *region)
+{
+  ei_region_unref (region->ei_region);
+  ei_device_unref (region->ei_device);
+  g_free (region);
+}
+
+static void
+process_regions (GrdSession       *session,
+                 struct ei_device *ei_device)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  int i = 0;
+  struct ei_region *ei_region;
+
+  while ((ei_region = ei_device_get_region (ei_device, i++)))
+    {
+      const char *mapping_id;
+      GrdRegion *region;
+
+      mapping_id = ei_region_get_mapping_id (ei_region);
+      if (!mapping_id)
+        continue;
+
+      region = g_new0 (GrdRegion, 1);
+      region->ei_device = ei_device_ref (ei_device);
+      region->ei_region = ei_region_ref (ei_region);
+      g_hash_table_insert (priv->regions, g_strdup (mapping_id), region);
+    }
+}
+
+static gboolean
+grd_ei_source_dispatch (gpointer user_data)
+{
+  GrdSession *session = GRD_SESSION (user_data);
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  struct ei_event *event;
+
+  ei_dispatch (priv->ei);
+
+  while ((event = ei_get_event (priv->ei)))
+    {
+      switch (ei_event_get_type (event))
+        {
+        case EI_EVENT_CONNECT:
+        case EI_EVENT_DISCONNECT:
+          break;
+        case EI_EVENT_SEAT_ADDED:
+          if (priv->ei_seat)
+            break;
+
+          priv->ei_seat = ei_seat_ref (ei_event_get_seat (event));
+          ei_seat_bind_capabilities (priv->ei_seat,
+                                     EI_DEVICE_CAP_POINTER,
+                                     EI_DEVICE_CAP_KEYBOARD,
+                                     EI_DEVICE_CAP_POINTER_ABSOLUTE,
+                                     EI_DEVICE_CAP_BUTTON,
+                                     EI_DEVICE_CAP_SCROLL,
+                                     NULL);
+          break;
+        case EI_EVENT_SEAT_REMOVED:
+          if (ei_event_get_seat (event) == priv->ei_seat)
+            g_clear_pointer (&priv->ei_seat, ei_seat_unref);
+          break;
+        case EI_EVENT_DEVICE_ADDED:
+          {
+            struct ei_device *device = ei_event_get_device (event);
+
+            if (ei_device_has_capability (device, EI_DEVICE_CAP_KEYBOARD))
+              {
+                g_autoptr (GError) error = NULL;
+
+                g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
+                priv->ei_keyboard = ei_device_ref (device);
+                if (!process_keymap (session, priv->ei_keyboard, &error))
+                  {
+                    g_warning ("Failed to handle keyboard layout: %s",
+                               error->message);
+                    grd_session_stop (session);
+                    ei_event_unref (event);
+                    return G_SOURCE_REMOVE;
+                  }
+              }
+            if (ei_device_has_capability (device, EI_DEVICE_CAP_POINTER_ABSOLUTE))
+              {
+                g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
+                priv->ei_abs_pointer = ei_device_ref (device);
+                process_regions (session, device);
+              }
+            break;
+          }
+        case EI_EVENT_DEVICE_RESUMED:
+          if (ei_event_get_device (event) == priv->ei_abs_pointer)
+            ei_device_start_emulating (priv->ei_abs_pointer, ++priv->ei_sequence);
+          if (ei_event_get_device (event) == priv->ei_keyboard)
+            ei_device_start_emulating (priv->ei_keyboard, ++priv->ei_sequence);
+          break;
+        case EI_EVENT_DEVICE_PAUSED:
+          break;
+        case EI_EVENT_DEVICE_REMOVED:
+          if (ei_event_get_device (event) == priv->ei_abs_pointer)
+            g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
+          if (ei_event_get_device (event) == priv->ei_keyboard)
+            g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
+          break;
+        default:
+          break;
+        }
+      ei_event_unref (event);
+    }
+
+  return G_SOURCE_CONTINUE;
+}
+
+
+static void
+on_eis_connected (GObject      *object,
+                  GAsyncResult *result,
+                  gpointer      user_data)
+{
+  GrdDBusMutterRemoteDesktopSession *proxy =
+    GRD_DBUS_MUTTER_REMOTE_DESKTOP_SESSION (object);
+  g_autoptr (GVariant) fd_variant = NULL;
+  g_autoptr (GUnixFDList) fd_list = NULL;
   GrdSession *session;
   GrdSessionPrivate *priv;
   GrdSessionClass *klass;
+  int fd;
+  struct ei *ei;
+  int ret;
   g_autoptr (GError) error = NULL;
   const char *remote_desktop_session_id;
   GrdDBusMutterScreenCast *screen_cast_proxy;
   GVariantBuilder properties_builder;
   GVariant *properties_variant;
 
-  session_proxy =
-    grd_dbus_mutter_remote_desktop_session_proxy_new_finish (result, &error);
-  if (!session_proxy)
+  if (!grd_dbus_mutter_remote_desktop_session_call_connect_to_eis_finish (proxy,
+                                                                          &fd_variant,
+                                                                          &fd_list,
+                                                                          result,
+                                                                          &error))
     {
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
         return;
 
-      g_warning ("Failed to acquire remote desktop session proxy: %s\n",
+      g_warning ("Failed to connect to EIS: %s",
                  error->message);
       grd_session_stop (GRD_SESSION (user_data));
       return;
@@ -896,20 +1333,41 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
   priv = grd_session_get_instance_private (session);
   klass = GRD_SESSION_GET_CLASS (session);
 
-  g_signal_connect (session_proxy, "closed",
+  fd = g_unix_fd_list_get (fd_list, g_variant_get_handle (fd_variant), &error);
+
+  ei = ei_new_sender (session);
+  ret = ei_setup_backend_fd (ei, fd);
+  if (ret < 0)
+    {
+      g_warning ("Failed to setup libei context: %s", g_strerror (-ret));
+
+      grd_session_stop (GRD_SESSION (user_data));
+      return;
+    }
+
+  ei_configure_name (ei, "gnome-remote-desktop");
+
+  priv->ei = ei;
+  priv->ei_source = grd_create_fd_source (ei_get_fd (ei),
+                                          "libei",
+                                          grd_ei_source_prepare,
+                                          grd_ei_source_dispatch,
+                                          session, NULL);
+  g_source_attach (priv->ei_source, NULL);
+  g_source_unref (priv->ei_source);
+
+  g_signal_connect (priv->remote_desktop_session, "closed",
                     G_CALLBACK (on_remote_desktop_session_closed),
                     session);
-  g_signal_connect (session_proxy, "selection-owner-changed",
+  g_signal_connect (priv->remote_desktop_session, "selection-owner-changed",
                     G_CALLBACK (on_remote_desktop_session_selection_owner_changed),
                     session);
-  g_signal_connect (session_proxy, "selection-transfer",
+  g_signal_connect (priv->remote_desktop_session, "selection-transfer",
                     G_CALLBACK (on_remote_desktop_session_selection_transfer),
                     session);
 
-  priv->remote_desktop_session = session_proxy;
-
   remote_desktop_session_id =
-    grd_dbus_mutter_remote_desktop_session_get_session_id (session_proxy);
+    grd_dbus_mutter_remote_desktop_session_get_session_id (priv->remote_desktop_session);
 
   g_variant_builder_init (&properties_builder, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&properties_builder, "{sv}",
@@ -928,19 +1386,59 @@ on_remote_desktop_session_proxy_acquired (GObject      *object,
                                                    session);
 
   priv->caps_lock_state_changed_id =
-    g_signal_connect (session_proxy, "notify::caps-lock-state",
+    g_signal_connect (priv->remote_desktop_session, "notify::caps-lock-state",
                       G_CALLBACK (on_caps_lock_state_changed),
                       session);
   priv->num_lock_state_changed_id =
-    g_signal_connect (session_proxy, "notify::num-lock-state",
+    g_signal_connect (priv->remote_desktop_session, "notify::num-lock-state",
                       G_CALLBACK (on_num_lock_state_changed),
                       session);
 
   if (klass->remote_desktop_session_ready)
     klass->remote_desktop_session_ready (session);
 
-  on_caps_lock_state_changed (session_proxy, NULL, session);
-  on_num_lock_state_changed (session_proxy, NULL, session);
+  on_caps_lock_state_changed (priv->remote_desktop_session, NULL, session);
+  on_num_lock_state_changed (priv->remote_desktop_session, NULL, session);
+}
+
+static void
+on_remote_desktop_session_proxy_acquired (GObject      *object,
+                                          GAsyncResult *result,
+                                          gpointer      user_data)
+{
+  GrdDBusMutterRemoteDesktopSession *session_proxy;
+  GrdSession *session;
+  GrdSessionPrivate *priv;
+  g_autoptr (GError) error = NULL;
+  GVariantBuilder options_builder;
+
+  session_proxy =
+    grd_dbus_mutter_remote_desktop_session_proxy_new_finish (result, &error);
+  if (!session_proxy)
+    {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
+      g_warning ("Failed to acquire remote desktop session proxy: %s",
+                 error->message);
+      grd_session_stop (GRD_SESSION (user_data));
+      return;
+    }
+
+  session = GRD_SESSION (user_data);
+  priv = grd_session_get_instance_private (session);
+
+  priv->remote_desktop_session = session_proxy;
+
+  g_variant_builder_init (&options_builder, G_VARIANT_TYPE ("a{sv}"));
+
+  grd_dbus_mutter_remote_desktop_session_call_connect_to_eis (
+    priv->remote_desktop_session,
+    g_variant_builder_end (&options_builder),
+    NULL,
+    priv->cancellable,
+    on_eis_connected,
+    session);
 }
 
 static void
@@ -1005,9 +1503,21 @@ grd_session_finalize (GObject *object)
 
   g_assert (!priv->remote_desktop_session);
 
+  g_clear_pointer (&priv->xkb_state, xkb_state_unref);
+  g_clear_pointer (&priv->xkb_keymap, xkb_keymap_unref);
+  g_clear_pointer (&priv->xkb_context, xkb_context_unref);
+
   if (priv->cancellable)
     g_assert (g_cancellable_is_cancelled (priv->cancellable));
   g_clear_object (&priv->cancellable);
+
+  g_clear_pointer (&priv->regions, g_hash_table_unref);
+
+  g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
+  g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
+  g_clear_pointer (&priv->ei_seat, ei_seat_unref);
+  g_clear_pointer (&priv->ei_source, g_source_destroy);
+  g_clear_pointer (&priv->ei, ei_unref);
 
   G_OBJECT_CLASS (grd_session_parent_class)->finalize (object);
 }
@@ -1054,6 +1564,11 @@ grd_session_get_property (GObject    *object,
 static void
 grd_session_init (GrdSession *session)
 {
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  priv->regions = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                         g_free,
+                                         (GDestroyNotify) grd_region_free);
 }
 
 static void

@@ -14,6 +14,7 @@ deps = [
   gio_dep,
   gio_unix_dep,
   pipewire_dep,
+  libei_dep,
   libnotify_dep,
   epoxy_dep,
   drm_dep,

@@ -35,8 +35,9 @@ struct _GrdStreamClass
   GObjectClass parent_class;
 };
 
-GrdStream *grd_stream_new (uint32_t                       stream_id,
-                           GrdDBusMutterScreenCastStream *proxy);
+GrdStream *grd_stream_new (uint32_t                        stream_id,
+                           GrdDBusMutterScreenCastStream  *proxy,
+                           GError                        **error);
 
 void grd_stream_destroy (GrdStream *stream);
 
@@ -44,7 +45,7 @@ uint32_t grd_stream_get_stream_id (GrdStream *stream);
 
 uint32_t grd_stream_get_pipewire_node_id (GrdStream *stream);
 
-const char * grd_stream_get_object_path (GrdStream *stream);
+const char * grd_stream_get_mapping_id (GrdStream *stream);
 
 void grd_stream_disconnect_proxy_signals (GrdStream *stream);
 

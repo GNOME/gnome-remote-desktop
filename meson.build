@@ -9,6 +9,7 @@ epoxy_req = '>= 1.4'
 freerdp_req = '>= 2.10.0'
 fuse_req = '>= 3.9.1'
 xkbcommon_req = '>= 1.0.0'
+libei_req = '>= 1.0.901'
 
 gnome = import('gnome')
 i18n  = import('i18n')
@@ -22,6 +23,7 @@ epoxy_dep = dependency('epoxy')
 glib_dep = dependency('glib-2.0', version: '>= 2.68')
 gio_dep = dependency('gio-2.0')
 gio_unix_dep = dependency('gio-unix-2.0')
+libei_dep = dependency('libei-1.0', version: libei_req)
 libnotify_dep = dependency('libnotify')
 libsecret_dep = dependency('libsecret-1')
 pipewire_dep = dependency('libpipewire-0.3', version: '>= 0.3.49')
