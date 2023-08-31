@@ -48,4 +48,11 @@ void grd_sync_point_complete (GrdSyncPoint *sync_point,
 
 gboolean grd_sync_point_wait_for_completion (GrdSyncPoint *sync_point);
 
+GSource * grd_create_fd_source (int             fd,
+                                const char     *name,
+                                GSourceFunc     prepare,
+                                GSourceFunc     dispatch,
+                                gpointer        user_data,
+                                GDestroyNotify  notify);
+
 #endif /* GRD_UTILS_H */
