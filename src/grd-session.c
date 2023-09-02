@@ -1330,6 +1330,8 @@ on_eis_connected (GObject      *object,
   fd = g_unix_fd_list_get (fd_list, g_variant_get_handle (fd_variant), &error);
 
   priv->ei = ei_new_sender (session);
+  ei_configure_name (priv->ei, "gnome-remote-desktop");
+
   ret = ei_setup_backend_fd (priv->ei, fd);
   if (ret < 0)
     {
@@ -1338,8 +1340,6 @@ on_eis_connected (GObject      *object,
       grd_session_stop (GRD_SESSION (user_data));
       return;
     }
-
-  ei_configure_name (priv->ei, "gnome-remote-desktop");
 
   priv->ei_source = grd_create_fd_source (ei_get_fd (priv->ei),
                                           "libei",
