@@ -425,7 +425,7 @@ pick_keycode_for_keysym_in_current_group (GrdSession *session,
   return FALSE;
 }
 
-uint32_t
+static uint32_t
 xkb_keycode_to_evdev (uint32_t xkb_keycode)
 {
   return xkb_keycode - 8;
