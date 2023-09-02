@@ -1333,7 +1333,7 @@ on_eis_connected (GObject      *object,
   ret = ei_setup_backend_fd (priv->ei, fd);
   if (ret < 0)
     {
-      g_warning ("Failed to setup libei context: %s", g_strerror (-ret));
+      g_warning ("Failed to setup libei backend: %s", g_strerror (-ret));
 
       grd_session_stop (GRD_SESSION (user_data));
       return;
