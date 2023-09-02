@@ -1301,12 +1301,12 @@ on_eis_connected (GObject      *object,
   GrdSessionPrivate *priv;
   GrdSessionClass *klass;
   int fd;
-  int ret;
   g_autoptr (GError) error = NULL;
   const char *remote_desktop_session_id;
   GrdDBusMutterScreenCast *screen_cast_proxy;
   GVariantBuilder properties_builder;
   GVariant *properties_variant;
+  int ret;
 
   if (!grd_dbus_mutter_remote_desktop_session_call_connect_to_eis_finish (proxy,
                                                                           &fd_variant,
