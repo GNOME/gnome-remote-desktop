@@ -1263,8 +1263,8 @@ grd_ei_source_dispatch (gpointer user_data)
                   {
                     g_warning ("Failed to handle keyboard layout: %s",
                                error->message);
-                    grd_session_stop (session);
                     ei_event_unref (event);
+                    grd_session_stop (session);
                     return G_SOURCE_REMOVE;
                   }
               }
