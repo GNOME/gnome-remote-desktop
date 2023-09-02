@@ -569,13 +569,10 @@ grd_session_notify_pointer_axis (GrdSession          *session,
     return;
 
   if (flags & GRD_POINTER_AXIS_FLAGS_FINISH)
-    {
-      ei_device_scroll_stop (priv->ei_abs_pointer, true, true);
-    }
+    ei_device_scroll_stop (priv->ei_abs_pointer, true, true);
   else
-    {
-      ei_device_scroll_delta (priv->ei_abs_pointer, dx, dy);
-    }
+    ei_device_scroll_delta (priv->ei_abs_pointer, dx, dy);
+
   ei_device_frame (priv->ei_abs_pointer, g_get_monotonic_time ());
 }
 
