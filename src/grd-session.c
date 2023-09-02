@@ -526,7 +526,6 @@ grd_session_notify_keyboard_keysym (GrdSession *session,
     }
 
   evcode = xkb_keycode_to_evdev (keycode);
-
   if (get_button_type (evcode) != EVDEV_BUTTON_TYPE_KEY)
     {
       g_warning ("Unknown/invalid key 0x%x pressed", evcode);
