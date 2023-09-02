@@ -1301,7 +1301,6 @@ on_eis_connected (GObject      *object,
   GrdSessionPrivate *priv;
   GrdSessionClass *klass;
   int fd;
-  struct ei *ei;
   int ret;
   g_autoptr (GError) error = NULL;
   const char *remote_desktop_session_id;
@@ -1330,8 +1329,8 @@ on_eis_connected (GObject      *object,
 
   fd = g_unix_fd_list_get (fd_list, g_variant_get_handle (fd_variant), &error);
 
-  ei = ei_new_sender (session);
-  ret = ei_setup_backend_fd (ei, fd);
+  priv->ei = ei_new_sender (session);
+  ret = ei_setup_backend_fd (priv->ei, fd);
   if (ret < 0)
     {
       g_warning ("Failed to setup libei context: %s", g_strerror (-ret));
@@ -1340,10 +1339,9 @@ on_eis_connected (GObject      *object,
       return;
     }
 
-  ei_configure_name (ei, "gnome-remote-desktop");
+  ei_configure_name (priv->ei, "gnome-remote-desktop");
 
-  priv->ei = ei;
-  priv->ei_source = grd_create_fd_source (ei_get_fd (ei),
+  priv->ei_source = grd_create_fd_source (ei_get_fd (priv->ei),
                                           "libei",
                                           grd_ei_source_prepare,
                                           grd_ei_source_dispatch,
