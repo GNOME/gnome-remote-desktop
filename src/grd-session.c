@@ -124,6 +124,32 @@ grd_session_get_context (GrdSession *session)
   return priv->context;
 }
 
+static void
+clear_session (GrdSession *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  g_clear_pointer (&priv->xkb_state, xkb_state_unref);
+  g_clear_pointer (&priv->xkb_keymap, xkb_keymap_unref);
+  g_clear_pointer (&priv->xkb_context, xkb_context_unref);
+
+  g_clear_pointer (&priv->regions, g_hash_table_unref);
+
+  g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
+  g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
+  g_clear_pointer (&priv->ei_seat, ei_seat_unref);
+  g_clear_pointer (&priv->ei_source, g_source_destroy);
+  g_clear_pointer (&priv->ei, ei_unref);
+
+  g_clear_signal_handler (&priv->caps_lock_state_changed_id,
+                          priv->remote_desktop_session);
+  g_clear_signal_handler (&priv->num_lock_state_changed_id,
+                          priv->remote_desktop_session);
+
+  g_clear_object (&priv->remote_desktop_session);
+  g_clear_object (&priv->screen_cast_session);
+}
+
 void
 grd_session_stop (GrdSession *session)
 {
@@ -150,13 +176,7 @@ grd_session_stop (GrdSession *session)
   if (priv->cancellable)
     g_cancellable_cancel (priv->cancellable);
 
-  g_clear_signal_handler (&priv->caps_lock_state_changed_id,
-                          priv->remote_desktop_session);
-  g_clear_signal_handler (&priv->num_lock_state_changed_id,
-                          priv->remote_desktop_session);
-
-  g_clear_object (&priv->remote_desktop_session);
-  g_clear_object (&priv->screen_cast_session);
+  clear_session (session);
 
   g_signal_emit (session, signals[STOPPED], 0);
 }
@@ -939,18 +959,9 @@ static void
 on_remote_desktop_session_closed (GrdDBusMutterRemoteDesktopSession *session_proxy,
                                   GrdSession                        *session)
 {
-  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-
   g_debug ("Remote desktop session closed, stopping session");
 
-  g_clear_signal_handler (&priv->caps_lock_state_changed_id,
-                          priv->remote_desktop_session);
-  g_clear_signal_handler (&priv->num_lock_state_changed_id,
-                          priv->remote_desktop_session);
-
-  g_clear_object (&priv->remote_desktop_session);
-  g_clear_object (&priv->screen_cast_session);
-
+  clear_session (session);
   grd_session_stop (session);
 }
 
@@ -1494,23 +1505,24 @@ grd_session_finalize (GObject *object)
   GrdSession *session = GRD_SESSION (object);
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
-  g_assert (!priv->remote_desktop_session);
-
-  g_clear_pointer (&priv->xkb_state, xkb_state_unref);
-  g_clear_pointer (&priv->xkb_keymap, xkb_keymap_unref);
-  g_clear_pointer (&priv->xkb_context, xkb_context_unref);
-
   if (priv->cancellable)
     g_assert (g_cancellable_is_cancelled (priv->cancellable));
   g_clear_object (&priv->cancellable);
 
-  g_clear_pointer (&priv->regions, g_hash_table_unref);
+  g_assert (!priv->xkb_state);
+  g_assert (!priv->xkb_keymap);
+  g_assert (!priv->xkb_context);
 
-  g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
-  g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
-  g_clear_pointer (&priv->ei_seat, ei_seat_unref);
-  g_clear_pointer (&priv->ei_source, g_source_destroy);
-  g_clear_pointer (&priv->ei, ei_unref);
+  g_assert (!priv->regions);
+
+  g_assert (!priv->ei_keyboard);
+  g_assert (!priv->ei_abs_pointer);
+  g_assert (!priv->ei_seat);
+  g_assert (!priv->ei_source);
+  g_assert (!priv->ei);
+
+  g_assert (!priv->remote_desktop_session);
+  g_assert (!priv->screen_cast_session);
 
   G_OBJECT_CLASS (grd_session_parent_class)->finalize (object);
 }
