@@ -1289,7 +1289,6 @@ grd_ei_source_dispatch (gpointer user_data)
   return G_SOURCE_CONTINUE;
 }
 
-
 static void
 on_eis_connected (GObject      *object,
                   GAsyncResult *result,
