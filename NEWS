@@ -1,0 +1,10 @@
+45.rc
+=====
+* Use default RDP and VNC ports again
+* Use libei for input event plumbing
+
+Contributors:
+  Jonas Ådahl, Pascal Nowack
+
+Translators:
+  Sabri Ünal [tr], Florentina Musat [ro], A S Alam [pa]
