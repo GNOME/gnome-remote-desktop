@@ -32,6 +32,7 @@
 #include "grd-dbus-remote-desktop.h"
 #include "grd-private.h"
 #include "grd-rdp-server.h"
+#include "grd-session-rdp.h"
 #include "grd-settings.h"
 #include "grd-types.h"
 #include "grd-utils.h"
@@ -44,6 +45,8 @@ struct _GrdDaemonHandover
 
   GrdDBusRemoteDesktopDispatcher *remote_desktop_dispatcher;
   GrdDBusRemoteDesktopHandover *remote_desktop_handover;
+
+  GrdSession *session;
 
   unsigned int logout_source_id;
 };
@@ -204,18 +207,24 @@ start_handover (GrdDaemonHandover *daemon_handover,
 }
 
 static void
-on_session_stopped (GrdSession *session)
+on_session_stopped (GrdSession        *session,
+                    GrdDaemonHandover *daemon_handover)
 {
   grd_session_manager_call_logout_sync ();
+
+  daemon_handover->session = NULL;
 }
 
 static void
-on_session_created (GrdRdpServer *rdp_server,
-                    GrdSession   *session)
+on_session_created (GrdRdpServer      *rdp_server,
+                    GrdSession        *session,
+                    GrdDaemonHandover *daemon_handover)
 {
   g_signal_connect (session, "stopped",
                     G_CALLBACK (on_session_stopped),
-                    NULL);
+                    daemon_handover);
+
+  daemon_handover->session = session;
 }
 
 static void
@@ -243,7 +252,7 @@ on_rdp_server_started (GrdDaemonHandover *daemon_handover)
 
   g_signal_connect (rdp_server, "session-created",
                     G_CALLBACK (on_session_created),
-                    NULL);
+                    daemon_handover);
 }
 
 static void
@@ -262,7 +271,27 @@ on_rdp_server_stopped (GrdDaemonHandover *daemon_handover)
 
   g_signal_handlers_disconnect_by_func (rdp_server,
                                         G_CALLBACK (on_session_created),
-                                        NULL);
+                                        daemon_handover);
+}
+
+static void
+on_redirect_client (GrdDBusRemoteDesktopHandover *interface,
+                    const char                   *routing_token,
+                    const char                   *user_name,
+                    const char                   *password,
+                    GrdDaemonHandover            *daemon_handover)
+{
+  const char *object_path = g_dbus_proxy_get_object_path (
+                              G_DBUS_PROXY (interface));
+
+  g_debug ("[DaemonHandover] At: %s, received RedirectClient signal",
+           object_path);
+
+  grd_session_rdp_send_server_redirection (
+    GRD_SESSION_RDP (daemon_handover->session),
+    routing_token,
+    user_name,
+    password);
 }
 
 static void
@@ -284,6 +313,9 @@ on_remote_desktop_handover_proxy_acquired (GObject      *object,
     }
 
   daemon_handover->remote_desktop_handover = g_steal_pointer (&proxy);
+
+  g_signal_connect (daemon_handover->remote_desktop_handover, "redirect-client",
+                    G_CALLBACK (on_redirect_client), daemon_handover);
 
   grd_daemon_maybe_enable_services (GRD_DAEMON (daemon_handover));
 }
