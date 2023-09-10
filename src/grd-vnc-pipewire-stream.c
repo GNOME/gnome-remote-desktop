@@ -422,10 +422,13 @@ on_stream_remove_buffer (void             *user_data,
 {
   GrdVncPipeWireStream *stream = user_data;
   BufferContext *buffer_context = NULL;
+  g_autoptr (GMutexLocker) locker = NULL;
 
   if (!g_hash_table_lookup_extended (stream->pipewire_buffers, buffer,
                                      NULL, (gpointer *) &buffer_context))
     g_assert_not_reached ();
+
+  locker = g_mutex_locker_new (&stream->dequeue_mutex);
 
   /* Ensure buffer is not locked any more */
   g_mutex_lock (&buffer_context->buffer_mutex);
