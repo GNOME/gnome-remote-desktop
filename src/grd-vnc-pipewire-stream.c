@@ -34,6 +34,8 @@
 #include "grd-utils.h"
 #include "grd-vnc-cursor.h"
 
+#define MAX_FORMAT_PARAMS 2
+
 enum
 {
   CLOSED,
@@ -174,28 +176,148 @@ vnc_pointer_free (VncPointer *vnc_pointer)
   g_free (vnc_pointer);
 }
 
+static void
+add_common_format_params (struct spa_pod_builder     *pod_builder,
+                          enum spa_video_format       spa_format,
+                          const GrdVncVirtualMonitor *virtual_monitor)
+{
+  struct spa_rectangle min_rect;
+  struct spa_rectangle max_rect;
+  struct spa_fraction min_framerate;
+  struct spa_fraction max_framerate;
+
+  min_rect = SPA_RECTANGLE (1, 1);
+  max_rect = SPA_RECTANGLE (INT32_MAX, INT32_MAX);
+  min_framerate = SPA_FRACTION (1, 1);
+  max_framerate = SPA_FRACTION (30, 1);
+
+  spa_pod_builder_add (pod_builder,
+                       SPA_FORMAT_mediaType,
+                       SPA_POD_Id (SPA_MEDIA_TYPE_video), 0);
+  spa_pod_builder_add (pod_builder,
+                       SPA_FORMAT_mediaSubtype,
+                       SPA_POD_Id (SPA_MEDIA_SUBTYPE_raw), 0);
+  spa_pod_builder_add (pod_builder,
+                       SPA_FORMAT_VIDEO_format,
+                       SPA_POD_Id (spa_format), 0);
+
+  if (virtual_monitor)
+    {
+      struct spa_rectangle virtual_monitor_rect;
+
+      virtual_monitor_rect = SPA_RECTANGLE (virtual_monitor->width,
+                                            virtual_monitor->height);
+      spa_pod_builder_add (pod_builder,
+                           SPA_FORMAT_VIDEO_size,
+                           SPA_POD_Rectangle (&virtual_monitor_rect), 0);
+    }
+  else
+    {
+      spa_pod_builder_add (pod_builder,
+                           SPA_FORMAT_VIDEO_size,
+                           SPA_POD_CHOICE_RANGE_Rectangle (&min_rect,
+                                                           &min_rect,
+                                                           &max_rect), 0);
+    }
+
+  spa_pod_builder_add (pod_builder,
+                       SPA_FORMAT_VIDEO_framerate,
+                       SPA_POD_Fraction (&SPA_FRACTION (0, 1)), 0);
+  spa_pod_builder_add (pod_builder,
+                       SPA_FORMAT_VIDEO_maxFramerate,
+                       SPA_POD_CHOICE_RANGE_Fraction (&min_framerate,
+                                                      &min_framerate,
+                                                      &max_framerate), 0);
+}
+
+static uint32_t
+add_format_params (GrdVncPipeWireStream        *stream,
+                   const GrdVncVirtualMonitor  *virtual_monitor,
+                   struct spa_pod_builder      *pod_builder,
+                   const struct spa_pod       **params,
+                   uint32_t                     n_available_params)
+{
+  GrdSession *session = GRD_SESSION (stream->session);
+  GrdContext *context = grd_session_get_context (session);
+  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
+  struct spa_pod_frame format_frame;
+  enum spa_video_format spa_format = SPA_VIDEO_FORMAT_BGRx;
+  gboolean need_fallback_format = FALSE;
+  uint32_t n_params = 0;
+
+  g_assert (n_available_params >= 2);
+
+  spa_pod_builder_push_object (pod_builder, &format_frame,
+                               SPA_TYPE_OBJECT_Format,
+                               SPA_PARAM_EnumFormat);
+  add_common_format_params (pod_builder, spa_format, virtual_monitor);
+
+  if (egl_thread)
+    {
+      uint32_t drm_format;
+      int n_modifiers;
+      g_autofree uint64_t *modifiers = NULL;
+
+      grd_get_spa_format_details (spa_format, &drm_format, NULL);
+      if (grd_egl_thread_get_modifiers_for_format (egl_thread, drm_format,
+                                                   &n_modifiers,
+                                                   &modifiers))
+        {
+          struct spa_pod_frame modifier_frame;
+          int i;
+
+          spa_pod_builder_prop (pod_builder,
+                                SPA_FORMAT_VIDEO_modifier,
+                                (SPA_POD_PROP_FLAG_MANDATORY |
+                                 SPA_POD_PROP_FLAG_DONT_FIXATE));
+
+          spa_pod_builder_push_choice (pod_builder, &modifier_frame,
+                                       SPA_CHOICE_Enum, 0);
+          spa_pod_builder_long (pod_builder, modifiers[0]);
+
+          for (i = 0; i < n_modifiers; i++)
+            {
+              uint64_t modifier = modifiers[i];
+
+              spa_pod_builder_long (pod_builder, modifier);
+            }
+          spa_pod_builder_long (pod_builder, DRM_FORMAT_MOD_INVALID);
+          spa_pod_builder_pop (pod_builder, &modifier_frame);
+
+          need_fallback_format = TRUE;
+        }
+    }
+
+  params[n_params++] = spa_pod_builder_pop (pod_builder, &format_frame);
+
+  if (need_fallback_format)
+    {
+      spa_pod_builder_push_object (pod_builder, &format_frame,
+                                   SPA_TYPE_OBJECT_Format,
+                                   SPA_PARAM_EnumFormat);
+      add_common_format_params (pod_builder, spa_format, virtual_monitor);
+      params[n_params++] = spa_pod_builder_pop (pod_builder, &format_frame);
+    }
+
+  return n_params;
+}
+
 void
 grd_vnc_pipewire_stream_resize (GrdVncPipeWireStream *stream,
                                 GrdVncVirtualMonitor *virtual_monitor)
 {
-  struct spa_rectangle virtual_monitor_rect;
   uint8_t params_buffer[1024];
   struct spa_pod_builder pod_builder;
-  const struct spa_pod *params[1];
-
-  virtual_monitor_rect = SPA_RECTANGLE (virtual_monitor->width,
-                                        virtual_monitor->height);
+  const struct spa_pod *params[MAX_FORMAT_PARAMS] = {};
+  uint32_t n_params = 0;
 
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
-  params[0] = spa_pod_builder_add_object (
-    &pod_builder,
-    SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat,
-    SPA_FORMAT_VIDEO_size, SPA_POD_Rectangle (&virtual_monitor_rect),
-    0);
+  n_params += add_format_params (stream, virtual_monitor, &pod_builder,
+                                 params, MAX_FORMAT_PARAMS);
 
-  pw_stream_update_params (stream->pipewire_stream,
-                           params, G_N_ELEMENTS (params));
+  g_assert (n_params > 0);
+  pw_stream_update_params (stream->pipewire_stream, params, n_params);
 }
 
 static void
@@ -769,76 +891,17 @@ static const struct pw_stream_events stream_events = {
   .process = on_stream_process,
 };
 
-static void
-add_common_format_params (struct spa_pod_builder     *pod_builder,
-                          enum spa_video_format       spa_format,
-                          const GrdVncVirtualMonitor *virtual_monitor)
-{
-  struct spa_rectangle min_rect;
-  struct spa_rectangle max_rect;
-  struct spa_fraction min_framerate;
-  struct spa_fraction max_framerate;
-
-  min_rect = SPA_RECTANGLE (1, 1);
-  max_rect = SPA_RECTANGLE (INT32_MAX, INT32_MAX);
-  min_framerate = SPA_FRACTION (1, 1);
-  max_framerate = SPA_FRACTION (30, 1);
-
-  spa_pod_builder_add (pod_builder,
-                       SPA_FORMAT_mediaType,
-                       SPA_POD_Id (SPA_MEDIA_TYPE_video), 0);
-  spa_pod_builder_add (pod_builder,
-                       SPA_FORMAT_mediaSubtype,
-                       SPA_POD_Id (SPA_MEDIA_SUBTYPE_raw), 0);
-  spa_pod_builder_add (pod_builder,
-                       SPA_FORMAT_VIDEO_format,
-                       SPA_POD_Id (spa_format), 0);
-
-  if (virtual_monitor)
-    {
-      struct spa_rectangle virtual_monitor_rect;
-
-      virtual_monitor_rect = SPA_RECTANGLE (virtual_monitor->width,
-                                            virtual_monitor->height);
-      spa_pod_builder_add (pod_builder,
-                           SPA_FORMAT_VIDEO_size,
-                           SPA_POD_Rectangle (&virtual_monitor_rect), 0);
-    }
-  else
-    {
-      spa_pod_builder_add (pod_builder,
-                           SPA_FORMAT_VIDEO_size,
-                           SPA_POD_CHOICE_RANGE_Rectangle (&min_rect,
-                                                           &min_rect,
-                                                           &max_rect), 0);
-    }
-
-  spa_pod_builder_add (pod_builder,
-                       SPA_FORMAT_VIDEO_framerate,
-                       SPA_POD_Fraction (&SPA_FRACTION (0, 1)), 0);
-  spa_pod_builder_add (pod_builder,
-                       SPA_FORMAT_VIDEO_maxFramerate,
-                       SPA_POD_CHOICE_RANGE_Fraction (&min_framerate,
-                                                      &min_framerate,
-                                                      &max_framerate), 0);
-}
-
 static gboolean
 connect_to_stream (GrdVncPipeWireStream        *stream,
                    const GrdVncVirtualMonitor  *virtual_monitor,
                    GError                     **error)
 {
-  GrdSession *session = GRD_SESSION (stream->session);
-  GrdContext *context = grd_session_get_context (session);
   struct pw_stream *pipewire_stream;
   uint8_t params_buffer[1024];
   struct spa_pod_builder pod_builder;
-  const struct spa_pod *params[2];
+  const struct spa_pod *params[MAX_FORMAT_PARAMS] = {};
+  uint32_t n_params = 0;
   int ret;
-  enum spa_video_format spa_format = SPA_VIDEO_FORMAT_BGRx;
-  GrdEglThread *egl_thread;
-  struct spa_pod_frame format_frame;
-  gboolean need_fallback_format = FALSE;
 
   pipewire_stream = pw_stream_new (stream->pipewire_core,
                                    "grd-vnc-pipewire-stream",
@@ -846,58 +909,8 @@ connect_to_stream (GrdVncPipeWireStream        *stream,
 
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
-  spa_pod_builder_push_object (&pod_builder, &format_frame,
-                               SPA_TYPE_OBJECT_Format,
-                               SPA_PARAM_EnumFormat);
-  add_common_format_params (&pod_builder, spa_format, virtual_monitor);
-
-  egl_thread = grd_context_get_egl_thread (context);
-  if (egl_thread)
-    {
-      uint32_t drm_format;
-      int n_modifiers;
-      g_autofree uint64_t *modifiers = NULL;
-
-      grd_get_spa_format_details (spa_format, &drm_format, NULL);
-      if (grd_egl_thread_get_modifiers_for_format (egl_thread, drm_format,
-                                                   &n_modifiers,
-                                                   &modifiers))
-        {
-          struct spa_pod_frame modifier_frame;
-          int i;
-
-          spa_pod_builder_prop (&pod_builder,
-                                SPA_FORMAT_VIDEO_modifier,
-                                (SPA_POD_PROP_FLAG_MANDATORY |
-                                 SPA_POD_PROP_FLAG_DONT_FIXATE));
-
-          spa_pod_builder_push_choice (&pod_builder, &modifier_frame,
-                                       SPA_CHOICE_Enum, 0);
-          spa_pod_builder_long (&pod_builder, modifiers[0]);
-
-          for (i = 0; i < n_modifiers; i++)
-            {
-              uint64_t modifier = modifiers[i];
-
-              spa_pod_builder_long (&pod_builder, modifier);
-            }
-          spa_pod_builder_long (&pod_builder, DRM_FORMAT_MOD_INVALID);
-          spa_pod_builder_pop (&pod_builder, &modifier_frame);
-
-          need_fallback_format = TRUE;
-        }
-    }
-
-  params[0] = spa_pod_builder_pop (&pod_builder, &format_frame);
-
-  if (need_fallback_format)
-    {
-      spa_pod_builder_push_object (&pod_builder, &format_frame,
-                                   SPA_TYPE_OBJECT_Format,
-                                   SPA_PARAM_EnumFormat);
-      add_common_format_params (&pod_builder, spa_format, virtual_monitor);
-      params[1] = spa_pod_builder_pop (&pod_builder, &format_frame);
-    }
+  n_params += add_format_params (stream, virtual_monitor, &pod_builder,
+                                 params, MAX_FORMAT_PARAMS);
 
   stream->pipewire_stream = pipewire_stream;
 
@@ -906,12 +919,13 @@ connect_to_stream (GrdVncPipeWireStream        *stream,
                           &stream_events,
                           stream);
 
+  g_assert (n_params > 0);
   ret = pw_stream_connect (stream->pipewire_stream,
                            PW_DIRECTION_INPUT,
                            stream->src_node_id,
                            (PW_STREAM_FLAG_RT_PROCESS |
                             PW_STREAM_FLAG_AUTOCONNECT),
-                           params, need_fallback_format ? 2 : 1);
+                           params, n_params);
   if (ret < 0)
     {
       g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (-ret),
