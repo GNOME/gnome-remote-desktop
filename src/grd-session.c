@@ -1197,7 +1197,7 @@ process_regions (GrdSession       *session,
                  struct ei_device *ei_device)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
-  int i = 0;
+  size_t i = 0;
   struct ei_region *ei_region;
 
   while ((ei_region = ei_device_get_region (ei_device, i++)))
