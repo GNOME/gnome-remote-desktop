@@ -1194,6 +1194,31 @@ grd_region_free (GrdRegion *region)
   g_free (region);
 }
 
+static gboolean
+should_dispose_region (gpointer key,
+                       gpointer value,
+                       gpointer user_data)
+{
+  struct ei_device *ei_device = user_data;
+  GrdRegion *region = value;
+
+  return region->ei_device == ei_device;
+}
+
+static void
+maybe_dispose_ei_abs_pointer (GrdSession *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  if (!priv->ei_abs_pointer)
+    return;
+
+  g_hash_table_foreach_remove (priv->regions,
+                               should_dispose_region,
+                               priv->ei_abs_pointer);
+  g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
+}
+
 static void
 process_regions (GrdSession       *session,
                  struct ei_device *ei_device)
@@ -1272,7 +1297,7 @@ grd_ei_source_dispatch (gpointer user_data)
               }
             if (ei_device_has_capability (device, EI_DEVICE_CAP_POINTER_ABSOLUTE))
               {
-                g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
+                maybe_dispose_ei_abs_pointer (session);
                 priv->ei_abs_pointer = ei_device_ref (device);
                 process_regions (session, device);
               }
@@ -1288,7 +1313,7 @@ grd_ei_source_dispatch (gpointer user_data)
           break;
         case EI_EVENT_DEVICE_REMOVED:
           if (ei_event_get_device (event) == priv->ei_abs_pointer)
-            g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
+            maybe_dispose_ei_abs_pointer (session);
           if (ei_event_get_device (event) == priv->ei_keyboard)
             g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
           break;
