@@ -1,0 +1,273 @@
+# Esperanto translation for gnome-remote-desktop.
+# Copyright (C) 2023 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2023-09-03 20:59+0000\n"
+"PO-Revision-Date: 2023-09-14 13:55+0200\n"
+"Last-Translator: Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>\n"
+"Language-Team: Esperanto <gnome-eo-list@gnome.org>\n"
+"Language: eo\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"X-Generator: Gtranslator 42.0\n"
+
+#: src/grd-daemon.c:612
+msgid "GNOME Remote Desktop"
+msgstr "GNOME Defora Labortablo"
+
+#: src/grd-prompt.c:124
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Ĉu vi volas kunhavigi vian labortablon?"
+
+#: src/grd-prompt.c:125
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Uzanto sur la komputilo '%s' provas defore rigardi aŭ regi vian labortablon."
+
+#: src/grd-prompt.c:131
+msgid "Refuse"
+msgstr "Rifuzi"
+
+#: src/grd-prompt.c:136
+msgid "Accept"
+msgstr "Akcepti"
+
+#: src/grd-ctl.c:53
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "Uzo: %s [OPCIOJ...] KOMANDO [SUBKOMANDO]...\n"
+
+#: src/grd-ctl.c:461
+msgid "Commands:\n"
+msgstr "Komandoj:\n"
+
+#: src/grd-ctl.c:466
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  rdp                                        - RDP-subkomandoj:\n"
+"    enable                                   - Aktivigi la internan RDP-"
+"interfacon\n"
+"    disable                                  - Malebligi la internan RDP-"
+"interfacon\n"
+"    set-tls-cert <vojo-al-cert>              - Meti vojon al TLS-a atestilo\n"
+"    set-tls-key <vojo-al-ŝlosilo>            - Meti vojon al TLS-a ŝlosilo\n"
+"    set-credentials <uzantnomo> <pasvorto>   - Meti uzantnomon kaj "
+"pasvorton\n"
+"                                               poŝtokredencojn\n"
+"    clear-credentials                        - Forigi uzantnomo- kaj "
+"pasvorto-\n"
+"                                               akreditaĵojn\n"
+"    enable-view-only                         - Malebligi foran regon de "
+"eniga\n"
+"                                               aparatoj\n"
+"    disable-view-only                        - Ebligi foran regon de eniga\n"
+"                                               aparatoj\n"
+"\n"
+
+#: src/grd-ctl.c:485
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  vnc                                        - VNC-subkomandoj:\n"
+"    enable                                   - Aktivigi la internan VNC-"
+"interfacon\n"
+"    disable                                  - Malebligi la internan VNC-"
+"interfacon\n"
+"    set-password <pasvorto>                  - Meti la VNC-pasvorton\n"
+"    clear-password                           - Forigi la VNC-pasvorton\n"
+"    set-auth-method password|prompt          - Meti la aŭtentiga metodon\n"
+"    enable-view-only                         - Malebligi foran regon de "
+"eniga\n"
+"                                               aparatoj\n"
+"    disable-view-only                        - Ebligi foran regon de eniga\n"
+"                                               aparatoj\n"
+"\n"
+
+#: src/grd-ctl.c:500
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  status [--montru-poŝtokredencojn]          - Montri la nunan staton\n"
+"\n"
+"Opcioj:\n"
+"  --headless                                 - Uzi senkapan poŝtokredencon\n"
+"  --help                                     - Montri ĉi tiun helptekston\n"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "Ĉu la interna RDP-interfaco estas aktivigita aŭ ne"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr "Se agordita al 'vera', la interna RDP-interfaco inicialiĝos."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "Ekran-kunhaviga modo de RDP-konektoj"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"La ekran-kunhaviga modo difinas, ĉu la RDP-interfacon specigas la primaran "
+"ekranon, aŭ ĉu estas kreita virtuala ekrano. Por la unua rezolucio de la "
+"virtuala ekrano, la RDP-interfacon uzas aŭ la datumojn de la kliento de la "
+"kerno ([MS-RDPBCGR] 2.2.1.3.2) aŭ la datumojn de la klienta ekrano ([MS-"
+"RDPBCGR] 2.2.1.3.6), depende de la disponebleco. Dum uzado de fora "
+"labortablo-sesio kun virtuala ekrano, klientoj povas ŝanĝi la rezolucion de "
+"la virtuala ekrano dum sesio kun la Ekranĉanĝa Virtua Kanalo Kromprodukto "
+"([MS-RDPEDISP]). Permesataj ekran-kunhavigaj modoj inkluzivas: * mirror-"
+"primary - Registri la primaran ekranon de la aktuala uzantlabortablo. * "
+"extend - Krei novan virtualan ekranon kaj uzi ĝin por la fora labortablo-"
+"sesio. La rezolucio de ĉi tiu virtuala ekrano derivas de la ekranoagordoj, "
+"transdonitaj de la fora labortablo-kliento."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+msgid "Path to the certificate file"
+msgstr "Pado al la atestila dosiero"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"Precipe por uzi RDP kun TLS-sekureco, la dosiero de la privata ŝlosilo kaj "
+"la atestila dosiero devas esti provizitaj al la RDP-servilo."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+msgid "Path to the private key file"
+msgstr "Pado al la privata ŝlosila dosiero"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+msgid "Only allow remote connections to view the screen content"
+msgstr "Nur permesi forajn konektojn vidi la ekransenhavon"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Kiam nurvido estas vera, foraj RDP-konektoj ne povas manipuli enigajn "
+"aparatojn (ekz., muson kaj klavaron)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "Ĉu la VNC-fonendaĵo estas aktivigita aŭ ne"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to 'true' the VNC backend will be initialized."
+msgstr "Se agordita al 'vera', la VNC-interfaco inicialiĝos."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Kiam nurvido estas vera, foraj VNC-konektoj ne povas manipuli enigajn "
+"aparatojn (ekz., muson kaj klavaron)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+msgid "Method used to authenticate VNC connections"
+msgstr "Metodo uzata por aŭtentigi VNC-konektojn"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"La metodo de VNC-a aŭtentigo priskribas kiel fora konekto estas aŭtentigita. "
+"Ĝi nun povas esti farita per du malsamaj manieroj: * prompt - per montrado "
+"de demandoj al la uzanto por ĉiu nova konekto, postulante ke persono kun "
+"fizika alirrajto al la laborstacio eksplite aprobu la novan konekton. * "
+"password - per postulo ke la fora kliento provizu konatan pasvorton"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Ekran-kunhaviga modo de VNC-konektoj"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"La ekran-kunhaviga modo difinas, ĉu la VNC-fonendaĵo kongruas kun la primara "
+"ekrano, aŭ ĉu estas kreata virtuala ekrano. Por la unua rezolucio de la "
+"virtuala ekrano, la VNC-fonendaĵo uzas defaŭltan grandon de 1920x1080 "
+"bildopunktoj. Dum uzado de fora labortablo-sesio kun virtuala ekrano, "
+"klientoj povas ŝanĝi la rezolucion de la virtuala ekrano dum sesio kun la "
+"Dosieraktuala Krome de Ekranĉanĝo (setDesktopSize PDU). Permesataj ekran-"
+"kunhavigaj modoj inkluzivas: * mirror-primary - Registri la primaran montron "
+"de la aktuala uzanto-sesio. * extend - Krei novan virtualan ekranon kaj uzi "
+"ĝin por la fora labortablo-sesio. La unua ekranorezolucio de ĉi tiu virtuala "
+"ekrano estas agordita al 1920x1080 bildopunktoj. Klientoj povas anstataŭigi "
+"la unuan rezolucion per postaj ekranoagordoj."
