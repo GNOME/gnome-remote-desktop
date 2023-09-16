@@ -52,6 +52,7 @@ typedef struct
   GrdRdpVirtualMonitor *virtual_monitor;
   const char *connector;
 
+  uint32_t stream_id;
   GrdStream *stream;
   GrdRdpPipeWireStream *pipewire_stream;
 } SurfaceContext;
@@ -125,14 +126,12 @@ surface_context_free (SurfaceContext *surface_context)
   g_clear_object (&surface_context->pipewire_stream);
   if (surface_context->stream)
     {
-      uint32_t stream_id = grd_stream_get_stream_id (surface_context->stream);
-
       grd_stream_disconnect_proxy_signals (surface_context->stream);
       g_clear_pointer (&surface_context->stream, grd_stream_destroy);
-
-      grd_session_rdp_release_stream_id (layout_manager->session_rdp,
-                                         stream_id);
     }
+
+  grd_session_rdp_release_stream_id (layout_manager->session_rdp,
+                                     surface_context->stream_id);
 
   grd_rdp_renderer_release_surface (layout_manager->renderer,
                                     surface_context->rdp_surface);
@@ -452,6 +451,7 @@ on_stream_ready (GrdStream           *stream,
                                      NULL, (gpointer *) &surface_context))
     g_assert_not_reached ();
 
+  g_assert (stream_id == surface_context->stream_id);
   g_assert (!surface_context->pipewire_stream);
 
   g_debug ("[RDP] Layout manager: Creating PipeWire stream for node id %u",
@@ -742,6 +742,8 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
 
       stream_id = grd_session_rdp_acquire_stream_id (layout_manager->session_rdp,
                                                      stream_owner);
+      surface_context->stream_id = stream_id;
+
       g_hash_table_insert (layout_manager->surface_table,
                            GUINT_TO_POINTER (stream_id), surface_context);
     }
