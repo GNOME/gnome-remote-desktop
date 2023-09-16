@@ -35,6 +35,7 @@ struct _GrdRdpDsp
   GrdRdpDspCreateFlag create_flags;
 
   HANDLE_AACENCODER aac_encoder;
+  uint32_t aac_frame_length;
 };
 
 G_DEFINE_TYPE (GrdRdpDsp, grd_rdp_dsp, G_TYPE_OBJECT)
@@ -50,6 +51,25 @@ grd_rdp_dsp_codec_to_string (GrdRdpDspCodec dsp_codec)
       return "AAC";
     case GRD_RDP_DSP_CODEC_ALAW:
       return "A-law";
+    }
+
+  g_assert_not_reached ();
+}
+
+uint32_t
+grd_rdp_dsp_get_frames_per_packet (GrdRdpDsp      *rdp_dsp,
+                                   GrdRdpDspCodec  codec)
+{
+  g_assert (rdp_dsp->create_flags & GRD_RDP_DSP_CREATE_FLAG_ENCODER);
+
+  switch (codec)
+    {
+    case GRD_RDP_DSP_CODEC_NONE:
+      g_assert_not_reached ();
+    case GRD_RDP_DSP_CODEC_AAC:
+      return rdp_dsp->aac_frame_length;
+    case GRD_RDP_DSP_CODEC_ALAW:
+      g_assert_not_reached ();
     }
 
   g_assert_not_reached ();
@@ -320,6 +340,7 @@ create_aac_encoder (GrdRdpDsp  *rdp_dsp,
                    aac_error);
       return FALSE;
     }
+  rdp_dsp->aac_frame_length = info.frameLength;
 
   g_debug ("[RDP.DSP] AAC encoder: maxOutBufBytes: %u, maxAncBytes: %u, "
            "inBufFillLevel: %u, inputChannels: %u, frameLength: %u, "

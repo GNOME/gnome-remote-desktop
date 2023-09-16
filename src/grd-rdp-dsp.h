@@ -56,6 +56,9 @@ GrdRdpDsp *grd_rdp_dsp_new (const GrdRdpDspDescriptor  *dsp_descriptor,
 
 const char *grd_rdp_dsp_codec_to_string (GrdRdpDspCodec dsp_codec);
 
+uint32_t grd_rdp_dsp_get_frames_per_packet (GrdRdpDsp      *rdp_dsp,
+                                            GrdRdpDspCodec  codec);
+
 gboolean grd_rdp_dsp_encode (GrdRdpDsp       *rdp_dsp,
                              GrdRdpDspCodec   codec,
                              int16_t         *input_data,
