@@ -48,6 +48,7 @@
 #include "grd-rdp-sam.h"
 #include "grd-rdp-server.h"
 #include "grd-rdp-surface.h"
+#include "grd-rdp-surface-renderer.h"
 #include "grd-rdp-telemetry.h"
 #include "grd-settings.h"
 
@@ -317,6 +318,8 @@ void
 grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
                                             GrdRdpSurface *rdp_surface)
 {
+  GrdRdpSurfaceRenderer *surface_renderer =
+    grd_rdp_surface_get_surface_renderer (rdp_surface);
   g_autoptr (GMutexLocker) locker = NULL;
   GrdRdpBuffer *buffer;
 
@@ -330,7 +333,7 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
       !is_rdp_peer_flag_set (session_rdp, RDP_PEER_OUTPUT_ENABLED) ||
       is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT) ||
       grd_rdp_surface_is_rendering_inhibited (rdp_surface) ||
-      rdp_surface->encoding_suspended)
+      grd_rdp_surface_renderer_is_rendering_suspended (surface_renderer))
     return;
 
   if (!rdp_surface->valid &&

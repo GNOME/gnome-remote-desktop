@@ -23,6 +23,7 @@
 
 #include "grd-rdp-pipewire-stream.h"
 #include "grd-rdp-surface.h"
+#include "grd-rdp-surface-renderer.h"
 #include "grd-session-rdp.h"
 #include "grd-stream.h"
 
@@ -93,14 +94,13 @@ surface_context_new (GrdRdpLayoutManager  *layout_manager,
                      GError              **error)
 {
   g_autofree SurfaceContext *surface_context = NULL;
+  GrdRdpSurfaceRenderer *surface_renderer;
 
   surface_context = g_new0 (SurfaceContext, 1);
   surface_context->layout_manager = layout_manager;
 
   surface_context->rdp_surface =
-    grd_rdp_surface_new (layout_manager->session_rdp,
-                         layout_manager->hwaccel_nvidia,
-                         layout_manager->render_context,
+    grd_rdp_surface_new (layout_manager->hwaccel_nvidia,
                          layout_manager->has_graphics_pipeline ? 60 : 30);
   if (!surface_context->rdp_surface)
     {
@@ -108,6 +108,13 @@ surface_context_new (GrdRdpLayoutManager  *layout_manager,
                    "Failed to create RDP surface");
       return NULL;
     }
+
+  surface_renderer =
+    grd_rdp_surface_renderer_new (surface_context->rdp_surface,
+                                  layout_manager->render_context,
+                                  layout_manager->session_rdp);
+  grd_rdp_surface_attach_surface_renderer (surface_context->rdp_surface,
+                                           surface_renderer);
 
   return g_steal_pointer (&surface_context);
 }
@@ -573,7 +580,13 @@ grd_rdp_layout_manager_maybe_trigger_render_sources (GrdRdpLayoutManager *layout
 
   g_hash_table_iter_init (&iter, layout_manager->surface_table);
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
-    grd_rdp_surface_trigger_render_source (surface_context->rdp_surface);
+    {
+      GrdRdpSurface *rdp_surface = surface_context->rdp_surface;
+      GrdRdpSurfaceRenderer *surface_renderer;
+
+      surface_renderer = grd_rdp_surface_get_surface_renderer (rdp_surface);
+      grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
+    }
 }
 
 gboolean

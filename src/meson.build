@@ -147,6 +147,8 @@ if have_rdp
     'grd-rdp-stream-owner.h',
     'grd-rdp-surface.c',
     'grd-rdp-surface.h',
+    'grd-rdp-surface-renderer.c',
+    'grd-rdp-surface-renderer.h',
     'grd-rdp-telemetry.c',
     'grd-rdp-telemetry.h',
     'grd-session-rdp.c',
