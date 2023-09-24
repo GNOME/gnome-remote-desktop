@@ -133,6 +133,8 @@ grd_stream_new (uint32_t                        stream_id,
 void
 grd_stream_destroy (GrdStream *stream)
 {
+  grd_stream_disconnect_proxy_signals (stream);
+
   g_object_run_dispose (G_OBJECT (stream));
   g_object_unref (stream);
 }
