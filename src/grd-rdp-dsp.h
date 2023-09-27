@@ -54,6 +54,8 @@ typedef struct
 GrdRdpDsp *grd_rdp_dsp_new (const GrdRdpDspDescriptor  *dsp_descriptor,
                             GError                    **error);
 
+const char *grd_rdp_dsp_codec_to_string (GrdRdpDspCodec dsp_codec);
+
 gboolean grd_rdp_dsp_encode (GrdRdpDsp       *rdp_dsp,
                              GrdRdpDspCodec   codec,
                              int16_t         *input_data,

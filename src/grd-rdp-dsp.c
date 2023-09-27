@@ -44,6 +44,22 @@ struct _GrdRdpDsp
 
 G_DEFINE_TYPE (GrdRdpDsp, grd_rdp_dsp, G_TYPE_OBJECT)
 
+const char *
+grd_rdp_dsp_codec_to_string (GrdRdpDspCodec dsp_codec)
+{
+  switch (dsp_codec)
+    {
+    case GRD_RDP_DSP_CODEC_NONE:
+      return "PCM";
+    case GRD_RDP_DSP_CODEC_AAC:
+      return "AAC";
+    case GRD_RDP_DSP_CODEC_ALAW:
+      return "A-law";
+    }
+
+  g_assert_not_reached ();
+}
+
 #ifdef HAVE_FDK_AAC
 static gboolean
 encode_aac (GrdRdpDsp  *rdp_dsp,
