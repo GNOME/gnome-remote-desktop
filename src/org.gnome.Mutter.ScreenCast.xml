@@ -200,6 +200,14 @@
     <method name="Start"/>
 
     <!--
+        Stop:
+        @short_description: Stop the stream
+
+        Stop the started stream.
+    -->
+    <method name="Stop"/>
+
+    <!--
         PipeWireStreamAdded:
         @short_description: Pipewire stream added
 
@@ -221,6 +229,9 @@
                            compositor coordinate space.
         * "size" (ii): Size of the source of the stream in the compositor
                        coordinate space.
+        * "output-name" s: Xrandr name of the output in case of X11 and
+                           wl_output.name in case of Wayland. Available only
+                           for monitor streams.
     -->
     <property name="Parameters" type="a{sv}" access="read" />
 
