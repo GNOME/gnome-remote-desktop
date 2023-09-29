@@ -38,6 +38,7 @@ typedef struct _GrdStreamPrivate
   char *mapping_id;
 
   GrdDBusMutterScreenCastStream *proxy;
+  GCancellable *cancellable;
 
   unsigned long pipewire_stream_added_id;
 } GrdStreamPrivate;
@@ -91,6 +92,7 @@ on_pipewire_stream_added (GrdDBusMutterScreenCastStream *proxy,
 GrdStream *
 grd_stream_new (uint32_t                        stream_id,
                 GrdDBusMutterScreenCastStream  *proxy,
+                GCancellable                   *cancellable,
                 GError                        **error)
 {
   GrdStream *stream;
@@ -122,6 +124,7 @@ grd_stream_new (uint32_t                        stream_id,
   priv->stream_id = stream_id;
   priv->mapping_id = mapping_id;
   priv->proxy = g_object_ref (proxy);
+  priv->cancellable = g_object_ref (cancellable);
   priv->pipewire_stream_added_id =
     g_signal_connect (proxy, "pipewire-stream-added",
                       G_CALLBACK (on_pipewire_stream_added),
@@ -130,13 +133,35 @@ grd_stream_new (uint32_t                        stream_id,
   return stream;
 }
 
-void
-grd_stream_destroy (GrdStream *stream)
+static void
+on_screen_cast_stream_stop_finished (GObject      *object,
+                                     GAsyncResult *result,
+                                     gpointer      user_data)
 {
-  grd_stream_disconnect_proxy_signals (stream);
+  GrdStream *stream = user_data;
+  GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
+
+  g_debug ("Stream %u stopped", priv->stream_id);
 
   g_object_run_dispose (G_OBJECT (stream));
   g_object_unref (stream);
+}
+
+void
+grd_stream_destroy (GrdStream *stream)
+{
+  GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
+
+  g_assert (priv->proxy);
+  g_assert (priv->cancellable);
+
+  grd_stream_disconnect_proxy_signals (stream);
+
+  g_debug ("Stopping stream %u", priv->stream_id);
+
+  grd_dbus_mutter_screen_cast_stream_call_stop (priv->proxy, priv->cancellable,
+                                                on_screen_cast_stream_stop_finished,
+                                                stream);
 }
 
 static void
@@ -156,6 +181,7 @@ grd_stream_dispose (GObject *object)
   GrdStream *stream = GRD_STREAM (object);
   GrdStreamPrivate *priv = grd_stream_get_instance_private (stream);
 
+  g_clear_object (&priv->cancellable);
   g_clear_object (&priv->proxy);
 
   G_OBJECT_CLASS (grd_stream_parent_class)->finalize (object);

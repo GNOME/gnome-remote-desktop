@@ -37,6 +37,7 @@ struct _GrdStreamClass
 
 GrdStream *grd_stream_new (uint32_t                        stream_id,
                            GrdDBusMutterScreenCastStream  *proxy,
+                           GCancellable                   *cancellable,
                            GError                        **error);
 
 void grd_stream_destroy (GrdStream *stream);

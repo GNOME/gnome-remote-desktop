@@ -240,7 +240,8 @@ on_screen_cast_stream_proxy_acquired (GObject      *object,
   priv = grd_session_get_instance_private (session);
   klass = GRD_SESSION_GET_CLASS (session);
 
-  stream = grd_stream_new (async_context->stream_id, stream_proxy, &error);
+  stream = grd_stream_new (async_context->stream_id, stream_proxy,
+                           priv->cancellable, &error);
   if (!stream)
     {
       g_warning ("Failed create stream: %s", error->message);
