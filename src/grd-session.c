@@ -1249,7 +1249,10 @@ grd_ei_source_dispatch (gpointer user_data)
 
   while ((event = ei_get_event (priv->ei)))
     {
-      switch (ei_event_get_type (event))
+      enum ei_event_type ei_event_type = ei_event_get_type (event);
+      gboolean handled = TRUE;
+
+      switch (ei_event_type)
         {
         case EI_EVENT_CONNECT:
         case EI_EVENT_DISCONNECT:
@@ -1313,7 +1316,14 @@ grd_ei_source_dispatch (gpointer user_data)
             g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
           break;
         default:
+          handled = FALSE;
           break;
+        }
+
+      if (handled)
+        {
+          g_debug ("ei: Handled event type %s",
+                   ei_event_type_to_string (ei_event_type));
         }
       ei_event_unref (event);
     }
