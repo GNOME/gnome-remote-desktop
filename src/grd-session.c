@@ -1118,7 +1118,7 @@ setup_xkb_keymap (GrdSession        *session,
                        "Keyboard layout was empty");
           goto err;
         }
-      else if (errno == EINTR)
+      else if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
         {
           continue;
         }
