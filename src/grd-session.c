@@ -1511,11 +1511,11 @@ grd_session_finalize (GObject *object)
     g_assert (g_cancellable_is_cancelled (priv->cancellable));
   g_clear_object (&priv->cancellable);
 
+  g_clear_pointer (&priv->regions, g_hash_table_unref);
+
   g_assert (!priv->xkb_state);
   g_assert (!priv->xkb_keymap);
   g_assert (!priv->xkb_context);
-
-  g_assert (!priv->regions);
 
   g_assert (!priv->ei_keyboard);
   g_assert (!priv->ei_abs_pointer);
