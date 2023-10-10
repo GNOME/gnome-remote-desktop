@@ -411,6 +411,8 @@ pick_keycode_for_keysym_in_current_group (GrdSession *session,
   uint32_t keycode, layout;
   xkb_keycode_t min_keycode, max_keycode;
 
+  g_assert (keycode_out);
+
   xkb_keymap = priv->xkb_keymap;
   xkb_state = priv->xkb_state;
 
