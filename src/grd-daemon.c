@@ -310,28 +310,27 @@ on_mutter_screen_cast_name_vanished (GDBusConnection *connection,
 }
 
 void
-grd_daemon_acquire_mutter_dbus_proxies (GrdDaemon       *daemon,
-                                        GDBusConnection *connection)
+grd_daemon_acquire_mutter_dbus_proxies (GrdDaemon *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
   g_clear_handle_id (&priv->mutter_remote_desktop_watch_name_id, g_bus_unwatch_name);
   priv->mutter_remote_desktop_watch_name_id =
-    g_bus_watch_name_on_connection (connection,
-                                    MUTTER_REMOTE_DESKTOP_BUS_NAME,
-                                    G_BUS_NAME_WATCHER_FLAGS_NONE,
-                                    on_mutter_remote_desktop_name_appeared,
-                                    on_mutter_remote_desktop_name_vanished,
-                                    daemon, NULL);
+    g_bus_watch_name (G_BUS_TYPE_SESSION,
+                      MUTTER_REMOTE_DESKTOP_BUS_NAME,
+                      G_BUS_NAME_WATCHER_FLAGS_NONE,
+                      on_mutter_remote_desktop_name_appeared,
+                      on_mutter_remote_desktop_name_vanished,
+                      daemon, NULL);
 
   g_clear_handle_id (&priv->mutter_screen_cast_watch_name_id, g_bus_unwatch_name);
   priv->mutter_screen_cast_watch_name_id =
-    g_bus_watch_name_on_connection (connection,
-                                    MUTTER_SCREEN_CAST_BUS_NAME,
-                                    G_BUS_NAME_WATCHER_FLAGS_NONE,
-                                    on_mutter_screen_cast_name_appeared,
-                                    on_mutter_screen_cast_name_vanished,
-                                    daemon, NULL);
+    g_bus_watch_name (G_BUS_TYPE_SESSION,
+                      MUTTER_SCREEN_CAST_BUS_NAME,
+                      G_BUS_NAME_WATCHER_FLAGS_NONE,
+                      on_mutter_screen_cast_name_appeared,
+                      on_mutter_screen_cast_name_vanished,
+                      daemon, NULL);
 }
 
 #ifdef HAVE_RDP

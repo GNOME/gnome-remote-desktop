@@ -43,7 +43,6 @@ GrdContext *grd_daemon_get_context (GrdDaemon *daemon);
 
 void grd_daemon_maybe_enable_services (GrdDaemon *daemon);
 
-void grd_daemon_acquire_mutter_dbus_proxies (GrdDaemon       *daemon,
-                                             GDBusConnection *connection);
+void grd_daemon_acquire_mutter_dbus_proxies (GrdDaemon *daemon);
 
 #endif /* GRD_DAEMON_H */
