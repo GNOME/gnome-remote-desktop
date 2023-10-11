@@ -73,10 +73,8 @@ static void
 grd_daemon_user_startup (GApplication *app)
 {
   GrdDaemon *daemon = GRD_DAEMON (app);
-  g_autoptr (GDBusConnection) connection = NULL;
 
-  connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
-  grd_daemon_acquire_mutter_dbus_proxies (daemon, connection);
+  grd_daemon_acquire_mutter_dbus_proxies (daemon);
 
   g_signal_connect (daemon, "mutter-proxy-acquired",
                     G_CALLBACK (grd_daemon_maybe_enable_services), NULL);
