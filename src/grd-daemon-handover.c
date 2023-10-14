@@ -25,6 +25,7 @@
 #include "grd-daemon-handover.h"
 
 #include <gio/gunixfdlist.h>
+#include <systemd/sd-login.h>
 #include <unistd.h>
 
 #include "grd-context.h"
@@ -49,6 +50,7 @@ struct _GrdDaemonHandover
   GrdSession *session;
 
   unsigned int logout_source_id;
+  unsigned int shutdown_daemon_idle_id;
 };
 
 G_DEFINE_TYPE (GrdDaemonHandover, grd_daemon_handover, GRD_TYPE_DAEMON)
@@ -274,6 +276,17 @@ on_rdp_server_stopped (GrdDaemonHandover *daemon_handover)
                                         daemon_handover);
 }
 
+static gboolean
+shutdown_daemon (gpointer user_data)
+{
+  GrdDaemonHandover *daemon_handover = user_data;
+
+  daemon_handover->shutdown_daemon_idle_id = 0;
+  g_application_release (G_APPLICATION (daemon_handover));
+
+  return G_SOURCE_REMOVE;
+}
+
 static void
 on_redirect_client (GrdDBusRemoteDesktopHandover *interface,
                     const char                   *routing_token,
@@ -329,6 +342,8 @@ on_remote_desktop_dispatcher_handover_requested (GObject      *object,
   GCancellable *cancellable =
     grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
   g_autofree char *object_path = NULL;
+  g_autofree char *session_id = NULL;
+  g_autofree char *session_class = NULL;
   g_autoptr (GError) error = NULL;
   gboolean success;
 
@@ -339,6 +354,22 @@ on_remote_desktop_dispatcher_handover_requested (GObject      *object,
               &error);
   if (!success)
     {
+      /* It's not expected or allowed for remote clients to connect to local
+       * login screens, they get their own dedicated login screen, so exit.
+       */
+      session_id = grd_get_session_id_from_pid (getpid ());
+      sd_session_get_class (session_id, &session_class);
+      if (!sd_session_is_remote (session_id) &&
+          g_str_equal (session_class, "greeter"))
+        {
+          g_assert (!daemon_handover->shutdown_daemon_idle_id);
+
+          g_debug ("[DaemonHandover] Shutting down stray GDM handover daemon");
+          daemon_handover->shutdown_daemon_idle_id =
+            g_idle_add (shutdown_daemon, daemon_handover);
+          return;
+        }
+
       g_warning ("[DaemonHandover] Failed requesting remote desktop "
                  "handover: %s", error->message);
       return;
@@ -446,6 +477,7 @@ grd_daemon_handover_shutdown (GApplication *app)
   g_clear_object (&daemon_handover->remote_desktop_dispatcher);
 
   g_clear_handle_id (&daemon_handover->logout_source_id, g_source_remove);
+  g_clear_handle_id (&daemon_handover->shutdown_daemon_idle_id, g_source_remove);
 
   G_APPLICATION_CLASS (grd_daemon_handover_parent_class)->shutdown (app);
 }
