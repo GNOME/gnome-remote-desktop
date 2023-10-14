@@ -210,13 +210,13 @@ on_mutter_remote_desktop_proxy_acquired (GObject      *object,
   GrdDaemon *daemon = user_data;
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdDBusMutterRemoteDesktop *proxy;
-  GError *error = NULL;
+  g_autoptr (GError) error = NULL;
 
   proxy = grd_dbus_mutter_remote_desktop_proxy_new_finish (result, &error);
   if (!proxy)
     {
-      g_warning ("Failed to create remote desktop proxy: %s", error->message);
-      g_error_free (error);
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        g_warning ("Failed to create remote desktop proxy: %s", error->message);
       return;
     }
 
@@ -233,12 +233,13 @@ on_mutter_screen_cast_proxy_acquired (GObject      *object,
   GrdDaemon *daemon = user_data;
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdDBusMutterScreenCast *proxy;
-  GError *error = NULL;
+  g_autoptr (GError) error = NULL;
 
   proxy = grd_dbus_mutter_screen_cast_proxy_new_finish (result, &error);
   if (!proxy)
     {
-      g_warning ("Failed to create screen cast proxy: %s", error->message);
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        g_warning ("Failed to create screen cast proxy: %s", error->message);
       return;
     }
 
