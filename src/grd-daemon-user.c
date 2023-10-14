@@ -38,23 +38,23 @@ grd_daemon_user_new (GrdRuntimeMode   runtime_mode,
                      GError         **error)
 {
   GrdContext *context;
-  GrdDaemonUser *daemon;
+  GrdDaemonUser *daemon_user;
 
   context = grd_context_new (runtime_mode, error);
   if (!context)
     return NULL;
 
-  daemon = g_object_new (GRD_TYPE_DAEMON_USER,
-                         "application-id", GRD_DAEMON_USER_APPLICATION_ID,
-                         "flags", G_APPLICATION_IS_SERVICE,
-                         "context", context,
-                         NULL);
+  daemon_user = g_object_new (GRD_TYPE_DAEMON_USER,
+                              "application-id", GRD_DAEMON_USER_APPLICATION_ID,
+                              "flags", G_APPLICATION_IS_SERVICE,
+                              "context", context,
+                              NULL);
 
-  return daemon;
+  return daemon_user;
 }
 
 static void
-grd_daemon_user_init (GrdDaemonUser *daemon)
+grd_daemon_user_init (GrdDaemonUser *daemon_user)
 {
 }
 
