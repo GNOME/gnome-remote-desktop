@@ -99,8 +99,14 @@ grd_stream_new (uint32_t                        stream_id,
   char *mapping_id = NULL;
 
   parameters = grd_dbus_mutter_screen_cast_stream_get_parameters (proxy);
-  g_variant_lookup (parameters, "mapping-id", "s", &mapping_id);
+  if (!parameters)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to get stream parameters for stream %u", stream_id);
+      return NULL;
+    }
 
+  g_variant_lookup (parameters, "mapping-id", "s", &mapping_id);
   if (!mapping_id)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
