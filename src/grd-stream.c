@@ -96,7 +96,7 @@ grd_stream_new (uint32_t                        stream_id,
   GrdStream *stream;
   GrdStreamPrivate *priv;
   GVariant *parameters;
-  char *mapping_id;
+  char *mapping_id = NULL;
 
   parameters = grd_dbus_mutter_screen_cast_stream_get_parameters (proxy);
   g_variant_lookup (parameters, "mapping-id", "s", &mapping_id);
