@@ -534,7 +534,7 @@ grd_session_notify_keyboard_keysym (GrdSession *session,
   int64_t now_us;
   uint32_t keycode = 0, level = 0, evcode = 0;
 
-  if (!priv->xkb_state)
+  if (!priv->xkb_state || !priv->ei_keyboard)
     return;
 
   now_us = g_get_monotonic_time ();
