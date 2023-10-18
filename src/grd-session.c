@@ -125,7 +125,7 @@ grd_session_get_context (GrdSession *session)
 }
 
 static void
-clear_session (GrdSession *session)
+clear_ei (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
@@ -140,6 +140,14 @@ clear_session (GrdSession *session)
   g_clear_pointer (&priv->ei_seat, ei_seat_unref);
   g_clear_pointer (&priv->ei_source, g_source_destroy);
   g_clear_pointer (&priv->ei, ei_unref);
+}
+
+static void
+clear_session (GrdSession *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  clear_ei (session);
 
   g_clear_signal_handler (&priv->caps_lock_state_changed_id,
                           priv->remote_desktop_session);
@@ -159,6 +167,8 @@ grd_session_stop (GrdSession *session)
     return;
 
   GRD_SESSION_GET_CLASS (session)->stop (session);
+
+  clear_ei (session);
 
   if (priv->remote_desktop_session && priv->started)
     {
