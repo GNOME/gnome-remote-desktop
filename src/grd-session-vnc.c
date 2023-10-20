@@ -456,8 +456,16 @@ handle_pointer_event (int          button_mask,
   if (session_vnc->stream &&
       (x != session_vnc->prev_x || y != session_vnc->prev_y))
     {
+      rfbScreenInfoPtr rfb_screen = session_vnc->rfb_screen;
+      GrdEventPointerMotionAbs motion_abs = {};
+
+      motion_abs.input_rect_width = rfb_screen->width;
+      motion_abs.input_rect_height = rfb_screen->height;
+      motion_abs.x = x;
+      motion_abs.y = y;
+
       grd_session_notify_pointer_motion_absolute (session, session_vnc->stream,
-                                                  x, y);
+                                                  &motion_abs);
 
       session_vnc->prev_x = x;
       session_vnc->prev_y = y;

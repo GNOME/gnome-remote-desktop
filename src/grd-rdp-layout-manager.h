@@ -24,6 +24,7 @@
 
 #include "grd-rdp-monitor-config.h"
 #include "grd-rdp-stream-owner.h"
+#include "grd-session.h"
 
 #define GRD_TYPE_RDP_LAYOUT_MANAGER (grd_rdp_layout_manager_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpLayoutManager, grd_rdp_layout_manager,
@@ -47,11 +48,10 @@ void grd_rdp_layout_manager_invalidate_surfaces (GrdRdpLayoutManager *layout_man
 
 void grd_rdp_layout_manager_maybe_trigger_render_sources (GrdRdpLayoutManager *layout_manager);
 
-gboolean grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager  *layout_manager,
-                                                    uint32_t              x,
-                                                    uint32_t              y,
-                                                    GrdStream           **stream,
-                                                    double               *stream_x,
-                                                    double               *stream_y);
+gboolean grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager       *layout_manager,
+                                                    uint32_t                   x,
+                                                    uint32_t                   y,
+                                                    GrdStream                **stream,
+                                                    GrdEventPointerMotionAbs  *motion_abs);
 
 #endif /* GRD_RDP_LAYOUT_MANAGER_H */

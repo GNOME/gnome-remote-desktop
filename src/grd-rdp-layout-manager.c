@@ -573,12 +573,11 @@ grd_rdp_layout_manager_maybe_trigger_render_sources (GrdRdpLayoutManager *layout
 }
 
 gboolean
-grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager  *layout_manager,
-                                           uint32_t              x,
-                                           uint32_t              y,
-                                           GrdStream           **stream,
-                                           double               *stream_x,
-                                           double               *stream_y)
+grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager       *layout_manager,
+                                           uint32_t                   x,
+                                           uint32_t                   y,
+                                           GrdStream                **stream,
+                                           GrdEventPointerMotionAbs  *motion_abs)
 {
   g_autoptr (GMutexLocker) locker = NULL;
   SurfaceContext *surface_context = NULL;
@@ -605,8 +604,10 @@ grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager  *layout_manager,
         continue;
 
       *stream = g_object_ref (surface_context->stream);
-      *stream_x = x - surface_context->output_origin_x;
-      *stream_y = y - surface_context->output_origin_y;
+      motion_abs->input_rect_width = surface_width;
+      motion_abs->input_rect_height = surface_height;
+      motion_abs->x = x - surface_context->output_origin_x;
+      motion_abs->y = y - surface_context->output_origin_y;
       return TRUE;
     }
 

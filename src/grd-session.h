@@ -128,10 +128,9 @@ void grd_session_notify_pointer_axis_discrete (GrdSession     *session,
                                                GrdPointerAxis  axis,
                                                int             steps);
 
-void grd_session_notify_pointer_motion_absolute (GrdSession *session,
-                                                 GrdStream  *stream,
-                                                 double      x,
-                                                 double      y);
+void grd_session_notify_pointer_motion_absolute (GrdSession                     *session,
+                                                 GrdStream                      *stream,
+                                                 const GrdEventPointerMotionAbs *motion_abs);
 
 gboolean grd_session_enable_clipboard (GrdSession   *session,
                                        GrdClipboard *clipboard,

@@ -624,17 +624,21 @@ grd_session_notify_pointer_axis_discrete (GrdSession    *session,
 }
 
 void
-grd_session_notify_pointer_motion_absolute (GrdSession *session,
-                                            GrdStream  *stream,
-                                            double      x,
-                                            double      y)
+grd_session_notify_pointer_motion_absolute (GrdSession                     *session,
+                                            GrdStream                      *stream,
+                                            const GrdEventPointerMotionAbs *motion_abs)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdRegion *region;
+  double x;
+  double y;
 
   region = g_hash_table_lookup (priv->regions, grd_stream_get_mapping_id (stream));
   if (!region)
     return;
+
+  x = motion_abs->x;
+  y = motion_abs->y;
 
   ei_device_pointer_motion_absolute (region->ei_device,
                                      ei_region_get_x (region->ei_region) + x,

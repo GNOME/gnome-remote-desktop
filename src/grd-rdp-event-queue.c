@@ -55,8 +55,7 @@ typedef struct _RdpEvent
   struct
   {
     GrdStream *stream;
-    double x;
-    double y;
+    GrdEventPointerMotionAbs motion_abs;
   } input_ptr_motion_abs;
 
   /* RDP_EVENT_TYPE_INPUT_PTR_BUTTON */
@@ -175,8 +174,7 @@ process_rdp_events (GrdRdpEventQueue *rdp_event_queue)
         case RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS:
           grd_session_notify_pointer_motion_absolute (
             session, rdp_event->input_ptr_motion_abs.stream,
-            rdp_event->input_ptr_motion_abs.x,
-            rdp_event->input_ptr_motion_abs.y);
+            &rdp_event->input_ptr_motion_abs.motion_abs);
           break;
         case RDP_EVENT_TYPE_INPUT_PTR_BUTTON:
           grd_session_notify_pointer_button (session,
@@ -245,18 +243,16 @@ grd_rdp_event_queue_add_input_event_keyboard_keysym (GrdRdpEventQueue *rdp_event
 }
 
 void
-grd_rdp_event_queue_add_input_event_pointer_motion_abs (GrdRdpEventQueue *rdp_event_queue,
-                                                        GrdStream        *stream,
-                                                        double            x,
-                                                        double            y)
+grd_rdp_event_queue_add_input_event_pointer_motion_abs (GrdRdpEventQueue               *rdp_event_queue,
+                                                        GrdStream                      *stream,
+                                                        const GrdEventPointerMotionAbs *motion_abs)
 {
   RdpEvent *rdp_event;
 
   rdp_event = g_malloc0 (sizeof (RdpEvent));
   rdp_event->type = RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS;
   rdp_event->input_ptr_motion_abs.stream = stream;
-  rdp_event->input_ptr_motion_abs.x = x;
-  rdp_event->input_ptr_motion_abs.y = y;
+  rdp_event->input_ptr_motion_abs.motion_abs = *motion_abs;
 
   queue_rdp_event (rdp_event_queue, rdp_event);
 }
