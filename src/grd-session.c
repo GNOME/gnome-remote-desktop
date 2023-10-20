@@ -1223,9 +1223,10 @@ process_regions (GrdSession       *session,
       if (!mapping_id)
         continue;
 
-      g_debug ("ei: mapping-id: %s, [x, y, w, h] = [%u, %u, %u, %u]", mapping_id,
-               ei_region_get_x (ei_region), ei_region_get_y (ei_region),
-               ei_region_get_width (ei_region), ei_region_get_height (ei_region));
+      g_debug ("ei: New region: mapping-id: %s, %ux%u (%u, %u)",
+               mapping_id,
+               ei_region_get_width (ei_region), ei_region_get_height (ei_region),
+               ei_region_get_x (ei_region), ei_region_get_y (ei_region));
 
       g_assert (ei_region_get_width (ei_region) > 0);
       g_assert (ei_region_get_height (ei_region) > 0);
