@@ -1263,6 +1263,9 @@ process_regions (GrdSession       *session,
                ei_region_get_x (ei_region), ei_region_get_y (ei_region),
                ei_region_get_width (ei_region), ei_region_get_height (ei_region));
 
+      g_assert (ei_region_get_width (ei_region) > 0);
+      g_assert (ei_region_get_height (ei_region) > 0);
+
       region = g_new0 (GrdRegion, 1);
       region->ei_device = ei_device_ref (ei_device);
       region->ei_region = ei_region_ref (ei_region);
