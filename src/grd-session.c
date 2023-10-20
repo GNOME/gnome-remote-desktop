@@ -635,6 +635,9 @@ grd_session_notify_pointer_motion_absolute (GrdSession                     *sess
   double x;
   double y;
 
+  g_assert (motion_abs->input_rect_width > 0);
+  g_assert (motion_abs->input_rect_height > 0);
+
   region = g_hash_table_lookup (priv->regions, grd_stream_get_mapping_id (stream));
   if (!region)
     return;
@@ -643,8 +646,8 @@ grd_session_notify_pointer_motion_absolute (GrdSession                     *sess
             ei_region_get_width (region->ei_region);
   scale_y = ((double) motion_abs->input_rect_height) /
             ei_region_get_height (region->ei_region);
-  x = motion_abs->x * scale_x;
-  y = motion_abs->y * scale_y;
+  x = motion_abs->x / scale_x;
+  y = motion_abs->y / scale_y;
 
   ei_device_pointer_motion_absolute (region->ei_device,
                                      ei_region_get_x (region->ei_region) + x,
@@ -1255,6 +1258,10 @@ process_regions (GrdSession       *session,
       mapping_id = ei_region_get_mapping_id (ei_region);
       if (!mapping_id)
         continue;
+
+      g_debug ("ei: mapping-id: %s, [x, y, w, h] = [%u, %u, %u, %u]", mapping_id,
+               ei_region_get_x (ei_region), ei_region_get_y (ei_region),
+               ei_region_get_width (ei_region), ei_region_get_height (ei_region));
 
       region = g_new0 (GrdRegion, 1);
       region->ei_device = ei_device_ref (ei_device);
