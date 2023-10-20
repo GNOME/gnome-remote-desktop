@@ -66,6 +66,17 @@ typedef enum _GrdPointerAxis
   GRD_POINTER_AXIS_HORIZONTAL
 } GrdPointerAxis;
 
+typedef struct _GrdEventPointerMotionAbs
+{
+  /* Size of the input region */
+  uint32_t input_rect_width;
+  uint32_t input_rect_height;
+
+  /* Absolute pointer position in the input region */
+  double x;
+  double y;
+} GrdEventPointerMotionAbs;
+
 struct _GrdSessionClass
 {
   GObjectClass parent_class;
