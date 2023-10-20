@@ -630,6 +630,8 @@ grd_session_notify_pointer_motion_absolute (GrdSession                     *sess
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdRegion *region;
+  double scale_x;
+  double scale_y;
   double x;
   double y;
 
@@ -637,8 +639,12 @@ grd_session_notify_pointer_motion_absolute (GrdSession                     *sess
   if (!region)
     return;
 
-  x = motion_abs->x;
-  y = motion_abs->y;
+  scale_x = ((double) motion_abs->input_rect_width) /
+            ei_region_get_width (region->ei_region);
+  scale_y = ((double) motion_abs->input_rect_height) /
+            ei_region_get_height (region->ei_region);
+  x = motion_abs->x * scale_x;
+  y = motion_abs->y * scale_y;
 
   ei_device_pointer_motion_absolute (region->ei_device,
                                      ei_region_get_x (region->ei_region) + x,
