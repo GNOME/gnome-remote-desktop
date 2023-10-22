@@ -8,8 +8,10 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2021-07-02 12:38+0000\n"
-"PO-Revision-Date: 2021-07-02 18:43+0300\n"
+"POT-Creation-Date: 2023-09-14 11:56+0000\n"
+"PO-Revision-Date: 2023-07-29 16:32+0300\n"
+"Last-Translator: Florentina Mușat <florentina [dot] musat [dot] 28 [at] "
+"gmail [dot] com>\n"
 "Language-Team: Romanian <gnomero-list@lists.sourceforge.net>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
@@ -17,10 +19,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
 "20)) ? 1 : 2);;\n"
-"Last-Translator: Florentina Mușat <florentina.musat.28@gmail.com>\n"
-"X-Generator: Poedit 3.0\n"
+"X-Generator: Poedit 3.3.2\n"
 
-#: src/grd-daemon.c:351
+#: src/grd-daemon.c:612
 msgid "GNOME Remote Desktop"
 msgstr "Desktop la distanță GNOME"
 
@@ -46,12 +47,150 @@ msgstr "Refuză"
 msgid "Accept"
 msgstr "Acceptă"
 
+#: src/grd-ctl.c:53
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "Utilizare: %s [OPȚIUNI...] COMANDĂ [SUBCOMANDĂ]...\n"
+
+#: src/grd-ctl.c:461
+msgid "Commands:\n"
+msgstr "Comenzi:\n"
+
+#: src/grd-ctl.c:466
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  rdp                                        - Subcomenzi RDP:\n"
+"    enable                                   - Activează backend-ul RDP\n"
+"    disable                                  - Dezactivează backend-ul RDP\n"
+"    set-tls-cert <path-to-cert>              - Stabilește calea către "
+"certificatul TLS\n"
+"    set-tls-key <path-to-key>                - Stabilește calea către cheia "
+"TLS\n"
+"    set-credentials <username> <password>    - Stabilește autorizările "
+"pentru numele de utilizator\n"
+"                                               și parola\n"
+"    clear-credentials                        - Eliberează autorizările "
+"pentru numele de utilizator\n"
+"                                               și parola\n"
+"    enable-view-only                         - Dezactivează controlul de la "
+"distanță al dispozitivelor\n"
+"                                               de intrare\n"
+"    disable-view-only                        - Activează controlul de la "
+"distanță al dispozitivelor\n"
+"                                               de intrare\n"
+"\n"
+
+#: src/grd-ctl.c:485
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"\n"
+msgstr ""
+"  vnc                                        - Subcomenzi VNC:\n"
+"    enable                                   - Activează backend-ul VNC\n"
+"    disable                                  - Dezactivează backend-ul VNC\n"
+"    set-password <password>                  - Stabilește parola VNC\n"
+"    clear-password                           - Eliberează parola VNC\n"
+"    set-auth-method password|prompt          - Stabilește metoda de "
+"autorizare\n"
+"    enable-view-only                         - Dezactivează controlul de la "
+"distanță al dispozitivelor\n"
+"                                               de intrare\n"
+"    disable-view-only                        - Activează controlul de la "
+"distanță al dispozitivelor\n"
+"                                               de intrare\n"
+"\n"
+
+#: src/grd-ctl.c:500
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  status [--show-credentials]                - Arată starea curentă\n"
+"\n"
+"Options:\n"
+"  --headless                                 - Utilizează stocarea "
+"autorizărilor fără cap\n"
+"  --help                                     - Tipărește acest text de "
+"ajutor\n"
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "Whether the RDP backend is enabled or not"
+msgstr "Dacă este activat sau nu backend-ul RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr "Dacă este stabilit la „true”, backend-ul RDP va fi inițializat."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Screenshare mode of RDP connections"
+msgstr "Modul partajare ecran al conexiunilor RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"Modul partajare ecran specifică, dacă backend-ul RDP oglindește ecranul "
+"primar, sau dacă este creat un monitor virtual. Pentru rezoluția inițială a "
+"monitorului virtual, backend-ul RDP utilizează ori datele de bază ale "
+"clientului ([MS-RDPBCGR] 2.2.1.3.2) ori datele de monitor ale clientului "
+"([MS-RDPBCGR] 2.2.1.3.6), în funcție de ce este disponibil. Când se "
+"utilizează o sesiune desktop la distanță cu un monitor virtual, clienții pot "
+"redimensiona rezoluția monitorului virtual în timpul unei sesiuni cu "
+"Extensia de canal virtual de actualizare a afișajului ([MS-RDPEDISP]). "
+"Modurile de partajare ecran permise includ: * mirror-primary - Înregistrează "
+"monitorul primar al sesiunii de utilizator curente. * extend - Creează un "
+"monitor virtual nou și îl utilizează pentru sesiunea desktop de la distanță. "
+"Rezoluția acestui monitor virtual este derivată de la configurarea "
+"monitorului, trimisă de clientul desktop de la distanță."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
 msgid "Path to the certificate file"
 msgstr "Calea către fișierul certificat"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:16
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -59,17 +198,17 @@ msgstr ""
 "Pentru a putea utiliza RDP cu Securitate TLS, atât fișierul cheii private "
 "cât și fișierul certificat trebuie să fie furnizate serverului RDP."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
 msgid "Path to the private key file"
 msgstr "Calea către fișierul cheii private"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:33
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid "Only allow remote connections to view the screen content"
 msgstr ""
 "Permite doar conexiunilor de la distanță să vizualizeze conținutul ecranului"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -77,7 +216,15 @@ msgstr ""
 "Când doar vizualizare este adevărat, conexiunile RDP de la distanță nu pot "
 "manipula dispozitivele de intrare (de ex: maus și tastatură)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:34
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+msgid "Whether the VNC backend is enabled or not"
+msgstr "Dacă este activat sau nu backend-ul VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+msgid "If set to 'true' the VNC backend will be initialized."
+msgstr "Dacă este stabilit la „true”, backend-ul va fi inițializat."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -85,11 +232,11 @@ msgstr ""
 "Când doar vizualizare este adevărat, conexiunile VNC de la distanță nu pot "
 "manipula dispozitivele de intrare (de ex: maus și tastatură)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
 msgid "Method used to authenticate VNC connections"
 msgstr "Metodă utilizată pentru autentificarea conexiunilor VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -103,3 +250,34 @@ msgstr ""
 "persoană cu acces fizic la stația de lucru pentru a aproba explicit "
 "conexiunea nouă. * password - solicitând clientului de la distanță să "
 "furnizeze o parolă cunoscută"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+msgid "Screenshare mode of VNC connections"
+msgstr "Modul partajare ecran al conexiunilor VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"Modul partajare ecran specifică, dacă backend-ul VNC oglindește ecranul "
+"primar, sau dacă este creat un monitor virtual. Pentru rezoluția inițială a "
+"monitorului virtual, backend-ul VNC utilizează o dimensiune implicită de "
+"1920x1080 pixeli. Când se utilizează o sesiune desktop de la distanță cu un "
+"monitor virtual, clienții pot redimensiona rezoluția monitorului virtual în "
+"timpul unei sesiuni cu setDesktopSize PDU. Modurile de partajare ecran "
+"permise includ: * mirror-primary - Înregistrează monitorul primar al "
+"sesiunii de utilizator curente. * extend - Creează un monitor virtual nou și "
+"îl utilizează pentru sesiunea desktop de la distanță. Rezoluția de monitor "
+"inițială a acestui monitor virtual este stabilită la 1920x1080 pixeli. "
+"Clienții pot suprascrie rezoluția inițială cu actualizări ulterioare ale "
+"configurației monitorului."
