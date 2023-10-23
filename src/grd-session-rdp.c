@@ -1809,6 +1809,11 @@ rdp_peer_post_connect (freerdp_peer *peer)
       g_warning ("Client doesn't have a pointer cache, closing connection");
       return FALSE;
     }
+  if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_FastPathOutput))
+    {
+      g_warning ("Client does not support fastpath output, closing connection");
+      return FALSE;
+    }
 
   g_debug ("New RDP client: [OS major type, OS minor type]: [%s, %s]",
            freerdp_peer_os_major_type_string (peer),
@@ -2062,6 +2067,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdp_settings->FrameMarkerCommandEnabled = TRUE;
   rdp_settings->SurfaceFrameMarkerEnabled = TRUE;
   rdp_settings->UnicodeInput = TRUE;
+
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_FastPathOutput, TRUE);
 
   peer->Capabilities = rdp_peer_capabilities;
   peer->PostConnect = rdp_peer_post_connect;
