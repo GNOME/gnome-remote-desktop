@@ -30,7 +30,6 @@
 
 #include "grd-clipboard-rdp.h"
 #include "grd-context.h"
-#include "grd-damage-utils.h"
 #include "grd-debug.h"
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-audio-playback.h"
@@ -62,13 +61,6 @@ typedef enum _RdpPeerFlag
   RDP_PEER_PENDING_GFX_GRAPHICS_RESET = 1 << 3,
 } RdpPeerFlag;
 
-typedef enum _PointerType
-{
-  POINTER_TYPE_DEFAULT = 0,
-  POINTER_TYPE_HIDDEN  = 1 << 0,
-  POINTER_TYPE_NORMAL  = 1 << 1,
-} PointerType;
-
 typedef enum _PauseKeyState
 {
   PAUSE_KEY_STATE_NONE,
@@ -89,18 +81,6 @@ typedef struct _SessionMetrics
   int64_t first_frame_sent_us;
   uint32_t skipped_frames;
 } SessionMetrics;
-
-typedef struct _Pointer
-{
-  uint8_t *bitmap;
-  uint16_t hotspot_x;
-  uint16_t hotspot_y;
-  uint16_t width;
-  uint16_t height;
-
-  uint16_t cache_index;
-  int64_t last_used;
-} Pointer;
 
 typedef struct _NSCThreadPoolContext
 {
@@ -155,10 +135,6 @@ struct _GrdSessionRdp
 
   GrdRdpCursorRenderer *cursor_renderer;
 
-  Pointer *last_pointer;
-  GHashTable *pointer_cache;
-  PointerType pointer_type;
-
   GHashTable *pressed_keys;
   GHashTable *pressed_unicode_keys;
   PauseKeyState pause_key_state;
@@ -192,10 +168,6 @@ static void
 rdp_peer_refresh_region (GrdSessionRdp *session_rdp,
                          GrdRdpSurface *rdp_surface,
                          GrdRdpBuffer  *buffer);
-
-static gboolean
-are_pointer_bitmaps_equal (gconstpointer a,
-                           gconstpointer b);
 
 static gboolean
 is_rdp_peer_flag_set (GrdSessionRdp *session_rdp,
@@ -359,254 +331,6 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
     return;
 
   rdp_peer_refresh_region (session_rdp, rdp_surface, buffer);
-}
-
-static gboolean
-is_mouse_pointer_hidden (uint32_t  width,
-                         uint32_t  height,
-                         uint8_t  *data)
-{
-  uint8_t *src_data;
-  uint32_t i;
-
-  for (i = 0, src_data = data; i < height * width; ++i, ++src_data)
-    {
-      src_data += 3;
-      if (*src_data)
-        return FALSE;
-    }
-
-  return TRUE;
-}
-
-static gboolean
-find_equal_pointer_bitmap (gpointer key,
-                           gpointer value,
-                           gpointer user_data)
-{
-  return are_pointer_bitmaps_equal (value, user_data);
-}
-
-void
-grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
-                                uint16_t       hotspot_x,
-                                uint16_t       hotspot_y,
-                                uint16_t       width,
-                                uint16_t       height,
-                                uint8_t       *data)
-{
-  rdpContext *rdp_context = session_rdp->peer->context;
-  rdpSettings *rdp_settings = rdp_context->settings;
-  rdpUpdate *rdp_update = rdp_context->update;
-  POINTER_SYSTEM_UPDATE pointer_system = {0};
-  POINTER_NEW_UPDATE pointer_new = {0};
-  POINTER_LARGE_UPDATE pointer_large = {0};
-  POINTER_CACHED_UPDATE pointer_cached = {0};
-  POINTER_COLOR_UPDATE *pointer_color;
-  cairo_rectangle_int_t cairo_rect;
-  Pointer *new_pointer;
-  void *key, *value;
-  uint32_t stride;
-  uint32_t xor_mask_length;
-  uint8_t *xor_mask;
-  uint8_t *src_data, *dst_data;
-  uint8_t r, g, b, a;
-  uint32_t x, y;
-
-  if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED))
-    {
-      g_free (data);
-      return;
-    }
-
-  if (is_mouse_pointer_hidden (width, height, data))
-    {
-      if (session_rdp->pointer_type != POINTER_TYPE_HIDDEN)
-        {
-          session_rdp->last_pointer = NULL;
-          session_rdp->pointer_type = POINTER_TYPE_HIDDEN;
-          pointer_system.type = SYSPTR_NULL;
-
-          rdp_update->pointer->PointerSystem (rdp_context, &pointer_system);
-        }
-
-      g_free (data);
-      return;
-    }
-
-  /* RDP only handles pointer bitmaps up to 384x384 pixels */
-  if (width > 384 || height > 384)
-    {
-      if (session_rdp->pointer_type != POINTER_TYPE_DEFAULT)
-        {
-          session_rdp->last_pointer = NULL;
-          session_rdp->pointer_type = POINTER_TYPE_DEFAULT;
-          pointer_system.type = SYSPTR_DEFAULT;
-
-          rdp_update->pointer->PointerSystem (rdp_context, &pointer_system);
-        }
-
-      g_free (data);
-      return;
-    }
-
-  session_rdp->pointer_type = POINTER_TYPE_NORMAL;
-
-  stride = width * 4;
-  if (session_rdp->last_pointer &&
-      session_rdp->last_pointer->hotspot_x == hotspot_x &&
-      session_rdp->last_pointer->hotspot_y == hotspot_y &&
-      session_rdp->last_pointer->width == width &&
-      session_rdp->last_pointer->height == height)
-    {
-      cairo_rect.x = cairo_rect.y = 0;
-      cairo_rect.width = width;
-      cairo_rect.height = height;
-
-      if (!grd_is_tile_dirty (&cairo_rect,
-                              data,
-                              session_rdp->last_pointer->bitmap,
-                              stride, 4))
-        {
-          session_rdp->last_pointer->last_used = g_get_monotonic_time ();
-          g_free (data);
-          return;
-        }
-    }
-
-  new_pointer = g_malloc0 (sizeof (Pointer));
-  new_pointer->bitmap = data;
-  new_pointer->hotspot_x = hotspot_x;
-  new_pointer->hotspot_y = hotspot_y;
-  new_pointer->width = width;
-  new_pointer->height = height;
-  if ((value = g_hash_table_find (session_rdp->pointer_cache,
-                                  find_equal_pointer_bitmap,
-                                  new_pointer)))
-    {
-      session_rdp->last_pointer = (Pointer *) value;
-      session_rdp->last_pointer->last_used = g_get_monotonic_time ();
-      pointer_cached.cacheIndex = session_rdp->last_pointer->cache_index;
-
-      rdp_update->pointer->PointerCached (rdp_context, &pointer_cached);
-
-      g_free (new_pointer);
-      g_free (data);
-
-      return;
-    }
-
-  xor_mask_length = height * stride * sizeof (uint8_t);
-  xor_mask = g_malloc0 (xor_mask_length);
-
-  for (y = 0; y < height; ++y)
-    {
-      src_data = &data[stride * (height - 1 - y)];
-      dst_data = &xor_mask[stride * y];
-
-      for (x = 0; x < width; ++x)
-        {
-          r = *src_data++;
-          g = *src_data++;
-          b = *src_data++;
-          a = *src_data++;
-
-          *dst_data++ = b;
-          *dst_data++ = g;
-          *dst_data++ = r;
-          *dst_data++ = a;
-        }
-    }
-
-  new_pointer->cache_index = g_hash_table_size (session_rdp->pointer_cache);
-  if (g_hash_table_size (session_rdp->pointer_cache) >= rdp_settings->PointerCacheSize)
-    {
-      /* Least recently used pointer */
-      Pointer *lru_pointer = NULL;
-      GHashTableIter iter;
-
-      g_hash_table_iter_init (&iter, session_rdp->pointer_cache);
-      while (g_hash_table_iter_next (&iter, &key, &value))
-        {
-          if (!lru_pointer || lru_pointer->last_used > ((Pointer *) key)->last_used)
-            lru_pointer = (Pointer *) key;
-        }
-
-      g_hash_table_steal (session_rdp->pointer_cache, lru_pointer);
-      new_pointer->cache_index = lru_pointer->cache_index;
-
-      g_free (lru_pointer->bitmap);
-      g_free (lru_pointer);
-    }
-
-  new_pointer->last_used = g_get_monotonic_time ();
-
-  if (width <= 96 && height <= 96)
-    {
-      pointer_new.xorBpp = 32;
-      pointer_color = &pointer_new.colorPtrAttr;
-      pointer_color->cacheIndex = new_pointer->cache_index;
-      /* xPos and yPos actually represent the hotspot coordinates of the pointer
-       * instead of the actual pointer position.
-       * FreeRDP just uses a confusing naming convention here.
-       * See also 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
-       * for reference
-       */
-      pointer_color->xPos = hotspot_x;
-      pointer_color->yPos = hotspot_y;
-      pointer_color->width = width;
-      pointer_color->height = height;
-      pointer_color->lengthAndMask = 0;
-      pointer_color->lengthXorMask = xor_mask_length;
-      pointer_color->andMaskData = NULL;
-      pointer_color->xorMaskData = xor_mask;
-      pointer_cached.cacheIndex = pointer_color->cacheIndex;
-
-      rdp_update->pointer->PointerNew (rdp_context, &pointer_new);
-    }
-  else
-    {
-      pointer_large.xorBpp = 32;
-      pointer_large.cacheIndex = new_pointer->cache_index;
-      pointer_large.hotSpotX = hotspot_x;
-      pointer_large.hotSpotY = hotspot_y;
-      pointer_large.width = width;
-      pointer_large.height = height;
-      pointer_large.lengthAndMask = 0;
-      pointer_large.lengthXorMask = xor_mask_length;
-      pointer_large.andMaskData = NULL;
-      pointer_large.xorMaskData = xor_mask;
-      pointer_cached.cacheIndex = pointer_large.cacheIndex;
-
-      rdp_update->pointer->PointerLarge (rdp_context, &pointer_large);
-    }
-
-  rdp_update->pointer->PointerCached (rdp_context, &pointer_cached);
-
-  g_hash_table_add (session_rdp->pointer_cache, new_pointer);
-  session_rdp->last_pointer = new_pointer;
-
-  g_free (xor_mask);
-}
-
-void
-grd_session_rdp_hide_pointer (GrdSessionRdp *session_rdp)
-{
-  rdpContext *rdp_context = session_rdp->peer->context;
-  rdpUpdate *rdp_update = rdp_context->update;
-  POINTER_SYSTEM_UPDATE pointer_system = {0};
-
-  if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED))
-    return;
-
-  if (session_rdp->pointer_type == POINTER_TYPE_HIDDEN)
-    return;
-
-  session_rdp->last_pointer = NULL;
-  session_rdp->pointer_type = POINTER_TYPE_HIDDEN;
-  pointer_system.type = SYSPTR_NULL;
-
-  rdp_update->pointer->PointerSystem (rdp_context, &pointer_system);
 }
 
 static void
@@ -2340,19 +2064,6 @@ clear_rdp_peer (GrdSessionRdp *session_rdp)
     }
 }
 
-static gboolean
-clear_pointer_bitmap (gpointer key,
-                      gpointer value,
-                      gpointer user_data)
-{
-  Pointer *pointer = (Pointer *) key;
-
-  g_free (pointer->bitmap);
-  g_free (pointer);
-
-  return TRUE;
-}
-
 static void
 grd_session_rdp_stop (GrdSession *session)
 {
@@ -2422,10 +2133,6 @@ grd_session_rdp_stop (GrdSession *session)
                                notify_keysym_released,
                                session_rdp);
   grd_rdp_event_queue_flush (session_rdp->rdp_event_queue);
-
-  g_hash_table_foreach_remove (session_rdp->pointer_cache,
-                               clear_pointer_bitmap,
-                               NULL);
 
   g_clear_handle_id (&session_rdp->close_session_idle_id, g_source_remove);
 }
@@ -2600,7 +2307,6 @@ grd_session_rdp_dispose (GObject *object)
   g_clear_pointer (&session_rdp->stream_table, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pressed_unicode_keys, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pressed_keys, g_hash_table_unref);
-  g_clear_pointer (&session_rdp->pointer_cache, g_hash_table_unref);
 
   g_clear_pointer (&session_rdp->stop_event, CloseHandle);
 
@@ -2620,38 +2326,11 @@ grd_session_rdp_finalize (GObject *object)
   G_OBJECT_CLASS (grd_session_rdp_parent_class)->finalize (object);
 }
 
-static gboolean
-are_pointer_bitmaps_equal (gconstpointer a,
-                           gconstpointer b)
-{
-  Pointer *first = (Pointer *) a;
-  Pointer *second = (Pointer *) b;
-  cairo_rectangle_int_t cairo_rect;
-
-  if (first->hotspot_x != second->hotspot_x ||
-      first->hotspot_y != second->hotspot_y ||
-      first->width != second->width ||
-      first->height != second->height)
-    return FALSE;
-
-  cairo_rect.x = cairo_rect.y = 0;
-  cairo_rect.width = first->width;
-  cairo_rect.height = first->height;
-  if (grd_is_tile_dirty (&cairo_rect,
-                         first->bitmap,
-                         second->bitmap,
-                         first->width * 4, 4))
-    return FALSE;
-
-  return TRUE;
-}
-
 static void
 grd_session_rdp_init (GrdSessionRdp *session_rdp)
 {
   session_rdp->stop_event = CreateEvent (NULL, TRUE, FALSE, NULL);
 
-  session_rdp->pointer_cache = g_hash_table_new (NULL, are_pointer_bitmaps_equal);
   session_rdp->pressed_keys = g_hash_table_new (NULL, NULL);
   session_rdp->pressed_unicode_keys = g_hash_table_new (NULL, NULL);
   session_rdp->stream_table = g_hash_table_new (NULL, NULL);

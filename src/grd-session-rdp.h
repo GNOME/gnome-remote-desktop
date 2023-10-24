@@ -82,13 +82,4 @@ int grd_session_rdp_get_stride_for_width (GrdSessionRdp *session_rdp,
 void grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
                                                  GrdRdpSurface *rdp_surface);
 
-void grd_session_rdp_update_pointer (GrdSessionRdp *session_rdp,
-                                     uint16_t       hotspot_x,
-                                     uint16_t       hotspot_y,
-                                     uint16_t       width,
-                                     uint16_t       height,
-                                     uint8_t       *data);
-
-void grd_session_rdp_hide_pointer (GrdSessionRdp *session_rdp);
-
 #endif /* GRD_SESSION_RDP_H */
