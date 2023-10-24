@@ -54,6 +54,15 @@
 #define MAX_MONITOR_COUNT_SCREEN_SHARE 1
 #define DISCRETE_SCROLL_STEP 10.0
 
+enum
+{
+  POST_CONNECTED,
+
+  N_SIGNALS
+};
+
+static guint signals[N_SIGNALS];
+
 typedef enum _RdpPeerFlag
 {
   RDP_PEER_ACTIVATED                  = 1 << 0,
@@ -156,6 +165,9 @@ struct _GrdSessionRdp
 
   GMutex close_session_mutex;
   unsigned int close_session_idle_id;
+
+  GMutex notify_post_connected_mutex;
+  unsigned int notify_post_connected_source_id;
 
   uint32_t next_stream_id;
 };
@@ -1590,12 +1602,27 @@ rdp_peer_capabilities (freerdp_peer *peer)
   return TRUE;
 }
 
+static void
+notify_post_connected (gpointer user_data)
+{
+  GrdSessionRdp *session_rdp = user_data;
+  SessionMetrics *session_metrics = &session_rdp->session_metrics;
+
+  g_mutex_lock (&session_rdp->notify_post_connected_mutex);
+  session_rdp->notify_post_connected_source_id = 0;
+  g_mutex_unlock (&session_rdp->notify_post_connected_mutex);
+
+  session_metrics->rd_session_start_init_us = g_get_monotonic_time ();
+  grd_session_start (GRD_SESSION (session_rdp));
+
+  g_signal_emit (session_rdp, signals[POST_CONNECTED], 0);
+}
+
 static BOOL
 rdp_peer_post_connect (freerdp_peer *peer)
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
-  SessionMetrics *session_metrics = &session_rdp->session_metrics;
   rdpSettings *rdp_settings = peer->context->settings;
   uint32_t multifrag_max_request_size =
     freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MultifragMaxRequestSize);
@@ -1673,9 +1700,6 @@ rdp_peer_post_connect (freerdp_peer *peer)
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
 
-  session_metrics->rd_session_start_init_us = g_get_monotonic_time ();
-  grd_session_start (GRD_SESSION (session_rdp));
-
   g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
 
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) &&
@@ -1688,6 +1712,11 @@ rdp_peer_post_connect (freerdp_peer *peer)
 
   set_rdp_peer_flag (session_rdp, RDP_PEER_OUTPUT_ENABLED);
   set_rdp_peer_flag (session_rdp, RDP_PEER_ACTIVATED);
+
+  g_mutex_lock (&session_rdp->notify_post_connected_mutex);
+  session_rdp->notify_post_connected_source_id =
+    g_idle_add_once (notify_post_connected, session_rdp);
+  g_mutex_unlock (&session_rdp->notify_post_connected_mutex);
 
   return TRUE;
 }
@@ -2237,6 +2266,9 @@ grd_session_rdp_stop (GrdSession *session)
   g_mutex_unlock (&rdp_peer_context->channel_mutex);
 
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
+  g_clear_handle_id (&session_rdp->notify_post_connected_source_id,
+                     g_source_remove);
+
   g_clear_object (&session_rdp->layout_manager);
 
   g_clear_object (&session_rdp->cursor_renderer);
@@ -2428,6 +2460,7 @@ grd_session_rdp_dispose (GObject *object)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
 
+  g_assert (!session_rdp->notify_post_connected_source_id);
   g_assert (!session_rdp->cursor_renderer);
 
   g_clear_object (&session_rdp->layout_manager);
@@ -2452,6 +2485,7 @@ grd_session_rdp_finalize (GObject *object)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
 
+  g_mutex_clear (&session_rdp->notify_post_connected_mutex);
   g_mutex_clear (&session_rdp->close_session_mutex);
   g_mutex_clear (&session_rdp->rdp_flags_mutex);
   g_mutex_clear (&session_rdp->pending_jobs_mutex);
@@ -2473,6 +2507,7 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
   g_mutex_init (&session_rdp->pending_jobs_mutex);
   g_mutex_init (&session_rdp->rdp_flags_mutex);
   g_mutex_init (&session_rdp->close_session_mutex);
+  g_mutex_init (&session_rdp->notify_post_connected_mutex);
 
   session_rdp->rdp_event_queue = grd_rdp_event_queue_new (session_rdp);
 
@@ -2498,4 +2533,11 @@ grd_session_rdp_class_init (GrdSessionRdpClass *klass)
     grd_session_rdp_on_caps_lock_state_changed;
   session_class->on_num_lock_state_changed =
     grd_session_rdp_on_num_lock_state_changed;
+
+  signals[POST_CONNECTED] = g_signal_new ("post-connected",
+                                          G_TYPE_FROM_CLASS (klass),
+                                          G_SIGNAL_RUN_LAST,
+                                          0,
+                                          NULL, NULL, NULL,
+                                          G_TYPE_NONE, 0);
 }
