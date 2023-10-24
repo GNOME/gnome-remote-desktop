@@ -32,6 +32,7 @@ G_DECLARE_FINAL_TYPE (GrdRdpPipeWireStream, grd_rdp_pipewire_stream,
                       GObject)
 
 GrdRdpPipeWireStream *grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
+                                                   GrdRdpCursorRenderer        *cursor_renderer,
                                                    GrdHwAccelNvidia            *hwaccel_nvidia,
                                                    GMainContext                *render_context,
                                                    GrdRdpSurface               *rdp_surface,

@@ -35,6 +35,7 @@
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-audio-playback.h"
 #include "grd-rdp-buffer.h"
+#include "grd-rdp-cursor-renderer.h"
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-display-control.h"
 #include "grd-rdp-dvc.h"
@@ -151,6 +152,8 @@ struct _GrdSessionRdp
 
   GThread *graphics_thread;
   GMainContext *graphics_context;
+
+  GrdRdpCursorRenderer *cursor_renderer;
 
   Pointer *last_pointer;
   GHashTable *pointer_cache;
@@ -2399,6 +2402,8 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
   g_clear_object (&session_rdp->layout_manager);
 
+  g_clear_object (&session_rdp->cursor_renderer);
+
   peer->Close (peer);
   g_clear_object (&session_rdp->connection);
 
@@ -2515,6 +2520,11 @@ grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
 
   session_metrics->rd_session_ready_us = g_get_monotonic_time ();
 
+  session_rdp->cursor_renderer =
+    grd_rdp_cursor_renderer_new (session_rdp->graphics_context,
+                                 session_rdp->peer->context);
+  grd_rdp_cursor_renderer_notify_session_ready (session_rdp->cursor_renderer);
+
   maybe_initialize_graphics_pipeline (session_rdp);
   initialize_remaining_virtual_channels (session_rdp);
 }
@@ -2532,6 +2542,7 @@ grd_session_rdp_remote_desktop_session_started (GrdSession *session)
 
   has_graphics_pipeline = rdp_settings->SupportGraphicsPipeline;
   grd_rdp_layout_manager_notify_session_started (session_rdp->layout_manager,
+                                                 session_rdp->cursor_renderer,
                                                  has_graphics_pipeline);
 }
 
@@ -2575,6 +2586,8 @@ static void
 grd_session_rdp_dispose (GObject *object)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (object);
+
+  g_assert (!session_rdp->cursor_renderer);
 
   g_clear_object (&session_rdp->layout_manager);
   clear_rdp_peer (session_rdp);

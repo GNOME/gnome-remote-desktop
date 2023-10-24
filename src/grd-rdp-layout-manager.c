@@ -64,6 +64,7 @@ struct _GrdRdpLayoutManager
   UpdateState state;
 
   GrdSessionRdp *session_rdp;
+  GrdRdpCursorRenderer *cursor_renderer;
   GrdHwAccelNvidia *hwaccel_nvidia;
   GMainContext *render_context;
 
@@ -390,6 +391,7 @@ on_stream_ready (GrdStream           *stream,
            pipewire_node_id);
   surface_context->pipewire_stream =
     grd_rdp_pipewire_stream_new (layout_manager->session_rdp,
+                                 layout_manager->cursor_renderer,
                                  layout_manager->hwaccel_nvidia,
                                  layout_manager->render_context,
                                  surface_context->rdp_surface,
@@ -514,9 +516,11 @@ grd_rdp_layout_manager_get_current_layout (GrdRdpLayoutManager  *layout_manager,
 }
 
 void
-grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager *layout_manager,
-                                               gboolean             has_graphics_pipeline)
+grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager  *layout_manager,
+                                               GrdRdpCursorRenderer *cursor_renderer,
+                                               gboolean              has_graphics_pipeline)
 {
+  layout_manager->cursor_renderer = cursor_renderer;
   layout_manager->has_graphics_pipeline = has_graphics_pipeline;
   layout_manager->session_started = TRUE;
 

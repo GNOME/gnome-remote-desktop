@@ -35,6 +35,7 @@
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-buffer-pool.h"
+#include "grd-rdp-cursor-renderer.h"
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-surface.h"
 #include "grd-utils.h"
@@ -89,15 +90,6 @@ struct _GrdRdpFrame
 
 typedef struct
 {
-  uint8_t *pointer_bitmap;
-  uint16_t pointer_hotspot_x;
-  uint16_t pointer_hotspot_y;
-  uint16_t pointer_width;
-  uint16_t pointer_height;
-} RdpPointer;
-
-typedef struct
-{
   GrdRdpBuffer *rdp_buffer;
 } UnmapBufferData;
 
@@ -124,6 +116,7 @@ struct _GrdRdpPipeWireStream
   GObject parent;
 
   GrdSessionRdp *session_rdp;
+  GrdRdpCursorRenderer *cursor_renderer;
   GrdRdpSurface *rdp_surface;
   GrdEglThreadSlot egl_slot;
 
@@ -142,15 +135,10 @@ struct _GrdRdpPipeWireStream
   GrdRdpBufferPool *buffer_pool;
 
   StreamContext *frame_context;
-  StreamContext *pointer_context;
 
   GSource *frame_render_source;
   GMutex frame_mutex;
   GrdRdpFrame *pending_frame;
-
-  GSource *pointer_render_source;
-  GMutex pointer_mutex;
-  RdpPointer *pending_pointer;
 
   struct pw_stream *pipewire_stream;
   struct spa_hook pipewire_stream_listener;
@@ -285,13 +273,6 @@ grd_rdp_frame_unref (GrdRdpFrame *frame)
       g_clear_pointer (&frame->buffer, grd_rdp_buffer_release);
       g_free (frame);
     }
-}
-
-static void
-rdp_pointer_free (RdpPointer *rdp_pointer)
-{
-  g_clear_pointer (&rdp_pointer->pointer_bitmap, g_free);
-  g_free (rdp_pointer);
 }
 
 static void
@@ -485,48 +466,6 @@ render_frame (gpointer user_data)
 }
 
 static gboolean
-render_mouse_pointer (gpointer user_data)
-{
-  StreamContext *stream_context = user_data;
-  g_autoptr (GMutexLocker) locker = NULL;
-  GrdRdpPipeWireStream *stream;
-  RdpPointer *rdp_pointer;
-
-  locker = g_mutex_locker_new (&stream_context->stream_mutex);
-  if (!stream_context->stream)
-    return G_SOURCE_REMOVE;
-
-  stream = stream_context->stream;
-  g_mutex_lock (&stream->pointer_mutex);
-  if (!stream->pending_pointer)
-    {
-      g_mutex_unlock (&stream->pointer_mutex);
-      return G_SOURCE_CONTINUE;
-    }
-
-  rdp_pointer = g_steal_pointer (&stream->pending_pointer);
-  g_mutex_unlock (&stream->pointer_mutex);
-
-  if (rdp_pointer->pointer_bitmap)
-    {
-      grd_session_rdp_update_pointer (stream->session_rdp,
-                                      rdp_pointer->pointer_hotspot_x,
-                                      rdp_pointer->pointer_hotspot_y,
-                                      rdp_pointer->pointer_width,
-                                      rdp_pointer->pointer_height,
-                                      g_steal_pointer (&rdp_pointer->pointer_bitmap));
-    }
-  else
-    {
-      grd_session_rdp_hide_pointer (stream->session_rdp);
-    }
-
-  rdp_pointer_free (rdp_pointer);
-
-  return G_SOURCE_CONTINUE;
-}
-
-static gboolean
 render_source_dispatch (GSource     *source,
                         GSourceFunc  callback,
                         gpointer     user_data)
@@ -542,10 +481,10 @@ static GSourceFuncs render_source_funcs =
 };
 
 static void
-create_render_sources (GrdRdpPipeWireStream *stream,
-                       GMainContext         *render_context)
+create_render_source (GrdRdpPipeWireStream *stream,
+                      GMainContext         *render_context)
 {
-  StreamContext *frame_context, *pointer_context;
+  StreamContext *frame_context;
 
   frame_context = stream_context_new (stream);
   stream->frame_context = frame_context;
@@ -556,16 +495,6 @@ create_render_sources (GrdRdpPipeWireStream *stream,
                          frame_context, stream_context_free);
   g_source_set_ready_time (stream->frame_render_source, -1);
   g_source_attach (stream->frame_render_source, render_context);
-
-  pointer_context = stream_context_new (stream);
-  stream->pointer_context = pointer_context;
-
-  stream->pointer_render_source = g_source_new (&render_source_funcs,
-                                                sizeof (GSource));
-  g_source_set_callback (stream->pointer_render_source, render_mouse_pointer,
-                         pointer_context, stream_context_free);
-  g_source_set_ready_time (stream->pointer_render_source, -1);
-  g_source_attach (stream->pointer_render_source, render_context);
 }
 
 static void
@@ -736,12 +665,12 @@ on_stream_remove_buffer (void             *user_data,
 }
 
 static void
-process_mouse_pointer_bitmap (GrdRdpPipeWireStream *stream,
-                              struct spa_buffer    *buffer)
+process_mouse_cursor_data (GrdRdpPipeWireStream *stream,
+                           struct spa_buffer    *buffer)
 {
   struct spa_meta_cursor *spa_meta_cursor;
   struct spa_meta_bitmap *spa_meta_bitmap;
-  RdpPointer *rdp_pointer = NULL;
+  GrdRdpCursorUpdate *cursor_update = NULL;
   GrdPixelFormat format;
 
   spa_meta_cursor = spa_buffer_find_meta_data (buffer, SPA_META_Cursor,
@@ -765,28 +694,25 @@ process_mouse_pointer_bitmap (GrdRdpPipeWireStream *stream,
 
       buf = SPA_MEMBER (spa_meta_bitmap, spa_meta_bitmap->offset, uint8_t);
 
-      rdp_pointer = g_new0 (RdpPointer, 1);
-      rdp_pointer->pointer_bitmap =
+      cursor_update = g_new0 (GrdRdpCursorUpdate, 1);
+      cursor_update->update_type = GRD_RDP_CURSOR_UPDATE_TYPE_NORMAL;
+      cursor_update->hotspot_x = spa_meta_cursor->hotspot.x;
+      cursor_update->hotspot_y = spa_meta_cursor->hotspot.y;
+      cursor_update->width = spa_meta_bitmap->size.width;
+      cursor_update->height = spa_meta_bitmap->size.height;
+      cursor_update->bitmap =
         g_memdup2 (buf, spa_meta_bitmap->size.height * spa_meta_bitmap->stride);
-      rdp_pointer->pointer_hotspot_x = spa_meta_cursor->hotspot.x;
-      rdp_pointer->pointer_hotspot_y = spa_meta_cursor->hotspot.y;
-      rdp_pointer->pointer_width = spa_meta_bitmap->size.width;
-      rdp_pointer->pointer_height = spa_meta_bitmap->size.height;
     }
   else if (spa_meta_bitmap)
     {
-      rdp_pointer = g_new0 (RdpPointer, 1);
+      cursor_update = g_new0 (GrdRdpCursorUpdate, 1);
+      cursor_update->update_type = GRD_RDP_CURSOR_UPDATE_TYPE_HIDDEN;
     }
 
-  if (rdp_pointer)
+  if (cursor_update)
     {
-      g_mutex_lock (&stream->pointer_mutex);
-      g_clear_pointer (&stream->pending_pointer, rdp_pointer_free);
-
-      stream->pending_pointer = rdp_pointer;
-      g_mutex_unlock (&stream->pointer_mutex);
-
-      g_source_set_ready_time (stream->pointer_render_source, 0);
+      grd_rdp_cursor_renderer_submit_cursor_update (stream->cursor_renderer,
+                                                    cursor_update);
     }
 }
 
@@ -1183,7 +1109,7 @@ on_stream_process (void *user_data)
 
   if (last_pointer_buffer)
     {
-      process_mouse_pointer_bitmap (stream, last_pointer_buffer->buffer);
+      process_mouse_cursor_data (stream, last_pointer_buffer->buffer);
       if (last_pointer_buffer != last_frame_buffer)
         pw_stream_queue_buffer (stream->pipewire_stream, last_pointer_buffer);
     }
@@ -1288,6 +1214,7 @@ static const struct pw_registry_events registry_events =
 
 GrdRdpPipeWireStream *
 grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
+                             GrdRdpCursorRenderer        *cursor_renderer,
                              GrdHwAccelNvidia            *hwaccel_nvidia,
                              GMainContext                *render_context,
                              GrdRdpSurface               *rdp_surface,
@@ -1303,6 +1230,7 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
 
   stream = g_object_new (GRD_TYPE_RDP_PIPEWIRE_STREAM, NULL);
   stream->session_rdp = session_rdp;
+  stream->cursor_renderer = cursor_renderer;
   stream->rdp_surface = rdp_surface;
   stream->src_node_id = src_node_id;
 
@@ -1311,7 +1239,7 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
 
   pw_init (NULL, NULL);
 
-  create_render_sources (stream, render_context);
+  create_render_source (stream, render_context);
 
   pipewire_source = grd_attached_pipewire_source_new ("RDP", error);
   if (!pipewire_source)
@@ -1400,14 +1328,8 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
       g_clear_pointer (&stream->pipewire_source, g_source_unref);
     }
 
-  stream_context_release_stream (stream->pointer_context);
   stream_context_release_stream (stream->frame_context);
 
-  if (stream->pointer_render_source)
-    {
-      g_source_destroy (stream->pointer_render_source);
-      g_clear_pointer (&stream->pointer_render_source, g_source_unref);
-    }
   if (stream->frame_render_source)
     {
       g_source_destroy (stream->frame_render_source);
@@ -1415,13 +1337,11 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
     }
 
   grd_rdp_damage_detector_invalidate_surface (stream->rdp_surface->detector);
-  g_clear_pointer (&stream->pending_pointer, rdp_pointer_free);
   g_clear_pointer (&stream->pending_frame, grd_rdp_frame_unref);
 
   release_all_buffers (stream);
   g_clear_object (&stream->buffer_pool);
 
-  g_mutex_clear (&stream->pointer_mutex);
   g_mutex_clear (&stream->frame_mutex);
   g_mutex_clear (&stream->dequeue_mutex);
 
@@ -1444,7 +1364,6 @@ grd_rdp_pipewire_stream_init (GrdRdpPipeWireStream *stream)
 
   g_mutex_init (&stream->dequeue_mutex);
   g_mutex_init (&stream->frame_mutex);
-  g_mutex_init (&stream->pointer_mutex);
 }
 
 static void

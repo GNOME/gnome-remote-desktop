@@ -38,8 +38,9 @@ void grd_rdp_layout_manager_get_current_layout (GrdRdpLayoutManager  *layout_man
                                                 MONITOR_DEF         **monitors,
                                                 uint32_t             *n_monitors);
 
-void grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager *layout_manager,
-                                                    gboolean             has_graphics_pipeline);
+void grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager  *layout_manager,
+                                                    GrdRdpCursorRenderer *cursor_renderer,
+                                                    gboolean              has_graphics_pipeline);
 
 void grd_rdp_layout_manager_submit_new_monitor_config (GrdRdpLayoutManager *layout_manager,
                                                        GrdRdpMonitorConfig *monitor_config);
