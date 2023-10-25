@@ -209,6 +209,12 @@ on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
   g_debug ("[DaemonSystem] At: %s, received StartHandover call",
            remote_client->handover_dst->object_path );
 
+  if (!remote_client->session && !remote_client->handover_src)
+    {
+      g_warning ("[DaemonSystem] RDP client disconnected during the handover");
+      goto err;
+    }
+
   routing_token = get_routing_token_from_id (remote_client->id);
 
   g_object_get (G_OBJECT (settings),
@@ -263,6 +269,7 @@ on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
   return G_DBUS_METHOD_INVOCATION_HANDLED;
 
 err:
+  abort_handover (remote_client);
   g_dbus_method_invocation_return_error (invocation,
                                          G_DBUS_ERROR,
                                          G_DBUS_ERROR_UNKNOWN_OBJECT,
