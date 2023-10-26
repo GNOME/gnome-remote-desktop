@@ -1514,6 +1514,9 @@ grd_session_start (GrdSession *session)
   priv->cancellable = g_cancellable_new ();
 
   remote_desktop_proxy = grd_context_get_mutter_remote_desktop_proxy (priv->context);
+
+  g_assert (remote_desktop_proxy);
+
   grd_dbus_mutter_remote_desktop_call_create_session (remote_desktop_proxy,
                                                       priv->cancellable,
                                                       on_remote_desktop_session_created,
