@@ -743,42 +743,6 @@ grd_session_set_selection (GrdSession *session,
     g_warning ("Failed to set selection: %s", error->message);
 }
 
-static int
-acquire_fd_from_list (GUnixFDList  *fd_list,
-                      int           fd_idx,
-                      GError      **error)
-{
-  int fd;
-  int fd_flags;
-
-  fd = g_unix_fd_list_get (fd_list, fd_idx, error);
-  if (fd == -1)
-    {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                   "fcntl: %s", g_strerror (errno));
-      return -1;
-    }
-
-  fd_flags = fcntl (fd, F_GETFD);
-  if (fd_flags == -1)
-    {
-      close (fd);
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                   "fcntl: %s", g_strerror (errno));
-      return -1;
-    }
-
-  if (fcntl (fd, F_SETFD, fd_flags | FD_CLOEXEC) == -1)
-    {
-      close (fd);
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                   "fcntl: %s", g_strerror (errno));
-      return -1;
-    }
-
-  return fd;
-}
-
 void
 grd_session_selection_write (GrdSession    *session,
                              unsigned int   serial,
@@ -809,7 +773,7 @@ grd_session_selection_write (GrdSession    *session,
     }
 
   g_variant_get (fd_variant, "h", &fd_idx);
-  fd = acquire_fd_from_list (fd_list, fd_idx, &error);
+  fd = g_unix_fd_list_get (fd_list, fd_idx, &error);
   if (fd == -1)
     {
       g_warning ("Failed to acquire file descriptor for serial %u: %s",
@@ -854,7 +818,7 @@ grd_session_selection_read (GrdSession  *session,
     }
 
   g_variant_get (fd_variant, "h", &fd_idx);
-  fd = acquire_fd_from_list (fd_list, fd_idx, &error);
+  fd = g_unix_fd_list_get (fd_list, fd_idx, &error);
   if (fd == -1)
     {
       g_warning ("Failed to acquire file descriptor: %s", error->message);
