@@ -39,7 +39,7 @@
     <!--
         StartHandover:
 
-        The new server is ready and starts the handover proccess sending its
+        The dst server is ready and starts the handover proccess sending its
         one time username/password and getting the certificate and key used
         by the system server.
     -->
@@ -51,9 +51,21 @@
     </method>
 
     <!--
+        RedirectClient:
+
+        Signal to make the src server send the server redirection with the
+        routing token and one time username/password to the client.
+    -->
+    <signal name="RedirectClient">
+      <arg name="routing_token" type="s"/>
+      <arg name="username" type="s"/>
+      <arg name="password" type="s"/>
+    </signal>
+
+    <!--
         TakeClientReady:
 
-        Signal to make aware the new server that the client has redirected
+        Signal to make aware the dst server that the client has redirected
         successfully and is ready to be taken.
     -->
     <signal name="TakeClientReady" />
@@ -61,7 +73,7 @@
     <!--
         TakeClient:
 
-        The new server takes the file descriptor which has the active
+        The dst server takes the file descriptor which has the active
         connection of the redirected client.
     -->
     <method name="TakeClient">
