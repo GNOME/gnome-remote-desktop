@@ -51,6 +51,7 @@ if have_rdp
   freerdp_client_dep = dependency('freerdp-client3', version: freerdp_req)
   freerdp_server_dep = dependency('freerdp-server3', version: freerdp_req)
   fuse_dep = dependency('fuse3', version: fuse_req)
+  opus_dep = dependency('opus')
   winpr_dep = dependency('winpr3', version: freerdp_req)
   xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
 endif

@@ -551,6 +551,7 @@ prepare_client_format (GrdRdpAudioPlayback *audio_playback)
       break;
     case GRD_RDP_DSP_CODEC_AAC:
     case GRD_RDP_DSP_CODEC_ALAW:
+    case GRD_RDP_DSP_CODEC_OPUS:
       frames_per_packet =
         grd_rdp_dsp_get_frames_per_packet (audio_playback->rdp_dsp,
                                            audio_playback->codec);
@@ -734,8 +735,10 @@ grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
 
   dsp_descriptor.create_flags = GRD_RDP_DSP_CREATE_FLAG_ENCODER;
   dsp_descriptor.n_samples_per_sec_aac = N_SAMPLES_PER_SEC;
+  dsp_descriptor.n_samples_per_sec_opus = 48000;
   dsp_descriptor.n_channels = N_CHANNELS;
   dsp_descriptor.bitrate_aac = audio_format_aac.nAvgBytesPerSec * 8;
+  dsp_descriptor.bitrate_opus = 96000;
 
   audio_playback->rdp_dsp = grd_rdp_dsp_new (&dsp_descriptor, &error);
   if (!audio_playback->rdp_dsp)
@@ -1098,6 +1101,7 @@ maybe_send_frames (GrdRdpAudioPlayback         *audio_playback,
       break;
     case GRD_RDP_DSP_CODEC_AAC:
     case GRD_RDP_DSP_CODEC_ALAW:
+    case GRD_RDP_DSP_CODEC_OPUS:
       success = grd_rdp_dsp_encode (audio_playback->rdp_dsp, codec,
                                     (int16_t *) raw_data, copied_data,
                                     sizeof (int16_t), &out_data, &out_size);

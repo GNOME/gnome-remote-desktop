@@ -32,6 +32,7 @@ typedef enum _GrdRdpDspCodec
   GRD_RDP_DSP_CODEC_NONE,
   GRD_RDP_DSP_CODEC_AAC,
   GRD_RDP_DSP_CODEC_ALAW,
+  GRD_RDP_DSP_CODEC_OPUS,
 } GrdRdpDspCodec;
 
 typedef enum
@@ -47,8 +48,10 @@ typedef struct
 
   /* Encoder */
   uint32_t n_samples_per_sec_aac;
+  uint32_t n_samples_per_sec_opus;
   uint32_t n_channels;
   uint32_t bitrate_aac;
+  uint32_t bitrate_opus;
 } GrdRdpDspDescriptor;
 
 GrdRdpDsp *grd_rdp_dsp_new (const GrdRdpDspDescriptor  *dsp_descriptor,

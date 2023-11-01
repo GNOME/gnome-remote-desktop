@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 39
-    BASE_TAG: '2023-12-30.0.freerdp3_1'
+    BASE_TAG: '2023-12-30.1.opus'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -24,6 +24,7 @@ stages:
       dnf install -y 'pkgconfig(ffnvcodec)' &&
       dnf install -y 'pkgconfig(fuse3)' &&
       dnf install -y 'pkgconfig(fdk-aac)' &&
+      dnf install -y 'pkgconfig(opus)' &&
       dnf install -y 'pkgconfig(tss2-esys)' \
                      'pkgconfig(tss2-mu)' 'pkgconfig(tss2-rc)' \
                      'pkgconfig(tss2-tctildr)' &&

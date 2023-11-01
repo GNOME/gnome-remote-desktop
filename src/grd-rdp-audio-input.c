@@ -567,6 +567,7 @@ audin_data (audin_server_context *audin_context,
       break;
     case GRD_RDP_DSP_CODEC_AAC:
     case GRD_RDP_DSP_CODEC_ALAW:
+    case GRD_RDP_DSP_CODEC_OPUS:
       success = grd_rdp_dsp_decode (audio_input->rdp_dsp, audio_input->codec,
                                     src_data, src_size,
                                     &audio_data->data, &dst_size);

@@ -145,6 +145,7 @@ if have_rdp
     freerdp_dep,
     freerdp_server_dep,
     fuse_dep,
+    opus_dep,
     winpr_dep,
     xkbcommon_dep,
   ]

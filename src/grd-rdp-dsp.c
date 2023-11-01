@@ -23,6 +23,7 @@
 
 #include <fdk-aac/aacenc_lib.h>
 #include <gio/gio.h>
+#include <opus/opus.h>
 
 #define G711_QUANT_MASK 0xF
 #define G711_SEG_MASK 0x70
@@ -33,9 +34,13 @@ struct _GrdRdpDsp
   GObject parent;
 
   GrdRdpDspCreateFlag create_flags;
+  uint32_t n_channels;
 
   HANDLE_AACENCODER aac_encoder;
   uint32_t aac_frame_length;
+
+  OpusEncoder *opus_encoder;
+  uint32_t opus_frame_length;
 };
 
 G_DEFINE_TYPE (GrdRdpDsp, grd_rdp_dsp, G_TYPE_OBJECT)
@@ -51,6 +56,8 @@ grd_rdp_dsp_codec_to_string (GrdRdpDspCodec dsp_codec)
       return "AAC";
     case GRD_RDP_DSP_CODEC_ALAW:
       return "A-law";
+    case GRD_RDP_DSP_CODEC_OPUS:
+      return "Opus";
     }
 
   g_assert_not_reached ();
@@ -70,6 +77,8 @@ grd_rdp_dsp_get_frames_per_packet (GrdRdpDsp      *rdp_dsp,
       return rdp_dsp->aac_frame_length;
     case GRD_RDP_DSP_CODEC_ALAW:
       g_assert_not_reached ();
+    case GRD_RDP_DSP_CODEC_OPUS:
+      return rdp_dsp->opus_frame_length;
     }
 
   g_assert_not_reached ();
@@ -131,6 +140,38 @@ encode_aac (GrdRdpDsp  *rdp_dsp,
   return TRUE;
 }
 
+static gboolean
+encode_opus (GrdRdpDsp  *rdp_dsp,
+             int16_t    *input_data,
+             uint32_t    input_size,
+             uint32_t    input_elem_size,
+             uint8_t   **output_data,
+             uint32_t   *output_size)
+{
+  uint32_t frames;
+  int32_t length;
+  int output_allocation_size;
+
+  frames = input_size / rdp_dsp->n_channels / input_elem_size;
+  g_assert (frames > 0);
+
+  output_allocation_size = input_size;
+  *output_data = g_malloc0 (output_allocation_size);
+
+  length = opus_encode (rdp_dsp->opus_encoder, input_data, frames,
+                        *output_data, output_allocation_size);
+  if (length < 0)
+    {
+      g_warning ("[RDP.DSP] Failed to Opus encode samples: %s",
+                 opus_strerror (length));
+      g_clear_pointer (output_data, g_free);
+      return FALSE;
+    }
+  *output_size = length;
+
+  return TRUE;
+}
+
 gboolean
 grd_rdp_dsp_encode (GrdRdpDsp       *rdp_dsp,
                     GrdRdpDspCodec   codec,
@@ -153,6 +194,9 @@ grd_rdp_dsp_encode (GrdRdpDsp       *rdp_dsp,
     case GRD_RDP_DSP_CODEC_ALAW:
       g_assert_not_reached ();
       return FALSE;
+    case GRD_RDP_DSP_CODEC_OPUS:
+      return encode_opus (rdp_dsp, input_data, input_size, input_elem_size,
+                          output_data, output_size);
     }
 
   g_assert_not_reached ();
@@ -224,6 +268,9 @@ grd_rdp_dsp_decode (GrdRdpDsp       *rdp_dsp,
     case GRD_RDP_DSP_CODEC_ALAW:
       return decode_alaw (rdp_dsp, input_data, input_size,
                           output_data, output_size);
+    case GRD_RDP_DSP_CODEC_OPUS:
+      g_assert_not_reached ();
+      return FALSE;
     }
 
   g_assert_not_reached ();
@@ -352,15 +399,59 @@ create_aac_encoder (GrdRdpDsp  *rdp_dsp,
 }
 
 static gboolean
+create_opus_encoder (GrdRdpDsp  *rdp_dsp,
+                     uint32_t    n_samples_per_sec,
+                     uint32_t    n_channels,
+                     uint32_t    bitrate,
+                     GError    **error)
+{
+  int opus_error = OPUS_OK;
+
+  rdp_dsp->opus_encoder = opus_encoder_create (n_samples_per_sec, n_channels,
+                                               OPUS_APPLICATION_AUDIO,
+                                               &opus_error);
+  if (opus_error != OPUS_OK)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create Opus encoder: %s",
+                   opus_strerror (opus_error));
+      return FALSE;
+    }
+  g_assert (rdp_dsp->opus_encoder);
+
+  opus_error = opus_encoder_ctl (rdp_dsp->opus_encoder,
+                                 OPUS_SET_BITRATE(bitrate));
+  if (opus_error != OPUS_OK)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to set Opus encoder bitrate: %s",
+                   opus_strerror (opus_error));
+      return FALSE;
+    }
+
+  rdp_dsp->opus_frame_length = n_samples_per_sec / 50;
+
+  return TRUE;
+}
+
+static gboolean
 create_encoders (GrdRdpDsp                  *rdp_dsp,
                  const GrdRdpDspDescriptor  *dsp_descriptor,
                  GError                    **error)
 {
+  rdp_dsp->n_channels = dsp_descriptor->n_channels;
+
   if (!create_aac_encoder (rdp_dsp,
                            dsp_descriptor->n_samples_per_sec_aac,
                            dsp_descriptor->n_channels,
                            dsp_descriptor->bitrate_aac,
                            error))
+    return FALSE;
+  if (!create_opus_encoder (rdp_dsp,
+                            dsp_descriptor->n_samples_per_sec_opus,
+                            dsp_descriptor->n_channels,
+                            dsp_descriptor->bitrate_opus,
+                            error))
     return FALSE;
 
   return TRUE;
@@ -386,6 +477,8 @@ static void
 grd_rdp_dsp_dispose (GObject *object)
 {
   GrdRdpDsp *rdp_dsp = GRD_RDP_DSP (object);
+
+  g_clear_pointer (&rdp_dsp->opus_encoder, opus_encoder_destroy);
 
   aacEncClose (&rdp_dsp->aac_encoder);
 
