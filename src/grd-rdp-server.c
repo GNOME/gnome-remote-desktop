@@ -144,9 +144,11 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
                       GError       **error)
 {
   GrdSettings *settings = grd_context_get_settings (rdp_server->context);
+  uint16_t rdp_port;
 
+  g_object_get (G_OBJECT (settings), "rdp-port", &rdp_port, NULL);
   if (!g_socket_listener_add_inet_port (G_SOCKET_LISTENER (rdp_server),
-                                        grd_settings_get_rdp_port (settings),
+                                        rdp_port,
                                         NULL,
                                         error))
     return FALSE;

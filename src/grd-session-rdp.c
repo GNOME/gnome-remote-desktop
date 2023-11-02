@@ -690,8 +690,11 @@ is_view_only (GrdSessionRdp *session_rdp)
 {
   GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
   GrdSettings *settings = grd_context_get_settings (context);
+  gboolean view_only;
 
-  return grd_settings_get_rdp_view_only (settings);
+  g_object_get (G_OBJECT (settings), "rdp-view-only", &view_only, NULL);
+
+  return view_only;
 }
 
 static gboolean
@@ -1993,6 +1996,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdpInput *rdp_input;
   RdpPeerContext *rdp_peer_context;
   rdpSettings *rdp_settings;
+  char *server_cert;
+  char *server_key;
 
   g_debug ("Initialize RDP session");
 
@@ -2036,10 +2041,13 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
       return FALSE;
     }
 
-  rdp_settings->CertificateFile =
-    g_strdup (grd_settings_get_rdp_server_cert (settings));
-  rdp_settings->PrivateKeyFile =
-    g_strdup (grd_settings_get_rdp_server_key (settings));
+  g_object_get (G_OBJECT (settings),
+                "rdp-server-cert", &server_cert,
+                "rdp-server-key", &server_key,
+                NULL);
+
+  rdp_settings->CertificateFile = server_cert;
+  rdp_settings->PrivateKeyFile = server_key;
   rdp_settings->RdpSecurity = FALSE;
   rdp_settings->TlsSecurity = FALSE;
   rdp_settings->NlaSecurity = TRUE;
@@ -2263,7 +2271,10 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   session_rdp->connection = g_object_ref (connection);
   session_rdp->hwaccel_nvidia = hwaccel_nvidia;
 
-  session_rdp->screen_share_mode = grd_settings_get_rdp_screen_share_mode (settings);
+  g_object_get (G_OBJECT (settings),
+                "rdp-screen-share-mode", &session_rdp->screen_share_mode,
+                NULL);
+
   session_rdp->layout_manager =
     grd_rdp_layout_manager_new (session_rdp,
                                 hwaccel_nvidia,

@@ -298,7 +298,9 @@ handle_new_client (rfbClientPtr rfb_client)
 
   g_debug ("New VNC client");
 
-  session_vnc->auth_method = grd_settings_get_vnc_auth_method (settings);
+  g_object_get (G_OBJECT (settings),
+                "vnc-auth-method", &session_vnc->auth_method,
+                NULL);
 
   session_vnc->rfb_client = rfb_client;
   rfb_client->clientGoneHook = handle_client_gone;
@@ -334,8 +336,11 @@ is_view_only (GrdSessionVnc *session_vnc)
 {
   GrdContext *context = grd_session_get_context (GRD_SESSION (session_vnc));
   GrdSettings *settings = grd_context_get_settings (context);
+  gboolean view_only;
 
-  return grd_settings_get_vnc_view_only (settings);
+  g_object_get (G_OBJECT (settings), "vnc-view-only", &view_only, NULL);
+
+  return view_only;
 }
 
 static void
@@ -759,7 +764,9 @@ grd_session_vnc_new (GrdVncServer      *vnc_server,
   session_vnc->connection = g_object_ref (connection);
 
   settings = grd_context_get_settings (context);
-  session_vnc->screen_share_mode = grd_settings_get_vnc_screen_share_mode (settings);
+  g_object_get (G_OBJECT (settings),
+                "vnc-screen-share-mode", &session_vnc->screen_share_mode,
+                NULL);
 
   grd_session_vnc_attach_source (session_vnc);
 

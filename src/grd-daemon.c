@@ -107,12 +107,18 @@ start_rdp_server (GrdDaemon *daemon)
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdSettings *settings = grd_context_get_settings (priv->context);
   g_autoptr (GError) error = NULL;
+  g_autofree char *certificate = NULL;
+  g_autofree char *key = NULL;
 
   if (priv->rdp_server)
     return;
 
-  if (!g_access (grd_settings_get_rdp_server_cert (settings), F_OK) &&
-      !g_access (grd_settings_get_rdp_server_key (settings), F_OK))
+  g_object_get (G_OBJECT (settings),
+                "rdp-server-cert", &certificate,
+                "rdp-server-key", &key,
+                NULL);
+
+  if (!g_access (certificate, F_OK) && !g_access (key, F_OK))
     {
       priv->rdp_server = grd_rdp_server_new (priv->context);
       if (!grd_rdp_server_start (priv->rdp_server, &error))
@@ -174,19 +180,26 @@ grd_daemon_maybe_enable_services (GrdDaemon *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdSettings *settings = grd_context_get_settings (priv->context);
+  gboolean rdp_enabled;
+  gboolean vnc_enabled;
 
   if (!GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
     return;
 
   grd_context_notify_daemon_ready (priv->context);
 
+  g_object_get (G_OBJECT (settings),
+                "rdp-enabled", &rdp_enabled,
+                "vnc-enabled", &vnc_enabled,
+                NULL);
+
 #ifdef HAVE_RDP
-  if (grd_settings_is_rdp_enabled (settings))
+  if (rdp_enabled)
     start_rdp_server (daemon);
 #endif
 
 #ifdef HAVE_VNC
-  if (grd_settings_is_vnc_enabled (settings))
+  if (vnc_enabled)
     start_vnc_server (daemon);
 #endif
 }
@@ -341,11 +354,13 @@ on_rdp_enabled_changed (GrdSettings *settings,
                         GrdDaemon   *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  gboolean rdp_enabled;
 
   if (!GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
     return;
 
-  if (grd_settings_is_rdp_enabled (settings))
+  g_object_get (G_OBJECT (settings), "rdp-enabled", &rdp_enabled, NULL);
+  if (rdp_enabled)
     {
       g_return_if_fail (!priv->rdp_server);
       start_rdp_server (daemon);
@@ -363,11 +378,13 @@ on_vnc_enabled_changed (GrdSettings *settings,
                         GrdDaemon   *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  gboolean vnc_enabled;
 
   if (!GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
     return;
 
-  if (grd_settings_is_vnc_enabled (settings))
+  g_object_get (G_OBJECT (settings), "vnc-enabled", &vnc_enabled, NULL);
+  if (vnc_enabled)
     {
       g_return_if_fail (!priv->vnc_server);
       start_vnc_server (daemon);
@@ -395,12 +412,12 @@ grd_daemon_startup (GApplication *app)
   GrdSettings *settings = grd_context_get_settings (priv->context);
 
 #ifdef HAVE_RDP
-  g_signal_connect (settings, "rdp-enabled-changed",
+  g_signal_connect (settings, "notify::rdp-enabled",
                     G_CALLBACK (on_rdp_enabled_changed),
                     daemon);
 #endif
 #ifdef HAVE_VNC
-  g_signal_connect (settings, "vnc-enabled-changed",
+  g_signal_connect (settings, "notify::vnc-enabled",
                     G_CALLBACK (on_vnc_enabled_changed),
                     daemon);
 #endif

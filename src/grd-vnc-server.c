@@ -134,9 +134,11 @@ grd_vnc_server_start (GrdVncServer  *vnc_server,
                       GError       **error)
 {
   GrdSettings *settings = grd_context_get_settings (vnc_server->context);
+  uint16_t vnc_port;
 
+  g_object_get (G_OBJECT (settings), "vnc-port", &vnc_port, NULL);
   if (!g_socket_listener_add_inet_port (G_SOCKET_LISTENER (vnc_server),
-                                        grd_settings_get_vnc_port (settings),
+                                        vnc_port,
                                         NULL,
                                         error))
     return FALSE;
