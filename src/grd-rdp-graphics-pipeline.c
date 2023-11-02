@@ -165,6 +165,7 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
                                           GrdRdpGfxSurface       *gfx_surface)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
+  rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
   RDPGFX_CREATE_SURFACE_PDU create_surface = {0};
   GrdRdpSurface *rdp_surface = grd_rdp_gfx_surface_get_rdp_surface (gfx_surface);
   uint16_t surface_id = grd_rdp_gfx_surface_get_surface_id (gfx_surface);
@@ -191,9 +192,9 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
                        GUINT_TO_POINTER (surface_serial), surface_context);
 
   if (!grd_rdp_gfx_surface_disallows_hwaccel_sessions (gfx_surface) &&
-      (rdpgfx_context->rdpcontext->settings->GfxAVC444v2 ||
-       rdpgfx_context->rdpcontext->settings->GfxAVC444 ||
-       rdpgfx_context->rdpcontext->settings->GfxH264) &&
+      (freerdp_settings_get_bool (rdp_settings, FreeRDP_GfxAVC444v2) ||
+       freerdp_settings_get_bool (rdp_settings, FreeRDP_GfxAVC444) ||
+       freerdp_settings_get_bool (rdp_settings, FreeRDP_GfxH264)) &&
       graphics_pipeline->hwaccel_nvidia &&
       grd_hwaccel_nvidia_create_nvenc_session (graphics_pipeline->hwaccel_nvidia,
                                                &encode_session_id,
@@ -1092,7 +1093,8 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
   gboolean success;
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
-  if (rdp_settings->NetworkAutoDetect && !graphics_pipeline->rtt_pause_source)
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect) &&
+      !graphics_pipeline->rtt_pause_source)
     ensure_rtt_receivement (graphics_pipeline);
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
@@ -1119,7 +1121,7 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
     }
 
   surface_id = grd_rdp_gfx_surface_get_surface_id (rdp_surface->gfx_surface);
-  if (rdp_settings->GfxH264 &&
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_GfxH264) &&
       g_hash_table_lookup_extended (graphics_pipeline->surface_hwaccel_table,
                                     GUINT_TO_POINTER (surface_id),
                                     NULL, (gpointer *) &hwaccel_context))
@@ -1140,7 +1142,8 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
       clear_old_enc_times (graphics_pipeline, g_get_monotonic_time ());
       track_enc_time (graphics_pipeline, enc_time_us);
 
-      if (rdp_settings->NetworkAutoDetect && !graphics_pipeline->rtt_pause_source)
+      if (freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect) &&
+          !graphics_pipeline->rtt_pause_source)
         ensure_rtt_receivement (graphics_pipeline);
       g_mutex_unlock (&graphics_pipeline->gfx_mutex);
     }
@@ -1648,6 +1651,8 @@ test_caps_version (GrdRdpGraphicsPipeline *graphics_pipeline,
       if (cap_sets[i].version == caps_version)
         {
           uint32_t flags = cap_sets[i].flags;
+          gboolean have_avc444 = FALSE;
+          gboolean have_avc420 = FALSE;
 
           switch (caps_version)
             {
@@ -1659,26 +1664,27 @@ test_caps_version (GrdRdpGraphicsPipeline *graphics_pipeline,
             case RDPGFX_CAPVERSION_102:
             case RDPGFX_CAPVERSION_101:
             case RDPGFX_CAPVERSION_10:
-              rdp_settings->GfxAVC444v2 = rdp_settings->GfxAVC444 =
-                rdp_settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+              have_avc444 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+              have_avc420 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
               break;
             case RDPGFX_CAPVERSION_81:
-              rdp_settings->GfxAVC444v2 = rdp_settings->GfxAVC444 = FALSE;
-              rdp_settings->GfxH264 = !!(flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
+              have_avc420 = !!(flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
               break;
             case RDPGFX_CAPVERSION_8:
-              rdp_settings->GfxAVC444v2 = rdp_settings->GfxAVC444 = FALSE;
-              rdp_settings->GfxH264 = FALSE;
               break;
             default:
               g_assert_not_reached ();
             }
 
+          freerdp_settings_set_bool (rdp_settings, FreeRDP_GfxAVC444v2, have_avc444);
+          freerdp_settings_set_bool (rdp_settings, FreeRDP_GfxAVC444, have_avc444);
+          freerdp_settings_set_bool (rdp_settings, FreeRDP_GfxH264, have_avc420);
+
           g_message ("[RDP.RDPGFX] CapsAdvertise: Accepting capability set with version "
                      "%s, Client cap flags: H264 (AVC444): %s, H264 (AVC420): %s",
                      rdpgfx_caps_version_to_string (caps_version),
-                     rdp_settings->GfxAVC444v2 ? "true" : "false",
-                     rdp_settings->GfxH264 ? "true" : "false");
+                     have_avc444 ? "true" : "false",
+                     have_avc420 ? "true" : "false");
           if (!graphics_pipeline->initialized)
             graphics_pipeline->initial_version = caps_version;
           graphics_pipeline->initialized = TRUE;
@@ -1774,6 +1780,7 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
                                wStream                    *encode_stream,
                                RFX_CONTEXT                *rfx_context)
 {
+  rdpSettings *rdp_settings = rdp_context->settings;
   GrdRdpGraphicsPipeline *graphics_pipeline;
   RdpgfxServerContext *rdpgfx_context;
   GSource *protocol_reset_source;
@@ -1808,7 +1815,7 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
   graphics_pipeline->protocol_reset_source = protocol_reset_source;
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
-  if (rdp_context->settings->NetworkAutoDetect &&
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect) &&
       !graphics_pipeline->rtt_pause_source)
     ensure_rtt_receivement (graphics_pipeline);
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
