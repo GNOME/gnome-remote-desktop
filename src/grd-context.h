@@ -30,12 +30,6 @@
 #include "grd-settings.h"
 #include "grd-types.h"
 
-typedef enum _GrdRuntimeMode
-{
-  GRD_RUNTIME_MODE_SCREEN_SHARE,
-  GRD_RUNTIME_MODE_HEADLESS,
-} GrdRuntimeMode;
-
 #define GRD_TYPE_CONTEXT (grd_context_get_type ())
 G_DECLARE_FINAL_TYPE (GrdContext, grd_context, GRD, CONTEXT, GObject)
 
@@ -53,8 +47,6 @@ void grd_context_set_mutter_screen_cast_proxy (GrdContext              *context,
                                                GrdDBusMutterScreenCast *proxy);
 
 GrdSettings * grd_context_get_settings (GrdContext *context);
-
-GrdCredentials * grd_context_get_credentials (GrdContext *context);
 
 GrdEglThread * grd_context_get_egl_thread (GrdContext *context);
 

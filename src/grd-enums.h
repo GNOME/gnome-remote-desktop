@@ -39,4 +39,10 @@ typedef enum
   GRD_VNC_SCREEN_SHARE_MODE_EXTEND,
 } GrdVncScreenShareMode;
 
+typedef enum
+{
+  GRD_RUNTIME_MODE_SCREEN_SHARE,
+  GRD_RUNTIME_MODE_HEADLESS,
+} GrdRuntimeMode;
+
 #endif /* GRD_ENUMS_H */

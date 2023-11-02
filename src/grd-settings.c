@@ -23,7 +23,10 @@
 #include "grd-settings.h"
 
 #include "grd-context.h"
-#include "grd-credentials.h"
+#include "grd-credentials-file.h"
+#include "grd-credentials-libsecret.h"
+#include "grd-credentials-tpm.h"
+#include "grd-enum-types.h"
 
 #define GRD_DEFAULT_RDP_SERVER_PORT 3389
 #define GRD_DEFAULT_VNC_SERVER_PORT 5900
@@ -32,14 +35,15 @@ enum
 {
   PROP_0,
 
-  PROP_CONTEXT,
+  PROP_RUNTIME_MODE,
   PROP_RDP_PORT,
   PROP_VNC_PORT,
 };
 
 typedef struct _GrdSettingsPrivate
 {
-  GrdContext *context;
+  GrdRuntimeMode runtime_mode;
+  GrdCredentials *credentials;
 
   struct {
     int port;
@@ -92,7 +96,6 @@ grd_settings_get_rdp_credentials (GrdSettings  *settings,
                                   GError      **error)
 {
   GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
-  GrdContext *context = priv->context;
   const char *test_username_override;
   const char *test_password_override;
   g_autofree char *credentials_string = NULL;
@@ -110,7 +113,7 @@ grd_settings_get_rdp_credentials (GrdSettings  *settings,
       return TRUE;
     }
 
-  credentials = grd_credentials_lookup (grd_context_get_credentials (context),
+  credentials = grd_credentials_lookup (priv->credentials,
                                         GRD_CREDENTIALS_TYPE_RDP,
                                         error);
   if (!credentials)
@@ -156,7 +159,6 @@ grd_settings_get_vnc_password (GrdSettings  *settings,
                                GError      **error)
 {
   GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
-  GrdContext *context = priv->context;
   const char *test_password_override;
   g_autoptr (GVariant) password = NULL;
 
@@ -164,7 +166,7 @@ grd_settings_get_vnc_password (GrdSettings  *settings,
   if (test_password_override)
     return g_strdup (test_password_override);
 
-  password = grd_credentials_lookup (grd_context_get_credentials (context),
+  password = grd_credentials_lookup (priv->credentials,
                                      GRD_CREDENTIALS_TYPE_VNC,
                                      error);
   if (!password)
@@ -230,9 +232,61 @@ grd_settings_get_vnc_auth_method (GrdSettings *settings)
     return GRD_SETTINGS_GET_CLASS (settings)->get_vnc_auth_method (settings);
 }
 
+static GrdCredentials *
+create_headless_credentials (void)
+{
+  g_autoptr (GrdCredentials) credentials = NULL;
+  g_autoptr (GError) error = NULL;
+
+  credentials = GRD_CREDENTIALS (grd_credentials_tpm_new (&error));
+  if (credentials)
+    return g_steal_pointer (&credentials);
+
+  g_warning ("Init TPM credentials failed because %s, using GKeyFile as fallback",
+             error->message);
+
+  g_clear_error (&error);
+  credentials = GRD_CREDENTIALS (grd_credentials_file_new (&error));
+  if (credentials)
+    return g_steal_pointer (&credentials);
+
+  g_warning ("Init file credentials failed: %s", error->message);
+
+  return NULL;
+}
+
+static GrdCredentials *
+create_credentials (GrdRuntimeMode runtime_mode)
+{
+  switch (runtime_mode)
+    {
+    case GRD_RUNTIME_MODE_HEADLESS:
+       return create_headless_credentials ();
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      return GRD_CREDENTIALS (grd_credentials_libsecret_new ());
+    }
+
+  g_assert_not_reached ();
+}
+
+static void
+grd_settings_constructed (GObject *object)
+{
+  GrdSettings *settings = GRD_SETTINGS (object);
+  GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
+
+  priv->credentials = create_credentials (priv->runtime_mode);
+  g_assert (priv->credentials);
+}
+
 static void
 grd_settings_finalize (GObject *object)
 {
+  GrdSettings *settings = GRD_SETTINGS (object);
+  GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
+
+  g_clear_object (&priv->credentials);
+
   G_OBJECT_CLASS (grd_settings_parent_class)->finalize (object);
 }
 
@@ -247,8 +301,8 @@ grd_settings_get_property (GObject    *object,
 
   switch (prop_id)
     {
-    case PROP_CONTEXT:
-      g_value_set_object (value, priv->context);
+    case PROP_RUNTIME_MODE:
+      g_value_set_enum (value, priv->runtime_mode);
       break;
     case PROP_RDP_PORT:
       g_value_set_int (value, priv->rdp.port);
@@ -272,8 +326,8 @@ grd_settings_set_property (GObject      *object,
 
   switch (prop_id)
     {
-    case PROP_CONTEXT:
-      priv->context = g_value_get_object (value);
+    case PROP_RUNTIME_MODE:
+      priv->runtime_mode = g_value_get_enum (value);
       break;
     case PROP_RDP_PORT:
       priv->rdp.port = g_value_get_int (value);
@@ -296,19 +350,21 @@ grd_settings_class_init (GrdSettingsClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+  object_class->constructed = grd_settings_constructed;
   object_class->finalize = grd_settings_finalize;
   object_class->get_property = grd_settings_get_property;
   object_class->set_property = grd_settings_set_property;
 
   g_object_class_install_property (object_class,
-                                   PROP_CONTEXT,
-                                   g_param_spec_object ("context",
-                                                        "GrdContext",
-                                                        "The GrdContext instance",
-                                                        GRD_TYPE_CONTEXT,
-                                                        G_PARAM_READWRITE |
-                                                        G_PARAM_CONSTRUCT_ONLY |
-                                                        G_PARAM_STATIC_STRINGS));
+                                   PROP_RUNTIME_MODE,
+                                   g_param_spec_enum ("runtime-mode",
+                                                      "runtime mode",
+                                                      "runtime mode",
+                                                      GRD_TYPE_RUNTIME_MODE,
+                                                      GRD_RUNTIME_MODE_SCREEN_SHARE,
+                                                      G_PARAM_READWRITE |
+                                                      G_PARAM_CONSTRUCT |
+                                                      G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_RDP_PORT,
                                    g_param_spec_int ("rdp-port",

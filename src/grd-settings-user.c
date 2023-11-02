@@ -193,10 +193,10 @@ grd_settings_user_get_vnc_auth_method (GrdSettings *settings)
 }
 
 GrdSettingsUser *
-grd_settings_user_new (GrdContext *context)
+grd_settings_user_new (GrdRuntimeMode runtime_mode)
 {
   return g_object_new (GRD_TYPE_SETTINGS_USER,
-                       "context", context,
+                       "runtime-mode", runtime_mode,
                        "rdp-port", GRD_USER_RDP_SERVER_PORT,
                        "vnc-port", GRD_USER_VNC_SERVER_PORT,
                        NULL);

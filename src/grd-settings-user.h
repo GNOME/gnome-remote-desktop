@@ -27,6 +27,6 @@
 G_DECLARE_FINAL_TYPE (GrdSettingsUser, grd_settings_user,
                       GRD, SETTINGS_USER, GrdSettings)
 
-GrdSettingsUser *grd_settings_user_new (GrdContext *context);
+GrdSettingsUser *grd_settings_user_new (GrdRuntimeMode runtime_mode);
 
 #endif /* GRD_SETTINGS_USER_H */

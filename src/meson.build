@@ -182,7 +182,15 @@ gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-mutter-remote-desktop',
                                           interface_prefix: 'org.gnome.Mutter.',
                                           namespace: 'GrdDBusMutter')
 
+gen_enum_types = gnome.mkenums('grd-enum-types',
+  h_template: 'grd-enum-types.h.in',
+  c_template: 'grd-enum-types.c.in',
+  sources: 'grd-enums.h',
+)
+
 daemon_sources += gen_daemon_sources
+
+daemon_sources += gen_enum_types
 
 control_sources = ([
   'grd-control.c'

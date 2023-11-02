@@ -24,9 +24,6 @@
 
 #include "grd-context.h"
 
-#include "grd-credentials-file.h"
-#include "grd-credentials-libsecret.h"
-#include "grd-credentials-tpm.h"
 #include "grd-egl-thread.h"
 #include "grd-settings-user.h"
 
@@ -42,7 +39,6 @@ struct _GrdContext
 
   GrdEglThread *egl_thread;
 
-  GrdCredentials *credentials;
   GrdSettings *settings;
 
   GrdRuntimeMode runtime_mode;
@@ -84,12 +80,6 @@ grd_context_get_settings (GrdContext *context)
   return context->settings;
 }
 
-GrdCredentials *
-grd_context_get_credentials (GrdContext *context)
-{
-  return context->credentials;
-}
-
 GrdEglThread *
 grd_context_get_egl_thread (GrdContext *context)
 {
@@ -120,32 +110,20 @@ grd_context_new (GrdRuntimeMode   runtime_mode,
                  GError         **error)
 {
   g_autoptr (GrdContext) context = NULL;
-  g_autoptr (GError) local_error = NULL;
 
   context = g_object_new (GRD_TYPE_CONTEXT, NULL);
   context->runtime_mode = runtime_mode;
 
   switch (runtime_mode)
     {
-    case GRD_RUNTIME_MODE_HEADLESS:
-      context->credentials = GRD_CREDENTIALS (grd_credentials_tpm_new (&local_error));
-      if (!context->credentials)
-        {
-          g_warning ("Init TPM credentials failed because %s, using GKeyFile as fallback",
-                     local_error->message);
-          context->credentials =
-            GRD_CREDENTIALS (grd_credentials_file_new (error));
-        }
-      break;
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
-      context->credentials = GRD_CREDENTIALS (grd_credentials_libsecret_new ());
+    case GRD_RUNTIME_MODE_HEADLESS:
+      context->settings = GRD_SETTINGS (grd_settings_user_new (runtime_mode));
       break;
     }
 
-  if (!context->credentials)
+  if (!context->settings)
     return NULL;
-
-  context->settings = GRD_SETTINGS (grd_settings_user_new (context));
 
   return g_steal_pointer (&context);
 }
@@ -159,7 +137,6 @@ grd_context_finalize (GObject *object)
   g_clear_object (&context->mutter_screen_cast_proxy);
   g_clear_pointer (&context->egl_thread, grd_egl_thread_free);
   g_clear_object (&context->settings);
-  g_clear_object (&context->credentials);
 
   G_OBJECT_CLASS (grd_context_parent_class)->finalize (object);
 }
