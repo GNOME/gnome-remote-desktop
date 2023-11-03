@@ -787,9 +787,6 @@ register_handover_for_display (GrdDaemonSystem         *daemon_system,
   const char *session_id;
   const char *remote_id;
 
-  if (!GRD_DBUS_GDM_IS_REMOTE_DISPLAY (remote_display))
-    return;
-
   remote_id = grd_dbus_gdm_remote_display_get_remote_id (remote_display);
   if (!g_hash_table_lookup_extended (daemon_system->remote_clients,
                                      remote_id, NULL,
@@ -869,23 +866,53 @@ unregister_handover_for_display (GrdDaemonSystem         *daemon_system,
 }
 
 static void
-on_gdm_display_iface_added (GrdDaemonSystem    *daemon_system,
-                            GDBusObject        *object,
-                            GDBusInterface     *interface,
-                            GDBusObjectManager *object_manager)
+sync_handover_with_gdm_display_object (GrdDaemonSystem  *daemon_system,
+                                       GrdDBusGdmObject *object)
 {
-  register_handover_for_display (daemon_system,
-                                 GRD_DBUS_GDM_REMOTE_DISPLAY (interface));
+  GrdDBusGdmRemoteDisplay *remote_display = NULL;
+
+  remote_display = grd_dbus_gdm_object_peek_remote_display (GRD_DBUS_GDM_OBJECT (object));
+
+  if (remote_display != NULL)
+    register_handover_for_display (daemon_system, remote_display);
+  else
+    unregister_handover_for_display (daemon_system, remote_display);
 }
 
 static void
-on_gdm_display_iface_removed (GrdDaemonSystem    *daemon_system,
-                              GDBusObject        *object,
-                              GDBusInterface     *interface,
-                              GDBusObjectManager *object_manager)
+on_gdm_object_remote_display_interface_changed (GrdDaemonSystem  *daemon_system,
+                                                GParamSpec       *param_spec,
+                                                GrdDBusGdmObject *object)
 {
-  unregister_handover_for_display (daemon_system,
-                                   GRD_DBUS_GDM_REMOTE_DISPLAY (interface));
+  sync_handover_with_gdm_display_object (daemon_system, object);
+}
+
+static void
+on_gdm_object_added (GrdDaemonSystem  *daemon_system,
+                     GrdDBusGdmObject *object)
+{
+  sync_handover_with_gdm_display_object (daemon_system, GRD_DBUS_GDM_OBJECT (object));
+  g_signal_connect_object (G_OBJECT (object),
+                           "notify::remote-display",
+                           G_CALLBACK (on_gdm_object_remote_display_interface_changed),
+                           daemon_system,
+                           G_CONNECT_SWAPPED);
+}
+
+static void
+on_gdm_object_removed (GrdDaemonSystem  *daemon_system,
+                       GrdDBusGdmObject *object)
+{
+  GrdDBusGdmRemoteDisplay *remote_display = NULL;
+
+  remote_display = grd_dbus_gdm_object_peek_remote_display (GRD_DBUS_GDM_OBJECT (object));
+
+  if (remote_display != NULL)
+    unregister_handover_for_display (daemon_system, remote_display);
+
+  g_signal_handlers_disconnect_by_func (G_OBJECT (object),
+                                        G_CALLBACK (on_gdm_object_remote_display_interface_changed),
+                                        daemon_system);
 }
 
 static void
@@ -922,15 +949,17 @@ on_gdm_object_manager_client_acquired (GObject      *source_object,
       return;
     }
 
-  g_signal_connect_swapped (daemon_system->display_objects,
-                            "interface-added",
-                            G_CALLBACK (on_gdm_display_iface_added),
-                            daemon_system);
+  g_signal_connect_object (daemon_system->display_objects,
+                           "object-added",
+                           G_CALLBACK (on_gdm_object_added),
+                           daemon_system,
+                           G_CONNECT_SWAPPED);
 
-  g_signal_connect_swapped (daemon_system->display_objects,
-                            "interface-removed",
-                            G_CALLBACK (on_gdm_display_iface_removed),
-                            daemon_system);
+  g_signal_connect_object (daemon_system->display_objects,
+                           "object-removed",
+                           G_CALLBACK (on_gdm_object_removed),
+                           daemon_system,
+                           G_CONNECT_SWAPPED);
 
   g_signal_connect (G_OBJECT (daemon_system->display_objects),
                     "notify::name-owner",
