@@ -200,7 +200,12 @@ ctl_sources = ([
   'grd-ctl.c',
   'grd-debug.c',
   'grd-debug.h',
+  'grd-settings.c',
+  'grd-settings.h',
+  'grd-settings-user.c',
+  'grd-settings-user.h',
   credentials_sources,
+  gen_enum_types,
 ])
 
 executable('gnome-remote-desktop-daemon',
