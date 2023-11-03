@@ -93,13 +93,9 @@ grd_daemon_system_is_ready (GrdDaemon *daemon)
       !daemon_system->dispatcher_skeleton)
     return FALSE;
 
-  g_object_get (G_OBJECT (daemon_system->remote_display_factory_proxy),
-                "g-name-owner", &gdm_remote_display_factory_name_owner,
-                NULL);
+  gdm_remote_display_factory_name_owner = g_dbus_proxy_get_name_owner (G_DBUS_PROXY (daemon_system->remote_display_factory_proxy));
 
-  g_object_get (G_OBJECT (daemon_system->display_objects),
-                "name-owner", &gdm_display_objects_name_owner,
-                NULL);
+  gdm_display_objects_name_owner = g_dbus_object_manager_client_get_name_owner (G_DBUS_OBJECT_MANAGER_CLIENT (daemon_system->display_objects));
 
   manager_connection = g_dbus_object_manager_server_get_connection (
                          daemon_system->handover_manager_server);
