@@ -38,7 +38,7 @@
 enum
 {
   PROP_0,
-
+  PROP_TCP_PORT,
   PROP_CONTEXT,
 };
 
@@ -66,6 +66,8 @@ struct _GrdRdpServer
 
   GrdContext *context;
   GrdHwAccelNvidia *hwaccel_nvidia;
+
+  int tcp_port;
 };
 
 G_DEFINE_TYPE (GrdRdpServer, grd_rdp_server, G_TYPE_SOCKET_SERVICE)
@@ -99,6 +101,17 @@ grd_rdp_server_new (GrdContext *context)
     }
 
   return rdp_server;
+}
+
+static void
+grd_rdp_server_set_tcp_port (GrdRdpServer *rdp_server,
+                             guint16       tcp_port)
+{
+  if (rdp_server->tcp_port == tcp_port)
+    return;
+
+  rdp_server->tcp_port = tcp_port;
+  g_object_notify (G_OBJECT (rdp_server), "tcp-port");
 }
 
 static void
@@ -246,10 +259,13 @@ bind_to_socket (GrdRdpServer  *rdp_server,
   port = grd_settings_get_rdp_port (settings);
 
   if (port != 0)
-    return g_socket_listener_add_inet_port (G_SOCKET_LISTENER (rdp_server),
+    {
+      is_bound = g_socket_listener_add_inet_port (G_SOCKET_LISTENER (rdp_server),
                                             port,
                                             NULL,
                                             error);
+      goto out;
+    }
 
   for (port = GRD_DEFAULT_RDP_SERVER_PORT;
        port <= (GRD_DEFAULT_RDP_SERVER_PORT + GRD_RDP_SERVER_PORT_RANGE);
@@ -275,8 +291,12 @@ bind_to_socket (GrdRdpServer  *rdp_server,
 
   is_bound = port != 0;
 
+out:
   if (is_bound)
-    g_debug ("[RDP] Bind to port %hu: %s", port);
+    {
+      g_debug ("[RDP] Bind to port %hu", port);
+      grd_rdp_server_set_tcp_port (rdp_server, port);
+    }
 
   return is_bound;
 }
@@ -318,6 +338,8 @@ grd_rdp_server_stop (GrdRdpServer *rdp_server)
 {
   g_socket_service_stop (G_SOCKET_SERVICE (rdp_server));
   g_socket_listener_close (G_SOCKET_LISTENER (rdp_server));
+
+  grd_rdp_server_set_tcp_port (rdp_server, -1);
 
   while (rdp_server->sessions)
     {
@@ -369,6 +391,11 @@ grd_rdp_server_get_property (GObject    *object,
     {
     case PROP_CONTEXT:
       g_value_set_object (value, rdp_server->context);
+      break;
+
+    case PROP_TCP_PORT:
+      g_value_set_int (value, rdp_server->tcp_port);
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -405,6 +432,8 @@ grd_rdp_server_init (GrdRdpServer *rdp_server)
    * Run the primitives benchmark here to save time, when initializing a session
    */
   primitives_get ();
+
+  rdp_server->tcp_port = -1;
 }
 
 static void
@@ -425,7 +454,18 @@ grd_rdp_server_class_init (GrdRdpServerClass *klass)
                                                         GRD_TYPE_CONTEXT,
                                                         G_PARAM_READWRITE |
                                                         G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_EXPLICIT_NOTIFY |
                                                         G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_TCP_PORT,
+                                   g_param_spec_int ("tcp-port",
+                                                     "TCP Port",
+                                                     "The TCP port the RDP server is bound to",
+                                                     -1,
+                                                     G_MAXUINT16,
+                                                     -1,
+                                                     G_PARAM_READABLE |
+                                                     G_PARAM_STATIC_STRINGS));
   signals[INCOMING_NEW_CONNECTION] = g_signal_new ("incoming-new-connection",
                                                    G_TYPE_FROM_CLASS (klass),
                                                    G_SIGNAL_RUN_LAST,
