@@ -23,7 +23,7 @@
 #ifndef GRD_PRIVATE_H
 #define GRD_PRIVATE_H
 
-#define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop.User"
+#define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop"
 #define GRD_DAEMON_SYSTEM_APPLICATION_ID "org.gnome.RemoteDesktop.System"
 #define GRD_DAEMON_HANDOVER_APPLICATION_ID "org.gnome.RemoteDesktop.Handover"
 #define REMOTE_DESKTOP_BUS_NAME "org.gnome.RemoteDesktop"
