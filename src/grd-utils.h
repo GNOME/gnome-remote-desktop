@@ -72,4 +72,9 @@ char * grd_get_session_id_from_pid (pid_t pid);
 char * grd_get_session_id_from_uid (uid_t uid);
 
 void grd_session_manager_call_logout_sync (void);
+
+gboolean grd_binding_set_target_if_source_greater_than_zero (GBinding     *binding,
+                                                             const GValue *source_value,
+                                                             GValue       *target_value,
+                                                             gpointer      user_data);
 #endif /* GRD_UTILS_H */

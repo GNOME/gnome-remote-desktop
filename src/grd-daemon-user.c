@@ -23,12 +23,15 @@
 #include "config.h"
 
 #include "grd-daemon-user.h"
+#include "grd-dbus-remote-desktop.h"
+#include "grd-utils.h"
 
 #include "grd-private.h"
 
 struct _GrdDaemonUser
 {
   GrdDaemon parent;
+  GrdDBusRemoteDesktopServerRdp *rdp_server_skeleton;
 };
 
 G_DEFINE_TYPE (GrdDaemonUser, grd_daemon_user, GRD_TYPE_DAEMON)
@@ -59,14 +62,46 @@ grd_daemon_user_init (GrdDaemonUser *daemon_user)
 }
 
 static void
+on_rdp_server_started (GrdDaemonUser *daemon_user)
+{
+  GrdRdpServer *rdp_server =
+    grd_daemon_get_rdp_server (GRD_DAEMON (daemon_user));
+
+  g_object_bind_property (rdp_server, "tcp-port",
+                          daemon_user->rdp_server_skeleton, "tcp-port",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property_full (rdp_server, "tcp-port",
+                               daemon_user->rdp_server_skeleton, "enabled",
+                               G_BINDING_SYNC_CREATE,
+                               grd_binding_set_target_if_source_greater_than_zero,
+                               NULL, NULL, NULL);
+}
+
+static void
 grd_daemon_user_startup (GApplication *app)
 {
   GrdDaemon *daemon = GRD_DAEMON (app);
+  GrdDaemonUser *daemon_user = GRD_DAEMON_USER (app);
+  GDBusConnection *connection;
+
+  daemon_user->rdp_server_skeleton =
+    grd_dbus_remote_desktop_server_rdp_skeleton_new ();
+
+  connection = g_application_get_dbus_connection (app);
+
+  g_dbus_interface_skeleton_export (
+    G_DBUS_INTERFACE_SKELETON (daemon_user->rdp_server_skeleton),
+    connection,
+    REMOTE_DESKTOP_OBJECT_PATH,
+    NULL);
 
   grd_daemon_acquire_mutter_dbus_proxies (daemon);
 
   g_signal_connect (daemon, "mutter-proxy-acquired",
                     G_CALLBACK (grd_daemon_maybe_enable_services), NULL);
+
+  g_signal_connect (daemon, "rdp-server-started",
+                    G_CALLBACK (on_rdp_server_started), NULL);
 
   G_APPLICATION_CLASS (grd_daemon_user_parent_class)->startup (app);
 }

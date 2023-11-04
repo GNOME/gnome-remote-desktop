@@ -71,6 +71,7 @@ struct _GrdDaemonSystem
 
   unsigned int system_grd_name_id;
   GrdDBusRemoteDesktopDispatcher *dispatcher_skeleton;
+  GrdDBusRemoteDesktopServerRdp *rdp_server_skeleton;
   GDBusObjectManagerServer *handover_manager_server;
 
   GHashTable *remote_clients;
@@ -308,7 +309,6 @@ register_handover_iface (GrdRemoteClient *remote_client,
 
   g_dbus_object_manager_server_export (daemon_system->handover_manager_server,
                                        handover->skeleton);
-
   g_dbus_object_skeleton_add_interface (
     handover->skeleton,
     G_DBUS_INTERFACE_SKELETON (handover->interface));
@@ -484,6 +484,15 @@ on_rdp_server_started (GrdDaemonSystem *daemon_system)
 {
   GrdRdpServer *rdp_server =
     grd_daemon_get_rdp_server (GRD_DAEMON (daemon_system));
+
+  g_object_bind_property (rdp_server, "tcp-port",
+                          daemon_system->rdp_server_skeleton, "tcp-port",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property_full (rdp_server, "tcp-port",
+                               daemon_system->rdp_server_skeleton, "enabled",
+                               G_BINDING_SYNC_CREATE,
+                               grd_binding_set_target_if_source_greater_than_zero,
+                               NULL, NULL, NULL);
 
   g_signal_connect (rdp_server, "incoming-new-connection",
                     G_CALLBACK (on_incoming_new_connection),
@@ -684,6 +693,12 @@ on_system_grd_bus_acquired (GDBusConnection *connection,
 
   g_dbus_interface_skeleton_export (
     G_DBUS_INTERFACE_SKELETON (daemon_system->dispatcher_skeleton),
+    connection,
+    REMOTE_DESKTOP_OBJECT_PATH,
+    NULL);
+
+  g_dbus_interface_skeleton_export (
+    G_DBUS_INTERFACE_SKELETON (daemon_system->rdp_server_skeleton),
     connection,
     REMOTE_DESKTOP_OBJECT_PATH,
     NULL);
@@ -1003,6 +1018,9 @@ grd_daemon_system_startup (GApplication *app)
                     G_CALLBACK (on_handle_request_handover),
                     daemon_system);
 
+  daemon_system->rdp_server_skeleton =
+    grd_dbus_remote_desktop_server_rdp_skeleton_new ();
+
   daemon_system->handover_manager_server =
     g_dbus_object_manager_server_new (REMOTE_DESKTOP_HANDOVER_OBJECT_PATH);
 
@@ -1053,6 +1071,10 @@ grd_daemon_system_shutdown (GApplication *app)
 
   g_clear_object (&daemon_system->display_objects);
   g_clear_object (&daemon_system->remote_display_factory_proxy);
+
+  g_dbus_interface_skeleton_unexport (
+    G_DBUS_INTERFACE_SKELETON (daemon_system->rdp_server_skeleton));
+  g_clear_object (&daemon_system->rdp_server_skeleton);
 
   g_dbus_interface_skeleton_unexport (
     G_DBUS_INTERFACE_SKELETON (daemon_system->dispatcher_skeleton));

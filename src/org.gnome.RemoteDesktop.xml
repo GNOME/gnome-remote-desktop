@@ -83,4 +83,24 @@
 
   </interface>
 
+  <!--
+      org.gnome.RemoteDesktop.Server.Rdp:
+      @short_description: RDP server interface
+
+      This API is intended to report status about the RDP server.
+      No compatibility between versions is promised.
+  -->
+  <interface name="org.gnome.RemoteDesktop.Server.Rdp">
+
+    <property name="Enabled" type="b" access="read"/>
+
+    <!--
+        TcpPort:
+
+        The TCP port the RDP server is bound to
+    -->
+    <property name="TcpPort" type="i" access="read"/>
+
+  </interface>
+
 </node>

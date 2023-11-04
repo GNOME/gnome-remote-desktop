@@ -326,3 +326,14 @@ grd_session_manager_call_logout_sync (void)
   if (error)
     g_warning ("Couldn't logout of session: %s", error->message);
 }
+
+gboolean
+grd_binding_set_target_if_source_greater_than_zero (GBinding     *binding,
+                                                    const GValue *source_value,
+                                                    GValue       *target_value,
+                                                    gpointer      user_data)
+{
+  int source_int = g_value_get_int (source_value);
+  g_value_set_boolean (target_value, source_int >= 0);
+  return TRUE;
+}
