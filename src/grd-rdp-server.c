@@ -30,6 +30,7 @@
 #include "grd-context.h"
 #include "grd-hwaccel-nvidia.h"
 #include "grd-session-rdp.h"
+#include "grd-utils.h"
 
 enum
 {
@@ -145,12 +146,17 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
 {
   GrdSettings *settings = grd_context_get_settings (rdp_server->context);
   uint16_t rdp_port;
+  gboolean negotiate_port;
 
-  g_object_get (G_OBJECT (settings), "rdp-port", &rdp_port, NULL);
-  if (!g_socket_listener_add_inet_port (G_SOCKET_LISTENER (rdp_server),
-                                        rdp_port,
-                                        NULL,
-                                        error))
+  g_object_get (G_OBJECT (settings),
+                "rdp-port", &rdp_port,
+                "rdp-negotiate-port", &negotiate_port,
+                NULL);
+
+  if (!grd_bind_socket (G_SOCKET_LISTENER (rdp_server),
+                        rdp_port,
+                        negotiate_port,
+                        error))
     return FALSE;
 
   g_signal_connect (rdp_server, "incoming", G_CALLBACK (on_incoming), NULL);

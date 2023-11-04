@@ -10,7 +10,7 @@
       </description>
     </key>
     <key name='negotiate-port' type='b'>
-      <default>false</default>
+      <default>true</default>
       <summary>Search a different RDP port if the configured one is used</summary>
       <description>
         When negotiatie-port is set to 'true' the RDP server will attempt to
