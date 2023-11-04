@@ -32,6 +32,9 @@
 #include "grd-hwaccel-nvidia.h"
 #include "grd-session-rdp.h"
 
+#define GRD_DEFAULT_RDP_SERVER_PORT 3389
+#define GRD_RDP_SERVER_PORT_RANGE 10
+
 enum
 {
   PROP_0,
@@ -232,20 +235,62 @@ grd_rdp_server_notify_incoming (GSocketService    *service,
   on_incoming (service, connection);
 }
 
+static gboolean
+bind_to_socket (GrdRdpServer  *rdp_server,
+                GError       **error)
+{
+  GrdSettings *settings = grd_context_get_settings (rdp_server->context);
+  guint16 port;
+  gboolean is_bound = FALSE;
+
+  port = grd_settings_get_rdp_port (settings);
+
+  if (port != 0)
+    return g_socket_listener_add_inet_port (G_SOCKET_LISTENER (rdp_server),
+                                            port,
+                                            NULL,
+                                            error);
+
+  for (port = GRD_DEFAULT_RDP_SERVER_PORT;
+       port <= (GRD_DEFAULT_RDP_SERVER_PORT + GRD_RDP_SERVER_PORT_RANGE);
+       port++)
+    {
+      g_autoptr (GError) local_error = NULL;
+
+      is_bound = g_socket_listener_add_inet_port (G_SOCKET_LISTENER (rdp_server),
+                                                  port,
+                                                  NULL,
+                                                  &local_error);
+      if (local_error)
+        g_debug ("[RDP] Could not bind to port %hu: %s", port, local_error->message);
+
+      if (is_bound)
+        break;
+
+      g_assert (port + 1 < G_MAXUINT16);
+    }
+
+  if (!is_bound)
+    port = g_socket_listener_add_any_inet_port (G_SOCKET_LISTENER (rdp_server), NULL, error);
+
+  is_bound = port != 0;
+
+  if (is_bound)
+    g_debug ("[RDP] Bind to port %hu: %s", port);
+
+  return is_bound;
+}
+
 gboolean
 grd_rdp_server_start (GrdRdpServer  *rdp_server,
                       GError       **error)
 {
-  GrdSettings *settings = grd_context_get_settings (rdp_server->context);
   GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (rdp_server->context);
 
   if (runtime_mode == GRD_RUNTIME_MODE_HANDOVER)
     return TRUE;
 
-  if (!g_socket_listener_add_inet_port (G_SOCKET_LISTENER (rdp_server),
-                                        grd_settings_get_rdp_port (settings),
-                                        NULL,
-                                        error))
+  if (!bind_to_socket (rdp_server, error))
     return FALSE;
 
   switch (runtime_mode)

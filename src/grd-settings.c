@@ -25,7 +25,7 @@
 #include "grd-context.h"
 #include "grd-credentials.h"
 
-#define GRD_DEFAULT_RDP_SERVER_PORT 3389
+#define GRD_DEFAULT_RDP_SERVER_PORT 0
 #define GRD_DEFAULT_VNC_SERVER_PORT 5900
 
 enum
