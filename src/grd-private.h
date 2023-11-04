@@ -23,7 +23,7 @@
 #ifndef GRD_PRIVATE_H
 #define GRD_PRIVATE_H
 
-#define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop.User"
+#define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop"
 #define MUTTER_REMOTE_DESKTOP_BUS_NAME "org.gnome.Mutter.RemoteDesktop"
 #define MUTTER_REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/Mutter/RemoteDesktop"
 #define MUTTER_SCREEN_CAST_BUS_NAME "org.gnome.Mutter.ScreenCast"
