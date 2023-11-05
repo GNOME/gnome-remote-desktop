@@ -357,7 +357,7 @@ create_encoders (GrdRdpDsp                  *rdp_dsp,
                  GError                    **error)
 {
   if (!create_aac_encoder (rdp_dsp,
-                           dsp_descriptor->n_samples_per_sec,
+                           dsp_descriptor->n_samples_per_sec_aac,
                            dsp_descriptor->n_channels,
                            dsp_descriptor->bitrate_aac,
                            error))

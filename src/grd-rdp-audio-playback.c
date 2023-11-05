@@ -733,7 +733,7 @@ grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
   pw_init (NULL, NULL);
 
   dsp_descriptor.create_flags = GRD_RDP_DSP_CREATE_FLAG_ENCODER;
-  dsp_descriptor.n_samples_per_sec = N_SAMPLES_PER_SEC;
+  dsp_descriptor.n_samples_per_sec_aac = N_SAMPLES_PER_SEC;
   dsp_descriptor.n_channels = N_CHANNELS;
   dsp_descriptor.bitrate_aac = audio_format_aac.nAvgBytesPerSec * 8;
 

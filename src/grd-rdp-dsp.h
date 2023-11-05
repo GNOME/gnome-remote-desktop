@@ -46,7 +46,7 @@ typedef struct
   GrdRdpDspCreateFlag create_flags;
 
   /* Encoder */
-  uint32_t n_samples_per_sec;
+  uint32_t n_samples_per_sec_aac;
   uint32_t n_channels;
   uint32_t bitrate_aac;
 } GrdRdpDspDescriptor;
