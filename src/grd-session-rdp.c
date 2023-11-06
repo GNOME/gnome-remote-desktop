@@ -138,6 +138,7 @@ struct _GrdSessionRdp
   GrdRdpSAMFile *sam_file;
   uint32_t rdp_error_info;
   GrdRdpScreenShareMode screen_share_mode;
+  gboolean is_view_only;
   gboolean session_should_stop;
 
   SessionMetrics session_metrics;
@@ -683,18 +684,6 @@ handle_client_gone (GrdSessionRdp *session_rdp)
 
   unset_rdp_peer_flag (session_rdp, RDP_PEER_ACTIVATED);
   maybe_queue_close_session_idle (session_rdp);
-}
-
-static gboolean
-is_view_only (GrdSessionRdp *session_rdp)
-{
-  GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
-  GrdSettings *settings = grd_context_get_settings (context);
-  gboolean view_only;
-
-  g_object_get (G_OBJECT (settings), "rdp-view-only", &view_only, NULL);
-
-  return view_only;
 }
 
 static gboolean
@@ -1370,7 +1359,7 @@ rdp_input_synchronize_event (rdpInput *rdp_input,
   GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
 
   if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) ||
-      is_view_only (session_rdp))
+      session_rdp->is_view_only)
     return TRUE;
 
   g_hash_table_foreach_remove (session_rdp->pressed_keys,
@@ -1405,7 +1394,7 @@ rdp_input_mouse_event (rdpInput *rdp_input,
   double axis_step;
 
   if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) ||
-      is_view_only (session_rdp))
+      session_rdp->is_view_only)
     return TRUE;
 
   if (!(flags & PTR_FLAGS_WHEEL) && !(flags & PTR_FLAGS_HWHEEL) &&
@@ -1477,7 +1466,7 @@ rdp_input_extended_mouse_event (rdpInput *rdp_input,
   int32_t button = 0;
 
   if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) ||
-      is_view_only (session_rdp))
+      session_rdp->is_view_only)
     return TRUE;
 
   rdp_input_mouse_event (rdp_input, PTR_FLAGS_MOVE, x, y);
@@ -1569,7 +1558,7 @@ rdp_input_keyboard_event (rdpInput *rdp_input,
   uint16_t keycode;
 
   if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) ||
-      is_view_only (session_rdp))
+      session_rdp->is_view_only)
     return TRUE;
 
   fullcode = flags & KBD_FLAGS_EXTENDED ? code | KBDEXT : code;
@@ -1619,7 +1608,7 @@ rdp_input_unicode_keyboard_event (rdpInput *rdp_input,
   GrdKeyState key_state;
 
   if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) ||
-      is_view_only (session_rdp))
+      session_rdp->is_view_only)
     return TRUE;
 
   code_utf32 = g_utf16_to_ucs4 (&code_utf16, 1, NULL, NULL, NULL);
@@ -2238,6 +2227,15 @@ graphics_thread_func (gpointer data)
   return NULL;
 }
 
+static void
+on_view_only_changed (GrdSettings   *settings,
+                      GrdSessionRdp *session_rdp)
+{
+  g_object_get (G_OBJECT (settings),
+                "rdp-view-only", &session_rdp->is_view_only,
+                NULL);
+}
+
 GrdSessionRdp *
 grd_session_rdp_new (GrdRdpServer      *rdp_server,
                      GSocketConnection *connection,
@@ -2273,7 +2271,12 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
 
   g_object_get (G_OBJECT (settings),
                 "rdp-screen-share-mode", &session_rdp->screen_share_mode,
+                "rdp-view-only", &session_rdp->is_view_only,
                 NULL);
+
+  g_signal_connect (settings, "notify::rdp-view-only",
+                    G_CALLBACK (on_view_only_changed),
+                    session_rdp);
 
   session_rdp->layout_manager =
     grd_rdp_layout_manager_new (session_rdp,
