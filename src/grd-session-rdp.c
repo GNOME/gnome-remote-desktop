@@ -207,17 +207,23 @@ grd_session_rdp_notify_new_desktop_size (GrdSessionRdp *session_rdp,
 {
   rdpContext *rdp_context = session_rdp->peer->context;
   rdpSettings *rdp_settings = rdp_context->settings;
+  uint32_t current_desktop_width =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopWidth);
+  uint32_t current_desktop_height =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopHeight);
 
-  if (rdp_settings->SupportGraphicsPipeline)
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
 
-  if (rdp_settings->DesktopWidth == desktop_width &&
-      rdp_settings->DesktopHeight == desktop_height)
+  if (current_desktop_width == desktop_width &&
+      current_desktop_height == desktop_height)
     return;
 
-  rdp_settings->DesktopWidth = desktop_width;
-  rdp_settings->DesktopHeight = desktop_height;
-  if (!rdp_settings->SupportGraphicsPipeline)
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_DesktopWidth,
+                               desktop_width);
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_DesktopHeight,
+                               desktop_height);
+  if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     rdp_context->update->DesktopResize (rdp_context);
 }
 
@@ -425,14 +431,17 @@ rdp_peer_refresh_gfx (GrdSessionRdp  *session_rdp,
 
   if (is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_GRAPHICS_RESET))
     {
+      uint32_t desktop_width =
+        freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopWidth);
+      uint32_t desktop_height =
+        freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopHeight);
       MONITOR_DEF *monitors;
       uint32_t n_monitors;
 
       grd_rdp_layout_manager_get_current_layout (session_rdp->layout_manager,
                                                  &monitors, &n_monitors);
       grd_rdp_graphics_pipeline_reset_graphics (graphics_pipeline,
-                                                rdp_settings->DesktopWidth,
-                                                rdp_settings->DesktopHeight,
+                                                desktop_width, desktop_height,
                                                 monitors, n_monitors);
       g_free (monitors);
 
@@ -453,6 +462,12 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   rdpSettings *rdp_settings = rdp_context->settings;
   rdpUpdate *rdp_update = rdp_context->update;
+  uint32_t multifrag_max_request_size =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MultifragMaxRequestSize);
+  uint32_t remote_fx_codec_id =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_RemoteFxCodecId);
+  gboolean has_surface_frame_marker =
+    freerdp_settings_get_bool (rdp_settings, FreeRDP_SurfaceFrameMarkerEnabled);
   GrdRdpSurfaceMapping *surface_mapping;
   uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
   uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
@@ -499,10 +514,10 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
                                          surface_height,
                                          src_stride,
                                          &n_messages,
-                                         rdp_settings->MultifragMaxRequestSize);
+                                         multifrag_max_request_size);
 
   cmd.cmdType = CMDTYPE_STREAM_SURFACE_BITS;
-  cmd.bmp.codecID = rdp_settings->RemoteFxCodecId;
+  cmd.bmp.codecID = remote_fx_codec_id;
   cmd.destLeft = surface_mapping->output_origin_x;
   cmd.destTop = surface_mapping->output_origin_y;
   cmd.destRight = cmd.destLeft + surface_width;
@@ -534,7 +549,7 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
       first = i == 0 ? TRUE : FALSE;
       last = i + 1 == n_messages ? TRUE : FALSE;
 
-      if (!rdp_settings->SurfaceFrameMarkerEnabled)
+      if (!has_surface_frame_marker)
         rdp_update->SurfaceBits (rdp_update->context, &cmd);
       else
         rdp_update->SurfaceFrameBits (rdp_update->context, &cmd, first, last,
@@ -557,19 +572,22 @@ rdp_peer_encode_nsc_rect (gpointer data,
   uint32_t src_stride = thread_pool_context->src_stride;
   uint8_t *src_data = thread_pool_context->src_data;
   rdpSettings *rdp_settings = thread_pool_context->rdp_settings;
+  uint32_t color_loss_level =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_NSCodecColorLossLevel);
+  gboolean allow_subsampling =
+    freerdp_settings_get_bool (rdp_settings, FreeRDP_NSCodecAllowSubsampling);
+  gboolean allow_dynamic_color_fidelity =
+    freerdp_settings_get_bool (rdp_settings, FreeRDP_NSCodecAllowDynamicColorFidelity);
   NSC_CONTEXT *nsc_context;
   uint8_t *src_data_at_pos;
 
   nsc_context = nsc_context_new ();
-  nsc_context_set_parameters (nsc_context,
-                              NSC_COLOR_LOSS_LEVEL,
-                              rdp_settings->NSCodecColorLossLevel);
-  nsc_context_set_parameters (nsc_context,
-                              NSC_ALLOW_SUBSAMPLING,
-                              rdp_settings->NSCodecAllowSubsampling);
-  nsc_context_set_parameters (nsc_context,
-                              NSC_DYNAMIC_COLOR_FIDELITY,
-                              rdp_settings->NSCodecAllowDynamicColorFidelity);
+  nsc_context_set_parameters (nsc_context, NSC_COLOR_LOSS_LEVEL,
+                              color_loss_level);
+  nsc_context_set_parameters (nsc_context, NSC_ALLOW_SUBSAMPLING,
+                              allow_subsampling);
+  nsc_context_set_parameters (nsc_context, NSC_DYNAMIC_COLOR_FIDELITY,
+                              allow_dynamic_color_fidelity);
   nsc_context_set_parameters (nsc_context,
                               NSC_COLOR_FORMAT,
                               PIXEL_FORMAT_BGRX32);
@@ -608,6 +626,10 @@ rdp_peer_refresh_nsc (GrdSessionRdp  *session_rdp,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   rdpSettings *rdp_settings = rdp_context->settings;
   rdpUpdate *rdp_update = rdp_context->update;
+  uint32_t ns_codec_id =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_NSCodecId);
+  gboolean has_surface_frame_marker =
+    freerdp_settings_get_bool (rdp_settings, FreeRDP_SurfaceFrameMarkerEnabled);
   GrdRdpSurfaceMapping *surface_mapping;
   uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
   uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
@@ -669,7 +691,7 @@ rdp_peer_refresh_nsc (GrdSessionRdp  *session_rdp,
 
   cmd.cmdType = CMDTYPE_SET_SURFACE_BITS;
   cmd.bmp.bpp = 32;
-  cmd.bmp.codecID = rdp_settings->NSCodecId;
+  cmd.bmp.codecID = ns_codec_id;
 
   for (i = 0; i < n_rects; ++i)
     {
@@ -687,7 +709,7 @@ rdp_peer_refresh_nsc (GrdSessionRdp  *session_rdp,
       first = i == 0 ? TRUE : FALSE;
       last = i + 1 == n_rects ? TRUE : FALSE;
 
-      if (!rdp_settings->SurfaceFrameMarkerEnabled)
+      if (!has_surface_frame_marker)
         rdp_update->SurfaceBits (rdp_update->context, &cmd);
       else
         rdp_update->SurfaceFrameBits (rdp_update->context, &cmd, first, last,
@@ -792,7 +814,8 @@ rdp_peer_refresh_raw_rect (rdpContext            *rdp_context,
                            uint8_t               *data)
 {
   rdpSettings *rdp_settings = rdp_context->settings;
-  uint32_t dst_bits_per_pixel = rdp_settings->ColorDepth;
+  uint32_t dst_bits_per_pixel =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_ColorDepth);
   GrdRdpSurfaceMapping *surface_mapping;
   uint32_t cols, rows;
   uint32_t x, y;
@@ -860,6 +883,10 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   rdpSettings *rdp_settings = rdp_context->settings;
   rdpUpdate *rdp_update = rdp_context->update;
+  uint32_t multifrag_max_request_size =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MultifragMaxRequestSize);
+  gboolean has_surface_frame_marker =
+    freerdp_settings_get_bool (rdp_settings, FreeRDP_SurfaceFrameMarkerEnabled);
   uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
   uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
   uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
@@ -936,7 +963,7 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
   /* We send 2 additional Bytes for the update header
    * (See also update_write_bitmap_update () in FreeRDP)
    */
-  max_update_size = rdp_settings->MultifragMaxRequestSize - 2;
+  max_update_size = multifrag_max_request_size - 2;
 
   bitmap_update.count = bitmap_update.number = 0;
   bitmap_update.rectangles = bitmap_data;
@@ -944,7 +971,7 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
 
   marker.frameId = rdp_peer_context->frame_id;
   marker.frameAction = SURFACECMD_FRAMEACTION_BEGIN;
-  if (rdp_settings->SurfaceFrameMarkerEnabled)
+  if (has_surface_frame_marker)
     rdp_update->SurfaceFrameMarker (rdp_context, &marker);
 
   for (i = 0; i < n_bitmaps; ++i)
@@ -970,7 +997,7 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
     }
 
   marker.frameAction = SURFACECMD_FRAMEACTION_END;
-  if (rdp_settings->SurfaceFrameMarkerEnabled)
+  if (has_surface_frame_marker)
     rdp_update->SurfaceFrameMarker (rdp_context, &marker);
 
   for (i = 0; i < n_bitmaps; ++i)
@@ -1012,7 +1039,7 @@ rdp_peer_refresh_region (GrdSessionRdp *session_rdp,
   cairo_region_t *region = NULL;
   gboolean success;
 
-  if (!rdp_settings->SupportGraphicsPipeline)
+  if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     {
       region = grd_rdp_damage_detector_get_damage_region (rdp_surface->detector);
       if (!region)
@@ -1023,11 +1050,11 @@ rdp_peer_refresh_region (GrdSessionRdp *session_rdp,
         }
     }
 
-  if (rdp_settings->SupportGraphicsPipeline)
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     success = rdp_peer_refresh_gfx (session_rdp, rdp_surface, buffer);
-  else if (rdp_settings->RemoteFxCodec)
+  else if (freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteFxCodec))
     success = rdp_peer_refresh_rfx (session_rdp, rdp_surface, region, buffer);
-  else if (rdp_settings->NSCodec)
+  else if (freerdp_settings_get_bool (rdp_settings, FreeRDP_NSCodec))
     success = rdp_peer_refresh_nsc (session_rdp, rdp_surface, region, buffer);
   else
     success = rdp_peer_refresh_raw (session_rdp, rdp_surface, region, buffer);
@@ -1385,7 +1412,7 @@ rdp_suppress_output (rdpContext         *rdp_context,
   else
     unset_rdp_peer_flag (session_rdp, RDP_PEER_OUTPUT_ENABLED);
 
-  if (rdp_settings->SupportGraphicsPipeline &&
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) &&
       rdp_peer_context->network_autodetection)
     {
       if (allow)
@@ -1433,7 +1460,7 @@ rdp_peer_capabilities (freerdp_peer *peer)
   GrdRdpMonitorConfig *monitor_config;
   g_autoptr (GError) error = NULL;
 
-  if (!rdp_settings->SupportGraphicsPipeline &&
+  if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) &&
       !(grd_get_debug_flags () & GRD_DEBUG_RDP_LEGACY_GRAPHICS))
     {
       g_warning ("[RDP] Client did not advertise support for the Graphics "
@@ -1442,22 +1469,23 @@ rdp_peer_capabilities (freerdp_peer *peer)
     }
 
   if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND &&
-      !rdp_settings->SupportGraphicsPipeline)
+      !freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     {
       g_warning ("[RDP] Sessions with client monitor configurations require "
                  "the Graphics Pipeline, closing connection");
       return FALSE;
     }
 
-  if ((rdp_settings->SupportGraphicsPipeline || rdp_settings->RemoteFxCodec ||
-       rdp_settings->NSCodec) &&
-      rdp_settings->ColorDepth != 32)
+  if ((freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) ||
+       freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteFxCodec) ||
+       freerdp_settings_get_bool (rdp_settings, FreeRDP_NSCodec)) &&
+      freerdp_settings_get_uint32 (rdp_settings, FreeRDP_ColorDepth) != 32)
     {
       g_debug ("[RDP] Fixing invalid colour depth set by client");
-      rdp_settings->ColorDepth = 32;
+      freerdp_settings_set_uint32 (rdp_settings, FreeRDP_ColorDepth, 32);
     }
 
-  switch (rdp_settings->ColorDepth)
+  switch (freerdp_settings_get_uint32 (rdp_settings, FreeRDP_ColorDepth))
     {
     case 32:
       break;
@@ -1467,7 +1495,7 @@ rdp_peer_capabilities (freerdp_peer *peer)
        */
       g_message ("Downgrading colour depth from 24 to 16 due to issues with "
                  "the interleaved codec");
-      rdp_settings->ColorDepth = 16;
+      freerdp_settings_set_uint32 (rdp_settings, FreeRDP_ColorDepth, 16);
     case 16:
     case 15:
       break;
@@ -1476,7 +1504,7 @@ rdp_peer_capabilities (freerdp_peer *peer)
       return FALSE;
     }
 
-  if (!rdp_settings->DesktopResize)
+  if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_DesktopResize))
     {
       g_warning ("Client doesn't support desktop resizing, closing connection");
       return FALSE;
@@ -1530,8 +1558,12 @@ rdp_peer_post_connect (freerdp_peer *peer)
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   SessionMetrics *session_metrics = &session_rdp->session_metrics;
   rdpSettings *rdp_settings = peer->context->settings;
+  uint32_t multifrag_max_request_size =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MultifragMaxRequestSize);
+  uint32_t os_major_type =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_OsMajorType);
 
-  if (rdp_settings->PointerCacheSize <= 0)
+  if (freerdp_settings_get_uint32 (rdp_settings, FreeRDP_PointerCacheSize) <= 0)
     {
       g_warning ("Client doesn't have a pointer cache, closing connection");
       return FALSE;
@@ -1546,58 +1578,60 @@ rdp_peer_post_connect (freerdp_peer *peer)
            freerdp_peer_os_major_type_string (peer),
            freerdp_peer_os_minor_type_string (peer));
 
-  if (!rdp_settings->SupportGraphicsPipeline &&
-      !rdp_settings->RemoteFxCodec &&
-      rdp_settings->NSCodec &&
-      rdp_settings->MultifragMaxRequestSize < 0x3F0000)
+  if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) &&
+      !freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteFxCodec) &&
+      freerdp_settings_get_bool (rdp_settings, FreeRDP_NSCodec) &&
+      multifrag_max_request_size < 0x3F0000)
     {
       g_message ("Disabling NSCodec since it does not support fragmentation");
-      rdp_settings->NSCodec = FALSE;
+      freerdp_settings_set_bool (rdp_settings, FreeRDP_NSCodec, FALSE);
     }
 
-  if (!rdp_settings->SupportGraphicsPipeline &&
-      !rdp_settings->RemoteFxCodec)
+  if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) &&
+      !freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteFxCodec))
     {
       g_warning ("[RDP] Client does neither support RFX nor GFX. This will "
                  "result in heavy performance and heavy bandwidth usage "
                  "regressions. The legacy path is deprecated!");
     }
 
-  if (rdp_settings->SupportGraphicsPipeline &&
-      !rdp_settings->NetworkAutoDetect)
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) &&
+      !freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect))
     {
       g_warning ("Client does not support autodetecting network characteristics "
                  "(RTT detection, Bandwidth measurement). "
                  "High latency connections will suffer!");
     }
-  if (rdp_settings->AudioPlayback && !rdp_settings->NetworkAutoDetect)
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_AudioPlayback) &&
+      !freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect))
     {
       g_warning ("[RDP] Client does not support autodetecting network "
                  "characteristics. Disabling audio output redirection");
-      rdp_settings->AudioPlayback = FALSE;
+      freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, FALSE);
     }
-  if (rdp_settings->AudioPlayback && !rdp_settings->SupportGraphicsPipeline)
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_AudioPlayback) &&
+      !freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     {
       g_warning ("[RDP] Client does not support graphics pipeline. Disabling "
                  "audio output redirection");
-      rdp_settings->AudioPlayback = FALSE;
+      freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, FALSE);
     }
-  if (rdp_settings->AudioPlayback &&
-      (rdp_settings->OsMajorType == OSMAJORTYPE_IOS ||
-       rdp_settings->OsMajorType == OSMAJORTYPE_ANDROID))
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_AudioPlayback) &&
+      (os_major_type == OSMAJORTYPE_IOS ||
+       os_major_type == OSMAJORTYPE_ANDROID))
     {
       g_warning ("[RDP] Client cannot handle graphics and audio "
                  "simultaneously. Disabling audio output redirection");
-      rdp_settings->AudioPlayback = FALSE;
+      freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, FALSE);
     }
 
-  if (rdp_settings->NetworkAutoDetect)
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect))
     {
       rdp_peer_context->network_autodetection =
         grd_rdp_network_autodetection_new (peer->context);
     }
 
-  if (rdp_settings->SupportGraphicsPipeline)
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
 
   session_metrics->rd_session_start_init_us = g_get_monotonic_time ();
@@ -1605,7 +1639,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
 
   g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
 
-  if (rdp_settings->SupportGraphicsPipeline &&
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) &&
       rdp_peer_context->network_autodetection)
     {
       grd_rdp_network_autodetection_ensure_rtt_consumer (
@@ -1679,7 +1713,7 @@ rdp_peer_context_new (freerdp_peer   *peer,
     }
 
   rdp_peer_context->planar_flags = 0;
-  if (rdp_settings->DrawAllowSkipAlpha)
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_DrawAllowSkipAlpha))
     rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_NA;
   rdp_peer_context->planar_flags |= PLANAR_FORMAT_HEADER_RLE;
 
@@ -1769,33 +1803,43 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
 
   rdp_settings->CertificateFile = server_cert;
   rdp_settings->PrivateKeyFile = server_key;
-  rdp_settings->RdpSecurity = FALSE;
-  rdp_settings->TlsSecurity = FALSE;
-  rdp_settings->NlaSecurity = TRUE;
 
-  rdp_settings->OsMajorType = OSMAJORTYPE_UNIX;
-  rdp_settings->OsMinorType = OSMINORTYPE_PSEUDO_XSERVER;
-  rdp_settings->AudioPlayback = TRUE;
-  rdp_settings->ColorDepth = 32;
-  rdp_settings->GfxAVC444v2 = rdp_settings->GfxAVC444 = FALSE;
-  rdp_settings->GfxH264 = FALSE;
-  rdp_settings->GfxSmallCache = FALSE;
-  rdp_settings->GfxThinClient = FALSE;
-  rdp_settings->HasExtendedMouseEvent = TRUE;
-  rdp_settings->HasHorizontalWheel = TRUE;
-  rdp_settings->NetworkAutoDetect = TRUE;
-  rdp_settings->PointerCacheSize = 100;
-  rdp_settings->RefreshRect = FALSE;
-  rdp_settings->RemoteConsoleAudio = TRUE;
-  rdp_settings->RemoteFxCodec = TRUE;
-  rdp_settings->RemoteFxImageCodec = TRUE;
-  rdp_settings->SupportGraphicsPipeline = TRUE;
-  rdp_settings->NSCodec = TRUE;
-  rdp_settings->FrameMarkerCommandEnabled = TRUE;
-  rdp_settings->SurfaceFrameMarkerEnabled = TRUE;
-  rdp_settings->UnicodeInput = TRUE;
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_RdpSecurity, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_TlsSecurity, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_NlaSecurity, TRUE);
+
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_OsMajorType,
+                               OSMAJORTYPE_UNIX);
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_OsMinorType,
+                               OSMINORTYPE_PSEUDO_XSERVER);
+
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_ColorDepth, 32);
+
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_GfxAVC444v2, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_GfxAVC444, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_GfxH264, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_GfxSmallCache, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_GfxThinClient, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline, TRUE);
+
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_RemoteFxCodec, TRUE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_RemoteFxImageCodec, TRUE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_NSCodec, TRUE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_SurfaceFrameMarkerEnabled, TRUE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_FrameMarkerCommandEnabled, TRUE);
+
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_PointerCacheSize, 100);
 
   freerdp_settings_set_bool (rdp_settings, FreeRDP_FastPathOutput, TRUE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_NetworkAutoDetect, TRUE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_RefreshRect, FALSE);
+
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_HasExtendedMouseEvent, TRUE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_HasHorizontalWheel, TRUE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_UnicodeInput, TRUE);
+
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, TRUE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_RemoteConsoleAudio, TRUE);
 
   peer->Capabilities = rdp_peer_capabilities;
   peer->PostConnect = rdp_peer_post_connect;
@@ -2161,7 +2205,7 @@ maybe_initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
   g_assert (!rdp_peer_context->telemetry);
   g_assert (!rdp_peer_context->graphics_pipeline);
 
-  if (!rdp_settings->SupportGraphicsPipeline)
+  if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     return;
 
   g_assert (is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT));
@@ -2206,13 +2250,16 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
     }
   if (WTSVirtualChannelManagerIsChannelJoined (vcm, "cliprdr"))
     {
+      uint32_t os_major_type =
+        freerdp_settings_get_uint32 (rdp_settings, FreeRDP_OsMajorType);
       gboolean peer_is_on_ms_windows;
 
-      peer_is_on_ms_windows = rdp_settings->OsMajorType == OSMAJORTYPE_WINDOWS;
+      peer_is_on_ms_windows = os_major_type == OSMAJORTYPE_WINDOWS;
       rdp_peer_context->clipboard_rdp =
         grd_clipboard_rdp_new (session_rdp, vcm, !peer_is_on_ms_windows);
     }
-  if (rdp_settings->AudioPlayback && !rdp_settings->RemoteConsoleAudio)
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_AudioPlayback) &&
+      !freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteConsoleAudio))
     {
       rdp_peer_context->audio_playback =
         grd_rdp_audio_playback_new (session_rdp, rdp_dvc, vcm, rdp_context);
@@ -2243,11 +2290,11 @@ grd_session_rdp_remote_desktop_session_started (GrdSession *session)
   SessionMetrics *session_metrics = &session_rdp->session_metrics;
   rdpContext *rdp_context = session_rdp->peer->context;
   rdpSettings *rdp_settings = rdp_context->settings;
-  gboolean has_graphics_pipeline;
+  gboolean has_graphics_pipeline =
+    freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline);
 
   session_metrics->rd_session_started_us = g_get_monotonic_time ();
 
-  has_graphics_pipeline = rdp_settings->SupportGraphicsPipeline;
   grd_rdp_layout_manager_notify_session_started (session_rdp->layout_manager,
                                                  session_rdp->cursor_renderer,
                                                  has_graphics_pipeline);
