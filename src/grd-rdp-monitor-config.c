@@ -106,6 +106,18 @@ create_monitor_config_from_client_core_data (rdpSettings  *rdp_settings,
 {
   g_autoptr (GrdRdpMonitorConfig) monitor_config = NULL;
   GrdRdpVirtualMonitor *virtual_monitor;
+  uint32_t desktop_width =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopWidth);
+  uint32_t desktop_height =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopHeight);
+  uint32_t desktop_physical_width =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopPhysicalWidth);
+  uint32_t desktop_physical_height =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopPhysicalHeight);
+  uint32_t desktop_orientation =
+    freerdp_settings_get_uint16 (rdp_settings, FreeRDP_DesktopOrientation);
+  uint32_t desktop_scale_factor =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopScaleFactor);
 
   monitor_config = g_malloc0 (sizeof (GrdRdpMonitorConfig));
   monitor_config->is_virtual = TRUE;
@@ -117,13 +129,13 @@ create_monitor_config_from_client_core_data (rdpSettings  *rdp_settings,
   /* Ignore the DeviceScaleFactor. It is deprecated (Win 8.1 only) */
   if (!write_sanitized_monitor_data (virtual_monitor,
                                      0, 0,
-                                     rdp_settings->DesktopWidth,
-                                     rdp_settings->DesktopHeight,
+                                     desktop_width,
+                                     desktop_height,
                                      TRUE,
-                                     rdp_settings->DesktopPhysicalWidth,
-                                     rdp_settings->DesktopPhysicalHeight,
-                                     rdp_settings->DesktopOrientation,
-                                     rdp_settings->DesktopScaleFactor,
+                                     desktop_physical_width,
+                                     desktop_physical_height,
+                                     desktop_orientation,
+                                     desktop_scale_factor,
                                      error))
     return NULL;
 
@@ -208,7 +220,10 @@ create_monitor_config_from_client_monitor_data (rdpSettings  *rdp_settings,
                                                 GError      **error)
 {
   g_autoptr (GrdRdpMonitorConfig) monitor_config = NULL;
-  uint32_t monitor_count = rdp_settings->MonitorCount;
+  const rdpMonitor *monitors =
+    freerdp_settings_get_pointer (rdp_settings, FreeRDP_MonitorDefArray);
+  uint32_t monitor_count =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MonitorCount);
   gboolean found_primary_monitor = FALSE;
   uint32_t i;
 
@@ -222,8 +237,10 @@ create_monitor_config_from_client_monitor_data (rdpSettings  *rdp_settings,
 
   for (i = 0; i < monitor_count; ++i)
     {
-      rdpMonitor *monitor = &rdp_settings->MonitorDefArray[i];
-      MONITOR_ATTRIBUTES *monitor_attributes = &monitor->attributes;
+      gboolean has_monitor_attributes =
+        freerdp_settings_get_bool (rdp_settings, FreeRDP_HasMonitorAttributes);
+      const rdpMonitor *monitor = &monitors[i];
+      const MONITOR_ATTRIBUTES *monitor_attributes = &monitor->attributes;
       gboolean is_primary = !!monitor->is_primary;
       uint32_t physical_width = 0;
       uint32_t physical_height = 0;
@@ -235,7 +252,7 @@ create_monitor_config_from_client_monitor_data (rdpSettings  *rdp_settings,
       if (!found_primary_monitor && is_primary)
         found_primary_monitor = TRUE;
 
-      if (rdp_settings->HasMonitorAttributes)
+      if (has_monitor_attributes)
         {
           physical_width = monitor_attributes->physicalWidth;
           physical_height = monitor_attributes->physicalHeight;
@@ -273,8 +290,11 @@ grd_rdp_monitor_config_new_from_client_data (rdpSettings  *rdp_settings,
                                              uint32_t      max_monitor_count,
                                              GError      **error)
 {
-  if (rdp_settings->MonitorCount == 0 ||
-      rdp_settings->MonitorCount > max_monitor_count)
+  uint32_t monitor_count =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MonitorCount);
+
+  if (monitor_count == 0 ||
+      monitor_count > max_monitor_count)
     return create_monitor_config_from_client_core_data (rdp_settings, error);
 
   return create_monitor_config_from_client_monitor_data (rdp_settings, error);
