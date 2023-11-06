@@ -71,6 +71,7 @@ struct _GrdSessionVnc
 
   GrdClipboardVnc *clipboard_vnc;
   GrdVncScreenShareMode screen_share_mode;
+  gboolean is_view_only;
   GrdVncMonitorConfig *monitor_config;
 };
 
@@ -331,18 +332,6 @@ handle_new_client (rfbClientPtr rfb_client)
   g_assert_not_reached ();
 }
 
-static gboolean
-is_view_only (GrdSessionVnc *session_vnc)
-{
-  GrdContext *context = grd_session_get_context (GRD_SESSION (session_vnc));
-  GrdSettings *settings = grd_context_get_settings (context);
-  gboolean view_only;
-
-  g_object_get (G_OBJECT (settings), "vnc-view-only", &view_only, NULL);
-
-  return view_only;
-}
-
 static void
 handle_key_event (rfbBool      down,
                   rfbKeySym    keysym,
@@ -351,7 +340,7 @@ handle_key_event (rfbBool      down,
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (rfb_client->screen->screenData);
   GrdSession *session = GRD_SESSION (session_vnc);
 
-  if (is_view_only (session_vnc))
+  if (session_vnc->is_view_only)
     return;
 
   if (down)
@@ -455,7 +444,7 @@ handle_pointer_event (int          button_mask,
   GrdSessionVnc *session_vnc = rfb_client->screen->screenData;
   GrdSession *session = GRD_SESSION (session_vnc);
 
-  if (is_view_only (session_vnc))
+  if (session_vnc->is_view_only)
     return;
 
   if (session_vnc->stream &&
@@ -748,6 +737,15 @@ grd_session_vnc_detach_source (GrdSessionVnc *session_vnc)
   g_clear_pointer (&session_vnc->source, g_source_unref);
 }
 
+static void
+on_view_only_changed (GrdSettings   *settings,
+                      GrdSessionVnc *session_vnc)
+{
+  g_object_get (G_OBJECT (settings),
+                "vnc-view-only", &session_vnc->is_view_only,
+                NULL);
+}
+
 GrdSessionVnc *
 grd_session_vnc_new (GrdVncServer      *vnc_server,
                      GSocketConnection *connection)
@@ -766,7 +764,12 @@ grd_session_vnc_new (GrdVncServer      *vnc_server,
   settings = grd_context_get_settings (context);
   g_object_get (G_OBJECT (settings),
                 "vnc-screen-share-mode", &session_vnc->screen_share_mode,
+                "vnc-view-only", &session_vnc->is_view_only,
                 NULL);
+
+  g_signal_connect (settings, "notify::vnc-view-only",
+                    G_CALLBACK (on_view_only_changed),
+                    session_vnc);
 
   grd_session_vnc_attach_source (session_vnc);
 
