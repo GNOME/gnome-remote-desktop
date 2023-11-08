@@ -32,3 +32,13 @@ option('systemd_user_unit_dir',
        type: 'string',
        value: '',
        description: 'systemd user service directory')
+
+option('conf_dir',
+       type: 'string',
+       value: '',
+       description: 'Config directory for the system daemon')
+
+option('user',
+        type: 'string',
+        value: 'gnome-remote-desktop',
+        description: 'Username for the GNOME Remote Desktop system service')

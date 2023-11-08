@@ -14,3 +14,6 @@
 
 /* Path of the data dir */
 #mesondefine GRD_DATA_DIR
+
+/* Path of the system daemon settings */
+#mesondefine GRD_CONF

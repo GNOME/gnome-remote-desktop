@@ -65,6 +65,8 @@ daemon_sources = files([
   'grd-settings.h',
   'grd-settings-handover.c',
   'grd-settings-handover.h',
+  'grd-settings-system.c',
+  'grd-settings-system.h',
   'grd-settings-user.c',
   'grd-settings-user.h',
   'grd-stream.c',
