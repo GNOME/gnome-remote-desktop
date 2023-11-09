@@ -22,6 +22,7 @@
 
 #include <gio/gio.h>
 #include <glib/gi18n.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include "grd-enums.h"
@@ -98,6 +99,19 @@ process_options (GrdSettings       *settings,
 }
 
 #ifdef HAVE_RDP
+static gboolean
+rdp_set_port (GrdSettings  *settings,
+              int           argc,
+              char        **argv,
+              GError      **error)
+{
+  int port;
+
+  port = strtol (argv[0], NULL, 10);
+  g_object_set (G_OBJECT (settings), "rdp-port", port, NULL);
+  return TRUE;
+}
+
 static gboolean
 rdp_enable (GrdSettings  *settings,
             int           argc,
@@ -195,6 +209,7 @@ rdp_disable_view_only (GrdSettings  *settings,
 }
 
 static const SubCommand rdp_subcommands[] = {
+  { "set-port", rdp_set_port, 1 },
   { "enable", rdp_enable, 0 },
   { "disable", rdp_disable, 0 },
   { "set-tls-cert", rdp_set_tls_cert, 1 },
@@ -218,6 +233,19 @@ process_rdp_options (GrdSettings  *settings,
 #endif /* HAVE_RDP */
 
 #ifdef HAVE_VNC
+static gboolean
+vnc_set_port (GrdSettings  *settings,
+              int           argc,
+              char        **argv,
+              GError      **error)
+{
+  int port;
+
+  port = strtol (argv[0], NULL, 10);
+  g_object_set (G_OBJECT (settings), "vnc-port", port, NULL);
+  return TRUE;
+}
+
 static gboolean
 vnc_enable (GrdSettings  *settings,
             int           argc,
@@ -318,6 +346,7 @@ vnc_disable_view_only (GrdSettings  *settings,
 }
 
 static const SubCommand vnc_subcommands[] = {
+  { "set-port", vnc_set_port, 1 },
   { "enable", vnc_enable, 0 },
   { "disable", vnc_disable, 0 },
   { "set-password", vnc_set_credentials, 1 },
@@ -350,6 +379,7 @@ print_help (void)
    * don't translate. Try to fit each line within 80 characters. */
   const char *help_rdp =
     _("  rdp                                        - RDP subcommands:\n"
+      "    set-port                                 - Set port the server binds to\n"
       "    enable                                   - Enable the RDP backend\n"
       "    disable                                  - Disable the RDP backend\n"
       "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -369,6 +399,7 @@ print_help (void)
    * don't translate. Try to fit each line within 80 characters. */
   const char *help_vnc =
     _("  vnc                                        - VNC subcommands:\n"
+      "    set-port                                 - Set port the server binds to\n"
       "    enable                                   - Enable the VNC backend\n"
       "    disable                                  - Disable the VNC backend\n"
       "    set-password <password>                  - Set the VNC password\n"
@@ -447,6 +478,7 @@ print_rdp_status (GrdSettings *settings,
                   gboolean     use_colors,
                   gboolean     show_credentials)
 {
+  uint16_t port;
   gboolean enabled;
   gboolean view_only;
   g_autofree char *tls_cert = NULL;
@@ -456,6 +488,7 @@ print_rdp_status (GrdSettings *settings,
   g_autoptr (GError) error = NULL;
 
   g_object_get (G_OBJECT (settings),
+                "rdp-port", &port,
                 "rdp-enabled", &enabled,
                 "rdp-server-key", &tls_key,
                 "rdp-server-cert", &tls_cert,
@@ -465,6 +498,7 @@ print_rdp_status (GrdSettings *settings,
   printf ("RDP:\n");
   printf ("\tStatus: %s\n", status_to_string (enabled, use_colors));
 
+  printf ("\tPort: %u\n", port);
   printf ("\tTLS certificate: %s\n", tls_cert);
   printf ("\tTLS key: %s\n", tls_key);
   printf ("\tView-only: %s\n", view_only ? "yes" : "no");
@@ -499,6 +533,7 @@ print_vnc_status (GrdSettings *settings,
                   gboolean     use_colors,
                   gboolean     show_credentials)
 {
+  uint16_t port;
   gboolean enabled;
   gboolean view_only;
   GrdVncAuthMethod auth_method;
@@ -506,6 +541,7 @@ print_vnc_status (GrdSettings *settings,
   g_autoptr (GError) error = NULL;
 
   g_object_get (G_OBJECT (settings),
+                "vnc-port", &port,
                 "vnc-enabled", &enabled,
                 "vnc-view-only", &view_only,
                 "vnc-auth-method", &auth_method,
@@ -521,6 +557,7 @@ print_vnc_status (GrdSettings *settings,
   printf ("VNC:\n");
   printf ("\tStatus: %s\n", status_to_string (enabled, use_colors));
 
+  printf ("\tPort: %u\n", port);
   if (auth_method == GRD_VNC_AUTH_METHOD_PROMPT)
     printf ("\tAuth method: prompt\n");
   else if (auth_method == GRD_VNC_AUTH_METHOD_PASSWORD)
