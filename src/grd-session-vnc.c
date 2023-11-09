@@ -739,6 +739,7 @@ grd_session_vnc_detach_source (GrdSessionVnc *session_vnc)
 
 static void
 on_view_only_changed (GrdSettings   *settings,
+                      GParamSpec    *pspec,
                       GrdSessionVnc *session_vnc)
 {
   g_object_get (G_OBJECT (settings),
