@@ -2229,6 +2229,7 @@ graphics_thread_func (gpointer data)
 
 static void
 on_view_only_changed (GrdSettings   *settings,
+                      GParamSpec    *pspec,
                       GrdSessionRdp *session_rdp)
 {
   g_object_get (G_OBJECT (settings),
