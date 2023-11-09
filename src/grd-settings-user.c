@@ -26,8 +26,6 @@
 
 #define GRD_RDP_SCHEMA_ID "org.gnome.desktop.remote-desktop.rdp"
 #define GRD_VNC_SCHEMA_ID "org.gnome.desktop.remote-desktop.vnc"
-#define GRD_USER_RDP_SERVER_PORT 3390
-#define GRD_USER_VNC_SERVER_PORT 5900
 
 struct _GrdSettingsUser
 {
@@ -46,8 +44,6 @@ grd_settings_user_new (GrdRuntimeMode runtime_mode)
 {
   return g_object_new (GRD_TYPE_SETTINGS_USER,
                        "runtime-mode", runtime_mode,
-                       "rdp-port", GRD_USER_RDP_SERVER_PORT,
-                       "vnc-port", GRD_USER_VNC_SERVER_PORT,
                        NULL);
 }
 
@@ -56,6 +52,9 @@ grd_settings_user_constructed (GObject *object)
 {
   GrdSettingsUser *settings = GRD_SETTINGS_USER (object);
 
+  g_settings_bind (settings->rdp_settings, "port",
+                   settings, "rdp-port",
+                   G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->rdp_settings, "enable",
                    settings, "rdp-enabled",
                    G_SETTINGS_BIND_DEFAULT);
@@ -70,6 +69,9 @@ grd_settings_user_constructed (GObject *object)
                    G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->rdp_settings, "tls-key",
                    settings, "rdp-server-key",
+                   G_SETTINGS_BIND_DEFAULT);
+  g_settings_bind (settings->vnc_settings, "port",
+                   settings, "vnc-port",
                    G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->vnc_settings, "enable",
                    settings, "vnc-enabled",

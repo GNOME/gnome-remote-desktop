@@ -2,6 +2,13 @@
   <schema id='org.gnome.desktop.remote-desktop' path='/org/gnome/desktop/remote-desktop/'>
   </schema>
   <schema id='org.gnome.desktop.remote-desktop.rdp' path='/org/gnome/desktop/remote-desktop/rdp/'>
+    <key name='port' type='q'>
+      <default>3389</default>
+      <summary>The port used by the RDP server</summary>
+      <description>
+        The RDP client will connect to this port to use this RDP server.
+      </description>
+    </key>
     <key name='enable' type='b'>
       <default>false</default>
       <summary>Whether the RDP backend is enabled or not</summary>
@@ -62,6 +69,13 @@
     </key>
   </schema>
   <schema id='org.gnome.desktop.remote-desktop.vnc' path='/org/gnome/desktop/remote-desktop/vnc/'>
+    <key name='port' type='q'>
+      <default>5900</default>
+      <summary>The port used by the VNC server</summary>
+      <description>
+        The VNC client will connect to this port to use this VNC server.
+      </description>
+    </key>
     <key name='enable' type='b'>
       <default>false</default>
       <summary>Whether the VNC backend is enabled or not</summary>
