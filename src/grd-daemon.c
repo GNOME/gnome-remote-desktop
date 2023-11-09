@@ -351,6 +351,7 @@ grd_daemon_acquire_mutter_dbus_proxies (GrdDaemon       *daemon,
 #ifdef HAVE_RDP
 static void
 on_rdp_enabled_changed (GrdSettings *settings,
+                        GParamSpec  *pspec,
                         GrdDaemon   *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
@@ -375,6 +376,7 @@ on_rdp_enabled_changed (GrdSettings *settings,
 #ifdef HAVE_VNC
 static void
 on_vnc_enabled_changed (GrdSettings *settings,
+                        GParamSpec  *pspec,
                         GrdDaemon   *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
