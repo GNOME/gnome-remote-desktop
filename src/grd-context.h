@@ -43,6 +43,8 @@ GrdDBusMutterScreenCast * grd_context_get_mutter_screen_cast_proxy (GrdContext *
 
 GrdDBusRemoteDesktopRdpServer * grd_context_get_rdp_server_interface (GrdContext *context);
 
+GrdDBusRemoteDesktopVncServer * grd_context_get_vnc_server_interface (GrdContext *context);
+
 void grd_context_set_mutter_remote_desktop_proxy (GrdContext                 *context,
                                                   GrdDBusMutterRemoteDesktop *proxy);
 
@@ -51,6 +53,9 @@ void grd_context_set_mutter_screen_cast_proxy (GrdContext              *context,
 
 void grd_context_set_rdp_server_interface (GrdContext                    *context,
                                            GrdDBusRemoteDesktopRdpServer *rdp_server_iface);
+
+void grd_context_set_vnc_server_interface (GrdContext                    *context,
+                                           GrdDBusRemoteDesktopVncServer *vnc_server_iface);
 
 GrdSettings * grd_context_get_settings (GrdContext *context);
 

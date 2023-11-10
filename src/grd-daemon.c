@@ -237,6 +237,79 @@ start_rdp_server (GrdDaemon *daemon)
 #endif /* HAVE_RDP */
 
 #ifdef HAVE_VNC
+static gboolean
+set_string_from_auth_method_enum (GBinding     *binding,
+                                  const GValue *source_value,
+                                  GValue       *target_value,
+                                  gpointer      user_data)
+{
+  GrdVncAuthMethod src_auth_method = g_value_get_enum (source_value);
+
+  switch (src_auth_method)
+    {
+    case GRD_VNC_AUTH_METHOD_PROMPT:
+      g_value_set_string (target_value, "prompt");
+      break;
+    case GRD_VNC_AUTH_METHOD_PASSWORD:
+      g_value_set_string (target_value, "password");
+      break;
+    }
+
+  return TRUE;
+}
+
+static void
+export_vnc_server_interface (GrdDaemon *daemon)
+{
+  GrdDBusRemoteDesktopVncServer *vnc_server_interface;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdSettings *settings = grd_context_get_settings (priv->context);
+  GDBusConnection *connection = g_application_get_dbus_connection (
+                                  G_APPLICATION (daemon));
+
+  vnc_server_interface =
+    grd_dbus_remote_desktop_vnc_server_skeleton_new ();
+
+  g_object_bind_property (settings, "vnc-enabled",
+                          vnc_server_interface, "enabled",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property (settings, "vnc-port",
+                          vnc_server_interface, "port",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property (settings, "vnc-negotiate-port",
+                          vnc_server_interface, "negotiate-port",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property (settings, "vnc-view-only",
+                          vnc_server_interface, "view-only",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property_full (settings, "vnc-auth-method",
+                               vnc_server_interface, "auth-method",
+                               G_BINDING_SYNC_CREATE,
+                               set_string_from_auth_method_enum,
+                               NULL, NULL, NULL);
+
+  g_dbus_interface_skeleton_export (
+    G_DBUS_INTERFACE_SKELETON (vnc_server_interface),
+    connection,
+    GRD_VNC_SERVER_OBJECT_PATH,
+    NULL);
+
+  grd_context_set_vnc_server_interface (priv->context, vnc_server_interface);
+}
+
+static void
+unexport_vnc_server_interface (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdDBusRemoteDesktopVncServer *vnc_server_interface =
+    grd_context_get_vnc_server_interface (priv->context);
+
+  g_dbus_interface_skeleton_unexport (
+    G_DBUS_INTERFACE_SKELETON (vnc_server_interface));
+
+  grd_context_set_vnc_server_interface (priv->context, NULL);
+}
+
 static void
 stop_vnc_server (GrdDaemon *daemon)
 {
@@ -280,6 +353,9 @@ export_services_status (GrdDaemon *daemon)
 #ifdef HAVE_RDP
   export_rdp_server_interface (daemon);
 #endif
+#ifdef HAVE_VNC
+  export_vnc_server_interface (daemon);
+#endif
 }
 
 static void
@@ -289,6 +365,9 @@ unexport_services_status (GrdDaemon *daemon)
 
 #ifdef HAVE_RDP
   unexport_rdp_server_interface (daemon);
+#endif
+#ifdef HAVE_VNC
+  unexport_vnc_server_interface (daemon);
 #endif
 }
 

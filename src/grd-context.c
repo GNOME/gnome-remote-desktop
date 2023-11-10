@@ -44,6 +44,7 @@ struct _GrdContext
   GrdRuntimeMode runtime_mode;
 
   GrdDBusRemoteDesktopRdpServer *rdp_server_iface;
+  GrdDBusRemoteDesktopVncServer *vnc_server_iface;
 };
 
 G_DEFINE_TYPE (GrdContext, grd_context, G_TYPE_OBJECT)
@@ -64,6 +65,12 @@ GrdDBusRemoteDesktopRdpServer *
 grd_context_get_rdp_server_interface (GrdContext *context)
 {
   return context->rdp_server_iface;
+}
+
+GrdDBusRemoteDesktopVncServer *
+grd_context_get_vnc_server_interface (GrdContext *context)
+{
+  return context->vnc_server_iface;
 }
 
 void
@@ -89,6 +96,15 @@ grd_context_set_rdp_server_interface (
 {
   g_clear_object (&context->rdp_server_iface);
   context->rdp_server_iface = rdp_server_iface;
+}
+
+void
+grd_context_set_vnc_server_interface (
+  GrdContext                    *context,
+  GrdDBusRemoteDesktopVncServer *vnc_server_iface)
+{
+  g_clear_object (&context->vnc_server_iface);
+  context->vnc_server_iface = vnc_server_iface;
 }
 
 GrdSettings *
