@@ -55,6 +55,9 @@ grd_settings_user_constructed (GObject *object)
   g_settings_bind (settings->rdp_settings, "port",
                    settings, "rdp-port",
                    G_SETTINGS_BIND_DEFAULT);
+  g_settings_bind (settings->rdp_settings, "negotiate-port",
+                   settings, "rdp-negotiate-port",
+                   G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->rdp_settings, "enable",
                    settings, "rdp-enabled",
                    G_SETTINGS_BIND_DEFAULT);

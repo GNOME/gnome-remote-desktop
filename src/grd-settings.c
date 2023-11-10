@@ -38,6 +38,7 @@ enum
 
   PROP_RUNTIME_MODE,
   PROP_RDP_PORT,
+  PROP_RDP_NEGOTIATE_PORT,
   PROP_VNC_PORT,
   PROP_RDP_ENABLED,
   PROP_VNC_ENABLED,
@@ -57,6 +58,7 @@ typedef struct _GrdSettingsPrivate
 
   struct {
     int port;
+    gboolean negotiate_port;
     gboolean is_enabled;
     gboolean view_only;
     GrdRdpScreenShareMode screen_share_mode;
@@ -311,6 +313,9 @@ grd_settings_get_property (GObject    *object,
     case PROP_RDP_PORT:
       g_value_set_int (value, priv->rdp.port);
       break;
+    case PROP_RDP_NEGOTIATE_PORT:
+      g_value_set_boolean (value, priv->rdp.negotiate_port);
+      break;
     case PROP_VNC_PORT:
       g_value_set_int (value, priv->vnc.port);
       break;
@@ -365,6 +370,9 @@ grd_settings_set_property (GObject      *object,
       break;
     case PROP_RDP_PORT:
       priv->rdp.port = g_value_get_int (value);
+      break;
+    case PROP_RDP_NEGOTIATE_PORT:
+      priv->rdp.negotiate_port = g_value_get_boolean (value);
       break;
     case PROP_VNC_PORT:
       priv->vnc.port = g_value_get_int (value);
@@ -439,6 +447,15 @@ grd_settings_class_init (GrdSettingsClass *klass)
                                                      G_PARAM_READWRITE |
                                                      G_PARAM_CONSTRUCT |
                                                      G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_RDP_NEGOTIATE_PORT,
+                                   g_param_spec_boolean ("rdp-negotiate-port",
+                                                         "rdp negotiate port",
+                                                         "rdp negotiate port",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE |
+                                                         G_PARAM_CONSTRUCT |
+                                                         G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
                                    PROP_VNC_PORT,
                                    g_param_spec_int ("vnc-port",
