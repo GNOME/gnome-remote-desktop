@@ -27,6 +27,7 @@
 
 #include "grd-dbus-mutter-remote-desktop.h"
 #include "grd-dbus-mutter-screen-cast.h"
+#include "grd-dbus-remote-desktop.h"
 #include "grd-settings.h"
 #include "grd-types.h"
 
@@ -40,11 +41,16 @@ GrdDBusMutterRemoteDesktop * grd_context_get_mutter_remote_desktop_proxy (GrdCon
 
 GrdDBusMutterScreenCast * grd_context_get_mutter_screen_cast_proxy (GrdContext *context);
 
+GrdDBusRemoteDesktopRdpServer * grd_context_get_rdp_server_interface (GrdContext *context);
+
 void grd_context_set_mutter_remote_desktop_proxy (GrdContext                 *context,
                                                   GrdDBusMutterRemoteDesktop *proxy);
 
 void grd_context_set_mutter_screen_cast_proxy (GrdContext              *context,
                                                GrdDBusMutterScreenCast *proxy);
+
+void grd_context_set_rdp_server_interface (GrdContext                    *context,
+                                           GrdDBusRemoteDesktopRdpServer *rdp_server_iface);
 
 GrdSettings * grd_context_get_settings (GrdContext *context);
 

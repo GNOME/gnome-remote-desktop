@@ -42,6 +42,8 @@ struct _GrdContext
   GrdSettings *settings;
 
   GrdRuntimeMode runtime_mode;
+
+  GrdDBusRemoteDesktopRdpServer *rdp_server_iface;
 };
 
 G_DEFINE_TYPE (GrdContext, grd_context, G_TYPE_OBJECT)
@@ -58,6 +60,12 @@ grd_context_get_mutter_screen_cast_proxy (GrdContext *context)
   return context->mutter_screen_cast_proxy;
 }
 
+GrdDBusRemoteDesktopRdpServer *
+grd_context_get_rdp_server_interface (GrdContext *context)
+{
+  return context->rdp_server_iface;
+}
+
 void
 grd_context_set_mutter_remote_desktop_proxy (GrdContext                 *context,
                                              GrdDBusMutterRemoteDesktop *proxy)
@@ -72,6 +80,15 @@ grd_context_set_mutter_screen_cast_proxy (GrdContext              *context,
 {
   g_clear_object (&context->mutter_screen_cast_proxy);
   context->mutter_screen_cast_proxy = proxy;
+}
+
+void
+grd_context_set_rdp_server_interface (
+  GrdContext                    *context,
+  GrdDBusRemoteDesktopRdpServer *rdp_server_iface)
+{
+  g_clear_object (&context->rdp_server_iface);
+  context->rdp_server_iface = rdp_server_iface;
 }
 
 GrdSettings *

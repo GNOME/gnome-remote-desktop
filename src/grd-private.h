@@ -25,6 +25,7 @@
 
 #define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop"
 #define REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/RemoteDesktop"
+#define GRD_RDP_SERVER_OBJECT_PATH "/org/gnome/RemoteDesktop/Rdp/Server"
 #define MUTTER_REMOTE_DESKTOP_BUS_NAME "org.gnome.Mutter.RemoteDesktop"
 #define MUTTER_REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/Mutter/RemoteDesktop"
 #define MUTTER_SCREEN_CAST_BUS_NAME "org.gnome.Mutter.ScreenCast"

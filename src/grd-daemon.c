@@ -132,6 +132,59 @@ unexport_remote_desktop_interface (GrdDaemon *daemon)
 
 #ifdef HAVE_RDP
 static void
+export_rdp_server_interface (GrdDaemon *daemon)
+{
+  GrdDBusRemoteDesktopRdpServer *rdp_server_interface;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdSettings *settings = grd_context_get_settings (priv->context);
+  GDBusConnection *connection = g_application_get_dbus_connection (
+                                  G_APPLICATION (daemon));
+
+  rdp_server_interface =
+    grd_dbus_remote_desktop_rdp_server_skeleton_new ();
+
+  g_object_bind_property (settings, "rdp-enabled",
+                          rdp_server_interface, "enabled",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property (settings, "rdp-port",
+                          rdp_server_interface, "port",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property (settings, "rdp-negotiate-port",
+                          rdp_server_interface, "negotiate-port",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property (settings, "rdp-server-cert",
+                          rdp_server_interface, "tls-cert",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property (settings, "rdp-server-key",
+                          rdp_server_interface, "tls-key",
+                          G_BINDING_SYNC_CREATE);
+  g_object_bind_property (settings, "rdp-view-only",
+                          rdp_server_interface, "view-only",
+                          G_BINDING_SYNC_CREATE);
+
+  g_dbus_interface_skeleton_export (
+    G_DBUS_INTERFACE_SKELETON (rdp_server_interface),
+    connection,
+    GRD_RDP_SERVER_OBJECT_PATH,
+    NULL);
+
+  grd_context_set_rdp_server_interface (priv->context, rdp_server_interface);
+}
+
+static void
+unexport_rdp_server_interface (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdDBusRemoteDesktopRdpServer *rdp_server_interface =
+    grd_context_get_rdp_server_interface (priv->context);
+
+  g_dbus_interface_skeleton_unexport (
+    G_DBUS_INTERFACE_SKELETON (rdp_server_interface));
+
+  grd_context_set_rdp_server_interface (priv->context, NULL);
+}
+
+static void
 stop_rdp_server (GrdDaemon *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
@@ -223,12 +276,20 @@ static void
 export_services_status (GrdDaemon *daemon)
 {
   export_remote_desktop_interface (daemon);
+
+#ifdef HAVE_RDP
+  export_rdp_server_interface (daemon);
+#endif
 }
 
 static void
 unexport_services_status (GrdDaemon *daemon)
 {
   unexport_remote_desktop_interface (daemon);
+
+#ifdef HAVE_RDP
+  unexport_rdp_server_interface (daemon);
+#endif
 }
 
 void
