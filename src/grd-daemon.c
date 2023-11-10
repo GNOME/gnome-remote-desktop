@@ -143,12 +143,8 @@ export_rdp_server_interface (GrdDaemon *daemon)
   rdp_server_interface =
     grd_dbus_remote_desktop_rdp_server_skeleton_new ();
 
-  g_object_bind_property (settings, "rdp-enabled",
-                          rdp_server_interface, "enabled",
-                          G_BINDING_SYNC_CREATE);
-  g_object_bind_property (settings, "rdp-port",
-                          rdp_server_interface, "port",
-                          G_BINDING_SYNC_CREATE);
+  grd_dbus_remote_desktop_rdp_server_set_enabled (rdp_server_interface, FALSE);
+  grd_dbus_remote_desktop_rdp_server_set_port (rdp_server_interface, -1);
   g_object_bind_property (settings, "rdp-negotiate-port",
                           rdp_server_interface, "negotiate-port",
                           G_BINDING_SYNC_CREATE);

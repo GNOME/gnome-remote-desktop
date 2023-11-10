@@ -146,7 +146,9 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
 {
   GrdSettings *settings = grd_context_get_settings (rdp_server->context);
   uint16_t rdp_port;
+  uint16_t selected_rdp_port = 0;
   gboolean negotiate_port;
+  GrdDBusRemoteDesktopRdpServer *rdp_server_iface;
 
   g_object_get (G_OBJECT (settings),
                 "rdp-port", &rdp_port,
@@ -155,11 +157,19 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
 
   if (!grd_bind_socket (G_SOCKET_LISTENER (rdp_server),
                         rdp_port,
+                        &selected_rdp_port,
                         negotiate_port,
                         error))
     return FALSE;
 
+  g_assert (selected_rdp_port != 0);
+
   g_signal_connect (rdp_server, "incoming", G_CALLBACK (on_incoming), NULL);
+
+  rdp_server_iface = grd_context_get_rdp_server_interface (rdp_server->context);
+  grd_dbus_remote_desktop_rdp_server_set_enabled (rdp_server_iface, TRUE);
+  grd_dbus_remote_desktop_rdp_server_set_port (rdp_server_iface,
+                                               selected_rdp_port);
 
   return TRUE;
 }
@@ -167,8 +177,14 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
 void
 grd_rdp_server_stop (GrdRdpServer *rdp_server)
 {
+  GrdDBusRemoteDesktopRdpServer *rdp_server_iface;
+
   g_socket_service_stop (G_SOCKET_SERVICE (rdp_server));
   g_socket_listener_close (G_SOCKET_LISTENER (rdp_server));
+
+  rdp_server_iface = grd_context_get_rdp_server_interface (rdp_server->context);
+  grd_dbus_remote_desktop_rdp_server_set_enabled (rdp_server_iface, FALSE);
+  grd_dbus_remote_desktop_rdp_server_set_port (rdp_server_iface, -1);
 
   while (rdp_server->sessions)
     {

@@ -159,6 +159,7 @@ grd_create_fd_source (int             fd,
 gboolean
 grd_bind_socket (GSocketListener  *server,
                  uint16_t          port,
+                 uint16_t         *selected_port,
                  gboolean          negotiate_port,
                  GError          **error)
 {
@@ -213,7 +214,10 @@ grd_bind_socket (GSocketListener  *server,
 
 out:
   if (is_bound)
-    g_debug ("%s Server bound to TCP port %hu", message_tag, port);
+    {
+      g_debug ("%s Server bound to TCP port %hu", message_tag, port);
+      *selected_port = port;
+    }
 
   return is_bound;
 }

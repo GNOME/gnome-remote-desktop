@@ -57,6 +57,7 @@ GSource * grd_create_fd_source (int             fd,
 
 gboolean grd_bind_socket (GSocketListener  *server,
                           uint16_t          port,
+                          uint16_t         *selected_port,
                           gboolean          port_negotiation_enabled,
                           GError          **error);
 
