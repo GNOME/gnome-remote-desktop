@@ -208,6 +208,26 @@ rdp_disable_view_only (GrdSettings  *settings,
   return TRUE;
 }
 
+static gboolean
+rdp_enable_port_negotiation (GrdSettings  *settings,
+                             int           argc,
+                             char        **argv,
+                             GError      **error)
+{
+  g_object_set (G_OBJECT (settings), "rdp-negotiate-port", TRUE, NULL);
+  return TRUE;
+}
+
+static gboolean
+rdp_disable_port_negotiation (GrdSettings  *settings,
+                              int           argc,
+                              char        **argv,
+                              GError      **error)
+{
+  g_object_set (G_OBJECT (settings), "rdp-negotiate-port", FALSE, NULL);
+  return TRUE;
+}
+
 static const SubCommand rdp_subcommands[] = {
   { "set-port", rdp_set_port, 1 },
   { "enable", rdp_enable, 0 },
@@ -218,6 +238,8 @@ static const SubCommand rdp_subcommands[] = {
   { "clear-credentials", rdp_clear_credentials, 0 },
   { "enable-view-only", rdp_enable_view_only, 0 },
   { "disable-view-only", rdp_disable_view_only, 0 },
+  { "enable-port-negotiation", rdp_enable_port_negotiation, 0 },
+  { "disable-port-negotiation", rdp_disable_port_negotiation, 0 },
 };
 
 static int
@@ -392,6 +414,10 @@ print_help (void)
       "                                               devices\n"
       "    disable-view-only                        - Enable remote control of input\n"
       "                                               devices\n"
+      "    enable-port-negotiation                  - If unavailable, listen to\n"
+      "                                               a different port\n"
+      "    disable-port-negotiation                 - If unavailable, don't listen\n"
+      "                                               to a different port\n"
       "\n");
 #endif /* HAVE_RDP */
 #ifdef HAVE_VNC
@@ -481,6 +507,7 @@ print_rdp_status (GrdSettings *settings,
   uint16_t port;
   gboolean enabled;
   gboolean view_only;
+  gboolean negotiate_port;
   g_autofree char *tls_cert = NULL;
   g_autofree char *tls_key = NULL;
   g_autofree char *username = NULL;
@@ -493,6 +520,7 @@ print_rdp_status (GrdSettings *settings,
                 "rdp-server-key", &tls_key,
                 "rdp-server-cert", &tls_cert,
                 "rdp-view-only", &view_only,
+                "rdp-negotiate-port", &negotiate_port,
                 NULL);
 
   printf ("RDP:\n");
@@ -502,6 +530,7 @@ print_rdp_status (GrdSettings *settings,
   printf ("\tTLS certificate: %s\n", tls_cert);
   printf ("\tTLS key: %s\n", tls_key);
   printf ("\tView-only: %s\n", view_only ? "yes" : "no");
+  printf ("\tNegotiate port: %s\n", negotiate_port ? "yes" : "no");
 
   grd_settings_get_rdp_credentials (settings,
                                     &username, &password,
