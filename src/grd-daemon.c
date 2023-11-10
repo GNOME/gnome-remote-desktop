@@ -34,6 +34,7 @@
 #include "grd-context.h"
 #include "grd-daemon-user.h"
 #include "grd-dbus-mutter-remote-desktop.h"
+#include "grd-dbus-remote-desktop.h"
 #include "grd-private.h"
 #include "grd-rdp-server.h"
 #include "grd-session.h"
@@ -68,6 +69,8 @@ typedef struct _GrdDaemonPrivate
 
   GrdContext *context;
 
+  GrdDBusRemoteDesktopOrgGnomeRemoteDesktop *remote_desktop_interface;
+
 #ifdef HAVE_RDP
   GrdRdpServer *rdp_server;
 #endif
@@ -84,6 +87,47 @@ grd_daemon_get_context (GrdDaemon *daemon)
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
 
   return priv->context;
+}
+
+static void
+export_remote_desktop_interface (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (priv->context);
+  GDBusConnection *connection = g_application_get_dbus_connection (
+                                  G_APPLICATION (daemon));
+
+  priv->remote_desktop_interface =
+    grd_dbus_remote_desktop_org_gnome_remote_desktop_skeleton_new ();
+
+  switch (runtime_mode)
+  {
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      grd_dbus_remote_desktop_org_gnome_remote_desktop_set_runtime_mode (
+        priv->remote_desktop_interface, "screen-share");
+      break;
+    case GRD_RUNTIME_MODE_HEADLESS:
+      grd_dbus_remote_desktop_org_gnome_remote_desktop_set_runtime_mode (
+        priv->remote_desktop_interface, "headless");
+      break;
+  }
+
+  g_dbus_interface_skeleton_export (
+    G_DBUS_INTERFACE_SKELETON (priv->remote_desktop_interface),
+    connection,
+    REMOTE_DESKTOP_OBJECT_PATH,
+    NULL);
+}
+
+static void
+unexport_remote_desktop_interface (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  g_dbus_interface_skeleton_unexport (
+    G_DBUS_INTERFACE_SKELETON (priv->remote_desktop_interface));
+
+  g_clear_object (&priv->remote_desktop_interface);
 }
 
 #ifdef HAVE_RDP
@@ -174,6 +218,18 @@ start_vnc_server (GrdDaemon *daemon)
     }
 }
 #endif /* HAVE_VNC */
+
+static void
+export_services_status (GrdDaemon *daemon)
+{
+  export_remote_desktop_interface (daemon);
+}
+
+static void
+unexport_services_status (GrdDaemon *daemon)
+{
+  unexport_remote_desktop_interface (daemon);
+}
 
 void
 grd_daemon_maybe_enable_services (GrdDaemon *daemon)
@@ -413,6 +469,8 @@ grd_daemon_startup (GApplication *app)
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdSettings *settings = grd_context_get_settings (priv->context);
 
+  export_services_status (daemon);
+
 #ifdef HAVE_RDP
   g_signal_connect (settings, "notify::rdp-enabled",
                     G_CALLBACK (on_rdp_enabled_changed),
@@ -440,6 +498,8 @@ grd_daemon_shutdown (GApplication *app)
   g_clear_object (&priv->cancellable);
 
   disable_services (daemon);
+
+  unexport_services_status (daemon);
 
   grd_context_set_mutter_remote_desktop_proxy (priv->context, NULL);
   g_clear_handle_id (&priv->mutter_remote_desktop_watch_name_id, g_bus_unwatch_name);

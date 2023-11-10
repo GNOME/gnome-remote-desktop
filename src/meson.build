@@ -181,6 +181,10 @@ gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-mutter-remote-desktop',
                                           'org.gnome.Mutter.RemoteDesktop.xml',
                                           interface_prefix: 'org.gnome.Mutter.',
                                           namespace: 'GrdDBusMutter')
+gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-remote-desktop',
+                                          'org.gnome.RemoteDesktop.xml',
+                                          interface_prefix: 'org.gnome.RemoteDesktop.',
+                                          namespace: 'GrdDBusRemoteDesktop')
 
 gen_enum_types = gnome.mkenums('grd-enum-types',
   h_template: 'grd-enum-types.h.in',
