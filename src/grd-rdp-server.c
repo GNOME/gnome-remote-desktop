@@ -208,6 +208,7 @@ grd_rdp_server_get_property (GObject    *object,
     {
     case PROP_CONTEXT:
       g_value_set_object (value, rdp_server->context);
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
