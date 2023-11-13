@@ -85,6 +85,15 @@
         The VNC client will connect to this port to use this VNC server.
       </description>
     </key>
+    <key name='negotiate-port' type='b'>
+      <default>false</default>
+      <summary>Search a different VNC port if the configured one is used</summary>
+      <description>
+        When negotiate-port is set to 'true' the VNC server will attempt to
+        listen to the first available of the next 10 ports starting from the
+        configured one.
+      </description>
+    </key>
     <key name='enable' type='b'>
       <default>false</default>
       <summary>Whether the VNC backend is enabled or not</summary>

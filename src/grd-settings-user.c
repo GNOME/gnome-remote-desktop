@@ -76,6 +76,9 @@ grd_settings_user_constructed (GObject *object)
   g_settings_bind (settings->vnc_settings, "port",
                    settings, "vnc-port",
                    G_SETTINGS_BIND_DEFAULT);
+  g_settings_bind (settings->vnc_settings, "negotiate-port",
+                   settings, "vnc-negotiate-port",
+                   G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->vnc_settings, "enable",
                    settings, "vnc-enabled",
                    G_SETTINGS_BIND_DEFAULT);
