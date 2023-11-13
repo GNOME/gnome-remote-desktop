@@ -367,6 +367,27 @@ vnc_disable_view_only (GrdSettings  *settings,
   return TRUE;
 }
 
+static gboolean
+vnc_enable_port_negotiation (GrdSettings  *settings,
+                             int           argc,
+                             char        **argv,
+                             GError      **error)
+{
+  g_object_set (G_OBJECT (settings), "vnc-negotiate-port", TRUE, NULL);
+  return TRUE;
+}
+
+static gboolean
+vnc_disable_port_negotiation (GrdSettings  *settings,
+                              int           argc,
+                              char        **argv,
+                              GError      **error)
+{
+  g_object_set (G_OBJECT (settings), "vnc-negotiate-port", FALSE, NULL);
+  return TRUE;
+}
+
+
 static const SubCommand vnc_subcommands[] = {
   { "set-port", vnc_set_port, 1 },
   { "enable", vnc_enable, 0 },
@@ -376,6 +397,8 @@ static const SubCommand vnc_subcommands[] = {
   { "set-auth-method", vnc_set_auth_method, 1 },
   { "enable-view-only", vnc_enable_view_only, 0 },
   { "disable-view-only", vnc_disable_view_only, 0 },
+  { "enable-port-negotiation", vnc_enable_port_negotiation, 0 },
+  { "disable-port-negotiation", vnc_disable_port_negotiation, 0 },
 };
 
 static int
@@ -435,6 +458,10 @@ print_help (void)
       "                                               devices\n"
       "    disable-view-only                        - Enable remote control of input\n"
       "                                               devices\n"
+      "    enable-port-negotiation                  - If unavailable, listen to\n"
+      "                                               a different port\n"
+      "    disable-port-negotiation                 - If unavailable, don't listen\n"
+      "                                               to a different port\n"
       "\n");
 #endif /* HAVE_VNC */
   /* For translators: This first words on each line is the command;
@@ -565,6 +592,7 @@ print_vnc_status (GrdSettings *settings,
   uint16_t port;
   gboolean enabled;
   gboolean view_only;
+  gboolean negotiate_port;
   GrdVncAuthMethod auth_method;
   g_autofree char *password = NULL;
   g_autoptr (GError) error = NULL;
@@ -574,6 +602,7 @@ print_vnc_status (GrdSettings *settings,
                 "vnc-enabled", &enabled,
                 "vnc-view-only", &view_only,
                 "vnc-auth-method", &auth_method,
+                "vnc-negotiate-port", &negotiate_port,
                 NULL);
 
   password = grd_settings_get_vnc_password (settings, &error);
@@ -592,6 +621,7 @@ print_vnc_status (GrdSettings *settings,
   else if (auth_method == GRD_VNC_AUTH_METHOD_PASSWORD)
     printf ("\tAuth method: password\n");
   printf ("\tView-only: %s\n", view_only ? "yes" : "no");
+  printf ("\tNegotiate port: %s\n", negotiate_port ? "yes" : "no");
   if (show_credentials)
     {
       printf ("\tPassword: %s\n", password);
