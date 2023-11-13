@@ -136,7 +136,9 @@ grd_vnc_server_start (GrdVncServer  *vnc_server,
 {
   GrdSettings *settings = grd_context_get_settings (vnc_server->context);
   uint16_t vnc_port;
+  uint16_t selected_vnc_port = 0;
   gboolean negotiate_port;
+  GrdDBusRemoteDesktopVncServer *vnc_server_iface;
 
   g_object_get (G_OBJECT (settings),
                 "vnc-port", &vnc_port,
@@ -145,11 +147,19 @@ grd_vnc_server_start (GrdVncServer  *vnc_server,
 
   if (!grd_bind_socket (G_SOCKET_LISTENER (vnc_server),
                         vnc_port,
+                        &selected_vnc_port,
                         negotiate_port,
                         error))
     return FALSE;
 
+  g_assert (selected_vnc_port != 0);
+
   g_signal_connect (vnc_server, "incoming", G_CALLBACK (on_incoming), NULL);
+
+  vnc_server_iface = grd_context_get_vnc_server_interface (vnc_server->context);
+  grd_dbus_remote_desktop_vnc_server_set_enabled (vnc_server_iface, 1);
+  grd_dbus_remote_desktop_vnc_server_set_port (vnc_server_iface,
+                                               selected_vnc_port);
 
   return TRUE;
 }
@@ -157,8 +167,14 @@ grd_vnc_server_start (GrdVncServer  *vnc_server,
 void
 grd_vnc_server_stop (GrdVncServer *vnc_server)
 {
+  GrdDBusRemoteDesktopVncServer *vnc_server_iface;
+
   g_socket_service_stop (G_SOCKET_SERVICE (vnc_server));
   g_socket_listener_close (G_SOCKET_LISTENER (vnc_server));
+
+  vnc_server_iface = grd_context_get_vnc_server_interface (vnc_server->context);
+  grd_dbus_remote_desktop_vnc_server_set_enabled (vnc_server_iface, FALSE);
+  grd_dbus_remote_desktop_vnc_server_set_port (vnc_server_iface, -1);
 
   while (vnc_server->sessions)
     {

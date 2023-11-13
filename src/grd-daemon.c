@@ -266,12 +266,8 @@ export_vnc_server_interface (GrdDaemon *daemon)
   vnc_server_interface =
     grd_dbus_remote_desktop_vnc_server_skeleton_new ();
 
-  g_object_bind_property (settings, "vnc-enabled",
-                          vnc_server_interface, "enabled",
-                          G_BINDING_SYNC_CREATE);
-  g_object_bind_property (settings, "vnc-port",
-                          vnc_server_interface, "port",
-                          G_BINDING_SYNC_CREATE);
+  grd_dbus_remote_desktop_vnc_server_set_enabled (vnc_server_interface, FALSE);
+  grd_dbus_remote_desktop_vnc_server_set_port (vnc_server_interface, -1);
   g_object_bind_property (settings, "vnc-negotiate-port",
                           vnc_server_interface, "negotiate-port",
                           G_BINDING_SYNC_CREATE);
