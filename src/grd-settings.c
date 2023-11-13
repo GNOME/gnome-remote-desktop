@@ -22,7 +22,8 @@
 
 #include "grd-settings.h"
 
-#include "grd-context.h"
+#include <gio/gio.h>
+
 #include "grd-credentials-file.h"
 #include "grd-credentials-libsecret.h"
 #include "grd-credentials-tpm.h"
