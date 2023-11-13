@@ -25,6 +25,7 @@
 #include "grd-utils.h"
 
 #include "grd-rdp-server.h"
+#include "grd-vnc-server.h"
 
 #define GRD_SERVER_PORT_RANGE 10
 
@@ -167,7 +168,14 @@ grd_bind_socket (GSocketListener  *server,
 #ifdef HAVE_RDP
   if (GRD_IS_RDP_SERVER (server))
     message_tag = g_strdup ("[RDP]");
+  else
 #endif
+#ifdef HAVE_VNC
+  if (GRD_IS_VNC_SERVER (server))
+    message_tag = g_strdup ("[VNC]");
+  else
+#endif
+    g_assert_not_reached ();
 
   if (!negotiate_port)
     {

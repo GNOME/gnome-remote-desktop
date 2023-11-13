@@ -30,6 +30,7 @@
 #include "grd-context.h"
 #include "grd-debug.h"
 #include "grd-session-vnc.h"
+#include "grd-utils.h"
 
 enum
 {
@@ -135,12 +136,17 @@ grd_vnc_server_start (GrdVncServer  *vnc_server,
 {
   GrdSettings *settings = grd_context_get_settings (vnc_server->context);
   uint16_t vnc_port;
+  gboolean negotiate_port;
 
-  g_object_get (G_OBJECT (settings), "vnc-port", &vnc_port, NULL);
-  if (!g_socket_listener_add_inet_port (G_SOCKET_LISTENER (vnc_server),
-                                        vnc_port,
-                                        NULL,
-                                        error))
+  g_object_get (G_OBJECT (settings),
+                "vnc-port", &vnc_port,
+                "vnc-negotiate-port", &negotiate_port,
+                NULL);
+
+  if (!grd_bind_socket (G_SOCKET_LISTENER (vnc_server),
+                        vnc_port,
+                        negotiate_port,
+                        error))
     return FALSE;
 
   g_signal_connect (vnc_server, "incoming", G_CALLBACK (on_incoming), NULL);
