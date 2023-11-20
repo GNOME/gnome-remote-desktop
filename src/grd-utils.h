@@ -55,4 +55,9 @@ GSource * grd_create_fd_source (int             fd,
                                 gpointer        user_data,
                                 GDestroyNotify  notify);
 
+gboolean grd_bind_socket (GSocketListener  *server,
+                          uint16_t          port,
+                          gboolean          port_negotiation_enabled,
+                          GError          **error);
+
 #endif /* GRD_UTILS_H */

@@ -24,6 +24,8 @@
 
 #include "grd-utils.h"
 
+#define GRD_SERVER_PORT_RANGE 10
+
 typedef struct _GrdFdSource
 {
   GSource source;
@@ -149,4 +151,53 @@ grd_create_fd_source (int             fd,
   g_source_add_poll (source, &fd_source->poll_fd);
 
   return source;
+}
+
+gboolean
+grd_bind_socket (GSocketListener  *server,
+                 uint16_t          port,
+                 gboolean          negotiate_port,
+                 GError          **error)
+{
+  gboolean is_bound = FALSE;
+
+  if (!negotiate_port)
+    {
+      is_bound = g_socket_listener_add_inet_port (server,
+                                                  port,
+                                                  NULL,
+                                                  error);
+      goto out;
+    }
+
+  for (; port <= port + GRD_SERVER_PORT_RANGE; port++)
+    {
+      g_autoptr (GError) local_error = NULL;
+
+      g_assert (port < G_MAXUINT16);
+
+      is_bound = g_socket_listener_add_inet_port (server,
+                                                  port,
+                                                  NULL,
+                                                  &local_error);
+      if (local_error)
+        {
+          g_debug ("Server could not be bound to TCP port %hu: %s",
+                   port, local_error->message);
+        }
+
+      if (is_bound)
+        break;
+    }
+
+  if (!is_bound)
+    port = g_socket_listener_add_any_inet_port (server, NULL, error);
+
+  is_bound = port != 0;
+
+out:
+  if (is_bound)
+    g_debug ("Server bound to TCP port %hu", port);
+
+  return is_bound;
 }
