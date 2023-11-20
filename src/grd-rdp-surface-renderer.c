@@ -21,6 +21,8 @@
 
 #include "grd-rdp-surface-renderer.h"
 
+#include "grd-rdp-buffer.h"
+#include "grd-rdp-surface.h"
 #include "grd-session-rdp.h"
 
 struct _GrdRdpSurfaceRenderer
@@ -59,6 +61,21 @@ grd_rdp_surface_renderer_update_suspension_state (GrdRdpSurfaceRenderer *surface
   surface_renderer->rendering_suspended = suspend_rendering;
   if (rendering_was_suspended && !surface_renderer->rendering_suspended)
     grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
+}
+
+void
+grd_rdp_surface_renderer_submit_buffer (GrdRdpSurfaceRenderer *surface_renderer,
+                                        GrdRdpBuffer          *buffer)
+{
+  GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+
+  g_mutex_lock (&rdp_surface->surface_mutex);
+  g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_release);
+
+  rdp_surface->pending_framebuffer = buffer;
+  g_mutex_unlock (&rdp_surface->surface_mutex);
+
+  grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
 }
 
 void
