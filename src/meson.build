@@ -244,6 +244,10 @@ configure_file(input: 'gnome-remote-desktop.service.in',
                output: 'gnome-remote-desktop.service',
                configuration: service_config,
                install_dir: servicedir)
+configure_file(input: 'gnome-remote-desktop-headless.service.in',
+               output: 'gnome-remote-desktop-headless.service',
+               configuration: service_config,
+               install_dir: servicedir)
 
 generated_enums_schema = custom_target('gsettings-enums',
               input: 'grd-enums.h',

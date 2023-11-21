@@ -23,7 +23,8 @@
 #ifndef GRD_PRIVATE_H
 #define GRD_PRIVATE_H
 
-#define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop"
+#define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop.User"
+#define GRD_DAEMON_HEADLESS_APPLICATION_ID "org.gnome.RemoteDesktop.Headless"
 #define REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/RemoteDesktop"
 #define GRD_RDP_SERVER_OBJECT_PATH "/org/gnome/RemoteDesktop/Rdp/Server"
 #define GRD_VNC_SERVER_OBJECT_PATH "/org/gnome/RemoteDesktop/Vnc/Server"

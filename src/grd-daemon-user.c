@@ -39,13 +39,24 @@ grd_daemon_user_new (GrdRuntimeMode   runtime_mode,
 {
   GrdContext *context;
   GrdDaemonUser *daemon_user;
+  const char *application_id = NULL;
 
   context = grd_context_new (runtime_mode, error);
   if (!context)
     return NULL;
 
+  switch (runtime_mode)
+    {
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      application_id = GRD_DAEMON_USER_APPLICATION_ID;
+      break;
+    case GRD_RUNTIME_MODE_HEADLESS:
+      application_id = GRD_DAEMON_HEADLESS_APPLICATION_ID;
+      break;
+    }
+
   daemon_user = g_object_new (GRD_TYPE_DAEMON_USER,
-                              "application-id", GRD_DAEMON_USER_APPLICATION_ID,
+                              "application-id", application_id,
                               "flags", G_APPLICATION_IS_SERVICE,
                               "context", context,
                               NULL);

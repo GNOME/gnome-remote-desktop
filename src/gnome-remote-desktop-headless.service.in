@@ -1,0 +1,12 @@
+[Unit]
+Description=GNOME Remote Desktop (headless)
+Conflicts=gnome-remote-desktop.service
+
+[Service]
+Type=dbus
+BusName=org.gnome.RemoteDesktop.Headless
+ExecStart=@libexecdir@/gnome-remote-desktop-daemon --headless
+Restart=on-failure
+
+[Install]
+WantedBy=gnome-session.target
