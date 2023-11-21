@@ -2,14 +2,14 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 #
-# Yuri Chornoivan <yurchor@ukr.net>, 2021, 2022.
+# Yuri Chornoivan <yurchor@ukr.net>, 2021, 2022, 2023.
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/iss"
 "ues\n"
-"POT-Creation-Date: 2022-08-06 14:38+0000\n"
-"PO-Revision-Date: 2022-08-07 19:18+0300\n"
+"POT-Creation-Date: 2023-11-21 16:04+0000\n"
+"PO-Revision-Date: 2023-11-21 20:15+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -20,7 +20,7 @@ msgstr ""
 "%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Lokalize 20.12.0\n"
 
-#: src/grd-daemon.c:503
+#: src/grd-daemon.c:824
 msgid "GNOME Remote Desktop"
 msgstr "Віддалена стільниця GNOME"
 
@@ -46,18 +46,38 @@ msgstr "Відкинути"
 msgid "Accept"
 msgstr "Прийняти"
 
-#: src/grd-ctl.c:52
+#: src/grd-ctl.c:53
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Користування: %s [ПАРАМЕТРИ...] КОМАНДА [ПІДКОМАНДА]...\n"
 
-#: src/grd-ctl.c:444
+#: src/grd-ctl.c:421
 msgid "Commands:\n"
 msgstr "Команди:\n"
 
-#: src/grd-ctl.c:449
+#: src/grd-ctl.c:426
+#| msgid ""
+#| "  rdp                                        - RDP subcommands:\n"
+#| "    enable                                   - Enable the RDP backend\n"
+#| "    disable                                  - Disable the RDP backend\n"
+#| "    set-tls-cert <path-to-cert>              - Set path to TLS "
+#| "certificate\n"
+#| "    set-tls-key <path-to-key>                - Set path to TLS key\n"
+#| "    set-credentials <username> <password>    - Set username and password\n"
+#| "                                               credentials\n"
+#| "    clear-credentials                        - Clear username and "
+#| "password\n"
+#| "                                               credentials\n"
+#| "    enable-view-only                         - Disable remote control of "
+#| "input\n"
+#| "                                               devices\n"
+#| "    disable-view-only                        - Enable remote control of "
+#| "input\n"
+#| "                                               devices\n"
+#| "\n"
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -72,9 +92,15 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - підкоманди RDP:\n"
+"    set-port                                 - встановити пов'язаний із"
+" сервером порт\n"
 "    enable                                   - увімкнути модуль RDP\n"
 "    disable                                  - вимкнути модуль RDP\n"
 "    set-tls-cert <шлях-до-сертифіката>       - встановити шлях до "
@@ -90,11 +116,33 @@ msgstr ""
 "    disable-view-only                        - увімкнути віддалене керування "
 "пристроями\n"
 "                                               введення\n"
+"    enable-port-negotiation                  - якщо порт недоступний,"
+" очікувати на\n"
+"                                               дані на іншому порту\n"
+"    disable-port-negotiation                 - якщо порт недоступний, не"
+" очікувати на\n"
+"                                               дані на іншому порту\n"
 "\n"
 
-#: src/grd-ctl.c:468
+#: src/grd-ctl.c:450
+#| msgid ""
+#| "  vnc                                        - VNC subcommands:\n"
+#| "    enable                                   - Enable the VNC backend\n"
+#| "    disable                                  - Disable the VNC backend\n"
+#| "    set-password <password>                  - Set the VNC password\n"
+#| "    clear-password                           - Clear the VNC password\n"
+#| "    set-auth-method password|prompt          - Set the authorization "
+#| "method\n"
+#| "    enable-view-only                         - Disable remote control of "
+#| "input\n"
+#| "                                               devices\n"
+#| "    disable-view-only                        - Enable remote control of "
+#| "input\n"
+#| "                                               devices\n"
+#| "\n"
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
@@ -106,9 +154,15 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  vnc                                        - підкоманди VNC:\n"
+"    set-port                                 - встановити пов'язаний із"
+" сервером порт\n"
 "    enable                                   - увімкнути модуль VNC\n"
 "    disable                                  - вимкнути модуль VNC\n"
 "    set-password <password>                  - встановити пароль до VNC\n"
@@ -121,14 +175,15 @@ msgstr ""
 "    disable-view-only                        - увімкнути віддалене керування "
 "пристроями\n"
 "                                               введення\n"
+"    enable-port-negotiation                  - якщо порт недоступний,"
+" очікувати на\n"
+"                                               дані на іншому порту\n"
+"    disable-port-negotiation                 - якщо порт недоступний, не"
+" очікувати на\n"
+"                                               дані на іншому порту\n"
 "\n"
 
-#: src/grd-ctl.c:483
-#| msgid ""
-#| "  status [--show-credentials]                - Show current status\n"
-#| "\n"
-#| "Options:\n"
-#| "  --help                                     - Print this help text\n"
+#: src/grd-ctl.c:470
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -140,23 +195,46 @@ msgstr ""
 "  status [--show-credentials]                - вивести поточний стан\n"
 "\n"
 "Параметри:\n"
-"  --headless                                 - використовувати автономне"
-" сховище реєстраційних даних\n"
+"  --headless                                 - використовувати автономне "
+"сховище реєстраційних даних\n"
 "  --help                                     - вивести цей довідковий текст\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "Порт, яким користується сервер RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr ""
+"Клієнт RDP встановить з'єднання з цим портом для використання цього сервера"
+" RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr "Шукати інший порт RDP, якщо налаштований вже використано"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiatie-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Якщо для negotiate-port встановлено значення «true», сервер RDP виконає"
+" спробу очікування даних на першому з доступних наступних 10 портів,"
+" починаючи з налаштованого."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Визначає, чи увімкнено модуль RDP"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Якщо встановлено у значення «true» модуль RDP буде ініціалізовано."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "Режим спільного використання екрана для з'єднань RDP"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -186,12 +264,12 @@ msgstr ""
 "визначено на основі налаштувань монітора, які надаються клієнтом віддаленої "
 "стільниці."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Шлях до файла сертифіката"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -199,16 +277,16 @@ msgstr ""
 "Що мати змогу користуватися RDP з захистом TLS, серверу RDP слід надати "
 "одразу файл закритого ключа і файл сертифіката."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Шлях до файла закритого ключа"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr "Дозволити віддалених з'єднанням лише переглядати вміст екрана"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -216,15 +294,38 @@ msgstr ""
 "Якщо view-only має значення true, користувачі віддалених з'єднань RDP не "
 "зможуть керувати пристроями введення (наприклад мишею або клавіатурою)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "Порт, яким користується сервер VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr ""
+"Клієнт VNC встановить з'єднання з цим портом для використання цього сервера"
+" VNC."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr "Шукати інший порт VNC, якщо налаштований вже використано"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Якщо для negotiate-port встановлено значення «true», сервер VNC виконає"
+" спробу очікування даних на першому з доступних наступних 10 портів,"
+" починаючи з налаштованого."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Визначає, чи увімкнено модуль VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Якщо встановлено у значення «true» модуль VNC буде ініціалізовано."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -232,11 +333,11 @@ msgstr ""
 "Якщо view-only має значення true, користувачі віддалених з'єднань VNC не "
 "зможуть керувати пристроями введення (наприклад мишею або клавіатурою)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "Спосіб, який буде використано для розпізнавання у з'єднаннях VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -251,11 +352,11 @@ msgstr ""
 "доступом до робочої станції. * password — вимога до віддаленого клієнта щодо "
 "надання відомого системі пароля"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
 msgstr "Режим спільного використання екрана для з'єднань VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
