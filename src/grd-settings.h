@@ -36,6 +36,8 @@ struct _GrdSettingsClass
   GObjectClass parent_class;
 };
 
+GrdRuntimeMode grd_settings_get_runtime_mode (GrdSettings *settings);
+
 void grd_settings_override_rdp_port (GrdSettings *settings,
                                      int          port);
 

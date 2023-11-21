@@ -61,12 +61,6 @@ grd_settings_user_constructed (GObject *object)
   g_settings_bind (settings->rdp_settings, "enable",
                    settings, "rdp-enabled",
                    G_SETTINGS_BIND_DEFAULT);
-  g_settings_bind (settings->rdp_settings, "view-only",
-                   settings, "rdp-view-only",
-                   G_SETTINGS_BIND_DEFAULT);
-  g_settings_bind (settings->rdp_settings, "screen-share-mode",
-                   settings, "rdp-screen-share-mode",
-                   G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->rdp_settings, "tls-cert",
                    settings, "rdp-server-cert",
                    G_SETTINGS_BIND_DEFAULT);
@@ -82,15 +76,35 @@ grd_settings_user_constructed (GObject *object)
   g_settings_bind (settings->vnc_settings, "enable",
                    settings, "vnc-enabled",
                    G_SETTINGS_BIND_DEFAULT);
-  g_settings_bind (settings->vnc_settings, "view-only",
-                   settings, "vnc-view-only",
-                   G_SETTINGS_BIND_DEFAULT);
-  g_settings_bind (settings->vnc_settings, "screen-share-mode",
-                   settings, "vnc-screen-share-mode",
-                   G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->vnc_settings, "auth-method",
                    settings, "vnc-auth-method",
                    G_SETTINGS_BIND_DEFAULT);
+
+  switch (grd_settings_get_runtime_mode (GRD_SETTINGS (settings)))
+    {
+    case GRD_RUNTIME_MODE_HEADLESS:
+      g_object_set (settings,
+                    "rdp-view-only", FALSE,
+                    "rdp-screen-share-mode", GRD_RDP_SCREEN_SHARE_MODE_EXTEND,
+                    "vnc-view-only", FALSE,
+                    "vnc-screen-share-mode", GRD_RDP_SCREEN_SHARE_MODE_EXTEND,
+                    NULL);
+      break;
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      g_settings_bind (settings->rdp_settings, "view-only",
+                       settings, "rdp-view-only",
+                       G_SETTINGS_BIND_DEFAULT);
+      g_settings_bind (settings->rdp_settings, "screen-share-mode",
+                       settings, "rdp-screen-share-mode",
+                       G_SETTINGS_BIND_DEFAULT);
+      g_settings_bind (settings->vnc_settings, "view-only",
+                       settings, "vnc-view-only",
+                       G_SETTINGS_BIND_DEFAULT);
+      g_settings_bind (settings->vnc_settings, "screen-share-mode",
+                       settings, "vnc-screen-share-mode",
+                       G_SETTINGS_BIND_DEFAULT);
+      break;
+    }
 
   G_OBJECT_CLASS (grd_settings_user_parent_class)->constructed (object);
 }

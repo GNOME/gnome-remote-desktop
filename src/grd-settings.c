@@ -78,6 +78,14 @@ typedef struct _GrdSettingsPrivate
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdSettings, grd_settings, G_TYPE_OBJECT)
 
+GrdRuntimeMode
+grd_settings_get_runtime_mode (GrdSettings *settings)
+{
+  GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
+
+  return priv->runtime_mode;
+}
+
 void
 grd_settings_override_rdp_port (GrdSettings *settings,
                                 int          port)
