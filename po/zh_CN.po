@@ -9,18 +9,18 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-08-08 04:05+0000\n"
-"PO-Revision-Date: 2022-08-10 20:04+0800\n"
-"Last-Translator: lumingzh <lumingzh@qq.com>\n"
+"POT-Creation-Date: 2023-11-21 16:04+0000\n"
+"PO-Revision-Date: 2023-11-22 15:54-0500\n"
+"Last-Translator: Boyuan Yang <073plan@gmail.com>\n"
 "Language-Team: Chinese - China <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Gtranslator 42.0\n"
-"Plural-Forms: nplurals=1; plural=0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.4.1\n"
 
-#: src/grd-daemon.c:503
+#: src/grd-daemon.c:824
 msgid "GNOME Remote Desktop"
 msgstr "GNOME 远程桌面"
 
@@ -44,18 +44,19 @@ msgstr "拒绝"
 msgid "Accept"
 msgstr "接受"
 
-#: src/grd-ctl.c:52
+#: src/grd-ctl.c:53
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "使用：%s [选项…] 命令 [子命令]…\n"
 
-#: src/grd-ctl.c:444
+#: src/grd-ctl.c:421
 msgid "Commands:\n"
 msgstr "命令：\n"
 
-#: src/grd-ctl.c:449
+#: src/grd-ctl.c:426
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -70,9 +71,14 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - RDP 子命令：\n"
+"    set-port                                 - 设置服务器绑定的端口\n"
 "    enable                                   - 启用 RDP 后端\n"
 "    disable                                  - 禁用 RDP 后端\n"
 "    set-tls-cert <path-to-cert>              - 设置到 TLS 证书的路径\n"
@@ -85,11 +91,32 @@ msgstr ""
 "                                               控制\n"
 "    disable-view-only                        - 启用输入设备的远程\n"
 "                                               控制\n"
+"    enable-port-negotiation                  - 如果端口不可用，则监听\n"
+"                                               另外的端口\n"
+"    disable-port-negotiation                 - 如果端口不可用，不要监听\n"
+"                                               另外的端口\n"
 "\n"
 
-#: src/grd-ctl.c:468
+#: src/grd-ctl.c:450
+#, fuzzy
+#| msgid ""
+#| "  vnc                                        - VNC subcommands:\n"
+#| "    enable                                   - Enable the VNC backend\n"
+#| "    disable                                  - Disable the VNC backend\n"
+#| "    set-password <password>                  - Set the VNC password\n"
+#| "    clear-password                           - Clear the VNC password\n"
+#| "    set-auth-method password|prompt          - Set the authorization "
+#| "method\n"
+#| "    enable-view-only                         - Disable remote control of "
+#| "input\n"
+#| "                                               devices\n"
+#| "    disable-view-only                        - Enable remote control of "
+#| "input\n"
+#| "                                               devices\n"
+#| "\n"
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
@@ -101,6 +128,10 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  vnc                                        - VNC 子命令：\n"
@@ -115,7 +146,7 @@ msgstr ""
 "                                               控制\n"
 "\n"
 
-#: src/grd-ctl.c:483
+#: src/grd-ctl.c:470
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -131,18 +162,36 @@ msgstr ""
 "  --help                                     - 显示该帮助文本\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "RDP 服务器使用的端口"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr "RDP 客户端将使用此端口连接到该 RDP 服务器。"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiatie-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
 msgstr "RDP 后端是否已启用"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "如果设置为“true”则 RDP 后端将初始化。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "RDP 连接的屏幕共享模式"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -165,12 +214,12 @@ msgstr ""
 "像当前用户会话的主监视器。* extend - 创建新的虚拟监视器并为远程桌面会话使用"
 "它。虚拟监视器的分辨率是从远程桌面客户端提交的监视器配置衍生出的。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "证书文件的路径"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -178,40 +227,58 @@ msgstr ""
 "如需使用支持 TLS 安全的 RDP 远程桌面，需要向 RDP 服务器提供私钥文件和证书文"
 "件。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "私钥文件的路径"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr "只允许远程连接查看屏幕内容"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr "若 view-only 为真，远程 RDP 连接不能操纵输入设备（如，鼠标和键盘）。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "VNC 服务器使用的端口"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
 msgstr "VNC 后端是否已启用"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "如果设置为“true”则 VNC 后端将初始化。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr "若 view-only 为真，远程 VNC 连接不能操纵输入设备（如，鼠标和键盘）。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "用于认证 VNC 连接的方法"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -223,11 +290,11 @@ msgstr ""
 "- 每次建立新连接时提示用户，需要可以物理接触工作站设备的人明确接受每个新连"
 "接。* password - 要求远程客户端提供一个已知的密码"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
 msgstr "VNC 连接的屏幕共享模式"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
