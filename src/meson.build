@@ -19,6 +19,7 @@ deps = [
   libsystemd_dep,
   epoxy_dep,
   drm_dep,
+  xkbcommon_dep,
 
   credentials_deps,
 ]
@@ -171,7 +172,6 @@ if have_rdp
     opus_dep,
     polkit_dep,
     winpr_dep,
-    xkbcommon_dep,
   ]
 endif
 

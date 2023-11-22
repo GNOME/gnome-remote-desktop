@@ -34,6 +34,7 @@ tss2_esys_dep = dependency('tss2-esys')
 tss2_mu_dep = dependency('tss2-mu')
 tss2_rc_dep = dependency('tss2-rc')
 tss2_tctildr_dep = dependency('tss2-tctildr')
+xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
 
 have_rdp = get_option('rdp')
 have_vnc = get_option('vnc')
@@ -56,7 +57,6 @@ if have_rdp
   opus_dep = dependency('opus')
   polkit_dep = dependency('polkit-gobject-1', version: polkit_req)
   winpr_dep = dependency('winpr3', version: freerdp_req)
-  xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
 endif
 
 if have_vnc
