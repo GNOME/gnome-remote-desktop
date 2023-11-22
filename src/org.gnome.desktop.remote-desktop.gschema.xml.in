@@ -13,7 +13,7 @@
       <default>true</default>
       <summary>Search a different RDP port if the configured one is used</summary>
       <description>
-        When negotiatie-port is set to 'true' the RDP server will attempt to
+        When negotiate-port is set to 'true' the RDP server will attempt to
         listen to the first available of the next 10 ports starting from the
         configured one.
       </description>
