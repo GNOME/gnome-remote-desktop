@@ -31,8 +31,8 @@ G_DECLARE_FINAL_TYPE (GrdRdpLayoutManager, grd_rdp_layout_manager,
                       GRD, RDP_LAYOUT_MANAGER, GrdRdpStreamOwner)
 
 GrdRdpLayoutManager *grd_rdp_layout_manager_new (GrdSessionRdp    *session_rdp,
-                                                 GrdHwAccelNvidia *hwaccel_nvidia,
-                                                 GMainContext     *render_context);
+                                                 GrdRdpRenderer   *renderer,
+                                                 GrdHwAccelNvidia *hwaccel_nvidia);
 
 void grd_rdp_layout_manager_get_current_layout (GrdRdpLayoutManager  *layout_manager,
                                                 MONITOR_DEF         **monitors,

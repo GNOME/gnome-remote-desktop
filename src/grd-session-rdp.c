@@ -45,6 +45,7 @@
 #include "grd-rdp-layout-manager.h"
 #include "grd-rdp-network-autodetection.h"
 #include "grd-rdp-private.h"
+#include "grd-rdp-renderer.h"
 #include "grd-rdp-sam.h"
 #include "grd-rdp-server.h"
 #include "grd-rdp-session-metrics.h"
@@ -130,9 +131,7 @@ struct _GrdSessionRdp
   GThread *socket_thread;
   HANDLE stop_event;
 
-  GThread *graphics_thread;
-  GMainContext *graphics_context;
-
+  GrdRdpRenderer *renderer;
   GrdRdpCursorRenderer *cursor_renderer;
 
   GHashTable *pressed_keys;
@@ -2249,23 +2248,6 @@ socket_thread_func (gpointer data)
   return NULL;
 }
 
-static gpointer
-graphics_thread_func (gpointer data)
-{
-  GrdSessionRdp *session_rdp = data;
-
-  if (session_rdp->hwaccel_nvidia)
-    grd_hwaccel_nvidia_push_cuda_context (session_rdp->hwaccel_nvidia);
-
-  while (!session_rdp->session_should_stop)
-    g_main_context_iteration (session_rdp->graphics_context, TRUE);
-
-  if (session_rdp->hwaccel_nvidia)
-    grd_hwaccel_nvidia_pop_cuda_context (session_rdp->hwaccel_nvidia);
-
-  return NULL;
-}
-
 static void
 on_view_only_changed (GrdSettings   *settings,
                       GParamSpec    *pspec,
@@ -2318,10 +2300,11 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
                     G_CALLBACK (on_view_only_changed),
                     session_rdp);
 
+  session_rdp->renderer = grd_rdp_renderer_new (session_rdp, hwaccel_nvidia);
   session_rdp->layout_manager =
     grd_rdp_layout_manager_new (session_rdp,
-                                hwaccel_nvidia,
-                                session_rdp->graphics_context);
+                                session_rdp->renderer,
+                                hwaccel_nvidia);
 
   if (!init_rdp_session (session_rdp, username, password, &error))
     {
@@ -2335,9 +2318,6 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   session_rdp->socket_thread = g_thread_new ("RDP socket thread",
                                              socket_thread_func,
                                              session_rdp);
-  session_rdp->graphics_thread = g_thread_new ("RDP graphics thread",
-                                               graphics_thread_func,
-                                               session_rdp);
 
   g_free (password);
   g_free (username);
@@ -2398,14 +2378,7 @@ grd_session_rdp_stop (GrdSession *session)
         rdp_peer_context->network_autodetection);
     }
 
-  if (session_rdp->graphics_thread)
-    {
-      g_assert (session_rdp->graphics_context);
-      g_assert (session_rdp->session_should_stop);
-
-      g_main_context_wakeup (session_rdp->graphics_context);
-      g_clear_pointer (&session_rdp->graphics_thread, g_thread_join);
-    }
+  grd_rdp_renderer_invoke_shutdown (session_rdp->renderer);
 
   g_mutex_lock (&rdp_peer_context->channel_mutex);
   g_clear_object (&rdp_peer_context->audio_input);
@@ -2423,6 +2396,7 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_object (&session_rdp->layout_manager);
 
   g_clear_object (&session_rdp->cursor_renderer);
+  g_clear_object (&session_rdp->renderer);
 
   peer->Close (peer);
   g_clear_object (&session_rdp->connection);
@@ -2484,7 +2458,7 @@ maybe_initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
   graphics_pipeline =
     grd_rdp_graphics_pipeline_new (session_rdp,
                                    rdp_peer_context->rdp_dvc,
-                                   session_rdp->graphics_context,
+                                   grd_rdp_renderer_get_graphics_context (session_rdp->renderer),
                                    rdp_peer_context->vcm,
                                    rdp_context,
                                    rdp_peer_context->network_autodetection,
@@ -2545,7 +2519,7 @@ grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
                                                    GRD_RDP_PHASE_SESSION_READY);
 
   session_rdp->cursor_renderer =
-    grd_rdp_cursor_renderer_new (session_rdp->graphics_context,
+    grd_rdp_cursor_renderer_new (session_rdp->renderer,
                                  session_rdp->peer->context);
   grd_rdp_cursor_renderer_notify_session_ready (session_rdp->cursor_renderer);
 
@@ -2617,8 +2591,7 @@ grd_session_rdp_dispose (GObject *object)
   g_clear_object (&session_rdp->layout_manager);
   clear_rdp_peer (session_rdp);
 
-  g_assert (!session_rdp->graphics_thread);
-  g_clear_pointer (&session_rdp->graphics_context, g_main_context_unref);
+  g_clear_object (&session_rdp->renderer);
 
   g_clear_object (&session_rdp->rdp_event_queue);
   g_clear_object (&session_rdp->session_metrics);
@@ -2663,8 +2636,6 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
 
   session_rdp->session_metrics = grd_rdp_session_metrics_new ();
   session_rdp->rdp_event_queue = grd_rdp_event_queue_new (session_rdp);
-
-  session_rdp->graphics_context = g_main_context_new ();
 }
 
 static void

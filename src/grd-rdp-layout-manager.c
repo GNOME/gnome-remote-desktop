@@ -22,6 +22,7 @@
 #include "grd-rdp-layout-manager.h"
 
 #include "grd-rdp-pipewire-stream.h"
+#include "grd-rdp-renderer.h"
 #include "grd-rdp-session-metrics.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
@@ -66,18 +67,15 @@ struct _GrdRdpLayoutManager
   UpdateState state;
 
   GrdSessionRdp *session_rdp;
+  GrdRdpRenderer *renderer;
   GrdRdpCursorRenderer *cursor_renderer;
   GrdHwAccelNvidia *hwaccel_nvidia;
-  GMainContext *render_context;
 
   GSource *layout_update_source;
   GHashTable *surface_table;
 
   GHashTable *pending_streams;
   GHashTable *pending_video_sizes;
-
-  GSource *surface_disposal_source;
-  GAsyncQueue *disposal_queue;
 
   GMutex monitor_config_mutex;
   GrdRdpMonitorConfig *current_monitor_config;
@@ -95,27 +93,22 @@ surface_context_new (GrdRdpLayoutManager  *layout_manager,
                      GError              **error)
 {
   g_autofree SurfaceContext *surface_context = NULL;
-  GrdRdpSurfaceRenderer *surface_renderer;
+  uint32_t refresh_rate;
 
   surface_context = g_new0 (SurfaceContext, 1);
   surface_context->layout_manager = layout_manager;
 
+  refresh_rate = layout_manager->has_graphics_pipeline ? 60 : 30;
+
   surface_context->rdp_surface =
-    grd_rdp_surface_new (layout_manager->hwaccel_nvidia);
+    grd_rdp_renderer_try_acquire_surface (layout_manager->renderer,
+                                          refresh_rate);
   if (!surface_context->rdp_surface)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Failed to create RDP surface");
       return NULL;
     }
-
-  surface_renderer =
-    grd_rdp_surface_renderer_new (surface_context->rdp_surface,
-                                  layout_manager->render_context,
-                                  layout_manager->session_rdp,
-                                  layout_manager->has_graphics_pipeline ? 60 : 30);
-  grd_rdp_surface_attach_surface_renderer (surface_context->rdp_surface,
-                                           surface_renderer);
 
   return g_steal_pointer (&surface_context);
 }
@@ -137,9 +130,8 @@ surface_context_free (SurfaceContext *surface_context)
                                          stream_id);
     }
 
-  g_async_queue_push (layout_manager->disposal_queue,
-                      surface_context->rdp_surface);
-  g_source_set_ready_time (layout_manager->surface_disposal_source, 0);
+  grd_rdp_renderer_release_surface (layout_manager->renderer,
+                                    surface_context->rdp_surface);
 
   g_clear_pointer (&surface_context->virtual_monitor, g_free);
   g_free (surface_context);
@@ -631,55 +623,17 @@ grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager       *layout_man
   return FALSE;
 }
 
-static gboolean
-dispose_surfaces (gpointer user_data)
-{
-  GrdRdpLayoutManager *layout_manager = user_data;
-  GrdRdpSurface *rdp_surface;
-
-  while ((rdp_surface = g_async_queue_try_pop (layout_manager->disposal_queue)))
-    {
-      g_clear_object (&rdp_surface->gfx_surface);
-      grd_rdp_surface_free (rdp_surface);
-    }
-
-  return G_SOURCE_CONTINUE;
-}
-
-static gboolean
-source_dispatch (GSource     *source,
-                 GSourceFunc  callback,
-                 gpointer     user_data)
-{
-  g_source_set_ready_time (source, -1);
-
-  return callback (user_data);
-}
-
-static GSourceFuncs source_funcs =
-{
-  .dispatch = source_dispatch,
-};
-
 GrdRdpLayoutManager *
 grd_rdp_layout_manager_new (GrdSessionRdp    *session_rdp,
-                            GrdHwAccelNvidia *hwaccel_nvidia,
-                            GMainContext     *render_context)
+                            GrdRdpRenderer   *renderer,
+                            GrdHwAccelNvidia *hwaccel_nvidia)
 {
   GrdRdpLayoutManager *layout_manager;
-  GSource *surface_disposal_source;
 
   layout_manager = g_object_new (GRD_TYPE_RDP_LAYOUT_MANAGER, NULL);
   layout_manager->session_rdp = session_rdp;
+  layout_manager->renderer = renderer;
   layout_manager->hwaccel_nvidia = hwaccel_nvidia;
-  layout_manager->render_context = render_context;
-
-  surface_disposal_source = g_source_new (&source_funcs, sizeof (GSource));
-  g_source_set_callback (surface_disposal_source, dispose_surfaces,
-                         layout_manager, NULL);
-  g_source_set_ready_time (surface_disposal_source, -1);
-  g_source_attach (surface_disposal_source, render_context);
-  layout_manager->surface_disposal_source = surface_disposal_source;
 
   return layout_manager;
 }
@@ -695,11 +649,6 @@ grd_rdp_layout_manager_dispose (GObject *object)
   g_clear_handle_id (&layout_manager->layout_destruction_id, g_source_remove);
   g_clear_handle_id (&layout_manager->layout_recreation_id, g_source_remove);
 
-  if (layout_manager->surface_disposal_source)
-    {
-      g_source_destroy (layout_manager->surface_disposal_source);
-      g_clear_pointer (&layout_manager->surface_disposal_source, g_source_unref);
-    }
   if (layout_manager->layout_update_source)
     {
       g_source_destroy (layout_manager->layout_update_source);
@@ -714,9 +663,6 @@ grd_rdp_layout_manager_dispose (GObject *object)
   g_clear_pointer (&layout_manager->pending_video_sizes, g_hash_table_unref);
   g_clear_pointer (&layout_manager->pending_streams, g_hash_table_unref);
   g_clear_pointer (&layout_manager->surface_table, g_hash_table_unref);
-
-  dispose_surfaces (layout_manager);
-  g_clear_pointer (&layout_manager->disposal_queue, g_async_queue_unref);
 
   G_OBJECT_CLASS (grd_rdp_layout_manager_parent_class)->dispose (object);
 }
@@ -1039,6 +985,21 @@ update_monitor_layout (gpointer user_data)
   return G_SOURCE_CONTINUE;
 }
 
+static gboolean
+source_dispatch (GSource     *source,
+                 GSourceFunc  callback,
+                 gpointer     user_data)
+{
+  g_source_set_ready_time (source, -1);
+
+  return callback (user_data);
+}
+
+static GSourceFuncs source_funcs =
+{
+  .dispatch = source_dispatch,
+};
+
 static void
 grd_rdp_layout_manager_init (GrdRdpLayoutManager *layout_manager)
 {
@@ -1051,7 +1012,6 @@ grd_rdp_layout_manager_init (GrdRdpLayoutManager *layout_manager)
                            NULL, (GDestroyNotify) surface_context_free);
   layout_manager->pending_streams = g_hash_table_new (NULL, NULL);
   layout_manager->pending_video_sizes = g_hash_table_new (NULL, NULL);
-  layout_manager->disposal_queue = g_async_queue_new ();
 
   g_mutex_init (&layout_manager->state_mutex);
   g_mutex_init (&layout_manager->monitor_config_mutex);

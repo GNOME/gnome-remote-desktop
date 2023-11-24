@@ -22,6 +22,7 @@
 #include "grd-rdp-cursor-renderer.h"
 
 #include "grd-damage-utils.h"
+#include "grd-rdp-renderer.h"
 
 typedef struct
 {
@@ -489,9 +490,10 @@ static GSourceFuncs render_source_funcs =
 };
 
 GrdRdpCursorRenderer *
-grd_rdp_cursor_renderer_new (GMainContext *render_context,
-                             rdpContext   *rdp_context)
+grd_rdp_cursor_renderer_new (GrdRdpRenderer *renderer,
+                             rdpContext     *rdp_context)
 {
+  GMainContext *render_context = grd_rdp_renderer_get_graphics_context (renderer);
   rdpSettings *rdp_settings = rdp_context->settings;
   GrdRdpCursorRenderer *cursor_renderer;
   GSource *render_source;

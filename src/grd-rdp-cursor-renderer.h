@@ -23,6 +23,8 @@
 #include <freerdp/freerdp.h>
 #include <glib-object.h>
 
+#include "grd-types.h"
+
 #define GRD_TYPE_RDP_CURSOR_RENDERER (grd_rdp_cursor_renderer_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpCursorRenderer, grd_rdp_cursor_renderer,
                       GRD, RDP_CURSOR_RENDERER, GObject)
@@ -45,8 +47,8 @@ typedef struct
   uint8_t *bitmap;
 } GrdRdpCursorUpdate;
 
-GrdRdpCursorRenderer *grd_rdp_cursor_renderer_new (GMainContext *render_context,
-                                                   rdpContext   *rdp_context);
+GrdRdpCursorRenderer *grd_rdp_cursor_renderer_new (GrdRdpRenderer *renderer,
+                                                   rdpContext     *rdp_context);
 
 void grd_rdp_cursor_renderer_notify_session_ready (GrdRdpCursorRenderer *cursor_renderer);
 
