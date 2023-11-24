@@ -137,6 +137,8 @@ if have_rdp
     'grd-rdp-pipewire-stream.c',
     'grd-rdp-pipewire-stream.h',
     'grd-rdp-private.h',
+    'grd-rdp-renderer.c',
+    'grd-rdp-renderer.h',
     'grd-rdp-routing-token.c',
     'grd-rdp-routing-token.h',
     'grd-rdp-sam.c',
