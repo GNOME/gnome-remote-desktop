@@ -71,6 +71,7 @@ typedef struct _GrdDaemonPrivate
 
   GrdContext *context;
 
+  GDBusConnection *connection;
   GrdDBusRemoteDesktopOrgGnomeRemoteDesktop *remote_desktop_interface;
 
 #ifdef HAVE_RDP
@@ -114,8 +115,6 @@ export_remote_desktop_interface (GrdDaemon *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (priv->context);
-  GDBusConnection *connection = g_application_get_dbus_connection (
-                                  G_APPLICATION (daemon));
 
   priv->remote_desktop_interface =
     grd_dbus_remote_desktop_org_gnome_remote_desktop_skeleton_new ();
@@ -138,7 +137,7 @@ export_remote_desktop_interface (GrdDaemon *daemon)
 
   g_dbus_interface_skeleton_export (
     G_DBUS_INTERFACE_SKELETON (priv->remote_desktop_interface),
-    connection,
+    priv->connection,
     REMOTE_DESKTOP_OBJECT_PATH,
     NULL);
 }
@@ -161,8 +160,6 @@ export_rdp_server_interface (GrdDaemon *daemon)
   GrdDBusRemoteDesktopRdpServer *rdp_server_interface;
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdSettings *settings = grd_context_get_settings (priv->context);
-  GDBusConnection *connection = g_application_get_dbus_connection (
-                                  G_APPLICATION (daemon));
 
   rdp_server_interface =
     grd_dbus_remote_desktop_rdp_server_skeleton_new ();
@@ -184,7 +181,7 @@ export_rdp_server_interface (GrdDaemon *daemon)
 
   g_dbus_interface_skeleton_export (
     G_DBUS_INTERFACE_SKELETON (rdp_server_interface),
-    connection,
+    priv->connection,
     GRD_RDP_SERVER_OBJECT_PATH,
     NULL);
 
@@ -284,8 +281,6 @@ export_vnc_server_interface (GrdDaemon *daemon)
   GrdDBusRemoteDesktopVncServer *vnc_server_interface;
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdSettings *settings = grd_context_get_settings (priv->context);
-  GDBusConnection *connection = g_application_get_dbus_connection (
-                                  G_APPLICATION (daemon));
 
   vnc_server_interface =
     grd_dbus_remote_desktop_vnc_server_skeleton_new ();
@@ -306,7 +301,7 @@ export_vnc_server_interface (GrdDaemon *daemon)
 
   g_dbus_interface_skeleton_export (
     G_DBUS_INTERFACE_SKELETON (vnc_server_interface),
-    connection,
+    priv->connection,
     GRD_VNC_SERVER_OBJECT_PATH,
     NULL);
 
@@ -370,7 +365,8 @@ export_services_status (GrdDaemon *daemon)
   export_rdp_server_interface (daemon);
 #endif
 #ifdef HAVE_VNC
-  export_vnc_server_interface (daemon);
+  if (GRD_IS_DAEMON_USER (daemon))
+    export_vnc_server_interface (daemon);
 #endif
 }
 
@@ -383,7 +379,8 @@ unexport_services_status (GrdDaemon *daemon)
   unexport_rdp_server_interface (daemon);
 #endif
 #ifdef HAVE_VNC
-  unexport_vnc_server_interface (daemon);
+  if (GRD_IS_DAEMON_USER (daemon))
+    unexport_vnc_server_interface (daemon);
 #endif
 }
 
@@ -617,6 +614,26 @@ grd_daemon_init (GrdDaemon *daemon)
   priv->cancellable = g_cancellable_new ();
 }
 
+static GDBusConnection *
+get_daemon_dbus_connection (GrdDaemon *daemon)
+{
+  g_autoptr (GDBusConnection) connection = NULL;
+  g_autoptr (GError) error = NULL;
+
+  if (GRD_IS_DAEMON_SYSTEM (daemon))
+    connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &error);
+  else
+    connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
+
+  if (!connection)
+    {
+      g_warning ("Failing acquiring dbus connection: %s", error->message);
+      return NULL;
+    }
+
+  return g_steal_pointer (&connection);
+}
+
 static void
 grd_daemon_startup (GApplication *app)
 {
@@ -624,6 +641,7 @@ grd_daemon_startup (GApplication *app)
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdSettings *settings = grd_context_get_settings (priv->context);
 
+  priv->connection = get_daemon_dbus_connection (daemon);
   export_services_status (daemon);
 
 #ifdef HAVE_RDP
@@ -661,6 +679,7 @@ grd_daemon_shutdown (GApplication *app)
   grd_daemon_disable_services (daemon);
 
   unexport_services_status (daemon);
+  g_clear_object (&priv->connection);
 
   grd_context_set_mutter_remote_desktop_proxy (priv->context, NULL);
   g_clear_handle_id (&priv->mutter_remote_desktop_watch_name_id, g_bus_unwatch_name);
