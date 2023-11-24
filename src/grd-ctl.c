@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <ctype.h>
 #include <gio/gio.h>
 #include <glib/gi18n.h>
 #include <pwd.h>
@@ -215,6 +216,18 @@ systemd_unit_is_active (GBusType     bus_type,
   return g_str_equal (active_state, "active");
 }
 
+static gboolean
+is_numeric (const char *s)
+{
+  while (*s)
+    {
+      if (isdigit (*s++) == 0)
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 #ifdef HAVE_RDP
 static gboolean
 rdp_set_port (GrdSettings  *settings,
@@ -223,6 +236,13 @@ rdp_set_port (GrdSettings  *settings,
               GError      **error)
 {
   int port;
+
+  if (!is_numeric (argv[0]))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                   "The port must be an integer");
+      return FALSE;
+    }
 
   port = strtol (argv[0], NULL, 10);
   g_object_set (G_OBJECT (settings), "rdp-port", port, NULL);
@@ -393,6 +413,13 @@ vnc_set_port (GrdSettings  *settings,
               GError      **error)
 {
   int port;
+
+  if (!is_numeric (argv[0]))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                   "The port must be an integer");
+      return FALSE;
+    }
 
   port = strtol (argv[0], NULL, 10);
   g_object_set (G_OBJECT (settings), "vnc-port", port, NULL);
