@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2023-11-21 16:04+0000\n"
-"PO-Revision-Date: 2023-11-22 15:54-0500\n"
+"POT-Creation-Date: 2023-11-23 13:27+0000\n"
+"PO-Revision-Date: 2023-11-24 11:23+0800\n"
 "Last-Translator: Boyuan Yang <073plan@gmail.com>\n"
 "Language-Team: Chinese - China <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -98,22 +98,6 @@ msgstr ""
 "\n"
 
 #: src/grd-ctl.c:450
-#, fuzzy
-#| msgid ""
-#| "  vnc                                        - VNC subcommands:\n"
-#| "    enable                                   - Enable the VNC backend\n"
-#| "    disable                                  - Disable the VNC backend\n"
-#| "    set-password <password>                  - Set the VNC password\n"
-#| "    clear-password                           - Clear the VNC password\n"
-#| "    set-auth-method password|prompt          - Set the authorization "
-#| "method\n"
-#| "    enable-view-only                         - Disable remote control of "
-#| "input\n"
-#| "                                               devices\n"
-#| "    disable-view-only                        - Enable remote control of "
-#| "input\n"
-#| "                                               devices\n"
-#| "\n"
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -144,6 +128,10 @@ msgstr ""
 "                                               控制\n"
 "    disable-view-only                        - 启用输入设备的远程\n"
 "                                               控制\n"
+"    enable-port-negotiation                  - 如果端口不可用，则监听\n"
+"                                               不同的端口\n"
+"    disable-port-negotiation                 - 如果端口不可用，不要监听\n"
+"                                               不同的端口\n"
 "\n"
 
 #: src/grd-ctl.c:470
@@ -171,13 +159,15 @@ msgstr "RDP 客户端将使用此端口连接到该 RDP 服务器。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Search a different RDP port if the configured one is used"
-msgstr ""
+msgstr "如果配置的端口被占用，则搜索不同的 RDP 端口"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 msgid ""
-"When negotiatie-port is set to 'true' the RDP server will attempt to listen "
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
+"当 negotiate-port 设置为 'true' 时，RDP 服务器将尝试从配置的端口开始侦听接下"
+"来 10 个端口中的第一个可用端口。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
@@ -248,17 +238,19 @@ msgstr "VNC 服务器使用的端口"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
 msgid "The VNC client will connect to this port to use this VNC server."
-msgstr ""
+msgstr "VNC 客户端将连接到该端口以使用此 VNC 服务器。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 msgid "Search a different VNC port if the configured one is used"
-msgstr ""
+msgstr "如果配置的端口被占用，则搜索不同的 VNC 端口"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
+"当 negotiate-port 设置为 'true' 时，VNC 服务器将尝试从配置的端口开始侦听接下"
+"来 10 个端口中的第一个可用端口。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
