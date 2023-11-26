@@ -4,17 +4,19 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues\n"
-"POT-Creation-Date: 2022-08-05 21:58+0000\n"
-"PO-Revision-Date: 2022-08-31 17:34+0000\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues\n"
+"POT-Creation-Date: 2023-11-21 16:04+0000\n"
+"PO-Revision-Date: 2023-11-21 21:48+0100\n"
 "Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
 "Language-Team: Catalan <gnome@llistes.softcatala.org>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.4.2\n"
 
-#: src/grd-daemon.c:503
+#: src/grd-daemon.c:824
 msgid "GNOME Remote Desktop"
 msgstr "Escriptori remot del GNOME"
 
@@ -40,18 +42,19 @@ msgstr "Rebutja"
 msgid "Accept"
 msgstr "Accepta"
 
-#: src/grd-ctl.c:52
+#: src/grd-ctl.c:53
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Ús: %s [OPCIONS...] ORDRE [SUBORDRE]...\n"
 
-#: src/grd-ctl.c:444
+#: src/grd-ctl.c:421
 msgid "Commands:\n"
 msgstr "Ordres:\n"
 
-#: src/grd-ctl.c:449
+#: src/grd-ctl.c:426
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -60,79 +63,142 @@ msgid ""
 "                                               credentials\n"
 "    clear-credentials                        - Clear username and password\n"
 "                                               credentials\n"
-"    enable-view-only                         - Disable remote control of input\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
 "                                               devices\n"
-"    disable-view-only                        - Enable remote control of input\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - Subordres RDP:\n"
+"    set-port                                 - Estableix el port on escolta "
+"el servidor\n"
 "    enable                                   - Habilita el rerefons RDP\n"
 "    disable                                  - Inhabilita el rerefons RDP\n"
-"    set-tls-cert <path-to-cert>              - Estableix el camí al certificat TLS\n"
-"    set-tls-key <path-to-key>                - Estableix el camí a la clau TLS\n"
-"    set-credentials <usuari> <contrasenya>   - Estableix el nom d'usuari i la contrasenya\n"
+"    set-tls-cert <path-to-cert>              - Estableix el camí al "
+"certificat TLS\n"
+"    set-tls-key <path-to-key>                - Estableix el camí a la clau "
+"TLS\n"
+"    set-credentials <usuari> <contrasenya>   - Estableix el nom d'usuari i "
+"la contrasenya\n"
 "                                               de les credencials\n"
-"    clear-credentials                        - Neteja el nom d'usuari i la contrasenya\n"
+"    clear-credentials                        - Neteja el nom d'usuari i la "
+"contrasenya\n"
 "                                               de les credencials\n"
-"    enable-view-only                         - Habilita el control remot de l'entrada\n"
-"                                               de dispositius\n"
-"    disable-view-only                        - Inhabilita el control remot de l'entrada\n"
-"                                               de dispositius\n"
+"    enable-view-only                         - Deshabilita el control remot "
+"pels\n"
+"                                               dispositius d'entrada\n"
+"    disable-view-only                        - Habilita el control remot "
+"pels\n"
+"                                               dispositius d'entrada\n"
+"    enable-port-negotiation                  - Si no està disponible, obre\n"
+"                                               un port diferent\n"
+"    disable-port-negotiation                 - Si no està disponible, no "
+"obris\n"
+"                                               un port diferent\n"
 "\n"
 
-#: src/grd-ctl.c:468
+#: src/grd-ctl.c:450
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
-"    enable-view-only                         - Disable remote control of input\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
 "                                               devices\n"
-"    disable-view-only                        - Enable remote control of input\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  vnc                                        - Subordres VNC:\n"
+"    set-port                                 - Estableix el port on escolta "
+"el servidor\n"
 "    enable                                   - Habilita el rerefons VNC\n"
 "    disable                                  - Inhabilita el rerefons VNC\n"
-"    set-password <contrasenya>               - Estableix la contrasenya del VNC\n"
-"    clear-password                           - Neteja la contrasenya del VNC\n"
-"    set-auth-method password|prompt          - Estableix el mètode d'autorització\n"
-"    enable-view-only                         - Habilita el control remot de l'entrada\n"
-"                                               de dispositius\n"
-"    disable-view-only                        - Inhabilita el control remot de l'entrada\n"
-"                                               de dispositius\n"
+"    set-password <contrasenya>               - Estableix la contrasenya del "
+"VNC\n"
+"    clear-password                           - Neteja la contrasenya del "
+"VNC\n"
+"    set-auth-method password|prompt          - Estableix el mètode "
+"d'autorització\n"
+"    enable-view-only                         - Deshabilita el control remot "
+"pels\n"
+"                                               dispositius d'entrada\n"
+"    disable-view-only                        - Habilita el control remot "
+"pels\n"
+"                                               dispositius d'entrada\n"
+"    enable-port-negotiation                  - Si no està disponible, obre\n"
+"                                               un port diferent\n"
+"    disable-port-negotiation                 - Si no està disponible, no "
+"obris\n"
+"                                               un port diferent\n"
+"\n"
 
-#: src/grd-ctl.c:483
+#: src/grd-ctl.c:470
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
-"  --headless                                 - Use headless credentials storage\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Mostra l'estat actual\n"
 "\n"
 "Opcions:\n"
-"  --headless                                 - Emmagatzema les credencials sense capçaleres  --help                                     - Mostra aquest text d'ajuda\n"
+"  --headless                                 - Emmagatzema les credencials "
+"sense capçaleres  --help                                     - Mostra aquest "
+"text d'ajuda\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "El port usat pel servidor RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr ""
+"El client RDP es connectarà a aquest port per usar aquest servidor RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr "Cerca un port RDP diferent en cas que el port configurat estigui en ús"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiatie-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Quan «negotiate-port» està establert a «true», el servidor RDP intentarà "
+"escoltar, d'entre els deu ports a partir del que s'hagi configurat, el "
+"primer que trobi disponible."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Si el rerefons RDP està habilitat o no"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#| msgid "If set to to 'true' the RDP backend will be initialized."
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Si s'estableix a «true» s'inicialitzarà el rerefons RDP."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "Mode de compartició de pantalla de les connexions RDP"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -142,9 +208,9 @@ msgid ""
 "session with a virtual monitor, clients can resize the resolution of the "
 "virtual monitor during a session with the Display Update Virtual Channel "
 "Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
-"primary - Record the primary monitor of the current user session. * extend -"
-" Create a new virtual monitor and use it for the remote desktop session. The"
-" resolution of this virtual monitor is derived from the monitor "
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
 "El mode compartició de pantalla especifica, si el rerefons RDP fa mirall de "
@@ -161,12 +227,12 @@ msgstr ""
 "d'aquest monitor virtual es deriva de la configuració del monitor, "
 "presentada pel client d'escriptori remot."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Camí al fitxer del certificat"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -174,18 +240,17 @@ msgstr ""
 "Per a poder utilitzar RDP amb seguretat TLS, tant el fitxer de la clau "
 "privada com el fitxer del certificat s'han de proporcionar al servidor RDP."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Camí al fitxer de clau privada"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr ""
-"Permet només a les connexions remotes per a veure el contingut de la "
-"pantalla"
+"Permet només a les connexions remotes per a veure el contingut de la pantalla"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -193,15 +258,37 @@ msgstr ""
 "Quan «view-only» és cert, les connexions RDP remotes no poden manipular els "
 "dispositius d'entrada (p. ex. ratolí i teclat)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "El port usat pel servidor VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr ""
+"El client VNC es connectarà a aquest port per usar aquest servidor VNC."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr "Cerca un port VNC diferent en cas que el port configurat estigui en ús"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Quan «negotiate-port» està establert a «true», el servidor VNC intentarà "
+"escoltar, d'entre els deu ports a partir del que s'hagi configurat, el "
+"primer que trobi disponible."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Si el rerefons VNC està habilitat o no"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Si s'estableix a «true» s'inicialitzarà el rerefons VNC."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -209,30 +296,29 @@ msgstr ""
 "Quan «view-only» és cert, les connexions VNC remotes no poden manipular els "
 "dispositius d'entrada (p. ex. ratolí i teclat)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "Mètode utilitzat per a autenticar les connexions VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
-"authenticated. It can currently be done in two different ways: * prompt - by"
-" prompting the user for each new connection, requiring a person with "
-"physical access to the workstation to explicitly approve the new connection."
-" * password - by requiring the remote client to provide a known password"
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
 msgstr ""
 "El mètode d'autenticació VNC descriu com s'autentica una connexió remota. "
 "Actualment, es pot fer de dues maneres diferents: * «prompt» - demanant a "
-"l'usuari per a cada nova connexió, requerint a una persona amb accés físic a"
-" l'estació de treball que aprovi explícitament la nova connexió. * "
-"«password» - demanant al client remot que proporcioni una contrasenya "
-"coneguda"
+"l'usuari per a cada nova connexió, requerint a una persona amb accés físic a "
+"l'estació de treball que aprovi explícitament la nova connexió. * «password» "
+"- demanant al client remot que proporcioni una contrasenya coneguda"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
 msgstr "Mode de compartició de pantalla de les connexions VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -246,8 +332,8 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr ""
-"El mode de compartició de pantalla especifica si el rerefons VNC reflecteix la"
-" pantalla primària o si es crea un monitor virtual. Per a la resolució "
+"El mode de compartició de pantalla especifica si el rerefons VNC reflecteix "
+"la pantalla primària o si es crea un monitor virtual. Per a la resolució "
 "inicial del monitor virtual, el dorsal VNC utilitza una mida predeterminada "
 "de 1920x1080 píxels. Quan s'utilitza una sessió d'escriptori remot amb un "
 "monitor virtual, els clients poden redimensionar la resolució del monitor "
@@ -255,6 +341,6 @@ msgstr ""
 "compartició de pantalla permesos inclouen: * mirror-primary - Enregistra el "
 "monitor primari de la sessió d'usuari actual. * extend - Crea un monitor "
 "virtual nou que s'utilitza per a la sessió d'escriptori remot. La resolució "
-"inicial del monitor d'aquest monitor virtual s'estableix a 1920x1080 píxels."
-" Els clients poden anul·lar la resolució inicial amb actualitzacions de "
+"inicial del monitor d'aquest monitor virtual s'estableix a 1920x1080 píxels. "
+"Els clients poden anul·lar la resolució inicial amb actualitzacions de "
 "configuració posteriors del monitor."
