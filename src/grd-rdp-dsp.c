@@ -21,11 +21,8 @@
 
 #include "grd-rdp-dsp.h"
 
-#include <gio/gio.h>
-
-#ifdef HAVE_FDK_AAC
 #include <fdk-aac/aacenc_lib.h>
-#endif /* HAVE_FDK_AAC */
+#include <gio/gio.h>
 
 #define G711_QUANT_MASK 0xF
 #define G711_SEG_MASK 0x70
@@ -37,9 +34,7 @@ struct _GrdRdpDsp
 
   GrdRdpDspCreateFlag create_flags;
 
-#ifdef HAVE_FDK_AAC
   HANDLE_AACENCODER aac_encoder;
-#endif /* HAVE_FDK_AAC */
 };
 
 G_DEFINE_TYPE (GrdRdpDsp, grd_rdp_dsp, G_TYPE_OBJECT)
@@ -60,7 +55,6 @@ grd_rdp_dsp_codec_to_string (GrdRdpDspCodec dsp_codec)
   g_assert_not_reached ();
 }
 
-#ifdef HAVE_FDK_AAC
 static gboolean
 encode_aac (GrdRdpDsp  *rdp_dsp,
             int16_t    *input_data,
@@ -116,7 +110,6 @@ encode_aac (GrdRdpDsp  *rdp_dsp,
 
   return TRUE;
 }
-#endif /* HAVE_FDK_AAC */
 
 gboolean
 grd_rdp_dsp_encode (GrdRdpDsp       *rdp_dsp,
@@ -135,13 +128,8 @@ grd_rdp_dsp_encode (GrdRdpDsp       *rdp_dsp,
       g_assert_not_reached ();
       return FALSE;
     case GRD_RDP_DSP_CODEC_AAC:
-#ifdef HAVE_FDK_AAC
       return encode_aac (rdp_dsp, input_data, input_size, input_elem_size,
                          output_data, output_size);
-#else
-      g_assert_not_reached ();
-      return FALSE;
-#endif /* HAVE_FDK_AAC */
     case GRD_RDP_DSP_CODEC_ALAW:
       g_assert_not_reached ();
       return FALSE;
@@ -223,7 +211,6 @@ grd_rdp_dsp_decode (GrdRdpDsp       *rdp_dsp,
   return FALSE;
 }
 
-#ifdef HAVE_FDK_AAC
 static gboolean
 create_aac_encoder (GrdRdpDsp  *rdp_dsp,
                     uint32_t    n_samples_per_sec,
@@ -342,21 +329,18 @@ create_aac_encoder (GrdRdpDsp  *rdp_dsp,
 
   return TRUE;
 }
-#endif /* HAVE_FDK_AAC */
 
 static gboolean
 create_encoders (GrdRdpDsp                  *rdp_dsp,
                  const GrdRdpDspDescriptor  *dsp_descriptor,
                  GError                    **error)
 {
-#ifdef HAVE_FDK_AAC
   if (!create_aac_encoder (rdp_dsp,
                            dsp_descriptor->n_samples_per_sec,
                            dsp_descriptor->n_channels,
                            dsp_descriptor->bitrate_aac,
                            error))
     return FALSE;
-#endif /* HAVE_FDK_AAC */
 
   return TRUE;
 }
@@ -380,13 +364,9 @@ grd_rdp_dsp_new (const GrdRdpDspDescriptor  *dsp_descriptor,
 static void
 grd_rdp_dsp_dispose (GObject *object)
 {
-#ifdef HAVE_FDK_AAC
   GrdRdpDsp *rdp_dsp = GRD_RDP_DSP (object);
-#endif /* HAVE_FDK_AAC */
 
-#ifdef HAVE_FDK_AAC
   aacEncClose (&rdp_dsp->aac_encoder);
-#endif /* HAVE_FDK_AAC */
 
   G_OBJECT_CLASS (grd_rdp_dsp_parent_class)->dispose (object);
 }

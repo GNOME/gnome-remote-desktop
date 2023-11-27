@@ -517,9 +517,7 @@ static const AUDIO_FORMAT audio_format_pcm =
 
 static AUDIO_FORMAT server_formats[] =
 {
-#ifdef HAVE_FDK_AAC
   audio_format_aac,
-#endif /* HAVE_FDK_AAC */
   audio_format_pcm,
 };
 
@@ -551,11 +549,9 @@ rdpsnd_activated (RdpsndServerContext *rdpsnd_context)
     {
       AUDIO_FORMAT *audio_format = &rdpsnd_context->client_formats[i];
 
-#ifdef HAVE_FDK_AAC
       if (audio_playback->aac_client_format_idx < 0 &&
           are_audio_formats_equal (audio_format, &audio_format_aac))
         audio_playback->aac_client_format_idx = i;
-#endif /* HAVE_FDK_AAC */
       if (audio_playback->pcm_client_format_idx < 0 &&
           are_audio_formats_equal (audio_format, &audio_format_pcm))
         audio_playback->pcm_client_format_idx = i;
@@ -1045,14 +1041,12 @@ maybe_send_frames (GrdRdpAudioPlayback         *audio_playback,
       audio_data_free (audio_data);
     }
 
-#ifdef HAVE_FDK_AAC
   if (audio_playback->aac_client_format_idx >= 0)
     {
       client_format_idx = audio_playback->aac_client_format_idx;
       codec = GRD_RDP_DSP_CODEC_AAC;
     }
   else
-#endif /* HAVE_FDK_AAC */
     {
       client_format_idx = audio_playback->pcm_client_format_idx;
       codec = GRD_RDP_DSP_CODEC_NONE;

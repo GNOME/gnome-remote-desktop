@@ -141,18 +141,13 @@ if have_rdp
   deps += [
     cuda_dep,
     dl_dep,
+    fdk_aac_dep,
     freerdp_dep,
     freerdp_server_dep,
     fuse_dep,
     winpr_dep,
     xkbcommon_dep,
   ]
-
-  if (have_fdk_aac)
-    deps += [
-      fdk_aac_dep,
-    ]
-  endif
 endif
 
 if have_vnc
