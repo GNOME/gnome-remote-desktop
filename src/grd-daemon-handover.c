@@ -47,6 +47,8 @@ struct _GrdDaemonHandover
 
   GrdSession *session;
 
+  unsigned int gnome_remote_desktop_watch_name_id;
+
   unsigned int logout_source_id;
 };
 
@@ -376,9 +378,11 @@ on_remote_desktop_rdp_dispatcher_proxy_acquired (GObject      *object,
   g_autoptr (GrdDBusRemoteDesktopRdpDispatcher) proxy = NULL;
   g_autoptr (GError) error = NULL;
 
+  if (daemon_handover->remote_desktop_dispatcher)
+    return;
+
   proxy =
-    grd_dbus_remote_desktop_rdp_dispatcher_proxy_new_for_bus_finish (result,
-                                                                     &error);
+    grd_dbus_remote_desktop_rdp_dispatcher_proxy_new_finish (result, &error);
   if (!proxy)
     {
       g_warning ("[DaemonHandover] Failed to create remote desktop "
@@ -393,6 +397,39 @@ on_remote_desktop_rdp_dispatcher_proxy_acquired (GObject      *object,
     cancellable,
     on_remote_desktop_rdp_dispatcher_handover_requested,
     daemon_handover);
+}
+
+static void
+on_gnome_remote_desktop_name_appeared (GDBusConnection *connection,
+                                       const char      *name,
+                                       const char      *name_owner,
+                                       gpointer         user_data)
+{
+  GrdDaemonHandover *daemon_handover = user_data;
+  GCancellable *cancellable =
+    grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
+
+  grd_dbus_remote_desktop_rdp_dispatcher_proxy_new (
+    connection,
+    G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
+    REMOTE_DESKTOP_BUS_NAME,
+    REMOTE_DESKTOP_DISPATCHER_OBJECT_PATH,
+    cancellable,
+    on_remote_desktop_rdp_dispatcher_proxy_acquired,
+    daemon_handover);
+}
+
+static void
+on_gnome_remote_desktop_name_vanished (GDBusConnection *connection,
+                                       const char      *name,
+                                       gpointer         user_data)
+{
+  GrdDaemonHandover *daemon_handover = user_data;
+
+  g_warning ("[DaemonHandover] %s name vanished, shutting down daemon",
+             REMOTE_DESKTOP_BUS_NAME);
+
+  g_application_release (G_APPLICATION (daemon_handover));
 }
 
 GrdDaemonHandover *
@@ -420,22 +457,19 @@ static void
 grd_daemon_handover_startup (GApplication *app)
 {
   GrdDaemonHandover *daemon_handover = GRD_DAEMON_HANDOVER (app);
-  GCancellable *cancellable =
-    grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
 
   grd_daemon_acquire_mutter_dbus_proxies (GRD_DAEMON (daemon_handover));
 
   g_signal_connect (daemon_handover, "mutter-proxy-acquired",
                     G_CALLBACK (grd_daemon_maybe_enable_services), NULL);
 
-  grd_dbus_remote_desktop_rdp_dispatcher_proxy_new_for_bus (
-    G_BUS_TYPE_SYSTEM,
-    G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
-    REMOTE_DESKTOP_BUS_NAME,
-    REMOTE_DESKTOP_DISPATCHER_OBJECT_PATH,
-    cancellable,
-    on_remote_desktop_rdp_dispatcher_proxy_acquired,
-    daemon_handover);
+  daemon_handover->gnome_remote_desktop_watch_name_id =
+    g_bus_watch_name (G_BUS_TYPE_SYSTEM,
+                      REMOTE_DESKTOP_BUS_NAME,
+                      G_BUS_NAME_WATCHER_FLAGS_NONE,
+                      on_gnome_remote_desktop_name_appeared,
+                      on_gnome_remote_desktop_name_vanished,
+                      daemon_handover, NULL);
 
   g_signal_connect (daemon_handover, "rdp-server-started",
                     G_CALLBACK (on_rdp_server_started), NULL);
@@ -453,6 +487,9 @@ grd_daemon_handover_shutdown (GApplication *app)
 
   g_clear_object (&daemon_handover->remote_desktop_handover);
   g_clear_object (&daemon_handover->remote_desktop_dispatcher);
+
+  g_clear_handle_id (&daemon_handover->gnome_remote_desktop_watch_name_id,
+                     g_bus_unwatch_name);
 
   g_clear_handle_id (&daemon_handover->logout_source_id, g_source_remove);
 
