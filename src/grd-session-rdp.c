@@ -449,6 +449,9 @@ grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
                                          const char    *certificate)
 {
   freerdp_peer *peer = session_rdp->peer;
+  rdpSettings *rdp_settings = peer->context->settings;
+  uint32_t os_major_type =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_OsMajorType);
   rdpRedirection *redirection;
   g_autofree BYTE *certificate_container = NULL;
   g_autofree WCHAR *utf16_password = NULL;
@@ -479,6 +482,8 @@ grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
 
   /* Password */
   redirection_flags |= LB_PASSWORD;
+  if (os_major_type != OSMAJORTYPE_IOS && os_major_type != OSMAJORTYPE_ANDROID)
+    redirection_flags |= LB_PASSWORD_IS_PK_ENCRYPTED;
   utf16_password = get_utf16_string (password, &size);
   g_assert (utf16_password);
   redirection_set_byte_option (redirection, LB_PASSWORD,
@@ -2080,6 +2085,13 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   freerdp_settings_set_bool (rdp_settings, FreeRDP_RdpSecurity, FALSE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_TlsSecurity, FALSE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_NlaSecurity, TRUE);
+
+  if (grd_context_get_runtime_mode (context) == GRD_RUNTIME_MODE_HANDOVER)
+    {
+      freerdp_settings_set_string (rdp_settings, FreeRDP_Username, username);
+      freerdp_settings_set_string (rdp_settings, FreeRDP_Password, password);
+      freerdp_settings_set_bool (rdp_settings, FreeRDP_RdstlsSecurity, TRUE);
+    }
 
   freerdp_settings_set_uint32 (rdp_settings, FreeRDP_OsMajorType,
                                OSMAJORTYPE_UNIX);
