@@ -583,10 +583,12 @@ rdpsnd_training_confirm (RdpsndServerContext *rdpsnd_context,
 {
   GrdRdpAudioPlayback *audio_playback = rdpsnd_context->data;
 
-  if (!audio_playback->pending_training_confirm)
+  if (audio_playback->pending_client_formats ||
+      !audio_playback->pending_training_confirm)
     {
-      g_warning ("[RDP.AUDIO_PLAYBACK] Received stray Training Confirm PDU. "
-                 "Ignoring...");
+      g_warning ("[RDP.AUDIO_PLAYBACK] Protocol violation: Received unexpected "
+                 "Training Confirm PDU. Terminating protocol");
+      g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
       return CHANNEL_RC_OK;
     }
 
