@@ -1162,6 +1162,7 @@ registry_event_global (void                  *user_data,
   const struct spa_dict_item *item;
   gboolean found_audio_sink = FALSE;
   uint32_t position[SPA_AUDIO_MAX_CHANNELS] = {};
+  g_autofree char *node_name = NULL;
   g_autoptr (GError) error = NULL;
 
   if (strcmp (type, PW_TYPE_INTERFACE_Node) != 0)
@@ -1169,17 +1170,21 @@ registry_event_global (void                  *user_data,
 
   spa_dict_for_each (item, props)
     {
+      if (strcmp (item->key, "node.name") == 0)
+        {
+          g_clear_pointer (&node_name, g_free);
+          node_name = g_strdup (item->value);
+        }
       if (strcmp (item->key, "media.class") == 0 &&
           strcmp (item->value, "Audio/Sink") == 0)
-        {
-          g_debug ("[RDP.AUDIO_PLAYBACK] Found audio sink: id: %u, type: %s/%u",
-                   id, type, version);
-          found_audio_sink = TRUE;
-        }
+        found_audio_sink = TRUE;
     }
 
   if (!found_audio_sink)
     return;
+
+  g_debug ("[RDP.AUDIO_PLAYBACK] Found audio sink: id: %u, type: %s/%u, "
+           "name: %s", id, type, version, node_name);
 
   locker = g_mutex_locker_new (&audio_playback->streams_mutex);
   if (g_hash_table_contains (audio_playback->audio_streams,
