@@ -275,7 +275,7 @@ create_credentials (GrdRuntimeMode runtime_mode)
   switch (runtime_mode)
     {
     case GRD_RUNTIME_MODE_HEADLESS:
-       return create_headless_credentials ();
+      return create_headless_credentials ();
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
       return GRD_CREDENTIALS (grd_credentials_libsecret_new ());
     }
