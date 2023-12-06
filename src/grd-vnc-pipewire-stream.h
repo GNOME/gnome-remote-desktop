@@ -32,10 +32,10 @@ G_DECLARE_FINAL_TYPE (GrdVncPipeWireStream, grd_vnc_pipewire_stream,
                       GRD, VNC_PIPEWIRE_STREAM,
                       GObject)
 
-GrdVncPipeWireStream * grd_vnc_pipewire_stream_new (GrdSessionVnc              *session_vnc,
-                                                    uint32_t                    src_node_id,
-                                                    const GrdVncVirtualMonitor *virtual_monitor,
-                                                    GError                    **error);
+GrdVncPipeWireStream *grd_vnc_pipewire_stream_new (GrdSessionVnc               *session_vnc,
+                                                   uint32_t                     src_node_id,
+                                                   const GrdVncVirtualMonitor  *virtual_monitor,
+                                                   GError                     **error);
 
 void grd_vnc_pipewire_stream_resize (GrdVncPipeWireStream *stream,
                                      GrdVncVirtualMonitor *virtual_monitor);
