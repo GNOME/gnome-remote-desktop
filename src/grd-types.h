@@ -50,6 +50,7 @@ typedef struct _GrdRdpLayoutManager GrdRdpLayoutManager;
 typedef struct _GrdRdpNetworkAutodetection GrdRdpNetworkAutodetection;
 typedef struct _GrdRdpSAMFile GrdRdpSAMFile;
 typedef struct _GrdRdpServer GrdRdpServer;
+typedef struct _GrdRdpSessionMetrics GrdRdpSessionMetrics;
 typedef struct _GrdRdpStreamOwner GrdRdpStreamOwner;
 typedef struct _GrdRdpSurface GrdRdpSurface;
 typedef struct _GrdRdpSurfaceRenderer GrdRdpSurfaceRenderer;

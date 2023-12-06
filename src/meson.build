@@ -143,6 +143,8 @@ if have_rdp
     'grd-rdp-sam.h',
     'grd-rdp-server.c',
     'grd-rdp-server.h',
+    'grd-rdp-session-metrics.c',
+    'grd-rdp-session-metrics.h',
     'grd-rdp-stream-owner.c',
     'grd-rdp-stream-owner.h',
     'grd-rdp-surface.c',
