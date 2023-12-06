@@ -100,8 +100,7 @@ surface_context_new (GrdRdpLayoutManager  *layout_manager,
   surface_context->layout_manager = layout_manager;
 
   surface_context->rdp_surface =
-    grd_rdp_surface_new (layout_manager->hwaccel_nvidia,
-                         layout_manager->has_graphics_pipeline ? 60 : 30);
+    grd_rdp_surface_new (layout_manager->hwaccel_nvidia);
   if (!surface_context->rdp_surface)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -112,7 +111,8 @@ surface_context_new (GrdRdpLayoutManager  *layout_manager,
   surface_renderer =
     grd_rdp_surface_renderer_new (surface_context->rdp_surface,
                                   layout_manager->render_context,
-                                  layout_manager->session_rdp);
+                                  layout_manager->session_rdp,
+                                  layout_manager->has_graphics_pipeline ? 60 : 30);
   grd_rdp_surface_attach_surface_renderer (surface_context->rdp_surface,
                                            surface_renderer);
 

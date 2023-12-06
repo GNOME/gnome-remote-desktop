@@ -38,6 +38,7 @@
 #include "grd-rdp-cursor-renderer.h"
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-surface.h"
+#include "grd-rdp-surface-renderer.h"
 #include "grd-utils.h"
 
 #define DEFAULT_BUFFER_POOL_SIZE 5
@@ -339,19 +340,22 @@ add_format_params (GrdRdpPipeWireStream        *stream,
   GrdSession *session = GRD_SESSION (stream->session_rdp);
   GrdContext *context = grd_session_get_context (session);
   GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
+  GrdRdpSurfaceRenderer *surface_renderer =
+    grd_rdp_surface_get_surface_renderer (stream->rdp_surface);
+  uint32_t refresh_rate =
+    grd_rdp_surface_renderer_get_refresh_rate (surface_renderer);
   struct spa_pod_frame format_frame;
   enum spa_video_format spa_format = SPA_VIDEO_FORMAT_BGRx;
   gboolean need_fallback_format = FALSE;
   uint32_t n_params = 0;
 
-  g_assert (stream->rdp_surface);
   g_assert (n_available_params >= 2);
 
   spa_pod_builder_push_object (pod_builder, &format_frame,
                                SPA_TYPE_OBJECT_Format,
                                SPA_PARAM_EnumFormat);
   add_common_format_params (pod_builder, spa_format, virtual_monitor,
-                            stream->rdp_surface->refresh_rate);
+                            refresh_rate);
 
   if (egl_thread)
     {
@@ -397,7 +401,7 @@ add_format_params (GrdRdpPipeWireStream        *stream,
                                    SPA_TYPE_OBJECT_Format,
                                    SPA_PARAM_EnumFormat);
       add_common_format_params (pod_builder, spa_format, virtual_monitor,
-                                stream->rdp_surface->refresh_rate);
+                                refresh_rate);
       params[n_params++] = spa_pod_builder_pop (pod_builder, &format_frame);
     }
 

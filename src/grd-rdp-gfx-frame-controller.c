@@ -63,7 +63,10 @@ get_activate_throttling_th_from_rtt (GrdRdpGfxFrameController *frame_controller,
                                      int64_t                   rtt_us)
 {
   GrdRdpSurface *rdp_surface = frame_controller->rdp_surface;
-  int64_t refresh_rate = rdp_surface->refresh_rate;
+  GrdRdpSurfaceRenderer *surface_renderer =
+    grd_rdp_surface_get_surface_renderer (rdp_surface);
+  int64_t refresh_rate =
+    grd_rdp_surface_renderer_get_refresh_rate (surface_renderer);
   uint32_t activate_throttling_th;
   uint32_t delayed_frames;
 

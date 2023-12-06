@@ -33,6 +33,7 @@
 #include "grd-rdp-gfx-surface.h"
 #include "grd-rdp-network-autodetection.h"
 #include "grd-rdp-surface.h"
+#include "grd-rdp-surface-renderer.h"
 #include "grd-session-rdp.h"
 #include "grd-utils.h"
 
@@ -168,6 +169,10 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
   RDPGFX_CREATE_SURFACE_PDU create_surface = {0};
   GrdRdpSurface *rdp_surface = grd_rdp_gfx_surface_get_rdp_surface (gfx_surface);
+  GrdRdpSurfaceRenderer *surface_renderer =
+    grd_rdp_surface_get_surface_renderer (rdp_surface);
+  uint32_t refresh_rate =
+    grd_rdp_surface_renderer_get_refresh_rate (surface_renderer);
   uint16_t surface_id = grd_rdp_gfx_surface_get_surface_id (gfx_surface);
   uint32_t surface_serial = grd_rdp_gfx_surface_get_serial (gfx_surface);
   uint16_t surface_width = grd_rdp_gfx_surface_get_width (gfx_surface);
@@ -200,7 +205,7 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
                                                &encode_session_id,
                                                surface_width, surface_height,
                                                &aligned_width, &aligned_height,
-                                               rdp_surface->refresh_rate))
+                                               refresh_rate))
     {
       uint16_t aligned_width_16;
       uint16_t aligned_height_16;

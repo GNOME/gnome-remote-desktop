@@ -21,6 +21,7 @@
 #define GRD_RDP_SURFACE_RENDERER_H
 
 #include <glib-object.h>
+#include <stdint.h>
 
 #include "grd-types.h"
 
@@ -30,7 +31,10 @@ G_DECLARE_FINAL_TYPE (GrdRdpSurfaceRenderer, grd_rdp_surface_renderer,
 
 GrdRdpSurfaceRenderer *grd_rdp_surface_renderer_new (GrdRdpSurface *rdp_surface,
                                                      GMainContext  *graphics_context,
-                                                     GrdSessionRdp *session_rdp);
+                                                     GrdSessionRdp *session_rdp,
+                                                     uint32_t       refresh_rate);
+
+uint32_t grd_rdp_surface_renderer_get_refresh_rate (GrdRdpSurfaceRenderer *surface_renderer);
 
 gboolean grd_rdp_surface_renderer_is_rendering_suspended (GrdRdpSurfaceRenderer *surface_renderer);
 

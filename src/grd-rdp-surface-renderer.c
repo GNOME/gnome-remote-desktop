@@ -30,11 +30,19 @@ struct _GrdRdpSurfaceRenderer
   GrdRdpSurface *rdp_surface;
   GrdSessionRdp *session_rdp;
 
+  uint32_t refresh_rate;
+
   GSource *render_source;
   gboolean rendering_suspended;
 };
 
 G_DEFINE_TYPE (GrdRdpSurfaceRenderer, grd_rdp_surface_renderer, G_TYPE_OBJECT)
+
+uint32_t
+grd_rdp_surface_renderer_get_refresh_rate (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  return surface_renderer->refresh_rate;
+}
 
 gboolean
 grd_rdp_surface_renderer_is_rendering_suspended (GrdRdpSurfaceRenderer *surface_renderer)
@@ -88,7 +96,8 @@ static GSourceFuncs render_source_funcs =
 GrdRdpSurfaceRenderer *
 grd_rdp_surface_renderer_new (GrdRdpSurface *rdp_surface,
                               GMainContext  *graphics_context,
-                              GrdSessionRdp *session_rdp)
+                              GrdSessionRdp *session_rdp,
+                              uint32_t       refresh_rate)
 {
   GrdRdpSurfaceRenderer *surface_renderer;
   GSource *render_source;
@@ -96,6 +105,7 @@ grd_rdp_surface_renderer_new (GrdRdpSurface *rdp_surface,
   surface_renderer = g_object_new (GRD_TYPE_RDP_SURFACE_RENDERER, NULL);
   surface_renderer->rdp_surface = rdp_surface;
   surface_renderer->session_rdp = session_rdp;
+  surface_renderer->refresh_rate = refresh_rate;
 
   render_source = g_source_new (&render_source_funcs, sizeof (GSource));
   g_source_set_callback (render_source, maybe_render_frame,
