@@ -37,6 +37,7 @@
 #include "grd-rdp-buffer-pool.h"
 #include "grd-rdp-cursor-renderer.h"
 #include "grd-rdp-damage-detector.h"
+#include "grd-rdp-session-metrics.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
 #include "grd-utils.h"
@@ -148,6 +149,7 @@ struct _GrdRdpPipeWireStream
 
   uint32_t src_node_id;
 
+  gboolean pending_resize;
   struct spa_video_info_raw spa_format;
 };
 
@@ -417,6 +419,8 @@ grd_rdp_pipewire_stream_resize (GrdRdpPipeWireStream *stream,
   const struct spa_pod *params[MAX_FORMAT_PARAMS] = {};
   uint32_t n_params = 0;
 
+  stream->pending_resize = TRUE;
+
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
   n_params += add_format_params (stream, virtual_monitor, &pod_builder,
@@ -433,7 +437,6 @@ render_frame (gpointer user_data)
   g_autoptr (GMutexLocker) locker = NULL;
   GrdRdpPipeWireStream *stream;
   GrdRdpSurface *rdp_surface;
-  gboolean had_frame = FALSE;
   GrdRdpFrame *frame;
 
   locker = g_mutex_locker_new (&stream_context->stream_mutex);
@@ -449,7 +452,15 @@ render_frame (gpointer user_data)
   if (frame)
     {
       g_mutex_lock (&rdp_surface->surface_mutex);
-      had_frame = !!rdp_surface->pending_framebuffer;
+      if (!stream->pending_resize)
+        {
+          GrdRdpSessionMetrics *session_metrics =
+            grd_session_rdp_get_session_metrics (stream->session_rdp);
+
+          grd_rdp_session_metrics_notify_frame_reception (session_metrics,
+                                                          rdp_surface);
+        }
+
       g_clear_pointer (&rdp_surface->pending_framebuffer,
                        grd_rdp_buffer_release);
 
@@ -461,7 +472,6 @@ render_frame (gpointer user_data)
   if (!frame)
     return G_SOURCE_CONTINUE;
 
-  grd_session_rdp_notify_frame (stream->session_rdp, had_frame);
   grd_session_rdp_maybe_encode_pending_frame (stream->session_rdp, rdp_surface);
 
   grd_rdp_frame_unref (frame);
@@ -604,6 +614,7 @@ on_stream_param_changed (void                 *user_data,
 
   grd_rdp_surface_set_size (stream->rdp_surface, width, height);
   g_signal_emit (stream, signals[VIDEO_RESIZED], 0, width, height);
+  stream->pending_resize = FALSE;
 
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
@@ -1362,6 +1373,8 @@ grd_rdp_pipewire_stream_finalize (GObject *object)
 static void
 grd_rdp_pipewire_stream_init (GrdRdpPipeWireStream *stream)
 {
+  stream->pending_resize = TRUE;
+
   stream->pipewire_buffers =
     g_hash_table_new_full (NULL, NULL,
                            NULL, (GDestroyNotify) buffer_context_free);

@@ -22,6 +22,7 @@
 #include "grd-rdp-layout-manager.h"
 
 #include "grd-rdp-pipewire-stream.h"
+#include "grd-rdp-session-metrics.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
 #include "grd-session-rdp.h"
@@ -932,8 +933,11 @@ create_stream (SurfaceContext *surface_context,
 static UpdateState
 create_or_update_streams (GrdRdpLayoutManager *layout_manager)
 {
+  GrdRdpSessionMetrics *session_metrics =
+    grd_session_rdp_get_session_metrics (layout_manager->session_rdp);
   GrdRdpMonitorConfig *monitor_config = layout_manager->current_monitor_config;
   SurfaceContext *surface_context = NULL;
+  GList *surfaces = NULL;
   GHashTableIter iter;
   gpointer key;
 
@@ -946,7 +950,12 @@ create_or_update_streams (GrdRdpLayoutManager *layout_manager)
         update_stream_params (surface_context, stream_id);
       else
         create_stream (surface_context, stream_id);
+
+      surfaces = g_list_prepend (surfaces, surface_context->rdp_surface);
     }
+
+  grd_rdp_session_metrics_prepare_surface_metrics (session_metrics, surfaces);
+  g_list_free (surfaces);
 
   if (monitor_config->is_virtual)
     {
@@ -979,7 +988,11 @@ update_monitor_layout (gpointer user_data)
     case UPDATE_STATE_AWAIT_CONFIG:
       if (maybe_pick_up_queued_monitor_config (layout_manager))
         {
+          GrdRdpSessionMetrics *session_metrics =
+            grd_session_rdp_get_session_metrics (layout_manager->session_rdp);
+
           inhibit_surface_rendering (layout_manager);
+          grd_rdp_session_metrics_notify_layout_change (session_metrics);
 
           transition_to_state (layout_manager, UPDATE_STATE_PREPARE_SURFACES);
           return update_monitor_layout (layout_manager);

@@ -47,6 +47,7 @@
 #include "grd-rdp-private.h"
 #include "grd-rdp-sam.h"
 #include "grd-rdp-server.h"
+#include "grd-rdp-session-metrics.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
 #include "grd-rdp-telemetry.h"
@@ -81,19 +82,6 @@ typedef enum _PauseKeyState
   PAUSE_KEY_STATE_NUMLOCK_DOWN,
   PAUSE_KEY_STATE_CTRL_UP,
 } PauseKeyState;
-
-typedef struct _SessionMetrics
-{
-  int64_t rd_session_start_init_us;
-  int64_t rd_session_ready_us;
-  int64_t rd_session_started_us;
-
-  gboolean received_first_frame;
-  gboolean sent_first_frame;
-  int64_t first_frame_ready_us;
-  int64_t first_frame_sent_us;
-  uint32_t skipped_frames;
-} SessionMetrics;
 
 typedef struct _NSCThreadPoolContext
 {
@@ -135,7 +123,7 @@ struct _GrdSessionRdp
   gboolean is_view_only;
   gboolean session_should_stop;
 
-  SessionMetrics session_metrics;
+  GrdRdpSessionMetrics *session_metrics;
 
   GMutex rdp_flags_mutex;
   RdpPeerFlag rdp_flags;
@@ -219,6 +207,12 @@ unset_rdp_peer_flag (GrdSessionRdp *session_rdp,
   g_mutex_unlock (&session_rdp->rdp_flags_mutex);
 }
 
+GrdRdpSessionMetrics *
+grd_session_rdp_get_session_metrics (GrdSessionRdp *session_rdp)
+{
+  return session_rdp->session_metrics;
+}
+
 void
 grd_session_rdp_notify_new_desktop_size (GrdSessionRdp *session_rdp,
                                          uint32_t       desktop_width,
@@ -244,22 +238,6 @@ grd_session_rdp_notify_new_desktop_size (GrdSessionRdp *session_rdp,
                                desktop_height);
   if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     rdp_context->update->DesktopResize (rdp_context);
-}
-
-void
-grd_session_rdp_notify_frame (GrdSessionRdp *session_rdp,
-                              gboolean       replaced_previous_frame)
-{
-  SessionMetrics *session_metrics = &session_rdp->session_metrics;
-
-  if (!session_metrics->received_first_frame)
-    {
-      session_metrics->first_frame_ready_us = g_get_monotonic_time ();
-      session_metrics->received_first_frame = TRUE;
-      g_debug ("[RDP] Received first frame");
-    }
-  if (!session_metrics->sent_first_frame && replaced_previous_frame)
-    ++session_metrics->skipped_frames;
 }
 
 void
@@ -1200,30 +1178,10 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
 }
 
 static void
-print_session_metrics (SessionMetrics *session_metrics)
-{
-  g_debug ("[RDP] Remote Desktop session metrics: "
-           "_ready: %lims, _started: %lims, firstFrameReceived: %lims, "
-           "firstFrameSent: %lims (skipped_frames: %u), wholeStartup: %lims",
-           (session_metrics->rd_session_ready_us -
-            session_metrics->rd_session_start_init_us) / 1000,
-           (session_metrics->rd_session_started_us -
-            session_metrics->rd_session_ready_us) / 1000,
-           (session_metrics->first_frame_ready_us -
-           session_metrics->rd_session_ready_us) / 1000,
-           (session_metrics->first_frame_sent_us -
-           session_metrics->first_frame_ready_us) / 1000,
-           session_metrics->skipped_frames,
-           (session_metrics->first_frame_sent_us -
-           session_metrics->rd_session_start_init_us) / 1000);
-}
-
-static void
 rdp_peer_refresh_region (GrdSessionRdp *session_rdp,
                          GrdRdpSurface *rdp_surface,
                          GrdRdpBuffer  *buffer)
 {
-  SessionMetrics *session_metrics = &session_rdp->session_metrics;
   rdpContext *rdp_context = session_rdp->peer->context;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   rdpSettings *rdp_settings = rdp_context->settings;
@@ -1254,12 +1212,12 @@ rdp_peer_refresh_region (GrdSessionRdp *session_rdp,
 
   ++rdp_peer_context->frame_id;
 
-  if (success && !session_metrics->sent_first_frame)
+  if (success)
     {
-      session_metrics->first_frame_sent_us = g_get_monotonic_time ();
-      session_metrics->sent_first_frame = TRUE;
+      GrdRdpSessionMetrics *session_metrics = session_rdp->session_metrics;
 
-      print_session_metrics (session_metrics);
+      grd_rdp_session_metrics_notify_frame_transmission (session_metrics,
+                                                         rdp_surface);
     }
 }
 
@@ -1787,14 +1745,14 @@ static void
 notify_post_connected (gpointer user_data)
 {
   GrdSessionRdp *session_rdp = user_data;
-  SessionMetrics *session_metrics = &session_rdp->session_metrics;
   GrdContext *grd_context = grd_session_get_context (GRD_SESSION (session_rdp));
 
   g_mutex_lock (&session_rdp->notify_post_connected_mutex);
   session_rdp->notify_post_connected_source_id = 0;
   g_mutex_unlock (&session_rdp->notify_post_connected_mutex);
 
-  session_metrics->rd_session_start_init_us = g_get_monotonic_time ();
+  grd_rdp_session_metrics_notify_phase_completion (session_rdp->session_metrics,
+                                                   GRD_RDP_PHASE_POST_CONNECT);
   if (grd_context_get_runtime_mode (grd_context) != GRD_RUNTIME_MODE_SYSTEM)
     grd_session_start (GRD_SESSION (session_rdp));
 
@@ -2579,9 +2537,9 @@ static void
 grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
-  SessionMetrics *session_metrics = &session_rdp->session_metrics;
 
-  session_metrics->rd_session_ready_us = g_get_monotonic_time ();
+  grd_rdp_session_metrics_notify_phase_completion (session_rdp->session_metrics,
+                                                   GRD_RDP_PHASE_SESSION_READY);
 
   session_rdp->cursor_renderer =
     grd_rdp_cursor_renderer_new (session_rdp->graphics_context,
@@ -2596,13 +2554,13 @@ static void
 grd_session_rdp_remote_desktop_session_started (GrdSession *session)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
-  SessionMetrics *session_metrics = &session_rdp->session_metrics;
   rdpContext *rdp_context = session_rdp->peer->context;
   rdpSettings *rdp_settings = rdp_context->settings;
   gboolean has_graphics_pipeline =
     freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline);
 
-  session_metrics->rd_session_started_us = g_get_monotonic_time ();
+  grd_rdp_session_metrics_notify_phase_completion (session_rdp->session_metrics,
+                                                   GRD_RDP_PHASE_SESSION_STARTED);
 
   grd_rdp_layout_manager_notify_session_started (session_rdp->layout_manager,
                                                  session_rdp->cursor_renderer,
@@ -2660,6 +2618,7 @@ grd_session_rdp_dispose (GObject *object)
   g_clear_pointer (&session_rdp->graphics_context, g_main_context_unref);
 
   g_clear_object (&session_rdp->rdp_event_queue);
+  g_clear_object (&session_rdp->session_metrics);
 
   g_clear_pointer (&session_rdp->stream_table, g_hash_table_unref);
   g_clear_pointer (&session_rdp->pressed_unicode_keys, g_hash_table_unref);
@@ -2699,6 +2658,7 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
   g_mutex_init (&session_rdp->close_session_mutex);
   g_mutex_init (&session_rdp->notify_post_connected_mutex);
 
+  session_rdp->session_metrics = grd_rdp_session_metrics_new ();
   session_rdp->rdp_event_queue = grd_rdp_event_queue_new (session_rdp);
 
   session_rdp->graphics_context = g_main_context_new ();
