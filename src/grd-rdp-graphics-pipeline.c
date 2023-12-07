@@ -24,9 +24,12 @@
 #include <cairo/cairo.h>
 #include <winpr/sysinfo.h>
 
+#include "grd-avc-frame-info.h"
+#include "grd-bitstream.h"
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-dvc.h"
+#include "grd-rdp-frame.h"
 #include "grd-rdp-frame-info.h"
 #include "grd-rdp-gfx-frame-controller.h"
 #include "grd-rdp-gfx-surface.h"
@@ -460,6 +463,183 @@ get_next_free_frame_id (GrdRdpGraphicsPipeline *graphics_pipeline)
   return frame_id;
 }
 
+static uint16_t
+get_rdpgfx_codec_id (GrdRdpCodec codec)
+{
+  switch (codec)
+    {
+    case GRD_RDP_CODEC_CAPROGRESSIVE:
+      return RDPGFX_CODECID_CAPROGRESSIVE;
+    case GRD_RDP_CODEC_AVC420:
+      return RDPGFX_CODECID_AVC420;
+    case GRD_RDP_CODEC_AVC444v2:
+      return RDPGFX_CODECID_AVC444v2;
+    }
+
+  g_assert_not_reached ();
+}
+
+static void
+set_region_rects (RDPGFX_H264_METABLOCK *avc_meta,
+                  cairo_region_t        *region)
+{
+  int n_rects;
+  int i;
+
+  avc_meta->numRegionRects = n_rects = cairo_region_num_rectangles (region);
+  avc_meta->regionRects = g_new0 (RECTANGLE_16, n_rects);
+  for (i = 0; i < n_rects; ++i)
+    {
+      cairo_rectangle_int_t cairo_rect;
+
+      cairo_region_get_rectangle (region, i, &cairo_rect);
+
+      avc_meta->regionRects[i].left = cairo_rect.x;
+      avc_meta->regionRects[i].top = cairo_rect.y;
+      avc_meta->regionRects[i].right = cairo_rect.x + cairo_rect.width;
+      avc_meta->regionRects[i].bottom = cairo_rect.y + cairo_rect.height;
+    }
+}
+
+static void
+set_avc_info (RDPGFX_H264_METABLOCK *avc_meta,
+              GrdBitstream          *bitstream,
+              int                    n_blocks)
+{
+  GrdAVCFrameInfo *avc_frame_info =
+    grd_bitstream_get_avc_frame_info (bitstream);
+  int i = 0;
+
+  avc_meta->quantQualityVals = g_new0 (RDPGFX_H264_QUANT_QUALITY, n_blocks);
+  for (i = 0; i < n_blocks; ++i)
+    {
+      avc_meta->quantQualityVals[i].qp =
+        grd_avc_frame_info_get_qp (avc_frame_info);
+      avc_meta->quantQualityVals[i].p =
+        grd_avc_frame_info_get_frame_type (avc_frame_info) == GRD_AVC_FRAME_TYPE_P;
+      avc_meta->quantQualityVals[i].qualityVal =
+        grd_avc_frame_info_get_quality_value (avc_frame_info);
+    }
+}
+
+static void
+prepare_avc420_bitstream (RDPGFX_AVC420_BITMAP_STREAM *avc420,
+                          cairo_region_t              *region,
+                          GrdBitstream                *bitstream)
+{
+  RDPGFX_H264_METABLOCK *avc_meta = &avc420->meta;
+  int n_rects;
+
+  n_rects = cairo_region_num_rectangles (region);
+
+  avc420->data = grd_bitstream_get_data (bitstream);
+  avc420->length = grd_bitstream_get_data_size (bitstream);
+
+  set_region_rects (avc_meta, region);
+  set_avc_info (avc_meta, bitstream, n_rects);
+}
+
+static void
+prepare_avc444_bitstream (RDPGFX_AVC444_BITMAP_STREAM *avc444,
+                          GrdRdpFrame                 *rdp_frame)
+{
+  GList *bitstreams = grd_rdp_frame_get_bitstreams (rdp_frame);
+  cairo_region_t *region = grd_rdp_frame_get_damage_region (rdp_frame);
+  GrdRdpFrameViewType view_type = grd_rdp_frame_get_avc_view_type (rdp_frame);
+  GrdBitstream *bitstream0 = NULL;
+  GrdBitstream *bitstream1 = NULL;
+  int n_rects;
+
+  g_assert (bitstreams);
+  g_assert (g_list_length (bitstreams) >= 1);
+
+  bitstream0 = bitstreams->data;
+  if (bitstreams->next)
+    bitstream1 = bitstreams->next->data;
+
+  switch (view_type)
+    {
+    case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
+      g_assert (g_list_length (bitstreams) == 2);
+      avc444->LC = 0;
+      break;
+    case GRD_RDP_FRAME_VIEW_TYPE_MAIN:
+      g_assert (g_list_length (bitstreams) == 1);
+      avc444->LC = 1;
+      break;
+    case GRD_RDP_FRAME_VIEW_TYPE_AUX:
+      g_assert (g_list_length (bitstreams) == 1);
+      avc444->LC = 2;
+      break;
+    }
+
+  prepare_avc420_bitstream (&avc444->bitstream[0], region, bitstream0);
+  if (bitstream1)
+    prepare_avc420_bitstream (&avc444->bitstream[1], region, bitstream1);
+
+  switch (view_type)
+    {
+    case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
+    case GRD_RDP_FRAME_VIEW_TYPE_MAIN:
+      n_rects = cairo_region_num_rectangles (region);
+
+      /* RFX_AVC420_METABLOCK size + bitstream0 size */
+      avc444->cbAvc420EncodedBitstream1 = sizeof (uint32_t) + n_rects * 10 +
+                                          avc444->bitstream[0].length;
+      break;
+    case GRD_RDP_FRAME_VIEW_TYPE_AUX:
+      /*
+       * If no YUV420 frame is present, then this field MUST be set to zero.
+       * ([MS-RDPEGFX] 2.2.4.6)
+       *
+       * The auxiliary view is referred to as Chroma420 frame.
+       */
+      avc444->cbAvc420EncodedBitstream1 = 0;
+      break;
+    }
+}
+
+static void
+prepare_avc_update (RDPGFX_SURFACE_COMMAND      *cmd,
+                    RDPGFX_AVC444_BITMAP_STREAM *avc444,
+                    GrdRdpFrame                 *rdp_frame)
+{
+  GrdRdpRenderContext *render_context =
+    grd_rdp_frame_get_render_context (rdp_frame);
+  GrdRdpCodec codec = grd_rdp_render_context_get_codec (render_context);
+  cairo_region_t *region = grd_rdp_frame_get_damage_region (rdp_frame);
+  GList *bitstreams = grd_rdp_frame_get_bitstreams (rdp_frame);
+  cairo_rectangle_int_t region_extents = {};
+  GrdBitstream *bitstream0;
+
+  g_assert (bitstreams);
+  g_assert (g_list_length (bitstreams) >= 1);
+
+  bitstream0 = bitstreams->data;
+
+  cairo_region_get_extents (region, &region_extents);
+
+  cmd->left = 0;
+  cmd->top = 0;
+  cmd->right = region_extents.x + region_extents.width;
+  cmd->bottom = region_extents.y + region_extents.height;
+
+  switch (codec)
+    {
+    case GRD_RDP_CODEC_CAPROGRESSIVE:
+      g_assert_not_reached ();
+      break;
+    case GRD_RDP_CODEC_AVC420:
+      prepare_avc420_bitstream (&avc444->bitstream[0], region, bitstream0);
+      cmd->extra = &avc444->bitstream[0];
+      break;
+    case GRD_RDP_CODEC_AVC444v2:
+      prepare_avc444_bitstream (avc444, rdp_frame);
+      cmd->extra = avc444;
+      break;
+    }
+}
+
 static void
 surface_serial_ref (GrdRdpGraphicsPipeline *graphics_pipeline,
                     uint32_t                surface_serial)
@@ -539,6 +719,23 @@ enqueue_tracked_frame_info (GrdRdpGraphicsPipeline *graphics_pipeline,
   g_queue_push_tail (graphics_pipeline->encoded_frames, gfx_frame_info);
 }
 
+static uint32_t
+get_frame_size (GrdRdpFrame *rdp_frame)
+{
+  GList *bitstreams = grd_rdp_frame_get_bitstreams (rdp_frame);
+  uint32_t frame_size = 0;
+
+  while (bitstreams)
+    {
+      GrdBitstream *bitstream = bitstreams->data;
+
+      frame_size += grd_bitstream_get_data_size (bitstream);
+      bitstreams = bitstreams->next;
+    }
+
+  return frame_size;
+}
+
 static void
 blit_surface_to_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
                          GrdRdpGfxSurface       *dst_surface,
@@ -567,6 +764,204 @@ blit_surface_to_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
 
       rdpgfx_context->SurfaceToSurface (rdpgfx_context, &surface_to_surface);
     }
+}
+
+static void
+clear_old_enc_times (GrdRdpGraphicsPipeline *graphics_pipeline,
+                     int64_t                 current_time_us)
+{
+  int64_t *tracked_enc_time_us;
+
+  while ((tracked_enc_time_us = g_queue_peek_head (graphics_pipeline->enc_times)) &&
+         current_time_us - *tracked_enc_time_us >= 1 * G_USEC_PER_SEC)
+    g_free (g_queue_pop_head (graphics_pipeline->enc_times));
+}
+
+static void
+track_enc_time (GrdRdpGraphicsPipeline *graphics_pipeline,
+                int64_t                 enc_time_us)
+{
+  int64_t *tracked_enc_time_us;
+
+  tracked_enc_time_us = g_malloc0 (sizeof (int64_t));
+  *tracked_enc_time_us = enc_time_us;
+
+  g_queue_push_tail (graphics_pipeline->enc_times, tracked_enc_time_us);
+}
+
+static gboolean
+maybe_slow_down_rtts (gpointer user_data)
+{
+  GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
+
+  g_mutex_lock (&graphics_pipeline->gfx_mutex);
+  clear_old_enc_times (graphics_pipeline, g_get_monotonic_time ());
+
+  if (g_queue_get_length (graphics_pipeline->enc_times) == 0)
+    {
+      grd_rdp_network_autodetection_set_rtt_consumer_necessity (
+        graphics_pipeline->network_autodetection,
+        GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX,
+        GRD_RDP_NW_AUTODETECT_RTT_NEC_LOW);
+
+      g_clear_pointer (&graphics_pipeline->rtt_pause_source, g_source_unref);
+      g_mutex_unlock (&graphics_pipeline->gfx_mutex);
+
+      return G_SOURCE_REMOVE;
+    }
+  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static void
+ensure_rtt_receivement (GrdRdpGraphicsPipeline *graphics_pipeline)
+{
+  GMainContext *graphics_context =
+    grd_rdp_renderer_get_graphics_context (graphics_pipeline->renderer);
+
+  g_assert (!graphics_pipeline->rtt_pause_source);
+
+  grd_rdp_network_autodetection_set_rtt_consumer_necessity (
+    graphics_pipeline->network_autodetection,
+    GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX,
+    GRD_RDP_NW_AUTODETECT_RTT_NEC_HIGH);
+
+  graphics_pipeline->rtt_pause_source =
+    g_timeout_source_new (ENC_TIMES_CHECK_INTERVAL_MS);
+  g_source_set_callback (graphics_pipeline->rtt_pause_source, maybe_slow_down_rtts,
+                         graphics_pipeline, NULL);
+  g_source_attach (graphics_pipeline->rtt_pause_source, graphics_context);
+}
+
+void
+grd_rdp_graphics_pipeline_submit_frame (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                        GrdRdpFrame            *rdp_frame)
+{
+  RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
+  rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
+  GrdRdpNetworkAutodetection *network_autodetection =
+    graphics_pipeline->network_autodetection;
+  GrdRdpRenderContext *render_context =
+    grd_rdp_frame_get_render_context (rdp_frame);
+  GrdRdpGfxSurface *gfx_surface =
+    grd_rdp_render_context_get_gfx_surface (render_context);
+  GrdRdpGfxSurface *render_surface =
+    grd_rdp_gfx_surface_get_render_surface (gfx_surface);
+  GrdRdpGfxFrameController *frame_controller =
+    grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
+  GrdRdpCodec codec = grd_rdp_render_context_get_codec (render_context);
+  uint32_t codec_context_id =
+    grd_rdp_gfx_surface_get_codec_context_id (gfx_surface);
+  GList *bitstreams = grd_rdp_frame_get_bitstreams (rdp_frame);
+  RDPGFX_START_FRAME_PDU cmd_start = {};
+  RDPGFX_END_FRAME_PDU cmd_end = {};
+  SYSTEMTIME system_time = {};
+  RDPGFX_SURFACE_COMMAND cmd = {};
+  RDPGFX_AVC444_BITMAP_STREAM avc444 = {};
+  gboolean pending_bw_measure_stop = FALSE;
+  RECTANGLE_16 *region_rects = NULL;
+  int n_rects = 0;
+  GrdBitstream *bitstream0;
+  uint32_t surface_serial;
+  int64_t enc_ack_time_us;
+
+  g_assert (bitstreams);
+  g_assert (g_list_length (bitstreams) >= 1);
+
+  bitstream0 = bitstreams->data;
+
+  GetSystemTime (&system_time);
+  cmd_start.timestamp = system_time.wHour << 22 |
+                        system_time.wMinute << 16 |
+                        system_time.wSecond << 10 |
+                        system_time.wMilliseconds;
+  cmd_start.frameId = get_next_free_frame_id (graphics_pipeline);
+  cmd_end.frameId = cmd_start.frameId;
+
+  cmd.surfaceId = grd_rdp_gfx_surface_get_surface_id (render_surface);
+  cmd.codecId = get_rdpgfx_codec_id (codec);
+  cmd.format = PIXEL_FORMAT_BGRX32;
+
+  switch (codec)
+    {
+    case GRD_RDP_CODEC_CAPROGRESSIVE:
+      g_assert (g_list_length (bitstreams) == 1);
+
+      cmd.contextId = codec_context_id;
+      cmd.length = grd_bitstream_get_data_size (bitstream0);
+      cmd.data = grd_bitstream_get_data (bitstream0);
+      break;
+    case GRD_RDP_CODEC_AVC420:
+    case GRD_RDP_CODEC_AVC444v2:
+      prepare_avc_update (&cmd, &avc444, rdp_frame);
+      region_rects = avc444.bitstream[0].meta.regionRects;
+      n_rects = avc444.bitstream[0].meta.numRegionRects;
+      break;
+    }
+
+  g_mutex_lock (&graphics_pipeline->gfx_mutex);
+  if (codec == GRD_RDP_CODEC_CAPROGRESSIVE &&
+      !g_hash_table_contains (graphics_pipeline->codec_context_table,
+                              GUINT_TO_POINTER (codec_context_id)))
+    {
+      g_hash_table_insert (graphics_pipeline->codec_context_table,
+                           GUINT_TO_POINTER (codec_context_id), gfx_surface);
+    }
+
+  enc_ack_time_us = g_get_monotonic_time ();
+  grd_rdp_gfx_frame_controller_unack_frame (frame_controller, cmd_start.frameId,
+                                            enc_ack_time_us);
+
+  surface_serial = grd_rdp_gfx_surface_get_serial (gfx_surface);
+  g_hash_table_insert (graphics_pipeline->frame_serial_table,
+                       GUINT_TO_POINTER (cmd_start.frameId),
+                       GUINT_TO_POINTER (surface_serial));
+  surface_serial_ref (graphics_pipeline, surface_serial);
+  ++graphics_pipeline->total_frames_encoded;
+
+  if (graphics_pipeline->frame_acks_suspended)
+    {
+      grd_rdp_gfx_frame_controller_ack_frame (frame_controller, cmd_start.frameId,
+                                              enc_ack_time_us);
+      enqueue_tracked_frame_info (graphics_pipeline, surface_serial,
+                                  cmd_start.frameId, enc_ack_time_us);
+    }
+  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
+
+  if (network_autodetection &&
+      get_frame_size (rdp_frame) >= MIN_BW_MEASURE_SIZE)
+    {
+      pending_bw_measure_stop =
+        grd_rdp_network_autodetection_try_bw_measure_start (network_autodetection);
+    }
+
+  rdpgfx_context->StartFrame (rdpgfx_context, &cmd_start);
+  rdpgfx_context->SurfaceCommand (rdpgfx_context, &cmd);
+
+  if (render_surface != gfx_surface)
+    {
+      blit_surface_to_surface (graphics_pipeline, gfx_surface, render_surface,
+                               region_rects, n_rects);
+    }
+  rdpgfx_context->EndFrame (rdpgfx_context, &cmd_end);
+
+  if (pending_bw_measure_stop)
+    grd_rdp_network_autodetection_queue_bw_measure_stop (network_autodetection);
+
+  g_free (avc444.bitstream[1].meta.quantQualityVals);
+  g_free (avc444.bitstream[1].meta.regionRects);
+  g_free (avc444.bitstream[0].meta.quantQualityVals);
+  g_free (avc444.bitstream[0].meta.regionRects);
+
+  g_mutex_lock (&graphics_pipeline->gfx_mutex);
+  clear_old_enc_times (graphics_pipeline, g_get_monotonic_time ());
+  track_enc_time (graphics_pipeline, enc_ack_time_us);
+
+  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect) &&
+      !graphics_pipeline->rtt_pause_source)
+    ensure_rtt_receivement (graphics_pipeline);
+  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 }
 
 static gboolean
@@ -999,74 +1394,6 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   cairo_region_destroy (region);
 
   return TRUE;
-}
-
-static void
-clear_old_enc_times (GrdRdpGraphicsPipeline *graphics_pipeline,
-                     int64_t                 current_time_us)
-{
-  int64_t *tracked_enc_time_us;
-
-  while ((tracked_enc_time_us = g_queue_peek_head (graphics_pipeline->enc_times)) &&
-         current_time_us - *tracked_enc_time_us >= 1 * G_USEC_PER_SEC)
-    g_free (g_queue_pop_head (graphics_pipeline->enc_times));
-}
-
-static void
-track_enc_time (GrdRdpGraphicsPipeline *graphics_pipeline,
-                int64_t                 enc_time_us)
-{
-  int64_t *tracked_enc_time_us;
-
-  tracked_enc_time_us = g_malloc0 (sizeof (int64_t));
-  *tracked_enc_time_us = enc_time_us;
-
-  g_queue_push_tail (graphics_pipeline->enc_times, tracked_enc_time_us);
-}
-
-static gboolean
-maybe_slow_down_rtts (gpointer user_data)
-{
-  GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
-
-  g_mutex_lock (&graphics_pipeline->gfx_mutex);
-  clear_old_enc_times (graphics_pipeline, g_get_monotonic_time ());
-
-  if (g_queue_get_length (graphics_pipeline->enc_times) == 0)
-    {
-      grd_rdp_network_autodetection_set_rtt_consumer_necessity (
-        graphics_pipeline->network_autodetection,
-        GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX,
-        GRD_RDP_NW_AUTODETECT_RTT_NEC_LOW);
-
-      g_clear_pointer (&graphics_pipeline->rtt_pause_source, g_source_unref);
-      g_mutex_unlock (&graphics_pipeline->gfx_mutex);
-
-      return G_SOURCE_REMOVE;
-    }
-  g_mutex_unlock (&graphics_pipeline->gfx_mutex);
-
-  return G_SOURCE_CONTINUE;
-}
-
-static void
-ensure_rtt_receivement (GrdRdpGraphicsPipeline *graphics_pipeline)
-{
-  GMainContext *graphics_context =
-    grd_rdp_renderer_get_graphics_context (graphics_pipeline->renderer);
-
-  g_assert (!graphics_pipeline->rtt_pause_source);
-
-  grd_rdp_network_autodetection_set_rtt_consumer_necessity (
-    graphics_pipeline->network_autodetection,
-    GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX,
-    GRD_RDP_NW_AUTODETECT_RTT_NEC_HIGH);
-
-  graphics_pipeline->rtt_pause_source =
-    g_timeout_source_new (ENC_TIMES_CHECK_INTERVAL_MS);
-  g_source_set_callback (graphics_pipeline->rtt_pause_source, maybe_slow_down_rtts,
-                         graphics_pipeline, NULL);
-  g_source_attach (graphics_pipeline->rtt_pause_source, graphics_context);
 }
 
 gboolean
