@@ -836,6 +836,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
       unsigned int i;
       uint8_t *dst_data = NULL;
 
+      acquire_pipewire_buffer_lock (stream, pw_buffer);
       frame->buffer = grd_rdp_buffer_pool_acquire (stream->buffer_pool);
       if (!frame->buffer)
         {
@@ -882,7 +883,6 @@ process_frame_data (GrdRdpPipeWireStream *stream,
           import_buffer_data->rdp_buffer = rdp_buffer;
         }
 
-      acquire_pipewire_buffer_lock (stream, pw_buffer);
       grd_egl_thread_download (egl_thread,
                                stream->egl_slot,
                                grd_rdp_buffer_get_pbo (rdp_buffer),
