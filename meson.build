@@ -9,7 +9,7 @@ epoxy_req = '>= 1.4'
 freerdp_req = '>= 2.10.0'
 fuse_req = '>= 3.9.1'
 xkbcommon_req = '>= 1.0.0'
-libei_req = '>= 1.0.901'
+libei_req = '>= 1.2.0'
 
 gnome = import('gnome')
 i18n  = import('i18n')

@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 39
-    BASE_TAG: '2023-08-31.4.libei'
+    BASE_TAG: '2023-12-13.1.libei'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -28,7 +28,6 @@ stages:
                      'pkgconfig(tss2-mu)' 'pkgconfig(tss2-rc)' \
                      'pkgconfig(tss2-tctildr)' &&
       dnf install -y asciidoc &&
-      dnf builddep -y libei --setopt=install_weak_deps=False &&
       dnf builddep -y mutter --setopt=install_weak_deps=False &&
 
       # To test
@@ -40,12 +39,8 @@ stages:
                      gnome-settings-daemon mesa-dri-drivers mutter &&
 
       ./.gitlab-ci/install-meson-project.sh \
-        https://gitlab.freedesktop.org/libinput/libei.git \
-        1.0.901 . &&
-
-      ./.gitlab-ci/install-meson-project.sh \
         https://gitlab.gnome.org/GNOME/mutter.git \
-        main . f0bb54079798e9e5cfb4fba4cef93873e4d32f03 &&
+        main . 7454287d3b2a9b3dbb15ecbf07a99c6272826d6e &&
 
       dnf clean all
 
