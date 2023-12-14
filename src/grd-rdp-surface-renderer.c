@@ -36,6 +36,9 @@ struct _GrdRdpSurfaceRenderer
 
   GSource *render_source;
   gboolean rendering_suspended;
+  gboolean rendering_inhibited;
+
+  GMutex render_mutex;
 };
 
 G_DEFINE_TYPE (GrdRdpSurfaceRenderer, grd_rdp_surface_renderer, G_TYPE_OBJECT)
@@ -69,13 +72,27 @@ grd_rdp_surface_renderer_submit_buffer (GrdRdpSurfaceRenderer *surface_renderer,
 {
   GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
 
-  g_mutex_lock (&rdp_surface->surface_mutex);
+  g_mutex_lock (&surface_renderer->render_mutex);
   g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_release);
 
   rdp_surface->pending_framebuffer = buffer;
-  g_mutex_unlock (&rdp_surface->surface_mutex);
+  g_mutex_unlock (&surface_renderer->render_mutex);
 
   grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
+}
+
+void
+grd_rdp_surface_renderer_inhibit_rendering (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  g_mutex_lock (&surface_renderer->render_mutex);
+  surface_renderer->rendering_inhibited = TRUE;
+  g_mutex_unlock (&surface_renderer->render_mutex);
+}
+
+void
+grd_rdp_surface_renderer_uninhibit_rendering (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  surface_renderer->rendering_inhibited = FALSE;
 }
 
 void
@@ -84,10 +101,30 @@ grd_rdp_surface_renderer_trigger_render_source (GrdRdpSurfaceRenderer *surface_r
   g_source_set_ready_time (surface_renderer->render_source, 0);
 }
 
+void
+grd_rdp_surface_renderer_reset (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+
+  g_mutex_lock (&surface_renderer->render_mutex);
+  g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_release);
+  g_mutex_unlock (&surface_renderer->render_mutex);
+}
+
 static gboolean
 maybe_render_frame (gpointer user_data)
 {
   GrdRdpSurfaceRenderer *surface_renderer = user_data;
+  GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+  g_autoptr (GMutexLocker) locker = NULL;
+
+  locker = g_mutex_locker_new (&surface_renderer->render_mutex);
+  if (!rdp_surface->pending_framebuffer)
+    return G_SOURCE_CONTINUE;
+
+  if (surface_renderer->rendering_inhibited ||
+      surface_renderer->rendering_suspended)
+    return G_SOURCE_CONTINUE;
 
   grd_session_rdp_maybe_encode_pending_frame (surface_renderer->session_rdp,
                                               surface_renderer->rdp_surface);
@@ -149,8 +186,19 @@ grd_rdp_surface_renderer_dispose (GObject *object)
 }
 
 static void
+grd_rdp_surface_renderer_finalize (GObject *object)
+{
+  GrdRdpSurfaceRenderer *surface_renderer = GRD_RDP_SURFACE_RENDERER (object);
+
+  g_mutex_clear (&surface_renderer->render_mutex);
+
+  G_OBJECT_CLASS (grd_rdp_surface_renderer_parent_class)->finalize (object);
+}
+
+static void
 grd_rdp_surface_renderer_init (GrdRdpSurfaceRenderer *surface_renderer)
 {
+  g_mutex_init (&surface_renderer->render_mutex);
 }
 
 static void
@@ -159,4 +207,5 @@ grd_rdp_surface_renderer_class_init (GrdRdpSurfaceRendererClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->dispose = grd_rdp_surface_renderer_dispose;
+  object_class->finalize = grd_rdp_surface_renderer_finalize;
 }

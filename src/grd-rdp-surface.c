@@ -77,8 +77,6 @@ grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia)
       rdp_surface->detector = GRD_RDP_DAMAGE_DETECTOR (detector);
     }
 
-  g_mutex_init (&rdp_surface->surface_mutex);
-
   return g_steal_pointer (&rdp_surface);
 }
 
@@ -92,8 +90,6 @@ grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
   g_clear_object (&rdp_surface->surface_renderer);
 
   g_clear_pointer (&rdp_surface->surface_mapping, g_free);
-
-  g_mutex_clear (&rdp_surface->surface_mutex);
 
   g_clear_object (&rdp_surface->detector);
   destroy_hwaccel_util_objects (rdp_surface);
@@ -123,12 +119,6 @@ GrdRdpSurfaceRenderer *
 grd_rdp_surface_get_surface_renderer (GrdRdpSurface *rdp_surface)
 {
   return rdp_surface->surface_renderer;
-}
-
-gboolean
-grd_rdp_surface_is_rendering_inhibited (GrdRdpSurface *rdp_surface)
-{
-  return rdp_surface->rendering_inhibited;
 }
 
 void
@@ -161,20 +151,6 @@ void
 grd_rdp_surface_invalidate_surface (GrdRdpSurface *rdp_surface)
 {
   rdp_surface->valid = FALSE;
-}
-
-void
-grd_rdp_surface_inhibit_rendering (GrdRdpSurface *rdp_surface)
-{
-  g_mutex_lock (&rdp_surface->surface_mutex);
-  rdp_surface->rendering_inhibited = TRUE;
-  g_mutex_unlock (&rdp_surface->surface_mutex);
-}
-
-void
-grd_rdp_surface_uninhibit_rendering (GrdRdpSurface *rdp_surface)
-{
-  rdp_surface->rendering_inhibited = FALSE;
 }
 
 void

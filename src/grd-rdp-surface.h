@@ -50,7 +50,6 @@ struct _GrdRdpSurface
 
   GrdRdpSurfaceRenderer *surface_renderer;
 
-  GMutex surface_mutex;
   GrdRdpBuffer *pending_framebuffer;
   GrdRdpDamageDetector *detector;
 
@@ -66,7 +65,6 @@ struct _GrdRdpSurface
   gboolean valid;
 
   GrdRdpGfxSurface *gfx_surface;
-  gboolean rendering_inhibited;
 };
 
 GrdRdpSurface *grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia);
@@ -81,8 +79,6 @@ GrdRdpSurfaceMapping *grd_rdp_surface_get_mapping (GrdRdpSurface *rdp_surface);
 
 GrdRdpSurfaceRenderer *grd_rdp_surface_get_surface_renderer (GrdRdpSurface *rdp_surface);
 
-gboolean grd_rdp_surface_is_rendering_inhibited (GrdRdpSurface *rdp_surface);
-
 void grd_rdp_surface_set_size (GrdRdpSurface *rdp_surface,
                                uint32_t       width,
                                uint32_t       height);
@@ -94,10 +90,6 @@ void grd_rdp_surface_attach_surface_renderer (GrdRdpSurface         *rdp_surface
                                               GrdRdpSurfaceRenderer *surface_renderer);
 
 void grd_rdp_surface_invalidate_surface (GrdRdpSurface *rdp_surface);
-
-void grd_rdp_surface_inhibit_rendering (GrdRdpSurface *rdp_surface);
-
-void grd_rdp_surface_uninhibit_rendering (GrdRdpSurface *rdp_surface);
 
 void grd_rdp_surface_reset (GrdRdpSurface *rdp_surface);
 

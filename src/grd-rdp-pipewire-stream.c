@@ -434,10 +434,10 @@ sync_egl_thread (GrdEglThread *egl_thread)
 static void
 release_all_buffers (GrdRdpPipeWireStream *stream)
 {
-  g_mutex_lock (&stream->rdp_surface->surface_mutex);
-  g_clear_pointer (&stream->rdp_surface->pending_framebuffer,
-                   grd_rdp_buffer_release);
-  g_mutex_unlock (&stream->rdp_surface->surface_mutex);
+  GrdRdpSurfaceRenderer *surface_renderer;
+
+  surface_renderer = grd_rdp_surface_get_surface_renderer (stream->rdp_surface);
+  grd_rdp_surface_renderer_reset (surface_renderer);
 }
 
 static void

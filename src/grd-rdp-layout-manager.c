@@ -766,7 +766,13 @@ inhibit_surface_rendering (GrdRdpLayoutManager *layout_manager)
 
   g_hash_table_iter_init (&iter, layout_manager->surface_table);
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
-    grd_rdp_surface_inhibit_rendering (surface_context->rdp_surface);
+    {
+      GrdRdpSurface *rdp_surface = surface_context->rdp_surface;
+      GrdRdpSurfaceRenderer *surface_renderer;
+
+      surface_renderer = grd_rdp_surface_get_surface_renderer (rdp_surface);
+      grd_rdp_surface_renderer_inhibit_rendering (surface_renderer);
+    }
 }
 
 static void
@@ -777,7 +783,13 @@ uninhibit_surface_rendering (GrdRdpLayoutManager *layout_manager)
 
   g_hash_table_iter_init (&iter, layout_manager->surface_table);
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
-    grd_rdp_surface_uninhibit_rendering (surface_context->rdp_surface);
+    {
+      GrdRdpSurface *rdp_surface = surface_context->rdp_surface;
+      GrdRdpSurfaceRenderer *surface_renderer;
+
+      surface_renderer = grd_rdp_surface_get_surface_renderer (rdp_surface);
+      grd_rdp_surface_renderer_uninhibit_rendering (surface_renderer);
+    }
 }
 
 static void
@@ -821,13 +833,16 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
   while (g_hash_table_size (layout_manager->surface_table) < n_target_surfaces)
     {
       GrdRdpStreamOwner *stream_owner = GRD_RDP_STREAM_OWNER (layout_manager);
+      GrdRdpSurfaceRenderer *surface_renderer;
       uint32_t stream_id;
 
       surface_context = surface_context_new (layout_manager, error);
       if (!surface_context)
         return FALSE;
 
-      grd_rdp_surface_inhibit_rendering (surface_context->rdp_surface);
+      surface_renderer =
+        grd_rdp_surface_get_surface_renderer (surface_context->rdp_surface);
+      grd_rdp_surface_renderer_inhibit_rendering (surface_renderer);
 
       stream_id = grd_session_rdp_acquire_stream_id (layout_manager->session_rdp,
                                                      stream_owner);
