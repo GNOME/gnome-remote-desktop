@@ -40,7 +40,6 @@ typedef enum
   CT_AUTODETECT_STATE_AWAIT_BW_RESULT_2,
   CT_AUTODETECT_STATE_AWAIT_BW_RESULT_3,
   CT_AUTODETECT_STATE_START_RTT_DETECTION,
-  CT_AUTODETECT_STATE_IN_RTT_DETECTION,
   CT_AUTODETECT_STATE_AWAIT_LAST_RTT_RESPONSE,
   CT_AUTODETECT_STATE_SEND_NET_CHAR_RESULT,
   CT_AUTODETECT_STATE_COMPLETE,
@@ -64,6 +63,7 @@ struct _GrdRdpConnectTimeAutodetection
 
   GSource *ping_source;
   uint32_t pending_pings;
+  gboolean pending_last_sequence_number;
   uint16_t last_sequence_number;
 
   int64_t base_round_trip_time_us;
@@ -179,8 +179,6 @@ ct_autodetect_state_to_string (CtAutodetectState state)
       return "AWAIT_BW_RESULT_3";
     case CT_AUTODETECT_STATE_START_RTT_DETECTION:
       return "START_RTT_DETECTION";
-    case CT_AUTODETECT_STATE_IN_RTT_DETECTION:
-      return "IN_RTT_DETECTION";
     case CT_AUTODETECT_STATE_AWAIT_LAST_RTT_RESPONSE:
       return "AWAIT_LAST_RTT_RESPONSE";
     case CT_AUTODETECT_STATE_SEND_NET_CHAR_RESULT:
@@ -213,9 +211,7 @@ last_sequence_number_ready (gpointer user_data,
 
   g_mutex_lock (&ct_autodetection->ct_autodetection_mutex);
   ct_autodetection->last_sequence_number = sequence_number;
-
-  transition_to_state (ct_autodetection,
-                       CT_AUTODETECT_STATE_AWAIT_LAST_RTT_RESPONSE);
+  ct_autodetection->pending_last_sequence_number = FALSE;
   g_mutex_unlock (&ct_autodetection->ct_autodetection_mutex);
 }
 
@@ -320,10 +316,9 @@ detect_network_characteristics (GrdRdpConnectTimeAutodetection *ct_autodetection
       g_assert (!ct_autodetection->ping_source);
       g_assert (ct_autodetection->pending_pings >= 2);
 
-      new_state = CT_AUTODETECT_STATE_IN_RTT_DETECTION;
+      new_state = CT_AUTODETECT_STATE_AWAIT_LAST_RTT_RESPONSE;
       pending_ping_emission = TRUE;
       break;
-    case CT_AUTODETECT_STATE_IN_RTT_DETECTION:
     case CT_AUTODETECT_STATE_AWAIT_LAST_RTT_RESPONSE:
       return FREERDP_AUTODETECT_STATE_REQUEST;
     case CT_AUTODETECT_STATE_SEND_NET_CHAR_RESULT:
@@ -452,9 +447,11 @@ grd_rdp_connect_time_autodetection_notify_rtt_measure_response (GrdRdpConnectTim
   g_autoptr (GMutexLocker) locker = NULL;
 
   locker = g_mutex_locker_new (&ct_autodetection->ct_autodetection_mutex);
-  if (ct_autodetection->state != CT_AUTODETECT_STATE_AWAIT_LAST_RTT_RESPONSE ||
+  if (ct_autodetection->pending_last_sequence_number ||
       ct_autodetection->last_sequence_number != sequence_number)
     return;
+
+  g_assert (ct_autodetection->state == CT_AUTODETECT_STATE_AWAIT_LAST_RTT_RESPONSE);
 
   g_debug ("[RDP] Connect-Time Autodetect: base RTT: %lims, average RTT: %lims",
            base_round_trip_time_us / 1000, avg_round_trip_time_us / 1000);
@@ -538,7 +535,6 @@ autodetect_network_characteristics_sync (rdpAutoDetect      *rdp_autodetect,
     case CT_AUTODETECT_STATE_START_RTT_DETECTION:
       g_assert_not_reached ();
       break;
-    case CT_AUTODETECT_STATE_IN_RTT_DETECTION:
     case CT_AUTODETECT_STATE_AWAIT_LAST_RTT_RESPONSE:
       pending_sync = TRUE;
       break;
@@ -630,6 +626,7 @@ grd_rdp_connect_time_autodetection_init (GrdRdpConnectTimeAutodetection *ct_auto
   ct_autodetection->state = CT_AUTODETECT_STATE_NONE;
 
   ct_autodetection->pending_pings = CT_N_PINGS;
+  ct_autodetection->pending_last_sequence_number = TRUE;
 
   g_mutex_init (&ct_autodetection->ct_autodetection_mutex);
   g_mutex_init (&ct_autodetection->net_char_sync_mutex);
