@@ -1434,7 +1434,7 @@ rdp_suppress_output (rdpContext         *rdp_context,
 }
 
 static FREERDP_AUTODETECT_STATE
-rdp_autodetect_on_connecttime_autodetect_begin (rdpAutoDetect *rdp_autodetect)
+rdp_autodetect_on_connect_time_autodetect_begin (rdpAutoDetect *rdp_autodetect)
 {
   rdpContext *rdp_context = rdp_autodetect->context;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
@@ -1928,7 +1928,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
 
   rdp_autodetect = peer->context->autodetect;
   rdp_autodetect->OnConnectTimeAutoDetectBegin =
-    rdp_autodetect_on_connecttime_autodetect_begin;
+    rdp_autodetect_on_connect_time_autodetect_begin;
 
   if (!peer->Initialize (peer))
     {
