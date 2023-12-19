@@ -92,13 +92,11 @@ determine_bw_measure_payloads (GrdRdpConnectTimeAutodetection *ct_autodetection,
                                uint16_t                       *payload_lengths,
                                uint32_t                       *n_payloads)
 {
-  *payload_lengths = 0;
-  *n_payloads = 1;
-
   switch (ct_autodetection->state)
     {
     case CT_AUTODETECT_STATE_MEASURE_BW_1:
       *payload_lengths = 15 * 1024 + 512 + 256 + 128 + 64;
+      *n_payloads = 1;
       break;
     case CT_AUTODETECT_STATE_MEASURE_BW_2:
       *payload_lengths = 15 * 1024 + 512 + 256 + 128 + 64;
