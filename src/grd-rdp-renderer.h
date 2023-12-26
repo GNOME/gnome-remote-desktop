@@ -57,11 +57,21 @@ void grd_rdp_renderer_notify_graphics_pipeline_reset (GrdRdpRenderer *renderer);
 
 void grd_rdp_renderer_maybe_reset_graphics (GrdRdpRenderer *renderer);
 
+void grd_rdp_renderer_inhibit_rendering (GrdRdpRenderer *renderer);
+
+void grd_rdp_renderer_uninhibit_rendering (GrdRdpRenderer *renderer);
+
 GrdRdpSurface *grd_rdp_renderer_try_acquire_surface (GrdRdpRenderer *renderer,
                                                      uint32_t        refresh_rate);
 
 void grd_rdp_renderer_release_surface (GrdRdpRenderer *renderer,
                                        GrdRdpSurface  *rdp_surface);
+
+GrdRdpRenderContext *grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer *renderer,
+                                                                  GrdRdpSurface  *rdp_surface);
+
+void grd_rdp_renderer_release_render_context (GrdRdpRenderer      *renderer,
+                                              GrdRdpRenderContext *render_context);
 
 void grd_rdp_renderer_clear_gfx_surfaces (GrdRdpRenderer *renderer);
 
