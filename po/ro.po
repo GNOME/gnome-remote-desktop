@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2023-05-05 14:00+0000\n"
-"PO-Revision-Date: 2023-07-29 16:32+0300\n"
+"POT-Creation-Date: 2023-11-26 11:48+0000\n"
+"PO-Revision-Date: 2023-12-27 16:48+0200\n"
 "Last-Translator: Florentina Mușat <florentina [dot] musat [dot] 28 [at] "
 "gmail [dot] com>\n"
 "Language-Team: Romanian <gnomero-list@lists.sourceforge.net>\n"
@@ -19,9 +19,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
 "20)) ? 1 : 2);;\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: src/grd-daemon.c:612
+#: src/grd-daemon.c:824
 msgid "GNOME Remote Desktop"
 msgstr "Desktop la distanță GNOME"
 
@@ -52,13 +52,14 @@ msgstr "Acceptă"
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Utilizare: %s [OPȚIUNI...] COMANDĂ [SUBCOMANDĂ]...\n"
 
-#: src/grd-ctl.c:461
+#: src/grd-ctl.c:421
 msgid "Commands:\n"
 msgstr "Comenzi:\n"
 
-#: src/grd-ctl.c:466
+#: src/grd-ctl.c:426
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -73,9 +74,15 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - Subcomenzi RDP:\n"
+"    set-port                                 - Stabilește portul la care se "
+"leagă serverul\n"
 "    enable                                   - Activează backend-ul RDP\n"
 "    disable                                  - Dezactivează backend-ul RDP\n"
 "    set-tls-cert <path-to-cert>              - Stabilește calea către "
@@ -94,11 +101,19 @@ msgstr ""
 "    disable-view-only                        - Activează controlul de la "
 "distanță al dispozitivelor\n"
 "                                               de intrare\n"
+"    enable-port-negotiation                  - Dacă nu este disponibil, "
+"ascultă\n"
+"                                               un port diferit\n"
+"    disable-port-negotiation                 - Dacă nu este disponibil, nu "
+"asculta\n"
+"                                               un port diferit\n"
+"\n"
 "\n"
 
-#: src/grd-ctl.c:485
+#: src/grd-ctl.c:450
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
@@ -110,9 +125,15 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  vnc                                        - Subcomenzi VNC:\n"
+"    set-port                                 - Stabilește portul la care se "
+"leagă serverul\n"
 "    enable                                   - Activează backend-ul VNC\n"
 "    disable                                  - Dezactivează backend-ul VNC\n"
 "    set-password <password>                  - Stabilește parola VNC\n"
@@ -125,9 +146,15 @@ msgstr ""
 "    disable-view-only                        - Activează controlul de la "
 "distanță al dispozitivelor\n"
 "                                               de intrare\n"
+"    enable-port-negotiation                  - Dacă nu este disponibil, "
+"ascultă\n"
+"                                               un port diferit\n"
+"    disable-port-negotiation                 - Dacă nu este disponibil, nu "
+"asculta\n"
+"                                               un port diferit\n"
 "\n"
 
-#: src/grd-ctl.c:500
+#: src/grd-ctl.c:470
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -145,18 +172,40 @@ msgstr ""
 "ajutor\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "Portul utilizat de serverul RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr ""
+"Clientul RDP se va conecta la acest port pentru a utiliza acest server RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr "Caută un port RDP diferit dacă portul configurat este utilizat"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Când negotiate-port este stabilit la „adevărat”, serverul RDP va încerca să "
+"asculte primul port disponibil dintre următoarele 10 porturi, începând de la "
+"cel configurat."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Dacă este activat sau nu backend-ul RDP"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Dacă este stabilit la „true”, backend-ul RDP va fi inițializat."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "Modul partajare ecran al conexiunilor RDP"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -185,12 +234,12 @@ msgstr ""
 "Rezoluția acestui monitor virtual este derivată de la configurarea "
 "monitorului, trimisă de clientul desktop de la distanță."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Calea către fișierul certificat"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -198,17 +247,17 @@ msgstr ""
 "Pentru a putea utiliza RDP cu Securitate TLS, atât fișierul cheii private "
 "cât și fișierul certificat trebuie să fie furnizate serverului RDP."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Calea către fișierul cheii private"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr ""
 "Permite doar conexiunilor de la distanță să vizualizeze conținutul ecranului"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -216,15 +265,37 @@ msgstr ""
 "Când doar vizualizare este adevărat, conexiunile RDP de la distanță nu pot "
 "manipula dispozitivele de intrare (de ex: maus și tastatură)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "Portul utilizat de serverul VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr ""
+"Clientul VNC se va conecta la acest port pentru a utiliza serverul VNC."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr "Caută un port VNC diferit dacă portul configurat este utilizat"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Când negotiate-port este stabilit la „adevărat”, serverul VNC va încerca să "
+"asculte primul port disponibil dintre următoarele 10 porturi, începând de la "
+"cel configurat."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Dacă este activat sau nu backend-ul VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Dacă este stabilit la „true”, backend-ul va fi inițializat."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -232,11 +303,11 @@ msgstr ""
 "Când doar vizualizare este adevărat, conexiunile VNC de la distanță nu pot "
 "manipula dispozitivele de intrare (de ex: maus și tastatură)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "Metodă utilizată pentru autentificarea conexiunilor VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -251,11 +322,11 @@ msgstr ""
 "conexiunea nouă. * password - solicitând clientului de la distanță să "
 "furnizeze o parolă cunoscută"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
 msgstr "Modul partajare ecran al conexiunilor VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
