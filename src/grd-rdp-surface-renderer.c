@@ -128,9 +128,13 @@ maybe_render_frame (gpointer user_data)
       surface_renderer->rendering_suspended)
     return G_SOURCE_CONTINUE;
 
+  if (grd_rdp_renderer_has_pending_graphics_pipeline_reset (surface_renderer->renderer))
+    return G_SOURCE_CONTINUE;
+
   if (grd_rdp_renderer_is_output_suppressed (surface_renderer->renderer))
     return G_SOURCE_CONTINUE;
 
+  grd_rdp_renderer_maybe_reset_graphics (surface_renderer->renderer);
   grd_session_rdp_maybe_encode_pending_frame (surface_renderer->session_rdp,
                                               surface_renderer->rdp_surface);
 

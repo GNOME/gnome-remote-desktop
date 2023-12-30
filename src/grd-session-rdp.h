@@ -63,14 +63,6 @@ void grd_session_rdp_notify_error (GrdSessionRdp      *session_rdp,
 void grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
                                         GrdRdpChannel  channel);
 
-void grd_session_rdp_notify_new_desktop_size (GrdSessionRdp *session_rdp,
-                                              uint32_t       desktop_width,
-                                              uint32_t       desktop_height);
-
-void grd_session_rdp_notify_graphics_pipeline_reset (GrdSessionRdp *session_rdp);
-
-void grd_session_rdp_notify_graphics_pipeline_ready (GrdSessionRdp *session_rdp);
-
 uint32_t grd_session_rdp_acquire_stream_id (GrdSessionRdp     *session_rdp,
                                             GrdRdpStreamOwner *stream_owner);
 

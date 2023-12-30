@@ -34,20 +34,13 @@ GrdRdpLayoutManager *grd_rdp_layout_manager_new (GrdSessionRdp    *session_rdp,
                                                  GrdRdpRenderer   *renderer,
                                                  GrdHwAccelNvidia *hwaccel_nvidia);
 
-void grd_rdp_layout_manager_get_current_layout (GrdRdpLayoutManager  *layout_manager,
-                                                MONITOR_DEF         **monitors,
-                                                uint32_t             *n_monitors);
-
 void grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager  *layout_manager,
                                                     GrdRdpCursorRenderer *cursor_renderer,
+                                                    rdpContext           *rdp_context,
                                                     gboolean              has_graphics_pipeline);
 
 void grd_rdp_layout_manager_submit_new_monitor_config (GrdRdpLayoutManager *layout_manager,
                                                        GrdRdpMonitorConfig *monitor_config);
-
-void grd_rdp_layout_manager_invalidate_surfaces (GrdRdpLayoutManager *layout_manager);
-
-void grd_rdp_layout_manager_maybe_trigger_render_sources (GrdRdpLayoutManager *layout_manager);
 
 gboolean grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager       *layout_manager,
                                                     uint32_t                   x,

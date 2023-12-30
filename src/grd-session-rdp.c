@@ -69,9 +69,7 @@ static guint signals[N_SIGNALS];
 
 typedef enum _RdpPeerFlag
 {
-  RDP_PEER_ACTIVATED                  = 1 << 0,
-  RDP_PEER_PENDING_GFX_INIT           = 1 << 1,
-  RDP_PEER_PENDING_GFX_GRAPHICS_RESET = 1 << 2,
+  RDP_PEER_ACTIVATED = 1 << 0,
 } RdpPeerFlag;
 
 typedef enum _PauseKeyState
@@ -210,51 +208,6 @@ grd_session_rdp_get_session_metrics (GrdSessionRdp *session_rdp)
   return session_rdp->session_metrics;
 }
 
-void
-grd_session_rdp_notify_new_desktop_size (GrdSessionRdp *session_rdp,
-                                         uint32_t       desktop_width,
-                                         uint32_t       desktop_height)
-{
-  rdpContext *rdp_context = session_rdp->peer->context;
-  rdpSettings *rdp_settings = rdp_context->settings;
-  uint32_t current_desktop_width =
-    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopWidth);
-  uint32_t current_desktop_height =
-    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopHeight);
-
-  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
-    set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
-
-  if (current_desktop_width == desktop_width &&
-      current_desktop_height == desktop_height)
-    return;
-
-  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_DesktopWidth,
-                               desktop_width);
-  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_DesktopHeight,
-                               desktop_height);
-  if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
-    rdp_context->update->DesktopResize (rdp_context);
-}
-
-void
-grd_session_rdp_notify_graphics_pipeline_reset (GrdSessionRdp *session_rdp)
-{
-  set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
-}
-
-void
-grd_session_rdp_notify_graphics_pipeline_ready (GrdSessionRdp *session_rdp)
-{
-  GrdRdpLayoutManager *layout_manager = session_rdp->layout_manager;
-
-  set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
-  unset_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
-
-  grd_rdp_layout_manager_invalidate_surfaces (layout_manager);
-  grd_rdp_layout_manager_maybe_trigger_render_sources (layout_manager);
-}
-
 static uint32_t
 get_next_free_stream_id (GrdSessionRdp *session_rdp)
 {
@@ -297,8 +250,7 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
 
   g_assert (session_rdp->peer);
 
-  if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) ||
-      is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT))
+  if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED))
     return;
 
   if (!rdp_surface->valid &&
@@ -598,27 +550,7 @@ rdp_peer_refresh_gfx (GrdSessionRdp  *session_rdp,
 {
   rdpContext *rdp_context = session_rdp->peer->context;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
-  rdpSettings *rdp_settings = rdp_context->settings;
   GrdRdpGraphicsPipeline *graphics_pipeline = rdp_peer_context->graphics_pipeline;
-
-  if (is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_GRAPHICS_RESET))
-    {
-      uint32_t desktop_width =
-        freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopWidth);
-      uint32_t desktop_height =
-        freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopHeight);
-      MONITOR_DEF *monitors;
-      uint32_t n_monitors;
-
-      grd_rdp_layout_manager_get_current_layout (session_rdp->layout_manager,
-                                                 &monitors, &n_monitors);
-      grd_rdp_graphics_pipeline_reset_graphics (graphics_pipeline,
-                                                desktop_width, desktop_height,
-                                                monitors, n_monitors);
-      g_free (monitors);
-
-      unset_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_GRAPHICS_RESET);
-    }
 
   return grd_rdp_graphics_pipeline_refresh_gfx (graphics_pipeline,
                                                 rdp_surface, buffer);
@@ -1833,7 +1765,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
     }
 
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
-    set_rdp_peer_flag (session_rdp, RDP_PEER_PENDING_GFX_INIT);
+    grd_rdp_renderer_notify_graphics_pipeline_reset (session_rdp->renderer);
 
   g_clear_pointer (&session_rdp->sam_file, grd_rdp_sam_free_sam_file);
 
@@ -2438,8 +2370,6 @@ maybe_initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
   if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     return;
 
-  g_assert (is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT));
-
   telemetry = grd_rdp_telemetry_new (session_rdp,
                                      rdp_peer_context->rdp_dvc,
                                      rdp_peer_context->vcm,
@@ -2448,8 +2378,8 @@ maybe_initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
 
   graphics_pipeline =
     grd_rdp_graphics_pipeline_new (session_rdp,
+                                   session_rdp->renderer,
                                    rdp_peer_context->rdp_dvc,
-                                   grd_rdp_renderer_get_graphics_context (session_rdp->renderer),
                                    rdp_peer_context->vcm,
                                    rdp_context,
                                    rdp_peer_context->network_autodetection,
@@ -2523,16 +2453,18 @@ grd_session_rdp_remote_desktop_session_started (GrdSession *session)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
   rdpContext *rdp_context = session_rdp->peer->context;
-  rdpSettings *rdp_settings = rdp_context->settings;
-  gboolean has_graphics_pipeline =
-    freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline);
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
+  GrdRdpGraphicsPipeline *graphics_pipeline = rdp_peer_context->graphics_pipeline;
 
   grd_rdp_session_metrics_notify_phase_completion (session_rdp->session_metrics,
                                                    GRD_RDP_PHASE_SESSION_STARTED);
 
+  grd_rdp_renderer_notify_session_started (session_rdp->renderer,
+                                           graphics_pipeline, rdp_context);
   grd_rdp_layout_manager_notify_session_started (session_rdp->layout_manager,
                                                  session_rdp->cursor_renderer,
-                                                 has_graphics_pipeline);
+                                                 rdp_context,
+                                                 !!graphics_pipeline);
 }
 
 static void

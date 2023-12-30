@@ -70,6 +70,7 @@ struct _GrdRdpLayoutManager
   GrdRdpRenderer *renderer;
   GrdRdpCursorRenderer *cursor_renderer;
   GrdHwAccelNvidia *hwaccel_nvidia;
+  rdpContext *rdp_context;
 
   GSource *layout_update_source;
   GHashTable *surface_table;
@@ -176,6 +177,28 @@ disconnect_proxy_signals (GrdRdpLayoutManager *layout_manager)
 }
 
 static void
+maybe_trigger_render_sources (GrdRdpLayoutManager *layout_manager)
+{
+  g_autoptr (GMutexLocker) locker = NULL;
+  SurfaceContext *surface_context = NULL;
+  GHashTableIter iter;
+
+  locker = g_mutex_locker_new (&layout_manager->state_mutex);
+  if (layout_manager->state != UPDATE_STATE_AWAIT_CONFIG)
+    return;
+
+  g_hash_table_iter_init (&iter, layout_manager->surface_table);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
+    {
+      GrdRdpSurface *rdp_surface = surface_context->rdp_surface;
+      GrdRdpSurfaceRenderer *surface_renderer;
+
+      surface_renderer = grd_rdp_surface_get_surface_renderer (rdp_surface);
+      grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
+    }
+}
+
+static void
 transition_to_state (GrdRdpLayoutManager *layout_manager,
                      UpdateState          state)
 {
@@ -197,7 +220,7 @@ transition_to_state (GrdRdpLayoutManager *layout_manager,
       break;
     case UPDATE_STATE_AWAIT_CONFIG:
       g_debug ("[RDP] Layout manager: Finished applying new monitor config");
-      grd_rdp_layout_manager_maybe_trigger_render_sources (layout_manager);
+      maybe_trigger_render_sources (layout_manager);
       g_source_set_ready_time (layout_manager->layout_update_source, 0);
       break;
     case UPDATE_STATE_PREPARE_SURFACES:
@@ -315,6 +338,63 @@ get_surface_context_from_pipewire_stream (GrdRdpLayoutManager  *layout_manager,
 }
 
 static void
+write_virtual_monitor_data (GrdRdpVirtualMonitor *virtual_monitor,
+                            rdpMonitor           *monitor)
+{
+  monitor->x = virtual_monitor->pos_x;
+  monitor->y = virtual_monitor->pos_y;
+  monitor->width = virtual_monitor->width;
+  monitor->height = virtual_monitor->height;
+
+  monitor->is_primary = virtual_monitor->is_primary;
+}
+
+static void
+write_connector_data (GrdRdpSurface *rdp_surface,
+                      rdpMonitor    *monitor)
+{
+  int32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
+  int32_t surface_height = grd_rdp_surface_get_height (rdp_surface);
+
+  monitor->x = 0;
+  monitor->y = 0;
+  monitor->width = surface_width;
+  monitor->height = surface_height;
+
+  monitor->is_primary = TRUE;
+}
+
+static void
+update_monitor_data (GrdRdpLayoutManager *layout_manager)
+{
+  rdpSettings *rdp_settings = layout_manager->rdp_context->settings;
+  SurfaceContext *surface_context = NULL;
+  GHashTableIter iter;
+  uint32_t i = 0;
+
+  g_hash_table_iter_init (&iter, layout_manager->surface_table);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
+    {
+      rdpMonitor monitor = {};
+
+      if (surface_context->connector)
+        g_assert (i == 0);
+
+      if (surface_context->virtual_monitor)
+        write_virtual_monitor_data (surface_context->virtual_monitor, &monitor);
+      if (surface_context->connector)
+        write_connector_data (surface_context->rdp_surface, &monitor);
+
+      if (!freerdp_settings_set_pointer_array (rdp_settings,
+                                               FreeRDP_MonitorDefArray, i++,
+                                               &monitor))
+        g_assert_not_reached ();
+    }
+
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_MonitorCount, i);
+}
+
+static void
 on_pipewire_stream_video_resized (GrdRdpPipeWireStream *pipewire_stream,
                                   uint32_t              width,
                                   uint32_t              height,
@@ -347,8 +427,9 @@ on_pipewire_stream_video_resized (GrdRdpPipeWireStream *pipewire_stream,
       g_assert (layout_manager->current_monitor_config->monitor_count == 1);
       g_assert (g_hash_table_size (layout_manager->surface_table) == 1);
 
-      grd_session_rdp_notify_new_desktop_size (layout_manager->session_rdp,
-                                               width, height);
+      update_monitor_data (layout_manager);
+      grd_rdp_renderer_notify_new_desktop_layout (layout_manager->renderer,
+                                                  width, height);
     }
 
   stream_id = grd_stream_get_stream_id (surface_context->stream);
@@ -452,75 +533,15 @@ grd_rdp_layout_manager_on_stream_created (GrdRdpStreamOwner *stream_owner,
                     layout_manager);
 }
 
-static void
-write_virtual_monitor_data (GrdRdpVirtualMonitor *virtual_monitor,
-                            MONITOR_DEF          *monitor)
-{
-  monitor->left = virtual_monitor->pos_x;
-  monitor->top = virtual_monitor->pos_y;
-  monitor->right = monitor->left + virtual_monitor->width - 1;
-  monitor->bottom = monitor->top + virtual_monitor->height - 1;
-
-  if (virtual_monitor->is_primary)
-    monitor->flags = MONITOR_PRIMARY;
-}
-
-static void
-write_connector_data (GrdRdpSurface *rdp_surface,
-                      MONITOR_DEF   *monitor)
-{
-  int32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
-  int32_t surface_height = grd_rdp_surface_get_height (rdp_surface);
-
-  monitor->left = 0;
-  monitor->top = 0;
-  monitor->right = monitor->left + surface_width - 1;
-  monitor->bottom = monitor->top + surface_height - 1;
-
-  monitor->flags = MONITOR_PRIMARY;
-}
-
-void
-grd_rdp_layout_manager_get_current_layout (GrdRdpLayoutManager  *layout_manager,
-                                           MONITOR_DEF         **monitors,
-                                           uint32_t             *n_monitors)
-{
-  SurfaceContext *surface_context = NULL;
-  GHashTableIter iter;
-  uint32_t i = 0;
-
-  g_assert (layout_manager->state == UPDATE_STATE_AWAIT_CONFIG);
-
-  *n_monitors = g_hash_table_size (layout_manager->surface_table);
-  g_assert (*n_monitors > 0);
-  *monitors = g_new0 (MONITOR_DEF, *n_monitors);
-
-  g_hash_table_iter_init (&iter, layout_manager->surface_table);
-  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
-    {
-      if (surface_context->virtual_monitor)
-        {
-          write_virtual_monitor_data (surface_context->virtual_monitor,
-                                      &(*monitors)[i]);
-        }
-      if (surface_context->connector)
-        {
-          g_assert (*n_monitors == 1);
-          write_connector_data (surface_context->rdp_surface, &(*monitors)[i]);
-        }
-
-      ++i;
-    }
-  g_assert (i == *n_monitors);
-}
-
 void
 grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager  *layout_manager,
                                                GrdRdpCursorRenderer *cursor_renderer,
+                                               rdpContext           *rdp_context,
                                                gboolean              has_graphics_pipeline)
 {
   layout_manager->cursor_renderer = cursor_renderer;
   layout_manager->has_graphics_pipeline = has_graphics_pipeline;
+  layout_manager->rdp_context = rdp_context;
   layout_manager->session_started = TRUE;
 
   g_source_set_ready_time (layout_manager->layout_update_source, 0);
@@ -541,44 +562,6 @@ grd_rdp_layout_manager_submit_new_monitor_config (GrdRdpLayoutManager *layout_ma
   g_mutex_unlock (&layout_manager->monitor_config_mutex);
 
   g_source_set_ready_time (layout_manager->layout_update_source, 0);
-}
-
-void
-grd_rdp_layout_manager_invalidate_surfaces (GrdRdpLayoutManager *layout_manager)
-{
-  g_autoptr (GMutexLocker) locker = NULL;
-  SurfaceContext *surface_context = NULL;
-  GHashTableIter iter;
-
-  locker = g_mutex_locker_new (&layout_manager->state_mutex);
-  if (layout_manager->state != UPDATE_STATE_AWAIT_CONFIG)
-    return;
-
-  g_hash_table_iter_init (&iter, layout_manager->surface_table);
-  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
-    grd_rdp_surface_invalidate_surface (surface_context->rdp_surface);
-}
-
-void
-grd_rdp_layout_manager_maybe_trigger_render_sources (GrdRdpLayoutManager *layout_manager)
-{
-  g_autoptr (GMutexLocker) locker = NULL;
-  SurfaceContext *surface_context = NULL;
-  GHashTableIter iter;
-
-  locker = g_mutex_locker_new (&layout_manager->state_mutex);
-  if (layout_manager->state != UPDATE_STATE_AWAIT_CONFIG)
-    return;
-
-  g_hash_table_iter_init (&iter, layout_manager->surface_table);
-  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
-    {
-      GrdRdpSurface *rdp_surface = surface_context->rdp_surface;
-      GrdRdpSurfaceRenderer *surface_renderer;
-
-      surface_renderer = grd_rdp_surface_get_surface_renderer (rdp_surface);
-      grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
-    }
 }
 
 gboolean
@@ -919,9 +902,10 @@ create_or_update_streams (GrdRdpLayoutManager *layout_manager)
 
   if (monitor_config->is_virtual)
     {
-      grd_session_rdp_notify_new_desktop_size (layout_manager->session_rdp,
-                                               monitor_config->desktop_width,
-                                               monitor_config->desktop_height);
+      update_monitor_data (layout_manager);
+      grd_rdp_renderer_notify_new_desktop_layout (layout_manager->renderer,
+                                                  monitor_config->desktop_width,
+                                                  monitor_config->desktop_height);
     }
 
   if (g_hash_table_size (layout_manager->pending_streams) > 0)

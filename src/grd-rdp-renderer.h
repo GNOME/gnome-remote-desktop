@@ -20,8 +20,8 @@
 #ifndef GRD_RDP_RENDERER_H
 #define GRD_RDP_RENDERER_H
 
+#include <freerdp/freerdp.h>
 #include <glib-object.h>
-#include <stdint.h>
 
 #include "grd-types.h"
 
@@ -36,10 +36,26 @@ GMainContext *grd_rdp_renderer_get_graphics_context (GrdRdpRenderer *renderer);
 
 gboolean grd_rdp_renderer_is_output_suppressed (GrdRdpRenderer *renderer);
 
+gboolean grd_rdp_renderer_has_pending_graphics_pipeline_reset (GrdRdpRenderer *renderer);
+
 void grd_rdp_renderer_update_output_suppression_state (GrdRdpRenderer *renderer,
                                                        gboolean        suppress_output);
 
 void grd_rdp_renderer_invoke_shutdown (GrdRdpRenderer *renderer);
+
+void grd_rdp_renderer_notify_session_started (GrdRdpRenderer         *renderer,
+                                              GrdRdpGraphicsPipeline *graphics_pipeline,
+                                              rdpContext             *rdp_context);
+
+void grd_rdp_renderer_notify_new_desktop_layout (GrdRdpRenderer *renderer,
+                                                 uint32_t        desktop_width,
+                                                 uint32_t        desktop_height);
+
+void grd_rdp_renderer_notify_graphics_pipeline_ready (GrdRdpRenderer *renderer);
+
+void grd_rdp_renderer_notify_graphics_pipeline_reset (GrdRdpRenderer *renderer);
+
+void grd_rdp_renderer_maybe_reset_graphics (GrdRdpRenderer *renderer);
 
 GrdRdpSurface *grd_rdp_renderer_try_acquire_surface (GrdRdpRenderer *renderer,
                                                      uint32_t        refresh_rate);

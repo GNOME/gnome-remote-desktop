@@ -32,6 +32,7 @@
 #include "grd-rdp-gfx-frame-controller.h"
 #include "grd-rdp-gfx-surface.h"
 #include "grd-rdp-network-autodetection.h"
+#include "grd-rdp-renderer.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
 #include "grd-session-rdp.h"
@@ -83,8 +84,8 @@ struct _GrdRdpGraphicsPipeline
   gboolean subscribed_status;
 
   GrdSessionRdp *session_rdp;
+  GrdRdpRenderer *renderer;
   GrdRdpDvc *rdp_dvc;
-  GMainContext *pipeline_context;
   GrdRdpNetworkAutodetection *network_autodetection;
   wStream *encode_stream;
   RFX_CONTEXT *rfx_context;
@@ -1079,6 +1080,9 @@ maybe_slow_down_rtts (gpointer user_data)
 static void
 ensure_rtt_receivement (GrdRdpGraphicsPipeline *graphics_pipeline)
 {
+  GMainContext *graphics_context =
+    grd_rdp_renderer_get_graphics_context (graphics_pipeline->renderer);
+
   g_assert (!graphics_pipeline->rtt_pause_source);
 
   grd_rdp_network_autodetection_set_rtt_consumer_necessity (
@@ -1090,8 +1094,7 @@ ensure_rtt_receivement (GrdRdpGraphicsPipeline *graphics_pipeline)
     g_timeout_source_new (ENC_TIMES_CHECK_INTERVAL_MS);
   g_source_set_callback (graphics_pipeline->rtt_pause_source, maybe_slow_down_rtts,
                          graphics_pipeline, NULL);
-  g_source_attach (graphics_pipeline->rtt_pause_source,
-                   graphics_pipeline->pipeline_context);
+  g_source_attach (graphics_pipeline->rtt_pause_source, graphics_context);
 }
 
 gboolean
@@ -1354,7 +1357,7 @@ rdpgfx_caps_advertise (RdpgfxServerContext             *rdpgfx_context,
                        const RDPGFX_CAPS_ADVERTISE_PDU *caps_advertise)
 {
   GrdRdpGraphicsPipeline *graphics_pipeline = rdpgfx_context->custom;
-  GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
+  GrdRdpRenderer *renderer = graphics_pipeline->renderer;
 
   g_debug ("[RDP.RDPGFX] Received a CapsAdvertise PDU");
   search_and_list_unknown_cap_sets_versions_and_flags (caps_advertise->capsSets,
@@ -1403,9 +1406,10 @@ rdpgfx_caps_advertise (RdpgfxServerContext             *rdpgfx_context,
   graphics_pipeline->cap_sets = g_memdup2 (caps_advertise->capsSets,
                                            graphics_pipeline->n_cap_sets *
                                            sizeof (RDPGFX_CAPSET));
+
+  grd_rdp_renderer_notify_graphics_pipeline_reset (renderer);
   g_mutex_unlock (&graphics_pipeline->caps_mutex);
 
-  grd_session_rdp_notify_graphics_pipeline_reset (session_rdp);
   g_source_set_ready_time (graphics_pipeline->protocol_reset_source, 0);
 
   return CHANNEL_RC_OK;
@@ -1584,6 +1588,8 @@ initiate_session_teardown (gpointer user_data)
 void
 grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
 {
+  GMainContext *graphics_context =
+    grd_rdp_renderer_get_graphics_context (graphics_pipeline->renderer);
   RdpgfxServerContext *rdpgfx_context;
 
   if (graphics_pipeline->channel_opened)
@@ -1606,7 +1612,7 @@ grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
   g_source_set_callback (graphics_pipeline->protocol_timeout_source,
                          initiate_session_teardown, graphics_pipeline, NULL);
   g_source_attach (graphics_pipeline->protocol_timeout_source,
-                   graphics_pipeline->pipeline_context);
+                   graphics_context);
 }
 
 static void
@@ -1721,7 +1727,7 @@ static gboolean
 reset_protocol (gpointer user_data)
 {
   GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
-  GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
+  GrdRdpRenderer *renderer = graphics_pipeline->renderer;
   g_autofree RDPGFX_CAPSET *cap_sets = NULL;
   uint16_t n_cap_sets;
   size_t i;
@@ -1750,7 +1756,12 @@ reset_protocol (gpointer user_data)
                              cap_sets, n_cap_sets,
                              cap_list[i]))
         {
-          grd_session_rdp_notify_graphics_pipeline_ready (session_rdp);
+          grd_rdp_renderer_notify_graphics_pipeline_ready (renderer);
+
+          g_mutex_lock (&graphics_pipeline->caps_mutex);
+          if (graphics_pipeline->cap_sets)
+            grd_rdp_renderer_notify_graphics_pipeline_reset (renderer);
+          g_mutex_unlock (&graphics_pipeline->caps_mutex);
 
           return G_SOURCE_CONTINUE;
         }
@@ -1783,14 +1794,16 @@ static GSourceFuncs protocol_reset_source_funcs =
 
 GrdRdpGraphicsPipeline *
 grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
+                               GrdRdpRenderer             *renderer,
                                GrdRdpDvc                  *rdp_dvc,
-                               GMainContext               *pipeline_context,
                                HANDLE                      vcm,
                                rdpContext                 *rdp_context,
                                GrdRdpNetworkAutodetection *network_autodetection,
                                wStream                    *encode_stream,
                                RFX_CONTEXT                *rfx_context)
 {
+  GMainContext *graphics_context =
+    grd_rdp_renderer_get_graphics_context (renderer);
   rdpSettings *rdp_settings = rdp_context->settings;
   GrdRdpGraphicsPipeline *graphics_pipeline;
   RdpgfxServerContext *rdpgfx_context;
@@ -1803,8 +1816,8 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
 
   graphics_pipeline->rdpgfx_context = rdpgfx_context;
   graphics_pipeline->session_rdp = session_rdp;
+  graphics_pipeline->renderer = renderer;
   graphics_pipeline->rdp_dvc = rdp_dvc;
-  graphics_pipeline->pipeline_context = pipeline_context;
   graphics_pipeline->network_autodetection = network_autodetection;
   graphics_pipeline->encode_stream = encode_stream;
   graphics_pipeline->rfx_context = rfx_context;
@@ -1822,7 +1835,7 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
   g_source_set_callback (protocol_reset_source, reset_protocol,
                          graphics_pipeline, NULL);
   g_source_set_ready_time (protocol_reset_source, -1);
-  g_source_attach (protocol_reset_source, pipeline_context);
+  g_source_attach (protocol_reset_source, graphics_context);
   graphics_pipeline->protocol_reset_source = protocol_reset_source;
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);

@@ -22,6 +22,7 @@
 #include "grd-rdp-renderer.h"
 
 #include "grd-hwaccel-nvidia.h"
+#include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
 
@@ -34,10 +35,16 @@ struct _GrdRdpRenderer
   GrdSessionRdp *session_rdp;
   GrdHwAccelNvidia *hwaccel_nvidia;
 
+  GrdRdpGraphicsPipeline *graphics_pipeline;
+  rdpContext *rdp_context;
+
   GThread *graphics_thread;
   GMainContext *graphics_context;
 
   gboolean output_suppressed;
+
+  gboolean pending_gfx_init;
+  gboolean pending_gfx_graphics_reset;
 
   GMutex surface_renderers_mutex;
   GHashTable *surface_renderer_table;
@@ -58,6 +65,12 @@ gboolean
 grd_rdp_renderer_is_output_suppressed (GrdRdpRenderer *renderer)
 {
   return renderer->output_suppressed;
+}
+
+gboolean
+grd_rdp_renderer_has_pending_graphics_pipeline_reset (GrdRdpRenderer *renderer)
+{
+  return renderer->pending_gfx_init;
 }
 
 static void
@@ -93,6 +106,114 @@ grd_rdp_renderer_invoke_shutdown (GrdRdpRenderer *renderer)
 
   g_main_context_wakeup (renderer->graphics_context);
   g_clear_pointer (&renderer->graphics_thread, g_thread_join);
+}
+
+void
+grd_rdp_renderer_notify_session_started (GrdRdpRenderer         *renderer,
+                                         GrdRdpGraphicsPipeline *graphics_pipeline,
+                                         rdpContext             *rdp_context)
+{
+  renderer->graphics_pipeline = graphics_pipeline;
+  renderer->rdp_context = rdp_context;
+}
+
+void
+grd_rdp_renderer_notify_new_desktop_layout (GrdRdpRenderer *renderer,
+                                            uint32_t        desktop_width,
+                                            uint32_t        desktop_height)
+{
+  rdpContext *rdp_context = renderer->rdp_context;
+  rdpSettings *rdp_settings = rdp_context->settings;
+  uint32_t current_desktop_width =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopWidth);
+  uint32_t current_desktop_height =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopHeight);
+
+  if (renderer->graphics_pipeline)
+    renderer->pending_gfx_graphics_reset = TRUE;
+
+  if (current_desktop_width == desktop_width &&
+      current_desktop_height == desktop_height)
+    return;
+
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_DesktopWidth,
+                               desktop_width);
+  freerdp_settings_set_uint32 (rdp_settings, FreeRDP_DesktopHeight,
+                               desktop_height);
+  if (!renderer->graphics_pipeline)
+    rdp_context->update->DesktopResize (rdp_context);
+}
+
+static void
+invalidate_surfaces (GrdRdpRenderer *renderer)
+{
+  GrdRdpSurface *rdp_surface = NULL;
+  g_autoptr (GMutexLocker) locker = NULL;
+  GHashTableIter iter;
+
+  locker = g_mutex_locker_new (&renderer->surface_renderers_mutex);
+  g_hash_table_iter_init (&iter, renderer->surface_renderer_table);
+  while (g_hash_table_iter_next (&iter, (gpointer *) &rdp_surface, NULL))
+    grd_rdp_surface_invalidate_surface (rdp_surface);
+}
+
+void
+grd_rdp_renderer_notify_graphics_pipeline_ready (GrdRdpRenderer *renderer)
+{
+  renderer->pending_gfx_graphics_reset = TRUE;
+  renderer->pending_gfx_init = FALSE;
+
+  invalidate_surfaces (renderer);
+  trigger_render_sources (renderer);
+}
+
+void
+grd_rdp_renderer_notify_graphics_pipeline_reset (GrdRdpRenderer *renderer)
+{
+  renderer->pending_gfx_init = TRUE;
+}
+
+void
+grd_rdp_renderer_maybe_reset_graphics (GrdRdpRenderer *renderer)
+{
+  rdpContext *rdp_context = renderer->rdp_context;
+  rdpSettings *rdp_settings = rdp_context->settings;
+  uint32_t desktop_width =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopWidth);
+  uint32_t desktop_height =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopHeight);
+  g_autofree MONITOR_DEF *monitor_defs = NULL;
+  uint32_t n_monitors;
+  uint32_t i;
+
+  if (!renderer->pending_gfx_graphics_reset)
+    return;
+
+  n_monitors = freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MonitorCount);
+  g_assert (n_monitors > 0);
+
+  monitor_defs = g_new0 (MONITOR_DEF, n_monitors);
+
+  for (i = 0; i < n_monitors; ++i)
+    {
+      const rdpMonitor *monitor =
+        freerdp_settings_get_pointer_array (rdp_settings,
+                                            FreeRDP_MonitorDefArray, i);
+      MONITOR_DEF *monitor_def = &monitor_defs[i];
+
+      monitor_def->left = monitor->x;
+      monitor_def->top = monitor->y;
+      monitor_def->right = monitor_def->left + monitor->width - 1;
+      monitor_def->bottom = monitor_def->top + monitor->height - 1;
+
+      if (monitor->is_primary)
+        monitor_def->flags = MONITOR_PRIMARY;
+    }
+
+  grd_rdp_graphics_pipeline_reset_graphics (renderer->graphics_pipeline,
+                                            desktop_width, desktop_height,
+                                            monitor_defs, n_monitors);
+  renderer->pending_gfx_graphics_reset = FALSE;
 }
 
 GrdRdpSurface *
