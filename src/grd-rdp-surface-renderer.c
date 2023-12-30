@@ -22,6 +22,7 @@
 #include "grd-rdp-surface-renderer.h"
 
 #include "grd-rdp-buffer.h"
+#include "grd-rdp-renderer.h"
 #include "grd-rdp-surface.h"
 #include "grd-session-rdp.h"
 
@@ -30,6 +31,7 @@ struct _GrdRdpSurfaceRenderer
   GObject parent;
 
   GrdRdpSurface *rdp_surface;
+  GrdRdpRenderer *renderer;
   GrdSessionRdp *session_rdp;
 
   uint32_t refresh_rate;
@@ -126,6 +128,9 @@ maybe_render_frame (gpointer user_data)
       surface_renderer->rendering_suspended)
     return G_SOURCE_CONTINUE;
 
+  if (grd_rdp_renderer_is_output_suppressed (surface_renderer->renderer))
+    return G_SOURCE_CONTINUE;
+
   grd_session_rdp_maybe_encode_pending_frame (surface_renderer->session_rdp,
                                               surface_renderer->rdp_surface);
 
@@ -148,16 +153,19 @@ static GSourceFuncs render_source_funcs =
 };
 
 GrdRdpSurfaceRenderer *
-grd_rdp_surface_renderer_new (GrdRdpSurface *rdp_surface,
-                              GMainContext  *graphics_context,
-                              GrdSessionRdp *session_rdp,
-                              uint32_t       refresh_rate)
+grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
+                              GrdRdpRenderer *renderer,
+                              GrdSessionRdp  *session_rdp,
+                              uint32_t        refresh_rate)
 {
+  GMainContext *graphics_context =
+    grd_rdp_renderer_get_graphics_context (renderer);
   GrdRdpSurfaceRenderer *surface_renderer;
   GSource *render_source;
 
   surface_renderer = g_object_new (GRD_TYPE_RDP_SURFACE_RENDERER, NULL);
   surface_renderer->rdp_surface = rdp_surface;
+  surface_renderer->renderer = renderer;
   surface_renderer->session_rdp = session_rdp;
   surface_renderer->refresh_rate = refresh_rate;
 

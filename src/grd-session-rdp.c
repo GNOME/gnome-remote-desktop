@@ -70,9 +70,8 @@ static guint signals[N_SIGNALS];
 typedef enum _RdpPeerFlag
 {
   RDP_PEER_ACTIVATED                  = 1 << 0,
-  RDP_PEER_OUTPUT_ENABLED             = 1 << 1,
-  RDP_PEER_PENDING_GFX_INIT           = 1 << 2,
-  RDP_PEER_PENDING_GFX_GRAPHICS_RESET = 1 << 3,
+  RDP_PEER_PENDING_GFX_INIT           = 1 << 1,
+  RDP_PEER_PENDING_GFX_GRAPHICS_RESET = 1 << 2,
 } RdpPeerFlag;
 
 typedef enum _PauseKeyState
@@ -299,7 +298,6 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
   g_assert (session_rdp->peer);
 
   if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED) ||
-      !is_rdp_peer_flag_set (session_rdp, RDP_PEER_OUTPUT_ENABLED) ||
       is_rdp_peer_flag_set (session_rdp, RDP_PEER_PENDING_GFX_INIT))
     return;
 
@@ -1549,16 +1547,13 @@ rdp_suppress_output (rdpContext         *rdp_context,
 {
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
-  GrdRdpLayoutManager *layout_manager = session_rdp->layout_manager;
   rdpSettings *rdp_settings = rdp_context->settings;
 
   if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED))
     return TRUE;
 
-  if (allow)
-    set_rdp_peer_flag (session_rdp, RDP_PEER_OUTPUT_ENABLED);
-  else
-    unset_rdp_peer_flag (session_rdp, RDP_PEER_OUTPUT_ENABLED);
+  grd_rdp_renderer_update_output_suppression_state (session_rdp->renderer,
+                                                    !allow);
 
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) &&
       rdp_peer_context->network_autodetection)
@@ -1576,9 +1571,6 @@ rdp_suppress_output (rdpContext         *rdp_context,
             GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX);
         }
     }
-
-  if (allow)
-    grd_rdp_layout_manager_maybe_trigger_render_sources (layout_manager);
 
   return TRUE;
 }
@@ -1853,7 +1845,6 @@ rdp_peer_post_connect (freerdp_peer *peer)
         GRD_RDP_NW_AUTODETECT_RTT_CONSUMER_RDPGFX);
     }
 
-  set_rdp_peer_flag (session_rdp, RDP_PEER_OUTPUT_ENABLED);
   set_rdp_peer_flag (session_rdp, RDP_PEER_ACTIVATED);
 
   g_mutex_lock (&session_rdp->notify_post_connected_mutex);

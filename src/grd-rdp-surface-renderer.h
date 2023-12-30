@@ -29,10 +29,10 @@
 G_DECLARE_FINAL_TYPE (GrdRdpSurfaceRenderer, grd_rdp_surface_renderer,
                       GRD, RDP_SURFACE_RENDERER, GObject)
 
-GrdRdpSurfaceRenderer *grd_rdp_surface_renderer_new (GrdRdpSurface *rdp_surface,
-                                                     GMainContext  *graphics_context,
-                                                     GrdSessionRdp *session_rdp,
-                                                     uint32_t       refresh_rate);
+GrdRdpSurfaceRenderer *grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
+                                                     GrdRdpRenderer *renderer,
+                                                     GrdSessionRdp  *session_rdp,
+                                                     uint32_t        refresh_rate);
 
 uint32_t grd_rdp_surface_renderer_get_refresh_rate (GrdRdpSurfaceRenderer *surface_renderer);
 
