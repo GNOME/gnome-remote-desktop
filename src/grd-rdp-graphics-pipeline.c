@@ -1717,7 +1717,7 @@ reset_protocol (gpointer user_data)
 {
   GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
   GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
-  RDPGFX_CAPSET *cap_sets;
+  g_autofree RDPGFX_CAPSET *cap_sets = NULL;
   uint16_t n_cap_sets;
   size_t i;
 
@@ -1729,8 +1729,6 @@ reset_protocol (gpointer user_data)
   if (!cap_sets || !n_cap_sets)
     {
       g_assert (graphics_pipeline->initialized);
-
-      g_free (cap_sets);
 
       return G_SOURCE_CONTINUE;
     }
@@ -1748,12 +1746,10 @@ reset_protocol (gpointer user_data)
                              cap_list[i]))
         {
           grd_session_rdp_notify_graphics_pipeline_ready (session_rdp);
-          g_free (cap_sets);
 
           return G_SOURCE_CONTINUE;
         }
     }
-  g_free (cap_sets);
 
   /*
    * CapsAdvertise already checked the capability sets to have at least one
