@@ -63,4 +63,6 @@ GrdRdpSurface *grd_rdp_renderer_try_acquire_surface (GrdRdpRenderer *renderer,
 void grd_rdp_renderer_release_surface (GrdRdpRenderer *renderer,
                                        GrdRdpSurface  *rdp_surface);
 
+void grd_rdp_renderer_clear_gfx_surfaces (GrdRdpRenderer *renderer);
+
 #endif /* GRD_RDP_RENDERER_H */

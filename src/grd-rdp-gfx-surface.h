@@ -65,8 +65,6 @@ uint16_t grd_rdp_gfx_surface_get_width (GrdRdpGfxSurface *gfx_surface);
 
 uint16_t grd_rdp_gfx_surface_get_height (GrdRdpGfxSurface *gfx_surface);
 
-gboolean grd_rdp_gfx_surface_is_auxiliary_surface (GrdRdpGfxSurface *gfx_surface);
-
 gboolean grd_rdp_gfx_surface_disallows_hwaccel_sessions (GrdRdpGfxSurface *gfx_surface);
 
 GrdRdpGfxSurface *grd_rdp_gfx_surface_get_render_surface (GrdRdpGfxSurface *gfx_surface);

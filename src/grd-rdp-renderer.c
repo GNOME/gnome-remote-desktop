@@ -250,6 +250,19 @@ grd_rdp_renderer_release_surface (GrdRdpRenderer *renderer,
   g_source_set_ready_time (renderer->surface_disposal_source, 0);
 }
 
+void
+grd_rdp_renderer_clear_gfx_surfaces (GrdRdpRenderer *renderer)
+{
+  GrdRdpSurface *rdp_surface = NULL;
+  g_autoptr (GMutexLocker) locker = NULL;
+  GHashTableIter iter;
+
+  locker = g_mutex_locker_new (&renderer->surface_renderers_mutex);
+  g_hash_table_iter_init (&iter, renderer->surface_renderer_table);
+  while (g_hash_table_iter_next (&iter, (gpointer *) &rdp_surface, NULL))
+    g_clear_object (&rdp_surface->gfx_surface);
+}
+
 static gpointer
 graphics_thread_func (gpointer data)
 {
