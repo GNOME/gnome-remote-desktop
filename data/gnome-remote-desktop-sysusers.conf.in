@@ -1,0 +1,2 @@
+# sysusers.d file to ensure the existence of the gnome-remote-desktop user
+u @GRD_USERNAME@ - "GNOME Remote Desktop" @GRD_HOMEDIR@

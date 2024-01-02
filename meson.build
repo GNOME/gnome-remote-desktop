@@ -80,6 +80,7 @@ endif
 grd_conf = join_paths(grd_confdir, 'grd.conf')
 
 grd_username = get_option('user')
+grd_homedir = get_option('home_dir')
 
 cdata = configuration_data()
 cdata.set_quoted('GETTEXT_PACKAGE', 'gnome-remote-desktop')
@@ -100,6 +101,8 @@ configinc = include_directories('.')
 
 userunitdir = get_option('systemd_user_unit_dir')
 systemunitdir = get_option('systemd_system_unit_dir')
+sysusersdir = get_option('systemd_sysusers_dir')
+tmpfilesdir = get_option('systemd_tmpfiles_dir')
 if systemd_dep.found()
   if userunitdir == ''
     userunitdir = systemd_dep.get_variable(pkgconfig: 'systemduserunitdir')
@@ -115,6 +118,22 @@ if systemd_dep.found()
 
   if systemunitdir == ''
     error('Couldn\'t determine systemd system unit service directory')
+  endif
+
+  if sysusersdir == ''
+    sysusersdir = systemd_dep.get_variable(pkgconfig: 'sysusersdir')
+  endif
+
+  if sysusersdir == ''
+    error('Couldn\'t determine systemd sysusers directory')
+  endif
+
+  if tmpfilesdir == ''
+    tmpfilesdir = systemd_dep.get_variable(pkgconfig: 'tmpfilesdir')
+  endif
+
+  if tmpfilesdir == ''
+    error('Couldn\'t determine systemd tmpfilesdir directory')
   endif
 endif
 

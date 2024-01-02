@@ -11,6 +11,23 @@ if have_rdp
     install_dir: grd_confdir,
   )
 
+  configure_file(input: 'gnome-remote-desktop-sysusers.conf.in',
+                 output: 'gnome-remote-desktop-sysusers.conf',
+                 configuration: {
+                   'GRD_USERNAME': grd_username,
+                   'GRD_HOMEDIR': grd_homedir,
+                 },
+                 install_dir: sysusersdir)
+
+  configure_file(input: 'gnome-remote-desktop-tmpfiles.conf.in',
+                 output: 'gnome-remote-desktop-tmpfiles.conf',
+                 configuration: {
+                   'GRD_USERNAME': grd_username,
+                   'GRD_HOMEDIR': grd_homedir,
+                   'GRD_CONFDIR': grd_confdir,
+                 },
+                 install_dir: tmpfilesdir)
+
   configure_file(input: 'org.gnome.RemoteDesktop.conf.in',
                  output: 'org.gnome.RemoteDesktop.conf',
                  configuration: {

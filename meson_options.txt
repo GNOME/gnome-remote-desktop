@@ -38,6 +38,16 @@ option('systemd_system_unit_dir',
        value: '',
        description: 'systemd system service directory')
 
+option('systemd_sysusers_dir',
+       type: 'string',
+       value: '',
+       description: 'systemd sysusers directory')
+
+option('systemd_tmpfiles_dir',
+       type: 'string',
+       value: '',
+       description: 'systemd tmpfiles directory')
+
 option('conf_dir',
        type: 'string',
        value: '',
@@ -47,6 +57,11 @@ option('user',
         type: 'string',
         value: 'gnome-remote-desktop',
         description: 'Username for the GNOME Remote Desktop system service')
+
+option('home_dir',
+        type: 'string',
+        value: '/var/lib/gnome-remote-desktop',
+        description: 'gnome-remote-desktop user directory')
 
 option('dbus_sys_dir',
        type: 'string',
