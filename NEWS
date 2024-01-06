@@ -1,3 +1,21 @@
+46.alpha
+========
+* Port to FreeRDP 3.1
+* Introduce systemd service for single user headless setups
+* Introduce headless remote login via GDM (RDP only)
+* Make fdk-aac dependency non-optional (RDP)
+* Improve cursor handling (RDP)
+* Automatic fallback port finding (RDP)
+* Add Opus coder support (RDP)
+* Misc. improvements to the RDP backend
+
+Contributors:
+  Jonas Ådahl, Pascal Nowack, Ray Strode, Joan Torres
+
+Translators:
+  Yuri Chornoivan [uk], Ekaterine Papava [ka], Boyuan Yang [zh_CN],
+  Jordi Mas i Hernandez [ca], Artur S0 [ru], Florentina Mușat [ro]
+
 45.rc
 =====
 * Use default RDP and VNC ports again
