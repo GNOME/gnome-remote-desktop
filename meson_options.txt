@@ -8,11 +8,6 @@ option('tests',
        value: true,
        description: 'Build the test suite')
 
-option('fdk_aac',
-       type: 'boolean',
-       value: true,
-       description: 'Audio output redirection for the RDP backend')
-
 option('rdp',
        type: 'boolean',
        value: true,
