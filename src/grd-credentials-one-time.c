@@ -111,6 +111,44 @@ generate_random_username (size_t   len,
   return g_strdelimit (username, "#:", '_');
 }
 
+static gboolean
+grd_credentials_one_time_store (GrdCredentials      *credentials,
+                                GrdCredentialsType   type,
+                                GVariant            *variant,
+                                GError             **error)
+{
+  GrdCredentialsOneTime *credentials_one_time =
+    GRD_CREDENTIALS_ONE_TIME (credentials);
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
+
+  g_assert (type == GRD_CREDENTIALS_TYPE_RDP);
+
+  g_variant_lookup (variant, "username", "s", &username);
+  if (!username)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Username not set");
+      return FALSE;
+    }
+
+  g_variant_lookup (variant, "password", "s", &password);
+  if (!password)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Password not set");
+      return FALSE;
+    }
+
+  g_clear_pointer (&credentials_one_time->rdp.username, g_free);
+  g_clear_pointer (&credentials_one_time->rdp.password, g_free);
+
+  credentials_one_time->rdp.username = g_steal_pointer (&username);
+  credentials_one_time->rdp.password = g_steal_pointer (&password);
+
+  return TRUE;
+}
+
 static GVariant *
 grd_credentials_one_time_lookup (GrdCredentials      *credentials,
                                  GrdCredentialsType   type,
@@ -189,5 +227,6 @@ grd_credentials_one_time_class_init (GrdCredentialsOneTimeClass *klass)
 
   object_class->finalize = grd_credentials_one_time_finalize;
 
+  credentials_class->store = grd_credentials_one_time_store;
   credentials_class->lookup = grd_credentials_one_time_lookup;
 }
