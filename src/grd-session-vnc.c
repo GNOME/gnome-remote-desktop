@@ -25,6 +25,7 @@
 #include "grd-session-vnc.h"
 
 #include <gio/gio.h>
+#include <glib/gi18n.h>
 #include <linux/input.h>
 #include <rfb/rfb.h>
 
@@ -282,12 +283,37 @@ prompt_response_callback (GObject      *source_object,
       grd_session_start (GRD_SESSION (session_vnc));
       rfbStartOnHoldClient (session_vnc->rfb_client);
       return;
-    case GRD_PROMPT_RESPONSE_REFUSE:
+    case GRD_PROMPT_RESPONSE_CANCEL:
       rfbRefuseOnHoldClient (session_vnc->rfb_client);
       return;
     }
 
   g_assert_not_reached ();
+}
+
+static void
+show_sharing_desktop_prompt (GrdSessionVnc *session_vnc,
+                             const char    *host)
+{
+  g_autoptr (GrdPromptDefinition) prompt_definition = NULL;
+
+  session_vnc->prompt = g_object_new (GRD_TYPE_PROMPT, NULL);
+  session_vnc->prompt_cancellable = g_cancellable_new ();
+
+  prompt_definition = g_new0 (GrdPromptDefinition, 1);
+  prompt_definition->summary =
+    g_strdup_printf (_("Do you want to share your desktop?"));
+  prompt_definition->body =
+    g_strdup_printf (_("A user on the computer '%s' is trying to remotely "
+                       "view or control your desktop."), host);
+  prompt_definition->cancel_label = g_strdup_printf (_("Refuse"));
+  prompt_definition->accept_label = g_strdup_printf (_("Accept"));
+
+  grd_prompt_query_async (session_vnc->prompt,
+                          prompt_definition,
+                          session_vnc->prompt_cancellable,
+                          prompt_response_callback,
+                          session_vnc);
 }
 
 static enum rfbNewClientAction
@@ -309,13 +335,7 @@ handle_new_client (rfbClientPtr rfb_client)
   switch (session_vnc->auth_method)
     {
     case GRD_VNC_AUTH_METHOD_PROMPT:
-      session_vnc->prompt = g_object_new (GRD_TYPE_PROMPT, NULL);
-      session_vnc->prompt_cancellable = g_cancellable_new ();
-      grd_prompt_query_async (session_vnc->prompt,
-                              rfb_client->host,
-                              session_vnc->prompt_cancellable,
-                              prompt_response_callback,
-                              session_vnc);
+      show_sharing_desktop_prompt (session_vnc, rfb_client->host);
       grd_session_vnc_detach_source (session_vnc);
       return RFB_CLIENT_ON_HOLD;
     case GRD_VNC_AUTH_METHOD_PASSWORD:
@@ -812,6 +832,12 @@ grd_session_vnc_stop (GrdSession *session)
   g_clear_pointer (&session_vnc->rfb_screen->frameBuffer, g_free);
   g_clear_pointer (&session_vnc->rfb_screen, rfbScreenCleanup);
   g_clear_pointer (&session_vnc->monitor_config, grd_vnc_monitor_config_free);
+  if (session_vnc->prompt_cancellable)
+    {
+      g_cancellable_cancel (session_vnc->prompt_cancellable);
+      g_clear_object (&session_vnc->prompt_cancellable);
+    }
+  g_clear_object (&session_vnc->prompt);
 
   g_clear_handle_id (&session_vnc->close_session_idle_id, g_source_remove);
 }

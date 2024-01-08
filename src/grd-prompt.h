@@ -24,14 +24,22 @@
 typedef enum _GrdPromptResponse
 {
   GRD_PROMPT_RESPONSE_ACCEPT,
-  GRD_PROMPT_RESPONSE_REFUSE
+  GRD_PROMPT_RESPONSE_CANCEL
 } GrdPromptResponse;
+
+typedef struct _GrdPromptDefinition
+{
+  char *summary;
+  char *body;
+  char *accept_label;
+  char *cancel_label;
+} GrdPromptDefinition;
 
 #define GRD_TYPE_PROMPT (grd_prompt_get_type ())
 G_DECLARE_FINAL_TYPE (GrdPrompt, grd_prompt, GRD, PROMPT, GObject)
 
 void grd_prompt_query_async (GrdPrompt           *prompt,
-                             const char          *remote_host,
+                             GrdPromptDefinition *prompt_definition,
                              GCancellable        *cancellable,
                              GAsyncReadyCallback  callback,
                              gpointer             user_data);
@@ -40,5 +48,9 @@ gboolean grd_prompt_query_finish (GrdPrompt          *prompt,
                                   GAsyncResult       *result,
                                   GrdPromptResponse  *response,
                                   GError            **error);
+
+void grd_prompt_definition_free (GrdPromptDefinition *prompt_definition);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdPromptDefinition, grd_prompt_definition_free)
 
 #endif /* GRD_PROMPT_H */

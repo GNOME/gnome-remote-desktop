@@ -20,7 +20,6 @@
 
 #include "config.h"
 
-#include <glib/gi18n.h>
 #include <libnotify/notify.h>
 
 #include "grd-prompt.h"
@@ -48,15 +47,15 @@ handle_notification_response (NotifyNotification *notification,
     {
       g_task_return_int (task, GRD_PROMPT_RESPONSE_ACCEPT);
     }
-  else if (g_strcmp0 (response, "refuse") == 0 ||
+  else if (g_strcmp0 (response, "cancel") == 0 ||
            g_strcmp0 (response, "closed") == 0)
     {
-      g_task_return_int (task, GRD_PROMPT_RESPONSE_REFUSE);
+      g_task_return_int (task, GRD_PROMPT_RESPONSE_CANCEL);
     }
   else
     {
       g_warning ("Unknown prompt response '%s'", response);
-      g_task_return_int (task, GRD_PROMPT_RESPONSE_REFUSE);
+      g_task_return_int (task, GRD_PROMPT_RESPONSE_CANCEL);
     }
 }
 
@@ -109,37 +108,49 @@ show_notification_idle_callback (gpointer user_data)
 
 void
 grd_prompt_query_async (GrdPrompt           *prompt,
-                        const char          *remote_host,
+                        GrdPromptDefinition *prompt_definition,
                         GCancellable        *cancellable,
                         GAsyncReadyCallback  callback,
                         gpointer             user_data)
 {
   NotifyNotification *notification;
   GTask *task;
-  g_autofree char *summary = NULL;
-  g_autofree char *body = NULL;
 
   task = g_task_new (G_OBJECT (prompt), cancellable, callback, user_data);
 
-  summary = g_strdup_printf (_("Do you want to share your desktop?"));
-  body = g_strdup_printf (_("A user on the computer '%s' is trying to remotely view or control your desktop."),
-                          remote_host);
-  notification = notify_notification_new (summary, body,
+  g_assert (prompt_definition);
+  g_assert (prompt_definition->summary ||
+            prompt_definition->body);
+
+  notification = notify_notification_new (prompt_definition->summary,
+                                          prompt_definition->body,
                                           "preferences-desktop-remote-desktop");
-  notify_notification_add_action (notification,
-                                  "refuse",
-                                  _("Refuse"),
-                                  handle_notification_response,
-                                  task, NULL);
-  notify_notification_add_action (notification,
-                                  "accept",
-                                  _("Accept"),
-                                  handle_notification_response,
-                                  task, NULL);
+
+  notify_notification_set_urgency (notification, NOTIFY_URGENCY_CRITICAL);
+
+  if (prompt_definition->cancel_label)
+    {
+      notify_notification_add_action (notification,
+                                      "cancel",
+                                      prompt_definition->cancel_label,
+                                      handle_notification_response,
+                                      task, NULL);
+    }
+
+  if (prompt_definition->accept_label)
+    {
+      notify_notification_add_action (notification,
+                                      "accept",
+                                      prompt_definition->accept_label,
+                                      handle_notification_response,
+                                      task, NULL);
+    }
+
   g_task_set_task_data (task, notification, g_object_unref);
 
   g_signal_connect (notification, "closed",
                     G_CALLBACK (on_notification_closed), task);
+
   g_cancellable_connect (cancellable,
                          G_CALLBACK (on_cancellable_cancelled),
                          task, NULL);
@@ -154,7 +165,13 @@ grd_prompt_query_finish (GrdPrompt          *prompt,
                          GError            **error)
 {
   g_autoptr(GTask) task = G_TASK (result);
+  GCancellable *cancellable;
   GrdPromptResponse response;
+
+  cancellable = g_task_get_cancellable (task);
+  g_signal_handlers_disconnect_by_func (cancellable,
+                                        G_CALLBACK (on_cancellable_cancelled),
+                                        task);
 
   response = g_task_propagate_int (task, error);
   if (response == -1)
@@ -162,6 +179,16 @@ grd_prompt_query_finish (GrdPrompt          *prompt,
 
   *out_response = response;
   return TRUE;
+}
+
+void
+grd_prompt_definition_free (GrdPromptDefinition *prompt_definition)
+{
+  g_clear_pointer (&prompt_definition->summary, g_free);
+  g_clear_pointer (&prompt_definition->body, g_free);
+  g_clear_pointer (&prompt_definition->accept_label, g_free);
+  g_clear_pointer (&prompt_definition->cancel_label, g_free);
+  g_free (prompt_definition);
 }
 
 static void
