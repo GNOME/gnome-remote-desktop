@@ -437,6 +437,7 @@ on_create_remote_display_finished (GObject      *object,
 static void
 on_incoming_redirected_connection (GrdRdpServer      *rdp_server,
                                    const char        *routing_token_str,
+                                   gboolean           requested_rdstls,
                                    GSocketConnection *connection,
                                    GrdDaemonSystem   *daemon_system)
 {

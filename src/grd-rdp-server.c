@@ -149,11 +149,13 @@ on_routing_token_peeked (GObject      *source_object,
   GCancellable *server_cancellable;
   g_autofree char *routing_token = NULL;
   g_autoptr (GError) error = NULL;
+  gboolean requested_rdstls = FALSE;
 
   routing_token = grd_routing_token_peek_finish (result,
                                                  &rdp_server,
                                                  &connection,
                                                  &server_cancellable,
+                                                 &requested_rdstls,
                                                  &error);
   if (g_cancellable_is_cancelled (server_cancellable))
     return;
@@ -167,7 +169,7 @@ on_routing_token_peeked (GObject      *source_object,
   if (routing_token)
     {
       g_signal_emit (rdp_server, signals[INCOMING_REDIRECTED_CONNECTION],
-                     0, routing_token, connection);
+                     0, routing_token, requested_rdstls, connection);
     }
   else
     {
@@ -421,6 +423,8 @@ grd_rdp_server_class_init (GrdRdpServerClass *klass)
                                                           G_SIGNAL_RUN_LAST,
                                                           0,
                                                           NULL, NULL, NULL,
-                                                          G_TYPE_NONE, 2, G_TYPE_STRING,
+                                                          G_TYPE_NONE, 3,
+                                                          G_TYPE_STRING,
+                                                          G_TYPE_BOOLEAN,
                                                           G_TYPE_SOCKET_CONNECTION);
 }

@@ -28,6 +28,7 @@
 #include <sys/socket.h>
 
 #define MAX_PEEK_TIME_MS 2000
+#define PROTOCOL_RDSTLS 0x00000004
 
 typedef struct _RoutingTokenContext
 {
@@ -38,7 +39,20 @@ typedef struct _RoutingTokenContext
   unsigned int abort_peek_source_id;
 
   GCancellable *server_cancellable;
+
+  gboolean requested_rdslts;
 } RoutingTokenContext;
+
+static void
+wstream_free_full (wStream *s);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (wStream, wstream_free_full)
+
+static void
+wstream_free_full (wStream *s)
+{
+  Stream_Free (s, TRUE);
+}
 
 static int
 find_cr_lf (const char *buffer,
@@ -125,12 +139,12 @@ peek_bytes (int            fd,
 
 static char *
 get_routing_token_without_prefix (char   *buffer,
-                                  size_t  buffer_length)
+                                  size_t  buffer_length,
+                                  size_t *routing_token_length)
 {
   g_autofree char *peeked_prefix = NULL;
   g_autofree char *prefix = NULL;
   size_t prefix_length;
-  size_t routing_token_length;
 
   prefix = g_strdup ("Cookie: msts=");
   prefix_length = strlen (prefix);
@@ -142,22 +156,22 @@ get_routing_token_without_prefix (char   *buffer,
   if (g_strcmp0 (peeked_prefix, prefix) != 0)
     return NULL;
 
-  routing_token_length = find_cr_lf (buffer, buffer_length);
-  if (routing_token_length == -1)
+  *routing_token_length = find_cr_lf (buffer, buffer_length);
+  if (*routing_token_length == -1)
     return NULL;
 
   return g_strndup (buffer + prefix_length,
-                    routing_token_length - prefix_length);
+                    *routing_token_length - prefix_length);
 }
 
 static gboolean
 peek_routing_token (int            fd,
                     char         **routing_token,
+                    gboolean      *requested_rdstls,
                     GCancellable  *cancellable,
                     GError       **error)
 {
-  BOOL success = FALSE;
-  wStream *s = NULL;
+  g_autoptr (wStream) s = NULL;
 
   /* TPKT values */
   uint8_t  version;
@@ -169,12 +183,19 @@ peek_routing_token (int            fd,
   uint16_t dst_ref;
   uint8_t  class_opt;
 
+  size_t routing_token_length;
+
+  /* rdpNegReq values */
+  uint8_t rdp_neg_type;
+  uint16_t rdp_neg_length;
+  uint32_t requested_protocols;
+
   /* Peek TPKT Header */
   s = Stream_New (NULL, 4);
   g_assert (s);
 
   if (!peek_bytes (fd, Stream_Buffer (s), 4, cancellable, error))
-    goto out;
+    return FALSE;
 
   Stream_Read_UINT8 (s, version);
   Stream_Seek (s, 1);
@@ -184,7 +205,7 @@ peek_routing_token (int            fd,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "The TPKT Header doesn't have version 3");
-      goto out;
+      return FALSE;
     }
 
   /* Peek full PDU */
@@ -193,7 +214,7 @@ peek_routing_token (int            fd,
   g_assert (s);
 
   if (!peek_bytes (fd, Stream_Buffer (s), tpkt_length, cancellable, error))
-    goto out;
+    return FALSE;
 
   Stream_Seek (s, 4);
 
@@ -210,19 +231,36 @@ peek_routing_token (int            fd,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Wrong info on x224Crq");
-      goto out;
+      return FALSE;
     }
 
   /* Check routingToken */
   *routing_token =
     get_routing_token_without_prefix ((char *) Stream_Pointer (s),
-                                      Stream_GetRemainingLength (s));
+                                      Stream_GetRemainingLength (s),
+                                      &routing_token_length);
+  if (!(*routing_token))
+    return TRUE;
 
-  success = TRUE;
+  /* Check rdpNegReq */
+  Stream_Seek (s, routing_token_length + 2);
+  if (Stream_GetRemainingLength (s) < 8)
+    return TRUE;
 
-out:
-  Stream_Free (s, TRUE);
-  return success;
+  Stream_Read_UINT8 (s, rdp_neg_type);
+  Stream_Seek (s, 1);
+  Stream_Read_UINT16 (s, rdp_neg_length);
+  Stream_Read_UINT32 (s, requested_protocols);
+  if (rdp_neg_type != 0x01 || rdp_neg_length != 8)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Wrong info on rdpNegReq");
+      return FALSE;
+    }
+
+  *requested_rdstls = requested_protocols & PROTOCOL_RDSTLS;
+
+  return TRUE;
 }
 
 static void
@@ -234,13 +272,15 @@ peek_routing_token_in_thread (GTask        *task,
   RoutingTokenContext *routing_token_context = task_data;
   GSocket *socket;
   int fd;
-  char *routing_token;
+  char *routing_token = NULL;
   GError *error = NULL;
 
   socket = g_socket_connection_get_socket (routing_token_context->connection);
   fd = g_socket_get_fd (socket);
 
-  if (!peek_routing_token (fd, &routing_token,
+  if (!peek_routing_token (fd,
+                           &routing_token,
+                           &routing_token_context->requested_rdslts,
                            routing_token_context->cancellable,
                            &error))
     g_task_return_error (task, error);
@@ -310,6 +350,7 @@ grd_routing_token_peek_finish (GAsyncResult       *result,
                                GrdRdpServer      **rdp_server,
                                GSocketConnection **connection,
                                GCancellable      **server_cancellable,
+                               gboolean           *requested_rdstls,
                                GError            **error)
 {
   RoutingTokenContext *routing_token_context =
@@ -318,6 +359,7 @@ grd_routing_token_peek_finish (GAsyncResult       *result,
   *rdp_server = routing_token_context->rdp_server;
   *connection = routing_token_context->connection;
   *server_cancellable = routing_token_context->server_cancellable;
+  *requested_rdstls = routing_token_context->requested_rdslts;
 
   return g_task_propagate_pointer (G_TASK (result), error);
 }

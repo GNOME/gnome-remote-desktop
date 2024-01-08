@@ -36,6 +36,7 @@ char *grd_routing_token_peek_finish (GAsyncResult       *result,
                                      GrdRdpServer      **rdp_server,
                                      GSocketConnection **connection,
                                      GCancellable      **server_cancellable,
+                                     gboolean           *requested_rdstls,
                                      GError            **error);
 
 #endif /* GRD_RDP_ROUTING_TOKEN_H */
