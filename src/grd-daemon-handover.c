@@ -120,8 +120,6 @@ on_take_client_finished (GObject      *object,
   rdp_server = grd_daemon_get_rdp_server (GRD_DAEMON (daemon_handover));
   grd_rdp_server_notify_incoming (G_SOCKET_SERVICE (rdp_server),
                                   socket_connection);
-
-  g_clear_handle_id (&daemon_handover->logout_source_id, g_source_remove);
 }
 
 static void
@@ -379,6 +377,8 @@ on_incoming_new_connection (GrdRdpServer      *rdp_server,
 
   if (daemon_handover->use_system_credentials)
     show_insecure_connection_prompt (daemon_handover);
+
+  g_clear_handle_id (&daemon_handover->logout_source_id, g_source_remove);
 }
 
 static void
