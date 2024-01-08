@@ -280,6 +280,48 @@ err:
   return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
+static gboolean
+on_handle_get_system_credentials (GrdDBusRemoteDesktopRdpHandover *interface,
+                                  GDBusMethodInvocation           *invocation,
+                                  GrdRemoteClient                 *remote_client)
+{
+  GrdDaemon *daemon = GRD_DAEMON (remote_client->daemon_system);
+  GrdContext *context = grd_daemon_get_context (daemon);
+  GrdSettings *settings = grd_context_get_settings (context);
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
+
+  g_assert (interface == remote_client->handover_dst->interface);
+
+  g_debug ("[DaemonSystem] At: %s, received GetSystemCredentials call",
+           remote_client->handover_dst->object_path);
+
+  if (!remote_client->use_system_credentials)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_IO_ERROR,
+                                             "This handover daemon isn't "
+                                             "allowed to use system credentials");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!grd_settings_get_rdp_credentials (settings,
+                                         &username, &password,
+                                         NULL))
+    g_assert_not_reached ();
+
+  grd_dbus_remote_desktop_rdp_handover_complete_get_system_credentials (
+    remote_client->handover_dst->interface,
+    invocation,
+    username,
+    password);
+
+  remote_client->use_system_credentials = FALSE;
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
 static void
 handover_iface_free (HandoverInterface *handover)
 {
@@ -309,6 +351,8 @@ handover_iface_new (const char      *session_id,
                     G_CALLBACK (on_handle_start_handover), remote_client);
   g_signal_connect (handover->interface, "handle-take-client",
                     G_CALLBACK (on_handle_take_client), remote_client);
+  g_signal_connect (handover->interface, "handle-get-system-credentials",
+                    G_CALLBACK (on_handle_get_system_credentials), remote_client);
 
   return handover;
 }

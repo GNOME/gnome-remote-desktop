@@ -132,6 +132,17 @@
       <arg name="fd" direction="out" type="h"/>
     </method>
 
+    <!--
+        GetSystemCredentials:
+
+        Get the system credentials to be used instead of the one-time
+        generated to authenticate the redirected client.
+    -->
+    <method name="GetSystemCredentials">
+      <arg name="username" direction="out" type="s"/>
+      <arg name="password" direction="out" type="s"/>
+    </method>
+
   </interface>
 
 </node>
