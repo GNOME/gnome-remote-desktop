@@ -119,6 +119,53 @@ on_take_client_finished (GObject      *object,
 }
 
 static void
+on_get_system_credentials_finished (GObject      *object,
+                                    GAsyncResult *result,
+                                    gpointer      user_data)
+{
+  GrdDaemonHandover *daemon_handover = user_data;
+  GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_handover));
+  GrdSettings *settings = grd_context_get_settings (context);
+  GCancellable *cancellable =
+    grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
+  g_autoptr (GError) error = NULL;
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
+  const char* object_path;
+
+  if (!grd_dbus_remote_desktop_rdp_handover_call_get_system_credentials_finish (
+        daemon_handover->remote_desktop_handover,
+        &username,
+        &password,
+        result,
+        &error))
+    {
+      g_warning ("[DaemonHandover] Failed getting system credentials: %s",
+                 error->message);
+      return;
+    }
+
+  if (!grd_settings_set_rdp_credentials (settings, username, password, &error))
+    {
+      g_warning ("[DaemonHanodver] Failed overwritting credentials: %s",
+                 error->message);
+      return;
+    }
+
+  object_path = g_dbus_proxy_get_object_path (
+                  G_DBUS_PROXY (daemon_handover->remote_desktop_handover));
+
+  g_debug ("[DaemonHandover] At: %s, calling TakeClient", object_path);
+
+  grd_dbus_remote_desktop_rdp_handover_call_take_client (
+    daemon_handover->remote_desktop_handover,
+    NULL,
+    cancellable,
+    on_take_client_finished,
+    daemon_handover);
+}
+
+static void
 on_take_client_ready (GrdDBusRemoteDesktopRdpHandover *interface,
                       gboolean                         use_system_credentials,
                       GrdDaemonHandover               *daemon_handover)
@@ -129,8 +176,24 @@ on_take_client_ready (GrdDBusRemoteDesktopRdpHandover *interface,
 
   object_path = g_dbus_proxy_get_object_path (G_DBUS_PROXY (interface));
 
-  g_debug ("[DaemonHandover] At: %s, received TakeClientReady signal and "
-           "calling TakeClient", object_path);
+  g_debug ("[DaemonHandover] At: %s, received TakeClientReady signal",
+           object_path);
+
+  if (use_system_credentials)
+    {
+      g_debug ("[DaemonHandover] At: %s, calling GetSystemCredentials",
+                object_path);
+
+      grd_dbus_remote_desktop_rdp_handover_call_get_system_credentials (
+        interface,
+        cancellable,
+        on_get_system_credentials_finished,
+        daemon_handover);
+
+      return;
+    }
+
+  g_debug ("[DaemonHandover] At: %s, calling TakeClient", object_path);
 
   grd_dbus_remote_desktop_rdp_handover_call_take_client (
     interface,
