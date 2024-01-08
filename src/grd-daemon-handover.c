@@ -25,6 +25,7 @@
 #include "grd-daemon-handover.h"
 
 #include <gio/gunixfdlist.h>
+#include <glib/gi18n.h>
 #include <unistd.h>
 
 #include "grd-context.h"
@@ -32,6 +33,7 @@
 #include "grd-daemon-utils.h"
 #include "grd-dbus-remote-desktop.h"
 #include "grd-private.h"
+#include "grd-prompt.h"
 #include "grd-rdp-server.h"
 #include "grd-session-rdp.h"
 #include "grd-settings.h"
@@ -46,6 +48,10 @@ struct _GrdDaemonHandover
   GrdDBusRemoteDesktopRdpHandover *remote_desktop_handover;
 
   GrdSession *session;
+
+  gboolean use_system_credentials;
+  GrdPrompt *prompt;
+  GCancellable *prompt_cancellable;
 
   unsigned int gnome_remote_desktop_watch_name_id;
 
@@ -179,6 +185,8 @@ on_take_client_ready (GrdDBusRemoteDesktopRdpHandover *interface,
   g_debug ("[DaemonHandover] At: %s, received TakeClientReady signal",
            object_path);
 
+  daemon_handover->use_system_credentials = use_system_credentials;
+
   if (use_system_credentials)
     {
       g_debug ("[DaemonHandover] At: %s, calling GetSystemCredentials",
@@ -280,6 +288,77 @@ on_session_stopped (GrdSession        *session,
   grd_session_manager_call_logout_sync ();
 
   daemon_handover->session = NULL;
+
+  if (daemon_handover->prompt_cancellable)
+    {
+      g_cancellable_cancel (daemon_handover->prompt_cancellable);
+      g_clear_object (&daemon_handover->prompt_cancellable);
+    }
+  g_clear_object (&daemon_handover->prompt);
+}
+
+static void
+prompt_response_callback (GObject      *source_object,
+                          GAsyncResult *async_result,
+                          gpointer      user_data)
+{
+  GrdDaemonHandover *daemon_handover = GRD_DAEMON_HANDOVER (user_data);
+  g_autoptr (GError) error = NULL;
+  GrdPromptResponse response;
+
+  if (!grd_prompt_query_finish (daemon_handover->prompt,
+                                async_result,
+                                &response,
+                                &error))
+    {
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        {
+          g_warning ("Failed to query user about session: %s", error->message);
+          grd_session_manager_call_logout_sync ();
+        }
+
+      return;
+    }
+
+  switch (response)
+    {
+    case GRD_PROMPT_RESPONSE_ACCEPT:
+      return;
+    case GRD_PROMPT_RESPONSE_CANCEL:
+      grd_session_manager_call_logout_sync ();
+      return;
+    }
+
+  g_assert_not_reached ();
+}
+
+static void
+show_insecure_connection_prompt (GrdDaemonHandover *daemon_handover)
+{
+  g_autoptr (GrdPromptDefinition) prompt_definition = NULL;
+
+  if (daemon_handover->prompt)
+    return;
+
+  daemon_handover->prompt = g_object_new (GRD_TYPE_PROMPT, NULL);
+  daemon_handover->prompt_cancellable = g_cancellable_new ();
+
+  prompt_definition = g_new0 (GrdPromptDefinition, 1);
+  prompt_definition->summary =
+    g_strdup_printf (_("This connection is insecure"));
+  prompt_definition->body =
+    g_strdup_printf (_("Do you want to continue with an insecure connection?\n"
+                       "To make it secure set "
+                       "<b><i>use redirection server name:i:1</i></b> "
+                       "in the RDP config file."));
+  prompt_definition->cancel_label = g_strdup_printf (_("Disconnect"));
+  prompt_definition->accept_label = g_strdup_printf (_("Continue"));
+
+  grd_prompt_query_async (daemon_handover->prompt,
+                          prompt_definition,
+                          daemon_handover->prompt_cancellable,
+                          prompt_response_callback,
+                          daemon_handover);
 }
 
 static void
@@ -297,6 +376,9 @@ on_incoming_new_connection (GrdRdpServer      *rdp_server,
   daemon_handover->session = session;
 
   grd_settings_recreate_rdp_credentials (settings);
+
+  if (daemon_handover->use_system_credentials)
+    show_insecure_connection_prompt (daemon_handover);
 }
 
 static void
@@ -561,6 +643,13 @@ grd_daemon_handover_shutdown (GApplication *app)
                      g_bus_unwatch_name);
 
   g_clear_handle_id (&daemon_handover->logout_source_id, g_source_remove);
+
+  if (daemon_handover->prompt_cancellable)
+    {
+      g_cancellable_cancel (daemon_handover->prompt_cancellable);
+      g_clear_object (&daemon_handover->prompt_cancellable);
+    }
+  g_clear_object (&daemon_handover->prompt);
 
   G_APPLICATION_CLASS (grd_daemon_handover_parent_class)->shutdown (app);
 }
