@@ -57,6 +57,8 @@ gboolean grd_settings_set_rdp_credentials (GrdSettings  *settings,
 gboolean grd_settings_clear_rdp_credentials (GrdSettings  *settings,
                                              GError      **error);
 
+void grd_settings_recreate_rdp_credentials (GrdSettings *settings);
+
 char *grd_settings_get_vnc_password (GrdSettings *settings,
                                       GError     **error);
 

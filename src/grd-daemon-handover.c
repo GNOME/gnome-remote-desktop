@@ -287,11 +287,16 @@ on_incoming_new_connection (GrdRdpServer      *rdp_server,
                             GrdSession        *session,
                             GrdDaemonHandover *daemon_handover)
 {
+  GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_handover));
+  GrdSettings *settings = grd_context_get_settings (context);
+
   g_signal_connect (session, "stopped",
                     G_CALLBACK (on_session_stopped),
                     daemon_handover);
 
   daemon_handover->session = session;
+
+  grd_settings_recreate_rdp_credentials (settings);
 }
 
 static void

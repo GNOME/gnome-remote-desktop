@@ -291,6 +291,15 @@ create_credentials (GrdRuntimeMode runtime_mode)
   g_assert_not_reached ();
 }
 
+void
+grd_settings_recreate_rdp_credentials (GrdSettings *settings)
+{
+  GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
+
+  g_clear_object (&priv->credentials);
+  priv->credentials = create_credentials (priv->runtime_mode);
+}
+
 static void
 grd_settings_constructed (GObject *object)
 {
