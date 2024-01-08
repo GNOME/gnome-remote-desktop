@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2023-11-23 13:27+0000\n"
-"PO-Revision-Date: 2023-11-23 23:42+0300\n"
+"POT-Creation-Date: 2024-01-06 15:23+0000\n"
+"PO-Revision-Date: 2024-01-08 15:51+0300\n"
 "Last-Translator: Artur So <arturios2005@mail.ru>\n"
 "Language-Team: Russian <gnome-cyr@gnome.org>\n"
 "Language: ru\n"
@@ -18,9 +18,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.4.1\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: src/grd-daemon.c:824
+#: src/grd-daemon.c:900
 msgid "GNOME Remote Desktop"
 msgstr "Удаленный рабочий стол GNOME"
 
@@ -46,16 +46,16 @@ msgstr "Отказаться"
 msgid "Accept"
 msgstr "Принять"
 
-#: src/grd-ctl.c:53
+#: src/grd-ctl.c:59
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Использование: %s [ОПЦИИ...] КОМАНДА [СУБКОМАНДА]...\n"
 
-#: src/grd-ctl.c:421
+#: src/grd-ctl.c:579
 msgid "Commands:\n"
 msgstr "Команды:\n"
 
-#: src/grd-ctl.c:426
+#: src/grd-ctl.c:584
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -105,7 +105,7 @@ msgstr ""
 "                                               другой порт\n"
 "\n"
 
-#: src/grd-ctl.c:450
+#: src/grd-ctl.c:608
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -146,13 +146,14 @@ msgstr ""
 "                                               другой порт\n"
 "\n"
 
-#: src/grd-ctl.c:470
+#: src/grd-ctl.c:628
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Показать текущее состояние\n"
@@ -160,6 +161,7 @@ msgstr ""
 "Опции:\n"
 "  --headless                                 - Использовать автономное "
 "хранилище учетных данных\n"
+"  --system                                   - Настроить системного демона\n"
 "  --help                                     - Вывести текст справки\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
