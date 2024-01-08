@@ -328,6 +328,18 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
   rdp_peer_refresh_region (session_rdp, rdp_surface, buffer);
 }
 
+gboolean
+grd_session_rdp_is_client_mstsc (GrdSessionRdp *session_rdp)
+{
+  rdpContext *rdp_context = session_rdp->peer->context;
+  rdpSettings *rdp_settings = rdp_context->settings;
+
+  return freerdp_settings_get_uint32 (rdp_settings, FreeRDP_OsMajorType) ==
+         OSMAJORTYPE_WINDOWS &&
+         freerdp_settings_get_uint32 (rdp_settings, FreeRDP_OsMinorType) ==
+         OSMINORTYPE_WINDOWS_NT;
+}
+
 static WCHAR *
 get_utf16_string (const char *str,
                   size_t     *size)

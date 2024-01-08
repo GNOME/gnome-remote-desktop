@@ -83,6 +83,8 @@ int grd_session_rdp_get_stride_for_width (GrdSessionRdp *session_rdp,
 void grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
                                                  GrdRdpSurface *rdp_surface);
 
+gboolean grd_session_rdp_is_client_mstsc (GrdSessionRdp *session_rdp);
+
 gboolean grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
                                                   const char    *routing_token,
                                                   const char    *user_name,
