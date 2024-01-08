@@ -117,7 +117,9 @@
         Signal to make the dst server aware that the client was redirected
         successfully and is ready to be taken.
     -->
-    <signal name="TakeClientReady" />
+    <signal name="TakeClientReady">
+      <arg name="use_system_credentials" type="b"/>
+    </signal>
 
     <!--
         TakeClient:

@@ -120,6 +120,7 @@ on_take_client_finished (GObject      *object,
 
 static void
 on_take_client_ready (GrdDBusRemoteDesktopRdpHandover *interface,
+                      gboolean                         use_system_credentials,
                       GrdDaemonHandover               *daemon_handover)
 {
   GCancellable *cancellable =

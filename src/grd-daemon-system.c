@@ -60,6 +60,9 @@ typedef struct
   HandoverInterface *handover_dst;
 
   unsigned int abort_handover_source_id;
+
+  gboolean is_client_mstsc;
+  gboolean use_system_credentials;
 } GrdRemoteClient;
 
 struct _GrdDaemonSystem
@@ -404,6 +407,7 @@ remote_client_new (GrdDaemonSystem *daemon_system,
   remote_client = g_new0 (GrdRemoteClient, 1);
   remote_client->id = get_next_available_id (daemon_system);
   remote_client->daemon_system = daemon_system;
+  remote_client->is_client_mstsc = grd_session_rdp_is_client_mstsc (GRD_SESSION_RDP (session));
   remote_client->session = session;
   g_object_weak_ref (G_OBJECT (session),
                      (GWeakNotify) session_disposed,
@@ -460,12 +464,15 @@ on_incoming_redirected_connection (GrdRdpServer      *rdp_server,
     }
 
   remote_client->socket_connection = g_object_ref (connection);
+  remote_client->use_system_credentials = remote_client->is_client_mstsc &&
+                                          !requested_rdstls;
 
   g_debug ("[DaemonSystem] At: %s, emitting TakeClientReady signal",
            remote_client->handover_dst->object_path);
 
   grd_dbus_remote_desktop_rdp_handover_emit_take_client_ready (
-    remote_client->handover_dst->interface);
+    remote_client->handover_dst->interface,
+    remote_client->use_system_credentials);
 }
 
 static void
