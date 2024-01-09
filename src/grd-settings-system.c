@@ -76,7 +76,7 @@ read_string (GrdSettingsSystem *settings_system,
                                  group,
                                  key,
                                  &error);
-  if (error)
+  if (error && error->code != G_KEY_FILE_ERROR_KEY_NOT_FOUND)
     return;
 
   g_object_set (G_OBJECT (settings_system), settings_name, value, NULL);
@@ -143,28 +143,19 @@ static const FileSetting rdp_file_settings[] =
   { "port", "rdp-port", read_int, write_int },
 };
 
-GKeyFile *
-load_key_file (void)
+static GKeyFile *
+load_key_file (const char  *file_path,
+               GError     **error)
 {
   g_autoptr (GKeyFile) key_file = NULL;
-  g_autoptr (GError) error = NULL;
-
-  if (!g_file_test (GRD_CUSTOM_CONF, G_FILE_TEST_IS_REGULAR))
-    {
-      g_warning ("Couldn't find system settings file");
-      return NULL;
-    }
 
   key_file = g_key_file_new ();
   if (!g_key_file_load_from_file (key_file,
-                                  GRD_CUSTOM_CONF,
+                                  file_path,
                                   G_KEY_FILE_KEEP_COMMENTS |
                                   G_KEY_FILE_KEEP_TRANSLATIONS,
-                                  &error))
-    {
-      g_warning ("Coulnd't load system settings file: %s", error->message);
-      return NULL;
-    }
+                                  error))
+    return NULL;
 
   return g_steal_pointer (&key_file);
 }
@@ -177,9 +168,9 @@ on_rdp_setting_changed (GrdSettingsSystem *settings_system,
   g_autoptr (GKeyFile) key_file = NULL;
   g_autoptr (GError) error = NULL;
 
-  key_file = load_key_file ();
+  key_file = load_key_file (GRD_CUSTOM_CONF, NULL);
   if (!key_file)
-    return;
+    key_file = g_key_file_new ();
 
   file_setting->write_settings_value (settings_system,
                                       key_file,
@@ -196,10 +187,16 @@ read_rdp_file_settings (GrdSettingsSystem *settings_system)
 {
   int i;
   g_autoptr (GKeyFile) key_file = NULL;
+  g_autoptr (GError) error = NULL;
 
-  key_file = load_key_file ();
+  key_file = load_key_file (GRD_CUSTOM_CONF, NULL);
   if (!key_file)
-    return;
+    key_file = load_key_file (GRD_DEFAULT_CONF, &error);
+  if (!key_file)
+    {
+      g_warning ("Failed to load default key file: %s", error->message);
+      return;
+    }
 
   for (i = 0; i < G_N_ELEMENTS (rdp_file_settings); i++)
     {
