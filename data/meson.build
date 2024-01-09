@@ -6,10 +6,13 @@ if have_rdp
     install_dir: grd_datadir,
   )
 
-  install_data('grd.conf',
-    install_mode: ['rw-r--r--', grd_username, grd_username],
-    install_dir: grd_confdir,
-  )
+  configure_file(input: 'grd.conf.in',
+                 output: 'grd.conf',
+                 configuration: {
+                   'GRD_CUSTOM_CONF': grd_custom_conf,
+                   'GRD_CONFDIR': grd_confdir,
+                 },
+                 install_dir: grd_datadir)
 
   configure_file(input: 'gnome-remote-desktop-sysusers.conf.in',
                  output: 'gnome-remote-desktop-sysusers.conf',

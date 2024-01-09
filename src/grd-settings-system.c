@@ -149,7 +149,7 @@ load_key_file (void)
   g_autoptr (GKeyFile) key_file = NULL;
   g_autoptr (GError) error = NULL;
 
-  if (!g_file_test (GRD_CONF, G_FILE_TEST_IS_REGULAR))
+  if (!g_file_test (GRD_CUSTOM_CONF, G_FILE_TEST_IS_REGULAR))
     {
       g_warning ("Couldn't find system settings file");
       return NULL;
@@ -157,7 +157,7 @@ load_key_file (void)
 
   key_file = g_key_file_new ();
   if (!g_key_file_load_from_file (key_file,
-                                  GRD_CONF,
+                                  GRD_CUSTOM_CONF,
                                   G_KEY_FILE_KEEP_COMMENTS |
                                   G_KEY_FILE_KEEP_TRANSLATIONS,
                                   &error))
@@ -187,7 +187,7 @@ on_rdp_setting_changed (GrdSettingsSystem *settings_system,
                                       file_setting->file_key,
                                       file_setting->settings_name);
 
-  if (!g_key_file_save_to_file (key_file, GRD_CONF, &error))
+  if (!g_key_file_save_to_file (key_file, GRD_CUSTOM_CONF, &error))
     g_warning ("Failed writing %s: %s", file_setting->file_key, error->message);
 }
 
@@ -292,7 +292,7 @@ init_file_monitor (void)
   g_autoptr (GFileMonitor) file_monitor = NULL;
   g_autoptr (GError) error = NULL;
 
-  g_file = g_file_new_for_path (GRD_CONF);
+  g_file = g_file_new_for_path (GRD_CUSTOM_CONF);
   if (!g_file)
     return NULL;
 
@@ -302,7 +302,7 @@ init_file_monitor (void)
                                       &error);
   if (!file_monitor)
     {
-      g_warning ("Failed monitoring %s: %s", GRD_CONF, error->message);
+      g_warning ("Failed monitoring %s: %s", GRD_CUSTOM_CONF, error->message);
       return NULL;
     }
 

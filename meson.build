@@ -77,7 +77,8 @@ grd_confdir = get_option('conf_dir')
 if grd_confdir == ''
   grd_confdir = join_paths(get_option('sysconfdir'), 'gnome-remote-desktop')
 endif
-grd_conf = join_paths(grd_confdir, 'grd.conf')
+grd_custom_conf = join_paths(grd_confdir, 'grd.conf')
+grd_default_conf = join_paths(grd_datadir, 'grd.conf')
 
 grd_username = get_option('user')
 grd_homedir = get_option('home_dir')
@@ -90,7 +91,8 @@ cdata.set('HAVE_RDP', have_rdp)
 cdata.set('HAVE_VNC', have_vnc)
 
 cdata.set_quoted('GRD_DATA_DIR', grd_datadir)
-cdata.set_quoted('GRD_CONF', grd_conf)
+cdata.set_quoted('GRD_CUSTOM_CONF', grd_custom_conf)
+cdata.set_quoted('GRD_DEFAULT_CONF', grd_default_conf)
 cdata.set_quoted('GRD_USERNAME', grd_username)
 
 configure_file(input: 'config.h.meson',
