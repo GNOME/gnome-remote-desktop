@@ -33,6 +33,9 @@
 #include "grd-session-rdp.h"
 #include "grd-utils.h"
 
+#define RDP_SERVER_N_BINDING_ATTEMPTS 10
+#define RDP_SERVER_BINDING_ATTEMPT_INTERVAL_MS 500
+
 enum
 {
   PROP_0,
@@ -63,6 +66,9 @@ struct _GrdRdpServer
 
   GrdContext *context;
   GrdHwAccelNvidia *hwaccel_nvidia;
+
+  uint32_t pending_binding_attempts;
+  unsigned int binding_timeout_source_id;
 };
 
 G_DEFINE_TYPE (GrdRdpServer, grd_rdp_server, G_TYPE_SOCKET_SERVICE)
@@ -236,40 +242,119 @@ grd_rdp_server_notify_incoming (GSocketService    *service,
   on_incoming (service, connection);
 }
 
-gboolean
-grd_rdp_server_start (GrdRdpServer  *rdp_server,
-                      GError       **error)
+static gboolean
+attempt_to_bind_port (gpointer user_data)
+{
+  GrdRdpServer *rdp_server = user_data;
+  GrdSettings *settings = grd_context_get_settings (rdp_server->context);
+  GrdDBusRemoteDesktopRdpServer *rdp_server_iface =
+    grd_context_get_rdp_server_interface (rdp_server->context);
+  uint16_t rdp_port = 0;
+  uint16_t selected_rdp_port = 0;
+
+  g_assert (rdp_server->pending_binding_attempts > 0);
+  --rdp_server->pending_binding_attempts;
+
+  g_object_get (G_OBJECT (settings),
+                "rdp-port", &rdp_port,
+                NULL);
+  g_assert (rdp_port != 0);
+
+  if (grd_bind_socket (G_SOCKET_LISTENER (rdp_server),
+                       rdp_port,
+                       &selected_rdp_port,
+                       FALSE,
+                       NULL))
+    {
+      g_assert (selected_rdp_port != 0);
+      grd_dbus_remote_desktop_rdp_server_set_port (rdp_server_iface,
+                                                   selected_rdp_port);
+
+      rdp_server->binding_timeout_source_id = 0;
+      return G_SOURCE_REMOVE;
+    }
+
+  if (rdp_server->pending_binding_attempts == 0)
+    {
+      g_warning ("Failed binding to port %u after %u attempts",
+                 rdp_port, RDP_SERVER_N_BINDING_ATTEMPTS);
+
+      rdp_server->binding_timeout_source_id = 0;
+      return G_SOURCE_REMOVE;
+    }
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean
+bind_socket (GrdRdpServer  *rdp_server,
+             GError       **error)
 {
   GrdSettings *settings = grd_context_get_settings (rdp_server->context);
   GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (rdp_server->context);
   GrdDBusRemoteDesktopRdpServer *rdp_server_iface =
     grd_context_get_rdp_server_interface (rdp_server->context);
-  uint16_t rdp_port;
+  uint16_t rdp_port = 0;
   uint16_t selected_rdp_port = 0;
   gboolean negotiate_port;
-
-  if (runtime_mode == GRD_RUNTIME_MODE_HANDOVER)
-    {
-      grd_dbus_remote_desktop_rdp_server_set_enabled (rdp_server_iface, TRUE);
-      return TRUE;
-    }
 
   g_object_get (G_OBJECT (settings),
                 "rdp-port", &rdp_port,
                 "rdp-negotiate-port", &negotiate_port,
                 NULL);
 
-  grd_dbus_remote_desktop_rdp_server_emit_binding (rdp_server_iface,
-                                                   rdp_port);
+  if (runtime_mode != GRD_RUNTIME_MODE_HANDOVER)
+    {
+      grd_dbus_remote_desktop_rdp_server_emit_binding (rdp_server_iface,
+                                                       rdp_port);
+    }
 
-  if (!grd_bind_socket (G_SOCKET_LISTENER (rdp_server),
-                        rdp_port,
-                        &selected_rdp_port,
-                        negotiate_port,
-                        error))
-    return FALSE;
+  switch (runtime_mode)
+    {
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+    case GRD_RUNTIME_MODE_HEADLESS:
+      if (!grd_bind_socket (G_SOCKET_LISTENER (rdp_server),
+                            rdp_port,
+                            &selected_rdp_port,
+                            negotiate_port,
+                            error))
+        return FALSE;
+      break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      if (grd_bind_socket (G_SOCKET_LISTENER (rdp_server),
+                           rdp_port,
+                           &selected_rdp_port,
+                           FALSE,
+                           error))
+        break;
+
+      g_assert (!rdp_server->binding_timeout_source_id);
+      rdp_server->binding_timeout_source_id =
+        g_timeout_add (RDP_SERVER_BINDING_ATTEMPT_INTERVAL_MS,
+                       attempt_to_bind_port,
+                       rdp_server);
+      return TRUE;
+    case GRD_RUNTIME_MODE_HANDOVER:
+      return TRUE;
+    }
 
   g_assert (selected_rdp_port != 0);
+  grd_dbus_remote_desktop_rdp_server_set_port (rdp_server_iface,
+                                               selected_rdp_port);
+
+  return TRUE;
+}
+
+gboolean
+grd_rdp_server_start (GrdRdpServer  *rdp_server,
+                      GError       **error)
+{
+  GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (rdp_server->context);
+  GrdDBusRemoteDesktopRdpServer *rdp_server_iface =
+    grd_context_get_rdp_server_interface (rdp_server->context);
+
+  if (!bind_socket (rdp_server, error))
+    return FALSE;
 
   switch (runtime_mode)
     {
@@ -285,12 +370,10 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
       rdp_server->cancellable = g_cancellable_new ();
       break;
     case GRD_RUNTIME_MODE_HANDOVER:
-      g_assert_not_reached ();
+      break;
     }
 
   grd_dbus_remote_desktop_rdp_server_set_enabled (rdp_server_iface, TRUE);
-  grd_dbus_remote_desktop_rdp_server_set_port (rdp_server_iface,
-                                               selected_rdp_port);
 
   return TRUE;
 }
@@ -322,6 +405,8 @@ grd_rdp_server_stop (GrdRdpServer *rdp_server)
       g_cancellable_cancel (rdp_server->cancellable);
       g_clear_object (&rdp_server->cancellable);
     }
+
+  g_clear_handle_id (&rdp_server->binding_timeout_source_id, g_source_remove);
 
   g_clear_object (&rdp_server->hwaccel_nvidia);
 }
@@ -370,6 +455,7 @@ grd_rdp_server_dispose (GObject *object)
   GrdRdpServer *rdp_server = GRD_RDP_SERVER (object);
 
   g_assert (!rdp_server->sessions);
+  g_assert (!rdp_server->binding_timeout_source_id);
   g_assert (!rdp_server->cleanup_sessions_idle_id);
   g_assert (!rdp_server->stopped_sessions);
 
@@ -387,6 +473,8 @@ grd_rdp_server_constructed (GObject *object)
 static void
 grd_rdp_server_init (GrdRdpServer *rdp_server)
 {
+  rdp_server->pending_binding_attempts = RDP_SERVER_N_BINDING_ATTEMPTS;
+
   winpr_InitializeSSL (WINPR_SSL_INIT_DEFAULT);
   WTSRegisterWtsApiFunctionTable (FreeRDP_InitWtsApi ());
 
