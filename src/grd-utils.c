@@ -165,6 +165,7 @@ grd_bind_socket (GSocketListener  *server,
 {
   g_autofree char *message_tag = NULL;
   gboolean is_bound = FALSE;
+  int i;
 
 #ifdef HAVE_RDP
   if (GRD_IS_RDP_SERVER (server))
@@ -187,7 +188,7 @@ grd_bind_socket (GSocketListener  *server,
       goto out;
     }
 
-  for (; port <= port + GRD_SERVER_PORT_RANGE; port++)
+  for (i = 0; i < GRD_SERVER_PORT_RANGE; i++, port++)
     {
       g_autoptr (GError) local_error = NULL;
 
