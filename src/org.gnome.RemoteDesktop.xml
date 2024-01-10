@@ -33,6 +33,16 @@
     <property name="TlsKey" type="s" access="read"/>
     <property name="ViewOnly" type="b" access="read"/>
 
+    <!--
+        Binding:
+
+        Signal to inform that the RDP server is currently attempting to bind
+        the port passed as an argument.
+    -->
+    <signal name="Binding">
+      <arg name="port" type="i"/>
+    </signal>
+
   </interface>
 
   <!--

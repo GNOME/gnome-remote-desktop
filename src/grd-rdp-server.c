@@ -259,6 +259,9 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
                 "rdp-negotiate-port", &negotiate_port,
                 NULL);
 
+  grd_dbus_remote_desktop_rdp_server_emit_binding (rdp_server_iface,
+                                                   rdp_port);
+
   if (!grd_bind_socket (G_SOCKET_LISTENER (rdp_server),
                         rdp_port,
                         &selected_rdp_port,
