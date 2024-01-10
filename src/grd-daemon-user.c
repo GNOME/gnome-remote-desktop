@@ -24,16 +24,99 @@
 
 #include "grd-daemon-user.h"
 
+#include <glib/gi18n.h>
+
 #include "grd-private.h"
+#include "grd-prompt.h"
 
 struct _GrdDaemonUser
 {
   GrdDaemon parent;
 
   GrdDBusRemoteDesktopRdpServer *system_rdp_server;
+
+  GrdPrompt *prompt;
+  GCancellable *prompt_cancellable;
 };
 
 G_DEFINE_TYPE (GrdDaemonUser, grd_daemon_user, GRD_TYPE_DAEMON)
+
+static void
+prompt_response_callback (GObject      *source_object,
+                          GAsyncResult *async_result,
+                          gpointer      user_data)
+{
+  GrdDaemonUser *daemon_user = GRD_DAEMON_USER (user_data);
+  g_autoptr (GError) error = NULL;
+  GrdPromptResponse response;
+
+  if (!grd_prompt_query_finish (daemon_user->prompt,
+                                async_result,
+                                &response,
+                                &error))
+    {
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        {
+          g_warning ("Failed to query user about port change: %s",
+                     error->message);
+        }
+    }
+
+  g_clear_object (&daemon_user->prompt);
+  g_clear_object (&daemon_user->prompt_cancellable);
+}
+
+static void
+show_port_changed_prompt (GrdDaemonUser *daemon_user,
+                          const int      system_rdp_port,
+                          const int      selected_rdp_port)
+{
+  g_autoptr (GrdPromptDefinition) prompt_definition = NULL;
+
+  if (daemon_user->prompt)
+    return;
+
+  daemon_user->prompt = g_object_new (GRD_TYPE_PROMPT, NULL);
+  daemon_user->prompt_cancellable = g_cancellable_new ();
+
+  prompt_definition = g_new0 (GrdPromptDefinition, 1);
+  prompt_definition->summary =
+    g_strdup_printf (_("Desktop Sharing port changed"));
+  prompt_definition->body =
+    g_strdup_printf (_("The Desktop Sharing port has changed from <b>%i</b> to "
+                       "<b>%i</b>.\n"
+                       "This is because the Remote Sessions service has been "
+                       "activated and it has a higher priority to use port "
+                       "<b>%i</b>."),
+                       system_rdp_port, selected_rdp_port, system_rdp_port);
+  prompt_definition->accept_label = g_strdup_printf (_("Accept"));
+
+  grd_prompt_query_async (daemon_user->prompt,
+                          prompt_definition,
+                          daemon_user->prompt_cancellable,
+                          prompt_response_callback,
+                          daemon_user);
+}
+
+static void
+on_rdp_server_started (GrdDaemonUser *daemon_user)
+{
+  GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_user));
+  GrdDBusRemoteDesktopRdpServer *rdp_server_iface =
+    grd_context_get_rdp_server_interface (context);
+  int selected_rdp_port =
+    grd_dbus_remote_desktop_rdp_server_get_port (rdp_server_iface);
+  int system_rdp_port =
+    grd_dbus_remote_desktop_rdp_server_get_port (daemon_user->system_rdp_server);
+
+  g_assert (selected_rdp_port != system_rdp_port);
+
+  show_port_changed_prompt (daemon_user, system_rdp_port, selected_rdp_port);
+
+  g_signal_handlers_disconnect_by_func (daemon_user,
+                                        G_CALLBACK (on_rdp_server_started),
+                                        NULL);
+}
 
 static void
 on_system_rdp_server_binding (GrdDBusRemoteDesktopRdpServer *system_rdp_server,
@@ -53,6 +136,9 @@ on_system_rdp_server_binding (GrdDBusRemoteDesktopRdpServer *system_rdp_server,
            "system daemon");
 
   grd_daemon_restart_rdp_server_with_delay (GRD_DAEMON (daemon_user));
+
+  g_signal_connect (daemon_user, "rdp-server-started",
+                    G_CALLBACK (on_rdp_server_started), NULL);
 }
 
 static void
@@ -146,6 +232,12 @@ grd_daemon_user_shutdown (GApplication *app)
   GrdDaemonUser *daemon_user = GRD_DAEMON_USER (app);
 
   g_clear_object (&daemon_user->system_rdp_server);
+  if (daemon_user->prompt_cancellable)
+    {
+      g_cancellable_cancel (daemon_user->prompt_cancellable);
+      g_clear_object (&daemon_user->prompt_cancellable);
+    }
+  g_clear_object (&daemon_user->prompt);
 
   G_APPLICATION_CLASS (grd_daemon_user_parent_class)->shutdown (app);
 }
