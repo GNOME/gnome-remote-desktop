@@ -39,9 +39,10 @@
 #include "grd-dbus-remote-desktop.h"
 #include "grd-private.h"
 #include "grd-rdp-server.h"
-#include "grd-session.h"
 #include "grd-settings-user.h"
 #include "grd-vnc-server.h"
+
+#define RDP_SERVER_RESTART_DELAY_MS 3000
 
 enum
 {
@@ -77,6 +78,7 @@ typedef struct _GrdDaemonPrivate
 
 #ifdef HAVE_RDP
   GrdRdpServer *rdp_server;
+  unsigned int restart_rdp_server_source_id;
 #endif
 #ifdef HAVE_VNC
   GrdVncServer *vnc_server;
@@ -217,6 +219,7 @@ stop_rdp_server (GrdDaemon *daemon)
   g_signal_emit (daemon, signals[RDP_SERVER_STOPPED], 0);
   grd_rdp_server_stop (priv->rdp_server);
   g_clear_object (&priv->rdp_server);
+  g_clear_handle_id (&priv->restart_rdp_server_source_id, g_source_remove);
   g_message ("RDP server stopped");
 }
 
@@ -256,6 +259,34 @@ start_rdp_server (GrdDaemon *daemon)
     {
       g_warning ("RDP TLS certificate and key not configured properly");
     }
+}
+
+static gboolean
+restart_rdp_server (gpointer user_data)
+{
+  GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  priv->restart_rdp_server_source_id = 0;
+
+  if (GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
+    start_rdp_server (daemon);
+
+  return G_SOURCE_REMOVE;
+}
+
+void
+grd_daemon_restart_rdp_server_with_delay (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  if (priv->restart_rdp_server_source_id)
+    return;
+
+  stop_rdp_server (daemon);
+
+  priv->restart_rdp_server_source_id =
+    g_timeout_add (RDP_SERVER_RESTART_DELAY_MS, restart_rdp_server, daemon);
 }
 #endif /* HAVE_RDP */
 
