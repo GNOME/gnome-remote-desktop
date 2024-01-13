@@ -176,6 +176,8 @@ struct _GrdSessionRdp
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION)
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (rdpRedirection, redirection_free)
+
 static gboolean
 close_session_idle (gpointer user_data);
 
@@ -452,11 +454,10 @@ grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
   rdpSettings *rdp_settings = peer->context->settings;
   uint32_t os_major_type =
     freerdp_settings_get_uint32 (rdp_settings, FreeRDP_OsMajorType);
-  rdpRedirection *redirection;
+  g_autoptr (rdpRedirection) redirection = NULL;
   g_autofree BYTE *certificate_container = NULL;
   g_autofree WCHAR *utf16_password = NULL;
   g_autofree WCHAR *utf16_encoded_redirection_guid = NULL;
-  gboolean success = FALSE;
   size_t size = 0;
   uint32_t redirection_flags = 0;
   uint32_t redirection_incorrect_flags = 0;
@@ -513,21 +514,17 @@ grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
     {
       g_warning ("[RDP] Something went wrong sending Server Redirection PDU. "
                  "Incorrect flag/s: 0x%08x", redirection_incorrect_flags);
-      goto out;
+      return FALSE;
     }
 
   g_message ("[RDP] Sending server redirection");
   if (!peer->SendServerRedirection (peer, redirection))
     {
       g_warning ("[RDP] Error sending server Redirection");
-      goto out;
+      return FALSE;
     }
 
-  success = TRUE;
-
-out:
-  redirection_free (redirection);
-  return success;
+  return TRUE;
 }
 
 static void
