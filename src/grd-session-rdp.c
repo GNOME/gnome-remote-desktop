@@ -176,6 +176,7 @@ struct _GrdSessionRdp
 
 G_DEFINE_TYPE (GrdSessionRdp, grd_session_rdp, GRD_TYPE_SESSION)
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (rdpCertificate, freerdp_certificate_free)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (rdpRedirection, redirection_free)
 
 static gboolean
@@ -400,26 +401,25 @@ static BYTE *
 get_certificate_container (const char *certificate,
                            size_t     *size)
 {
-  BOOL free_buffer = TRUE;
   g_autofree BYTE *der_certificate = NULL;
-  rdpCertificate *rdp_certificate = NULL;
+  g_autoptr (rdpCertificate) rdp_certificate = NULL;
   BYTE *certificate_container = NULL;
   size_t der_certificate_len = 0;
   wStream *s;
-
-  s = Stream_New (NULL, 2048);
-  g_assert (s);
 
   *size = 0;
 
   rdp_certificate = freerdp_certificate_new_from_pem (certificate);
   if (!rdp_certificate)
-    goto out;
+    return NULL;
 
   der_certificate = freerdp_certificate_get_der (rdp_certificate,
                                                  &der_certificate_len);
   if (!der_certificate)
-    goto out;
+    return NULL;
+
+  s = Stream_New (NULL, 2048);
+  g_assert (s);
 
   if (!Stream_EnsureRemainingCapacity (s, 12))
     g_assert_not_reached ();
@@ -435,11 +435,9 @@ get_certificate_container (const char *certificate,
 
   *size = Stream_GetPosition (s);
   certificate_container = Stream_Buffer (s);
-  free_buffer = FALSE;
 
-out:
-  freerdp_certificate_free (rdp_certificate);
-  Stream_Free (s, free_buffer);
+  Stream_Free (s, FALSE);
+
   return certificate_container;
 }
 
