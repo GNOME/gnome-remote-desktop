@@ -185,9 +185,9 @@ on_rdp_setting_changed (GrdSettingsSystem *settings_system,
 static void
 read_rdp_file_settings (GrdSettingsSystem *settings_system)
 {
-  int i;
   g_autoptr (GKeyFile) key_file = NULL;
   g_autoptr (GError) error = NULL;
+  int i;
 
   key_file = load_key_file (GRD_CUSTOM_CONF, NULL);
   if (!key_file)
