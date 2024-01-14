@@ -24,7 +24,6 @@
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-damage-detector-cuda.h"
 #include "grd-rdp-damage-detector-memcmp.h"
-#include "grd-rdp-surface-renderer.h"
 
 static void
 destroy_hwaccel_util_objects (GrdRdpSurface *rdp_surface)
