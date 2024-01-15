@@ -169,6 +169,40 @@ grd_get_session_id_from_uid (uid_t uid)
   return g_strdup (session_id);
 }
 
+gboolean
+grd_is_remote_login (void)
+{
+  g_autofree char *session_id = NULL;
+  g_autofree char *class = NULL;
+  pid_t pid;
+  uid_t uid;
+  int ret;
+
+  pid = getpid ();
+  session_id = grd_get_session_id_from_pid (pid);
+  if (!session_id)
+    {
+      uid = getuid ();
+      session_id = grd_get_session_id_from_uid (uid);
+    }
+
+  if (!session_id)
+    {
+      g_warning ("Couldn't get session id");
+      return FALSE;
+    }
+
+  ret = sd_session_get_class (session_id, &class);
+  if (ret < 0)
+    {
+      g_warning ("Couldn't determine session class: %s", g_strerror (-ret));
+      return FALSE;
+    }
+
+  return g_strcmp0 (class, "greeter") == 0 &&
+         sd_session_is_remote (session_id) == 1;
+}
+
 void
 grd_session_manager_call_logout_sync (void)
 {

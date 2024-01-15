@@ -38,6 +38,8 @@ char *grd_get_session_id_from_pid (pid_t pid);
 
 char *grd_get_session_id_from_uid (uid_t uid);
 
+gboolean grd_is_remote_login (void);
+
 void grd_session_manager_call_logout_sync (void);
 
 #endif /* GRD_DAEMON_UTILS_H */

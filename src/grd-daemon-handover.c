@@ -375,7 +375,7 @@ on_incoming_new_connection (GrdRdpServer      *rdp_server,
 
   grd_settings_recreate_rdp_credentials (settings);
 
-  if (daemon_handover->use_system_credentials)
+  if (daemon_handover->use_system_credentials && grd_is_remote_login ())
     show_insecure_connection_prompt (daemon_handover);
 
   g_clear_handle_id (&daemon_handover->logout_source_id, g_source_remove);
