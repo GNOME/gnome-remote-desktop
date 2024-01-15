@@ -312,7 +312,7 @@ prompt_response_callback (GObject      *source_object,
       if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
         {
           g_warning ("Failed to query user about session: %s", error->message);
-          grd_session_manager_call_logout_sync ();
+          grd_session_stop (daemon_handover->session);
         }
 
       return;
@@ -323,7 +323,7 @@ prompt_response_callback (GObject      *source_object,
     case GRD_PROMPT_RESPONSE_ACCEPT:
       return;
     case GRD_PROMPT_RESPONSE_CANCEL:
-      grd_session_manager_call_logout_sync ();
+      grd_session_stop (daemon_handover->session);
       return;
     }
 
@@ -450,7 +450,7 @@ on_redirect_client (GrdDBusRemoteDesktopRdpHandover *interface,
   if (!grd_session_rdp_send_server_redirection (session_rdp, routing_token,
                                                 user_name, password,
                                                 certificate))
-    grd_session_manager_call_logout_sync ();
+    grd_session_stop (daemon_handover->session);
 }
 
 static void
