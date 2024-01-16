@@ -83,7 +83,11 @@ on_cancellable_cancelled (GCancellable *cancellable,
   NotifyNotification *notification =
     NOTIFY_NOTIFICATION (g_task_get_task_data (task));
 
+  g_signal_handlers_disconnect_by_func (notification,
+                                        G_CALLBACK (on_notification_closed),
+                                        task);
   notify_notification_close (notification, NULL);
+
   g_idle_add (cancelled_idle_callback, task);
 }
 
