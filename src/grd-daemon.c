@@ -224,6 +224,13 @@ stop_rdp_server (GrdDaemon *daemon)
 }
 
 static void
+on_rdp_server_binding_failed (GrdRdpServer *rdp_server,
+                              GrdDaemon    *daemon)
+{
+  stop_rdp_server (daemon);
+}
+
+static void
 start_rdp_server (GrdDaemon *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
@@ -244,6 +251,8 @@ start_rdp_server (GrdDaemon *daemon)
       grd_context_get_runtime_mode (priv->context) == GRD_RUNTIME_MODE_HANDOVER)
     {
       priv->rdp_server = grd_rdp_server_new (priv->context);
+      g_signal_connect (priv->rdp_server, "binding-failed",
+                        G_CALLBACK (on_rdp_server_binding_failed), daemon);
       if (!grd_rdp_server_start (priv->rdp_server, &error))
         {
           g_warning ("Failed to start RDP server: %s\n", error->message);

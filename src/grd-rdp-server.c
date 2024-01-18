@@ -47,6 +47,7 @@ enum
 {
   INCOMING_NEW_CONNECTION,
   INCOMING_REDIRECTED_CONNECTION,
+  BINDING_FAILED,
 
   N_SIGNALS
 };
@@ -278,6 +279,8 @@ attempt_to_bind_port (gpointer user_data)
     {
       g_warning ("Failed binding to port %u after %u attempts",
                  rdp_port, RDP_SERVER_N_BINDING_ATTEMPTS);
+
+      g_signal_emit (rdp_server, signals[BINDING_FAILED], 0);
 
       rdp_server->binding_timeout_source_id = 0;
       return G_SOURCE_REMOVE;
@@ -518,4 +521,10 @@ grd_rdp_server_class_init (GrdRdpServerClass *klass)
                                                           G_TYPE_STRING,
                                                           G_TYPE_BOOLEAN,
                                                           G_TYPE_SOCKET_CONNECTION);
+  signals[BINDING_FAILED] = g_signal_new ("binding-failed",
+                                          G_TYPE_FROM_CLASS (klass),
+                                          G_SIGNAL_RUN_LAST,
+                                          0,
+                                          NULL, NULL, NULL,
+                                          G_TYPE_NONE, 0);
 }
