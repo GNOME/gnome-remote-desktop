@@ -42,6 +42,21 @@ struct _GrdDaemonUser
 G_DEFINE_TYPE (GrdDaemonUser, grd_daemon_user, GRD_TYPE_DAEMON)
 
 static void
+on_rdp_server_stopped (GrdDaemonUser *daemon_user)
+{
+  if (daemon_user->prompt_cancellable)
+    {
+      g_cancellable_cancel (daemon_user->prompt_cancellable);
+      g_clear_object (&daemon_user->prompt_cancellable);
+    }
+  g_clear_object (&daemon_user->prompt);
+
+  g_signal_handlers_disconnect_by_func (daemon_user,
+                                        G_CALLBACK (on_rdp_server_stopped),
+                                        NULL);
+}
+
+static void
 prompt_response_callback (GObject      *source_object,
                           GAsyncResult *async_result,
                           gpointer      user_data)
@@ -72,9 +87,6 @@ show_port_changed_prompt (GrdDaemonUser *daemon_user,
                           const int      selected_rdp_port)
 {
   g_autoptr (GrdPromptDefinition) prompt_definition = NULL;
-
-  if (daemon_user->prompt)
-    return;
 
   daemon_user->prompt = g_object_new (GRD_TYPE_PROMPT, NULL);
   daemon_user->prompt_cancellable = g_cancellable_new ();
@@ -135,10 +147,12 @@ on_system_rdp_server_binding (GrdDBusRemoteDesktopRdpServer *system_rdp_server,
   g_debug ("[DaemonUser] Restarting RDP server due to port conflict with the "
            "system daemon");
 
-  grd_daemon_restart_rdp_server_with_delay (GRD_DAEMON (daemon_user));
-
+  g_signal_connect (daemon_user, "rdp-server-stopped",
+                    G_CALLBACK (on_rdp_server_stopped), NULL);
   g_signal_connect (daemon_user, "rdp-server-started",
                     G_CALLBACK (on_rdp_server_started), NULL);
+
+  grd_daemon_restart_rdp_server_with_delay (GRD_DAEMON (daemon_user));
 }
 
 static void
