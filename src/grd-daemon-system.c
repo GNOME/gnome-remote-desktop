@@ -192,7 +192,7 @@ get_routing_token_from_id (const char *id)
 static gboolean
 on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
                           GDBusMethodInvocation           *invocation,
-                          const char                      *user_name,
+                          const char                      *username,
                           const char                      *password,
                           GrdRemoteClient                 *remote_client)
 {
@@ -230,7 +230,7 @@ on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
       if (!grd_session_rdp_send_server_redirection (
              GRD_SESSION_RDP (remote_client->session),
              routing_token,
-             user_name,
+             username,
              password,
              certificate))
         goto err;
@@ -242,7 +242,7 @@ on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
                      remote_client->handover_src->interface));
       redirect_variant = g_variant_new ("(sss)",
                                         routing_token,
-                                        user_name,
+                                        username,
                                         password);
       g_dbus_connection_emit_signal (connection,
                                      remote_client->handover_src->sender_name,
