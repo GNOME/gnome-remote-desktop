@@ -427,7 +427,7 @@ get_certificate_container (const char *certificate,
 gboolean
 grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
                                          const char    *routing_token,
-                                         const char    *user_name,
+                                         const char    *username,
                                          const char    *password,
                                          const char    *certificate)
 {
@@ -444,7 +444,7 @@ grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
   uint32_t redirection_incorrect_flags = 0;
 
   g_assert (routing_token);
-  g_assert (user_name);
+  g_assert (username);
   g_assert (password);
   g_assert (certificate);
 
@@ -460,7 +460,7 @@ grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
   /* Username */
   redirection_flags |= LB_USERNAME;
   redirection_set_string_option (redirection, LB_USERNAME,
-                                 user_name);
+                                 username);
 
   /* Password */
   redirection_flags |= LB_PASSWORD;

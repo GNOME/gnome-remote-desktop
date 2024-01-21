@@ -87,7 +87,7 @@ gboolean grd_session_rdp_is_client_mstsc (GrdSessionRdp *session_rdp);
 
 gboolean grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
                                                   const char    *routing_token,
-                                                  const char    *user_name,
+                                                  const char    *username,
                                                   const char    *password,
                                                   const char    *certificate);
 
