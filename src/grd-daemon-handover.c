@@ -253,7 +253,7 @@ logout (gpointer user_data)
 
 static void
 start_handover (GrdDaemonHandover *daemon_handover,
-                const char        *user_name,
+                const char        *username,
                 const char        *password)
 {
   GCancellable *cancellable =
@@ -269,7 +269,7 @@ start_handover (GrdDaemonHandover *daemon_handover,
 
   grd_dbus_remote_desktop_rdp_handover_call_start_handover (
     daemon_handover->remote_desktop_handover,
-    user_name,
+    username,
     password,
     cancellable,
     on_start_handover_finished,
@@ -388,11 +388,11 @@ on_rdp_server_started (GrdDaemonHandover *daemon_handover)
   GrdContext *context = grd_daemon_get_context (daemon);
   GrdSettings *settings = grd_context_get_settings (context);
   GrdRdpServer *rdp_server = grd_daemon_get_rdp_server (daemon);
-  g_autofree char *user_name = NULL;
+  g_autofree char *username = NULL;
   g_autofree char *password = NULL;
 
   if (!grd_settings_get_rdp_credentials (settings,
-                                         &user_name, &password,
+                                         &username, &password,
                                          NULL))
     g_assert_not_reached ();
 
@@ -400,7 +400,7 @@ on_rdp_server_started (GrdDaemonHandover *daemon_handover)
                     "take-client-ready", G_CALLBACK (on_take_client_ready),
                     daemon_handover);
 
-  start_handover (daemon_handover, user_name, password);
+  start_handover (daemon_handover, username, password);
 
   g_signal_connect (rdp_server, "incoming-new-connection",
                     G_CALLBACK (on_incoming_new_connection),
@@ -429,7 +429,7 @@ on_rdp_server_stopped (GrdDaemonHandover *daemon_handover)
 static void
 on_redirect_client (GrdDBusRemoteDesktopRdpHandover *interface,
                     const char                      *routing_token,
-                    const char                      *user_name,
+                    const char                      *username,
                     const char                      *password,
                     GrdDaemonHandover               *daemon_handover)
 {
@@ -448,7 +448,7 @@ on_redirect_client (GrdDBusRemoteDesktopRdpHandover *interface,
                 NULL);
 
   if (!grd_session_rdp_send_server_redirection (session_rdp, routing_token,
-                                                user_name, password,
+                                                username, password,
                                                 certificate))
     grd_session_stop (daemon_handover->session);
 }
