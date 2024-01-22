@@ -9,55 +9,34 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2022-08-05 21:58+0000\n"
-"PO-Revision-Date: 2022-08-25 15:56+0200\n"
-"Last-Translator: Marek Černocký <marek@manet.cz>\n"
+"POT-Creation-Date: 2024-01-15 13:27+0000\n"
+"PO-Revision-Date: 2024-01-22 18:12+0100\n"
+"Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2\n"
-"X-Generator: Gtranslator 3.38.0\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: src/grd-daemon.c:503
+#: src/grd-daemon.c:900
 msgid "GNOME Remote Desktop"
 msgstr "Vzdálená plocha GNOME"
 
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "Přejete si sdílet svoji plochu?"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr ""
-"Uživatel na počítači „%s“ zkouší vzdáleně zobrazit nebo ovládat vaše "
-"uživatelské prostředí."
-
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "Zamítnout"
-
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "Přijmout"
-
-#: src/grd-ctl.c:52
+#: src/grd-ctl.c:59
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Použití: %s [VOLBY…] PŘÍKAZ [PODPŘÍKAZ]…\n"
 
-#: src/grd-ctl.c:444
+#: src/grd-ctl.c:579
 msgid "Commands:\n"
-msgstr "Příkaz:\n"
+msgstr "Příkazy:\n"
 
-#: src/grd-ctl.c:449
+#: src/grd-ctl.c:584
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -72,9 +51,15 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                       - Podpříkazy RDP:\n"
+"    set-port                                 - Nastavit port, na kterém "
+"server naslouchá\n"
 "    enable                                  - Povolit podporu RDP\n"
 "    disable                                 - Zakázat podporu RDP\n"
 "    set-tls-cert <cesta-k-certifikátu>      - Nastavit cestu k certifikátu "
@@ -88,11 +73,18 @@ msgstr ""
 "vstupních zařízení\n"
 "    disable-view-only                       - Povolit vzdálené ovládání "
 "vstupních zařízení\n"
+"    enable-port-negotiation                  - Pokud není k dispozici, "
+"poslouchat na\n"
+"                                               jiném portu\n"
+"    disable-port-negotiation                 - Pokud není k dispozici, "
+"neposlouchat na\n"
+"                                               jiném portu\n"
 "\n"
 
-#: src/grd-ctl.c:468
+#: src/grd-ctl.c:608
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
@@ -104,9 +96,15 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  vnc                                       - Podpříkazy VNC:\n"
+"    set-port                                 - Nastavit port, na kterém "
+"server naslouchá\n"
 "    enable                                  - Povolit podporu VNC\n"
 "    disable                                 - Zakázat podporu VNC\n"
 "    set-password <heslo>                    - Nastavit heslo VNC\n"
@@ -116,15 +114,22 @@ msgstr ""
 "vstupních zařízení\n"
 "    disable-view-only                       - Povolit vzdálené ovládání "
 "vstupních zařízební\n"
+"    enable-port-negotiation                  - Pokud není k dispozici, "
+"poslouchat na\n"
+"                                               jiném portu\n"
+"    disable-port-negotiation                 - Pokud není k dispozici, "
+"neposlouchat na\n"
+"                                               jiném portu\n"
 "\n"
 
-#: src/grd-ctl.c:483
+#: src/grd-ctl.c:628
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]               - Zobrazit aktuální stav\n"
@@ -132,21 +137,43 @@ msgstr ""
 "Volby:\n"
 "  --headless                                - Pro neinteraktivní zařízení "
 "používat úložiště s pověřeními\n"
+"  --system                                   - Nastavit systémový démon\n"
 "  --help                                    - Vypsat tuto nápovědu\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "Port používaný serverem RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr ""
+"Klient RDP se připojí k tomuto portu, aby mohl používat tento server RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr "Vyhledat jiný port RDP, pokud se nastavený port již používá"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Když je negotiate-port nastaven na 'true', server RDP se pokusí naslouchat "
+"na prvním dostupnému z následujících 10 portů počínaje od nastaveného."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Zda má, či nemá, být povolená podpora RDP"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Když je zapnuto, bude zprovozněna podpora RDP"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "Režim sdílení obrazovky pro připojení RDP"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -172,12 +199,12 @@ msgstr ""
 "vzdálené plochy. Rozlišení virtuálního monitoru je odvozeno z nastavení "
 "monitoru zaslaného klientem zvdálené plochy."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Cesta k souboru s cerifikátem"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -185,16 +212,16 @@ msgstr ""
 "Aby protokol RDP bylo možné použít zabezpečený pomocí TLS, musí být serveru "
 "RDP poskytnuty soubory se soukromým klíčem a certifikátem."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Cesta k souboru se soukromým klíčem"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr "Vzdálenému připojení umožnit pouze zobrazení obsahu obrazovky"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -202,15 +229,36 @@ msgstr ""
 "Když je zapnuto „pouze zobrazení“, vzdálené připojení RDP nebude mít "
 "kontrolu nad vstupními zařízeními (např. myší a klávesnicí)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "Port používaný serverem VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr ""
+"Klient VNC se připojí k tomuto portu, aby mohl používat tento server VNC."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr "Vyhledat jiný port VNC, pokud se nastavený port již používá"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Když je negotiate-port nastaven na 'true', server VNC se pokusí naslouchat "
+"na prvním dostupnému z následujících 10 portů počínaje od nastaveného."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Zda má, či nemá, být povolená podpora VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Když je zapnuto, bude zprovozněna podpora VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -218,11 +266,11 @@ msgstr ""
 "Když je zapnuto „pouze zobrazení“, vzdálené připojení VNC nebude mít "
 "kontrolu nad vstupními zařízeními (např. myší a klávesnicí)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "Metoda použitá k ověření spojení VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -236,11 +284,11 @@ msgstr ""
 "přítomnost u zařízení, aby připojení výslovně schválil. • password – "
 "požaduje po vzdáleném klientovi znalost hesla"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
 msgstr "Režim sdílení obrazovky pro připojení VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -263,3 +311,21 @@ msgstr ""
 "monitor a použije jej pro sezení vzdálené plochy. Počáteční rozlišení tohoto "
 "monitoru je nastaveno na 1920×1080 pixelů. Klient může přebít počáteční "
 "rozlišení dílčími aktualizacemi nastavení monitoru."
+
+#, c-format
+#~ msgid "Do you want to share your desktop?"
+#~ msgstr "Přejete si sdílet svoji plochu?"
+
+#, c-format
+#~ msgid ""
+#~ "A user on the computer '%s' is trying to remotely view or control your "
+#~ "desktop."
+#~ msgstr ""
+#~ "Uživatel na počítači „%s“ zkouší vzdáleně zobrazit nebo ovládat vaše "
+#~ "uživatelské prostředí."
+
+#~ msgid "Refuse"
+#~ msgstr "Zamítnout"
+
+#~ msgid "Accept"
+#~ msgstr "Přijmout"
