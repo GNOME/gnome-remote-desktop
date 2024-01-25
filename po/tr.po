@@ -2,63 +2,42 @@
 # Copyright (C) 2021-2023 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 #
-# Emin Tufan Çetin <etcetin@gmail.com>, 2021, 2022.
-# Sabri Ünal <libreajans@gmail.com>, 2023.
+# Emin Tufan Çetin <etcetin@gmail.com>, 2021, 2022, 2024.
+# Sabri Ünal <libreajans@gmail.com>, 2023, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues\n"
-"POT-Creation-Date: 2023-07-12 19:44+0000\n"
-"PO-Revision-Date: 2023-03-06 20:29+0300\n"
-"Last-Translator: Sabri Ünal <libreajans@gmail.com>\n"
+"POT-Creation-Date: 2024-01-19 09:40+0000\n"
+"PO-Revision-Date: 2024-01-25 08:00+0300\n"
+"Last-Translator: Emin Tufan Çetin <etcetin@gmail.com>\n"
 "Language-Team: Turkish <takim@gnome.org.tr>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: src/grd-daemon.c:612
+#: src/grd-daemon.c:940
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Uzaktan Masaüstü"
 
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "Masaüstünüzü paylaşmak istiyor musunuz?"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr ""
-"'%s' bilgisayarındaki kullanıcı masaüstünüzü uzaktan görüntülemek veya "
-"denetlemek istiyor."
-
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "Reddet"
-
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "Kabul Et"
-
-#: src/grd-ctl.c:53
+#: src/grd-ctl.c:59
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Kullanım: %s [SEÇENEKLER...] KOMUT [ALT KOMUT]...\n"
 
-#: src/grd-ctl.c:461
+#: src/grd-ctl.c:579
 msgid "Commands:\n"
 msgstr "Komutlar:\n"
 
-#: src/grd-ctl.c:466
+#: src/grd-ctl.c:584
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -73,33 +52,30 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - RDP alt komutları:\n"
+"    set-port                                 - Sunucunun bağlanacağı bağlantı noktasını belirt\n"
 "    enable                                   - RDP arka ucunu etkinleştir\n"
-"    disable                                  - RDP arka ucunu devre dışı "
-"bırak\n"
-"    set-tls-cert <path-to-cert>              - TLS sertifikasının yolunu "
-"belirt\n"
-"    set-tls-key <path-to-key>                - TLS anahtarının yolunu "
-"belirt\n"
-"    set-credentials <username> <password>    - Kullanıcı adı ve parola "
-"bilgilerini\n"
-"                                               belirt\n"
-"    clear-credentials                        - Kullanıcı adı ve parola "
-"bilgilerini\n"
-"                                               temizle\n"
-"    enable-view-only                         - Girdi aygıtlarının uzaktan "
-"denetimini\n"
-"                                               devre dışı bırak\n"
-"    disable-view-only                        - Girdi aygıtlarının uzaktan "
-"denetimini\n"
-"                                               etkinleştir\n"
+"    disable                                  - RDP arka ucunu devre dışı bırak\n"
+"    set-tls-cert <path-to-cert>              - TLS sertifikasının yolunu belirt\n"
+"    set-tls-key <path-to-key>                - TLS anahtarının yolunu belirt\n"
+"    set-credentials <username> <password>    - Kullanıcı adı ve parola bilgilerini belirt\n"
+"    clear-credentials                        - Kullanıcı adı ve parola bilgilerini temizle\n"
+"    enable-view-only                         - Girdi aygıtlarının uzaktan denetimini devre dışı bırak\n"
+"    disable-view-only                        - Girdi aygıtlarının uzaktan denetimini etkinleştir\n"
+"    enable-port-negotiation                  - Uygun değilse, başka bağlantı noktası dinle\n"
+"    disable-port-negotiation                 - Uygun değilse, başka bağlantı noktası dinleme\n"
 "\n"
 
-#: src/grd-ctl.c:485
+#: src/grd-ctl.c:608
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
@@ -111,31 +87,35 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  vnc                                        - VNC alt komutları:\n"
+"    set-port                                 - Sunucunun bağlanacağı bağlantı noktasını belirt\n"
 "    enable                                   - VNC arka ucunu etkinleştir\n"
-"    disable                                  - VNC arka ucunu devre dışı "
-"bırak\n"
+"    disable                                  - VNC arka ucunu devre dışı bırak\n"
 "    set-password <password>                  - VNC parolasını belirt\n"
 "    clear-password                           - VNC parolasını temizle\n"
-"    set-auth-method password|prompt          - Kimlik doğrulama yöntemini "
-"belirt\n"
-"    enable-view-only                         - Girdi aygıtlarının uzaktan "
-"denetimini\n"
+"    set-auth-method password|prompt          - Kimlik doğrulama yöntemini belirt\n"
+"    enable-view-only                         - Girdi aygıtlarının uzaktan denetimini\n"
 "                                               devre dışı bırak\n"
-"    disable-view-only                        - Girdi aygıtlarının uzaktan "
-"denetimini\n"
+"    disable-view-only                        - Girdi aygıtlarının uzaktan denetimini\n"
 "                                               etkinleştir\n"
+"    enable-port-negotiation                  - Uygun değilse, başka bağlantı noktası dinle\n"
+"    disable-port-negotiation                 - Uygun değilse, başka bağlantı noktası dinleme\n"
 "\n"
 
-#: src/grd-ctl.c:500
+#: src/grd-ctl.c:628
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Geçerli durumu göster\n"
@@ -143,21 +123,46 @@ msgstr ""
 "Seçenekler:\n"
 "  --headless                                 - Başsız kimlik depolama "
 "kullan\n"
+"  --system                                   - Sistem art alan hizmetini "
+"yapılandır\n"
 "  --help                                     - Bu yardım  metnini yazdır\n"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "RDP sunucusunun kullandığı bağlantı noktası"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr ""
+"RDP istemcisi, bu RDP sunucusunu kullanmak için bu noktaya "
+"bağlanacak."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr "Yapılandırılmış kullanılıyorsa başka RDP bağlantı noktası ara"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Bağlantı noktası müzakeresi 'doğru' olarak ayarlandıysa, RDP sunucusu "
+"yapılandırılmıştan başlayarak sonraki 10 bağlantı noktasında ilk uygunu dinlemeye "
+"çalışacak."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
 msgstr "RDP arka ucunun etkin olup olmayacağı"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Eğer 'true' olarak belirlenirse RDP arka ucu yüklenecektir."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "RDP bağlantılarının ekran paylaşım kipi"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -184,12 +189,12 @@ msgstr ""
 "için yeni sanal monitör oluştur ve kullan. Bu sanal monitörün çözünürlüğü, "
 "uzaktan masaüstü istemcisinin bildirdiğinden elde edilir."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Sertifika dosyası yolu"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -197,16 +202,16 @@ msgstr ""
 "TLS Güvenliği ile RDP kullanmak için RDP sunucusuna hem özel anahtar dosyası "
 "hem de sertifika dosyası sağlanmalıdır."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Özel anahtar dosyası yolu"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr "Uzak bağlantıların yalnızca ekran içeriğini görmesine izin ver"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -214,15 +219,38 @@ msgstr ""
 "Yalnızca-görüntüle seçildiğinde uzak RDP bağlantıları girdi aygıtlarını "
 "(örn. fare ve klavye) hareket ettiremez."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
-msgid "Whether the VNC backend is enabled or not"
-msgstr "VNC arka ucunun etkin olup olmaması"
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "VNC sunucusunun kullandığı bağlantı noktası"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr ""
+"VNC istemcisi, bu VNC sunucusunu kullanmak için bu noktaya "
+"bağlanacak."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr "Yapılandırılmış kullanılıyorsa başka VNC bağlantı noktası ara"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Bağlantı noktası müzakeresi 'doğru' olarak ayarlandıysa, VNC sunucusu "
+"yapılandırılmıştan başlayarak sonraki 10 bağlantı noktasında ilk uygunu dinlemeye "
+"çalışacak."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+msgid "Whether the VNC backend is enabled or not"
+msgstr "VNC arka ucunun etkin olup olmayacağı"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Eğer 'true' olarak belirlenirse VNC arka ucu yüklenecektir."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -230,11 +258,11 @@ msgstr ""
 "Yalnızca-görüntüle seçildiğinde uzak VNC bağlantıları girdi aygıtlarını "
 "(örn. fare ve klavye) hareket ettiremez."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "VNC bağlantılarını kimlik doğrulamada kullanılacak yöntem"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -248,11 +276,11 @@ msgstr ""
 "onaylamak için iş istasyonuna bir kişinin fiziksel erişimini gerektirir. * "
 "password (parola) - uzak istemcinin bilinen parolayı sağlamasını gerektirir"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
 msgstr "VNC bağlantılarının ekran paylaşım kipi"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -276,3 +304,21 @@ msgstr ""
 "oturumu için yeni sanal monitör oluştur ve kullan. Bu sanal monitörün ilk "
 "ekran çözünürlüğü 1920x1080 pikseldir.İstemciler, bu ilk çözünürlüğü sonraki "
 "ekran yapılandırma güncellemeleriyle değiştirebilirler."
+
+#, c-format
+#~ msgid "Do you want to share your desktop?"
+#~ msgstr "Masaüstünüzü paylaşmak istiyor musunuz?"
+
+#, c-format
+#~ msgid ""
+#~ "A user on the computer '%s' is trying to remotely view or control your "
+#~ "desktop."
+#~ msgstr ""
+#~ "'%s' bilgisayarındaki kullanıcı masaüstünüzü uzaktan görüntülemek veya "
+#~ "denetlemek istiyor."
+
+#~ msgid "Refuse"
+#~ msgstr "Reddet"
+
+#~ msgid "Accept"
+#~ msgstr "Kabul Et"
