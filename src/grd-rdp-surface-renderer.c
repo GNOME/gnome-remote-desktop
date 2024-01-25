@@ -38,7 +38,6 @@ struct _GrdRdpSurfaceRenderer
 
   GSource *render_source;
   gboolean rendering_suspended;
-  gboolean rendering_inhibited;
 
   GMutex render_mutex;
 };
@@ -84,20 +83,6 @@ grd_rdp_surface_renderer_submit_buffer (GrdRdpSurfaceRenderer *surface_renderer,
 }
 
 void
-grd_rdp_surface_renderer_inhibit_rendering (GrdRdpSurfaceRenderer *surface_renderer)
-{
-  g_mutex_lock (&surface_renderer->render_mutex);
-  surface_renderer->rendering_inhibited = TRUE;
-  g_mutex_unlock (&surface_renderer->render_mutex);
-}
-
-void
-grd_rdp_surface_renderer_uninhibit_rendering (GrdRdpSurfaceRenderer *surface_renderer)
-{
-  surface_renderer->rendering_inhibited = FALSE;
-}
-
-void
 grd_rdp_surface_renderer_trigger_render_source (GrdRdpSurfaceRenderer *surface_renderer)
 {
   g_source_set_ready_time (surface_renderer->render_source, 0);
@@ -117,26 +102,26 @@ static gboolean
 maybe_render_frame (gpointer user_data)
 {
   GrdRdpSurfaceRenderer *surface_renderer = user_data;
+  GrdRdpRenderer *renderer = surface_renderer->renderer;
   GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+  GrdRdpRenderContext *render_context;
   g_autoptr (GMutexLocker) locker = NULL;
 
   locker = g_mutex_locker_new (&surface_renderer->render_mutex);
   if (!rdp_surface->pending_framebuffer)
     return G_SOURCE_CONTINUE;
 
-  if (surface_renderer->rendering_inhibited ||
-      surface_renderer->rendering_suspended)
+  if (surface_renderer->rendering_suspended)
     return G_SOURCE_CONTINUE;
 
-  if (grd_rdp_renderer_has_pending_graphics_pipeline_reset (surface_renderer->renderer))
+  render_context = grd_rdp_renderer_try_acquire_render_context (renderer,
+                                                                rdp_surface);
+  if (!render_context)
     return G_SOURCE_CONTINUE;
 
-  if (grd_rdp_renderer_is_output_suppressed (surface_renderer->renderer))
-    return G_SOURCE_CONTINUE;
-
-  grd_rdp_renderer_maybe_reset_graphics (surface_renderer->renderer);
   grd_session_rdp_maybe_encode_pending_frame (surface_renderer->session_rdp,
                                               surface_renderer->rdp_surface);
+  grd_rdp_renderer_release_render_context (renderer, render_context);
 
   return G_SOURCE_CONTINUE;
 }

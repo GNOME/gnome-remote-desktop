@@ -79,18 +79,6 @@ grd_rdp_renderer_get_graphics_context (GrdRdpRenderer *renderer)
   return renderer->graphics_context;
 }
 
-gboolean
-grd_rdp_renderer_is_output_suppressed (GrdRdpRenderer *renderer)
-{
-  return renderer->output_suppressed;
-}
-
-gboolean
-grd_rdp_renderer_has_pending_graphics_pipeline_reset (GrdRdpRenderer *renderer)
-{
-  return renderer->pending_gfx_init;
-}
-
 static void
 trigger_render_sources (GrdRdpRenderer *renderer)
 {
@@ -205,52 +193,6 @@ grd_rdp_renderer_notify_graphics_pipeline_reset (GrdRdpRenderer *renderer)
 }
 
 void
-grd_rdp_renderer_maybe_reset_graphics (GrdRdpRenderer *renderer)
-{
-  rdpContext *rdp_context = renderer->rdp_context;
-  rdpSettings *rdp_settings = rdp_context->settings;
-  uint32_t desktop_width =
-    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopWidth);
-  uint32_t desktop_height =
-    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopHeight);
-  g_autofree MONITOR_DEF *monitor_defs = NULL;
-  uint32_t n_monitors;
-  uint32_t i;
-
-  if (!renderer->pending_gfx_graphics_reset)
-    return;
-
-  g_assert (g_hash_table_size (renderer->acquired_render_contexts) == 0);
-  g_hash_table_remove_all (renderer->render_context_table);
-
-  n_monitors = freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MonitorCount);
-  g_assert (n_monitors > 0);
-
-  monitor_defs = g_new0 (MONITOR_DEF, n_monitors);
-
-  for (i = 0; i < n_monitors; ++i)
-    {
-      const rdpMonitor *monitor =
-        freerdp_settings_get_pointer_array (rdp_settings,
-                                            FreeRDP_MonitorDefArray, i);
-      MONITOR_DEF *monitor_def = &monitor_defs[i];
-
-      monitor_def->left = monitor->x;
-      monitor_def->top = monitor->y;
-      monitor_def->right = monitor_def->left + monitor->width - 1;
-      monitor_def->bottom = monitor_def->top + monitor->height - 1;
-
-      if (monitor->is_primary)
-        monitor_def->flags = MONITOR_PRIMARY;
-    }
-
-  grd_rdp_graphics_pipeline_reset_graphics (renderer->graphics_pipeline,
-                                            desktop_width, desktop_height,
-                                            monitor_defs, n_monitors);
-  renderer->pending_gfx_graphics_reset = FALSE;
-}
-
-void
 grd_rdp_renderer_inhibit_rendering (GrdRdpRenderer *renderer)
 {
   gboolean inhibition_done = FALSE;
@@ -306,6 +248,52 @@ grd_rdp_renderer_release_surface (GrdRdpRenderer *renderer,
 
   g_async_queue_push (renderer->disposal_queue, rdp_surface);
   g_source_set_ready_time (renderer->surface_disposal_source, 0);
+}
+
+static void
+maybe_reset_graphics (GrdRdpRenderer *renderer)
+{
+  rdpContext *rdp_context = renderer->rdp_context;
+  rdpSettings *rdp_settings = rdp_context->settings;
+  uint32_t desktop_width =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopWidth);
+  uint32_t desktop_height =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_DesktopHeight);
+  g_autofree MONITOR_DEF *monitor_defs = NULL;
+  uint32_t n_monitors;
+  uint32_t i;
+
+  if (!renderer->pending_gfx_graphics_reset)
+    return;
+
+  g_assert (g_hash_table_size (renderer->acquired_render_contexts) == 0);
+  g_hash_table_remove_all (renderer->render_context_table);
+
+  n_monitors = freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MonitorCount);
+  g_assert (n_monitors > 0);
+
+  monitor_defs = g_new0 (MONITOR_DEF, n_monitors);
+
+  for (i = 0; i < n_monitors; ++i)
+    {
+      const rdpMonitor *monitor =
+        freerdp_settings_get_pointer_array (rdp_settings,
+                                            FreeRDP_MonitorDefArray, i);
+      MONITOR_DEF *monitor_def = &monitor_defs[i];
+
+      monitor_def->left = monitor->x;
+      monitor_def->top = monitor->y;
+      monitor_def->right = monitor_def->left + monitor->width - 1;
+      monitor_def->bottom = monitor_def->top + monitor->height - 1;
+
+      if (monitor->is_primary)
+        monitor_def->flags = MONITOR_PRIMARY;
+    }
+
+  grd_rdp_graphics_pipeline_reset_graphics (renderer->graphics_pipeline,
+                                            desktop_width, desktop_height,
+                                            monitor_defs, n_monitors);
+  renderer->pending_gfx_graphics_reset = FALSE;
 }
 
 static GrdRdpRenderContext *
@@ -365,7 +353,7 @@ grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer *renderer,
       renderer->output_suppressed)
     return NULL;
 
-  grd_rdp_renderer_maybe_reset_graphics (renderer);
+  maybe_reset_graphics (renderer);
 
   if (g_hash_table_lookup_extended (renderer->render_context_table, rdp_surface,
                                     NULL, (gpointer *) &render_context))

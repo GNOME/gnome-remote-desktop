@@ -35,6 +35,7 @@ typedef enum
 {
   UPDATE_STATE_FATAL_ERROR,
   UPDATE_STATE_AWAIT_CONFIG,
+  UPDATE_STATE_AWAIT_INHIBITION_DONE,
   UPDATE_STATE_PREPARE_SURFACES,
   UPDATE_STATE_AWAIT_STREAMS,
   UPDATE_STATE_AWAIT_VIDEO_SIZES,
@@ -73,6 +74,7 @@ struct _GrdRdpLayoutManager
   rdpContext *rdp_context;
 
   GSource *layout_update_source;
+  GSource *preparation_source;
   GHashTable *surface_table;
 
   GHashTable *pending_streams;
@@ -81,6 +83,8 @@ struct _GrdRdpLayoutManager
   GMutex monitor_config_mutex;
   GrdRdpMonitorConfig *current_monitor_config;
   GrdRdpMonitorConfig *pending_monitor_config;
+
+  unsigned long inhibition_done_id;
 
   unsigned int layout_destruction_id;
   unsigned int layout_recreation_id;
@@ -147,6 +151,8 @@ update_state_to_string (UpdateState state)
       return "FATAL_ERROR";
     case UPDATE_STATE_AWAIT_CONFIG:
       return "AWAIT_CONFIG";
+    case UPDATE_STATE_AWAIT_INHIBITION_DONE:
+      return "AWAIT_INHIBITION_DONE";
     case UPDATE_STATE_PREPARE_SURFACES:
       return "PREPARE_SURFACES";
     case UPDATE_STATE_AWAIT_STREAMS:
@@ -223,7 +229,11 @@ transition_to_state (GrdRdpLayoutManager *layout_manager,
       maybe_trigger_render_sources (layout_manager);
       g_source_set_ready_time (layout_manager->layout_update_source, 0);
       break;
+    case UPDATE_STATE_AWAIT_INHIBITION_DONE:
+      break;
     case UPDATE_STATE_PREPARE_SURFACES:
+      g_source_set_ready_time (layout_manager->layout_update_source, 0);
+      break;
     case UPDATE_STATE_AWAIT_STREAMS:
     case UPDATE_STATE_AWAIT_VIDEO_SIZES:
       break;
@@ -606,6 +616,13 @@ grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager       *layout_man
   return FALSE;
 }
 
+static void
+on_inhibition_done (GrdRdpRenderer      *renderer,
+                    GrdRdpLayoutManager *layout_manager)
+{
+  g_source_set_ready_time (layout_manager->preparation_source, 0);
+}
+
 GrdRdpLayoutManager *
 grd_rdp_layout_manager_new (GrdSessionRdp    *session_rdp,
                             GrdRdpRenderer   *renderer,
@@ -618,6 +635,11 @@ grd_rdp_layout_manager_new (GrdSessionRdp    *session_rdp,
   layout_manager->renderer = renderer;
   layout_manager->hwaccel_nvidia = hwaccel_nvidia;
 
+  layout_manager->inhibition_done_id =
+    g_signal_connect (renderer, "inhibition-done",
+                      G_CALLBACK (on_inhibition_done),
+                      layout_manager);
+
   return layout_manager;
 }
 
@@ -629,9 +651,17 @@ grd_rdp_layout_manager_dispose (GObject *object)
   if (layout_manager->surface_table)
     g_hash_table_remove_all (layout_manager->surface_table);
 
+  g_clear_signal_handler (&layout_manager->inhibition_done_id,
+                          layout_manager->renderer);
+
   g_clear_handle_id (&layout_manager->layout_destruction_id, g_source_remove);
   g_clear_handle_id (&layout_manager->layout_recreation_id, g_source_remove);
 
+  if (layout_manager->preparation_source)
+    {
+      g_source_destroy (layout_manager->preparation_source);
+      g_clear_pointer (&layout_manager->preparation_source, g_source_unref);
+    }
   if (layout_manager->layout_update_source)
     {
       g_source_destroy (layout_manager->layout_update_source);
@@ -688,40 +718,6 @@ maybe_pick_up_queued_monitor_config (GrdRdpLayoutManager *layout_manager)
 }
 
 static void
-inhibit_surface_rendering (GrdRdpLayoutManager *layout_manager)
-{
-  SurfaceContext *surface_context = NULL;
-  GHashTableIter iter;
-
-  g_hash_table_iter_init (&iter, layout_manager->surface_table);
-  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
-    {
-      GrdRdpSurface *rdp_surface = surface_context->rdp_surface;
-      GrdRdpSurfaceRenderer *surface_renderer;
-
-      surface_renderer = grd_rdp_surface_get_surface_renderer (rdp_surface);
-      grd_rdp_surface_renderer_inhibit_rendering (surface_renderer);
-    }
-}
-
-static void
-uninhibit_surface_rendering (GrdRdpLayoutManager *layout_manager)
-{
-  SurfaceContext *surface_context = NULL;
-  GHashTableIter iter;
-
-  g_hash_table_iter_init (&iter, layout_manager->surface_table);
-  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
-    {
-      GrdRdpSurface *rdp_surface = surface_context->rdp_surface;
-      GrdRdpSurfaceRenderer *surface_renderer;
-
-      surface_renderer = grd_rdp_surface_get_surface_renderer (rdp_surface);
-      grd_rdp_surface_renderer_uninhibit_rendering (surface_renderer);
-    }
-}
-
-static void
 dispose_unneeded_surfaces (GrdRdpLayoutManager *layout_manager)
 {
   GrdRdpMonitorConfig *monitor_config = layout_manager->current_monitor_config;
@@ -762,16 +758,11 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
   while (g_hash_table_size (layout_manager->surface_table) < n_target_surfaces)
     {
       GrdRdpStreamOwner *stream_owner = GRD_RDP_STREAM_OWNER (layout_manager);
-      GrdRdpSurfaceRenderer *surface_renderer;
       uint32_t stream_id;
 
       surface_context = surface_context_new (layout_manager, error);
       if (!surface_context)
         return FALSE;
-
-      surface_renderer =
-        grd_rdp_surface_get_surface_renderer (surface_context->rdp_surface);
-      grd_rdp_surface_renderer_inhibit_rendering (surface_renderer);
 
       stream_id = grd_session_rdp_acquire_stream_id (layout_manager->session_rdp,
                                                      stream_owner);
@@ -932,15 +923,13 @@ update_monitor_layout (gpointer user_data)
     case UPDATE_STATE_AWAIT_CONFIG:
       if (maybe_pick_up_queued_monitor_config (layout_manager))
         {
-          GrdRdpSessionMetrics *session_metrics =
-            grd_session_rdp_get_session_metrics (layout_manager->session_rdp);
+          grd_rdp_renderer_inhibit_rendering (layout_manager->renderer);
 
-          inhibit_surface_rendering (layout_manager);
-          grd_rdp_session_metrics_notify_layout_change (session_metrics);
-
-          transition_to_state (layout_manager, UPDATE_STATE_PREPARE_SURFACES);
-          return update_monitor_layout (layout_manager);
+          transition_to_state (layout_manager, UPDATE_STATE_AWAIT_INHIBITION_DONE);
+          return G_SOURCE_CONTINUE;
         }
+      break;
+    case UPDATE_STATE_AWAIT_INHIBITION_DONE:
       break;
     case UPDATE_STATE_PREPARE_SURFACES:
       dispose_unneeded_surfaces (layout_manager);
@@ -960,11 +949,30 @@ update_monitor_layout (gpointer user_data)
     case UPDATE_STATE_AWAIT_VIDEO_SIZES:
       break;
     case UPDATE_STATE_START_RENDERING:
-      uninhibit_surface_rendering (layout_manager);
+      grd_rdp_renderer_uninhibit_rendering (layout_manager->renderer);
 
       transition_to_state (layout_manager, UPDATE_STATE_AWAIT_CONFIG);
       break;
     }
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean
+finish_layout_change_preparation (gpointer user_data)
+{
+  GrdRdpLayoutManager *layout_manager = user_data;
+  GrdRdpSessionMetrics *session_metrics =
+    grd_session_rdp_get_session_metrics (layout_manager->session_rdp);
+
+  g_assert (layout_manager->state == UPDATE_STATE_FATAL_ERROR ||
+            layout_manager->state == UPDATE_STATE_AWAIT_INHIBITION_DONE);
+
+  if (layout_manager->state == UPDATE_STATE_FATAL_ERROR)
+    return G_SOURCE_CONTINUE;
+
+  grd_rdp_session_metrics_notify_layout_change (session_metrics);
+  transition_to_state (layout_manager, UPDATE_STATE_PREPARE_SURFACES);
 
   return G_SOURCE_CONTINUE;
 }
@@ -988,6 +996,7 @@ static void
 grd_rdp_layout_manager_init (GrdRdpLayoutManager *layout_manager)
 {
   GSource *layout_update_source;
+  GSource *preparation_source;
 
   layout_manager->state = UPDATE_STATE_AWAIT_CONFIG;
 
@@ -1006,6 +1015,13 @@ grd_rdp_layout_manager_init (GrdRdpLayoutManager *layout_manager)
   g_source_set_ready_time (layout_update_source, -1);
   g_source_attach (layout_update_source, NULL);
   layout_manager->layout_update_source = layout_update_source;
+
+  preparation_source = g_source_new (&source_funcs, sizeof (GSource));
+  g_source_set_callback (preparation_source, finish_layout_change_preparation,
+                         layout_manager, NULL);
+  g_source_set_ready_time (preparation_source, -1);
+  g_source_attach (preparation_source, NULL);
+  layout_manager->preparation_source = preparation_source;
 }
 
 static void

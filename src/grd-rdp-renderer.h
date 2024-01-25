@@ -34,10 +34,6 @@ GrdRdpRenderer *grd_rdp_renderer_new (GrdSessionRdp    *session_rdp,
 
 GMainContext *grd_rdp_renderer_get_graphics_context (GrdRdpRenderer *renderer);
 
-gboolean grd_rdp_renderer_is_output_suppressed (GrdRdpRenderer *renderer);
-
-gboolean grd_rdp_renderer_has_pending_graphics_pipeline_reset (GrdRdpRenderer *renderer);
-
 void grd_rdp_renderer_update_output_suppression_state (GrdRdpRenderer *renderer,
                                                        gboolean        suppress_output);
 
@@ -54,8 +50,6 @@ void grd_rdp_renderer_notify_new_desktop_layout (GrdRdpRenderer *renderer,
 void grd_rdp_renderer_notify_graphics_pipeline_ready (GrdRdpRenderer *renderer);
 
 void grd_rdp_renderer_notify_graphics_pipeline_reset (GrdRdpRenderer *renderer);
-
-void grd_rdp_renderer_maybe_reset_graphics (GrdRdpRenderer *renderer);
 
 void grd_rdp_renderer_inhibit_rendering (GrdRdpRenderer *renderer);
 
