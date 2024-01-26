@@ -25,7 +25,6 @@
 #include "grd-rdp-renderer.h"
 #include "grd-rdp-session-metrics.h"
 #include "grd-rdp-surface.h"
-#include "grd-rdp-surface-renderer.h"
 #include "grd-session-rdp.h"
 #include "grd-stream.h"
 
@@ -183,28 +182,6 @@ disconnect_proxy_signals (GrdRdpLayoutManager *layout_manager)
 }
 
 static void
-maybe_trigger_render_sources (GrdRdpLayoutManager *layout_manager)
-{
-  g_autoptr (GMutexLocker) locker = NULL;
-  SurfaceContext *surface_context = NULL;
-  GHashTableIter iter;
-
-  locker = g_mutex_locker_new (&layout_manager->state_mutex);
-  if (layout_manager->state != UPDATE_STATE_AWAIT_CONFIG)
-    return;
-
-  g_hash_table_iter_init (&iter, layout_manager->surface_table);
-  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &surface_context))
-    {
-      GrdRdpSurface *rdp_surface = surface_context->rdp_surface;
-      GrdRdpSurfaceRenderer *surface_renderer;
-
-      surface_renderer = grd_rdp_surface_get_surface_renderer (rdp_surface);
-      grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
-    }
-}
-
-static void
 transition_to_state (GrdRdpLayoutManager *layout_manager,
                      UpdateState          state)
 {
@@ -226,7 +203,6 @@ transition_to_state (GrdRdpLayoutManager *layout_manager,
       break;
     case UPDATE_STATE_AWAIT_CONFIG:
       g_debug ("[RDP] Layout manager: Finished applying new monitor config");
-      maybe_trigger_render_sources (layout_manager);
       g_source_set_ready_time (layout_manager->layout_update_source, 0);
       break;
     case UPDATE_STATE_AWAIT_INHIBITION_DONE:
