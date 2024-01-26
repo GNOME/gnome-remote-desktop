@@ -40,7 +40,7 @@ typedef struct _RoutingTokenContext
 
   GCancellable *server_cancellable;
 
-  gboolean requested_rdslts;
+  gboolean requested_rdstls;
 } RoutingTokenContext;
 
 static void
@@ -280,7 +280,7 @@ peek_routing_token_in_thread (GTask        *task,
 
   if (!peek_routing_token (fd,
                            &routing_token,
-                           &routing_token_context->requested_rdslts,
+                           &routing_token_context->requested_rdstls,
                            routing_token_context->cancellable,
                            &error))
     g_task_return_error (task, error);
@@ -359,7 +359,7 @@ grd_routing_token_peek_finish (GAsyncResult       *result,
   *rdp_server = routing_token_context->rdp_server;
   *connection = routing_token_context->connection;
   *server_cancellable = routing_token_context->server_cancellable;
-  *requested_rdstls = routing_token_context->requested_rdslts;
+  *requested_rdstls = routing_token_context->requested_rdstls;
 
   return g_task_propagate_pointer (G_TASK (result), error);
 }
