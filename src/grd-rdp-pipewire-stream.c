@@ -284,7 +284,7 @@ add_common_format_params (struct spa_pod_builder     *pod_builder,
                        SPA_POD_Fraction (&SPA_FRACTION (0, 1)), 0);
   spa_pod_builder_add (pod_builder,
                        SPA_FORMAT_VIDEO_maxFramerate,
-                       SPA_POD_CHOICE_RANGE_Fraction (&min_framerate,
+                       SPA_POD_CHOICE_RANGE_Fraction (&max_framerate,
                                                       &min_framerate,
                                                       &max_framerate), 0);
 }
