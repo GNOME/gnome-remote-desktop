@@ -23,6 +23,7 @@
 
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-graphics-pipeline.h"
+#include "grd-rdp-private.h"
 #include "grd-rdp-render-context.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
@@ -150,6 +151,14 @@ grd_rdp_renderer_notify_new_desktop_layout (GrdRdpRenderer *renderer,
 
   if (renderer->graphics_pipeline)
     renderer->pending_gfx_graphics_reset = TRUE;
+
+  if (!renderer->graphics_pipeline)
+    {
+      RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
+
+      rfx_context_reset (rdp_peer_context->rfx_context,
+                         desktop_width, desktop_height);
+    }
 
   if (current_desktop_width == desktop_width &&
       current_desktop_height == desktop_height)

@@ -590,12 +590,7 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
   surface_mapping = grd_rdp_surface_get_mapping (rdp_surface);
 
   rfx_context_set_mode (rdp_peer_context->rfx_context, RLGR3);
-  if (!rdp_surface->valid)
-    {
-      rfx_context_reset (rdp_peer_context->rfx_context,
-                         surface_width, surface_height);
-      rdp_surface->valid = TRUE;
-    }
+  rdp_surface->valid = TRUE;
 
   n_rects = cairo_region_num_rectangles (region);
   rfx_rects = g_malloc0 (n_rects * sizeof (RFX_RECT));
