@@ -21,6 +21,9 @@
 
 #include "grd-rdp-render-context.h"
 
+#include "grd-rdp-damage-detector.h"
+#include "grd-rdp-surface.h"
+
 struct _GrdRdpRenderContext
 {
   GObject parent;
@@ -29,8 +32,11 @@ struct _GrdRdpRenderContext
 G_DEFINE_TYPE (GrdRdpRenderContext, grd_rdp_render_context, G_TYPE_OBJECT)
 
 GrdRdpRenderContext *
-grd_rdp_render_context_new (void)
+grd_rdp_render_context_new (GrdRdpSurface *rdp_surface)
 {
+  if (!grd_rdp_damage_detector_invalidate_surface (rdp_surface->detector))
+    return NULL;
+
   return g_object_new (GRD_TYPE_RDP_RENDER_CONTEXT, NULL);
 }
 

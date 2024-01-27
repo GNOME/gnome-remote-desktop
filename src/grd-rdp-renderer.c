@@ -27,6 +27,7 @@
 #include "grd-rdp-render-context.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
+#include "grd-session-rdp.h"
 
 enum
 {
@@ -172,26 +173,12 @@ grd_rdp_renderer_notify_new_desktop_layout (GrdRdpRenderer *renderer,
     rdp_context->update->DesktopResize (rdp_context);
 }
 
-static void
-invalidate_surfaces (GrdRdpRenderer *renderer)
-{
-  GrdRdpSurface *rdp_surface = NULL;
-  g_autoptr (GMutexLocker) locker = NULL;
-  GHashTableIter iter;
-
-  locker = g_mutex_locker_new (&renderer->surface_renderers_mutex);
-  g_hash_table_iter_init (&iter, renderer->surface_renderer_table);
-  while (g_hash_table_iter_next (&iter, (gpointer *) &rdp_surface, NULL))
-    grd_rdp_surface_invalidate_surface (rdp_surface);
-}
-
 void
 grd_rdp_renderer_notify_graphics_pipeline_ready (GrdRdpRenderer *renderer)
 {
   renderer->pending_gfx_graphics_reset = TRUE;
   renderer->pending_gfx_init = FALSE;
 
-  invalidate_surfaces (renderer);
   trigger_render_sources (renderer);
 }
 
@@ -349,6 +336,15 @@ render_context_unref (GrdRdpRenderer      *renderer,
     g_hash_table_remove (renderer->acquired_render_contexts, render_context);
 }
 
+static void
+handle_graphics_subsystem_failure (GrdRdpRenderer *renderer)
+{
+  renderer->stop_rendering = TRUE;
+
+  grd_session_rdp_notify_error (renderer->session_rdp,
+                                GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+}
+
 GrdRdpRenderContext *
 grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer *renderer,
                                              GrdRdpSurface  *rdp_surface)
@@ -369,7 +365,12 @@ grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer *renderer,
                                     NULL, (gpointer *) &render_context))
     return render_context_ref (renderer, render_context);
 
-  render_context = grd_rdp_render_context_new ();
+  render_context = grd_rdp_render_context_new (rdp_surface);
+  if (!render_context)
+    {
+      handle_graphics_subsystem_failure (renderer);
+      return NULL;
+    }
 
   g_hash_table_insert (renderer->render_context_table,
                        rdp_surface, render_context);
@@ -397,6 +398,13 @@ grd_rdp_renderer_release_render_context (GrdRdpRenderer      *renderer,
 
   if (inhibition_done)
     g_signal_emit (renderer, signals[INHIBITION_DONE], 0);
+}
+
+void
+grd_rdp_renderer_clear_render_contexts (GrdRdpRenderer *renderer)
+{
+  g_assert (g_hash_table_size (renderer->acquired_render_contexts) == 0);
+  g_hash_table_remove_all (renderer->render_context_table);
 }
 
 void

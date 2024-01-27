@@ -22,10 +22,12 @@
 
 #include <glib-object.h>
 
+#include "grd-types.h"
+
 #define GRD_TYPE_RDP_RENDER_CONTEXT (grd_rdp_render_context_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpRenderContext, grd_rdp_render_context,
                       GRD, RDP_RENDER_CONTEXT, GObject)
 
-GrdRdpRenderContext *grd_rdp_render_context_new (void);
+GrdRdpRenderContext *grd_rdp_render_context_new (GrdRdpSurface *rdp_surface);
 
 #endif /* GRD_RDP_RENDER_CONTEXT_H */

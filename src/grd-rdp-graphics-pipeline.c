@@ -1587,6 +1587,7 @@ reset_graphics_pipeline (GrdRdpGraphicsPipeline *graphics_pipeline)
                                frame_serial_free, graphics_pipeline);
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
+  grd_rdp_renderer_clear_render_contexts (graphics_pipeline->renderer);
   grd_rdp_renderer_clear_gfx_surfaces (graphics_pipeline->renderer);
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);

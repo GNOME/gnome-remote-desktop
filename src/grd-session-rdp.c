@@ -253,14 +253,6 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
   if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED))
     return;
 
-  if (!rdp_surface->valid &&
-      !grd_rdp_damage_detector_invalidate_surface (rdp_surface->detector))
-    {
-      grd_session_rdp_notify_error (session_rdp,
-                                    GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
-      return;
-    }
-
   buffer = g_steal_pointer (&rdp_surface->pending_framebuffer);
   if (!grd_rdp_damage_detector_submit_new_framebuffer (rdp_surface->detector,
                                                        buffer))
