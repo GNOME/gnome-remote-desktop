@@ -268,6 +268,7 @@ maybe_reset_graphics (GrdRdpRenderer *renderer)
 
   g_assert (g_hash_table_size (renderer->acquired_render_contexts) == 0);
   g_hash_table_remove_all (renderer->render_context_table);
+  grd_rdp_renderer_clear_gfx_surfaces (renderer);
 
   n_monitors = freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MonitorCount);
   g_assert (n_monitors > 0);

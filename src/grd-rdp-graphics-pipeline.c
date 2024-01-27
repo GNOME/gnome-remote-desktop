@@ -346,10 +346,8 @@ grd_rdp_graphics_pipeline_reset_graphics (GrdRdpGraphicsPipeline *graphics_pipel
   g_debug ("[RDP.RDPGFX] Resetting graphics");
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
-  g_hash_table_steal_all (graphics_pipeline->surface_table);
+  g_assert (g_hash_table_size (graphics_pipeline->surface_table) == 0);
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
-
-  grd_rdp_renderer_clear_gfx_surfaces (graphics_pipeline->renderer);
 
   /*
    * width and height refer here to the size of the Graphics Output Buffer
