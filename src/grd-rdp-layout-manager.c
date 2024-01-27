@@ -752,7 +752,6 @@ prepare_surface_contexts (GrdRdpLayoutManager  *layout_manager,
       g_autofree GrdRdpSurfaceMapping *surface_mapping = NULL;
 
       grd_rdp_surface_set_size (surface_context->rdp_surface, 0, 0);
-      grd_rdp_surface_invalidate_surface (surface_context->rdp_surface);
       g_clear_pointer (&surface_context->virtual_monitor, g_free);
 
       if (monitor_config->is_virtual)

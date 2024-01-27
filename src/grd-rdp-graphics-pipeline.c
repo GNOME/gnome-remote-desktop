@@ -542,8 +542,6 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
   gboolean pending_bw_measure_stop = FALSE;
   int i;
 
-  rdp_surface->valid = TRUE;
-
   aligned_width = surface_width + (surface_width % 16 ? 16 - surface_width % 16 : 0);
   aligned_height = surface_height + (surface_height % 64 ? 64 - surface_height % 64 : 0);
 
@@ -854,7 +852,6 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   rfx_context_set_mode (graphics_pipeline->rfx_context, RLGR1);
   rfx_context_reset (graphics_pipeline->rfx_context,
                      surface_width, surface_height);
-  rdp_surface->valid = TRUE;
 
   codec_context_id = grd_rdp_gfx_surface_get_codec_context_id (gfx_surface);
   g_mutex_lock (&graphics_pipeline->gfx_mutex);

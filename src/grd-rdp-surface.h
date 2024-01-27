@@ -62,7 +62,6 @@ struct _GrdRdpSurface
   } avc;
 
   gboolean needs_no_local_data;
-  gboolean valid;
 
   GrdRdpGfxSurface *gfx_surface;
 };
@@ -88,8 +87,6 @@ void grd_rdp_surface_set_mapping (GrdRdpSurface        *rdp_surface,
 
 void grd_rdp_surface_attach_surface_renderer (GrdRdpSurface         *rdp_surface,
                                               GrdRdpSurfaceRenderer *surface_renderer);
-
-void grd_rdp_surface_invalidate_surface (GrdRdpSurface *rdp_surface);
 
 void grd_rdp_surface_reset (GrdRdpSurface *rdp_surface);
 

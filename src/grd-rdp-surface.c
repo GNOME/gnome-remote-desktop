@@ -147,12 +147,6 @@ grd_rdp_surface_attach_surface_renderer (GrdRdpSurface         *rdp_surface,
 }
 
 void
-grd_rdp_surface_invalidate_surface (GrdRdpSurface *rdp_surface)
-{
-  rdp_surface->valid = FALSE;
-}
-
-void
 grd_rdp_surface_reset (GrdRdpSurface *rdp_surface)
 {
   rdp_surface->needs_no_local_data = FALSE;

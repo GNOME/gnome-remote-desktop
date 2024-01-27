@@ -582,7 +582,6 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
   surface_mapping = grd_rdp_surface_get_mapping (rdp_surface);
 
   rfx_context_set_mode (rdp_peer_context->rfx_context, RLGR3);
-  rdp_surface->valid = TRUE;
 
   n_rects = cairo_region_num_rectangles (region);
   rfx_rects = g_malloc0 (n_rects * sizeof (RFX_RECT));
@@ -735,8 +734,6 @@ rdp_peer_refresh_nsc (GrdSessionRdp  *session_rdp,
   int i;
 
   surface_mapping = grd_rdp_surface_get_mapping (rdp_surface);
-
-  rdp_surface->valid = TRUE;
 
   n_rects = cairo_region_num_rectangles (region);
   encode_contexts = g_malloc0 (n_rects * sizeof (NSCEncodeContext));
@@ -994,8 +991,6 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
   uint32_t max_update_size;
   uint32_t next_size;
   int i;
-
-  rdp_surface->valid = TRUE;
 
   n_rects = cairo_region_num_rectangles (region);
   for (i = 0; i < n_rects; ++i)
