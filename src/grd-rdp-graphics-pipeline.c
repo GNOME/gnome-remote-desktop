@@ -117,6 +117,8 @@ struct _GrdRdpGraphicsPipeline
   GHashTable *surface_hwaccel_table;
   GrdHwAccelNvidia *hwaccel_nvidia;
 
+  unsigned long gfx_initable_id;
+
   uint32_t next_frame_id;
   uint16_t next_surface_id;
   uint32_t next_serial;
@@ -1378,8 +1380,6 @@ rdpgfx_caps_advertise (RdpgfxServerContext             *rdpgfx_context,
   grd_rdp_renderer_notify_graphics_pipeline_reset (renderer);
   g_mutex_unlock (&graphics_pipeline->caps_mutex);
 
-  g_source_set_ready_time (graphics_pipeline->protocol_reset_source, 0);
-
   return CHANNEL_RC_OK;
 }
 
@@ -1744,6 +1744,13 @@ static GSourceFuncs protocol_reset_source_funcs =
   .dispatch = protocol_reset_source_dispatch,
 };
 
+static void
+on_gfx_initable (GrdRdpRenderer         *renderer,
+                 GrdRdpGraphicsPipeline *graphics_pipeline)
+{
+  g_source_set_ready_time (graphics_pipeline->protocol_reset_source, 0);
+}
+
 GrdRdpGraphicsPipeline *
 grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
                                GrdRdpRenderer             *renderer,
@@ -1790,6 +1797,11 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
   g_source_attach (protocol_reset_source, graphics_context);
   graphics_pipeline->protocol_reset_source = protocol_reset_source;
 
+  graphics_pipeline->gfx_initable_id =
+    g_signal_connect (renderer, "gfx-initable",
+                      G_CALLBACK (on_gfx_initable),
+                      graphics_pipeline);
+
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect) &&
       !graphics_pipeline->rtt_pause_source)
@@ -1817,6 +1829,9 @@ grd_rdp_graphics_pipeline_dispose (GObject *object)
                                                    graphics_pipeline->dvc_subscription_id);
       graphics_pipeline->subscribed_status = FALSE;
     }
+
+  g_clear_signal_handler (&graphics_pipeline->gfx_initable_id,
+                          graphics_pipeline->renderer);
 
   if (graphics_pipeline->protocol_timeout_source)
     {
