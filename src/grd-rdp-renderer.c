@@ -32,6 +32,7 @@
 enum
 {
   INHIBITION_DONE,
+  GFX_INITABLE,
 
   N_SIGNALS
 };
@@ -185,7 +186,17 @@ grd_rdp_renderer_notify_graphics_pipeline_ready (GrdRdpRenderer *renderer)
 void
 grd_rdp_renderer_notify_graphics_pipeline_reset (GrdRdpRenderer *renderer)
 {
+  gboolean gfx_initable = FALSE;
+
+  g_mutex_lock (&renderer->inhibition_mutex);
   renderer->pending_gfx_init = TRUE;
+
+  if (g_hash_table_size (renderer->acquired_render_contexts) == 0)
+    gfx_initable = TRUE;
+  g_mutex_unlock (&renderer->inhibition_mutex);
+
+  if (gfx_initable)
+    g_signal_emit (renderer, signals[GFX_INITABLE], 0);
 }
 
 void
@@ -383,6 +394,7 @@ grd_rdp_renderer_release_render_context (GrdRdpRenderer      *renderer,
                                          GrdRdpRenderContext *render_context)
 {
   gboolean inhibition_done = FALSE;
+  gboolean gfx_initable = FALSE;
 
   g_mutex_lock (&renderer->inhibition_mutex);
   render_context_unref (renderer, render_context);
@@ -394,10 +406,16 @@ grd_rdp_renderer_release_render_context (GrdRdpRenderer      *renderer,
   if (renderer->rendering_inhibited &&
       g_hash_table_size (renderer->acquired_render_contexts) == 0)
     inhibition_done = TRUE;
+
+  if (renderer->pending_gfx_init &&
+      g_hash_table_size (renderer->acquired_render_contexts) == 0)
+    gfx_initable = TRUE;
   g_mutex_unlock (&renderer->inhibition_mutex);
 
   if (inhibition_done)
     g_signal_emit (renderer, signals[INHIBITION_DONE], 0);
+  if (gfx_initable)
+    g_signal_emit (renderer, signals[GFX_INITABLE], 0);
 }
 
 void
@@ -581,4 +599,10 @@ grd_rdp_renderer_class_init (GrdRdpRendererClass *klass)
                                            0,
                                            NULL, NULL, NULL,
                                            G_TYPE_NONE, 0);
+  signals[GFX_INITABLE] = g_signal_new ("gfx-initable",
+                                        G_TYPE_FROM_CLASS (klass),
+                                        G_SIGNAL_RUN_LAST,
+                                        0,
+                                        NULL, NULL, NULL,
+                                        G_TYPE_NONE, 0);
 }
