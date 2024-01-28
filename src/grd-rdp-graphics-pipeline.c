@@ -1066,7 +1066,6 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
-  GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
   HWAccelContext *hwaccel_context;
   uint16_t surface_id;
   int64_t enc_time_us;
@@ -1089,8 +1088,7 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
 
       rdp_surface->gfx_surface = grd_rdp_gfx_surface_new (graphics_pipeline,
                                                           &surface_descriptor);
-      frame_controller = grd_rdp_gfx_frame_controller_new (session_rdp,
-                                                           rdp_surface);
+      frame_controller = grd_rdp_gfx_frame_controller_new (rdp_surface);
       grd_rdp_gfx_surface_attach_frame_controller (rdp_surface->gfx_surface,
                                                    g_steal_pointer (&frame_controller));
       map_surface (graphics_pipeline, rdp_surface->gfx_surface);

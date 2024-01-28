@@ -24,7 +24,6 @@
 #include "grd-rdp-gfx-frame-log.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
-#include "grd-session-rdp.h"
 
 #define ACTIVATE_THROTTLING_TH_DEFAULT 2
 #define DEACTIVATE_THROTTLING_TH_DEFAULT 1
@@ -40,7 +39,6 @@ struct _GrdRdpGfxFrameController
 {
   GObject parent;
 
-  GrdSessionRdp *session_rdp;
   GrdRdpSurface *rdp_surface;
 
   GrdRdpGfxFrameLog *frame_log;
@@ -288,13 +286,11 @@ grd_rdp_gfx_frame_controller_notify_new_round_trip_time (GrdRdpGfxFrameControlle
 }
 
 GrdRdpGfxFrameController *
-grd_rdp_gfx_frame_controller_new (GrdSessionRdp *session_rdp,
-                                  GrdRdpSurface *rdp_surface)
+grd_rdp_gfx_frame_controller_new (GrdRdpSurface *rdp_surface)
 {
   GrdRdpGfxFrameController *frame_controller;
 
   frame_controller = g_object_new (GRD_TYPE_RDP_GFX_FRAME_CONTROLLER, NULL);
-  frame_controller->session_rdp = session_rdp;
   frame_controller->rdp_surface = rdp_surface;
 
   return frame_controller;
