@@ -64,6 +64,7 @@ void grd_rdp_graphics_pipeline_notify_new_round_trip_time (GrdRdpGraphicsPipelin
 
 gboolean grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                 GrdRdpSurface          *rdp_surface,
+                                                GrdRdpRenderContext    *render_context,
                                                 GrdRdpBuffer           *buffer);
 
 #endif /* GRD_RDP_GRAPHICS_PIPELINE_H */

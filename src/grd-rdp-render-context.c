@@ -22,22 +22,53 @@
 #include "grd-rdp-render-context.h"
 
 #include "grd-rdp-damage-detector.h"
+#include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-surface.h"
 
 struct _GrdRdpRenderContext
 {
   GObject parent;
+
+  GrdRdpGfxSurface *gfx_surface;
 };
 
 G_DEFINE_TYPE (GrdRdpRenderContext, grd_rdp_render_context, G_TYPE_OBJECT)
 
-GrdRdpRenderContext *
-grd_rdp_render_context_new (GrdRdpSurface *rdp_surface)
+GrdRdpGfxSurface *
+grd_rdp_render_context_get_gfx_surface (GrdRdpRenderContext *render_context)
 {
+  return render_context->gfx_surface;
+}
+
+GrdRdpRenderContext *
+grd_rdp_render_context_new (GrdRdpGraphicsPipeline *graphics_pipeline,
+                            GrdRdpSurface          *rdp_surface)
+{
+  GrdRdpRenderContext *render_context;
+
   if (!grd_rdp_damage_detector_invalidate_surface (rdp_surface->detector))
     return NULL;
 
-  return g_object_new (GRD_TYPE_RDP_RENDER_CONTEXT, NULL);
+  render_context = g_object_new (GRD_TYPE_RDP_RENDER_CONTEXT, NULL);
+
+  if (graphics_pipeline)
+    {
+      render_context->gfx_surface =
+        grd_rdp_graphics_pipeline_acquire_gfx_surface (graphics_pipeline,
+                                                       rdp_surface);
+    }
+
+  return render_context;
+}
+
+static void
+grd_rdp_render_context_dispose (GObject *object)
+{
+  GrdRdpRenderContext *render_context = GRD_RDP_RENDER_CONTEXT (object);
+
+  g_clear_object (&render_context->gfx_surface);
+
+  G_OBJECT_CLASS (grd_rdp_render_context_parent_class)->dispose (object);
 }
 
 static void
@@ -48,4 +79,7 @@ grd_rdp_render_context_init (GrdRdpRenderContext *render_context)
 static void
 grd_rdp_render_context_class_init (GrdRdpRenderContextClass *klass)
 {
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->dispose = grd_rdp_render_context_dispose;
 }

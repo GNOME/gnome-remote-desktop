@@ -264,7 +264,6 @@ maybe_reset_graphics (GrdRdpRenderer *renderer)
 
   g_assert (g_hash_table_size (renderer->acquired_render_contexts) == 0);
   g_hash_table_remove_all (renderer->render_context_table);
-  grd_rdp_renderer_clear_gfx_surfaces (renderer);
 
   n_monitors = freerdp_settings_get_uint32 (rdp_settings, FreeRDP_MonitorCount);
   g_assert (n_monitors > 0);
@@ -365,7 +364,8 @@ grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer *renderer,
                                     NULL, (gpointer *) &render_context))
     return render_context_ref (renderer, render_context);
 
-  render_context = grd_rdp_render_context_new (rdp_surface);
+  render_context = grd_rdp_render_context_new (renderer->graphics_pipeline,
+                                               rdp_surface);
   if (!render_context)
     {
       handle_graphics_subsystem_failure (renderer);
@@ -405,19 +405,6 @@ grd_rdp_renderer_clear_render_contexts (GrdRdpRenderer *renderer)
 {
   g_assert (g_hash_table_size (renderer->acquired_render_contexts) == 0);
   g_hash_table_remove_all (renderer->render_context_table);
-}
-
-void
-grd_rdp_renderer_clear_gfx_surfaces (GrdRdpRenderer *renderer)
-{
-  GrdRdpSurface *rdp_surface = NULL;
-  g_autoptr (GMutexLocker) locker = NULL;
-  GHashTableIter iter;
-
-  locker = g_mutex_locker_new (&renderer->surface_renderers_mutex);
-  g_hash_table_iter_init (&iter, renderer->surface_renderer_table);
-  while (g_hash_table_iter_next (&iter, (gpointer *) &rdp_surface, NULL))
-    g_clear_object (&rdp_surface->gfx_surface);
 }
 
 static gpointer
@@ -489,7 +476,6 @@ dispose_surfaces (gpointer user_data)
       g_hash_table_remove (renderer->surface_renderer_table, rdp_surface);
       g_mutex_unlock (&renderer->surface_renderers_mutex);
 
-      g_clear_object (&rdp_surface->gfx_surface);
       grd_rdp_surface_free (rdp_surface);
     }
 

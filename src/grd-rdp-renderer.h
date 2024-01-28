@@ -69,6 +69,4 @@ void grd_rdp_renderer_release_render_context (GrdRdpRenderer      *renderer,
 
 void grd_rdp_renderer_clear_render_contexts (GrdRdpRenderer *renderer);
 
-void grd_rdp_renderer_clear_gfx_surfaces (GrdRdpRenderer *renderer);
-
 #endif /* GRD_RDP_RENDERER_H */

@@ -120,7 +120,8 @@ maybe_render_frame (gpointer user_data)
     return G_SOURCE_CONTINUE;
 
   grd_session_rdp_maybe_encode_pending_frame (surface_renderer->session_rdp,
-                                              surface_renderer->rdp_surface);
+                                              surface_renderer->rdp_surface,
+                                              render_context);
   grd_rdp_renderer_release_render_context (renderer, render_context);
 
   return G_SOURCE_CONTINUE;

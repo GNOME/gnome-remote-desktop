@@ -72,8 +72,9 @@ void grd_session_rdp_release_stream_id (GrdSessionRdp *session_rdp,
 int grd_session_rdp_get_stride_for_width (GrdSessionRdp *session_rdp,
                                           int            width);
 
-void grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
-                                                 GrdRdpSurface *rdp_surface);
+void grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp       *session_rdp,
+                                                 GrdRdpSurface       *rdp_surface,
+                                                 GrdRdpRenderContext *render_context);
 
 gboolean grd_session_rdp_is_client_mstsc (GrdSessionRdp *session_rdp);
 

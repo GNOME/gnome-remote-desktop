@@ -32,6 +32,7 @@
 #include "grd-rdp-gfx-frame-controller.h"
 #include "grd-rdp-gfx-surface.h"
 #include "grd-rdp-network-autodetection.h"
+#include "grd-rdp-render-context.h"
 #include "grd-rdp-renderer.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
@@ -570,13 +571,13 @@ static gboolean
 refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
                             HWAccelContext         *hwaccel_context,
                             GrdRdpSurface          *rdp_surface,
+                            GrdRdpGfxSurface       *gfx_surface,
                             GrdRdpBuffer           *buffer,
                             int64_t                *enc_time_us)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   GrdRdpNetworkAutodetection *network_autodetection =
     graphics_pipeline->network_autodetection;
-  GrdRdpGfxSurface *gfx_surface = rdp_surface->gfx_surface;
   GrdRdpGfxSurface *render_surface =
     grd_rdp_gfx_surface_get_render_surface (gfx_surface);
   GrdRdpGfxFrameController *frame_controller =
@@ -869,6 +870,7 @@ rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
 static gboolean
 refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
                                      GrdRdpSurface          *rdp_surface,
+                                     GrdRdpGfxSurface       *gfx_surface,
                                      GrdRdpBuffer           *buffer,
                                      int64_t                *enc_time_us)
 {
@@ -876,7 +878,6 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
   GrdRdpNetworkAutodetection *network_autodetection =
     graphics_pipeline->network_autodetection;
-  GrdRdpGfxSurface *gfx_surface = rdp_surface->gfx_surface;
   GrdRdpGfxFrameController *frame_controller =
     grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
   uint16_t surface_width = grd_rdp_gfx_surface_get_width (gfx_surface);
@@ -1085,10 +1086,13 @@ ensure_rtt_receivement (GrdRdpGraphicsPipeline *graphics_pipeline)
 gboolean
 grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline,
                                        GrdRdpSurface          *rdp_surface,
+                                       GrdRdpRenderContext    *render_context,
                                        GrdRdpBuffer           *buffer)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
+  GrdRdpGfxSurface *gfx_surface =
+    grd_rdp_render_context_get_gfx_surface (render_context);
   HWAccelContext *hwaccel_context;
   uint16_t surface_id;
   int64_t enc_time_us;
@@ -1100,24 +1104,7 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
     ensure_rtt_receivement (graphics_pipeline);
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
-  if (!rdp_surface->gfx_surface)
-    {
-      g_autoptr (GrdRdpGfxFrameController) frame_controller = NULL;
-      GrdRdpGfxSurfaceDescriptor surface_descriptor = {};
-
-      surface_descriptor.surface_id = get_next_free_surface_id (graphics_pipeline);
-      surface_descriptor.serial = get_next_free_serial (graphics_pipeline);
-      surface_descriptor.rdp_surface = rdp_surface;
-
-      rdp_surface->gfx_surface = grd_rdp_gfx_surface_new (graphics_pipeline,
-                                                          &surface_descriptor);
-      frame_controller = grd_rdp_gfx_frame_controller_new (rdp_surface);
-      grd_rdp_gfx_surface_attach_frame_controller (rdp_surface->gfx_surface,
-                                                   g_steal_pointer (&frame_controller));
-      map_surface (graphics_pipeline, rdp_surface->gfx_surface);
-    }
-
-  surface_id = grd_rdp_gfx_surface_get_surface_id (rdp_surface->gfx_surface);
+  surface_id = grd_rdp_gfx_surface_get_surface_id (gfx_surface);
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_GfxH264) &&
       g_hash_table_lookup_extended (graphics_pipeline->surface_hwaccel_table,
                                     GUINT_TO_POINTER (surface_id),
@@ -1125,11 +1112,13 @@ grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline
     {
       g_assert (hwaccel_context->api == HW_ACCEL_API_NVENC);
       success = refresh_gfx_surface_avc420 (graphics_pipeline, hwaccel_context,
-                                            rdp_surface, buffer, &enc_time_us);
+                                            rdp_surface, gfx_surface, buffer,
+                                            &enc_time_us);
     }
   else
     {
-      success = refresh_gfx_surface_rfx_progressive (graphics_pipeline, rdp_surface,
+      success = refresh_gfx_surface_rfx_progressive (graphics_pipeline,
+                                                     rdp_surface, gfx_surface,
                                                      buffer, &enc_time_us);
     }
 
@@ -1606,7 +1595,6 @@ reset_graphics_pipeline (GrdRdpGraphicsPipeline *graphics_pipeline)
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
   grd_rdp_renderer_clear_render_contexts (graphics_pipeline->renderer);
-  grd_rdp_renderer_clear_gfx_surfaces (graphics_pipeline->renderer);
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
   graphics_pipeline->frame_acks_suspended = FALSE;

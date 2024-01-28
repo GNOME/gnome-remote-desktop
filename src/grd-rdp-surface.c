@@ -82,8 +82,6 @@ grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia)
 void
 grd_rdp_surface_free (GrdRdpSurface *rdp_surface)
 {
-  g_assert (!rdp_surface->gfx_surface);
-
   g_assert (!rdp_surface->pending_framebuffer);
 
   g_clear_object (&rdp_surface->surface_renderer);

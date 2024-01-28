@@ -167,9 +167,10 @@ static gboolean
 close_session_idle (gpointer user_data);
 
 static void
-rdp_peer_refresh_region (GrdSessionRdp *session_rdp,
-                         GrdRdpSurface *rdp_surface,
-                         GrdRdpBuffer  *buffer);
+rdp_peer_refresh_region (GrdSessionRdp       *session_rdp,
+                         GrdRdpSurface       *rdp_surface,
+                         GrdRdpRenderContext *render_context,
+                         GrdRdpBuffer        *buffer);
 
 static gboolean
 is_rdp_peer_flag_set (GrdSessionRdp *session_rdp,
@@ -243,8 +244,9 @@ grd_session_rdp_release_stream_id (GrdSessionRdp *session_rdp,
 }
 
 void
-grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
-                                            GrdRdpSurface *rdp_surface)
+grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp       *session_rdp,
+                                            GrdRdpSurface       *rdp_surface,
+                                            GrdRdpRenderContext *render_context)
 {
   GrdRdpBuffer *buffer;
 
@@ -266,7 +268,7 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp *session_rdp,
   if (!grd_rdp_damage_detector_is_region_damaged (rdp_surface->detector))
     return;
 
-  rdp_peer_refresh_region (session_rdp, rdp_surface, buffer);
+  rdp_peer_refresh_region (session_rdp, rdp_surface, render_context, buffer);
 }
 
 gboolean
@@ -536,16 +538,17 @@ handle_client_gone (GrdSessionRdp *session_rdp)
 }
 
 static gboolean
-rdp_peer_refresh_gfx (GrdSessionRdp  *session_rdp,
-                      GrdRdpSurface  *rdp_surface,
-                      GrdRdpBuffer   *buffer)
+rdp_peer_refresh_gfx (GrdSessionRdp       *session_rdp,
+                      GrdRdpSurface       *rdp_surface,
+                      GrdRdpRenderContext *render_context,
+                      GrdRdpBuffer        *buffer)
 {
   rdpContext *rdp_context = session_rdp->peer->context;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   GrdRdpGraphicsPipeline *graphics_pipeline = rdp_peer_context->graphics_pipeline;
 
-  return grd_rdp_graphics_pipeline_refresh_gfx (graphics_pipeline,
-                                                rdp_surface, buffer);
+  return grd_rdp_graphics_pipeline_refresh_gfx (graphics_pipeline, rdp_surface,
+                                                render_context, buffer);
 }
 
 static gboolean
@@ -1091,9 +1094,10 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
 }
 
 static void
-rdp_peer_refresh_region (GrdSessionRdp *session_rdp,
-                         GrdRdpSurface *rdp_surface,
-                         GrdRdpBuffer  *buffer)
+rdp_peer_refresh_region (GrdSessionRdp       *session_rdp,
+                         GrdRdpSurface       *rdp_surface,
+                         GrdRdpRenderContext *render_context,
+                         GrdRdpBuffer        *buffer)
 {
   rdpContext *rdp_context = session_rdp->peer->context;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
@@ -1113,7 +1117,7 @@ rdp_peer_refresh_region (GrdSessionRdp *session_rdp,
     }
 
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
-    success = rdp_peer_refresh_gfx (session_rdp, rdp_surface, buffer);
+    success = rdp_peer_refresh_gfx (session_rdp, rdp_surface, render_context, buffer);
   else if (freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteFxCodec))
     success = rdp_peer_refresh_rfx (session_rdp, rdp_surface, region, buffer);
   else if (freerdp_settings_get_bool (rdp_settings, FreeRDP_NSCodec))

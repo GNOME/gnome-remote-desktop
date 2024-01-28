@@ -28,6 +28,9 @@
 G_DECLARE_FINAL_TYPE (GrdRdpRenderContext, grd_rdp_render_context,
                       GRD, RDP_RENDER_CONTEXT, GObject)
 
-GrdRdpRenderContext *grd_rdp_render_context_new (GrdRdpSurface *rdp_surface);
+GrdRdpRenderContext *grd_rdp_render_context_new (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                                 GrdRdpSurface          *rdp_surface);
+
+GrdRdpGfxSurface *grd_rdp_render_context_get_gfx_surface (GrdRdpRenderContext *render_context);
 
 #endif /* GRD_RDP_RENDER_CONTEXT_H */

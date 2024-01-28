@@ -62,8 +62,6 @@ struct _GrdRdpSurface
   } avc;
 
   gboolean needs_no_local_data;
-
-  GrdRdpGfxSurface *gfx_surface;
 };
 
 GrdRdpSurface *grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia);
