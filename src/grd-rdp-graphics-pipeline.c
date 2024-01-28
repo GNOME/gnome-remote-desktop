@@ -333,6 +333,64 @@ grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipel
   rdpgfx_context->DeleteSurface (rdpgfx_context, &delete_surface);
 }
 
+static void
+map_surface_to_output (GrdRdpGraphicsPipeline *graphics_pipeline,
+                       GrdRdpGfxSurface       *gfx_surface,
+                       GrdRdpSurfaceMapping   *surface_mapping)
+{
+  RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
+  GrdRdpSurfaceMappingType mapping_type = surface_mapping->mapping_type;
+  uint16_t surface_id = grd_rdp_gfx_surface_get_surface_id (gfx_surface);
+  RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU map_surface_to_output = {};
+
+  g_assert (mapping_type == GRD_RDP_SURFACE_MAPPING_TYPE_MAP_TO_OUTPUT);
+
+  map_surface_to_output.surfaceId = surface_id;
+  map_surface_to_output.outputOriginX = surface_mapping->output_origin_x;
+  map_surface_to_output.outputOriginY = surface_mapping->output_origin_y;
+
+  rdpgfx_context->MapSurfaceToOutput (rdpgfx_context, &map_surface_to_output);
+}
+
+static void
+map_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
+             GrdRdpGfxSurface       *gfx_surface)
+{
+  GrdRdpSurface *rdp_surface = grd_rdp_gfx_surface_get_rdp_surface (gfx_surface);
+  GrdRdpSurfaceMapping *surface_mapping;
+
+  surface_mapping = grd_rdp_surface_get_mapping (rdp_surface);
+  switch (surface_mapping->mapping_type)
+    {
+    case GRD_RDP_SURFACE_MAPPING_TYPE_MAP_TO_OUTPUT:
+      map_surface_to_output (graphics_pipeline, gfx_surface, surface_mapping);
+      break;
+    }
+}
+
+GrdRdpGfxSurface *
+grd_rdp_graphics_pipeline_acquire_gfx_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                               GrdRdpSurface          *rdp_surface)
+{
+
+  GrdRdpGfxSurfaceDescriptor surface_descriptor = {};
+  GrdRdpGfxSurface *gfx_surface;
+  GrdRdpGfxFrameController *frame_controller;
+
+  surface_descriptor.surface_id = get_next_free_surface_id (graphics_pipeline);
+  surface_descriptor.serial = get_next_free_serial (graphics_pipeline);
+  surface_descriptor.rdp_surface = rdp_surface;
+
+  gfx_surface = grd_rdp_gfx_surface_new (graphics_pipeline,
+                                         &surface_descriptor);
+
+  frame_controller = grd_rdp_gfx_frame_controller_new (rdp_surface);
+  grd_rdp_gfx_surface_attach_frame_controller (gfx_surface, frame_controller);
+  map_surface (graphics_pipeline, gfx_surface);
+
+  return gfx_surface;
+}
+
 void
 grd_rdp_graphics_pipeline_reset_graphics (GrdRdpGraphicsPipeline *graphics_pipeline,
                                           uint32_t                width,
@@ -954,41 +1012,6 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   cairo_region_destroy (region);
 
   return TRUE;
-}
-
-static void
-map_surface_to_output (GrdRdpGraphicsPipeline *graphics_pipeline,
-                       GrdRdpGfxSurface       *gfx_surface,
-                       GrdRdpSurfaceMapping   *surface_mapping)
-{
-  RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
-  GrdRdpSurfaceMappingType mapping_type = surface_mapping->mapping_type;
-  uint16_t surface_id = grd_rdp_gfx_surface_get_surface_id (gfx_surface);
-  RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU map_surface_to_output = {};
-
-  g_assert (mapping_type == GRD_RDP_SURFACE_MAPPING_TYPE_MAP_TO_OUTPUT);
-
-  map_surface_to_output.surfaceId = surface_id;
-  map_surface_to_output.outputOriginX = surface_mapping->output_origin_x;
-  map_surface_to_output.outputOriginY = surface_mapping->output_origin_y;
-
-  rdpgfx_context->MapSurfaceToOutput (rdpgfx_context, &map_surface_to_output);
-}
-
-static void
-map_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
-             GrdRdpGfxSurface       *gfx_surface)
-{
-  GrdRdpSurface *rdp_surface = grd_rdp_gfx_surface_get_rdp_surface (gfx_surface);
-  GrdRdpSurfaceMapping *surface_mapping;
-
-  surface_mapping = grd_rdp_surface_get_mapping (rdp_surface);
-  switch (surface_mapping->mapping_type)
-    {
-    case GRD_RDP_SURFACE_MAPPING_TYPE_MAP_TO_OUTPUT:
-      map_surface_to_output (graphics_pipeline, gfx_surface, surface_mapping);
-      break;
-    }
 }
 
 static void

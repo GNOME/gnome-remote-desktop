@@ -50,6 +50,9 @@ void grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_
 void grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                GrdRdpGfxSurface       *gfx_surface);
 
+GrdRdpGfxSurface *grd_rdp_graphics_pipeline_acquire_gfx_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                                                 GrdRdpSurface          *rdp_surface);
+
 void grd_rdp_graphics_pipeline_reset_graphics (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                uint32_t                width,
                                                uint32_t                height,
