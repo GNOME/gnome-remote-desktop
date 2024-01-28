@@ -473,7 +473,7 @@ on_create_remote_display_finished (GObject      *object,
   g_autoptr (GError) error = NULL;
 
   if (!grd_dbus_gdm_remote_display_factory_call_create_remote_display_finish (
-        proxy, result, &error))
+         proxy, result, &error))
     {
       g_warning ("[DaemonSystem] Error while calling CreateRemoteDisplay on "
                  "DisplayMananger: %s", error->message);
