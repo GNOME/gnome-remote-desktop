@@ -91,7 +91,7 @@ on_take_client_finished (GObject      *object,
 
   proxy = GRD_DBUS_REMOTE_DESKTOP_RDP_HANDOVER (object);
   if (!grd_dbus_remote_desktop_rdp_handover_call_take_client_finish (
-        proxy, &fd_variant, &fd_list, result, &error))
+         proxy, &fd_variant, &fd_list, result, &error))
     {
       g_warning ("[DaemonHandover] Error calling TakeClient dbus method: %s",
                  error->message);
@@ -138,11 +138,11 @@ on_get_system_credentials_finished (GObject      *object,
   const char* object_path;
 
   if (!grd_dbus_remote_desktop_rdp_handover_call_get_system_credentials_finish (
-        daemon_handover->remote_desktop_handover,
-        &username,
-        &password,
-        result,
-        &error))
+         daemon_handover->remote_desktop_handover,
+         &username,
+         &password,
+         result,
+         &error))
     {
       g_warning ("[DaemonHandover] Failed getting system credentials: %s",
                  error->message);
@@ -224,7 +224,7 @@ on_start_handover_finished (GObject      *object,
 
   proxy = GRD_DBUS_REMOTE_DESKTOP_RDP_HANDOVER (object);
   if (!grd_dbus_remote_desktop_rdp_handover_call_start_handover_finish (
-        proxy, &certificate, &key, result, &error))
+         proxy, &certificate, &key, result, &error))
     {
       g_warning ("[DaemonHandover] Failed to start handover: %s",
                  error->message);
