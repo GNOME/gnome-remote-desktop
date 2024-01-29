@@ -258,7 +258,7 @@ peek_routing_token (int            fd,
       return FALSE;
     }
 
-  *requested_rdstls = requested_protocols & PROTOCOL_RDSTLS;
+  *requested_rdstls = !!(requested_protocols & PROTOCOL_RDSTLS);
 
   return TRUE;
 }
