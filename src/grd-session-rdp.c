@@ -1648,6 +1648,7 @@ rdp_peer_capabilities (freerdp_peer *peer)
 
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline) ||
       freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteFxCodec) ||
+      freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteFxImageCodec) ||
       freerdp_settings_get_bool (rdp_settings, FreeRDP_NSCodec))
     {
       uint16_t supported_color_depths =
