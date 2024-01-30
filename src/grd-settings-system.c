@@ -179,7 +179,7 @@ on_rdp_setting_changed (GrdSettingsSystem *settings_system,
                                       file_setting->settings_name);
 
   if (!g_key_file_save_to_file (key_file, GRD_CUSTOM_CONF, &error))
-    g_warning ("Failed writing %s: %s", file_setting->file_key, error->message);
+    g_warning ("Failed to write %s: %s", file_setting->file_key, error->message);
 }
 
 static void
@@ -299,7 +299,7 @@ init_file_monitor (void)
                                       &error);
   if (!file_monitor)
     {
-      g_warning ("Failed monitoring %s: %s", GRD_CUSTOM_CONF, error->message);
+      g_warning ("Failed to monitor %s: %s", GRD_CUSTOM_CONF, error->message);
       return NULL;
     }
 
