@@ -93,8 +93,8 @@ on_take_client_finished (GObject      *object,
   if (!grd_dbus_remote_desktop_rdp_handover_call_take_client_finish (
          proxy, &fd_variant, &fd_list, result, &error))
     {
-      g_warning ("[DaemonHandover] Error calling TakeClient dbus method: %s",
-                 error->message);
+      g_warning ("[DaemonHandover] An error occurred while calling "
+                 "TakeClient: %s", error->message);
       return;
     }
 
@@ -110,7 +110,7 @@ on_take_client_finished (GObject      *object,
   socket = g_socket_new_from_fd (fd, &error);
   if (!socket)
     {
-      g_warning ("[DaemonHandover] Error creating socket: %s",
+      g_warning ("[DaemonHandover] Failed to create socket from fd: %s",
                  error->message);
       return;
     }
@@ -144,14 +144,14 @@ on_get_system_credentials_finished (GObject      *object,
          result,
          &error))
     {
-      g_warning ("[DaemonHandover] Failed getting system credentials: %s",
+      g_warning ("[DaemonHandover] Failed to get system credentials: %s",
                  error->message);
       return;
     }
 
   if (!grd_settings_set_rdp_credentials (settings, username, password, &error))
     {
-      g_warning ("[DaemonHanodver] Failed overwritting credentials: %s",
+      g_warning ("[DaemonHanodver] Failed to overwrite credentials: %s",
                  error->message);
       return;
     }
@@ -500,7 +500,7 @@ on_remote_desktop_rdp_dispatcher_handover_requested (GObject      *object,
       &error);
   if (!success)
     {
-      g_warning ("[DaemonHandover] Failed requesting remote desktop "
+      g_warning ("[DaemonHandover] Failed to request remote desktop "
                  "handover: %s", error->message);
       return;
     }
