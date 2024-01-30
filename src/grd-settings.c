@@ -234,6 +234,15 @@ grd_settings_set_vnc_password (GrdSettings  *settings,
 {
   GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
 
+  g_assert (password);
+
+  if (!g_utf8_validate (password, -1, NULL))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                   "Password is not a valid UTF-8 string");
+      return FALSE;
+    }
+
   return grd_credentials_store (priv->credentials,
                                 GRD_CREDENTIALS_TYPE_VNC,
                                 g_variant_new_string (password),
