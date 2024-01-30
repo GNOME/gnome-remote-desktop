@@ -1,4 +1,6 @@
-src/grd-daemon.c
-src/grd-prompt.c
 src/grd-ctl.c
+src/grd-daemon.c
+src/grd-daemon-handover.c
+src/grd-daemon-user.c
+src/grd-session-vnc.c
 src/org.gnome.desktop.remote-desktop.gschema.xml.in
