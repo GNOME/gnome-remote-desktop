@@ -207,7 +207,7 @@ systemd_unit_is_active (GBusType     bus_type,
   if (!result)
     {
       g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_PROPERTY,
-                   "Error getting ActiveState property");
+                   "An error occurred while getting the ActiveState property");
       return FALSE;
     }
 
@@ -731,7 +731,7 @@ print_rdp_status (GrdSettings *settings,
                                     &error);
   if (error)
     {
-      fprintf (stderr, "Failed reading credentials: %s.\n", error->message);
+      fprintf (stderr, "Failed to read credentials: %s.\n", error->message);
       return;
     }
 
