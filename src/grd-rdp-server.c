@@ -169,7 +169,7 @@ on_routing_token_peeked (GObject      *source_object,
 
   if (error)
     {
-      g_warning ("Error peeking routing token: %s", error->message);
+      g_warning ("Failed to peek routing token: %s", error->message);
       return;
     }
 
@@ -277,7 +277,7 @@ attempt_to_bind_port (gpointer user_data)
 
   if (rdp_server->pending_binding_attempts == 0)
     {
-      g_warning ("Failed binding to port %u after %u attempts",
+      g_warning ("Failed to bind port %u after %u attempts",
                  rdp_port, RDP_SERVER_N_BINDING_ATTEMPTS);
 
       g_signal_emit (rdp_server, signals[BINDING_FAILED], 0);
