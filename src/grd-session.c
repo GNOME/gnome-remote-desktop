@@ -244,7 +244,7 @@ on_screen_cast_stream_proxy_acquired (GObject      *object,
                            priv->cancellable, &error);
   if (!stream)
     {
-      g_warning ("Failed create stream: %s", error->message);
+      g_warning ("Failed to create stream: %s", error->message);
       grd_session_stop (async_context->session);
       return;
     }
