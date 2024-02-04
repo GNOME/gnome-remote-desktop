@@ -30,6 +30,9 @@ GrdRdpPwBuffer *grd_rdp_pw_buffer_new (struct pw_buffer  *pw_buffer,
 
 void grd_rdp_pw_buffer_free (GrdRdpPwBuffer *rdp_pw_buffer);
 
+uint8_t *grd_rdp_pw_buffer_get_mapped_data (GrdRdpPwBuffer *rdp_pw_buffer,
+                                            int32_t        *stride);
+
 void grd_rdp_pw_buffer_ensure_unlocked (GrdRdpPwBuffer *rdp_pw_buffer);
 
 void grd_rdp_pw_buffer_acquire_lock (GrdRdpPwBuffer *rdp_pw_buffer);
