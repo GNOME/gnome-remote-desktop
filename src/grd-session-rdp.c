@@ -250,8 +250,6 @@ grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp       *session_rdp,
 {
   GrdRdpBuffer *buffer;
 
-  g_assert (session_rdp->peer);
-
   if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED))
     return;
 
