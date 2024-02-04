@@ -27,7 +27,6 @@
 #include <spa/param/props.h>
 #include <spa/param/format-utils.h>
 #include <spa/param/video/format-utils.h>
-#include <sys/mman.h>
 
 #include "grd-context.h"
 #include "grd-egl-thread.h"
@@ -69,10 +68,6 @@ struct _GrdRdpFrame
   gatomicrefcount refcount;
 
   GrdRdpBuffer *buffer;
-
-  gboolean has_map;
-  size_t map_size;
-  uint8_t *map;
 
   GrdRdpPipeWireStream *stream;
   GrdRdpFrameReadyCallback callback;
@@ -198,8 +193,6 @@ grd_rdp_frame_unref (GrdRdpFrame *frame)
 {
   if (g_atomic_ref_count_dec (&frame->refcount))
     {
-      g_assert (!frame->has_map);
-
       g_clear_pointer (&frame->buffer, grd_rdp_buffer_release);
       g_free (frame);
     }
@@ -601,12 +594,6 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
   g_assert (frame);
   g_assert (buffer);
 
-  if (frame->has_map)
-    {
-      munmap (frame->map, frame->map_size);
-      frame->has_map = FALSE;
-    }
-
   if (!success)
     goto out;
 
@@ -735,7 +722,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
   int bpp;
   int width;
   int height;
-  int src_stride;
+  int32_t src_stride;
   int dst_stride;
 
   g_assert (buffer->datas[0].chunk->size > 0);
@@ -756,28 +743,25 @@ process_frame_data (GrdRdpPipeWireStream *stream,
       GrdContext *context = grd_session_get_context (session);
       GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
       GrdHwAccelNvidia *hwaccel_nvidia = stream->rdp_surface->hwaccel_nvidia;
+      GrdRdpPwBuffer *rdp_pw_buffer = NULL;
       AllocateBufferData *allocate_buffer_data;
       RealizeBufferData *realize_buffer_data;
       GrdRdpBuffer *rdp_buffer;
-      size_t size;
-      uint8_t *map;
       void *src_data;
       uint32_t pbo;
       uint8_t *data_to_upload;
 
-      size = buffer->datas[0].maxsize + buffer->datas[0].mapoffset;
-      map = mmap (NULL, size, PROT_READ, MAP_PRIVATE, buffer->datas[0].fd, 0);
-      if (map == MAP_FAILED)
-        {
-          g_warning ("Failed to mmap buffer: %s", g_strerror (errno));
-          callback (stream, g_steal_pointer (&frame), FALSE, user_data);
-          return;
-        }
-      src_data = SPA_MEMBER (map, buffer->datas[0].mapoffset, uint8_t);
+      acquire_pipewire_buffer_lock (stream, pw_buffer);
+      if (!g_hash_table_lookup_extended (stream->pipewire_buffers, pw_buffer,
+                                         NULL, (gpointer *) &rdp_pw_buffer))
+        g_assert_not_reached ();
+
+      src_data = grd_rdp_pw_buffer_get_mapped_data (rdp_pw_buffer, &src_stride);
 
       frame->buffer = grd_rdp_buffer_pool_acquire (stream->buffer_pool);
       if (!frame->buffer)
         {
+          maybe_release_pipewire_buffer_lock (stream, pw_buffer);
           grd_session_rdp_notify_error (stream->session_rdp,
                                         GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
           callback (stream, g_steal_pointer (&frame), FALSE, user_data);
@@ -790,10 +774,6 @@ process_frame_data (GrdRdpPipeWireStream *stream,
       if (stream->rdp_surface->needs_no_local_data &&
           src_stride == dst_stride)
         {
-          frame->map_size = size;
-          frame->map = map;
-          frame->has_map = TRUE;
-
           data_to_upload = src_data;
         }
       else
@@ -805,13 +785,12 @@ process_frame_data (GrdRdpPipeWireStream *stream,
                            src_stride,
                            bpp);
 
-          munmap (map, size);
-
           data_to_upload = grd_rdp_buffer_get_local_data (rdp_buffer);
         }
 
       if (!hwaccel_nvidia)
         {
+          maybe_release_pipewire_buffer_lock (stream, pw_buffer);
           callback (stream, g_steal_pointer (&frame), TRUE, user_data);
           return;
         }
@@ -824,7 +803,6 @@ process_frame_data (GrdRdpPipeWireStream *stream,
       realize_buffer_data = g_new0 (RealizeBufferData, 1);
       realize_buffer_data->rdp_buffer = rdp_buffer;
 
-      acquire_pipewire_buffer_lock (stream, pw_buffer);
       grd_egl_thread_upload (egl_thread,
                              stream->egl_slot,
                              pbo,
