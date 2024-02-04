@@ -40,6 +40,8 @@ uint32_t grd_rdp_buffer_get_width (GrdRdpBuffer *rdp_buffer);
 
 uint32_t grd_rdp_buffer_get_height (GrdRdpBuffer *rdp_buffer);
 
+uint32_t grd_rdp_buffer_get_stride (GrdRdpBuffer *rdp_buffer);
+
 uint8_t *grd_rdp_buffer_get_local_data (GrdRdpBuffer *rdp_buffer);
 
 uint32_t grd_rdp_buffer_get_pbo (GrdRdpBuffer *rdp_buffer);

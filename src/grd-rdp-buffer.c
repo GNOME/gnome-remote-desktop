@@ -56,6 +56,7 @@ struct _GrdRdpBuffer
 
   uint32_t width;
   uint32_t height;
+  uint32_t stride;
 
   uint8_t *local_data;
 
@@ -119,6 +120,7 @@ grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
 
   rdp_buffer->width = width;
   rdp_buffer->height = height;
+  rdp_buffer->stride = stride;
   rdp_buffer->local_data = g_malloc0 (stride * height * sizeof (uint8_t));
 
   if (preallocate_on_gpu &&
@@ -207,6 +209,12 @@ uint32_t
 grd_rdp_buffer_get_height (GrdRdpBuffer *rdp_buffer)
 {
   return rdp_buffer->height;
+}
+
+uint32_t
+grd_rdp_buffer_get_stride (GrdRdpBuffer *rdp_buffer)
+{
+  return rdp_buffer->stride;
 }
 
 uint8_t *
