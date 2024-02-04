@@ -571,8 +571,7 @@ rdp_peer_refresh_rfx (GrdSessionRdp  *session_rdp,
   uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
   uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
   uint32_t surface_height = grd_rdp_surface_get_height (rdp_surface);
-  uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
-                                                              surface_width);
+  uint32_t src_stride = grd_rdp_buffer_get_stride (buffer);
   SURFACE_BITS_COMMAND cmd = {0};
   cairo_rectangle_int_t cairo_rect;
   RFX_RECT *rfx_rects, *rfx_rect;
@@ -722,9 +721,7 @@ rdp_peer_refresh_nsc (GrdSessionRdp  *session_rdp,
     freerdp_settings_get_bool (rdp_settings, FreeRDP_SurfaceFrameMarkerEnabled);
   GrdRdpSurfaceMapping *surface_mapping;
   uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
-  uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
-  uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
-                                                              surface_width);
+  uint32_t src_stride = grd_rdp_buffer_get_stride (buffer);
   NSCThreadPoolContext *thread_pool_context =
     &session_rdp->nsc_thread_pool_context;
   g_autoptr (GError) error = NULL;
@@ -976,9 +973,7 @@ rdp_peer_refresh_raw (GrdSessionRdp  *session_rdp,
   gboolean has_surface_frame_marker =
     freerdp_settings_get_bool (rdp_settings, FreeRDP_SurfaceFrameMarkerEnabled);
   uint8_t *data = grd_rdp_buffer_get_local_data (buffer);
-  uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
-  uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
-                                                              surface_width);
+  uint32_t src_stride = grd_rdp_buffer_get_stride (buffer);
   RawThreadPoolContext *thread_pool_context =
     &session_rdp->raw_thread_pool_context;
   g_autoptr (GError) error = NULL;

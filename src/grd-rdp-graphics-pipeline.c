@@ -884,8 +884,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
     grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
   uint16_t surface_width = grd_rdp_gfx_surface_get_width (gfx_surface);
   uint16_t surface_height = grd_rdp_gfx_surface_get_height (gfx_surface);
-  uint32_t src_stride = grd_session_rdp_get_stride_for_width (session_rdp,
-                                                              surface_width);
+  uint32_t src_stride = grd_rdp_buffer_get_stride (buffer);
   RDPGFX_SURFACE_COMMAND cmd = {0};
   RDPGFX_START_FRAME_PDU cmd_start = {0};
   RDPGFX_END_FRAME_PDU cmd_end = {0};

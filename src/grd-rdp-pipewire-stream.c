@@ -463,7 +463,7 @@ on_stream_param_changed (void                 *user_data,
   spa_format_video_raw_parse (format, &stream->spa_format);
   height = stream->spa_format.size.height;
   width = stream->spa_format.size.width;
-  stride = grd_session_rdp_get_stride_for_width (stream->session_rdp, width);
+  stride = width * 4;
 
   g_debug ("[RDP] Stream parameters changed. New surface size: [%u, %u]",
            width, height);
@@ -757,8 +757,6 @@ process_frame_data (GrdRdpPipeWireStream *stream,
   height = stream->spa_format.size.height;
   width = stream->spa_format.size.width;
   src_stride = buffer->datas[0].chunk->stride;
-  dst_stride = grd_session_rdp_get_stride_for_width (stream->session_rdp,
-                                                     width);
   grd_get_spa_format_details (stream->spa_format.format,
                               &drm_format, &bpp);
 
@@ -800,6 +798,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
           return;
         }
       rdp_buffer = frame->buffer;
+      dst_stride = grd_rdp_buffer_get_stride (rdp_buffer);
       pbo = grd_rdp_buffer_get_pbo (rdp_buffer);
 
       if (stream->rdp_surface->needs_no_local_data &&
@@ -883,6 +882,7 @@ process_frame_data (GrdRdpPipeWireStream *stream,
           return;
         }
       rdp_buffer = frame->buffer;
+      dst_stride = grd_rdp_buffer_get_stride (rdp_buffer);
 
       row_width = dst_stride / bpp;
 
