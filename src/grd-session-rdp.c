@@ -1843,13 +1843,6 @@ rdp_peer_context_new (freerdp_peer   *peer,
   return TRUE;
 }
 
-int
-grd_session_rdp_get_stride_for_width (GrdSessionRdp *session_rdp,
-                                      int            width)
-{
-  return width * 4;
-}
-
 static gboolean
 init_rdp_session (GrdSessionRdp  *session_rdp,
                   const char     *username,
