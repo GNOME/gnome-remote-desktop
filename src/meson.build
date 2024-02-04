@@ -138,6 +138,8 @@ if have_rdp
     'grd-rdp-pipewire-stream.c',
     'grd-rdp-pipewire-stream.h',
     'grd-rdp-private.h',
+    'grd-rdp-pw-buffer.c',
+    'grd-rdp-pw-buffer.h',
     'grd-rdp-render-context.c',
     'grd-rdp-render-context.h',
     'grd-rdp-renderer.c',
