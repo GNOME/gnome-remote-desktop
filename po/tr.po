@@ -9,9 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2024-01-19 09:40+0000\n"
-"PO-Revision-Date: 2024-01-25 08:00+0300\n"
+"issues/\n"
+"POT-Creation-Date: 2024-01-31 06:23+0000\n"
+"PO-Revision-Date: 2024-02-06 21:13+0300\n"
 "Last-Translator: Emin Tufan Çetin <etcetin@gmail.com>\n"
 "Language-Team: Turkish <takim@gnome.org.tr>\n"
 "Language: tr\n"
@@ -20,10 +20,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 3.4.2\n"
-
-#: src/grd-daemon.c:940
-msgid "GNOME Remote Desktop"
-msgstr "GNOME Uzaktan Masaüstü"
 
 #: src/grd-ctl.c:59
 #, c-format
@@ -59,17 +55,27 @@ msgid ""
 "\n"
 msgstr ""
 "  rdp                                        - RDP alt komutları:\n"
-"    set-port                                 - Sunucunun bağlanacağı bağlantı noktasını belirt\n"
+"    set-port                                - Sunucunun bağlanacağı bağlantı "
+"noktasını belirt\n"
 "    enable                                   - RDP arka ucunu etkinleştir\n"
-"    disable                                  - RDP arka ucunu devre dışı bırak\n"
-"    set-tls-cert <path-to-cert>              - TLS sertifikasının yolunu belirt\n"
-"    set-tls-key <path-to-key>                - TLS anahtarının yolunu belirt\n"
-"    set-credentials <username> <password>    - Kullanıcı adı ve parola bilgilerini belirt\n"
-"    clear-credentials                        - Kullanıcı adı ve parola bilgilerini temizle\n"
-"    enable-view-only                         - Girdi aygıtlarının uzaktan denetimini devre dışı bırak\n"
-"    disable-view-only                        - Girdi aygıtlarının uzaktan denetimini etkinleştir\n"
-"    enable-port-negotiation                  - Uygun değilse, başka bağlantı noktası dinle\n"
-"    disable-port-negotiation                 - Uygun değilse, başka bağlantı noktası dinleme\n"
+"    disable                                  - RDP arka ucunu devre dışı "
+"bırak\n"
+"    set-tls-cert <path-to-cert>             - TLS sertifikasının yolunu "
+"belirt\n"
+"    set-tls-key <path-to-key>                - TLS anahtarının yolunu "
+"belirt\n"
+"    set-credentials <username> <password>    - Kullanıcı adı ve parola "
+"bilgilerini belirt\n"
+"    clear-credentials                        - Kullanıcı adı ve parola "
+"bilgilerini temizle\n"
+"    enable-view-only                       - Girdi aygıtlarının uzaktan "
+"denetimini devre dışı bırak\n"
+"    disable-view-only                        - Girdi aygıtlarının uzaktan "
+"denetimini etkinleştir\n"
+"    enable-port-negotiation                  - Uygun değilse, başka bağlantı "
+"noktası dinle\n"
+"    disable-port-negotiation                 - Uygun değilse, başka bağlantı "
+"noktası dinleme\n"
 "\n"
 
 #: src/grd-ctl.c:608
@@ -94,18 +100,25 @@ msgid ""
 "\n"
 msgstr ""
 "  vnc                                        - VNC alt komutları:\n"
-"    set-port                                 - Sunucunun bağlanacağı bağlantı noktasını belirt\n"
+"    set-port                                 - Sunucunun bağlanacağı "
+"bağlantı noktasını belirt\n"
 "    enable                                   - VNC arka ucunu etkinleştir\n"
-"    disable                                  - VNC arka ucunu devre dışı bırak\n"
+"    disable                                  - VNC arka ucunu devre dışı "
+"bırak\n"
 "    set-password <password>                  - VNC parolasını belirt\n"
 "    clear-password                           - VNC parolasını temizle\n"
-"    set-auth-method password|prompt          - Kimlik doğrulama yöntemini belirt\n"
-"    enable-view-only                         - Girdi aygıtlarının uzaktan denetimini\n"
+"    set-auth-method password|prompt          - Kimlik doğrulama yöntemini "
+"belirt\n"
+"    enable-view-only                         - Girdi aygıtlarının uzaktan "
+"denetimini\n"
 "                                               devre dışı bırak\n"
-"    disable-view-only                        - Girdi aygıtlarının uzaktan denetimini\n"
+"    disable-view-only                        - Girdi aygıtlarının uzaktan "
+"denetimini\n"
 "                                               etkinleştir\n"
-"    enable-port-negotiation                  - Uygun değilse, başka bağlantı noktası dinle\n"
-"    disable-port-negotiation                 - Uygun değilse, başka bağlantı noktası dinleme\n"
+"    enable-port-negotiation                  - Uygun değilse, başka bağlantı "
+"noktası dinle\n"
+"    disable-port-negotiation                 - Uygun değilse, başka bağlantı "
+"noktası dinleme\n"
 "\n"
 
 #: src/grd-ctl.c:628
@@ -127,15 +140,84 @@ msgstr ""
 "yapılandır\n"
 "  --help                                     - Bu yardım  metnini yazdır\n"
 
+#: src/grd-daemon.c:940
+msgid "GNOME Remote Desktop"
+msgstr "GNOME Uzaktan Masaüstü"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "Bu bağlantı güvensiz"
+
+#: src/grd-daemon-handover.c:348
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
+"RDP config file."
+msgstr ""
+"Güvensiz bağlantıyla sürdürmek ister misiniz?\n"
+"Güvenli yapmak için RDP yapılandırma dosyasında <b><i>use redirection server "
+"name:i:1</i></b> belirtin."
+
+#: src/grd-daemon-handover.c:352
+#, c-format
+msgid "Disconnect"
+msgstr "Bağlantıyı Kes"
+
+#: src/grd-daemon-handover.c:353
+#, c-format
+msgid "Continue"
+msgstr "Sürdür"
+
+#: src/grd-daemon-user.c:96
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "Masaüstü Paylaşımı bağlantı noktası değişti"
+
+#: src/grd-daemon-user.c:98
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"<b>%i</b> olan Masaüstü Paylaşımı bağlantı noktası <b>%i</b> olarak "
+"değiştirildi.\n"
+"Çünkü Uzak Oturumlar hizmeti etkinleştirildi ve <b>%i</b> bağlantı noktasını "
+"kullanmada yüksek önceliklidir."
+
+#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "Kabul Et"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Masaüstünüzü paylaşmak istiyor musunuz?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"'%s' bilgisayarındaki kullanıcı masaüstünüzü uzaktan görüntülemek veya "
+"denetlemek istiyor."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "Reddet"
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "The port used by the RDP server"
 msgstr "RDP sunucusunun kullandığı bağlantı noktası"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
 msgid "The RDP client will connect to this port to use this RDP server."
-msgstr ""
-"RDP istemcisi, bu RDP sunucusunu kullanmak için bu noktaya "
-"bağlanacak."
+msgstr "RDP istemcisi, bu RDP sunucusunu kullanmak için bu noktaya bağlanacak."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Search a different RDP port if the configured one is used"
@@ -147,8 +229,8 @@ msgid ""
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
 "Bağlantı noktası müzakeresi 'doğru' olarak ayarlandıysa, RDP sunucusu "
-"yapılandırılmıştan başlayarak sonraki 10 bağlantı noktasında ilk uygunu dinlemeye "
-"çalışacak."
+"yapılandırılmıştan başlayarak sonraki 10 bağlantı noktasında ilk uygunu "
+"dinlemeye çalışacak."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
@@ -225,9 +307,7 @@ msgstr "VNC sunucusunun kullandığı bağlantı noktası"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
 msgid "The VNC client will connect to this port to use this VNC server."
-msgstr ""
-"VNC istemcisi, bu VNC sunucusunu kullanmak için bu noktaya "
-"bağlanacak."
+msgstr "VNC istemcisi, bu VNC sunucusunu kullanmak için bu noktaya bağlanacak."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 msgid "Search a different VNC port if the configured one is used"
@@ -239,8 +319,8 @@ msgid ""
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
 "Bağlantı noktası müzakeresi 'doğru' olarak ayarlandıysa, VNC sunucusu "
-"yapılandırılmıştan başlayarak sonraki 10 bağlantı noktasında ilk uygunu dinlemeye "
-"çalışacak."
+"yapılandırılmıştan başlayarak sonraki 10 bağlantı noktasında ilk uygunu "
+"dinlemeye çalışacak."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
@@ -304,21 +384,3 @@ msgstr ""
 "oturumu için yeni sanal monitör oluştur ve kullan. Bu sanal monitörün ilk "
 "ekran çözünürlüğü 1920x1080 pikseldir.İstemciler, bu ilk çözünürlüğü sonraki "
 "ekran yapılandırma güncellemeleriyle değiştirebilirler."
-
-#, c-format
-#~ msgid "Do you want to share your desktop?"
-#~ msgstr "Masaüstünüzü paylaşmak istiyor musunuz?"
-
-#, c-format
-#~ msgid ""
-#~ "A user on the computer '%s' is trying to remotely view or control your "
-#~ "desktop."
-#~ msgstr ""
-#~ "'%s' bilgisayarındaki kullanıcı masaüstünüzü uzaktan görüntülemek veya "
-#~ "denetlemek istiyor."
-
-#~ msgid "Refuse"
-#~ msgstr "Reddet"
-
-#~ msgid "Accept"
-#~ msgstr "Kabul Et"
