@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2024-01-15 13:27+0000\n"
-"PO-Revision-Date: 2024-01-22 18:12+0100\n"
+"issues/\n"
+"POT-Creation-Date: 2024-01-30 20:40+0000\n"
+"PO-Revision-Date: 2024-02-07 16:12+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -19,10 +19,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Poedit 3.4.2\n"
-
-#: src/grd-daemon.c:900
-msgid "GNOME Remote Desktop"
-msgstr "Vzdálená plocha GNOME"
 
 #: src/grd-ctl.c:59
 #, c-format
@@ -139,6 +135,76 @@ msgstr ""
 "používat úložiště s pověřeními\n"
 "  --system                                   - Nastavit systémový démon\n"
 "  --help                                    - Vypsat tuto nápovědu\n"
+
+#: src/grd-daemon.c:940
+msgid "GNOME Remote Desktop"
+msgstr "Vzdálená plocha GNOME"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "Toto připojení není bezpečné"
+
+#: src/grd-daemon-handover.c:348
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
+"RDP config file."
+msgstr ""
+"Chcete pokračovat s nezabezpečeným připojením?\n"
+"Pro zajištění bezpečnosti nastavte <b><i>use redirection server name:i:1</"
+"i></b> v konfiguračním souboru RDP."
+
+#: src/grd-daemon-handover.c:352
+#, c-format
+msgid "Disconnect"
+msgstr "Odpojit"
+
+#: src/grd-daemon-handover.c:353
+#, c-format
+msgid "Continue"
+msgstr "Pokračovat"
+
+#: src/grd-daemon-user.c:96
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "Port sdílení plochy se změnil"
+
+#: src/grd-daemon-user.c:98
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"Port sdílení plochy se změnil z <b>%i</b> na <b>%i</b>.\n"
+"Důvodem je, že byla aktivována služba Vzdálená sezení a má vyšší prioritu "
+"pro použití portu <b>%i</b>."
+
+#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "Přijmout"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Přejete si sdílet svoji plochu?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Uživatel na počítači „%s“ zkouší vzdáleně zobrazit nebo ovládat vaše "
+"uživatelské prostředí."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "Zamítnout"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "The port used by the RDP server"
@@ -311,21 +377,3 @@ msgstr ""
 "monitor a použije jej pro sezení vzdálené plochy. Počáteční rozlišení tohoto "
 "monitoru je nastaveno na 1920×1080 pixelů. Klient může přebít počáteční "
 "rozlišení dílčími aktualizacemi nastavení monitoru."
-
-#, c-format
-#~ msgid "Do you want to share your desktop?"
-#~ msgstr "Přejete si sdílet svoji plochu?"
-
-#, c-format
-#~ msgid ""
-#~ "A user on the computer '%s' is trying to remotely view or control your "
-#~ "desktop."
-#~ msgstr ""
-#~ "Uživatel na počítači „%s“ zkouší vzdáleně zobrazit nebo ovládat vaše "
-#~ "uživatelské prostředí."
-
-#~ msgid "Refuse"
-#~ msgstr "Zamítnout"
-
-#~ msgid "Accept"
-#~ msgstr "Přijmout"
