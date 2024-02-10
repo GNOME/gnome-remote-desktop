@@ -728,7 +728,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
   return TRUE;
 }
 
-static gboolean
+static void
 rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
                                wStream     *s,
                                gboolean     needs_progressive_header)
@@ -754,7 +754,7 @@ rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
       /* RFX_PROGRESSIVE_SYNC */
       block_len = 12;
       if (!Stream_EnsureRemainingCapacity (s, block_len))
-        return FALSE;
+        g_assert_not_reached ();
 
       Stream_Write_UINT16 (s, 0xCCC0);     /* blockType */
       Stream_Write_UINT32 (s, block_len);  /* blockLen */
@@ -764,7 +764,7 @@ rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
       /* RFX_PROGRESSIVE_CONTEXT */
       block_len = 10;
       if (!Stream_EnsureRemainingCapacity (s, block_len))
-        return FALSE;
+        g_assert_not_reached ();
 
       Stream_Write_UINT16 (s, 0xCCC3);    /* blockType */
       Stream_Write_UINT32 (s, block_len); /* blockLen */
@@ -776,7 +776,7 @@ rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
   /* RFX_PROGRESSIVE_FRAME_BEGIN */
   block_len = 12;
   if (!Stream_EnsureRemainingCapacity (s, block_len))
-    return FALSE;
+    g_assert_not_reached ();
 
   Stream_Write_UINT16 (s, 0xCCC1);                                  /* blockType */
   Stream_Write_UINT32 (s, block_len);                               /* blockLen */
@@ -797,7 +797,7 @@ rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
 
   block_len += tiles_data_size;
   if (!Stream_EnsureRemainingCapacity (s, block_len))
-    return FALSE;
+    g_assert_not_reached ();
 
   Stream_Write_UINT16 (s, 0xCCC4);          /* blockType */
   Stream_Write_UINT32 (s, block_len);       /* blockLen */
@@ -861,12 +861,10 @@ rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
   /* RFX_PROGRESSIVE_FRAME_END */
   block_len = 6;
   if (!Stream_EnsureRemainingCapacity (s, block_len))
-    return FALSE;
+    g_assert_not_reached ();
 
   Stream_Write_UINT16 (s, 0xCCC2);    /* blockType */
   Stream_Write_UINT32 (s, block_len); /* blockLen */
-
-  return TRUE;
 }
 
 static gboolean
@@ -956,15 +954,9 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   cmd.format = PIXEL_FORMAT_BGRX32;
 
   Stream_SetPosition (graphics_pipeline->encode_stream, 0);
-  if (!rfx_progressive_write_message (rfx_message,
-                                      graphics_pipeline->encode_stream,
-                                      needs_progressive_header))
-    {
-      g_warning ("[RDP.RDPGFX] rfx_progressive_write_message() failed");
-      rfx_message_free (graphics_pipeline->rfx_context, rfx_message);
-      cairo_region_destroy (region);
-      return FALSE;
-    }
+  rfx_progressive_write_message (rfx_message,
+                                 graphics_pipeline->encode_stream,
+                                 needs_progressive_header);
   rfx_message_free (graphics_pipeline->rfx_context, rfx_message);
 
   cmd.length = Stream_GetPosition (graphics_pipeline->encode_stream);
