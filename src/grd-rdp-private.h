@@ -30,9 +30,6 @@ typedef struct _RdpPeerContext
 
   GrdSessionRdp *session_rdp;
 
-  uint32_t frame_id;
-  uint16_t planar_flags;
-
   RFX_CONTEXT *rfx_context;
   wStream *encode_stream;
 

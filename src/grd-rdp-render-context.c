@@ -46,17 +46,16 @@ grd_rdp_render_context_new (GrdRdpGraphicsPipeline *graphics_pipeline,
 {
   GrdRdpRenderContext *render_context;
 
+  g_assert (graphics_pipeline);
+
   if (!grd_rdp_damage_detector_invalidate_surface (rdp_surface->detector))
     return NULL;
 
   render_context = g_object_new (GRD_TYPE_RDP_RENDER_CONTEXT, NULL);
 
-  if (graphics_pipeline)
-    {
-      render_context->gfx_surface =
-        grd_rdp_graphics_pipeline_acquire_gfx_surface (graphics_pipeline,
-                                                       rdp_surface);
-    }
+  render_context->gfx_surface =
+    grd_rdp_graphics_pipeline_acquire_gfx_surface (graphics_pipeline,
+                                                   rdp_surface);
 
   return render_context;
 }

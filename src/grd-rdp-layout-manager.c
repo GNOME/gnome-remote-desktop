@@ -29,6 +29,7 @@
 #include "grd-stream.h"
 
 #define LAYOUT_RECREATION_TIMEOUT_MS 50
+#define TARGET_SURFACE_REFRESH_RATE 60
 
 typedef enum
 {
@@ -61,7 +62,6 @@ struct _GrdRdpLayoutManager
 {
   GrdRdpStreamOwner parent;
 
-  gboolean has_graphics_pipeline;
   gboolean session_started;
 
   GMutex state_mutex;
@@ -98,16 +98,13 @@ surface_context_new (GrdRdpLayoutManager  *layout_manager,
                      GError              **error)
 {
   g_autofree SurfaceContext *surface_context = NULL;
-  uint32_t refresh_rate;
 
   surface_context = g_new0 (SurfaceContext, 1);
   surface_context->layout_manager = layout_manager;
 
-  refresh_rate = layout_manager->has_graphics_pipeline ? 60 : 30;
-
   surface_context->rdp_surface =
     grd_rdp_renderer_try_acquire_surface (layout_manager->renderer,
-                                          refresh_rate);
+                                          TARGET_SURFACE_REFRESH_RATE);
   if (!surface_context->rdp_surface)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -522,11 +519,9 @@ grd_rdp_layout_manager_on_stream_created (GrdRdpStreamOwner *stream_owner,
 void
 grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager  *layout_manager,
                                                GrdRdpCursorRenderer *cursor_renderer,
-                                               rdpContext           *rdp_context,
-                                               gboolean              has_graphics_pipeline)
+                                               rdpContext           *rdp_context)
 {
   layout_manager->cursor_renderer = cursor_renderer;
-  layout_manager->has_graphics_pipeline = has_graphics_pipeline;
   layout_manager->rdp_context = rdp_context;
   layout_manager->session_started = TRUE;
 

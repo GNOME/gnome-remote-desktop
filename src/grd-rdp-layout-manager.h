@@ -36,8 +36,7 @@ GrdRdpLayoutManager *grd_rdp_layout_manager_new (GrdSessionRdp    *session_rdp,
 
 void grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager  *layout_manager,
                                                     GrdRdpCursorRenderer *cursor_renderer,
-                                                    rdpContext           *rdp_context,
-                                                    gboolean              has_graphics_pipeline);
+                                                    rdpContext           *rdp_context);
 
 void grd_rdp_layout_manager_submit_new_monitor_config (GrdRdpLayoutManager *layout_manager,
                                                        GrdRdpMonitorConfig *monitor_config);
