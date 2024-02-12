@@ -1,15 +1,15 @@
 # Georgian translation for gnome-rdp.
 # Copyright (C) 2023 gnome-rdp authors
 # This file is distributed under the same license as the gnome-rdp package.
-# Ekaterine Papava <papava.e@gtu.ge>, 2023.
+# Ekaterine Papava <papava.e@gtu.ge>, 2023-2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2023-11-23 13:27+0000\n"
-"PO-Revision-Date: 2023-11-24 06:13+0100\n"
+"issues/\n"
+"POT-Creation-Date: 2024-01-30 20:40+0000\n"
+"PO-Revision-Date: 2024-02-12 15:16+0100\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
 "Language: ka\n"
@@ -19,42 +19,16 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 3.3.2\n"
 
-#: src/grd-daemon.c:824
-msgid "GNOME Remote Desktop"
-msgstr "GNOME Remote Desktop"
-
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "გნებავთ თქვენი სამუშაო მაგიდის გაზიარება?"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr ""
-"მომხმარებელი კომპიუტერიდან '%s' ცდილობს შორიდან ნახოს ან მართოს თქვენი "
-"სამუშაო მაგიდა."
-
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "უარყოფა"
-
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "დასტური"
-
-#: src/grd-ctl.c:53
+#: src/grd-ctl.c:59
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "გამოყენება: %s [პარამეტრები...] ბრძანება [ქვებრძანება]...\n"
 
-#: src/grd-ctl.c:421
+#: src/grd-ctl.c:579
 msgid "Commands:\n"
 msgstr "ბრძანებები:\n"
 
-#: src/grd-ctl.c:426
+#: src/grd-ctl.c:584
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -103,7 +77,7 @@ msgstr ""
 "                                               სხვა პორტს არ მოუსმინო\n"
 "\n"
 
-#: src/grd-ctl.c:450
+#: src/grd-ctl.c:608
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -145,21 +119,86 @@ msgstr ""
 "\n"
 "\n"
 
-#: src/grd-ctl.c:470
+#: src/grd-ctl.c:628
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
-"  სტატუსი [--show-credentials]                - მიმდინარე სტატუსის ჩვენება\n"
+"  status [--show-credentials]                - მიმდინარე სტატუსის ჩვენება\n"
 "\n"
 "პარამეტრები:\n"
 "  --headless                                 - პაროლების საცავის ინტერფეისის "
 "გარეშე გამოყენება\n"
 "  --help                                     - ამ ტექსტის ჩვენება\n"
+
+#: src/grd-daemon.c:940
+msgid "GNOME Remote Desktop"
+msgstr "GNOME Remote Desktop"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "ეს მიერთება დაცული არაა"
+
+#: src/grd-daemon-handover.c:348
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
+"RDP config file."
+msgstr ""
+
+#: src/grd-daemon-handover.c:352
+#, c-format
+msgid "Disconnect"
+msgstr "გათიშვა"
+
+#: src/grd-daemon-handover.c:353
+#, c-format
+msgid "Continue"
+msgstr "გაგრძელება"
+
+#: src/grd-daemon-user.c:96
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "სამუშაო მაგიდის გაზიარების პორტი შეიცვალა"
+
+#: src/grd-daemon-user.c:98
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+
+#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "დასტური"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "გნებავთ თქვენი სამუშაო მაგიდის გაზიარება?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"მომხმარებელი კომპიუტერიდან '%s' ცდილობს შორიდან ნახოს ან მართოს თქვენი "
+"სამუშაო მაგიდა."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "უარყოფა"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "The port used by the RDP server"
