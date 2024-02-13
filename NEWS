@@ -1,3 +1,21 @@
+46.beta
+=======
+* Add layering to system daemon configuration
+* Various fixes and cleanups to the RDP backend
+* Handle the Microsofts mstsc client (default RDP client in MS Windows)
+  clients better when redirecting
+* Improve system-daemon <-> user-daemon RDP port conflict handling
+* Fix crash when setting invalid configuration
+* Improved performance during monitor layout changes
+
+Contributors:
+  Pascal Nowack, Joan Torres
+
+Translators:
+  Artur S0 [ru], Danial Behzadi [fa], Daniel Rusek [cs], Emin Tufan Çetin [tr],
+  Fabio Tomat [fur], Ekaterine Papava [ka], Yuri Chornoivan [uk],
+  Asier Sarasua Garmendia [eu]
+
 46.alpha
 ========
 * Port to FreeRDP 3.1
