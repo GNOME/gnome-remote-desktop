@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2024-01-06 15:23+0000\n"
-"PO-Revision-Date: 2024-01-08 15:51+0300\n"
+"issues/\n"
+"POT-Creation-Date: 2024-01-30 20:40+0000\n"
+"PO-Revision-Date: 2024-02-05 15:04+0300\n"
 "Last-Translator: Artur So <arturios2005@mail.ru>\n"
 "Language-Team: Russian <gnome-cyr@gnome.org>\n"
 "Language: ru\n"
@@ -19,32 +19,6 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Poedit 3.4.2\n"
-
-#: src/grd-daemon.c:900
-msgid "GNOME Remote Desktop"
-msgstr "Удаленный рабочий стол GNOME"
-
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "Хотите поделиться своим рабочим столом?"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr ""
-"Пользователь компьютера «%s» пытается удаленно просматривать или "
-"контролировать ваш рабочий стол."
-
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "Отказаться"
-
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "Принять"
 
 #: src/grd-ctl.c:59
 #, c-format
@@ -163,6 +137,76 @@ msgstr ""
 "хранилище учетных данных\n"
 "  --system                                   - Настроить системного демона\n"
 "  --help                                     - Вывести текст справки\n"
+
+#: src/grd-daemon.c:940
+msgid "GNOME Remote Desktop"
+msgstr "Удаленный рабочий стол GNOME"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "Это соединение небезопасно"
+
+#: src/grd-daemon-handover.c:348
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
+"RDP config file."
+msgstr ""
+"Хотите ли вы продолжить работу с небезопасным соединением?\n"
+"Чтобы сделать его безопасным, установите <b><i>использовать имя сервера "
+"перенаправления:i:1</i></b> в файле конфигурации RDP."
+
+#: src/grd-daemon-handover.c:352
+#, c-format
+msgid "Disconnect"
+msgstr "Отключиться"
+
+#: src/grd-daemon-handover.c:353
+#, c-format
+msgid "Continue"
+msgstr "Продолжить"
+
+#: src/grd-daemon-user.c:96
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "Изменен порт общего доступа к рабочему столу"
+
+#: src/grd-daemon-user.c:98
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"Порт общего доступа к рабочему столу изменился с <b>%i</b> на <b>%i</b>.\n"
+"Это связано с тем, что служба Remote Sessions была активирована, и она имеет "
+"более высокий приоритет для использования порта <b>%i</b>."
+
+#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "Принять"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Хотите поделиться своим рабочим столом?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Пользователь компьютера «%s» пытается удаленно просматривать или "
+"контролировать ваш рабочий стол."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "Отказаться"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "The port used by the RDP server"
