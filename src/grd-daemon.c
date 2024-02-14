@@ -161,6 +161,82 @@ unexport_remote_desktop_interface (GrdDaemon *daemon)
 }
 
 #ifdef HAVE_RDP
+static gboolean
+on_handle_get_rdp_credentials (GrdDBusRemoteDesktopRdpServer *rdp_server_interface,
+                               GDBusMethodInvocation         *invocation,
+                               GrdDaemon                     *daemon)
+{
+  GrdContext *context = grd_daemon_get_context (daemon);
+  GrdSettings *settings = grd_context_get_settings (context);
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
+  g_autoptr (GError) error = NULL;
+  GVariantBuilder credentials;
+
+  g_variant_builder_init (&credentials, G_VARIANT_TYPE ("a{sv}"));
+
+  if (grd_settings_get_rdp_credentials (settings,
+                                        &username, &password,
+                                        &error))
+    {
+      g_variant_builder_add (&credentials, "{sv}", "username",
+                             g_variant_new_string (username));
+      g_variant_builder_add (&credentials, "{sv}", "password",
+                             g_variant_new_string (password));
+    }
+
+  grd_dbus_remote_desktop_rdp_server_complete_get_credentials (rdp_server_interface,
+                                                               invocation,
+                                                               g_variant_builder_end (&credentials));
+
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
+static gboolean
+on_handle_set_rdp_credentials (GrdDBusRemoteDesktopRdpServer *rdp_server_interface,
+                               GDBusMethodInvocation         *invocation,
+                               GVariant                      *credentials,
+                               GrdDaemon                     *daemon)
+{
+  GrdContext *context = grd_daemon_get_context (daemon);
+  GrdSettings *settings = grd_context_get_settings (context);
+  g_autofree char *old_username = NULL;
+  g_autofree char *old_password = NULL;
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
+  g_autoptr (GError) error = NULL;
+
+  g_variant_lookup (credentials, "username", "s", &username);
+  g_variant_lookup (credentials, "password", "s", &password);
+
+  if (!username && !password)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Username or password expected in credentials");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!username || !password)
+    grd_settings_get_rdp_credentials (settings, &old_username, &old_password, NULL);
+
+  if (!username)
+    username = g_steal_pointer (&old_username);
+
+  if (!password)
+    password = g_steal_pointer (&old_password);
+
+  if (!grd_settings_set_rdp_credentials (settings, username, password, &error))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "Failed to set credentials: %s", error->message);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  grd_dbus_remote_desktop_rdp_server_complete_set_credentials (rdp_server_interface,
+                                                               invocation);
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
 static void
 export_rdp_server_interface (GrdDaemon *daemon)
 {
@@ -185,6 +261,13 @@ export_rdp_server_interface (GrdDaemon *daemon)
   g_object_bind_property (settings, "rdp-view-only",
                           rdp_server_interface, "view-only",
                           G_BINDING_SYNC_CREATE);
+
+  g_signal_connect_object (rdp_server_interface, "handle-get-credentials",
+                           G_CALLBACK (on_handle_get_rdp_credentials),
+                           daemon, 0);
+  g_signal_connect_object (rdp_server_interface, "handle-set-credentials",
+                           G_CALLBACK (on_handle_set_rdp_credentials),
+                           daemon, 0);
 
   g_dbus_interface_skeleton_export (
     G_DBUS_INTERFACE_SKELETON (rdp_server_interface),

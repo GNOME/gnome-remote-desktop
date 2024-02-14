@@ -33,6 +33,14 @@
     <property name="TlsKey" type="s" access="read"/>
     <property name="ViewOnly" type="b" access="read"/>
 
+    <method name="GetCredentials">
+      <arg name="credentials" direction="out" type="a{sv}"/>
+    </method>
+
+    <method name="SetCredentials">
+      <arg name="credentials" direction="in" type="a{sv}"/>
+    </method>
+
     <!--
         Binding:
 
