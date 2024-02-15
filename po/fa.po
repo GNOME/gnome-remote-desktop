@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2024-01-15 13:27+0000\n"
-"PO-Revision-Date: 2024-01-18 03:44+0330\n"
+"issues/\n"
+"POT-Creation-Date: 2024-01-30 20:40+0000\n"
+"PO-Revision-Date: 2024-02-16 01:03+0330\n"
 "Last-Translator: Danial Behzadi <dani.behzi@ubuntu.com>\n"
 "Language-Team: Persian <fa@li.org>\n"
 "Language: fa\n"
@@ -18,10 +18,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-DamnedLies-Scope: partial\n"
 "X-Generator: Poedit 3.4.2\n"
-
-#: src/grd-daemon.c:900
-msgid "GNOME Remote Desktop"
-msgstr "میزکار دوردست گنوم"
 
 #: src/grd-ctl.c:59
 #, c-format
@@ -129,6 +125,74 @@ msgstr ""
 "بی‌سر\n"
 "  --system                                   - پیکربندی خدمت سامانه\n"
 "  --help                                     - چاپ این متن راهنما\n"
+
+#: src/grd-daemon.c:940
+msgid "GNOME Remote Desktop"
+msgstr "میزکار دوردست گنوم"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "این اتّصال ناامن است"
+
+#: src/grd-daemon-handover.c:348
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b><i>use redirection server name:i:1</i></b> in the RDP "
+"config file."
+msgstr ""
+"می‌خواهید با اتّصالی ناامن ادامه دهید؟\n"
+"برای امن کردنش <b><i>use redirection server name:i:1</i></b> را در پروندهٔ "
+"پیکربندی RDP تنظیم کنید."
+
+#: src/grd-daemon-handover.c:352
+#, c-format
+msgid "Disconnect"
+msgstr "قطع"
+
+#: src/grd-daemon-handover.c:353
+#, c-format
+msgid "Continue"
+msgstr "ادامه"
+
+#: src/grd-daemon-user.c:96
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "درگاه هم‌رسانی میزکار تغییر کرد"
+
+#: src/grd-daemon-user.c:98
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"درگاه هم‌رسانی میزکار از <b>%i</b> به <b>%i</b> تغییر کرد.\n"
+"به این دلیلی که خدمت نشست‌های دوردست فعّال شده و اولویتی بالاتر برای استفاده از "
+"درگاه <b>%i</b> دارد."
+
+#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "پذیرش"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "می‌خواهید میزکارتان را هم‌رسانی کنید؟"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your desktop."
+msgstr ""
+"کاربری روی رایانهٔ «%s» در تلاش برای دیدن یا واپایش میزکارتان از راه دور است."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "رد"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "The port used by the RDP server"
@@ -298,20 +362,3 @@ msgstr ""
 "مجازی‌ جدید و استفاده از آن برای نشست میزکار دوردست. وضوح ابتدایی این نمایشگر "
 "مجازی روی ۱۹۲۰×۱۰۸۰ تنظیم شده. کارخواه‌ها می‌توانند با به‌روز رسانی‌های بعدی "
 "پیکربندی نمایشگر، وضوع ابتدایی را پایمال کنند."
-
-#, c-format
-#~ msgid "Do you want to share your desktop?"
-#~ msgstr "می‌خواهید میزکارتان را هم‌رسانی کنید؟"
-
-#, c-format
-#~ msgid ""
-#~ "A user on the computer '%s' is trying to remotely view or control your "
-#~ "desktop."
-#~ msgstr ""
-#~ "کاربری روی رایانهٔ «%s» در تلاش برای دیدن یا واپایش میزکارتان از راه دور است."
-
-#~ msgid "Refuse"
-#~ msgstr "رد"
-
-#~ msgid "Accept"
-#~ msgstr "پذیرش"
