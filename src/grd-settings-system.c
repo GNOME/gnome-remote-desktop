@@ -142,8 +142,44 @@ write_int (GrdSettingsSystem *settings_system,
                           value);
 }
 
+static void
+read_boolean (GrdSettingsSystem *settings_system,
+              GKeyFile          *key_file,
+              const char        *group,
+              const char        *key,
+              const char        *settings_name)
+{
+  gboolean value = FALSE;
+  g_autoptr (GError) error = NULL;
+
+  value = g_key_file_get_boolean (key_file, group, key, &error);
+  if (error)
+    return;
+
+  g_object_set (G_OBJECT (settings_system), settings_name, value, NULL);
+}
+
+static void
+write_boolean (GrdSettingsSystem *settings_system,
+               GKeyFile          *key_file,
+               const char        *group,
+               const char        *key,
+               const char        *settings_name)
+{
+  gboolean value = FALSE;
+
+  g_object_get (G_OBJECT (settings_system), settings_name, &value, NULL);
+
+  g_key_file_set_boolean (key_file,
+                          group,
+                          key,
+                          value);
+}
+
+
 static const FileSetting rdp_file_settings[] =
 {
+  { "enabled", "rdp-enabled", read_boolean, write_boolean },
   { "tls-cert", "rdp-server-cert-path", read_filename, write_string },
   { "tls-key", "rdp-server-key-path", read_filename, write_string },
   { "port", "rdp-port", read_int, write_int },

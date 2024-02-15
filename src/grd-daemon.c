@@ -43,6 +43,7 @@
 #include "grd-dbus-remote-desktop.h"
 #include "grd-private.h"
 #include "grd-rdp-server.h"
+#include "grd-settings-system.h"
 #include "grd-settings-user.h"
 #include "grd-utils.h"
 #include "grd-vnc-server.h"
@@ -176,6 +177,36 @@ unexport_remote_desktop_interface (GrdDaemon *daemon)
 }
 
 #ifdef HAVE_RDP
+static gboolean
+on_handle_enable_rdp (GrdDBusRemoteDesktopRdpServer *rdp_server_interface,
+                      GDBusMethodInvocation         *invocation,
+                      GrdDaemon                     *daemon)
+{
+  GrdContext *context = grd_daemon_get_context (daemon);
+  GrdSettings *settings = grd_context_get_settings (context);
+
+  g_object_set (G_OBJECT (settings), "rdp-enabled", TRUE, NULL);
+
+  grd_dbus_remote_desktop_rdp_server_complete_enable (rdp_server_interface,
+                                                      invocation);
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
+static gboolean
+on_handle_disable_rdp (GrdDBusRemoteDesktopRdpServer *rdp_server_interface,
+                       GDBusMethodInvocation         *invocation,
+                       GrdDaemon                     *daemon)
+{
+  GrdContext *context = grd_daemon_get_context (daemon);
+  GrdSettings *settings = grd_context_get_settings (context);
+
+  g_object_set (G_OBJECT (settings), "rdp-enabled", FALSE, NULL);
+
+  grd_dbus_remote_desktop_rdp_server_complete_disable (rdp_server_interface,
+                                                       invocation);
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
 static gboolean
 on_handle_get_rdp_credentials (GrdDBusRemoteDesktopRdpServer *rdp_server_interface,
                                GDBusMethodInvocation         *invocation,
@@ -365,6 +396,12 @@ export_rdp_server_interface (GrdDaemon *daemon)
                           rdp_server_interface, "view-only",
                           G_BINDING_SYNC_CREATE);
 
+  g_signal_connect_object (rdp_server_interface, "handle-enable",
+                           G_CALLBACK (on_handle_enable_rdp),
+                           daemon, 0);
+  g_signal_connect_object (rdp_server_interface, "handle-disable",
+                           G_CALLBACK (on_handle_disable_rdp),
+                           daemon, 0);
   g_signal_connect_object (rdp_server_interface, "handle-get-credentials",
                            G_CALLBACK (on_handle_get_rdp_credentials),
                            daemon, 0);
@@ -918,7 +955,8 @@ grd_daemon_startup (GApplication *app)
   export_services_status (daemon);
 
 #ifdef HAVE_RDP
-  if (GRD_IS_SETTINGS_USER (settings))
+  if (GRD_IS_SETTINGS_USER (settings) ||
+      GRD_IS_SETTINGS_SYSTEM (settings))
     {
       g_signal_connect (settings, "notify::rdp-enabled",
                         G_CALLBACK (on_rdp_enabled_changed),

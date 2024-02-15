@@ -33,6 +33,10 @@
     <property name="TlsKey" type="s" access="read"/>
     <property name="ViewOnly" type="b" access="read"/>
 
+    <method name="Enable" />
+
+    <method name="Disable" />
+
     <method name="GetCredentials">
       <arg name="credentials" direction="out" type="a{sv}"/>
     </method>
