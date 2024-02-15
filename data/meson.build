@@ -87,3 +87,11 @@ configure_file(input: 'org.gnome.remotedesktop.configure-system-daemon.policy.in
                  'bindir': bindir,
                },
                install_dir: join_paths(datadir, 'polkit-1', 'actions'))
+
+configure_file(input: 'org.gnome.RemoteDesktop.service.in',
+               output: 'org.gnome.RemoteDesktop.service',
+               configuration: {
+                 'libexecdir': libexecdir,
+                 'GRD_USERNAME': grd_username,
+               },
+               install_dir: dbus_system_services_dir)

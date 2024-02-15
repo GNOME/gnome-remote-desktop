@@ -1,6 +1,6 @@
 project('gnome-remote-desktop', 'c',
         version: '46.beta',
-        meson_version: '>= 0.57.0',
+        meson_version: '>= 0.58.0',
         default_options: ['warning_level=1',
                           'buildtype=debugoptimized'])
 
@@ -70,6 +70,11 @@ mandir = join_paths(prefix, get_option('mandir'))
 schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
 desktopdir = join_paths(datadir, 'applications')
 dbus_sys_dir = (get_option('dbus_sys_dir') != '') ? get_option('dbus_sys_dir') : join_paths(datadir, 'dbus-1', 'system.d')
+
+dbus_dep = dependency('dbus-1', required: false)
+dbus_system_services_dir = dbus_dep.get_variable(datadir / 'dbus-1' / 'system-services',
+                                                 pkgconfig: 'system_bus_services_dir',
+                                                 pkgconfig_define: ['datadir', datadir])
 
 grd_datadir = join_paths(datadir, 'gnome-remote-desktop')
 
