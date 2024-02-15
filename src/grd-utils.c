@@ -24,6 +24,10 @@
 
 #include "grd-utils.h"
 
+#include <glib/gstdio.h>
+#include <gio/gunixinputstream.h>
+#include <gio/gunixfdlist.h>
+
 #include "grd-rdp-server.h"
 #include "grd-vnc-server.h"
 
@@ -221,4 +225,67 @@ out:
     }
 
   return is_bound;
+}
+
+void
+grd_rewrite_path_to_user_data_dir (char       **path,
+                                   const char  *subdir,
+                                   const char  *fallback_path)
+{
+  const char *input_path = NULL;
+  g_autofree char *basename = NULL;
+  g_autofree char *output_path = NULL;
+
+  g_assert (path);
+  g_assert (subdir);
+  g_assert (fallback_path);
+  g_assert (strstr (subdir, "..") == NULL);
+
+  input_path = *path;
+
+  if (!input_path ||
+      input_path[0] == '\0' ||
+      G_IS_DIR_SEPARATOR (input_path[strlen (input_path) - 1]))
+    input_path = fallback_path;
+
+  basename = g_path_get_basename (input_path);
+
+  g_assert (!G_IS_DIR_SEPARATOR (basename[0]));
+
+  output_path =  g_build_filename (g_get_user_data_dir (),
+                                   "gnome-remote-desktop",
+                                   subdir,
+                                   basename,
+                                   NULL);
+
+  g_free (*path);
+  *path = g_steal_pointer (&output_path);
+}
+
+gboolean
+grd_write_fd_to_file (int            fd,
+                      const char    *filename,
+                      GCancellable  *cancellable,
+                      GError       **error)
+{
+  g_autoptr (GInputStream) input_stream = NULL;
+  g_autoptr (GFileOutputStream) output_stream = NULL;
+  g_autoptr (GFile) file = NULL;
+  g_autofree char *dir = g_path_get_dirname (filename);
+
+  g_mkdir_with_parents (dir, 0755);
+
+  file = g_file_new_for_path (filename);
+
+  input_stream = G_INPUT_STREAM (g_unix_input_stream_new (fd, FALSE));
+  output_stream = g_file_replace (file, NULL, TRUE, G_FILE_CREATE_PRIVATE, NULL, error);
+
+  if (!output_stream)
+    return FALSE;
+
+  return g_output_stream_splice (G_OUTPUT_STREAM(output_stream), input_stream,
+                                 G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE |
+                                 G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
+                                 cancellable,
+                                 error);
 }

@@ -41,6 +41,12 @@
       <arg name="credentials" direction="in" type="a{sv}"/>
     </method>
 
+    <method name="ImportCertificate">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
+      <arg name="Certificate" type="(sh)" direction="in"/>
+      <arg name="PrivateKey" type="(sh)" direction="in"/>
+    </method>
+
     <!--
         Binding:
 

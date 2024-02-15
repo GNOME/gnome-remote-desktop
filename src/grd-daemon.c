@@ -24,6 +24,10 @@
 
 #include "grd-daemon.h"
 
+#ifdef HAVE_RDP
+#include <freerdp/freerdp.h>
+#endif
+
 #include <gio/gio.h>
 #include <glib-unix.h>
 #include <glib/gi18n.h>
@@ -40,9 +44,11 @@
 #include "grd-private.h"
 #include "grd-rdp-server.h"
 #include "grd-settings-user.h"
+#include "grd-utils.h"
 #include "grd-vnc-server.h"
 
 #define RDP_SERVER_RESTART_DELAY_MS 3000
+#define RDP_SERVER_USER_CERT_SUBDIR "certificates"
 
 enum
 {
@@ -86,6 +92,11 @@ typedef struct _GrdDaemonPrivate
 } GrdDaemonPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
+
+#ifdef HAVE_RDP
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (rdpCertificate, freerdp_certificate_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (rdpPrivateKey, freerdp_key_free)
+#endif
 
 GCancellable *
 grd_daemon_get_cancellable (GrdDaemon *daemon)
@@ -237,6 +248,94 @@ on_handle_set_rdp_credentials (GrdDBusRemoteDesktopRdpServer *rdp_server_interfa
   return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
 
+static gboolean
+on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interface,
+                              GDBusMethodInvocation         *invocation,
+                              GUnixFDList                   *fd_list,
+                              GVariant                      *certificate,
+                              GVariant                      *private_key,
+                              gpointer                       user_data)
+{
+  GrdDaemon *daemon = GRD_DAEMON (user_data);
+  GrdContext *context = grd_daemon_get_context (daemon);
+  GrdSettings *settings = grd_context_get_settings (context);
+  GCancellable *cancellable =
+    grd_daemon_get_cancellable (daemon);
+  g_autofree gchar *certificate_filename = NULL;
+  g_autofree char *key_filename = NULL;
+  g_autoptr (GError) error = NULL;
+  int certificate_fd_index;
+  int key_fd_index;
+  g_autofd int certificate_fd = -1;
+  g_autofd int key_fd = -1;
+  g_autoptr (rdpCertificate) rdp_certificate = NULL;
+  g_autoptr (rdpPrivateKey) rdp_private_key = NULL;
+
+  g_variant_get (certificate, "(sh)", &certificate_filename, &certificate_fd_index);
+  g_variant_get (private_key, "(sh)", &key_filename, &key_fd_index);
+
+  certificate_fd = g_unix_fd_list_get (fd_list, certificate_fd_index, &error);
+  if (certificate_fd == -1)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  key_fd = g_unix_fd_list_get (fd_list, key_fd_index, &error);
+  if (key_fd == -1)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  grd_rewrite_path_to_user_data_dir (&certificate_filename, RDP_SERVER_USER_CERT_SUBDIR, "rdp-tls.crt");
+  if (!grd_write_fd_to_file (certificate_fd, certificate_filename, cancellable, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  rdp_certificate = freerdp_certificate_new_from_file (certificate_filename);
+
+  if (!rdp_certificate)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_IO_ERROR,
+                                             G_IO_ERROR_INVALID_DATA,
+                                             "Invalid certificate");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  grd_rewrite_path_to_user_data_dir (&key_filename, RDP_SERVER_USER_CERT_SUBDIR, "rdp-tls.key");
+  if (!grd_write_fd_to_file (key_fd, key_filename, cancellable, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  rdp_private_key = freerdp_key_new_from_file (key_filename);
+
+  if (!rdp_private_key)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_IO_ERROR,
+                                             G_IO_ERROR_INVALID_DATA,
+                                             "Invalid private key");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+
+  g_object_set (settings,
+                "rdp-server-cert-path", certificate_filename,
+                "rdp-server-key-path", key_filename,
+                NULL);
+
+  grd_dbus_remote_desktop_rdp_server_complete_import_certificate (rdp_server_interface,
+                                                                  invocation,
+                                                                  fd_list);
+  return G_DBUS_METHOD_INVOCATION_HANDLED;
+}
+
 static void
 export_rdp_server_interface (GrdDaemon *daemon)
 {
@@ -267,6 +366,9 @@ export_rdp_server_interface (GrdDaemon *daemon)
                            daemon, 0);
   g_signal_connect_object (rdp_server_interface, "handle-set-credentials",
                            G_CALLBACK (on_handle_set_rdp_credentials),
+                           daemon, 0);
+  g_signal_connect_object (rdp_server_interface, "handle-import-certificate",
+                           G_CALLBACK (on_handle_import_certificate),
                            daemon, 0);
 
   g_dbus_interface_skeleton_export (

@@ -63,26 +63,6 @@ grd_settings_system_new (void)
 }
 
 static void
-read_string (GrdSettingsSystem *settings_system,
-             GKeyFile          *key_file,
-             const char        *group,
-             const char        *key,
-             const char        *settings_name)
-{
-  g_autofree char *value = NULL;
-  g_autoptr (GError) error = NULL;
-
-  value = g_key_file_get_string (key_file,
-                                 group,
-                                 key,
-                                 &error);
-  if (error && error->code != G_KEY_FILE_ERROR_KEY_NOT_FOUND)
-    return;
-
-  g_object_set (G_OBJECT (settings_system), settings_name, value, NULL);
-}
-
-static void
 write_string (GrdSettingsSystem *settings_system,
               GKeyFile          *key_file,
               const char        *group,
@@ -97,6 +77,32 @@ write_string (GrdSettingsSystem *settings_system,
                          group,
                          key,
                          value);
+}
+
+static void
+read_filename (GrdSettingsSystem *settings_system,
+               GKeyFile          *key_file,
+               const char        *group,
+               const char        *key,
+               const char        *settings_name)
+{
+  g_autofree char *value = NULL;
+  g_autoptr (GError) error = NULL;
+
+  value = g_key_file_get_string (key_file,
+                                 group,
+                                 key,
+                                 &error);
+  if (error && error->code != G_KEY_FILE_ERROR_KEY_NOT_FOUND)
+    return;
+
+  if (!value)
+    return;
+
+  if (!g_file_test (value, G_FILE_TEST_IS_REGULAR))
+    return;
+
+  g_object_set (G_OBJECT (settings_system), settings_name, value, NULL);
 }
 
 static void
@@ -138,8 +144,8 @@ write_int (GrdSettingsSystem *settings_system,
 
 static const FileSetting rdp_file_settings[] =
 {
-  { "tls-cert", "rdp-server-cert-path", read_string, write_string },
-  { "tls-key", "rdp-server-key-path", read_string, write_string },
+  { "tls-cert", "rdp-server-cert-path", read_filename, write_string },
+  { "tls-key", "rdp-server-key-path", read_filename, write_string },
   { "port", "rdp-port", read_int, write_int },
 };
 
