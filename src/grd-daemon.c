@@ -91,6 +91,10 @@ typedef struct _GrdDaemonPrivate
 #endif
 } GrdDaemonPrivate;
 
+#ifdef HAVE_RDP
+static void maybe_start_rdp_server (GrdDaemon *daemon);
+#endif
+
 G_DEFINE_TYPE_WITH_PRIVATE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
 
 #ifdef HAVE_RDP
@@ -394,9 +398,35 @@ unexport_rdp_server_interface (GrdDaemon *daemon)
 }
 
 static void
+start_rdp_server_when_ready (GrdDaemon *daemon,
+                             gboolean   should_start_when_ready)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdSettings *settings = grd_context_get_settings (priv->context);
+
+  g_signal_handlers_disconnect_by_func (G_OBJECT (settings),
+                                        G_CALLBACK (maybe_start_rdp_server),
+                                        daemon);
+
+  if (!should_start_when_ready)
+    return;
+
+  g_signal_connect_object (G_OBJECT (settings),
+                           "notify::rdp-server-cert",
+                           G_CALLBACK (maybe_start_rdp_server),
+                           daemon, G_CONNECT_SWAPPED);
+  g_signal_connect_object (G_OBJECT (settings),
+                           "notify::rdp-server-key",
+                           G_CALLBACK (maybe_start_rdp_server),
+                           daemon, G_CONNECT_SWAPPED);
+}
+
+static void
 stop_rdp_server (GrdDaemon *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  start_rdp_server_when_ready (daemon, FALSE);
 
   if (!priv->rdp_server)
     return;
@@ -419,39 +449,59 @@ static void
 start_rdp_server (GrdDaemon *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  g_autoptr (GError) error = NULL;
+
+  g_assert (!priv->rdp_server);
+
+  priv->rdp_server = grd_rdp_server_new (priv->context);
+  g_signal_connect (priv->rdp_server, "binding-failed",
+                    G_CALLBACK (on_rdp_server_binding_failed), daemon);
+  if (!grd_rdp_server_start (priv->rdp_server, &error))
+    {
+      g_warning ("Failed to start RDP server: %s\n", error->message);
+      stop_rdp_server (daemon);
+    }
+  else
+    {
+      g_signal_emit (daemon, signals[RDP_SERVER_STARTED], 0);
+      g_message ("RDP server started");
+    }
+}
+
+static void
+maybe_start_rdp_server (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   GrdSettings *settings = grd_context_get_settings (priv->context);
   g_autoptr (GError) error = NULL;
   g_autofree char *certificate = NULL;
   g_autofree char *key = NULL;
+  gboolean rdp_enabled = FALSE;
 
   if (priv->rdp_server)
     return;
 
+  if (!GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
+    return;
+
   g_object_get (G_OBJECT (settings),
+                "rdp-enabled", &rdp_enabled,
                 "rdp-server-cert", &certificate,
                 "rdp-server-key", &key,
                 NULL);
 
+  if (!rdp_enabled)
+    return;
+
   if ((certificate && key) ||
       grd_context_get_runtime_mode (priv->context) == GRD_RUNTIME_MODE_HANDOVER)
     {
-      priv->rdp_server = grd_rdp_server_new (priv->context);
-      g_signal_connect (priv->rdp_server, "binding-failed",
-                        G_CALLBACK (on_rdp_server_binding_failed), daemon);
-      if (!grd_rdp_server_start (priv->rdp_server, &error))
-        {
-          g_warning ("Failed to start RDP server: %s\n", error->message);
-          stop_rdp_server (daemon);
-        }
-      else
-        {
-          g_signal_emit (daemon, signals[RDP_SERVER_STARTED], 0);
-          g_message ("RDP server started");
-        }
+      start_rdp_server (daemon);
     }
   else
     {
-      g_warning ("RDP TLS certificate and key not configured properly");
+      g_message ("RDP TLS certificate and key not yet configured properly");
+      start_rdp_server_when_ready (daemon, TRUE);
     }
 }
 
@@ -463,8 +513,7 @@ restart_rdp_server (gpointer user_data)
 
   priv->restart_rdp_server_source_id = 0;
 
-  if (GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
-    start_rdp_server (daemon);
+  maybe_start_rdp_server (daemon);
 
   return G_SOURCE_REMOVE;
 }
@@ -634,8 +683,7 @@ grd_daemon_maybe_enable_services (GrdDaemon *daemon)
                 NULL);
 
 #ifdef HAVE_RDP
-  if (rdp_enabled)
-    start_rdp_server (daemon);
+  maybe_start_rdp_server (daemon);
 #endif
 
 #ifdef HAVE_VNC
@@ -793,7 +841,6 @@ on_rdp_enabled_changed (GrdSettings *settings,
                         GParamSpec  *pspec,
                         GrdDaemon   *daemon)
 {
-  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
   gboolean rdp_enabled;
 
   if (!GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
@@ -801,14 +848,9 @@ on_rdp_enabled_changed (GrdSettings *settings,
 
   g_object_get (G_OBJECT (settings), "rdp-enabled", &rdp_enabled, NULL);
   if (rdp_enabled)
-    {
-      g_return_if_fail (!priv->rdp_server);
-      start_rdp_server (daemon);
-    }
+    maybe_start_rdp_server (daemon);
   else
-    {
-      stop_rdp_server (daemon);
-    }
+    stop_rdp_server (daemon);
 }
 #endif /* HAVE_RDP */
 
