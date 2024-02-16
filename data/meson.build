@@ -85,6 +85,7 @@ configure_file(input: 'org.gnome.remotedesktop.configure-system-daemon.policy.in
                output: 'org.gnome.remotedesktop.configure-system-daemon.policy',
                configuration: {
                  'bindir': bindir,
+                 'GRD_USERNAME': grd_username,
                },
                install_dir: join_paths(datadir, 'polkit-1', 'actions'))
 

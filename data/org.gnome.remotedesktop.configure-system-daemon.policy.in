@@ -17,6 +17,7 @@
     </defaults>
     <annotate key="org.freedesktop.policykit.imply">org.freedesktop.systemd1.manage-units org.freedesktop.systemd1.manage-unit-files</annotate>
     <annotate key="org.freedesktop.policykit.exec.path">@bindir@/grdctl</annotate>
+    <annotate key="org.freedesktop.policykit.owner">unix-user:@GRD_USERNAME@</annotate>
   </action>
 
 </policyconfig>

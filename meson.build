@@ -8,6 +8,7 @@ cuda_req = '>= 11.1.5.0'
 epoxy_req = '>= 1.4'
 freerdp_req = '>= 3.1.0'
 fuse_req = '>= 3.9.1'
+polkit_req = '>= 122'
 xkbcommon_req = '>= 1.0.0'
 libei_req = '>= 1.2.0'
 
@@ -53,6 +54,7 @@ if have_rdp
   freerdp_server_dep = dependency('freerdp-server3', version: freerdp_req)
   fuse_dep = dependency('fuse3', version: fuse_req)
   opus_dep = dependency('opus')
+  polkit_dep = dependency('polkit-gobject-1', version: polkit_req)
   winpr_dep = dependency('winpr3', version: freerdp_req)
   xkbcommon_dep = dependency('xkbcommon', version: xkbcommon_req)
 endif

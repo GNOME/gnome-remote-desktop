@@ -24,6 +24,7 @@ stages:
       dnf install -y 'pkgconfig(ffnvcodec)' &&
       dnf install -y 'pkgconfig(fuse3)' &&
       dnf install -y 'pkgconfig(fdk-aac)' &&
+      dnf install -y 'pkgconfig(polkit-gobject-1)' &&
       dnf install -y 'pkgconfig(opus)' &&
       dnf install -y 'pkgconfig(tss2-esys)' \
                      'pkgconfig(tss2-mu)' 'pkgconfig(tss2-rc)' \
