@@ -10,7 +10,6 @@ if have_rdp
                  output: 'grd.conf',
                  configuration: {
                    'GRD_CUSTOM_CONF': grd_custom_conf,
-                   'GRD_CONFDIR': grd_confdir,
                  },
                  install_dir: grd_datadir)
 
