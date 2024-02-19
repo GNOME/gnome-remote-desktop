@@ -36,6 +36,7 @@
 #include "grd-rdp-server.h"
 #include "grd-session-rdp.h"
 #include "grd-settings.h"
+#include "grd-settings-system.h"
 
 #define MAX_HANDOVER_WAIT_TIME_MS (30 * 1000)
 #define GRD_CONFIGURE_SYSTEM_DAEMON_POLKIT_ACTION "org.gnome.remotedesktop.configure-system-daemon"
@@ -1096,8 +1097,11 @@ grd_daemon_system_startup (GApplication *app)
   GCancellable *cancellable =
     grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
   GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_system));
+  GrdSettingsSystem *settings_system = GRD_SETTINGS_SYSTEM (grd_context_get_settings (context));
   GrdDBusRemoteDesktopRdpServer *rdp_server_interface;
   g_autoptr (GError) error = NULL;
+
+  grd_settings_system_use_local_state (settings_system);
 
   daemon_system->authority = polkit_authority_get_sync (NULL, &error);
   if (!daemon_system->authority)
