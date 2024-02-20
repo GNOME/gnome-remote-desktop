@@ -33,6 +33,7 @@
 #include "grd-settings-user.h"
 
 #define GRD_SYSTEMD_SERVICE "gnome-remote-desktop.service"
+static gboolean performing_system_configuration = FALSE;
 
 typedef struct _SubCommand
 {
@@ -104,9 +105,9 @@ process_options (GrdSettings       *settings,
 }
 
 gboolean
-start_systemd_unit (GBusType     bus_type,
-                    const char  *unit,
-                    GError     **error)
+enable_systemd_unit (GBusType     bus_type,
+                     const char  *unit,
+                     GError     **error)
 {
   g_autoptr (GDBusConnection) connection = NULL;
   g_autoptr (GVariant) reply = NULL;
@@ -127,13 +128,30 @@ start_systemd_unit (GBusType     bus_type,
                                        G_DBUS_CALL_FLAGS_NO_AUTO_START,
                                        -1, NULL, error);
 
+  if (!reply)
+    return FALSE;
+
+  reply = g_dbus_connection_call_sync (connection,
+                                       "org.freedesktop.systemd1",
+                                       "/org/freedesktop/systemd1",
+                                       "org.freedesktop.systemd1.Manager",
+                                       "EnableUnitFiles",
+                                       g_variant_new ("(^asbb)",
+                                                      (const char*[]) { unit, NULL },
+                                                      FALSE, FALSE),
+                                       (GVariantType *) "(ba(sss))",
+                                       G_DBUS_CALL_FLAGS_NONE,
+                                       -1,
+                                       NULL,
+                                       error);
+
   return reply != NULL;
 }
 
 gboolean
-stop_systemd_unit (GBusType     bus_type,
-                   const char  *unit,
-                   GError     **error)
+disable_systemd_unit (GBusType     bus_type,
+                      const char  *unit,
+                      GError     **error)
 {
   g_autoptr (GDBusConnection) connection = NULL;
   g_autoptr (GVariant) reply = NULL;
@@ -153,6 +171,23 @@ stop_systemd_unit (GBusType     bus_type,
                                        NULL,
                                        G_DBUS_CALL_FLAGS_NO_AUTO_START,
                                        -1, NULL, error);
+
+  if (!reply)
+    return FALSE;
+
+  reply = g_dbus_connection_call_sync (connection,
+                                       "org.freedesktop.systemd1",
+                                       "/org/freedesktop/systemd1",
+                                       "org.freedesktop.systemd1.Manager",
+                                       "DisableUnitFiles",
+                                       g_variant_new ("(^asb)",
+                                                      (const char*[]) { unit, NULL },
+                                                      FALSE),
+                                       (GVariantType *) "(a(sss))",
+                                       G_DBUS_CALL_FLAGS_NONE,
+                                       -1,
+                                       NULL,
+                                       error);
 
   return reply != NULL;
 }
@@ -255,14 +290,13 @@ rdp_enable (GrdSettings  *settings,
             char        **argv,
             GError      **error)
 {
-  if (GRD_IS_SETTINGS_SYSTEM (settings))
-    {
-      return start_systemd_unit (G_BUS_TYPE_SYSTEM,
-                                 GRD_SYSTEMD_SERVICE,
-                                 error);
-    }
+  if (performing_system_configuration)
+    return enable_systemd_unit (G_BUS_TYPE_SYSTEM,
+                                GRD_SYSTEMD_SERVICE,
+                                error);
 
   g_object_set (G_OBJECT (settings), "rdp-enabled", TRUE, NULL);
+
   return TRUE;
 }
 
@@ -272,14 +306,13 @@ rdp_disable (GrdSettings  *settings,
              char        **argv,
              GError      **error)
 {
-  if (GRD_IS_SETTINGS_SYSTEM (settings))
-    {
-      return stop_systemd_unit (G_BUS_TYPE_SYSTEM,
-                                GRD_SYSTEMD_SERVICE,
-                                error);
-    }
+  if (performing_system_configuration)
+    return disable_systemd_unit (G_BUS_TYPE_SYSTEM,
+                                 GRD_SYSTEMD_SERVICE,
+                                 error);
 
   g_object_set (G_OBJECT (settings), "rdp-enabled", FALSE, NULL);
+
   return TRUE;
 }
 
@@ -893,7 +926,6 @@ main (int   argc,
   int i;
   int arg_shift;
   int exit_code = EX_USAGE;
-  gboolean is_switching_rdp = FALSE;
   struct passwd *pw;
 
   g_set_prgname (argv[0]);
@@ -927,15 +959,7 @@ main (int   argc,
 
   arg_shift = i + 1;
 
-  if (argc > i + 1)
-    {
-      is_switching_rdp = (strcmp (argv[i], "rdp") == 0 &&
-                          strcmp (argv[i + 1], "enable") == 0) ||
-                         (strcmp (argv[i], "rdp") == 0 &&
-                          strcmp (argv[i + 1], "disable") == 0);
-    }
-
-  if (runtime_mode == GRD_RUNTIME_MODE_SYSTEM && !is_switching_rdp)
+  if (runtime_mode == GRD_RUNTIME_MODE_SYSTEM)
     {
       g_autoptr (GStrvBuilder) builder = NULL;
       g_auto (GStrv) new_argv = NULL;
@@ -981,7 +1005,10 @@ main (int   argc,
           exit_code = EXIT_SUCCESS;
         }
 
-      goto done;
+      if (exit_code != EXIT_SUCCESS)
+        goto done;
+
+      performing_system_configuration = TRUE;
     }
 
   pw = getpwnam (GRD_USERNAME);
