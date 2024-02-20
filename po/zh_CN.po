@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2023-11-23 13:27+0000\n"
-"PO-Revision-Date: 2023-11-24 11:23+0800\n"
+"issues/\n"
+"POT-Creation-Date: 2024-01-30 20:40+0000\n"
+"PO-Revision-Date: 2024-02-20 16:26+0800\n"
 "Last-Translator: Boyuan Yang <073plan@gmail.com>\n"
 "Language-Team: Chinese - China <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -18,42 +18,18 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.1\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: src/grd-daemon.c:824
-msgid "GNOME Remote Desktop"
-msgstr "GNOME 远程桌面"
-
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "您是否想要分享您的桌面？"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr "计算机“%s”上的一个用户正在尝试远程查看或控制您的桌面。"
-
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "拒绝"
-
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "接受"
-
-#: src/grd-ctl.c:53
+#: src/grd-ctl.c:59
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "使用：%s [选项…] 命令 [子命令]…\n"
 
-#: src/grd-ctl.c:421
+#: src/grd-ctl.c:579
 msgid "Commands:\n"
 msgstr "命令：\n"
 
-#: src/grd-ctl.c:426
+#: src/grd-ctl.c:584
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -97,7 +73,7 @@ msgstr ""
 "                                               另外的端口\n"
 "\n"
 
-#: src/grd-ctl.c:450
+#: src/grd-ctl.c:608
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -134,20 +110,89 @@ msgstr ""
 "                                               不同的端口\n"
 "\n"
 
-#: src/grd-ctl.c:470
+#: src/grd-ctl.c:628
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - 显示当前状态\n"
 "\n"
 "选项：\n"
 "  --headless                                 - 使用无头证书存储\n"
+"  --system                                   - 配置系统守护进程\n"
 "  --help                                     - 显示该帮助文本\n"
+
+#: src/grd-daemon.c:940
+msgid "GNOME Remote Desktop"
+msgstr "GNOME 远程桌面"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "此连接不安全"
+
+#: src/grd-daemon-handover.c:348
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
+"RDP config file."
+msgstr ""
+"是否要继续使用不安全的连接？\n"
+"若要确保安全，请在 RDP 配置文件中设置 <b><i>use redirection server name:i:1</"
+"i></b>。"
+
+#: src/grd-daemon-handover.c:352
+#, c-format
+msgid "Disconnect"
+msgstr "断开连接"
+
+#: src/grd-daemon-handover.c:353
+#, c-format
+msgid "Continue"
+msgstr "继续"
+
+#: src/grd-daemon-user.c:96
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "桌面共享端口已更改"
+
+#: src/grd-daemon-user.c:98
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"桌面共享端口已从 <b>%i</b> 更改为 <b>%i</b>。\n"
+"这是由于远程会话服务已激活，并且它具有更高的优先级来使用 <b>%i</b> 端口。"
+
+#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "接受"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "您是否想要分享您的桌面？"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr "计算机“%s”上的一个用户正在尝试远程查看或控制您的桌面。"
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "拒绝"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "The port used by the RDP server"
