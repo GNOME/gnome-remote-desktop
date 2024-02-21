@@ -747,9 +747,7 @@ print_rdp_status (GrdSettings *settings,
                 NULL);
 
   printf ("RDP:\n");
-  if (!GRD_IS_SETTINGS_SYSTEM (settings))
-    printf ("\tStatus: %s\n", status_to_string (enabled, use_colors));
-
+  printf ("\tStatus: %s\n", status_to_string (enabled, use_colors));
   printf ("\tPort: %u\n", port);
   printf ("\tTLS certificate: %s\n", tls_cert);
   printf ("\tTLS key: %s\n", tls_key);
