@@ -294,7 +294,6 @@ grd_settings_system_new (void)
 {
   return g_object_new (GRD_TYPE_SETTINGS_SYSTEM,
                        "runtime-mode", GRD_RUNTIME_MODE_SYSTEM,
-                       "rdp-enabled", TRUE,
                        "rdp-view-only", FALSE,
                        "rdp-screen-share-mode", GRD_RDP_SCREEN_SHARE_MODE_EXTEND,
                        NULL);
