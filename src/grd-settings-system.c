@@ -240,40 +240,40 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
 static void
 grd_settings_system_reload_sources (GrdSettingsSystem *settings_system)
 {
-    g_autoptr (GError) error = NULL;
-    g_autofree char *local_state_conf = grd_settings_system_get_local_state_conf ();
-    const char *paths[] = {
-        [GRD_SETTINGS_SOURCE_TYPE_DEFAULT] = GRD_DEFAULT_CONF,
-        [GRD_SETTINGS_SOURCE_TYPE_CUSTOM] = GRD_CUSTOM_CONF,
-        [GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE] = local_state_conf,
-    };
-    g_autoptr (GKeyFile) key_file = NULL;
-    size_t source_type;
+  g_autoptr (GError) error = NULL;
+  g_autofree char *local_state_conf = grd_settings_system_get_local_state_conf ();
+  const char *paths[] = {
+      [GRD_SETTINGS_SOURCE_TYPE_DEFAULT] = GRD_DEFAULT_CONF,
+      [GRD_SETTINGS_SOURCE_TYPE_CUSTOM] = GRD_CUSTOM_CONF,
+      [GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE] = local_state_conf,
+  };
+  g_autoptr (GKeyFile) key_file = NULL;
+  size_t source_type;
 
-    key_file = g_key_file_new ();
+  key_file = g_key_file_new ();
 
-    for (source_type = GRD_SETTINGS_SOURCE_TYPE_DEFAULT;
-         source_type < NUMBER_OF_GRD_SETTINGS_SOURCES;
-         source_type++)
-      {
-        GrdSettingsSource *source = NULL;
+  for (source_type = GRD_SETTINGS_SOURCE_TYPE_DEFAULT;
+       source_type < NUMBER_OF_GRD_SETTINGS_SOURCES;
+       source_type++)
+    {
+      GrdSettingsSource *source = NULL;
 
-        g_clear_pointer (&settings_system->setting_sources[source_type],
-                         grd_settings_source_free);
+      g_clear_pointer (&settings_system->setting_sources[source_type],
+                       grd_settings_source_free);
 
-        source = grd_settings_source_new (source_type, paths[source_type]);
+      source = grd_settings_source_new (source_type, paths[source_type]);
 
-        if (source != NULL)
-          {
-            merge_descendant_keys (settings_system, key_file, source->key_file);
+      if (source != NULL)
+        {
+          merge_descendant_keys (settings_system, key_file, source->key_file);
 
-            g_signal_connect (source->file_monitor,
-                              "changed", G_CALLBACK (on_file_changed),
-                              settings_system);
+          g_signal_connect (source->file_monitor,
+                            "changed", G_CALLBACK (on_file_changed),
+                            settings_system);
 
-            settings_system->setting_sources[source_type] = g_steal_pointer (&source);
-          }
-      }
+          settings_system->setting_sources[source_type] = g_steal_pointer (&source);
+        }
+    }
 
   g_clear_pointer (&settings_system->key_file, g_key_file_unref);
   settings_system->key_file = g_steal_pointer (&key_file);
