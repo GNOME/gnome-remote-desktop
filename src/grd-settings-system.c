@@ -237,19 +237,32 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
   return TRUE;
 }
 
+static char **
+get_conf_paths (void)
+{
+  g_autofree char *local_state_conf = NULL;
+  char **paths = NULL;
+
+  local_state_conf = grd_settings_system_get_local_state_conf ();
+
+  paths = g_new (char *, NUMBER_OF_GRD_SETTINGS_SOURCES + 1);
+  paths[GRD_SETTINGS_SOURCE_TYPE_DEFAULT] = g_strdup (GRD_DEFAULT_CONF);
+  paths[GRD_SETTINGS_SOURCE_TYPE_CUSTOM] = g_strdup (GRD_CUSTOM_CONF);
+  paths[GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE] = g_steal_pointer (&local_state_conf);
+  paths[NUMBER_OF_GRD_SETTINGS_SOURCES] = NULL;
+
+  return paths;
+}
+
 static void
 grd_settings_system_reload_sources (GrdSettingsSystem *settings_system)
 {
-  g_autoptr (GError) error = NULL;
-  g_autofree char *local_state_conf = grd_settings_system_get_local_state_conf ();
-  const char *paths[] = {
-      [GRD_SETTINGS_SOURCE_TYPE_DEFAULT] = GRD_DEFAULT_CONF,
-      [GRD_SETTINGS_SOURCE_TYPE_CUSTOM] = GRD_CUSTOM_CONF,
-      [GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE] = local_state_conf,
-  };
   g_autoptr (GKeyFile) key_file = NULL;
+  g_autoptr (GError) error = NULL;
+  g_auto (GStrv) paths = NULL;
   size_t source_type;
 
+  paths = get_conf_paths ();
   key_file = g_key_file_new ();
 
   for (source_type = GRD_SETTINGS_SOURCE_TYPE_DEFAULT;
