@@ -139,8 +139,8 @@ merge_descendant_keys (GrdSettingsSystem *settings_system,
                        GKeyFile          *descendant_key_file)
 {
   g_auto (GStrv) groups = NULL;
-  gsize group_count = 0;
-  gsize i, j;
+  size_t group_count = 0;
+  size_t i, j;
 
   g_assert (key_file != NULL);
   g_assert (descendant_key_file != NULL);
@@ -149,7 +149,7 @@ merge_descendant_keys (GrdSettingsSystem *settings_system,
   for (i = 0; i < group_count; i++)
     {
       g_auto (GStrv) keys = NULL;
-      gsize key_count = 0;
+      size_t key_count = 0;
 
       keys = g_key_file_get_keys (descendant_key_file, groups[i], &key_count, NULL);
       for (j = 0; j < key_count; j++)
@@ -168,8 +168,8 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
                       GKeyFile              *key_file_to_prune)
 {
   g_auto (GStrv) groups = NULL;
-  gsize group_count = 0;
-  gsize i, j;
+  size_t group_count = 0;
+  size_t i, j;
 
   if (source_type == GRD_SETTINGS_SOURCE_TYPE_DEFAULT)
     return TRUE;
@@ -182,7 +182,7 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
   for (i = 0; i < group_count; i++)
     {
       g_auto (GStrv) keys = NULL;
-      gsize key_count;
+      size_t key_count;
 
       if (source_type != GRD_SETTINGS_SOURCE_TYPE_CUSTOM)
         g_key_file_remove_comment (key_file_to_prune, groups[i], NULL, NULL);
@@ -191,7 +191,7 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
 
       for (j = 0; j < key_count; j++)
         {
-          g_autofree gchar *value_to_prune = g_key_file_get_value (key_file_to_prune, groups[i], keys[j], NULL);
+          g_autofree char *value_to_prune = g_key_file_get_value (key_file_to_prune, groups[i], keys[j], NULL);
           GrdSettingsSourceType ancestor_type;
           gboolean should_prune_key = FALSE;
 
@@ -208,7 +208,7 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
 
               if (g_key_file_has_key (ancestor_source->key_file, groups[i], keys[j], NULL))
                 {
-                  g_autofree gchar *ancestor_value = g_key_file_get_value (ancestor_source->key_file, groups[i], keys[j], NULL);
+                  g_autofree char *ancestor_value = g_key_file_get_value (ancestor_source->key_file, groups[i], keys[j], NULL);
 
                   if (g_strcmp0 (value_to_prune, ancestor_value) == 0)
                     should_prune_key = TRUE;
@@ -248,7 +248,7 @@ grd_settings_system_reload_sources (GrdSettingsSystem *settings_system)
         [GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE] = local_state_conf,
     };
     g_autoptr (GKeyFile) key_file = NULL;
-    gsize source_type;
+    size_t source_type;
 
     key_file = g_key_file_new ();
 
@@ -282,7 +282,7 @@ grd_settings_system_reload_sources (GrdSettingsSystem *settings_system)
 static void
 grd_settings_system_free_sources (GrdSettingsSystem *settings_system)
 {
-  gsize i;
+  size_t i;
 
   for (i = 0; i < NUMBER_OF_GRD_SETTINGS_SOURCES; i++)
     g_clear_pointer (&settings_system->setting_sources[i],
@@ -437,7 +437,7 @@ on_rdp_setting_changed (GrdSettingsSystem *settings_system,
 {
   g_autoptr (GKeyFile) key_file = NULL;
   g_autofree char *data = NULL;
-  gsize length = 0;
+  size_t length = 0;
   g_autoptr (GError) error = NULL;
   const char *filename;
   GrdSettingsSourceType settings_source_type;
