@@ -83,12 +83,13 @@ static GrdSettingsSource *
 grd_settings_source_new (GrdSettingsSourceType  source_type,
                          const char            *file_path)
 {
+  g_autofree GrdSettingsSource *source = NULL;
+  GKeyFileFlags flags = G_KEY_FILE_NONE;
+  g_autoptr (GKeyFile) key_file = NULL;
   g_autoptr (GError) error = NULL;
   g_autoptr (GFile) file = NULL;
-  g_autofree GrdSettingsSource *source = g_new0 (GrdSettingsSource, 1);
-  g_autoptr (GKeyFile) key_file = NULL;
-  GKeyFileFlags flags = G_KEY_FILE_NONE;
 
+  source = g_new0 (GrdSettingsSource, 1);
   key_file = g_key_file_new ();
 
   if (source_type == GRD_SETTINGS_SOURCE_TYPE_CUSTOM)
@@ -99,14 +100,16 @@ grd_settings_source_new (GrdSettingsSourceType  source_type,
                                    flags,
                                    &error))
     {
-      g_debug ("Failed to load key file from '%s': %s", file_path, error->message);
+      g_debug ("Failed to load key file from '%s': %s",
+               file_path, error->message);
       return NULL;
     }
 
   source->key_file = g_steal_pointer (&key_file);
 
   file = g_file_new_for_path (file_path);
-  source->file_monitor = g_file_monitor_file (file, G_FILE_MONITOR_NONE, NULL, &error);
+  source->file_monitor = g_file_monitor_file (file, G_FILE_MONITOR_NONE,
+                                              NULL, &error);
   if  (!source->file_monitor)
     {
       g_warning ("Failed to monitor file '%s': %s", file_path, error->message);
@@ -130,7 +133,9 @@ grd_settings_source_free (GrdSettingsSource *source)
 static char *
 grd_settings_system_get_local_state_conf (void)
 {
-  return g_build_filename (g_get_user_data_dir (), "gnome-remote-desktop", "grd.conf", NULL);
+  return g_build_filename (g_get_user_data_dir (),
+                           "gnome-remote-desktop", "grd.conf",
+                           NULL);
 }
 
 static void
@@ -151,11 +156,16 @@ merge_descendant_keys (GrdSettingsSystem *settings_system,
       g_auto (GStrv) keys = NULL;
       size_t key_count = 0;
 
-      keys = g_key_file_get_keys (descendant_key_file, groups[i], &key_count, NULL);
+      keys = g_key_file_get_keys (descendant_key_file,
+                                  groups[i], &key_count,
+                                  NULL);
       for (j = 0; j < key_count; j++)
         {
-          g_autofree char *value = g_key_file_get_value (descendant_key_file, groups[i], keys[j], NULL);
+          g_autofree char *value = NULL;
 
+          value = g_key_file_get_value (descendant_key_file,
+                                        groups[i], keys[j],
+                                        NULL);
           if (value)
             g_key_file_set_value (key_file, groups[i], keys[j], value);
         }
@@ -187,18 +197,28 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
       if (source_type != GRD_SETTINGS_SOURCE_TYPE_CUSTOM)
         g_key_file_remove_comment (key_file_to_prune, groups[i], NULL, NULL);
 
-      keys = g_key_file_get_keys (key_file_to_prune, groups[i], &key_count, NULL);
+      keys = g_key_file_get_keys (key_file_to_prune,
+                                  groups[i], &key_count,
+                                  NULL);
 
       for (j = 0; j < key_count; j++)
         {
-          g_autofree char *value_to_prune = g_key_file_get_value (key_file_to_prune, groups[i], keys[j], NULL);
+          g_autofree char *value_to_prune = NULL;
           GrdSettingsSourceType ancestor_type;
           gboolean should_prune_key = FALSE;
 
-          if (source_type != GRD_SETTINGS_SOURCE_TYPE_CUSTOM)
-            g_key_file_remove_comment (key_file_to_prune, groups[i], keys[j], NULL);
+          value_to_prune = g_key_file_get_value (key_file_to_prune,
+                                                 groups[i], keys[j],
+                                                 NULL);
 
-          for (ancestor_type = source_type - 1; ancestor_type >= GRD_SETTINGS_SOURCE_TYPE_DEFAULT; ancestor_type--)
+          if (source_type != GRD_SETTINGS_SOURCE_TYPE_CUSTOM)
+            g_key_file_remove_comment (key_file_to_prune,
+                                       groups[i], keys[j],
+                                       NULL);
+
+          for (ancestor_type = source_type - 1;
+               ancestor_type >= GRD_SETTINGS_SOURCE_TYPE_DEFAULT;
+               ancestor_type--)
             {
               GrdSettingsSource *ancestor_source;
 
@@ -206,9 +226,15 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
               if (ancestor_source == NULL)
                 continue;
 
-              if (g_key_file_has_key (ancestor_source->key_file, groups[i], keys[j], NULL))
+              if (g_key_file_has_key (ancestor_source->key_file,
+                                      groups[i], keys[j],
+                                      NULL))
                 {
-                  g_autofree char *ancestor_value = g_key_file_get_value (ancestor_source->key_file, groups[i], keys[j], NULL);
+                  g_autofree char *ancestor_value = NULL;
+
+                  ancestor_value = g_key_file_get_value (ancestor_source->key_file,
+                                                         groups[i], keys[j],
+                                                         NULL);
 
                   if (g_strcmp0 (value_to_prune, ancestor_value) == 0)
                     should_prune_key = TRUE;
@@ -218,12 +244,15 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
             }
 
           if (should_prune_key)
-            g_key_file_remove_key (key_file_to_prune, groups[i], keys[j], NULL);
+            g_key_file_remove_key (key_file_to_prune,
+                                   groups[i], keys[j],
+                                   NULL);
         }
       g_clear_pointer (&keys, g_strfreev);
 
-      keys = g_key_file_get_keys (key_file_to_prune, groups[i], &key_count, NULL);
-
+      keys = g_key_file_get_keys (key_file_to_prune,
+                                  groups[i], &key_count,
+                                  NULL);
       if (key_count == 0)
         g_key_file_remove_group (key_file_to_prune, groups[i], NULL);
     }
@@ -370,8 +399,8 @@ read_int (GrdSettingsSystem *settings_system,
           const char        *key,
           const char        *settings_name)
 {
-  int value;
   g_autoptr (GError) error = NULL;
+  int value;
 
   value = g_key_file_get_integer (key_file,
                                   group,
@@ -407,8 +436,8 @@ read_boolean (GrdSettingsSystem *settings_system,
               const char        *key,
               const char        *settings_name)
 {
-  gboolean value = FALSE;
   g_autoptr (GError) error = NULL;
+  gboolean value = FALSE;
 
   value = g_key_file_get_boolean (key_file, group, key, &error);
   if (error)
@@ -448,13 +477,13 @@ on_rdp_setting_changed (GrdSettingsSystem *settings_system,
                         GParamSpec        *pspec,
                         FileSetting       *file_setting)
 {
+  GrdSettingsSourceType settings_source_type = GRD_SETTINGS_SOURCE_TYPE_INVALID;
+  g_autofree char *local_state_conf = NULL;
   g_autoptr (GKeyFile) key_file = NULL;
-  g_autofree char *data = NULL;
-  size_t length = 0;
   g_autoptr (GError) error = NULL;
+  g_autofree char *data = NULL;
   const char *filename;
-  GrdSettingsSourceType settings_source_type;
-  g_autofree char *local_state_conf = grd_settings_system_get_local_state_conf ();
+  size_t length = 0;
 
   grd_settings_system_reload_sources (settings_system);
 
@@ -481,6 +510,7 @@ on_rdp_setting_changed (GrdSettingsSystem *settings_system,
   else
     settings_source_type = GRD_SETTINGS_SOURCE_TYPE_CUSTOM;
 
+  local_state_conf = grd_settings_system_get_local_state_conf ();
   switch (settings_source_type)
     {
       case GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE:
@@ -502,7 +532,10 @@ on_rdp_setting_changed (GrdSettingsSystem *settings_system,
                             key_file))
     {
       if (!g_key_file_save_to_file (key_file, filename, &error))
-        g_warning ("Failed to write %s: %s", file_setting->file_key, error->message);
+        {
+          g_warning ("Failed to write %s: %s", file_setting->file_key,
+                     error->message);
+        }
     }
   else
     {
