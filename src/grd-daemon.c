@@ -304,7 +304,7 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
   GCancellable *cancellable = grd_daemon_get_cancellable (daemon);
   g_autoptr (rdpCertificate) rdp_certificate = NULL;
   g_autoptr (rdpPrivateKey) rdp_private_key = NULL;
-  g_autofree gchar *certificate_filename = NULL;
+  g_autofree char *certificate_filename = NULL;
   g_autofree char *key_filename = NULL;
   g_autoptr (GError) error = NULL;
   g_autofd int certificate_fd = -1;
