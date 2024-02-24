@@ -24,9 +24,9 @@
 
 #include "grd-utils.h"
 
-#include <glib/gstdio.h>
-#include <gio/gunixinputstream.h>
 #include <gio/gunixfdlist.h>
+#include <gio/gunixinputstream.h>
+#include <glib/gstdio.h>
 
 #include "grd-rdp-server.h"
 #include "grd-vnc-server.h"
