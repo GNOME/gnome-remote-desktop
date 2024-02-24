@@ -1,14 +1,14 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 #
-# Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>, 2022.
+# SPDX-FileCopyrightText: 2022, 2024 Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issu"
-"es\n"
-"POT-Creation-Date: 2022-09-05 21:42+0000\n"
-"PO-Revision-Date: 2022-09-07 22:54+0300\n"
+"es/\n"
+"POT-Creation-Date: 2024-01-30 20:40+0000\n"
+"PO-Revision-Date: 2024-02-25 00:41+0200\n"
 "Last-Translator: Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>\n"
 "Language-Team: Latvian <lata-l10n@googlegroups.com>\n"
 "Language: lv\n"
@@ -17,46 +17,40 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 :"
 " 2);\n"
-"X-Generator: Lokalize 21.12.3\n"
+"X-Generator: Lokalize 23.08.1\n"
 
-#: src/grd-daemon.c:503
-msgid "GNOME Remote Desktop"
-msgstr "GNOME attālinātā darbvirsma"
-
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "Vai vēlaties koplietot savu darbvirsmu?"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr ""
-"Lietotājs no datora “%s” mēģina attālināti apskatīt vai kontrolēt jūsu "
-"darbvirsmu."
-
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "Noraidīt"
-
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "Pieņemt"
-
-#: src/grd-ctl.c:53
+#: src/grd-ctl.c:59
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Lietojums: %s [OPCIJAS...] KOMANDA [APAKŠKOMANDA]...\n"
 
-#: src/grd-ctl.c:461
+#: src/grd-ctl.c:579
 msgid "Commands:\n"
 msgstr "Komandas:\n"
 
-#: src/grd-ctl.c:466
+#: src/grd-ctl.c:584
+#| msgid ""
+#| "  rdp                                        - RDP subcommands:\n"
+#| "    enable                                   - Enable the RDP backend\n"
+#| "    disable                                  - Disable the RDP backend\n"
+#| "    set-tls-cert <path-to-cert>              - Set path to TLS "
+#| "certificate\n"
+#| "    set-tls-key <path-to-key>                - Set path to TLS key\n"
+#| "    set-credentials <username> <password>    - Set username and password\n"
+#| "                                               credentials\n"
+#| "    clear-credentials                        - Clear username and "
+#| "password\n"
+#| "                                               credentials\n"
+#| "    enable-view-only                         - Disable remote control of "
+#| "input\n"
+#| "                                               devices\n"
+#| "    disable-view-only                        - Enable remote control of "
+#| "input\n"
+#| "                                               devices\n"
+#| "\n"
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -71,31 +65,57 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - RDP apakškomandas:\n"
+"    set-port                                 - Iestatīt portu, pie kura"
+" pieslēdzas serveris\n"
 "    enable                                   - Ieslēgt RDP aizmuguri\n"
 "    disable                                  - Izslēgt RDP aizmuguri\n"
-"    set-tls-cert <ceļš-uz-serifikātu>        - Iestatīt ceļu uz TLS"
-" sertifikātu\n"
+"    set-tls-cert <ceļš-uz-serifikātu>        - Iestatīt ceļu uz TLS "
+"sertifikātu\n"
 "    set-tls-key <ceļš-uz-atslēgu>            - Iestatīt ceļu uz TLS atslēgu\n"
-"    set-credentials <lietotājs> <parole>     - Iestatīt lietotājvārdu un"
-" paroļu\n"
+"    set-credentials <lietotājs> <parole>     - Iestatīt lietotājvārdu un "
+"paroļu\n"
 "                                               akreditācijas datus\n"
-"    clear-credentials                        - Attīrīt lietotājvārdu un"
-" paroļu\n"
+"    clear-credentials                        - Attīrīt lietotājvārdu un "
+"paroļu\n"
 "                                               akreditācijas datus\n"
-"    enable-view-only                         - Izslēgt ievades ierīču"
-" attālināto\n"
+"    enable-view-only                         - Izslēgt ievades ierīču "
+"attālināto\n"
 "                                               vadību\n"
-"    disable-view-only                        - Ieslēgt ievades ierīču"
-" attālināto\n"
+"    disable-view-only                        - Ieslēgt ievades ierīču "
+"attālināto\n"
 "                                               vadību\n"
+"    enable-port-negotiation                  - Ja nav pieejams, klausīties\n"
+"                                               citu portu\n"
+"    disable-port-negotiation                 - Ja nav pieejams, neklausīties\n"
+"                                               citu portu\n"
 "\n"
 
-#: src/grd-ctl.c:485
+#: src/grd-ctl.c:608
+#| msgid ""
+#| "  vnc                                        - VNC subcommands:\n"
+#| "    enable                                   - Enable the VNC backend\n"
+#| "    disable                                  - Disable the VNC backend\n"
+#| "    set-password <password>                  - Set the VNC password\n"
+#| "    clear-password                           - Clear the VNC password\n"
+#| "    set-auth-method password|prompt          - Set the authorization "
+#| "method\n"
+#| "    enable-view-only                         - Disable remote control of "
+#| "input\n"
+#| "                                               devices\n"
+#| "    disable-view-only                        - Enable remote control of "
+#| "input\n"
+#| "                                               devices\n"
+#| "\n"
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
@@ -107,49 +127,160 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  vnc                                        - VNC apakškomandas:\n"
+"    set-port                                 - Iestatīt portu, pie kura"
+" pieslēdzas serveris\n"
 "    enable                                   - Ieslēgt VNC aizmuguri\n"
 "    disable                                  - Izslēgt VNC aizmuguri\n"
 "    set-password <parole>                    - Iestatīt VNC paroli\n"
 "    clear-password                           - Attīrīt VNC paroli\n"
-"    set-auth-method password|prompt          - Iestatīt pilnvarošanas metodi\n"
+"    set-auth-method password|prompt          - Iestatīt pilnvarošanas "
+"metodi\n"
 "    enable-view-only                         - Izslēgt ievades ierīču\n"
 "                                               vadību\n"
 "    disable-view-only                        - Ieslēgt ievades ierīču\n"
 "                                               vadību\n"
+"    enable-port-negotiation                  - Ja nav pieejams, klausīties\n"
+"                                               citu portu\n"
+"    disable-port-negotiation                 - Ja nav pieejams, neklausīties\n"
+"                                               citu portu\n"
 "\n"
 
-#: src/grd-ctl.c:500
+#: src/grd-ctl.c:628
+#| msgid ""
+#| "  status [--show-credentials]                - Show current status\n"
+#| "\n"
+#| "Options:\n"
+#| "  --headless                                 - Use headless credentials "
+#| "storage\n"
+#| "  --help                                     - Print this help text\n"
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Rādīt pašreizējo statusu\n"
 "\n"
 "Opcijas:\n"
-"  --headless                                 - Izmantot bezdispleja"
-" akreditācijas datu krātuvi\n"
+"  --headless                                 - Izmantot bezdispleja "
+"akreditācijas datu krātuvi\n"
+"  --system                                   - Konfigurēt sistēmas demonu\n"
 "  --help                                     - Izdrukā šo palīdzības tekstu\n"
 
+#: src/grd-daemon.c:940
+msgid "GNOME Remote Desktop"
+msgstr "GNOME attālinātā darbvirsma"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "Šis savienojums ir nedrošs"
+
+#: src/grd-daemon-handover.c:348
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
+"RDP config file."
+msgstr ""
+"Vai vēlaties turpināt ar nedrošu savienojumu?\n"
+"Lai to padarītu drošu, RDP konfigurācijas datnē iestatiet <b><i>use"
+" redirection server name:i:1</i></b>."
+
+#: src/grd-daemon-handover.c:352
+#, c-format
+msgid "Disconnect"
+msgstr "Atvienot"
+
+#: src/grd-daemon-handover.c:353
+#, c-format
+msgid "Continue"
+msgstr "Turpināt"
+
+#: src/grd-daemon-user.c:96
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "Darbvirsmas koplietošanas ports ir mainīts"
+
+#: src/grd-daemon-user.c:98
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"Darbvirsmas koplietošanas ports ir mainīts no <b>%i</b> uz <b>%i</b>.\n"
+"Tas tāpēc, ka attālinātās sesijas pakalpojums ir aktivizēts un tam uz šo"
+" portu ir augstāka  prioritāte<b>%i</b>."
+
+#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "Pieņemt"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Vai vēlaties koplietot savu darbvirsmu?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Lietotājs no datora “%s” mēģina attālināti apskatīt vai kontrolēt jūsu "
+"darbvirsmu."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "Noraidīt"
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "Ports, ko izmanto RDP serveris"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr "RDP klients savienosies ar šo portu, lai varētu izmantot RDP serveri."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr "Meklējiet citu RDP portu, ja konfigurētais ports jau ir aizņemts"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Kad negotiate-port ir iestatīts uz “patiess”, RDP serveris mēģinās klausīties"
+" uz pirmo pieejamo portu no nākamajiem 10 portiem, sākot no nokonfigurētā"
+" porta."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Vai RDP aizmugure ir ieslēgta"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Ja iestatīts uz “patiess”, RDP aizmugure tiks inicializēta."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "Ekrāna koplietošanas režīms RDP savienojumiem"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -164,58 +295,92 @@ msgid ""
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
+"Ekrāna koplietošanas režīms nosaka, vai RDP aizmugure atspoguļos primāro"
+" ekrānu, vai arī tiks izveidots virtuālais monitors. Virtuālā monitora"
+" sākotnējai izšķirtspējai RDP aizmugure izmantos vai nu klienta pamata datus"
+" ([MS-RDPBCGR] 2.2.1.3.2) vai arī klienta monitora datus ([MS-RDPBCGR]"
+" 2.2.1.3.6), atkarībā no tā, kurš ir pieejams. Kad izmanto attālināto"
+" darbvirsmas sesiju ar virtuālo monitoru, klienti var mainīt virtuālā"
+" monitora izšķirtspēju sesijas laikā ar paplašinājumu Display Update Virtual"
+" Channel Extension ([MS-RDPEDISP]). Atļautie ekrāna koplietošanas režīmi"
+" iekļauj: * mirror-primary — ieraksta pašreizējās lietotāja sesijas primāro"
+" monitoru. * extend — izveido jaunu virtuālo monitoru un izmanto to"
+" attālinātās darbvirsmas sesijai. Šī virtuālā monitora izšķirtspēja tiek"
+" ņemta no monitora konfigurācijas, ko ir norādījis attālinātās darbvirsmas"
+" klients."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Ceļš uz sertifikāta datni"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
 msgstr ""
-"Lai varētu izmantot RDP ar TLS drošību, RDP serverim jāsniedz gan privātā"
-" atslēga, gan sertifikāta datne."
+"Lai varētu izmantot RDP ar TLS drošību, RDP serverim jāsniedz gan privātā "
+"atslēga, gan sertifikāta datne."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Ceļš uz privātās atslēgas datni"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr "Attālinātajiem savienojumiem ļaut tikai skatīt ekrāna saturu"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"Kad view-only ir iestatīts uz “patiess”, attālinātie RDP savienojumi nevar"
-" izmantot ievades ierīces (piemēram, peli un tastatūru)."
+"Kad view-only ir iestatīts uz “patiess”, attālinātie RDP savienojumi nevar "
+"izmantot ievades ierīces (piemēram, peli un tastatūru)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "Ports, ko izmanto VNC serveris"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr "VNC klients savienosies ar šo portu, izmantojot VNC serveri."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr "Meklējiet citu VNC portu, ja konfigurētais ports jau ir aizņemts"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Kad negotiate-port ir iestatīts uz “patiess”, VNC serveris mēģinās klausīties"
+" uz pirmo pieejamo portu no nākamajiem 10 portiem, sākot no nokonfigurētā"
+" porta."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Vai VNC aizmugure ir ieslēgta"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Ja iestatīts uz “patiess”, VNC aizmugure tiks inicializēta."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"Kad view-only ir iestatīts uz “patiess”, attālinātie VNC savienojumi nevar"
-" izmantot ievades ierīces (piemēram, peli un tastatūru)."
+"Kad view-only ir iestatīts uz “patiess”, attālinātie VNC savienojumi nevar "
+"izmantot ievades ierīces (piemēram, peli un tastatūru)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "Metode, kuru izmantot VNC savienojumu autentifikācijai"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -223,12 +388,17 @@ msgid ""
 "access to the workstation to explicitly approve the new connection. * "
 "password - by requiring the remote client to provide a known password"
 msgstr ""
+"VNC autentifikācijas metodes apraksta, kā attālinātie savienojumi tiek"
+" autentificēti. To pašlaik var izdarīt divos veidos: * prompt — vaicājot"
+" lietotājam pie katra savienojuma, kas prasa lietotājam ar fizisku piekļuvi"
+" darba stacijai apstiprināt jauno savienojumu. * password — pieprasa"
+" attālināto klientu uzrādīt zināmo paroli"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
 msgstr "Ekrāna koplietošanas režīms VNC savienojumiem"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -242,3 +412,15 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr ""
+"Ekrāna koplietošanas režīms nosaka, vai VNC aizmugure atspoguļos primāro"
+" ekrānu, vai arī tiks izveidots virtuālais monitors. Virtuālā monitora"
+" sākotnējai izšķirtspējai VNC aizmugure izmantos noklusējuma izmēru"
+" 1920x1080. Kad izmanto attālināto darbvirsmas sesiju ar virtuālo monitoru,"
+" klienti var mainīt virtuālā monitora izšķirtspēju sesijas laikā ar"
+" setDesktopSize PDU. Atļautie ekrāna koplietošanas režīmi iekļauj: *"
+" mirror-primary — ieraksta pašreizējās lietotāja sesijas primāro monitoru. *"
+" extend — izveido jaunu virtuālo monitoru un izmanto to attālinātās"
+" darbvirsmas sesijai. Sākotnējā izšķirtspēja šim virtuālajam monitoram tiek"
+" iestatīta uz 1920x1080 pikseļiem. Klienti var pārrakstīt sākotnējo"
+" izšķirtspēju ar konfigurācijas atjaunināšanu."
+
