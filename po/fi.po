@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2022-02-25 22:19+0000\n"
-"PO-Revision-Date: 2022-02-27 19:23+0200\n"
+"issues/\n"
+"POT-Creation-Date: 2024-01-30 20:40+0000\n"
+"PO-Revision-Date: 2024-02-24 19:55+0200\n"
 "Last-Translator: Jiri Grönroos <jiri.gronroos+l10n@iki.fi>\n"
 "Language-Team: Finnish <lokalisointi-lista@googlegroups.com>\n"
 "Language: fi\n"
@@ -17,46 +17,21 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: src/grd-daemon.c:423
-msgid "GNOME Remote Desktop"
-msgstr "Gnomen Etätyöpöytä"
-
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "Haluatko jakaa työpöytäsi?"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr ""
-"Käyttäjä laitteella '%s' yrittää muodostaa etäyhteyden nähdäkseen tai "
-"ohjatakseen työpöytääsi."
-
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "Estä"
-
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "Hyväksy"
-
-#: src/grd-ctl.c:44
+#: src/grd-ctl.c:59
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr ""
 
-#: src/grd-ctl.c:383
+#: src/grd-ctl.c:579
 msgid "Commands:\n"
 msgstr "Komennot:\n"
 
-#: src/grd-ctl.c:388
+#: src/grd-ctl.c:584
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -71,12 +46,17 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 
-#: src/grd-ctl.c:407
+#: src/grd-ctl.c:608
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
@@ -88,14 +68,27 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 
-#: src/grd-ctl.c:422
+#: src/grd-ctl.c:628
+#, fuzzy
+#| msgid ""
+#| "  status [--show-credentials]                - Show current status\n"
+#| "\n"
+#| "Options:\n"
+#| "  --help                                     - Print this help text\n"
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Näytä nykyinen tila\n"
@@ -103,19 +96,106 @@ msgstr ""
 "Valinnat:\n"
 "  --help                                     - Tulosta tämä ohjeteksti\n"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
-msgid "Whether the RDP backend is enabled or not"
+#: src/grd-daemon.c:940
+msgid "GNOME Remote Desktop"
+msgstr "Gnomen etätyöpöytä"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "Tämä yhteys ei ole turvallinen"
+
+#: src/grd-daemon-handover.c:348
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
+"RDP config file."
 msgstr ""
+
+#: src/grd-daemon-handover.c:352
+#, c-format
+msgid "Disconnect"
+msgstr "Katkaise yhteys"
+
+#: src/grd-daemon-handover.c:353
+#, c-format
+msgid "Continue"
+msgstr "Jatka"
+
+#: src/grd-daemon-user.c:96
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "Työpöydän jakamisen portti muuttui"
+
+#: src/grd-daemon-user.c:98
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"Työpöydän jakamisen portti muuttui portista <b>%i</b> porttiin <b>%i</b>.\n"
+"Tämä johtuu siitä, että etäistuntopalvelut on aktivoitu ja sillä on suurempi "
+"prioriteetti käyttää porttia <b>%i</b>."
+
+#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "Hyväksy"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Haluatko jakaa työpöytäsi?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Käyttäjä laitteella '%s' yrittää muodostaa etäyhteyden nähdäkseen tai "
+"ohjatakseen työpöytääsi."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "Estä"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "RDP-palvelimen käyttämä portti"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-msgid "If set to to 'true' the RDP backend will be initialized."
+msgid "The RDP client will connect to this port to use this RDP server."
 msgstr ""
+"RDP-asiakasohjelmisto yhdistää tähän porttiin käyttääkseen tätä RDP-"
+"palvelinta."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
-msgid "Screenshare mode of RDP connections"
+msgid "Search a different RDP port if the configured one is used"
 msgstr ""
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+msgid "Whether the RDP backend is enabled or not"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
+msgid "Screenshare mode of RDP connections"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -123,20 +203,20 @@ msgid ""
 "([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
 "2.2.1.3.6), depending on what is available. When using a remote desktop "
 "session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Control Channel Extension "
-"([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Polku varmennetiedostoon"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -144,16 +224,16 @@ msgstr ""
 "Jotta RDP:tä voidaan käyttää TLS-protokollan kanssa, on toimitettava sekä "
 "yksityisen avaimen tiedosto että sertifikaattitiedosto RDP-palvelimelle."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Polku yksityisen avaimen tiedostoon"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr "Salli etäyhteyksien nähdä vain näytön sisältö"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -161,15 +241,35 @@ msgstr ""
 "Kun vain luku -tila on käytössä, RDP-etäyhteydet eivät voi manipuloida "
 "syötelaitteita (esim. hiirtä ja näppäimistöä)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "VNC-palvelimen käyttämä portti"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr ""
+"VNC-asiakasohjelmisto yhdistää tähän porttiin käyttääkseen tätä VNC-"
+"palvelinta."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
 msgstr ""
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-msgid "If set to to 'true' the VNC backend will be initialized."
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+msgid "If set to 'true' the VNC backend will be initialized."
 msgstr ""
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -177,11 +277,11 @@ msgstr ""
 "Kun vain luku -tila on käytössä, VNC-etäyhteydet eivät voi manipuloida "
 "syötelaitteita (esim. hiirtä ja näppäimistöä)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "VNC-yhteyksien todentamiseen käytetty menetelmä"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -194,3 +294,22 @@ msgstr ""
 "jokaisesta uudesta yhteydestä ja vaatimalla henkilö, jolla on fyysinen pääsy "
 "työasemalle, hyväksymään nimenomaisesti uuden yhteyden. * salasana - "
 "vaatimalla etäkäyttäjää antamaan olemassa oleva salasana"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+msgid "Screenshare mode of VNC connections"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
