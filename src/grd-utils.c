@@ -275,11 +275,11 @@ grd_write_fd_to_file (int            fd,
 
   g_mkdir_with_parents (dir, 0755);
 
-  file = g_file_new_for_path (filename);
-
   input_stream = G_INPUT_STREAM (g_unix_input_stream_new (fd, FALSE));
-  output_stream = g_file_replace (file, NULL, TRUE, G_FILE_CREATE_PRIVATE, NULL, error);
 
+  file = g_file_new_for_path (filename);
+  output_stream = g_file_replace (file, NULL, TRUE, G_FILE_CREATE_PRIVATE,
+                                  NULL, error);
   if (!output_stream)
     return FALSE;
 
