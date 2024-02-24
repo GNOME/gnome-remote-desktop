@@ -13,7 +13,7 @@
   -->
   <interface name="org.gnome.RemoteDesktop">
 
-    <property name="RuntimeMode" type="s" access="read"/>
+    <property name="RuntimeMode" type="s" access="read" />
 
   </interface>
 
@@ -26,29 +26,29 @@
   -->
   <interface name="org.gnome.RemoteDesktop.Rdp.Server">
 
-    <property name="Enabled" type="b" access="read"/>
-    <property name="Port" type="i" access="read"/>
-    <property name="NegotiatePort" type="b" access="read"/>
-    <property name="TlsCert" type="s" access="read"/>
-    <property name="TlsKey" type="s" access="read"/>
-    <property name="ViewOnly" type="b" access="read"/>
+    <property name="Enabled" type="b" access="read" />
+    <property name="Port" type="i" access="read" />
+    <property name="NegotiatePort" type="b" access="read" />
+    <property name="TlsCert" type="s" access="read" />
+    <property name="TlsKey" type="s" access="read" />
+    <property name="ViewOnly" type="b" access="read" />
 
     <method name="Enable" />
 
     <method name="Disable" />
 
     <method name="GetCredentials">
-      <arg name="credentials" direction="out" type="a{sv}"/>
+      <arg name="credentials" direction="out" type="a{sv}" />
     </method>
 
     <method name="SetCredentials">
-      <arg name="credentials" direction="in" type="a{sv}"/>
+      <arg name="credentials" direction="in" type="a{sv}" />
     </method>
 
     <method name="ImportCertificate">
-      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
-      <arg name="Certificate" type="(sh)" direction="in"/>
-      <arg name="PrivateKey" type="(sh)" direction="in"/>
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true" />
+      <arg name="Certificate" type="(sh)" direction="in" />
+      <arg name="PrivateKey" type="(sh)" direction="in" />
     </method>
 
     <!--
@@ -58,7 +58,7 @@
         the port passed as an argument.
     -->
     <signal name="Binding">
-      <arg name="port" type="i"/>
+      <arg name="port" type="i" />
     </signal>
 
   </interface>
@@ -72,11 +72,11 @@
   -->
   <interface name="org.gnome.RemoteDesktop.Vnc.Server">
 
-    <property name="Enabled" type="b" access="read"/>
-    <property name="Port" type="i" access="read"/>
-    <property name="NegotiatePort" type="b" access="read"/>
-    <property name="AuthMethod" type="s" access="read"/>
-    <property name="ViewOnly" type="b" access="read"/>
+    <property name="Enabled" type="b" access="read" />
+    <property name="Port" type="i" access="read" />
+    <property name="NegotiatePort" type="b" access="read" />
+    <property name="AuthMethod" type="s" access="read" />
+    <property name="ViewOnly" type="b" access="read" />
 
   </interface>
 
@@ -98,7 +98,7 @@
         the session.
     -->
     <method name="RequestHandover">
-      <arg name="handover" direction="out" type="o"/>
+      <arg name="handover" direction="out" type="o" />
     </method>
 
   </interface>
@@ -121,10 +121,10 @@
         by the system server.
     -->
     <method name="StartHandover">
-      <arg name="username" direction="in" type="s"/>
-      <arg name="password" direction="in" type="s"/>
-      <arg name="certificate" direction="out" type="s"/>
-      <arg name="key" direction="out" type="s"/>
+      <arg name="username" direction="in" type="s" />
+      <arg name="password" direction="in" type="s" />
+      <arg name="certificate" direction="out" type="s" />
+      <arg name="key" direction="out" type="s" />
     </method>
 
     <!--
@@ -134,9 +134,9 @@
         routing token and one time username/password to the client.
     -->
     <signal name="RedirectClient">
-      <arg name="routing_token" type="s"/>
-      <arg name="username" type="s"/>
-      <arg name="password" type="s"/>
+      <arg name="routing_token" type="s" />
+      <arg name="username" type="s" />
+      <arg name="password" type="s" />
     </signal>
 
     <!--
@@ -146,7 +146,7 @@
         successfully and is ready to be taken.
     -->
     <signal name="TakeClientReady">
-      <arg name="use_system_credentials" type="b"/>
+      <arg name="use_system_credentials" type="b" />
     </signal>
 
     <!--
@@ -156,8 +156,8 @@
         connection of the redirected client.
     -->
     <method name="TakeClient">
-      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
-      <arg name="fd" direction="out" type="h"/>
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true" />
+      <arg name="fd" direction="out" type="h" />
     </method>
 
     <!--
@@ -167,8 +167,8 @@
         generated to authenticate the redirected client.
     -->
     <method name="GetSystemCredentials">
-      <arg name="username" direction="out" type="s"/>
-      <arg name="password" direction="out" type="s"/>
+      <arg name="username" direction="out" type="s" />
+      <arg name="password" direction="out" type="s" />
     </method>
 
   </interface>
