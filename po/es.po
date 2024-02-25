@@ -190,7 +190,7 @@ msgstr ""
 "El puerto de la compartición de escritorio ha cambiado de <b>%i</b> a <b>%i</"
 "b>.\n"
 "Esto es porque el servicio de sesiones remotas ha estado activado y tiene "
-"una prioridad superior para usar el puerto b>%i</b>."
+"una prioridad superior para usar el puerto <b>%i</b>."
 
 #: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
 #, c-format
