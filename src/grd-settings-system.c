@@ -512,18 +512,15 @@ on_rdp_setting_changed (GrdSettingsSystem *settings_system,
   local_state_conf = grd_settings_system_get_local_state_conf ();
   switch (settings_source_type)
     {
-      case GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE:
-        filename = local_state_conf;
-        break;
-
-      case GRD_SETTINGS_SOURCE_TYPE_CUSTOM:
-        g_remove (local_state_conf);
-        filename = GRD_CUSTOM_CONF;
-        break;
-
-      default:
-        g_assert_not_reached ();
-
+    case GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE:
+      filename = local_state_conf;
+      break;
+    case GRD_SETTINGS_SOURCE_TYPE_CUSTOM:
+      g_remove (local_state_conf);
+      filename = GRD_CUSTOM_CONF;
+      break;
+    default:
+      g_assert_not_reached ();
     }
 
   if (prune_inherited_keys (settings_system,
