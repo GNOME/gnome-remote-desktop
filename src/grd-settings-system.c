@@ -72,12 +72,11 @@ struct _GrdSettingsSystem
 
 G_DEFINE_TYPE (GrdSettingsSystem, grd_settings_system, GRD_TYPE_SETTINGS)
 
-static void on_file_changed (GFileMonitor      *file_monitor,
-                             GFile             *file,
-                             GFile             *other_file,
-                             GFileMonitorEvent  event_type,
-                             gpointer           user_data);
-static void read_rdp_file_settings (GrdSettingsSystem *settings_system);
+static void
+grd_settings_system_reload_sources (GrdSettingsSystem *settings_system);
+
+static void
+read_rdp_file_settings (GrdSettingsSystem *settings_system);
 
 static GrdSettingsSource *
 grd_settings_source_new (GrdSettingsSourceType  source_type,
@@ -281,6 +280,22 @@ get_conf_paths (void)
   paths[N_GRD_SETTINGS_SOURCES] = NULL;
 
   return paths;
+}
+
+static void
+on_file_changed (GFileMonitor      *file_monitor,
+                 GFile             *file,
+                 GFile             *other_file,
+                 GFileMonitorEvent  event_type,
+                 gpointer           user_data)
+{
+  GrdSettingsSystem *settings_system = GRD_SETTINGS_SYSTEM (user_data);
+
+  if (event_type == G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
+    {
+      grd_settings_system_reload_sources (settings_system);
+      read_rdp_file_settings (settings_system);
+    }
 }
 
 static void
@@ -562,22 +577,6 @@ read_rdp_file_settings (GrdSettingsSystem *settings_system)
       g_signal_handlers_unblock_by_func (G_OBJECT (settings_system),
                                          G_CALLBACK (on_rdp_setting_changed),
                                          (gpointer) &rdp_file_settings[i]);
-    }
-}
-
-static void
-on_file_changed (GFileMonitor      *file_monitor,
-                 GFile             *file,
-                 GFile             *other_file,
-                 GFileMonitorEvent  event_type,
-                 gpointer           user_data)
-{
-  GrdSettingsSystem *settings_system = GRD_SETTINGS_SYSTEM (user_data);
-
-  if (event_type == G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
-    {
-      grd_settings_system_reload_sources (settings_system);
-      read_rdp_file_settings (settings_system);
     }
 }
 
