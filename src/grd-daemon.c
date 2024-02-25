@@ -92,11 +92,11 @@ typedef struct _GrdDaemonPrivate
 #endif
 } GrdDaemonPrivate;
 
+G_DEFINE_TYPE_WITH_PRIVATE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
+
 #ifdef HAVE_RDP
 static void maybe_start_rdp_server (GrdDaemon *daemon);
 #endif
-
-G_DEFINE_TYPE_WITH_PRIVATE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
 
 #ifdef HAVE_RDP
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (rdpCertificate, freerdp_certificate_free)
