@@ -27,22 +27,6 @@
 
 #define GRD_SETTINGS_SYSTEM_GROUP_RDP "RDP"
 
-typedef struct
-{
-  const char *file_key;
-  const char *settings_name;
-  void (* read_settings_value) (GrdSettingsSystem *settings_system,
-                                GKeyFile          *key_file,
-                                const char        *group,
-                                const char        *key,
-                                const char        *settings_name);
-  void (* write_settings_value) (GrdSettingsSystem *settings_system,
-                                 GKeyFile          *key_file,
-                                 const char        *group,
-                                 const char        *key,
-                                 const char        *settings_name);
-} FileSetting;
-
 typedef enum
 {
   GRD_SETTINGS_SOURCE_TYPE_INVALID = -1,
@@ -58,6 +42,22 @@ typedef struct
   GFileMonitor *file_monitor;
   GrdSettingsSourceType type;
 } GrdSettingsSource;
+
+typedef struct
+{
+  const char *file_key;
+  const char *settings_name;
+  void (* read_settings_value) (GrdSettingsSystem *settings_system,
+                                GKeyFile          *key_file,
+                                const char        *group,
+                                const char        *key,
+                                const char        *settings_name);
+  void (* write_settings_value) (GrdSettingsSystem *settings_system,
+                                 GKeyFile          *key_file,
+                                 const char        *group,
+                                 const char        *key,
+                                 const char        *settings_name);
+} FileSetting;
 
 struct _GrdSettingsSystem
 {
