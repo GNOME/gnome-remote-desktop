@@ -1057,33 +1057,44 @@ on_authorize_method (GrdDBusRemoteDesktopRdpServer *interface,
                      gpointer                       user_data)
 {
   GrdDaemonSystem *daemon_system = GRD_DAEMON_SYSTEM (user_data);
-  PolkitSubject *subject = polkit_system_bus_name_new (g_dbus_method_invocation_get_sender (invocation));
   g_autoptr (PolkitAuthorizationResult) result = NULL;
+  g_autoptr (PolkitSubject) subject = NULL;
+  PolkitCheckAuthorizationFlags flags;
   g_autoptr (GError) error = NULL;
+  const char *sender = NULL;
+  const char *action = NULL;
 
   if (!daemon_system->authority)
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_ACCESS_DENIED,
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_ACCESS_DENIED,
                                              "RDP server is shutting down");
       return FALSE;
     }
 
-  result = polkit_authority_check_authorization_sync (daemon_system->authority, subject,
-                                                      GRD_CONFIGURE_SYSTEM_DAEMON_POLKIT_ACTION,
-                                                      NULL,
-                                                      POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
-                                                      NULL, &error);
+  sender = g_dbus_method_invocation_get_sender (invocation);
+  subject = polkit_system_bus_name_new (sender);
+  action = GRD_CONFIGURE_SYSTEM_DAEMON_POLKIT_ACTION;
+  flags = POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION;
+  result = polkit_authority_check_authorization_sync (daemon_system->authority,
+                                                      subject, action,
+                                                      NULL, flags, NULL,
+                                                      &error);
   if (!result)
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                             "Failed to check authorization: %s", error->message);
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_FAILED,
+                                             "Failed to check authorization: %s",
+                                             error->message);
       return FALSE;
     }
 
   if (!polkit_authorization_result_get_is_authorized (result))
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_ACCESS_DENIED,
-                                             "Not authorized for action " GRD_CONFIGURE_SYSTEM_DAEMON_POLKIT_ACTION);
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_ACCESS_DENIED,
+                                             "Not authorized for action %s",
+                                             action);
       return FALSE;
     }
 
@@ -1097,7 +1108,8 @@ grd_daemon_system_startup (GApplication *app)
   GCancellable *cancellable =
     grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
   GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_system));
-  GrdSettingsSystem *settings_system = GRD_SETTINGS_SYSTEM (grd_context_get_settings (context));
+  GrdSettings *settings = grd_context_get_settings (context);
+  GrdSettingsSystem *settings_system = GRD_SETTINGS_SYSTEM (settings);
   GrdDBusRemoteDesktopRdpServer *rdp_server_interface;
   g_autoptr (GError) error = NULL;
 
