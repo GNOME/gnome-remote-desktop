@@ -257,13 +257,18 @@ on_handle_set_rdp_credentials (GrdDBusRemoteDesktopRdpServer *rdp_server_interfa
 
   if (!username && !password)
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                                             "Username or password expected in credentials");
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_INVALID_ARGS,
+                                             "Username or password expected "
+                                             "in credentials");
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
   if (!username || !password)
-    grd_settings_get_rdp_credentials (settings, &old_username, &old_password, NULL);
+    {
+      grd_settings_get_rdp_credentials (settings, &old_username, &old_password,
+                                        NULL);
+    }
 
   if (!username)
     username = g_steal_pointer (&old_username);
@@ -273,8 +278,10 @@ on_handle_set_rdp_credentials (GrdDBusRemoteDesktopRdpServer *rdp_server_interfa
 
   if (!grd_settings_set_rdp_credentials (settings, username, password, &error))
     {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                             "Failed to set credentials: %s", error->message);
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
+                                             G_DBUS_ERROR_FAILED,
+                                             "Failed to set credentials: %s",
+                                             error->message);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
@@ -294,8 +301,7 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
   GrdDaemon *daemon = GRD_DAEMON (user_data);
   GrdContext *context = grd_daemon_get_context (daemon);
   GrdSettings *settings = grd_context_get_settings (context);
-  GCancellable *cancellable =
-    grd_daemon_get_cancellable (daemon);
+  GCancellable *cancellable = grd_daemon_get_cancellable (daemon);
   g_autofree gchar *certificate_filename = NULL;
   g_autofree char *key_filename = NULL;
   g_autoptr (GError) error = NULL;
@@ -306,8 +312,10 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
   g_autoptr (rdpCertificate) rdp_certificate = NULL;
   g_autoptr (rdpPrivateKey) rdp_private_key = NULL;
 
-  g_variant_get (certificate, "(sh)", &certificate_filename, &certificate_fd_index);
-  g_variant_get (private_key, "(sh)", &key_filename, &key_fd_index);
+  g_variant_get (certificate, "(sh)", &certificate_filename,
+                 &certificate_fd_index);
+  g_variant_get (private_key, "(sh)", &key_filename,
+                 &key_fd_index);
 
   certificate_fd = g_unix_fd_list_get (fd_list, certificate_fd_index, &error);
   if (certificate_fd == -1)
@@ -323,8 +331,11 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  grd_rewrite_path_to_user_data_dir (&certificate_filename, RDP_SERVER_USER_CERT_SUBDIR, "rdp-tls.crt");
-  if (!grd_write_fd_to_file (certificate_fd, certificate_filename, cancellable, &error))
+  grd_rewrite_path_to_user_data_dir (&certificate_filename,
+                                     RDP_SERVER_USER_CERT_SUBDIR,
+                                     "rdp-tls.crt");
+  if (!grd_write_fd_to_file (certificate_fd, certificate_filename,
+                             cancellable, &error))
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
       return G_DBUS_METHOD_INVOCATION_HANDLED;
@@ -341,7 +352,9 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  grd_rewrite_path_to_user_data_dir (&key_filename, RDP_SERVER_USER_CERT_SUBDIR, "rdp-tls.key");
+  grd_rewrite_path_to_user_data_dir (&key_filename,
+                                     RDP_SERVER_USER_CERT_SUBDIR,
+                                     "rdp-tls.key");
   if (!grd_write_fd_to_file (key_fd, key_filename, cancellable, &error))
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -358,7 +371,6 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
                                              "Invalid private key");
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
-
 
   g_object_set (settings,
                 "rdp-server-cert-path", certificate_filename,
