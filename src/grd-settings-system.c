@@ -134,6 +134,14 @@ get_local_state_conf (void)
                            NULL);
 }
 
+void
+grd_settings_system_use_local_state (GrdSettingsSystem *settings_system)
+{
+  g_assert (GRD_IS_SETTINGS_SYSTEM (settings_system));
+
+  settings_system->use_local_state = TRUE;
+}
+
 static void
 merge_descendant_keys (GrdSettingsSystem *settings_system,
                        GKeyFile          *key_file,
@@ -344,14 +352,6 @@ grd_settings_system_new (void)
                        "rdp-view-only", FALSE,
                        "rdp-screen-share-mode", GRD_RDP_SCREEN_SHARE_MODE_EXTEND,
                        NULL);
-}
-
-void
-grd_settings_system_use_local_state (GrdSettingsSystem *settings_system)
-{
-  g_assert (GRD_IS_SETTINGS_SYSTEM (settings_system));
-
-  settings_system->use_local_state = TRUE;
 }
 
 static void
