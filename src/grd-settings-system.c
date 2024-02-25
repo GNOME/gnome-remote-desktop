@@ -620,6 +620,7 @@ grd_settings_system_finalize (GObject *object)
 {
   GrdSettingsSystem *settings = GRD_SETTINGS_SYSTEM (object);
 
+  g_clear_pointer (&settings->key_file, g_key_file_unref);
   grd_settings_system_free_sources (settings);
 
   G_OBJECT_CLASS (grd_settings_system_parent_class)->finalize (object);
