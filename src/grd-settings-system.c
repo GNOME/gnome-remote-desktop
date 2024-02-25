@@ -304,17 +304,16 @@ grd_settings_system_reload_sources (GrdSettingsSystem *settings_system)
                        grd_settings_source_free);
 
       source = grd_settings_source_new (source_type, paths[source_type]);
+      if (!source)
+        continue;
 
-      if (source != NULL)
-        {
-          merge_descendant_keys (settings_system, key_file, source->key_file);
+      merge_descendant_keys (settings_system, key_file, source->key_file);
 
-          g_signal_connect (source->file_monitor,
-                            "changed", G_CALLBACK (on_file_changed),
-                            settings_system);
+      g_signal_connect (source->file_monitor,
+                        "changed", G_CALLBACK (on_file_changed),
+                        settings_system);
 
-          settings_system->setting_sources[source_type] = g_steal_pointer (&source);
-        }
+      settings_system->setting_sources[source_type] = g_steal_pointer (&source);
     }
 
   g_clear_pointer (&settings_system->key_file, g_key_file_unref);
