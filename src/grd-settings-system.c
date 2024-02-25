@@ -70,14 +70,14 @@ struct _GrdSettingsSystem
   gboolean use_local_state;
 };
 
+G_DEFINE_TYPE (GrdSettingsSystem, grd_settings_system, GRD_TYPE_SETTINGS)
+
 static void on_file_changed (GFileMonitor      *file_monitor,
                              GFile             *file,
                              GFile             *other_file,
                              GFileMonitorEvent  event_type,
                              gpointer           user_data);
 static void read_rdp_file_settings (GrdSettingsSystem *settings_system);
-
-G_DEFINE_TYPE (GrdSettingsSystem, grd_settings_system, GRD_TYPE_SETTINGS)
 
 static GrdSettingsSource *
 grd_settings_source_new (GrdSettingsSourceType  source_type,
