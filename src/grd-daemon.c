@@ -302,15 +302,15 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
   GrdContext *context = grd_daemon_get_context (daemon);
   GrdSettings *settings = grd_context_get_settings (context);
   GCancellable *cancellable = grd_daemon_get_cancellable (daemon);
+  g_autoptr (rdpCertificate) rdp_certificate = NULL;
+  g_autoptr (rdpPrivateKey) rdp_private_key = NULL;
   g_autofree gchar *certificate_filename = NULL;
   g_autofree char *key_filename = NULL;
   g_autoptr (GError) error = NULL;
-  int certificate_fd_index;
-  int key_fd_index;
   g_autofd int certificate_fd = -1;
   g_autofd int key_fd = -1;
-  g_autoptr (rdpCertificate) rdp_certificate = NULL;
-  g_autoptr (rdpPrivateKey) rdp_private_key = NULL;
+  int certificate_fd_index;
+  int key_fd_index;
 
   g_variant_get (certificate, "(sh)", &certificate_filename,
                  &certificate_fd_index);
