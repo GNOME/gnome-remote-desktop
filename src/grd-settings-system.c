@@ -121,9 +121,6 @@ grd_settings_source_new (GrdSettingsSourceType  source_type,
 static void
 grd_settings_source_free (GrdSettingsSource *source)
 {
-  if (!source)
-    return;
-
   g_clear_pointer (&source->key_file, g_key_file_unref);
   g_clear_object (&source->file_monitor);
   g_clear_pointer (&source, g_free);
