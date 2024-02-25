@@ -208,9 +208,11 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
                                                  NULL);
 
           if (source_type != GRD_SETTINGS_SOURCE_TYPE_CUSTOM)
-            g_key_file_remove_comment (key_file_to_prune,
-                                       groups[i], keys[j],
-                                       NULL);
+            {
+              g_key_file_remove_comment (key_file_to_prune,
+                                         groups[i], keys[j],
+                                         NULL);
+            }
 
           for (ancestor_type = source_type - 1;
                ancestor_type >= GRD_SETTINGS_SOURCE_TYPE_DEFAULT;
@@ -240,9 +242,11 @@ prune_inherited_keys (GrdSettingsSystem     *settings_system,
             }
 
           if (should_prune_key)
-            g_key_file_remove_key (key_file_to_prune,
-                                   groups[i], keys[j],
-                                   NULL);
+            {
+              g_key_file_remove_key (key_file_to_prune,
+                                     groups[i], keys[j],
+                                     NULL);
+            }
         }
       g_clear_pointer (&keys, g_strfreev);
 
