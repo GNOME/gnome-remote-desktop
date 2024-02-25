@@ -33,7 +33,7 @@ typedef enum
   GRD_SETTINGS_SOURCE_TYPE_DEFAULT = 0,
   GRD_SETTINGS_SOURCE_TYPE_CUSTOM = 1,
   GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE = 2,
-  NUMBER_OF_GRD_SETTINGS_SOURCES
+  N_GRD_SETTINGS_SOURCES
 } GrdSettingsSourceType;
 
 typedef struct
@@ -63,7 +63,7 @@ struct _GrdSettingsSystem
 {
   GrdSettings parent;
 
-  GrdSettingsSource *setting_sources[NUMBER_OF_GRD_SETTINGS_SOURCES];
+  GrdSettingsSource *setting_sources[N_GRD_SETTINGS_SOURCES];
 
   GKeyFile *key_file;
 
@@ -274,11 +274,11 @@ get_conf_paths (void)
 
   local_state_conf = grd_settings_system_get_local_state_conf ();
 
-  paths = g_new (char *, NUMBER_OF_GRD_SETTINGS_SOURCES + 1);
+  paths = g_new (char *, N_GRD_SETTINGS_SOURCES + 1);
   paths[GRD_SETTINGS_SOURCE_TYPE_DEFAULT] = g_strdup (GRD_DEFAULT_CONF);
   paths[GRD_SETTINGS_SOURCE_TYPE_CUSTOM] = g_strdup (GRD_CUSTOM_CONF);
   paths[GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE] = g_steal_pointer (&local_state_conf);
-  paths[NUMBER_OF_GRD_SETTINGS_SOURCES] = NULL;
+  paths[N_GRD_SETTINGS_SOURCES] = NULL;
 
   return paths;
 }
@@ -295,7 +295,7 @@ grd_settings_system_reload_sources (GrdSettingsSystem *settings_system)
   key_file = g_key_file_new ();
 
   for (source_type = GRD_SETTINGS_SOURCE_TYPE_DEFAULT;
-       source_type < NUMBER_OF_GRD_SETTINGS_SOURCES;
+       source_type < N_GRD_SETTINGS_SOURCES;
        source_type++)
     {
       GrdSettingsSource *source = NULL;
@@ -325,7 +325,7 @@ grd_settings_system_free_sources (GrdSettingsSystem *settings_system)
 {
   size_t i;
 
-  for (i = 0; i < NUMBER_OF_GRD_SETTINGS_SOURCES; i++)
+  for (i = 0; i < N_GRD_SETTINGS_SOURCES; i++)
     g_clear_pointer (&settings_system->setting_sources[i],
                      grd_settings_source_free);
 }
