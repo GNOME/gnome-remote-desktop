@@ -336,16 +336,6 @@ grd_settings_system_reload_sources (GrdSettingsSystem *settings_system)
   settings_system->key_file = g_steal_pointer (&key_file);
 }
 
-static void
-grd_settings_system_free_sources (GrdSettingsSystem *settings_system)
-{
-  size_t i;
-
-  for (i = 0; i < N_GRD_SETTINGS_SOURCES; i++)
-    g_clear_pointer (&settings_system->setting_sources[i],
-                     grd_settings_source_free);
-}
-
 GrdSettingsSystem *
 grd_settings_system_new (void)
 {
@@ -615,10 +605,16 @@ grd_settings_system_constructed (GObject *object)
 static void
 grd_settings_system_finalize (GObject *object)
 {
-  GrdSettingsSystem *settings = GRD_SETTINGS_SYSTEM (object);
+  GrdSettingsSystem *settings_system = GRD_SETTINGS_SYSTEM (object);
+  size_t i;
 
-  g_clear_pointer (&settings->key_file, g_key_file_unref);
-  grd_settings_system_free_sources (settings);
+  g_clear_pointer (&settings_system->key_file, g_key_file_unref);
+
+  for (i = 0; i < N_GRD_SETTINGS_SOURCES; i++)
+    {
+      g_clear_pointer (&settings_system->setting_sources[i],
+                       grd_settings_source_free);
+    }
 
   G_OBJECT_CLASS (grd_settings_system_parent_class)->finalize (object);
 }
