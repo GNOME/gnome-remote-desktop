@@ -28,6 +28,7 @@ G_DECLARE_FINAL_TYPE (GrdSettingsSystem, grd_settings_system,
                       GRD, SETTINGS_SYSTEM, GrdSettings)
 
 GrdSettingsSystem *grd_settings_system_new (void);
+
 void grd_settings_system_use_local_state (GrdSettingsSystem *settings_system);
 
 #endif /* GRD_SETTINGS_SYSTEM_H */
