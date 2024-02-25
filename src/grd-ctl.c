@@ -287,9 +287,11 @@ rdp_enable (GrdSettings  *settings,
             GError      **error)
 {
   if (performing_system_configuration)
-    return enable_systemd_unit (G_BUS_TYPE_SYSTEM,
-                                GRD_SYSTEMD_SERVICE,
-                                error);
+    {
+      return enable_systemd_unit (G_BUS_TYPE_SYSTEM,
+                                  GRD_SYSTEMD_SERVICE,
+                                  error);
+    }
 
   g_object_set (G_OBJECT (settings), "rdp-enabled", TRUE, NULL);
 
@@ -303,9 +305,11 @@ rdp_disable (GrdSettings  *settings,
              GError      **error)
 {
   if (performing_system_configuration)
-    return disable_systemd_unit (G_BUS_TYPE_SYSTEM,
-                                 GRD_SYSTEMD_SERVICE,
-                                 error);
+    {
+      return disable_systemd_unit (G_BUS_TYPE_SYSTEM,
+                                   GRD_SYSTEMD_SERVICE,
+                                   error);
+    }
 
   g_object_set (G_OBJECT (settings), "rdp-enabled", FALSE, NULL);
 
