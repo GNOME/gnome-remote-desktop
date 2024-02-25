@@ -111,7 +111,6 @@ enable_systemd_unit (GBusType     bus_type,
 {
   g_autoptr (GDBusConnection) connection = NULL;
   g_autoptr (GVariant) reply = NULL;
-  const char *mode = "replace";
 
   connection = g_bus_get_sync (bus_type, NULL, error);
   if (!connection)
@@ -123,11 +122,10 @@ enable_systemd_unit (GBusType     bus_type,
                                        "org.freedesktop.systemd1.Manager",
                                        "StartUnit",
                                        g_variant_new ("(ss)",
-                                                      unit, mode),
+                                                      unit, "replace"),
                                        NULL,
                                        G_DBUS_CALL_FLAGS_NO_AUTO_START,
                                        -1, NULL, error);
-
   if (!reply)
     return FALSE;
 
@@ -155,7 +153,6 @@ disable_systemd_unit (GBusType     bus_type,
 {
   g_autoptr (GDBusConnection) connection = NULL;
   g_autoptr (GVariant) reply = NULL;
-  const char *mode = "replace";
 
   connection = g_bus_get_sync (bus_type, NULL, error);
   if (!connection)
@@ -167,11 +164,10 @@ disable_systemd_unit (GBusType     bus_type,
                                        "org.freedesktop.systemd1.Manager",
                                        "StopUnit",
                                        g_variant_new ("(ss)",
-                                                      unit, mode),
+                                                      unit, "replace"),
                                        NULL,
                                        G_DBUS_CALL_FLAGS_NO_AUTO_START,
                                        -1, NULL, error);
-
   if (!reply)
     return FALSE;
 
