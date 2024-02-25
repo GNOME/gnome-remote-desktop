@@ -127,7 +127,7 @@ grd_settings_source_free (GrdSettingsSource *source)
 }
 
 static char *
-grd_settings_system_get_local_state_conf (void)
+get_local_state_conf (void)
 {
   return g_build_filename (g_get_user_data_dir (),
                            "gnome-remote-desktop", "grd.conf",
@@ -272,7 +272,7 @@ get_conf_paths (void)
   g_autofree char *local_state_conf = NULL;
   char **paths = NULL;
 
-  local_state_conf = grd_settings_system_get_local_state_conf ();
+  local_state_conf = get_local_state_conf ();
 
   paths = g_new (char *, N_GRD_SETTINGS_SOURCES + 1);
   paths[GRD_SETTINGS_SOURCE_TYPE_DEFAULT] = g_strdup (GRD_DEFAULT_CONF);
@@ -515,7 +515,7 @@ on_rdp_setting_changed (GrdSettingsSystem *settings_system,
   else
     settings_source_type = GRD_SETTINGS_SOURCE_TYPE_CUSTOM;
 
-  local_state_conf = grd_settings_system_get_local_state_conf ();
+  local_state_conf = get_local_state_conf ();
   switch (settings_source_type)
     {
     case GRD_SETTINGS_SOURCE_TYPE_LOCAL_STATE:
