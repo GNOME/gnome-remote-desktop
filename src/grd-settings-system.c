@@ -143,8 +143,8 @@ merge_descendant_keys (GrdSettingsSystem *settings_system,
   size_t group_count = 0;
   size_t i, j;
 
-  g_assert (key_file != NULL);
-  g_assert (descendant_key_file != NULL);
+  g_assert (key_file);
+  g_assert (descendant_key_file);
 
   groups = g_key_file_get_groups (descendant_key_file, &group_count);
   for (i = 0; i < group_count; i++)
