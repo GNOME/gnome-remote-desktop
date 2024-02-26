@@ -247,6 +247,18 @@ ctl_sources = ([
   gen_enum_types,
 ])
 
+ctl_deps = [
+  glib_dep,
+  gio_dep,
+  credentials_deps,
+]
+
+if have_rdp
+  ctl_deps += [
+    freerdp_dep,
+  ]
+endif
+
 executable('gnome-remote-desktop-daemon',
            daemon_sources,
            dependencies: deps,
@@ -262,11 +274,7 @@ executable('gnome-remote-desktop-control',
 
 executable('grdctl',
            ctl_sources,
-           dependencies: [
-             glib_dep,
-             gio_dep,
-             credentials_deps,
-           ],
+           dependencies: ctl_deps,
            include_directories: [configinc],
            install: true)
 

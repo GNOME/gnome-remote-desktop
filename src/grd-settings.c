@@ -24,6 +24,10 @@
 
 #include <gio/gio.h>
 
+#ifdef HAVE_RDP
+#include <freerdp/freerdp.h>
+#endif
+
 #include "grd-credentials-file.h"
 #include "grd-credentials-libsecret.h"
 #include "grd-credentials-one-time.h"
@@ -49,6 +53,7 @@ enum
   PROP_RDP_SCREEN_SHARE_MODE,
   PROP_VNC_SCREEN_SHARE_MODE,
   PROP_RDP_SERVER_CERT,
+  PROP_RDP_SERVER_FINGERPRINT,
   PROP_RDP_SERVER_KEY,
   PROP_RDP_SERVER_CERT_PATH,
   PROP_RDP_SERVER_KEY_PATH,
@@ -67,6 +72,7 @@ typedef struct _GrdSettingsPrivate
     gboolean view_only;
     GrdRdpScreenShareMode screen_share_mode;
     char *server_cert;
+    char *server_fingerprint;
     char *server_key;
     char *server_cert_path;
     char *server_key_path;
@@ -82,6 +88,10 @@ typedef struct _GrdSettingsPrivate
 } GrdSettingsPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdSettings, grd_settings, G_TYPE_OBJECT)
+
+#ifdef HAVE_RDP
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (rdpCertificate, freerdp_certificate_free)
+#endif
 
 GrdRuntimeMode
 grd_settings_get_runtime_mode (GrdSettings *settings)
@@ -397,6 +407,9 @@ grd_settings_get_property (GObject    *object,
     case PROP_RDP_SERVER_CERT:
       g_value_set_string (value, priv->rdp.server_cert);
       break;
+    case PROP_RDP_SERVER_FINGERPRINT:
+      g_value_set_string (value, priv->rdp.server_fingerprint);
+      break;
     case PROP_RDP_SERVER_KEY:
       g_value_set_string (value, priv->rdp.server_key);
       break;
@@ -415,6 +428,38 @@ grd_settings_get_property (GObject    *object,
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
+}
+
+static void
+update_rdp_server_fingerprint (GrdSettings *settings)
+{
+  GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
+#ifdef HAVE_RDP
+  g_autoptr (rdpCertificate) rdp_certificate = NULL;
+#endif
+  g_autofree char *fingerprint = NULL;
+
+  if (!priv->rdp.server_cert_path)
+    return;
+
+#ifdef HAVE_RDP
+  rdp_certificate = freerdp_certificate_new_from_file (priv->rdp.server_cert_path);
+  if (!rdp_certificate)
+    {
+      g_warning ("RDP server certificate is invalid");
+      return;
+    }
+
+  fingerprint = freerdp_certificate_get_fingerprint (rdp_certificate);
+  if (!fingerprint)
+    {
+      g_warning ("Could not compute RDP server certificate fingerprint");
+      return;
+    }
+#endif
+
+  if (fingerprint)
+    g_object_set (G_OBJECT (settings), "rdp-server-fingerprint", fingerprint, NULL);
 }
 
 static void
@@ -495,6 +540,10 @@ grd_settings_set_property (GObject      *object,
       g_clear_pointer (&priv->rdp.server_cert, g_free);
       priv->rdp.server_cert = g_strdup (g_value_get_string (value));
       break;
+    case PROP_RDP_SERVER_FINGERPRINT:
+      g_clear_pointer (&priv->rdp.server_fingerprint, g_free);
+      priv->rdp.server_fingerprint = g_strdup (g_value_get_string (value));
+      break;
     case PROP_RDP_SERVER_KEY:
       g_clear_pointer (&priv->rdp.server_key, g_free);
       priv->rdp.server_key = g_strdup (g_value_get_string (value));
@@ -503,6 +552,7 @@ grd_settings_set_property (GObject      *object,
       g_clear_pointer (&priv->rdp.server_cert_path, g_free);
       priv->rdp.server_cert_path = g_strdup (g_value_get_string (value));
       update_rdp_server_cert (settings);
+      update_rdp_server_fingerprint (settings);
       break;
     case PROP_RDP_SERVER_KEY_PATH:
       g_clear_pointer (&priv->rdp.server_key_path, g_free);
@@ -643,6 +693,15 @@ grd_settings_class_init (GrdSettingsClass *klass)
                                    g_param_spec_string ("rdp-server-cert",
                                                         "rdp server cert",
                                                         "rdp server cert",
+                                                        NULL,
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_CONSTRUCT |
+                                                        G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_RDP_SERVER_FINGERPRINT,
+                                   g_param_spec_string ("rdp-server-fingerprint",
+                                                        "rdp server fingerprint",
+                                                        "rdp server fingerprint",
                                                         NULL,
                                                         G_PARAM_READWRITE |
                                                         G_PARAM_CONSTRUCT |

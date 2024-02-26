@@ -401,6 +401,9 @@ export_rdp_server_interface (GrdDaemon *daemon)
   g_object_bind_property (settings, "rdp-server-cert-path",
                           rdp_server_interface, "tls-cert",
                           G_BINDING_SYNC_CREATE);
+  g_object_bind_property (settings, "rdp-server-fingerprint",
+                          rdp_server_interface, "tls-fingerprint",
+                          G_BINDING_SYNC_CREATE);
   g_object_bind_property (settings, "rdp-server-key-path",
                           rdp_server_interface, "tls-key",
                           G_BINDING_SYNC_CREATE);
