@@ -727,23 +727,23 @@ print_rdp_status (GrdSettings *settings,
                   gboolean     use_colors,
                   gboolean     show_credentials)
 {
-  uint16_t port;
-  gboolean enabled;
-  gboolean view_only;
-  gboolean negotiate_port;
   g_autofree char *tls_cert = NULL;
   g_autofree char *tls_key = NULL;
   g_autofree char *username = NULL;
   g_autofree char *password = NULL;
   g_autoptr (GError) error = NULL;
+  gboolean negotiate_port;
+  gboolean view_only;
+  gboolean enabled;
+  uint16_t port;
 
   g_object_get (G_OBJECT (settings),
-                "rdp-port", &port,
-                "rdp-enabled", &enabled,
-                "rdp-server-key-path", &tls_key,
                 "rdp-server-cert-path", &tls_cert,
-                "rdp-view-only", &view_only,
+                "rdp-server-key-path", &tls_key,
                 "rdp-negotiate-port", &negotiate_port,
+                "rdp-view-only", &view_only,
+                "rdp-enabled", &enabled,
+                "rdp-port", &port,
                 NULL);
 
   printf ("RDP:\n");
