@@ -345,9 +345,11 @@ show_insecure_connection_prompt (GrdDaemonHandover *daemon_handover)
   prompt_definition->summary =
     g_strdup_printf (_("This connection is insecure"));
   prompt_definition->body =
+  /* Translators: Don't translate "use redirection server name:i:1".
+   * It's a menu option, and it's the same for all languages. */
     g_strdup_printf (_("Do you want to continue with an insecure connection?\n"
                        "To make it secure set "
-                       "<b><i>use redirection server name:i:1</i></b> "
+                       "<b>“use redirection server name:i:1”</b> "
                        "in the RDP config file."));
   prompt_definition->cancel_label = g_strdup_printf (_("Disconnect"));
   prompt_definition->accept_label = g_strdup_printf (_("Continue"));
