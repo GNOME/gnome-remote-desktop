@@ -920,6 +920,7 @@ main (int   argc,
       char *argv[])
 {
   g_autoptr (GrdSettings) settings = NULL;
+  gboolean is_switching_rdp = FALSE;
   GrdRuntimeMode runtime_mode;
   int i;
   int arg_shift;
@@ -957,7 +958,15 @@ main (int   argc,
 
   arg_shift = i + 1;
 
-  if (runtime_mode == GRD_RUNTIME_MODE_SYSTEM)
+  if (argc > i + 1)
+    {
+      is_switching_rdp = (strcmp (argv[i], "rdp") == 0 &&
+                          strcmp (argv[i + 1], "enable") == 0) ||
+                         (strcmp (argv[i], "rdp") == 0 &&
+                          strcmp (argv[i + 1], "disable") == 0);
+    }
+
+  if (runtime_mode == GRD_RUNTIME_MODE_SYSTEM && is_switching_rdp)
     {
       g_autoptr (GStrvBuilder) builder = NULL;
       g_auto (GStrv) new_argv = NULL;
