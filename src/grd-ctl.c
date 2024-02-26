@@ -727,6 +727,7 @@ print_rdp_status (GrdSettings *settings,
                   gboolean     use_colors,
                   gboolean     show_credentials)
 {
+  g_autofree char *tls_fingerprint = NULL;
   g_autofree char *tls_cert = NULL;
   g_autofree char *tls_key = NULL;
   g_autofree char *username = NULL;
@@ -738,6 +739,7 @@ print_rdp_status (GrdSettings *settings,
   uint16_t port;
 
   g_object_get (G_OBJECT (settings),
+                "rdp-server-fingerprint", &tls_fingerprint,
                 "rdp-server-cert-path", &tls_cert,
                 "rdp-server-key-path", &tls_key,
                 "rdp-negotiate-port", &negotiate_port,
@@ -750,6 +752,7 @@ print_rdp_status (GrdSettings *settings,
   printf ("\tStatus: %s\n", status_to_string (enabled, use_colors));
   printf ("\tPort: %u\n", port);
   printf ("\tTLS certificate: %s\n", tls_cert);
+  printf ("\tTLS fingerprint: %s\n", tls_fingerprint);
   printf ("\tTLS key: %s\n", tls_key);
   if (!GRD_IS_SETTINGS_SYSTEM (settings))
     {
