@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=Gnome Remote Desktop Handover Daemon
+Name=GNOME Remote Desktop Handover Daemon
 Exec=@libexecdir@/gnome-remote-desktop-daemon --handover
 Terminal=false
 StartupNotify=true
