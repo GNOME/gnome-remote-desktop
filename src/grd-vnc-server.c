@@ -135,7 +135,7 @@ grd_vnc_server_start (GrdVncServer  *vnc_server,
                       GError       **error)
 {
   GrdSettings *settings = grd_context_get_settings (vnc_server->context);
-  uint16_t vnc_port;
+  int vnc_port;
   uint16_t selected_vnc_port = 0;
   gboolean negotiate_port;
   GrdDBusRemoteDesktopVncServer *vnc_server_iface;
