@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/iss"
 "ues/\n"
-"POT-Creation-Date: 2024-01-30 20:40+0000\n"
-"PO-Revision-Date: 2024-02-13 21:09+0200\n"
+"POT-Creation-Date: 2024-02-29 20:07+0000\n"
+"PO-Revision-Date: 2024-03-01 23:40+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -20,16 +20,16 @@ msgstr ""
 "%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Lokalize 23.04.1\n"
 
-#: src/grd-ctl.c:59
+#: src/grd-ctl.c:60
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Користування: %s [ПАРАМЕТРИ...] КОМАНДА [ПІДКОМАНДА]...\n"
 
-#: src/grd-ctl.c:579
+#: src/grd-ctl.c:612
 msgid "Commands:\n"
 msgstr "Команди:\n"
 
-#: src/grd-ctl.c:584
+#: src/grd-ctl.c:617
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -79,7 +79,7 @@ msgstr ""
 "                                               дані на іншому порту\n"
 "\n"
 
-#: src/grd-ctl.c:608
+#: src/grd-ctl.c:641
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -123,14 +123,7 @@ msgstr ""
 "                                               дані на іншому порту\n"
 "\n"
 
-#: src/grd-ctl.c:628
-#| msgid ""
-#| "  status [--show-credentials]                - Show current status\n"
-#| "\n"
-#| "Options:\n"
-#| "  --headless                                 - Use headless credentials "
-#| "storage\n"
-#| "  --help                                     - Print this help text\n"
+#: src/grd-ctl.c:661
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -145,11 +138,11 @@ msgstr ""
 "Параметри:\n"
 "  --headless                                 - використовувати автономне "
 "сховище реєстраційних даних\n"
-"  --system                                   - налаштувати фонову службу"
-" системи\n"
+"  --system                                   - налаштувати фонову службу "
+"системи\n"
 "  --help                                     - вивести цей довідковий текст\n"
 
-#: src/grd-daemon.c:940
+#: src/grd-daemon.c:1220
 msgid "GNOME Remote Desktop"
 msgstr "Віддалена стільниця GNOME"
 
@@ -158,23 +151,29 @@ msgstr "Віддалена стільниця GNOME"
 msgid "This connection is insecure"
 msgstr "Це з'єднання не захищено"
 
-#: src/grd-daemon-handover.c:348
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
 #, c-format
+#| msgid ""
+#| "Do you want to continue with an insecure connection?\n"
+#| "To make it secure set <b><i>use redirection server name:i:1</i></b> in "
+#| "the RDP config file."
 msgid ""
 "Do you want to continue with an insecure connection?\n"
-"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
-"RDP config file."
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
 msgstr ""
 "Хочете продовжити із незахищеним з'єднанням?\n"
-"Для захисту з'єднання встановіть <b><i>use redirection server name:i:1</i><"
-"/b> у файлі налаштувань RDP."
+"Для захисту з'єднання встановіть <b>«use redirection server name:i:1»</b> у"
+" файлі налаштувань RDP."
 
-#: src/grd-daemon-handover.c:352
+#: src/grd-daemon-handover.c:354
 #, c-format
 msgid "Disconnect"
 msgstr "Від’єднатися"
 
-#: src/grd-daemon-handover.c:353
+#: src/grd-daemon-handover.c:355
 #, c-format
 msgid "Continue"
 msgstr "Продовжити"
@@ -192,8 +191,8 @@ msgid ""
 "higher priority to use port <b>%i</b>."
 msgstr ""
 "Порт оприлюднення даних стільниці було змінено з <b>%i</b> на <b>%i</b>.\n"
-"Причиною цього є те, що було активовано «Віддалені сеанси», а ця програма"
-" має вищий пріоритет щодо використання порту <b>%i</b>."
+"Причиною цього є те, що було активовано «Віддалені сеанси», а ця програма "
+"має вищий пріоритет щодо використання порту <b>%i</b>."
 
 #: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
 #, c-format
