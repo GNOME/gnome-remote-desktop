@@ -736,7 +736,7 @@ print_rdp_status (GrdSettings *settings,
   gboolean negotiate_port;
   gboolean view_only;
   gboolean enabled;
-  uint16_t port;
+  int port;
 
   g_object_get (G_OBJECT (settings),
                 "rdp-server-fingerprint", &tls_fingerprint,
@@ -750,7 +750,7 @@ print_rdp_status (GrdSettings *settings,
 
   printf ("RDP:\n");
   printf ("\tStatus: %s\n", status_to_string (enabled, use_colors));
-  printf ("\tPort: %u\n", port);
+  printf ("\tPort: %d\n", port);
   printf ("\tTLS certificate: %s\n", tls_cert);
   printf ("\tTLS fingerprint: %s\n", tls_fingerprint);
   printf ("\tTLS key: %s\n", tls_key);
@@ -790,7 +790,7 @@ print_vnc_status (GrdSettings *settings,
                   gboolean     use_colors,
                   gboolean     show_credentials)
 {
-  uint16_t port;
+  int port;
   gboolean enabled;
   gboolean view_only;
   gboolean negotiate_port;
@@ -816,7 +816,7 @@ print_vnc_status (GrdSettings *settings,
   printf ("VNC:\n");
   printf ("\tStatus: %s\n", status_to_string (enabled, use_colors));
 
-  printf ("\tPort: %u\n", port);
+  printf ("\tPort: %d\n", port);
   if (auth_method == GRD_VNC_AUTH_METHOD_PROMPT)
     printf ("\tAuth method: prompt\n");
   else if (auth_method == GRD_VNC_AUTH_METHOD_PASSWORD)
