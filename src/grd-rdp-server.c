@@ -250,7 +250,7 @@ attempt_to_bind_port (gpointer user_data)
   GrdSettings *settings = grd_context_get_settings (rdp_server->context);
   GrdDBusRemoteDesktopRdpServer *rdp_server_iface =
     grd_context_get_rdp_server_interface (rdp_server->context);
-  uint16_t rdp_port = 0;
+  int rdp_port = 0;
   uint16_t selected_rdp_port = 0;
 
   g_assert (rdp_server->pending_binding_attempts > 0);
@@ -277,7 +277,7 @@ attempt_to_bind_port (gpointer user_data)
 
   if (rdp_server->pending_binding_attempts == 0)
     {
-      g_warning ("Failed to bind port %u after %u attempts",
+      g_warning ("Failed to bind port %d after %u attempts",
                  rdp_port, RDP_SERVER_N_BINDING_ATTEMPTS);
 
       g_signal_emit (rdp_server, signals[BINDING_FAILED], 0);
@@ -297,7 +297,7 @@ bind_socket (GrdRdpServer  *rdp_server,
   GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (rdp_server->context);
   GrdDBusRemoteDesktopRdpServer *rdp_server_iface =
     grd_context_get_rdp_server_interface (rdp_server->context);
-  uint16_t rdp_port = 0;
+  int rdp_port = 0;
   uint16_t selected_rdp_port = 0;
   gboolean negotiate_port;
 
