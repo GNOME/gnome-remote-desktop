@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-01-30 20:40+0000\n"
-"PO-Revision-Date: 2024-02-05 15:04+0300\n"
+"POT-Creation-Date: 2024-02-29 20:07+0000\n"
+"PO-Revision-Date: 2024-02-29 23:54+0300\n"
 "Last-Translator: Artur So <arturios2005@mail.ru>\n"
 "Language-Team: Russian <gnome-cyr@gnome.org>\n"
 "Language: ru\n"
@@ -20,16 +20,16 @@ msgstr ""
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Poedit 3.4.2\n"
 
-#: src/grd-ctl.c:59
+#: src/grd-ctl.c:60
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Использование: %s [ОПЦИИ...] КОМАНДА [СУБКОМАНДА]...\n"
 
-#: src/grd-ctl.c:579
+#: src/grd-ctl.c:612
 msgid "Commands:\n"
 msgstr "Команды:\n"
 
-#: src/grd-ctl.c:584
+#: src/grd-ctl.c:617
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -79,7 +79,7 @@ msgstr ""
 "                                               другой порт\n"
 "\n"
 
-#: src/grd-ctl.c:608
+#: src/grd-ctl.c:641
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -120,7 +120,7 @@ msgstr ""
 "                                               другой порт\n"
 "\n"
 
-#: src/grd-ctl.c:628
+#: src/grd-ctl.c:661
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -138,7 +138,7 @@ msgstr ""
 "  --system                                   - Настроить системного демона\n"
 "  --help                                     - Вывести текст справки\n"
 
-#: src/grd-daemon.c:940
+#: src/grd-daemon.c:1220
 msgid "GNOME Remote Desktop"
 msgstr "Удаленный рабочий стол GNOME"
 
@@ -147,23 +147,25 @@ msgstr "Удаленный рабочий стол GNOME"
 msgid "This connection is insecure"
 msgstr "Это соединение небезопасно"
 
-#: src/grd-daemon-handover.c:348
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
 #, c-format
 msgid ""
 "Do you want to continue with an insecure connection?\n"
-"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
-"RDP config file."
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
 msgstr ""
 "Хотите ли вы продолжить работу с небезопасным соединением?\n"
-"Чтобы сделать его безопасным, установите <b><i>использовать имя сервера "
-"перенаправления:i:1</i></b> в файле конфигурации RDP."
+"Чтобы сделать его безопасным, установите <b>“использовать имя сервера "
+"перенаправления:i:1”</b> в файле конфигурации RDP."
 
-#: src/grd-daemon-handover.c:352
+#: src/grd-daemon-handover.c:354
 #, c-format
 msgid "Disconnect"
 msgstr "Отключиться"
 
-#: src/grd-daemon-handover.c:353
+#: src/grd-daemon-handover.c:355
 #, c-format
 msgid "Continue"
 msgstr "Продолжить"
