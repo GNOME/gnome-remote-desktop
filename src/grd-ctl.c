@@ -969,7 +969,7 @@ main (int   argc,
                           strcmp (argv[i + 1], "disable") == 0);
     }
 
-  if (runtime_mode == GRD_RUNTIME_MODE_SYSTEM && is_switching_rdp)
+  if (runtime_mode == GRD_RUNTIME_MODE_SYSTEM)
     {
       g_autoptr (GStrvBuilder) builder = NULL;
       g_auto (GStrv) new_argv = NULL;
@@ -1016,6 +1016,9 @@ main (int   argc,
         }
 
       if (exit_code != EXIT_SUCCESS)
+        goto done;
+
+      if (!is_switching_rdp)
         goto done;
 
       performing_system_configuration = TRUE;
