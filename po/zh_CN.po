@@ -2,34 +2,34 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Boyuan Yang <073plan@gmail.com>, 2021.
-# lumingzh <lumingzh@qq.com>, 2022.
+# lumingzh <lumingzh@qq.com>, 2022-2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-01-30 20:40+0000\n"
-"PO-Revision-Date: 2024-02-20 16:26+0800\n"
-"Last-Translator: Boyuan Yang <073plan@gmail.com>\n"
+"POT-Creation-Date: 2024-02-29 20:07+0000\n"
+"PO-Revision-Date: 2024-03-03 18:05+0800\n"
+"Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese - China <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.2\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"X-Generator: Gtranslator 45.3\n"
 
-#: src/grd-ctl.c:59
+#: src/grd-ctl.c:60
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "使用：%s [选项…] 命令 [子命令]…\n"
 
-#: src/grd-ctl.c:579
+#: src/grd-ctl.c:612
 msgid "Commands:\n"
 msgstr "命令：\n"
 
-#: src/grd-ctl.c:584
+#: src/grd-ctl.c:617
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -73,7 +73,7 @@ msgstr ""
 "                                               另外的端口\n"
 "\n"
 
-#: src/grd-ctl.c:608
+#: src/grd-ctl.c:641
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -110,7 +110,7 @@ msgstr ""
 "                                               不同的端口\n"
 "\n"
 
-#: src/grd-ctl.c:628
+#: src/grd-ctl.c:661
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -127,7 +127,7 @@ msgstr ""
 "  --system                                   - 配置系统守护进程\n"
 "  --help                                     - 显示该帮助文本\n"
 
-#: src/grd-daemon.c:940
+#: src/grd-daemon.c:1220
 msgid "GNOME Remote Desktop"
 msgstr "GNOME 远程桌面"
 
@@ -136,23 +136,25 @@ msgstr "GNOME 远程桌面"
 msgid "This connection is insecure"
 msgstr "此连接不安全"
 
-#: src/grd-daemon-handover.c:348
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
 #, c-format
 msgid ""
 "Do you want to continue with an insecure connection?\n"
-"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
-"RDP config file."
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
 msgstr ""
-"是否要继续使用不安全的连接？\n"
-"若要确保安全，请在 RDP 配置文件中设置 <b><i>use redirection server name:i:1</"
-"i></b>。"
+"您想要继续使用不安全的连接吗？\n"
+"若要确保安全，请在 RDP 配置文件中设置 <b>“use redirection server name:i:1”</"
+"b>。"
 
-#: src/grd-daemon-handover.c:352
+#: src/grd-daemon-handover.c:354
 #, c-format
 msgid "Disconnect"
 msgstr "断开连接"
 
-#: src/grd-daemon-handover.c:353
+#: src/grd-daemon-handover.c:355
 #, c-format
 msgid "Continue"
 msgstr "继续"
