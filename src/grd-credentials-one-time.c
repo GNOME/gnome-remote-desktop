@@ -189,14 +189,14 @@ grd_credentials_one_time_new (void)
   credentials_one_time->rdp.username = generate_random_username (16, &error);
   if (!credentials_one_time->rdp.username)
     {
-      g_warning ("Error generating one time rdp.username %s", error->message);
+      g_warning ("Failed to generate one time RDP username: %s", error->message);
       return NULL;
     }
 
   credentials_one_time->rdp.password = generate_random_utf8_bytes (16, &error);
   if (!credentials_one_time->rdp.password)
     {
-      g_warning ("Error generating one time rdp.password %s", error->message);
+      g_warning ("Failed to generate one time RDP password: %s", error->message);
       return NULL;
     }
 
