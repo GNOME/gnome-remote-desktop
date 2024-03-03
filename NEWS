@@ -1,3 +1,25 @@
+46.rc
+=====
+* Allow D-Bus activation
+* Add polkit rules for system daemon configuration access
+* Add system daemon configuration D-Bus API
+* Allow checking TLS fingerprint via grdctl
+* Fix VNC-only bulids
+* Disable DMA buffer support when running with NVIDIA
+
+Contributors:
+  Ondrej Holy, Pascal Nowack, Marvin Schmidt, Ray Strode, Joan Torres
+
+Translators:
+  Fran Dieguez [gl], Danial Behzadi [fa], Yaron Shahrabani [he],
+  Nathan Follens [nl], Matej Urbančič [sl], Kukuh Syafaat [id],
+  Boyuan Yang [zh_CN], Daniel Mustieles [es], Andi Chandler [en_GB],
+  Jiri Grönroos [fi], Rūdolfs Mazurs [lv], Guillaume Bernard [fr],
+  Andre Klapper [es], Aurimas Černius [lt], Daniel Rusek [cs],
+  Ekaterine Papava [ka], Asier Sarasua Garmendia [eu], Yuri Chornoivan [uk],
+  Balázs Úr [hu], Artur S0 [ru], Luming Zh [zh_CN], Anders Jonsson [sv],
+  Sabri Ünal [tr], Irénée THIRION [fr]
+
 46.beta
 =======
 * Add layering to system daemon configuration
