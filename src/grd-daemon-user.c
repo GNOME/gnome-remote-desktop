@@ -167,7 +167,7 @@ on_remote_desktop_rdp_server_proxy_acquired (GObject      *object,
     grd_dbus_remote_desktop_rdp_server_proxy_new_for_bus_finish (result, &error);
   if (!daemon_user->system_rdp_server)
     {
-      g_warning ("[DaemonUser] Failed to create system rdp server proxy: "
+      g_warning ("[DaemonUser] Failed to create system RDP server proxy: "
                  "%s", error->message);
       return;
     }
