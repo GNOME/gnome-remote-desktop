@@ -945,9 +945,11 @@ get_daemon_dbus_connection (GrdDaemon *daemon)
   g_autoptr (GDBusConnection) connection = NULL;
   g_autoptr (GError) error = NULL;
 
+#ifdef HAVE_RDP
   if (GRD_IS_DAEMON_SYSTEM (daemon))
     connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &error);
   else
+#endif /* HAVE_RDP */
     connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
 
   if (!connection)
