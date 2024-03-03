@@ -316,7 +316,7 @@ add_format_params (GrdRdpPipeWireStream        *stream,
   add_common_format_params (pod_builder, spa_format, virtual_monitor,
                             refresh_rate);
 
-  if (egl_thread)
+  if (egl_thread && !stream->rdp_surface->hwaccel_nvidia)
     {
       uint32_t drm_format;
       int n_modifiers;
@@ -490,7 +490,7 @@ on_stream_param_changed (void                 *user_data,
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
   allowed_buffer_types = 1 << SPA_DATA_MemFd;
-  if (egl_thread)
+  if (egl_thread && !stream->rdp_surface->hwaccel_nvidia)
     allowed_buffer_types |= 1 << SPA_DATA_DmaBuf;
 
   params[0] = spa_pod_builder_add_object (
