@@ -33,14 +33,17 @@ struct _GrdDaemonUser
 {
   GrdDaemon parent;
 
+#ifdef HAVE_RDP
   GrdDBusRemoteDesktopRdpServer *system_rdp_server;
 
   GrdPrompt *prompt;
   GCancellable *prompt_cancellable;
+#endif /* HAVE_RDP */
 };
 
 G_DEFINE_TYPE (GrdDaemonUser, grd_daemon_user, GRD_TYPE_DAEMON)
 
+#ifdef HAVE_RDP
 static void
 on_rdp_server_stopped (GrdDaemonUser *daemon_user)
 {
@@ -176,6 +179,7 @@ on_remote_desktop_rdp_server_proxy_acquired (GObject      *object,
                     G_CALLBACK (on_system_rdp_server_binding),
                     daemon_user);
 }
+#endif /* HAVE_RDP */
 
 GrdDaemonUser *
 grd_daemon_user_new (GrdRuntimeMode   runtime_mode,
@@ -220,14 +224,17 @@ static void
 grd_daemon_user_startup (GApplication *app)
 {
   GrdDaemonUser *daemon_user = GRD_DAEMON_USER (app);
+#ifdef HAVE_RDP
   GCancellable *cancellable =
     grd_daemon_get_cancellable (GRD_DAEMON (daemon_user));
+#endif /* HAVE_RDP */
 
   grd_daemon_acquire_mutter_dbus_proxies (GRD_DAEMON (daemon_user));
 
   g_signal_connect (daemon_user, "mutter-proxy-acquired",
                     G_CALLBACK (grd_daemon_maybe_enable_services), NULL);
 
+#ifdef HAVE_RDP
   grd_dbus_remote_desktop_rdp_server_proxy_new_for_bus (
     G_BUS_TYPE_SYSTEM,
     G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
@@ -236,6 +243,7 @@ grd_daemon_user_startup (GApplication *app)
     cancellable,
     on_remote_desktop_rdp_server_proxy_acquired,
     daemon_user);
+#endif /* HAVE_RDP */
 
   G_APPLICATION_CLASS (grd_daemon_user_parent_class)->startup (app);
 }
@@ -243,6 +251,7 @@ grd_daemon_user_startup (GApplication *app)
 static void
 grd_daemon_user_shutdown (GApplication *app)
 {
+#ifdef HAVE_RDP
   GrdDaemonUser *daemon_user = GRD_DAEMON_USER (app);
 
   g_clear_object (&daemon_user->system_rdp_server);
@@ -252,6 +261,7 @@ grd_daemon_user_shutdown (GApplication *app)
       g_clear_object (&daemon_user->prompt_cancellable);
     }
   g_clear_object (&daemon_user->prompt);
+#endif /* HAVE_RDP */
 
   G_APPLICATION_CLASS (grd_daemon_user_parent_class)->shutdown (app);
 }
