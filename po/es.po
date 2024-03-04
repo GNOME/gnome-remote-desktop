@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-01-30 20:40+0000\n"
-"PO-Revision-Date: 2024-02-21 12:18+0100\n"
+"POT-Creation-Date: 2024-02-29 20:07+0000\n"
+"PO-Revision-Date: 2024-03-04 10:52+0100\n"
 "Last-Translator: Daniel Mustieles <daniel.mustieles@gmail.com>\n"
 "Language-Team: Spanish - Spain <gnome-es-list@gnome.org>\n"
 "Language: es_ES\n"
@@ -20,16 +20,16 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "X-Generator: Gtranslator 45.3\n"
 
-#: src/grd-ctl.c:59
+#: src/grd-ctl.c:60
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Uso: %s [OPCIONES...] COMANDO [SUBCOMANDO]...\n"
 
-#: src/grd-ctl.c:579
+#: src/grd-ctl.c:612
 msgid "Commands:\n"
 msgstr "Comandos:\n"
 
-#: src/grd-ctl.c:584
+#: src/grd-ctl.c:617
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -81,7 +81,7 @@ msgstr ""
 "                                               en un puerto diferente\n"
 "\n"
 
-#: src/grd-ctl.c:608
+#: src/grd-ctl.c:641
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -126,7 +126,7 @@ msgstr ""
 "                                               en un puerto diferente\n"
 "\n"
 
-#: src/grd-ctl.c:628
+#: src/grd-ctl.c:661
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -145,7 +145,7 @@ msgstr ""
 "sistema\n"
 "  --help                                     - Mostrar este texto de ayuda\n"
 
-#: src/grd-daemon.c:940
+#: src/grd-daemon.c:1220
 msgid "GNOME Remote Desktop"
 msgstr "Escritorio remoto GNOME"
 
@@ -154,23 +154,25 @@ msgstr "Escritorio remoto GNOME"
 msgid "This connection is insecure"
 msgstr "Esta conexión no es segura"
 
-#: src/grd-daemon-handover.c:348
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
 #, c-format
 msgid ""
 "Do you want to continue with an insecure connection?\n"
-"To make it secure set <b><i>use redirection server name:i:1</i></b> in the "
-"RDP config file."
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
 msgstr ""
 "¿Quiere continuar con una conexión no segura?\n"
-"Para hacerla segura, establezca <b><i>use redirection server name:i:1</i></"
-"b> en el archivo de configuración de RDP."
+"Para hacerla segura, establezca <b>use redirection server name:i:1</b> en el "
+"archivo de configuración de RDP."
 
-#: src/grd-daemon-handover.c:352
+#: src/grd-daemon-handover.c:354
 #, c-format
 msgid "Disconnect"
 msgstr "Desconectar"
 
-#: src/grd-daemon-handover.c:353
+#: src/grd-daemon-handover.c:355
 #, c-format
 msgid "Continue"
 msgstr "Continuar"
