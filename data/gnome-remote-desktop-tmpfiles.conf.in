@@ -1,5 +1,3 @@
 # tmpfiles.d file to ensure the existence of the home directory for gnome-remote-desktop user
 d @GRD_HOMEDIR@ 0700 @GRD_USERNAME@ @GRD_USERNAME@
-z @GRD_HOMEDIR@ 0700 @GRD_USERNAME@ @GRD_USERNAME@
-Z @GRD_CONFDIR@ - @GRD_USERNAME@ @GRD_USERNAME@
-z @GRD_CONFDIR@ 0755
+d @GRD_CONFDIR@ 0755 @GRD_USERNAME@ @GRD_USERNAME@
