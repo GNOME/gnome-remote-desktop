@@ -4,61 +4,37 @@
 #
 # Philipp Kiemle <philipp.kiemle@gmail.com>, 2021-2022.
 # Jürgen Benvenuti <gastornis@posteo.org>, 2022.
+# Tim Sabsch <tim@sabsch.com>, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2022-09-07 20:23+0000\n"
-"PO-Revision-Date: 2022-09-08 20:39+0200\n"
-"Last-Translator: Jürgen Benvenuti <gastornis@posteo.org>\n"
+"issues/\n"
+"POT-Creation-Date: 2024-03-11 18:38+0000\n"
+"PO-Revision-Date: 2024-03-11 22:52+0100\n"
+"Last-Translator: Christian Kirbach <christian.kirbach@gmail.com>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: src/grd-daemon.c:503
-msgid "GNOME Remote Desktop"
-msgstr "GNOME Remote Desktop"
-
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "Möchten Sie Ihren Bildschirm freigeben?"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr ""
-"Ein Benutzer am Rechner »%s« versucht, Ihren Bildschirm aus der Ferne zu "
-"betrachten oder zu steuern."
-
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "Abweisen"
-
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "Akzeptieren"
-
-#: src/grd-ctl.c:53
+#: src/grd-ctl.c:60
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Aufruf: %s [OPTIONEN …] BEFEHL [UNTERBEFEHL] …\n"
 
-#: src/grd-ctl.c:461
+#: src/grd-ctl.c:612
 msgid "Commands:\n"
 msgstr "Befehle:\n"
 
-#: src/grd-ctl.c:466
+#: src/grd-ctl.c:617
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -73,9 +49,15 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                          - RDP-Unterbefehle:\n"
+"    set-port                                 - Port festlegen, auf dem sich "
+"der Server verbindet\n"
 "    enable                                     - RDP-Backend aktivieren\n"
 "    disable                                    - RDP-Backend deaktivieren\n"
 "    set-tls-cert <pfad-zu-zertifikat>          - Pfad zum TLS-Zertifikat "
@@ -90,11 +72,16 @@ msgstr ""
 "Eingabegeräten deaktivieren\n"
 "    disable-view-only                          - Fernsteuerung mittels "
 "Eingabegeräten aktivieren\n"
+"    enable-port-negotiation                  - Falls nicht verfügbar, auf "
+"einem anderen Port lauschen\n"
+"    disable-port-negotiation                 - Falls nicht verfügbar, nicht "
+"auf einem anderen Port lauschen\n"
 "\n"
 
-#: src/grd-ctl.c:485
+#: src/grd-ctl.c:641
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
@@ -106,9 +93,15 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  vnc                                        - VNC-Unterbefehle:\n"
+"    set-port                                 - Port festlegen, auf dem sich "
+"der Server verbindet\n"
 "    enable                                   - VNC-Backend aktivieren\n"
 "    disable                                  - VNC-Backend deaktivieren\n"
 "    set-password <Passwort>                  - VNC-Passwort festlegen\n"
@@ -119,15 +112,20 @@ msgstr ""
 "Eingabegeräten deaktivieren\n"
 "    disable-view-only                        - Fernsteuerung von "
 "Eingabegeräten aktivieren\n"
+"    enable-port-negotiation                  - Falls nicht verfügbar, auf "
+"einem anderen Port lauschen\n"
+"    disable-port-negotiation                 - Falls nicht verfügbar, nicht "
+"auf einem anderen Port lauschen\n"
 "\n"
 
-#: src/grd-ctl.c:500
+#: src/grd-ctl.c:661
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Aktuellen Status anzeigen\n"
@@ -135,21 +133,120 @@ msgstr ""
 "Optionen:\n"
 "  --headless                                 - »Headless«-Speicher für "
 "Anmeldeinformationen verwenden\n"
-"  --help                                     - Diesen Hilfetext anzeigen\n"
+"  --system                                   - Systemdienst einrichten\n"
+"  --help                                    - Diesen Hilfetext anzeigen\n"
+
+#: src/grd-daemon.c:1222
+msgid "GNOME Remote Desktop"
+msgstr "GNOME Remote Desktop"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "Diese Verbindung ist unsicher"
+
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
+msgstr ""
+"Möchten Sie mit einer unsicheren Verbindung fortfahren?\n"
+"Um sie zu sichern, setzen Sie <b>\"use redirection server name:i:1\"</b> in "
+"der RDP-Konfigurationsdatei."
+
+#: src/grd-daemon-handover.c:354
+#, c-format
+msgid "Disconnect"
+msgstr "Trennen"
+
+#: src/grd-daemon-handover.c:355
+#, c-format
+msgid "Continue"
+msgstr "Fortsetzen"
+
+#: src/grd-daemon-user.c:99
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "Port für Bildschirmfreigabe geändert"
+
+#: src/grd-daemon-user.c:101
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"Der Port für die Bildschirmfreigabe hat sich von <b>%i</b> zu <b>%i</b> "
+"geändert.\n"
+"Das liegt daran, dass der Dienst für entfernte Sitzungen aktiviert wurde und "
+"er eine höhere Priorität hat, den Port <b>%i</b> zu verwenden."
+
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "Akzeptieren"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Möchten Sie Ihren Bildschirm freigeben?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Ein Benutzer am Rechner »%s« versucht, Ihren Bildschirm aus der Ferne zu "
+"betrachten oder zu steuern."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "Abweisen"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "Der vom RDP-Server verwendete Port"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr ""
+"Der RDP-Client stellt eine Verbindung zu diesem Port her, um diesen RDP-"
+"Server zu verwenden."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr ""
+"Einen anderen RDP-Port suchen, wenn der eingerichtete Port bereits verwendet "
+"wird"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Wenn »negotiate-port« auf »true« gesetzt ist, versucht der RDP-Server, den "
+"ersten der nächsten 10 verfügbaren Ports, beginnend mit dem konfigurierten "
+"Port, zu überwachen."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Legt fest, ob das RDP-Backend aktiviert ist oder nicht"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Wenn »wahr«, wird das RDP-Backend initialisiert."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "Art der Bildschirmfreigabe bei RDP-Verbindungen"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -178,12 +275,12 @@ msgstr ""
 "Monitors wird von der Monitorkonfiguration abgeleitet, die vom Client "
 "übermittelt wurde."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Pfad zur Zertifikatsdatei"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -192,17 +289,17 @@ msgstr ""
 "Schlüsseldatei als auch die Zertifikatsdatei dem RDP-Server bereitgestellt "
 "werden."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Pfad zur privaten Schlüsseldatei"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr ""
 "Entfernten Verbindungen lediglich das Ansehen des Bildschirminhalts erlauben"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -210,15 +307,40 @@ msgstr ""
 "Wenn »Nur ansehen« wahr ist, können entfernte RDP-Verbindungen keine "
 "Eingabegeräte manipulieren (z.B. Maus und Tastatur)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "Der vom VNC-Server verwendete Port"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr ""
+"Der VNC-Client stellt eine Verbindung zu diesem Port her, um diesen VNC-"
+"Server zu verwenden."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr ""
+"Einen anderen VNC-Port suchen, wenn der eingerichtete Port bereits verwendet "
+"wird"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Wenn »negotiate-port« auf »true« gesetzt ist, versucht der VNC-Server, den "
+"ersten der nächsten 10 verfügbaren Ports, beginnend mit dem konfigurierten "
+"Port, zu überwachen."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Legt fest, ob das VNC-Backend aktiviert ist oder nicht"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Wenn »wahr«, wird das VNC-Backend initialisiert."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -226,11 +348,11 @@ msgstr ""
 "Wenn »Nur ansehen« wahr ist, können entfernte VNC-Verbindungen keine "
 "Eingabegeräte manipulieren (z.B. Maus und Tastatur)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "Zur Authentifizierung von VNC-Verbindungen genutzte Methode"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -245,11 +367,11 @@ msgstr ""
 "Rechner. * Passwort - indem der entfernte Benutzer ein bekanntes Passwort "
 "benötigt"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
 msgstr "Art der Bildschirmfreigabe bei VNC-Verbindungen"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
