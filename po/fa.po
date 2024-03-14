@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-02-29 20:07+0000\n"
-"PO-Revision-Date: 2024-02-29 23:51+0330\n"
+"POT-Creation-Date: 2024-03-14 15:00+0000\n"
+"PO-Revision-Date: 2024-03-15 01:06+0330\n"
 "Last-Translator: Danial Behzadi <dani.behzi@ubuntu.com>\n"
 "Language-Team: Persian <fa@li.org>\n"
 "Language: fa\n"
@@ -18,6 +18,20 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-DamnedLies-Scope: partial\n"
 "X-Generator: Poedit 3.4.2\n"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgstr "اجازه به پیکربندی تنظیمات خدمت سامانهٔ gnome-remote-desktop."
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr "نیازمند هویت‌سنجی برای پیکربندی تنظیمات خدمت سامانهٔ gnome-remote-desktop."
+
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "خدمت تحویل میزکار دوردست گنوم"
 
 #: src/grd-ctl.c:60
 #, c-format
@@ -126,7 +140,7 @@ msgstr ""
 "  --system                                   - پیکربندی خدمت سامانه\n"
 "  --help                                     - چاپ این متن راهنما\n"
 
-#: src/grd-daemon.c:1220
+#: src/grd-daemon.c:1222
 msgid "GNOME Remote Desktop"
 msgstr "میزکار دوردست گنوم"
 
@@ -158,12 +172,12 @@ msgstr "قطع"
 msgid "Continue"
 msgstr "ادامه"
 
-#: src/grd-daemon-user.c:96
+#: src/grd-daemon-user.c:99
 #, c-format
 msgid "Desktop Sharing port changed"
 msgstr "درگاه هم‌رسانی میزکار تغییر کرد"
 
-#: src/grd-daemon-user.c:98
+#: src/grd-daemon-user.c:101
 #, c-format
 msgid ""
 "The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
@@ -174,7 +188,7 @@ msgstr ""
 "به این دلیلی که خدمت نشست‌های دوردست فعّال شده و اولویتی بالاتر برای استفاده از "
 "درگاه <b>%i</b> دارد."
 
-#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
 #, c-format
 msgid "Accept"
 msgstr "پذیرش"
