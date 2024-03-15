@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-02-29 20:07+0000\n"
-"PO-Revision-Date: 2024-03-01 04:53+0100\n"
+"POT-Creation-Date: 2024-03-14 15:00+0000\n"
+"PO-Revision-Date: 2024-03-15 04:07+0100\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
 "Language: ka\n"
@@ -18,6 +18,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 3.3.2\n"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgstr ""
+"'gnome-remote-desktop'-ის სისტემური დემონის პარამეტრების მორგების დაშვება."
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"'gnome-remove-desktop'-ის სისტემური დემონის პარამეტრების მოსარგებად "
+"აუცილებელია ავთენტიკაცია."
+
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+#| msgid "GNOME Remote Desktop"
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "GNOME Remote Desktop Handover Daemon"
 
 #: src/grd-ctl.c:60
 #, c-format
@@ -136,7 +154,7 @@ msgstr ""
 "გარეშე გამოყენება\n"
 "  --help                                     - ამ ტექსტის ჩვენება\n"
 
-#: src/grd-daemon.c:1220
+#: src/grd-daemon.c:1222
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Remote Desktop"
 
@@ -168,12 +186,12 @@ msgstr "გათიშვა"
 msgid "Continue"
 msgstr "გაგრძელება"
 
-#: src/grd-daemon-user.c:96
+#: src/grd-daemon-user.c:99
 #, c-format
 msgid "Desktop Sharing port changed"
 msgstr "სამუშაო მაგიდის გაზიარების პორტი შეიცვალა"
 
-#: src/grd-daemon-user.c:98
+#: src/grd-daemon-user.c:101
 #, c-format
 msgid ""
 "The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
@@ -184,7 +202,7 @@ msgstr ""
 "ეს იმიტომ მოხდა, რომ Remote Sessions სერვისი გააქტიურდა და მას უფრო მაღალი "
 "პრიორიტეტი აქვს, პორტი <b>%i</b> გამოიყენოს."
 
-#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
 #, c-format
 msgid "Accept"
 msgstr "დასტური"
