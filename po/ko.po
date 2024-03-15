@@ -1,60 +1,52 @@
 # Korean translation for gnome-remote-desktop.
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
-# Seong-ho Cho <shcho@gnome.org>, 2021-2022.
+# Seong-ho Cho <shcho@gnome.org>, 2021-2022, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2022-08-05 21:58+0000\n"
-"PO-Revision-Date: 2022-08-28 22:58+0900\n"
-"Last-Translator: Seong-ho Cho <shcho@gnome.org>\n"
+"issues/\n"
+"POT-Creation-Date: 2024-03-14 15:00+0000\n"
+"PO-Revision-Date: 2024-03-15 23:07+0900\n"
+"Last-Translator: Seong-ho Cho <darkcircle.0426@gmail.com>\n"
 "Language-Team: Korean <gnome-kr@googlegroups.com>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 2.3.1\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: src/grd-daemon.c:503
-msgid "GNOME Remote Desktop"
-msgstr "그놈 원격 데스크톱"
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgstr "gnome-remote-desktop의 시스템 데몬 설정 구성을 허용합니다."
 
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "데스크톱을 공유하시겠습니까?"
-
-#: src/grd-prompt.c:125
-#, c-format
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr "'%s' 컴퓨터의 사용자가 데스크톱을 원격으로 보거나 제어하려고 합니다."
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"gnome-remote-desktop의 시스템 데몬 설정을 구성하려면 인증이 필요합니다."
 
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "거절"
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "그놈 원격 데스크톱 핸드오버 데몬"
 
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "수락"
-
-#: src/grd-ctl.c:52
+#: src/grd-ctl.c:60
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
-msgstr "사용법: %s [<옵션>...] <명령> [<하위명령>]...\n"
+msgstr "사용법: %s [옵션...] <명령> [하위명령]...\n"
 
-#: src/grd-ctl.c:444
+#: src/grd-ctl.c:612
 msgid "Commands:\n"
 msgstr "명령:\n"
 
-#: src/grd-ctl.c:449
+#: src/grd-ctl.c:617
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -69,22 +61,32 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - RDP 하위 명령:\n"
 "    enable                                   - RDP 백엔드 사용\n"
 "    disable                                  - RDP 백엔드 미사용\n"
-"    set-tls-cert <인증서경로>              - TLS 인증서 경로 설정\n"
-"    set-tls-key <키-경로>                - TLS 키 경로 설정\n"
-"    set-credentials <사용자이름> <암호>    - 사용자이름과 암호 인증 설정\n"
-"    clear-credentials                        - 사용자 이름과 암호 인증 지움\n"
+"    set-tls-cert <인증서경로>                  - TLS 인증서 경로 설정\n"
+"    set-tls-key <키-경로>                     - TLS 키 경로 설정\n"
+"    set-credentials <사용자이름> <암호>        - 사용자이름과 암호 인증 설"
+"정\n"
+"    clear-credentials                        - 사용자이름과 암호 인증 지움\n"
 "    enable-view-only                         - 입력 장치 원격 제어 미사용\n"
 "    disable-view-only                        - 입력 장치 원격 제어 사용\n"
+"    enable-port-negotiation                  - 사용할 수 없다면 다른\n"
+"                                               포트 번호 감청\n"
+"    disable-port-negotiation                 - 사용할 수 없다면 다른 \n"
+"                                               포트 번호 감청 안함\n"
 "\n"
 
-#: src/grd-ctl.c:468
+#: src/grd-ctl.c:641
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
@@ -96,6 +98,10 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  vnc                                        - VNC 하위 명령:\n"
@@ -106,15 +112,20 @@ msgstr ""
 "    set-auth-method password|prompt          - 인증 방식 설정\n"
 "    enable-view-only                         - 원격 입력 장치 제어 미사용\n"
 "    disable-view-only                        - 원격 입력 장치 제어 사용\n"
+"    enable-port-negotiation                  - 사용할 수 없다면 다른\n"
+"                                               포트 번호 감청\n"
+"    disable-port-negotiation                 - 사용할 수 없다면 다른 \n"
+"                                               포트 번호 감청 안함\n"
 "\n"
 
-#: src/grd-ctl.c:483
+#: src/grd-ctl.c:661
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - 현재 상태를 표시합니다\n"
@@ -122,21 +133,112 @@ msgstr ""
 "옵션:\n"
 "  --headless                                 - 헤드리스 인증 저장소를 활용합"
 "니다.\n"
+"  --system                                   - 시스템 데몬을 설정합니다\n"
 "  --help                                     - 도움말 문구를 출력합니다\n"
 
+#: src/grd-daemon.c:1222
+msgid "GNOME Remote Desktop"
+msgstr "그놈 원격 데스크톱"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "이 연결은 안전하지 않습니다"
+
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
+msgstr ""
+"안전하지 않은 연결을 계속하시겠습니까?\n"
+"안전한 연결을 진행하려면 RDP 설정 파일에 <b>“use redirection server name:"
+"i:1”</b> 설정을 추가하십시오."
+
+#: src/grd-daemon-handover.c:354
+#, c-format
+msgid "Disconnect"
+msgstr "연결 끊기"
+
+#: src/grd-daemon-handover.c:355
+#, c-format
+msgid "Continue"
+msgstr "계속"
+
+#: src/grd-daemon-user.c:99
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "데스크톱 공유 포트 번호 바꿈"
+
+#: src/grd-daemon-user.c:101
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"데스크톱 공유 포트 번호를 <b>%i</b>에서 <b>%i</b>(으)로 바꾸었습니다.\n"
+"원격 세션 서비스에서 <b>%i</b> 포트 번호를 사용하도록 활성화하였고 높은 우선 "
+"순위를 배정했기 때문입니다."
+
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "수락"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "데스크톱을 공유하시겠습니까?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr "'%s' 컴퓨터의 사용자가 데스크톱을 원격으로 보거나 제어하려고 합니다."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "거절"
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "RDP 서버에서 사용하는 포트 번호"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr "RDP 클라이언트에서 이 포트 번호를 사용하여 RDP 서버에 연결합니다."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr "다른 RDP 포트 번호를 설정하여 사용하는 지 여부 검색"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"negotiate-port를 '참'으로 설정했다면 RDP 서버는 설정 포트번호부터 시작하여 다"
+"음 10개 포트 번호에서 차례대로 연결 수락을 시도합니다."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
 msgstr "RDP 백엔드 사용 여부"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "'true'로 설정하면 RDP 백엔드를 초기화합니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "RDP 연결 화면 공유 모드"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -161,12 +263,12 @@ msgstr ""
 "톱 세션용 새 가상 모니터를 만들어 활용하는 extend가 있습니다. 이 가상 모니터"
 "의 해상도는 원격 데스크톱 클라이언트가 보낸 모니터 설정을 따릅니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "인증 파일 경로"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -174,16 +276,16 @@ msgstr ""
 "TLS 보안 수단으로 RDP 연결을 사용할 수 있으려면 개인키 파일과 인증 파일을 "
 "RDP 서버에 제공해야합니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "개인키 경로"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr "화면 내용 보기 연결만 허용"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -191,15 +293,35 @@ msgstr ""
 "view-only 값이 true면, 원격 RDP 연결로 입력 장치(예: 마우스, 키보드)를 제어"
 "할 수 없습니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "VNC 서버에서 사용하는 포트 번호"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr "VNC 클라이언트에서 이 포트 번호를 사용하여 VNC 서버에 연결합니다."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr "다른 VNC 포트 번호를 설정하여 사용하는지 여부 검색"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"negotiate-port를 '참'으로 설정했다면 VNC 서버는 설정 포트번호부터 시작하여 다"
+"음 10개 포트 번호에서 차례대로 연결 수락을 시도합니다."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
 msgstr "VNC 백엔드 사용 여부"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "'true'로 설정하면 VNC 백엔드를 초기화합니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -207,11 +329,11 @@ msgstr ""
 "view-only 값이 true면, 원격 VNC 연결로 입력 장치(예: 마우스, 키보드)를 제어"
 "할 수 없습니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "VNC 연결 인증 방식"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -224,11 +346,11 @@ msgstr ""
 "있게 워크스테이션을 물리적으로 다룰 사람이 필요합니다. * 암호 - 이미 알고 있"
 "는 암호를 원격 클라이언트에서 입력합니다"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
 msgstr "VNC 연결 화면 공유 모드"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -249,5 +371,5 @@ msgstr ""
 "서 가상 모니터 해상도를 조절할 수 있습니다. 사용할 수 있는 화면 공유 모드는 "
 "현재 사용자 세션의 주 모니터를 기록하는 mirror-primary, 원격 데스크톱 세션용 "
 "새 가상 모니터를 만들어 활용하는 extend가 있습니다. 이 가상 모니터의 초기 모"
-"니터 해상도는 1920x1080으로 설정합니다. 클라이언트에서는 모니터 설정을 업데"
-"이트할 때마다 해당 설정 값으로 초기 해상도 값을 대신할 수 있습니다."
+"니터 해상도는 1920x1080으로 설정합니다. 클라이언트에서는 모니터 설정을 업데이"
+"트할 때마다 해당 설정 값으로 초기 해상도 값을 대신할 수 있습니다."
