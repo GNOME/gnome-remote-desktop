@@ -3,15 +3,16 @@
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # FULL NAME <EMAIL@ADDRESS>, 2021.
 # Daniel Mustieles <daniel.mustieles@gmail.com>, 2022-2024.
+# Daniel Mustieles García <daniel.mustieles@gmail.com>, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-02-29 20:07+0000\n"
-"PO-Revision-Date: 2024-03-04 10:52+0100\n"
-"Last-Translator: Daniel Mustieles <daniel.mustieles@gmail.com>\n"
+"POT-Creation-Date: 2024-03-14 15:00+0000\n"
+"PO-Revision-Date: 2024-03-15 11:29+0100\n"
+"Last-Translator: Daniel Mustieles García <daniel.mustieles@gmail.com>\n"
 "Language-Team: Spanish - Spain <gnome-es-list@gnome.org>\n"
 "Language: es_ES\n"
 "MIME-Version: 1.0\n"
@@ -19,6 +20,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "X-Generator: Gtranslator 45.3\n"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgstr ""
+"Permitir configurar las opciones del demonio del sistema de gnome-remote-"
+"desktop"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"Se requiere autenticación para configurar los ajustes del demonio del "
+"sistema de gnome-remote-desktop."
+
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "Demonio de transferencia de escritorio remoto de GNOME"
 
 #: src/grd-ctl.c:60
 #, c-format
@@ -145,7 +164,7 @@ msgstr ""
 "sistema\n"
 "  --help                                     - Mostrar este texto de ayuda\n"
 
-#: src/grd-daemon.c:1220
+#: src/grd-daemon.c:1222
 msgid "GNOME Remote Desktop"
 msgstr "Escritorio remoto GNOME"
 
@@ -177,12 +196,12 @@ msgstr "Desconectar"
 msgid "Continue"
 msgstr "Continuar"
 
-#: src/grd-daemon-user.c:96
+#: src/grd-daemon-user.c:99
 #, c-format
 msgid "Desktop Sharing port changed"
 msgstr "Puerto de compartición de escritorio cambiado"
 
-#: src/grd-daemon-user.c:98
+#: src/grd-daemon-user.c:101
 #, c-format
 msgid ""
 "The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
@@ -194,7 +213,7 @@ msgstr ""
 "Esto es porque el servicio de sesiones remotas ha estado activado y tiene "
 "una prioridad superior para usar el puerto <b>%i</b>."
 
-#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
 #, c-format
 msgid "Accept"
 msgstr "Aceptar"
