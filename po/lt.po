@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-02-29 20:07+0000\n"
-"PO-Revision-Date: 2024-03-03 22:58+0200\n"
+"POT-Creation-Date: 2024-03-14 15:00+0000\n"
+"PO-Revision-Date: 2024-03-16 22:38+0200\n"
 "Last-Translator: Aurimas Černius <aurisc4@gmail.com>\n"
 "Language-Team: Lietuvių <gnome-lt@lists.akl.lt>\n"
 "Language: lt\n"
@@ -19,6 +19,23 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "(n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Poedit 3.4.2\n"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgstr ""
+"Leisti konfigūruoti gnome-remote-desktop sisteminės tarnybos nuostatas."
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"Būtina patvirtinti tapatybę norint konfigūruoti gnome-remote-desktop "
+"sisteminės tarnybos nuostatas."
+
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "GNOME nuotolinio darbastalio perdavimo tarnyba"
 
 #: src/grd-ctl.c:60
 #, c-format
@@ -139,7 +156,7 @@ msgstr ""
 "  --help                                       - Atspausdinti šį tekstą\n"
 "\n"
 
-#: src/grd-daemon.c:1220
+#: src/grd-daemon.c:1222
 msgid "GNOME Remote Desktop"
 msgstr "GNOME nuotolinis darbastalis"
 
@@ -171,12 +188,12 @@ msgstr "Atsijungti"
 msgid "Continue"
 msgstr "Tęsti"
 
-#: src/grd-daemon-user.c:96
+#: src/grd-daemon-user.c:99
 #, c-format
 msgid "Desktop Sharing port changed"
 msgstr "Dalinimosi darbalaukiu prievadas pasikeitė"
 
-#: src/grd-daemon-user.c:98
+#: src/grd-daemon-user.c:101
 #, c-format
 msgid ""
 "The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
@@ -187,7 +204,7 @@ msgstr ""
 "Taip yra todėl, kad nuotolinių seansų tarnyba buvo suaktyvinta ir turi "
 "pirmenybę naudoti prievadą <b>%i</b>."
 
-#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
 #, c-format
 msgid "Accept"
 msgstr "Sutikti"
