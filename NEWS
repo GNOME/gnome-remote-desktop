@@ -1,3 +1,18 @@
+46.0
+====
+* Fix custom configuration directory with tmpfiles
+
+Contributors:
+  Piotr Drąg, Joan Torres
+
+Translators:
+  Matej Urbančič [sl], Andi Chandler [en_GB], Kukuh Syafaat [id],
+  Rūdolfs Mazurs [lv], Fran Dieguez [gl], Ask Hjorth Larsen [da],
+  Tim Sabsch [de], Piotr Drąg [pl], Anders Jonsson [sv], Yuri Chornoivan [uk],
+  Danial Behzadi [fa], Ekaterine Papava [ka], Daniel Rusek [cs],
+  Daniel Mustieles [es], Boyuan Yang [zh_CN], Sabri Ünal [tr],
+  Seong-ho Cho [ko], Baurzhan Muftakhidinov [kk]
+
 46.rc
 =====
 * Allow D-Bus activation
