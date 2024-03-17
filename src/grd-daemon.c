@@ -342,7 +342,6 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
     }
 
   rdp_certificate = freerdp_certificate_new_from_file (certificate_filename);
-
   if (!rdp_certificate)
     {
       g_dbus_method_invocation_return_error (invocation,
@@ -362,7 +361,6 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
     }
 
   rdp_private_key = freerdp_key_new_from_file (key_filename);
-
   if (!rdp_private_key)
     {
       g_dbus_method_invocation_return_error (invocation,
