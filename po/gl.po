@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-02-29 20:07+0000\n"
-"PO-Revision-Date: 2024-03-10 16:53+0100\n"
+"POT-Creation-Date: 2024-03-14 15:00+0000\n"
+"PO-Revision-Date: 2024-03-19 16:37+0100\n"
 "Last-Translator: Fran Dieguez <fran.dieguez@gnome.org>\n"
 "Language-Team: Galician <proxecto@trasno.gal>\n"
 "Language: gl\n"
@@ -24,6 +24,24 @@ msgstr ""
 "X-DL-Branch: master\n"
 "X-DL-Domain: po\n"
 "X-DL-State: Translating\n"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgstr ""
+"Permite configurar as preferencias do daemon do sistema de gnome-remote-"
+"desktop."
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"Requírese autenticación para configurar as preferencias do daemon do sistema "
+"de gnome-remote-desktop."
+
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "Demo de transferencia de Escritorio Remoto de GNOME"
 
 #: src/grd-ctl.c:60
 #, c-format
@@ -155,7 +173,7 @@ msgstr ""
 "  --system                                   - Configurar daemon do sistema\n"
 "  --help                                     - Mostra este mensaxe de axuda\n"
 
-#: src/grd-daemon.c:1220
+#: src/grd-daemon.c:1222
 msgid "GNOME Remote Desktop"
 msgstr "Escritorio Remoto de GNOME"
 
@@ -187,12 +205,12 @@ msgstr "Desconectar"
 msgid "Continue"
 msgstr "Continuar"
 
-#: src/grd-daemon-user.c:96
+#: src/grd-daemon-user.c:99
 #, c-format
 msgid "Desktop Sharing port changed"
 msgstr "Porto de compartición de escritorio cambiado"
 
-#: src/grd-daemon-user.c:98
+#: src/grd-daemon-user.c:101
 #, c-format
 msgid ""
 "The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
@@ -203,7 +221,7 @@ msgstr ""
 "ISto é porque o servizo de Sesións Remotas foi activado e ten unha "
 "prioridade maior para usar o porto <b>%i</b>."
 
-#: src/grd-daemon-user.c:104 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
 #, c-format
 msgid "Accept"
 msgstr "Aceptar"
