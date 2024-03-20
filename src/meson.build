@@ -16,7 +16,6 @@ deps = [
   pipewire_dep,
   libei_dep,
   libnotify_dep,
-  libsystemd_dep,
   epoxy_dep,
   drm_dep,
   xkbcommon_dep,
@@ -82,12 +81,6 @@ if have_rdp
   daemon_sources += files([
     'grd-clipboard-rdp.c',
     'grd-clipboard-rdp.h',
-    'grd-daemon-handover.c',
-    'grd-daemon-handover.h',
-    'grd-daemon-system.c',
-    'grd-daemon-system.h',
-    'grd-daemon-utils.c',
-    'grd-daemon-utils.h',
     'grd-hwaccel-nvidia.c',
     'grd-hwaccel-nvidia.h',
     'grd-rdp-audio-input.c',
@@ -163,6 +156,21 @@ if have_rdp
     'grd-session-rdp.c',
     'grd-session-rdp.h',
   ])
+
+  if libsystemd_dep.found()
+    daemon_sources += files([
+      'grd-daemon-handover.c',
+      'grd-daemon-handover.h',
+      'grd-daemon-system.c',
+      'grd-daemon-system.h',
+      'grd-daemon-utils.c',
+      'grd-daemon-utils.h',
+    ])
+
+    deps += [
+      libsystemd_dep,
+    ]
+  endif
 
   deps += [
     cuda_dep,
