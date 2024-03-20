@@ -36,8 +36,6 @@
 #include <stdlib.h>
 
 #include "grd-context.h"
-#include "grd-daemon-handover.h"
-#include "grd-daemon-system.h"
 #include "grd-daemon-user.h"
 #include "grd-dbus-mutter-remote-desktop.h"
 #include "grd-dbus-remote-desktop.h"
@@ -47,6 +45,11 @@
 #include "grd-settings-user.h"
 #include "grd-utils.h"
 #include "grd-vnc-server.h"
+
+#ifdef HAVE_LIBSYSTEMD
+#include "grd-daemon-handover.h"
+#include "grd-daemon-system.h"
+#endif /* HAVE_LIBSYSTEMD */
 
 #define RDP_SERVER_RESTART_DELAY_MS 3000
 #define RDP_SERVER_USER_CERT_SUBDIR "certificates"
@@ -983,11 +986,11 @@ get_daemon_dbus_connection (GrdDaemon *daemon)
   g_autoptr (GDBusConnection) connection = NULL;
   g_autoptr (GError) error = NULL;
 
-#ifdef HAVE_RDP
+#if defined(HAVE_RDP) && defined(HAVE_LIBSYSTEMD)
   if (GRD_IS_DAEMON_SYSTEM (daemon))
     connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &error);
   else
-#endif /* HAVE_RDP */
+#endif /* HAVE_RDP && HAVE_LIBSYSTEMD */
     connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
 
   if (!connection)
@@ -1240,12 +1243,12 @@ main (int argc, char **argv)
       "Print version", NULL },
     { "headless", 0, 0, G_OPTION_ARG_NONE, &headless,
       "Run in headless mode", NULL },
-#ifdef HAVE_RDP
+#if defined(HAVE_RDP) && defined(HAVE_LIBSYSTEMD)
     { "system", 0, 0, G_OPTION_ARG_NONE, &system,
       "Run in headless mode as a system g-r-d service", NULL },
     { "handover", 0, 0, G_OPTION_ARG_NONE, &handover,
       "Run in headless mode taking a connection from system g-r-d service", NULL },
-#endif
+#endif /* HAVE_RDP && HAVE_LIBSYSTEMD */
     { "rdp-port", 0, 0, G_OPTION_ARG_INT, &rdp_port,
       "RDP port", NULL },
     { "vnc-port", 0, 0, G_OPTION_ARG_INT, &vnc_port,
@@ -1295,12 +1298,19 @@ main (int argc, char **argv)
     case GRD_RUNTIME_MODE_HEADLESS:
       daemon = GRD_DAEMON (grd_daemon_user_new (runtime_mode, &error));
       break;
+#ifdef HAVE_LIBSYSTEMD
     case GRD_RUNTIME_MODE_SYSTEM:
       daemon = GRD_DAEMON (grd_daemon_system_new (&error));
       break;
     case GRD_RUNTIME_MODE_HANDOVER:
       daemon = GRD_DAEMON (grd_daemon_handover_new (&error));
       break;
+#else
+    case GRD_RUNTIME_MODE_SYSTEM:
+    case GRD_RUNTIME_MODE_HANDOVER:
+      g_assert_not_reached ();
+      break;
+#endif /* HAVE_LIBSYSTEMD */
     }
 
   if (!daemon)

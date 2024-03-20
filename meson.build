@@ -94,6 +94,7 @@ cdata = configuration_data()
 cdata.set_quoted('GETTEXT_PACKAGE', 'gnome-remote-desktop')
 cdata.set_quoted('VERSION', meson.project_version())
 
+cdata.set('HAVE_LIBSYSTEMD', libsystemd_dep.found())
 cdata.set('HAVE_RDP', have_rdp)
 cdata.set('HAVE_VNC', have_vnc)
 
