@@ -1813,8 +1813,13 @@ rdp_peer_context_new (freerdp_peer   *peer,
       g_warning ("[RDP] Failed to create RFX context");
       return FALSE;
     }
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
   rfx_context_set_pixel_format (rdp_peer_context->rfx_context,
                                 PIXEL_FORMAT_BGRX32);
+#else
+  rfx_context_set_pixel_format (rdp_peer_context->rfx_context,
+                                PIXEL_FORMAT_XRGB32);
+#endif
 
   rdp_peer_context->encode_stream = Stream_New (NULL, 64 * 64 * 4);
   if (!rdp_peer_context->encode_stream)
