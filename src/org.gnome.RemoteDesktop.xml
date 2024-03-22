@@ -172,6 +172,14 @@
       <arg name="password" direction="out" type="s" />
     </method>
 
+    <!--
+        RestartHandover:
+
+        Signal to inform the dst server that a new handover is ready to start.
+        This happens after the first handover.
+    -->
+    <signal name="RestartHandover" />
+
   </interface>
 
 </node>

@@ -896,6 +896,45 @@ on_gdm_remote_display_session_id_changed (GrdDBusGdmRemoteDisplay *remote_displa
 }
 
 static void
+on_remote_display_remote_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
+                                     GParamSpec              *pspec,
+                                     GrdRemoteClient         *remote_client)
+{
+  GrdDaemonSystem *daemon_system = remote_client->daemon_system;
+  GrdRemoteClient *new_remote_client;
+  const char *remote_id;
+  const char *session_id;
+
+  remote_id = grd_dbus_gdm_remote_display_get_remote_id (remote_display);
+  if (!g_hash_table_lookup_extended (daemon_system->remote_clients,
+                                     remote_id, NULL,
+                                     (gpointer *) &new_remote_client))
+    {
+      g_debug ("[DaemonSystem] GDM set to a remote display a remote "
+               "id %s we didn't know about", remote_id);
+      return;
+    }
+
+  g_debug ("[DaemonSystem] GDM updated a remote display with a new remote id: "
+           "%s", remote_id);
+
+  g_signal_handlers_disconnect_by_func (remote_display,
+                                        G_CALLBACK (on_remote_display_remote_id_changed),
+                                        remote_client);
+  g_signal_connect (remote_display, "notify::remote-id",
+                    G_CALLBACK (on_remote_display_remote_id_changed),
+                    new_remote_client);
+
+  g_hash_table_remove (daemon_system->remote_clients, remote_client->id);
+
+  session_id = grd_dbus_gdm_remote_display_get_session_id (remote_display);
+  register_handover_iface (new_remote_client, session_id);
+
+  grd_dbus_remote_desktop_rdp_handover_emit_restart_handover (
+    new_remote_client->handover_dst->interface);
+}
+
+static void
 register_handover_for_display (GrdDaemonSystem         *daemon_system,
                                GrdDBusGdmRemoteDisplay *remote_display)
 {
@@ -912,6 +951,10 @@ register_handover_for_display (GrdDaemonSystem         *daemon_system,
                "id %s we didn't know about", remote_id);
       return;
     }
+
+  g_signal_connect (remote_display, "notify::remote-id",
+                    G_CALLBACK (on_remote_display_remote_id_changed),
+                    remote_client);
 
   session_id = grd_dbus_gdm_remote_display_get_session_id (remote_display);
   if (!session_id || strcmp (session_id, "") == 0)
