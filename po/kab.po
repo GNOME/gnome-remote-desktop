@@ -1,0 +1,372 @@
+# Kabyle translation for gnome-remote-desktop.
+# Copyright (C) 2024 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Rachida SACI <rgebbid@gmail.com>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues/\n"
+"POT-Creation-Date: 2024-03-20 21:27+0000\n"
+"PO-Revision-Date: 2024-03-21 05:24+0100\n"
+"Last-Translator: sa\n"
+"Language-Team: Kabyle <kab@li.org>\n"
+"Language: kab\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgstr "Sireg i uswel n yiɣewwaren n unagraw amuffir n gnome-remote-desktop."
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"Asesteb yettusra i uswel n yiɣewwaren n unagraw amuffir n gnome-remote-"
+"desktop."
+
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "Daemon n usiweḍ n tnarit tanmeggagt GNOME"
+
+#: src/grd-ctl.c:60
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "Aseqdec: %s [RIXTIṚIYIN...] TILUDNA [TILUDNA TARNAWT]...\n"
+
+#: src/grd-ctl.c:612
+msgid "Commands:\n"
+msgstr "Tiludna:\n"
+
+#: src/grd-ctl.c:617
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
+"\n"
+msgstr ""
+"  rdp                                        - Tiludna tirnawin n RDP:\n"
+"    set-port                                 - Sbadu tawwurt wuɣur yeqqen "
+"uqeddac\n"
+"    enable                                   - Rmed RDP backend\n"
+"    disable                                  - Sens RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Sbadu abrid ɣer uselkin TLS\n"
+"    set-tls-key <path-to-key>                - Sbadu abrid ɣer tsarut TLS\n"
+"    set-credentials <username> <password>    - Sbadu isem n useqdac d wawal "
+"n uεeddi\n"
+"                                               inekcam\n"
+"    clear-credentials                        - Sfeḍ inekcam d wawal n "
+"uεeddi\n"
+"                                               inekcam\n"
+"    enable-view-only                         - Sens asenqed anmeggag d "
+"ukcam\n"
+"                                               ibenkan\n"
+"    disable-view-only                        - Rmed asenqed anmeggag d "
+"ukcam\n"
+"                                               ibenkan\n"
+"    enable-port-negotiation                  - Ma yella, sell i\n"
+"                                               tewwurt niḍen\n"
+"    disable-port-negotiation                 - Ma ulac, ur sell ara\n"
+"                                               i tewwurt niḍen\n"
+"\n"
+
+#: src/grd-ctl.c:641
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
+"\n"
+msgstr ""
+"   vnc                                        - Tiludna n VNC:\n"
+"    set-port                                 - Sbadu tawwurt wuɣur yeqqen "
+"uqeddac\n"
+"    enable                                   - Rmed VNC backend\n"
+"    disable                                  - Sens VNC backend\n"
+"    set-password <password>                  - Sbadu awal n uεeddi n VNC\n"
+"    clear-password                           - Sfeḍ awal n uεeddi n VNC\n"
+"    set-auth-method password|prompt          - Sbadu tarrayt n usireg\n"
+"    enable-view-only                         - Sens qsenqed anmeggag n "
+"ukcam\n"
+"                                               yibenkan\n"
+"    disable-view-only                        - Rmed asenqed anmeggag n "
+"ukcam\n"
+"                                               yibenkan\n"
+"    enable-port-negotiation                  - Ma tella, sell i\n"
+"                                               ɣer tewwurt niḍen\n"
+"    disable-port-negotiation                 - Ma ulac, ur sell ara\n"
+"                                               ɣer tewwurt niḍen\n"
+"\n"
+
+#: src/grd-ctl.c:661
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
+"  --system                                   - Configure system daemon\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  addaden [--show-credentials]                - Sken addaden imiranen\n"
+"\n"
+"Tixtiṛiyin:\n"
+"  --headless                                 - Seqdec aḥraz n yinekcumen n "
+"headless\n"
+"  --system                                   - Swel system daemon\n"
+"  --help                                     - Siggez aḍris-a n tallalt\n"
+
+#: src/grd-daemon.c:1222
+msgid "GNOME Remote Desktop"
+msgstr "Tanarit tanmeggagt GNOME"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "Tuqqna-a d taraɣellsant"
+
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
+msgstr ""
+"Tebɣiḍ ad tkemmleḍ s tuqqna taraɣellsant?\n"
+"I wakken ad tt-terreḍ d taɣellsant sbadu <b>“seqdec isem n uqeddac n uwehhi:"
+"i:1”</b> deg ufaylu n twila RDP."
+
+#: src/grd-daemon-handover.c:354
+#, c-format
+msgid "Disconnect"
+msgstr "Ffeɣ seg tuqqna"
+
+#: src/grd-daemon-handover.c:355
+#, c-format
+msgid "Continue"
+msgstr "Kemmel"
+
+#: src/grd-daemon-user.c:99
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "Tawwurt n beṭṭu n tnarit tbeddel"
+
+#: src/grd-daemon-user.c:101
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"Tawwurt n beṭṭu n tnarit tetwabeddel seg <b>%i</b> to <b>%i</b>.\n"
+"Acku aqeddac n tɣimiyin tinmeggagin ttwaremdent yerna ɣer-sent tazwart "
+"meqqren i useqdec n tewwurt <b>%i</b>."
+
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "Qbel"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Tebɣiḍ ad tebḍuḍ tanarit-ik?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Aseqdec ɣef uselkim \"%s\" yettaεraḍ ad yesken neɣ ad iseddu tanarit-ik s "
+"wudem anmeggag."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "Agi"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "Tawwurt tettuseqdec s uqeddac RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr "Amsaɣ RDP ad yeqqen ɣer tewwurt-a i useqdec n uqeddac-a RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr "NAdi Tawwurt RDP niḍen ma yella win yettusewlen yettwaseqdacay"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Ma tili tewwurt n usqerdec tettusbadu ɣe 'tidet', aqeddac RDP ad yeεreḍ ad "
+"isel i tewwurt tamezwarut yellan gar 10 tewwura tuḍfirin s beddu seg tin "
+"yettusewlen."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+msgid "Whether the RDP backend is enabled or not"
+msgstr "Ma yella backned RDP yettwarmed neɣ ala"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr "Ma yella yettusbadu ɣef 'true', backned RDP ad yettuwennez."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
+msgid "Screenshare mode of RDP connections"
+msgstr "Askar n beṭṭu n ugdil n tuqqniwin RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+msgid "Path to the certificate file"
+msgstr "Abrid ɣer ufaylu n uselkin"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"I wekken ad tizmireḍ ad tesqedceḍ RDP s tɣellist n TLS, afaylu n tsarut "
+"tusligt akked ufaylu n uselkin ilaq ad ttwamudden i sin ɣer uqeddac RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
+msgid "Path to the private key file"
+msgstr "Abrid ɣer ufaylu n tsarut tusligt"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
+msgid "Only allow remote connections to view the screen content"
+msgstr "Sireg tuqqniwin kan tinmeggagin ad walint agbur n ugdil"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Ma yella twalaḍ kan d tidet, tuqqniwin RDP tinmeggagin ur zmirent ara ad "
+"seddunt ibenkan n ukcam (amedya: taɣerdayt akked unasiw)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "Tawwurt yettusqecen s uqeddac VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr "Amsaɣ VNC ad yeqqen ɣer tewwurt-a i useqdec n uqeddac-a VNC."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr "Nadi tawwurt VNC wayeḍ ma yella win yettusewlen yettwaseqdacay"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Ma tili tewwurt n usqerdec tettusbadu ɣe 'tidet', aqeddac VNC ad yeεreḍ ad "
+"isel i tewwurt tamezwarut yellan gar 10 tewwura tuḍfirin s beddu seg tin "
+"yettusewlen."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+msgid "Whether the VNC backend is enabled or not"
+msgstr "Ma yella backned VNC yettwarmed neɣ ala"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+msgid "If set to 'true' the VNC backend will be initialized."
+msgstr "Ma yella yettusbadu ɣef 'true', backned VNC ad yettuwennez."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"Mi ara twaliḍ kan d tidet, tuqqniwin VNC tinmeggagin ur zmirent ara ad "
+"seddunt ibenkan n ukcam (amedya: taɣerdayt neɣ anasiw)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
+msgid "Method used to authenticate VNC connections"
+msgstr "Tarrayat yettuseqdacen i usesteb n tuqqniwin VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+msgid "Screenshare mode of VNC connections"
+msgstr "Askar n beṭṭu n ugdil n tuqqniwin VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
