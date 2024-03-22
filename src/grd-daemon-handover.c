@@ -228,7 +228,6 @@ on_start_handover_finished (GObject      *object,
     {
       g_warning ("[DaemonHandover] Failed to start handover: %s",
                  error->message);
-      grd_session_manager_call_logout_sync ();
       return;
     }
 
@@ -283,7 +282,8 @@ static void
 on_session_stopped (GrdSession        *session,
                     GrdDaemonHandover *daemon_handover)
 {
-  grd_session_manager_call_logout_sync ();
+  if (grd_is_remote_login ())
+    grd_session_manager_call_logout_sync ();
 
   daemon_handover->session = NULL;
 
@@ -583,6 +583,8 @@ on_gnome_remote_desktop_name_vanished (GDBusConnection *connection,
              REMOTE_DESKTOP_BUS_NAME);
 
   g_application_release (G_APPLICATION (daemon_handover));
+
+  grd_session_manager_call_logout_sync ();
 }
 
 GrdDaemonHandover *
