@@ -37,6 +37,7 @@
 #include "grd-rdp-server.h"
 #include "grd-session-rdp.h"
 #include "grd-settings.h"
+#include "grd-shell-dialog.h"
 
 struct _GrdDaemonHandover
 {
@@ -50,6 +51,8 @@ struct _GrdDaemonHandover
   gboolean use_system_credentials;
   GrdPrompt *prompt;
   GCancellable *prompt_cancellable;
+
+  GrdShellDialog *dialog;
 
   unsigned int gnome_remote_desktop_watch_name_id;
 };
@@ -264,13 +267,37 @@ on_session_stopped (GrdSession        *session,
     grd_session_manager_call_logout_sync ();
 
   daemon_handover->session = NULL;
+}
 
-  if (daemon_handover->prompt_cancellable)
-    {
-      g_cancellable_cancel (daemon_handover->prompt_cancellable);
-      g_clear_object (&daemon_handover->prompt_cancellable);
-    }
-  g_clear_object (&daemon_handover->prompt);
+static gboolean
+show_insecure_connection_dialog (GrdDaemonHandover *daemon_handover)
+{
+  GCancellable *cancellable =
+    grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
+
+  g_assert (!daemon_handover->dialog);
+
+  daemon_handover->dialog = grd_shell_dialog_new (cancellable);
+  if (!daemon_handover->dialog)
+    return FALSE;
+
+  g_signal_connect_swapped (daemon_handover->dialog, "cancelled",
+                            G_CALLBACK (grd_session_stop),
+                            daemon_handover->session);
+
+  grd_shell_dialog_open (daemon_handover->dialog,
+                         _("Continue with an insecure connection?"),
+                         _("This Remote Desktop connection is insecure. "
+                           "To secure this connection, enable RDSTLS Security "
+                           "in your client by saving the connection settings "
+                           "in your client as an RDP file and set "
+                           /* Translators: Don't translate “use redirection server name:i:1”.
+                           * It's a menu option, and it's the same for all languages. */
+                           "“use redirection server name:i:1” in it."),
+                         _("Disconnect"),
+                         _("Continue"));
+
+  return TRUE;
 }
 
 static void
@@ -313,8 +340,7 @@ show_insecure_connection_prompt (GrdDaemonHandover *daemon_handover)
 {
   g_autoptr (GrdPromptDefinition) prompt_definition = NULL;
 
-  if (daemon_handover->prompt)
-    return;
+  g_assert (!daemon_handover->prompt);
 
   daemon_handover->prompt = g_object_new (GRD_TYPE_PROMPT, NULL);
   daemon_handover->prompt_cancellable = g_cancellable_new ();
@@ -323,12 +349,14 @@ show_insecure_connection_prompt (GrdDaemonHandover *daemon_handover)
   prompt_definition->summary =
     g_strdup_printf (_("This connection is insecure"));
   prompt_definition->body =
-  /* Translators: Don't translate "use redirection server name:i:1".
-   * It's a menu option, and it's the same for all languages. */
-    g_strdup_printf (_("Do you want to continue with an insecure connection?\n"
-                       "To make it secure set "
-                       "<b>“use redirection server name:i:1”</b> "
-                       "in the RDP config file."));
+    g_strdup_printf (_("Continue with an insecure connection?\n"
+                       "This Remote Desktop connection is insecure. "
+                       "To secure this connection, enable RDSTLS Security "
+                       "in your client by saving the connection settings "
+                       "in your client as an RDP file and set "
+                       /* Translators: Don't translate “use redirection server name:i:1”.
+                       * It's a menu option, and it's the same for all languages. */
+                       "“use redirection server name:i:1” in it."));
   prompt_definition->cancel_label = g_strdup_printf (_("Disconnect"));
   prompt_definition->accept_label = g_strdup_printf (_("Continue"));
 
@@ -337,6 +365,16 @@ show_insecure_connection_prompt (GrdDaemonHandover *daemon_handover)
                           daemon_handover->prompt_cancellable,
                           prompt_response_callback,
                           daemon_handover);
+}
+
+static void
+inform_about_insecure_connection (GrdDaemonHandover *daemon_handover)
+{
+  gboolean could_display_dialog;
+
+  could_display_dialog = show_insecure_connection_dialog (daemon_handover);
+  if (!could_display_dialog)
+    show_insecure_connection_prompt (daemon_handover);
 }
 
 static void
@@ -364,7 +402,7 @@ on_incoming_new_connection (GrdRdpServer      *rdp_server,
   grd_settings_recreate_rdp_credentials (settings);
 
   if (daemon_handover->use_system_credentials && grd_is_remote_login ())
-    show_insecure_connection_prompt (daemon_handover);
+    inform_about_insecure_connection (daemon_handover);
 }
 
 static void
@@ -656,6 +694,8 @@ grd_daemon_handover_shutdown (GApplication *app)
       g_clear_object (&daemon_handover->prompt_cancellable);
     }
   g_clear_object (&daemon_handover->prompt);
+
+  g_clear_object (&daemon_handover->dialog);
 
   G_APPLICATION_CLASS (grd_daemon_handover_parent_class)->shutdown (app);
 }
