@@ -456,6 +456,24 @@ on_redirect_client (GrdDBusRemoteDesktopRdpHandover *interface,
 }
 
 static void
+on_restart_handover (GrdDBusRemoteDesktopRdpHandover *proxy,
+                     GrdDaemonHandover               *daemon_handover)
+{
+  GrdDaemon *daemon = GRD_DAEMON (daemon_handover);
+  GrdContext *context = grd_daemon_get_context (daemon);
+  GrdSettings *settings = grd_context_get_settings (context);
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
+
+  if (!grd_settings_get_rdp_credentials (settings,
+                                         &username, &password,
+                                         NULL))
+    g_assert_not_reached ();
+
+  start_handover (daemon_handover, username, password);
+}
+
+static void
 on_remote_desktop_rdp_handover_proxy_acquired (GObject      *object,
                                                GAsyncResult *result,
                                                gpointer      user_data)
@@ -478,6 +496,8 @@ on_remote_desktop_rdp_handover_proxy_acquired (GObject      *object,
 
   g_signal_connect (daemon_handover->remote_desktop_handover, "redirect-client",
                     G_CALLBACK (on_redirect_client), daemon_handover);
+  g_signal_connect (daemon_handover->remote_desktop_handover, "restart-handover",
+                    G_CALLBACK (on_restart_handover), daemon_handover);
 
   grd_daemon_maybe_enable_services (GRD_DAEMON (daemon_handover));
 }
