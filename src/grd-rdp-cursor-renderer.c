@@ -325,17 +325,10 @@ submit_cursor (GrdRdpCursorRenderer *cursor_renderer,
 
       for (x = 0; x < width; ++x)
         {
-#if G_BYTE_ORDER == G_LITTLE_ENDIAN
           r = *src_data++;
           g = *src_data++;
           b = *src_data++;
           a = *src_data++;
-#else
-          a = *src_data++;
-          b = *src_data++;
-          g = *src_data++;
-          r = *src_data++;
-#endif
 
           *dst_data++ = b;
           *dst_data++ = g;
