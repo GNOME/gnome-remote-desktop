@@ -130,6 +130,18 @@ struct _GrdRdpGraphicsPipeline
 G_DEFINE_TYPE (GrdRdpGraphicsPipeline, grd_rdp_graphics_pipeline, G_TYPE_OBJECT)
 
 void
+grd_rdp_graphics_pipeline_get_capabilities (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                            gboolean               *have_avc444,
+                                            gboolean               *have_avc420)
+{
+  RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
+  rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
+
+  *have_avc444 = freerdp_settings_get_bool (rdp_settings, FreeRDP_GfxAVC444v2);
+  *have_avc420 = freerdp_settings_get_bool (rdp_settings, FreeRDP_GfxH264);
+}
+
+void
 grd_rdp_graphics_pipeline_set_hwaccel_nvidia (GrdRdpGraphicsPipeline *graphics_pipeline,
                                               GrdHwAccelNvidia       *hwaccel_nvidia)
 {

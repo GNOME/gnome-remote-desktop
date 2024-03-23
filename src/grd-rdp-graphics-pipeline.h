@@ -41,6 +41,10 @@ GrdRdpGraphicsPipeline *grd_rdp_graphics_pipeline_new (GrdSessionRdp            
 
 void grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline);
 
+void grd_rdp_graphics_pipeline_get_capabilities (GrdRdpGraphicsPipeline *graphics_pipeline,
+                                                 gboolean               *have_avc444,
+                                                 gboolean               *have_avc420);
+
 void grd_rdp_graphics_pipeline_set_hwaccel_nvidia (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                    GrdHwAccelNvidia       *hwaccel_nvidia);
 
