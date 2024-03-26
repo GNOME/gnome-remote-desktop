@@ -369,6 +369,14 @@ on_incoming_new_connection (GrdRdpServer      *rdp_server,
   GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_handover));
   GrdSettings *settings = grd_context_get_settings (context);
 
+  if (daemon_handover->session)
+    {
+      g_signal_handlers_disconnect_by_func (daemon_handover->session,
+                                            G_CALLBACK (on_session_stopped),
+                                            daemon_handover);
+      grd_session_stop (daemon_handover->session);
+    }
+
   g_signal_connect (session, "stopped",
                     G_CALLBACK (on_session_stopped),
                     daemon_handover);
