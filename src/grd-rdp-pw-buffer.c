@@ -97,6 +97,23 @@ get_pw_buffer_type (struct pw_buffer *pw_buffer)
 }
 
 static gboolean
+is_supported_dma_buf_buffer (struct pw_buffer  *pw_buffer,
+                             GError           **error)
+{
+  struct spa_buffer *spa_buffer = pw_buffer->buffer;
+  uint32_t n_planes = spa_buffer->n_datas;
+
+  if (n_planes != 1)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Unsupported dma-buf: Expected exactly 1 plane for format");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
 try_mmap_buffer (GrdRdpPwBuffer  *rdp_pw_buffer,
                  GError         **error)
 {
@@ -145,6 +162,10 @@ grd_rdp_pw_buffer_new (struct pw_buffer  *pw_buffer,
                    get_pw_buffer_type (pw_buffer));
       return NULL;
     }
+
+  if (get_pw_buffer_type (pw_buffer) == SPA_DATA_DmaBuf &&
+      !is_supported_dma_buf_buffer (pw_buffer, error))
+    return NULL;
 
   if (get_pw_buffer_type (pw_buffer) == SPA_DATA_MemFd &&
       !try_mmap_buffer (rdp_pw_buffer, error))
