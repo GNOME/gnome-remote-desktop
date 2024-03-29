@@ -154,7 +154,7 @@ grd_get_session_id_from_uid (uid_t uid)
 
   n_sessions = sd_uid_get_sessions (uid, 0, &sessions);
 
-  for (i = n_sessions; i >= 0; i--)
+  for (i = n_sessions - 1; i >= 0; i--)
     {
       if (!grd_sd_session_is_graphical (sessions[i]))
         continue;
