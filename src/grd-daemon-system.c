@@ -394,7 +394,6 @@ on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
   return G_DBUS_METHOD_INVOCATION_HANDLED;
 
 err:
-  abort_handover (remote_client);
   g_dbus_method_invocation_return_error (invocation,
                                          G_DBUS_ERROR,
                                          G_DBUS_ERROR_UNKNOWN_OBJECT,

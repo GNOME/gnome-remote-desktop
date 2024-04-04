@@ -38,8 +38,6 @@
 #include "grd-session-rdp.h"
 #include "grd-settings.h"
 
-#define MAX_HANDOVER_WAIT_TIME_MS (20 * 1000)
-
 struct _GrdDaemonHandover
 {
   GrdDaemon parent;
@@ -54,8 +52,6 @@ struct _GrdDaemonHandover
   GCancellable *prompt_cancellable;
 
   unsigned int gnome_remote_desktop_watch_name_id;
-
-  unsigned int logout_source_id;
 };
 
 G_DEFINE_TYPE (GrdDaemonHandover, grd_daemon_handover, GRD_TYPE_DAEMON)
@@ -237,19 +233,6 @@ on_start_handover_finished (GObject      *object,
                 NULL);
 }
 
-static gboolean
-logout (gpointer user_data)
-{
-  GrdDaemonHandover *daemon_handover = user_data;
-
-  g_warning ("[DaemonHandover] Logging out, handover timeout reached");
-
-  daemon_handover->logout_source_id = 0;
-  grd_session_manager_call_logout_sync ();
-
-  return G_SOURCE_REMOVE;
-}
-
 static void
 start_handover (GrdDaemonHandover *daemon_handover,
                 const char        *username,
@@ -258,8 +241,6 @@ start_handover (GrdDaemonHandover *daemon_handover,
   GCancellable *cancellable =
     grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
   const char *object_path;
-
-  g_assert (!daemon_handover->logout_source_id);
 
   object_path = g_dbus_proxy_get_object_path (
                   G_DBUS_PROXY (daemon_handover->remote_desktop_handover));
@@ -273,9 +254,6 @@ start_handover (GrdDaemonHandover *daemon_handover,
     cancellable,
     on_start_handover_finished,
     daemon_handover);
-
-  daemon_handover->logout_source_id =
-    g_timeout_add (MAX_HANDOVER_WAIT_TIME_MS, logout, daemon_handover);
 }
 
 static void
@@ -387,8 +365,6 @@ on_incoming_new_connection (GrdRdpServer      *rdp_server,
 
   if (daemon_handover->use_system_credentials && grd_is_remote_login ())
     show_insecure_connection_prompt (daemon_handover);
-
-  g_clear_handle_id (&daemon_handover->logout_source_id, g_source_remove);
 }
 
 static void
@@ -673,8 +649,6 @@ grd_daemon_handover_shutdown (GApplication *app)
 
   g_clear_handle_id (&daemon_handover->gnome_remote_desktop_watch_name_id,
                      g_bus_unwatch_name);
-
-  g_clear_handle_id (&daemon_handover->logout_source_id, g_source_remove);
 
   if (daemon_handover->prompt_cancellable)
     {
