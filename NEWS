@@ -1,3 +1,17 @@
+46.1
+====
+* Fix running on big endian
+* Don't crash when there are no user sessions
+
+Contributors:
+  Ondrej Holy, Pascal Nowack
+
+Translators:
+  Aurimas Černius [lt], Yaron Shahrabani [he], Fran Dieguez [gl],
+  Vincent Chatelain [fr], Sabri Ünal [tr], Rachida SACI [kab],
+  Christian Kirbach [de], Asier Sarasua Garmendia [eu], Nathan Follens [nl],
+  Martin [sl], Artur S0 [ru]
+
 46.0
 ====
 * Fix custom configuration directory with tmpfiles
