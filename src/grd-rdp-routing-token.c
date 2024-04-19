@@ -60,7 +60,7 @@ find_cr_lf (const char *buffer,
 {
   int i;
 
-  for (i = 0; i < length; ++i)
+  for (i = 0; i < length - 1; ++i)
     {
       if (buffer[i] == 0x0D && buffer[i + 1] == 0x0A)
         return i;
