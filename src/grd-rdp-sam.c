@@ -77,7 +77,6 @@ grd_rdp_sam_create_sam_file (const char *username,
   g_autofree char *filename = NULL;
   g_autofree char *sam_string = NULL;
   int fd;
-  int fd_flags;
   FILE *sam_file;
 
   file_dir = g_strdup_printf ("%s%s", g_get_user_runtime_dir (), grd_path);
@@ -92,25 +91,16 @@ grd_rdp_sam_create_sam_file (const char *username,
       return NULL;
     }
 
-  fd = mkstemp (filename);
+  fd = g_mkstemp (filename);
   if (fd < 0)
     {
-      g_warning ("[RDP] mkstemp() failed: %s", g_strerror (errno));
+      g_warning ("[RDP] g_mkstemp() failed: %s", g_strerror (errno));
       return NULL;
     }
 
   rdp_sam_file = g_new0 (GrdRdpSAMFile, 1);
   rdp_sam_file->fd = fd;
   rdp_sam_file->filename = g_steal_pointer (&filename);
-
-  fd_flags = fcntl (rdp_sam_file->fd, F_GETFD);
-  if (fd_flags == -1 ||
-      fcntl (rdp_sam_file->fd, F_SETFD, fd_flags | FD_CLOEXEC) == -1)
-    {
-      g_warning ("[RDP] fcntl() failed: %s", g_strerror (errno));
-      grd_rdp_sam_free_sam_file (rdp_sam_file);
-      return NULL;
-    }
 
   sam_string = create_sam_string (username, password);
 
