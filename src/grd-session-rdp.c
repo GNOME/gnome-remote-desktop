@@ -1529,6 +1529,7 @@ rdp_peer_capabilities (freerdp_peer *peer)
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   rdpSettings *rdp_settings = peer->context->settings;
+  HANDLE vcm = rdp_peer_context->vcm;
   GrdRdpMonitorConfig *monitor_config;
   g_autoptr (GError) error = NULL;
 
@@ -1594,6 +1595,13 @@ rdp_peer_capabilities (freerdp_peer *peer)
   if (!freerdp_settings_get_bool (rdp_settings, FreeRDP_DesktopResize))
     {
       g_warning ("Client doesn't support desktop resizing, closing connection");
+      return FALSE;
+    }
+
+  if (!WTSVirtualChannelManagerIsChannelJoined (vcm, DRDYNVC_SVC_CHANNEL_NAME))
+    {
+      g_warning ("[RDP] Client doesn't support the DRDYNVC SVC, "
+                 "closing connection");
       return FALSE;
     }
 
