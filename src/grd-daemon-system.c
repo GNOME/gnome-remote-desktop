@@ -280,6 +280,39 @@ get_handover_object_path_for_call (GrdDaemonSystem        *daemon_system,
 }
 
 static gboolean
+on_authorize_handover_method (GrdDBusRemoteDesktopRdpHandover *interface,
+                              GDBusMethodInvocation           *invocation,
+                              gpointer                         user_data)
+{
+  GrdRemoteClient *remote_client = user_data;
+  g_autofree char *object_path = NULL;
+  g_autoptr (GError) error = NULL;
+
+  g_assert (interface == remote_client->handover_dst->interface);
+  g_assert (remote_client->handover_dst->object_path);
+
+  object_path = get_handover_object_path_for_call (remote_client->daemon_system,
+                                                   invocation,
+                                                   &error);
+  if (!object_path)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return FALSE;
+    }
+
+  if (g_strcmp0 (object_path, remote_client->handover_dst->object_path) != 0)
+    {
+      g_dbus_method_invocation_return_error_literal (invocation, G_DBUS_ERROR,
+                                                     G_DBUS_ERROR_ACCESS_DENIED,
+                                                     "Caller using incorrect "
+                                                     "handover");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
 on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
                           GDBusMethodInvocation           *invocation,
                           const char                      *username,
@@ -436,6 +469,8 @@ handover_iface_new (const char      *session_id,
   handover->skeleton = g_dbus_object_skeleton_new (handover->object_path);
 
   handover->interface = grd_dbus_remote_desktop_rdp_handover_skeleton_new ();
+  g_signal_connect (handover->interface, "g-authorize-method",
+                    G_CALLBACK (on_authorize_handover_method), remote_client);
   g_signal_connect (handover->interface, "handle-start-handover",
                     G_CALLBACK (on_handle_start_handover), remote_client);
   g_signal_connect (handover->interface, "handle-take-client",
