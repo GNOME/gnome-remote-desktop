@@ -22,17 +22,27 @@
 
 #include <ctype.h>
 #include <gio/gio.h>
+#include <gio/gunixinputstream.h>
+#include <gio/gunixoutputstream.h>
 #include <glib/gi18n.h>
 #include <pwd.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sysexits.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "grd-enums.h"
 #include "grd-settings-system.h"
 #include "grd-settings-user.h"
 
 #define GRD_SYSTEMD_SERVICE "gnome-remote-desktop.service"
+
+typedef enum
+{
+  PROMPT_TYPE_VISIBLE_TEXT,
+  PROMPT_TYPE_HIDDEN_TEXT
+} PromptType;
 
 typedef struct _SubCommand
 {
@@ -321,13 +331,109 @@ rdp_set_tls_key (GrdSettings  *settings,
   return TRUE;
 }
 
+static char *
+prompt_for_input (const char  *prompt,
+                  PromptType   prompt_type,
+                  GError     **error)
+{
+  g_autoptr (GInputStream) input_stream = NULL;
+  g_autoptr (GOutputStream) output_stream = NULL;
+  g_autoptr (GDataInputStream) data_input_stream = NULL;
+  gboolean terminal_attributes_changed = FALSE;
+  struct termios terminal_attributes;
+  g_autofree char *input = NULL;
+  gboolean success;
+  int output_fd;
+  int input_fd;
+
+  input_fd = STDIN_FILENO;
+  output_fd = STDOUT_FILENO;
+
+  input_stream = g_unix_input_stream_new (input_fd, FALSE);
+  data_input_stream = g_data_input_stream_new (input_stream);
+
+  if (isatty (output_fd))
+    output_stream = g_unix_output_stream_new (output_fd, FALSE);
+
+  if (output_stream)
+    {
+      success = g_output_stream_write_all (output_stream, prompt, strlen (prompt), NULL, NULL, error);
+      if (!success)
+        return NULL;
+
+      if (prompt_type == PROMPT_TYPE_HIDDEN_TEXT && isatty (input_fd))
+        {
+          struct termios updated_terminal_attributes;
+          int ret;
+
+          ret = tcgetattr (input_fd, &terminal_attributes);
+          if (ret < 0)
+            {
+              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           "Could not query terminal attributes");
+              return NULL;
+            }
+
+          updated_terminal_attributes = terminal_attributes;
+          updated_terminal_attributes.c_lflag &= ~ECHO;
+
+          ret = tcsetattr (input_fd, TCSANOW, &updated_terminal_attributes);
+          if (ret < 0)
+            {
+              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           "Could not disable input echo in terminal");
+              return NULL;
+            }
+
+          terminal_attributes_changed = TRUE;
+        }
+    }
+
+  input = g_data_input_stream_read_line_utf8 (data_input_stream, NULL, NULL, error);
+
+  if (terminal_attributes_changed)
+    {
+      g_output_stream_write_all (output_stream, "\n", strlen ("\n"), NULL, NULL, NULL);
+      tcsetattr (input_fd, TCSANOW, &terminal_attributes);
+    }
+
+  return g_steal_pointer (&input);
+}
+
 static gboolean
 rdp_set_credentials (GrdSettings  *settings,
                      int           argc,
                      char        **argv,
                      GError      **error)
 {
-  return grd_settings_set_rdp_credentials (settings, argv[0], argv[1], error);
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
+
+  if (argc < 1)
+    {
+      username = prompt_for_input (_("Username: "), PROMPT_TYPE_VISIBLE_TEXT,
+                                   error);
+      if (!username)
+        return FALSE;
+    }
+  else
+    {
+      username = g_strdup (argv[0]);
+    }
+
+  if (argc < 2)
+    {
+      password = prompt_for_input (_("Password: "), PROMPT_TYPE_HIDDEN_TEXT,
+                                   error);
+      if (!password)
+        return FALSE;
+    }
+  else
+    {
+      password = g_strdup (argv[1]);
+    }
+
+  return grd_settings_set_rdp_credentials (settings, username, password, error);
 }
 
 static gboolean
@@ -385,6 +491,8 @@ static const SubCommand rdp_subcommands[] = {
   { "disable", rdp_disable, 0 },
   { "set-tls-cert", rdp_set_tls_cert, 1 },
   { "set-tls-key", rdp_set_tls_key, 1 },
+  { "set-credentials", rdp_set_credentials, 0 },
+  { "set-credentials", rdp_set_credentials, 1 },
   { "set-credentials", rdp_set_credentials, 2 },
   { "clear-credentials", rdp_clear_credentials, 0 },
   { "enable-view-only", rdp_enable_view_only, 0 },
@@ -454,9 +562,20 @@ vnc_set_credentials (GrdSettings  *settings,
                      char        **argv,
                      GError      **error)
 {
-  char *password;
+  g_autofree char *password = NULL;
 
-  password = argv[0];
+  if (argc < 1)
+    {
+      password = prompt_for_input (_("Password: "), PROMPT_TYPE_HIDDEN_TEXT,
+                                   error);
+      if (!password)
+        return FALSE;
+    }
+  else
+    {
+      password = g_strdup (argv[1]);
+    }
+
   if (strlen (password) > MAX_VNC_PASSWORD_SIZE)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
@@ -464,7 +583,7 @@ vnc_set_credentials (GrdSettings  *settings,
       return FALSE;
     }
 
-  return grd_settings_set_vnc_password (settings, argv[0], error);
+  return grd_settings_set_vnc_password (settings, password, error);
 }
 
 static gboolean
@@ -550,6 +669,7 @@ static const SubCommand vnc_subcommands[] = {
   { "set-port", vnc_set_port, 1 },
   { "enable", vnc_enable, 0 },
   { "disable", vnc_disable, 0 },
+  { "set-password", vnc_set_credentials, 0 },
   { "set-password", vnc_set_credentials, 1 },
   { "clear-password", vnc_clear_credentials, 0 },
   { "set-auth-method", vnc_set_auth_method, 1 },
@@ -581,24 +701,24 @@ print_help (void)
   /* For translators: This first words on each line is the command;
    * don't translate. Try to fit each line within 80 characters. */
   const char *help_rdp =
-    _("  rdp                                        - RDP subcommands:\n"
-      "    set-port                                 - Set port the server binds to\n"
-      "    enable                                   - Enable the RDP backend\n"
-      "    disable                                  - Disable the RDP backend\n"
-      "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
-      "    set-tls-key <path-to-key>                - Set path to TLS key\n"
-      "    set-credentials <username> <password>    - Set username and password\n"
-      "                                               credentials\n"
-      "    clear-credentials                        - Clear username and password\n"
-      "                                               credentials\n"
-      "    enable-view-only                         - Disable remote control of input\n"
-      "                                               devices\n"
-      "    disable-view-only                        - Enable remote control of input\n"
-      "                                               devices\n"
-      "    enable-port-negotiation                  - If unavailable, listen to\n"
-      "                                               a different port\n"
-      "    disable-port-negotiation                 - If unavailable, don't listen\n"
-      "                                               to a different port\n"
+    _("  rdp                                            - RDP subcommands:\n"
+      "    set-port                                     - Set port the server binds to\n"
+      "    enable                                       - Enable the RDP backend\n"
+      "    disable                                      - Disable the RDP backend\n"
+      "    set-tls-cert <path-to-cert>                  - Set path to TLS certificate\n"
+      "    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+      "    set-credentials [<username> [<password>]]    - Set username and password\n"
+      "                                                   credentials\n"
+      "    clear-credentials                            - Clear username and password\n"
+      "                                                   credentials\n"
+      "    enable-view-only                             - Disable remote control of input\n"
+      "                                                   devices\n"
+      "    disable-view-only                            - Enable remote control of input\n"
+      "                                                   devices\n"
+      "    enable-port-negotiation                      - If unavailable, listen to\n"
+      "                                                   a different port\n"
+      "    disable-port-negotiation                     - If unavailable, don't listen\n"
+      "                                                   to a different port\n"
       "\n");
 #endif /* HAVE_RDP */
 #ifdef HAVE_VNC
@@ -609,7 +729,7 @@ print_help (void)
       "    set-port                                 - Set port the server binds to\n"
       "    enable                                   - Enable the VNC backend\n"
       "    disable                                  - Disable the VNC backend\n"
-      "    set-password <password>                  - Set the VNC password\n"
+      "    set-password [<password>]                - Set the VNC password\n"
       "    clear-password                           - Clear the VNC password\n"
       "    set-auth-method password|prompt          - Set the authorization method\n"
       "    enable-view-only                         - Disable remote control of input\n"
@@ -951,6 +1071,7 @@ main (int   argc,
                     new_argv,
                     NULL,
                     G_SPAWN_SEARCH_PATH
+                    | G_SPAWN_CHILD_INHERITS_STDIN
                     | G_SPAWN_CHILD_INHERITS_STDOUT,
                     NULL,
                     NULL,

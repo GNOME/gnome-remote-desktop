@@ -260,6 +260,7 @@ ctl_sources = ([
 ctl_deps = [
   glib_dep,
   gio_dep,
+  gio_unix_dep,
   credentials_deps,
 ]
 
