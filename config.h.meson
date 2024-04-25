@@ -15,6 +15,9 @@
 /* Path of the data dir */
 #mesondefine GRD_DATA_DIR
 
+/* Path of the libexec dir */
+#mesondefine GRD_LIBEXEC_DIR
+
 /* Path of the system daemon custom settings dir */
 #mesondefine GRD_CUSTOM_CONF
 
