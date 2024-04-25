@@ -7,16 +7,16 @@
   <vendor>The GNOME Project</vendor>
   <vendor_url>http://www.gnome.org/</vendor_url>
 
-  <action id="org.gnome.remotedesktop.configure-system-daemon">
-    <description>Allow to configure gnome-remote-desktop's system daemon settings.</description>
-    <message>Authentication is required to configure gnome-remote-desktop's system daemon settings.</message>
+  <action id="org.gnome.remotedesktop.enable-system-daemon">
+    <description>Allow to enable and disable gnome-remote-desktop's system daemon</description>
+    <message>Authentication is required to enable or disable gnome-remote-desktop's system daemon.</message>
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
       <allow_active>auth_admin_keep</allow_active>
     </defaults>
-    <annotate key="org.freedesktop.policykit.imply">org.gnome.remotedesktop.enable-system-daemon</annotate>
-    <annotate key="org.freedesktop.policykit.exec.path">@bindir@/grdctl</annotate>
+    <annotate key="org.freedesktop.policykit.imply">org.freedesktop.systemd1.manage-units org.freedesktop.systemd1.manage-unit-files</annotate>
+    <annotate key="org.freedesktop.policykit.exec.path">@libexecdir@/grd-enable-service</annotate>
     <annotate key="org.freedesktop.policykit.owner">unix-user:@GRD_USERNAME@</annotate>
   </action>
 
