@@ -60,6 +60,9 @@ grd_credentials_file_store (GrdCredentials      *credentials,
 {
   GrdCredentialsFile *credentials_file = GRD_CREDENTIALS_FILE (credentials);
   g_autofree const char *serialized = NULL;
+  g_autofree char *contents = NULL;
+  g_autoptr (GFile) file = NULL;
+  size_t length;
 
   g_variant_ref_sink (variant);
   serialized = g_variant_print (variant, TRUE);
@@ -69,8 +72,14 @@ grd_credentials_file_store (GrdCredentials      *credentials,
                          group_name_from_type (type),
                          GRD_CREDENTIALS_FILE_KEY, serialized);
 
-  return g_key_file_save_to_file (credentials_file->key_file,
-                                  credentials_file->filename, error);
+  contents = g_key_file_to_data (credentials_file->key_file, &length, error);
+  if (!contents)
+    return FALSE;
+
+  file = g_file_new_for_path (credentials_file->filename);
+  return g_file_replace_contents (file, contents, length, NULL, FALSE,
+                                  G_FILE_CREATE_REPLACE_DESTINATION |
+                                  G_FILE_CREATE_PRIVATE, NULL, NULL, error);
 }
 
 static GVariant *
