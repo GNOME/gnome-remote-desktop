@@ -2031,9 +2031,6 @@ socket_thread_func (gpointer data)
   uint32_t n_events;
   uint32_t n_freerdp_handles;
 
-  if (session_rdp->hwaccel_nvidia)
-    grd_hwaccel_nvidia_push_cuda_context (session_rdp->hwaccel_nvidia);
-
   peer = session_rdp->peer;
   rdp_peer_context = (RdpPeerContext *) peer->context;
   vcm = rdp_peer_context->vcm;
@@ -2141,9 +2138,6 @@ socket_thread_func (gpointer data)
       if (pending_bw_measure_stop)
         grd_rdp_network_autodetection_bw_measure_stop (network_autodetection);
     }
-
-  if (session_rdp->hwaccel_nvidia)
-    grd_hwaccel_nvidia_pop_cuda_context (session_rdp->hwaccel_nvidia);
 
   return NULL;
 }
