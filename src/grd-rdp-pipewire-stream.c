@@ -440,6 +440,7 @@ on_stream_param_changed (void                 *user_data,
                                                width, height) ||
       !grd_rdp_buffer_pool_resize_buffers (stream->buffer_pool, height, stride))
     {
+      stream->dequeuing_disallowed = TRUE;
       grd_session_rdp_notify_error (
         stream->session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
       return;
