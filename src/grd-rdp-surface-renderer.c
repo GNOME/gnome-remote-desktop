@@ -135,7 +135,7 @@ maybe_encode_pending_frame (GrdRdpSurfaceRenderer *surface_renderer,
   if (!grd_rdp_renderer_render_frame (surface_renderer->renderer,
                                       rdp_surface, render_context, buffer))
     {
-      surface_renderer->graphics_subsystem_failed = TRUE;
+      handle_graphics_subsystem_failure (surface_renderer);
       return;
     }
 

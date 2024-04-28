@@ -621,8 +621,6 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
   region = grd_rdp_damage_detector_get_damage_region (rdp_surface->detector);
   if (!region)
     {
-      grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
-                                    GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
       grd_hwaccel_nvidia_avc420_retrieve_bitstream (graphics_pipeline->hwaccel_nvidia,
                                                     hwaccel_context->encode_session_id,
                                                     NULL, NULL);
@@ -875,7 +873,6 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
                                      int64_t                *enc_time_us)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
-  GrdSessionRdp *session_rdp = graphics_pipeline->session_rdp;
   GrdRdpNetworkAutodetection *network_autodetection =
     graphics_pipeline->network_autodetection;
   GrdRdpGfxFrameController *frame_controller =
@@ -901,11 +898,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   region = grd_rdp_damage_detector_get_damage_region (rdp_surface->detector);
   if (!region)
-    {
-      grd_session_rdp_notify_error (
-        session_rdp, GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
-      return FALSE;
-    }
+    return FALSE;
 
   rfx_context_set_mode (graphics_pipeline->rfx_context, RLGR1);
   rfx_context_reset (graphics_pipeline->rfx_context,
