@@ -34,9 +34,7 @@
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-audio-input.h"
 #include "grd-rdp-audio-playback.h"
-#include "grd-rdp-buffer.h"
 #include "grd-rdp-cursor-renderer.h"
-#include "grd-rdp-damage-detector.h"
 #include "grd-rdp-display-control.h"
 #include "grd-rdp-dvc.h"
 #include "grd-rdp-event-queue.h"
@@ -48,7 +46,6 @@
 #include "grd-rdp-sam.h"
 #include "grd-rdp-server.h"
 #include "grd-rdp-session-metrics.h"
-#include "grd-rdp-surface.h"
 #include "grd-rdp-telemetry.h"
 #include "grd-settings.h"
 
@@ -200,53 +197,6 @@ grd_session_rdp_release_stream_id (GrdSessionRdp *session_rdp,
                                    uint32_t       stream_id)
 {
   g_hash_table_remove (session_rdp->stream_table, GUINT_TO_POINTER (stream_id));
-}
-
-static gboolean
-rdp_peer_refresh_graphics_pipeline (GrdSessionRdp       *session_rdp,
-                                    GrdRdpSurface       *rdp_surface,
-                                    GrdRdpRenderContext *render_context,
-                                    GrdRdpBuffer        *buffer)
-{
-  rdpContext *rdp_context = session_rdp->peer->context;
-  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
-  GrdRdpGraphicsPipeline *graphics_pipeline = rdp_peer_context->graphics_pipeline;
-
-  return grd_rdp_graphics_pipeline_refresh_gfx (graphics_pipeline, rdp_surface,
-                                                render_context, buffer);
-}
-
-void
-grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp       *session_rdp,
-                                            GrdRdpSurface       *rdp_surface,
-                                            GrdRdpRenderContext *render_context)
-{
-  GrdRdpBuffer *buffer;
-
-  if (!is_rdp_peer_flag_set (session_rdp, RDP_PEER_ACTIVATED))
-    return;
-
-  buffer = g_steal_pointer (&rdp_surface->pending_framebuffer);
-  if (!grd_rdp_damage_detector_submit_new_framebuffer (rdp_surface->detector,
-                                                       buffer))
-    {
-      grd_rdp_buffer_release (buffer);
-      grd_session_rdp_notify_error (session_rdp,
-                                    GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
-      return;
-    }
-
-  if (!grd_rdp_damage_detector_is_region_damaged (rdp_surface->detector))
-    return;
-
-  if (rdp_peer_refresh_graphics_pipeline (session_rdp, rdp_surface,
-                                          render_context, buffer))
-    {
-      GrdRdpSessionMetrics *session_metrics = session_rdp->session_metrics;
-
-      grd_rdp_session_metrics_notify_frame_transmission (session_metrics,
-                                                         rdp_surface);
-    }
 }
 
 gboolean

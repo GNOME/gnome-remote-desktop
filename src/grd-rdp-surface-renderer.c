@@ -22,7 +22,9 @@
 #include "grd-rdp-surface-renderer.h"
 
 #include "grd-rdp-buffer.h"
+#include "grd-rdp-damage-detector.h"
 #include "grd-rdp-renderer.h"
+#include "grd-rdp-session-metrics.h"
 #include "grd-rdp-surface.h"
 #include "grd-session-rdp.h"
 
@@ -38,6 +40,8 @@ struct _GrdRdpSurfaceRenderer
 
   GSource *render_source;
   gboolean rendering_suspended;
+
+  gboolean graphics_subsystem_failed;
 
   GMutex render_mutex;
 };
@@ -98,6 +102,47 @@ grd_rdp_surface_renderer_reset (GrdRdpSurfaceRenderer *surface_renderer)
   g_mutex_unlock (&surface_renderer->render_mutex);
 }
 
+static void
+handle_graphics_subsystem_failure (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  surface_renderer->graphics_subsystem_failed = TRUE;
+
+  grd_session_rdp_notify_error (surface_renderer->session_rdp,
+                                GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+}
+
+static void
+maybe_encode_pending_frame (GrdRdpSurfaceRenderer *surface_renderer,
+                            GrdRdpRenderContext   *render_context)
+{
+  GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+  GrdRdpSessionMetrics *session_metrics =
+    grd_session_rdp_get_session_metrics (surface_renderer->session_rdp);
+  GrdRdpBuffer *buffer;
+
+  buffer = g_steal_pointer (&rdp_surface->pending_framebuffer);
+  if (!grd_rdp_damage_detector_submit_new_framebuffer (rdp_surface->detector,
+                                                       buffer))
+    {
+      grd_rdp_buffer_release (buffer);
+      handle_graphics_subsystem_failure (surface_renderer);
+      return;
+    }
+
+  if (!grd_rdp_damage_detector_is_region_damaged (rdp_surface->detector))
+    return;
+
+  if (!grd_rdp_renderer_render_frame (surface_renderer->renderer,
+                                      rdp_surface, render_context, buffer))
+    {
+      surface_renderer->graphics_subsystem_failed = TRUE;
+      return;
+    }
+
+  grd_rdp_session_metrics_notify_frame_transmission (session_metrics,
+                                                     rdp_surface);
+}
+
 static gboolean
 maybe_render_frame (gpointer user_data)
 {
@@ -106,6 +151,9 @@ maybe_render_frame (gpointer user_data)
   GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
   GrdRdpRenderContext *render_context;
   g_autoptr (GMutexLocker) locker = NULL;
+
+  if (surface_renderer->graphics_subsystem_failed)
+    return G_SOURCE_CONTINUE;
 
   locker = g_mutex_locker_new (&surface_renderer->render_mutex);
   if (!rdp_surface->pending_framebuffer)
@@ -119,9 +167,7 @@ maybe_render_frame (gpointer user_data)
   if (!render_context)
     return G_SOURCE_CONTINUE;
 
-  grd_session_rdp_maybe_encode_pending_frame (surface_renderer->session_rdp,
-                                              surface_renderer->rdp_surface,
-                                              render_context);
+  maybe_encode_pending_frame (surface_renderer, render_context);
   grd_rdp_renderer_release_render_context (renderer, render_context);
 
   return G_SOURCE_CONTINUE;

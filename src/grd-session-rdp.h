@@ -69,10 +69,6 @@ uint32_t grd_session_rdp_acquire_stream_id (GrdSessionRdp     *session_rdp,
 void grd_session_rdp_release_stream_id (GrdSessionRdp *session_rdp,
                                         uint32_t       stream_id);
 
-void grd_session_rdp_maybe_encode_pending_frame (GrdSessionRdp       *session_rdp,
-                                                 GrdRdpSurface       *rdp_surface,
-                                                 GrdRdpRenderContext *render_context);
-
 gboolean grd_session_rdp_is_client_mstsc (GrdSessionRdp *session_rdp);
 
 gboolean grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
