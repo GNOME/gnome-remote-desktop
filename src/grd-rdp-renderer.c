@@ -407,6 +407,17 @@ grd_rdp_renderer_clear_render_contexts (GrdRdpRenderer *renderer)
   g_hash_table_remove_all (renderer->render_context_table);
 }
 
+gboolean
+grd_rdp_renderer_render_frame (GrdRdpRenderer      *renderer,
+                               GrdRdpSurface       *rdp_surface,
+                               GrdRdpRenderContext *render_context,
+                               GrdRdpBuffer        *rdp_buffer)
+{
+  return grd_rdp_graphics_pipeline_refresh_gfx (renderer->graphics_pipeline,
+                                                rdp_surface, render_context,
+                                                rdp_buffer);
+}
+
 static gpointer
 graphics_thread_func (gpointer data)
 {
