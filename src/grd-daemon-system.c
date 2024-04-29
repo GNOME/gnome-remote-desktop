@@ -492,15 +492,30 @@ on_incoming_redirected_connection (GrdRdpServer      *rdp_server,
                                    GSocketConnection *connection,
                                    GrdDaemonSystem   *daemon_system)
 {
-  uint64_t routing_token;
-  GrdRemoteClient *remote_client;
   g_autofree char *remote_id = NULL;
+  GrdRemoteClient *remote_client;
+  uint64_t routing_token;
+  gboolean success;
 
-  g_debug ("[DaemonSystem] Incoming connection with routing token: %s",
-           routing_token_str);
+  success = g_ascii_string_to_unsigned (routing_token_str, 10, 0, UINT32_MAX,
+                                        &routing_token, NULL);
+  if (!success)
+    {
+      g_autofree char *encoded_token = NULL;
 
-  routing_token = strtoul (routing_token_str, NULL, 10);
-  remote_id = get_id_from_routing_token (routing_token);
+      g_warning ("[DaemonSystem] Incoming client connection used "
+                 "invalid routing token");
+
+      encoded_token = g_base64_encode ((unsigned char *) routing_token_str,
+                                       strlen (routing_token_str));
+      g_debug ("[DaemonSystem] Invalid routing token: %s", encoded_token);
+      return;
+    }
+
+  g_debug ("[DaemonSystem] Incoming connection with routing token: %u",
+           (uint32_t) routing_token);
+
+  remote_id = get_id_from_routing_token ((uint32_t) routing_token);
   if (!g_hash_table_lookup_extended (daemon_system->remote_clients,
                                      remote_id, NULL,
                                      (gpointer *) &remote_client))
