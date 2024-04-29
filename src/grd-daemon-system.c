@@ -1067,9 +1067,9 @@ grd_daemon_system_init (GrdDaemonSystem *daemon_system)
 }
 
 static gboolean
-on_authorize_method (GrdDBusRemoteDesktopRdpServer *interface,
-                     GDBusMethodInvocation         *invocation,
-                     gpointer                       user_data)
+on_authorize_rdp_server_method (GrdDBusRemoteDesktopRdpServer *interface,
+                                GDBusMethodInvocation         *invocation,
+                                gpointer                       user_data)
 {
   GrdDaemonSystem *daemon_system = GRD_DAEMON_SYSTEM (user_data);
   g_autoptr (PolkitAuthorizationResult) result = NULL;
@@ -1184,7 +1184,7 @@ grd_daemon_system_startup (GApplication *app)
 
   rdp_server_interface = grd_context_get_rdp_server_interface (context);
   g_signal_connect_object (rdp_server_interface, "g-authorize-method",
-                           G_CALLBACK (on_authorize_method),
+                           G_CALLBACK (on_authorize_rdp_server_method),
                            daemon_system, 0);
 }
 
