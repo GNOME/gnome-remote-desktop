@@ -193,6 +193,92 @@ get_routing_token_from_id (const char *id)
   return g_strdup (id + strlen (REMOTE_DESKTOP_CLIENT_OBJECT_PATH "/"));
 }
 
+static char *
+get_session_id_of_sender (GDBusConnection  *connection,
+                          const char       *name,
+                          GCancellable     *cancellable,
+                          GError          **error)
+{
+  char *session_id = NULL;
+  gboolean success;
+  pid_t pid = 0;
+  uid_t uid = 0;
+
+  success = grd_get_pid_of_sender_sync (connection,
+                                        name,
+                                        &pid,
+                                        cancellable,
+                                        error);
+  if (!success)
+    return NULL;
+
+  session_id = grd_get_session_id_from_pid (pid);
+  if (session_id)
+    return session_id;
+
+  success = grd_get_uid_of_sender_sync (connection,
+                                        name,
+                                        &uid,
+                                        cancellable,
+                                        error);
+  if (!success)
+    return NULL;
+
+  session_id = grd_get_session_id_from_uid (uid);
+  if (!session_id)
+    {
+      g_set_error (error,
+                   G_IO_ERROR,
+                   G_IO_ERROR_NOT_FOUND,
+                   "Could not find a session for user %d",
+                   (int) uid);
+    }
+
+  return session_id;
+}
+
+static char *
+get_handover_object_path_for_call (GrdDaemonSystem        *daemon_system,
+                                   GDBusMethodInvocation  *invocation,
+                                   GError                **error)
+{
+  g_autoptr (GDBusObject) object = NULL;
+  g_autofree char *object_path = NULL;
+  g_autofree char *session_id = NULL;
+  GDBusConnection *connection = NULL;
+  const char *sender = NULL;
+  GCancellable *cancellable;
+
+  connection = g_dbus_method_invocation_get_connection (invocation);
+  sender = g_dbus_method_invocation_get_sender (invocation);
+  cancellable = grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
+
+  session_id = get_session_id_of_sender (connection,
+                                         sender,
+                                         cancellable,
+                                         error);
+  if (!session_id)
+    return NULL;
+
+  object_path = g_strdup_printf ("%s/session%s",
+                                 REMOTE_DESKTOP_HANDOVERS_OBJECT_PATH,
+                                 session_id);
+
+  object = g_dbus_object_manager_get_object (
+             G_DBUS_OBJECT_MANAGER (daemon_system->handover_manager_server),
+             object_path);
+  if (!object)
+    {
+      g_set_error (error,
+                   G_DBUS_ERROR,
+                   G_DBUS_ERROR_UNKNOWN_OBJECT,
+                   "No connection waiting for handover");
+      return NULL;
+    }
+
+  return g_steal_pointer (&object_path);
+}
+
 static gboolean
 on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
                           GDBusMethodInvocation           *invocation,
@@ -591,92 +677,6 @@ on_rdp_server_stopped (GrdDaemonSystem *daemon_system)
   g_signal_handlers_disconnect_by_func (rdp_server,
                                         G_CALLBACK (on_incoming_redirected_connection),
                                         daemon_system);
-}
-
-static char *
-get_session_id_of_sender (GDBusConnection  *connection,
-                          const char       *name,
-                          GCancellable     *cancellable,
-                          GError          **error)
-{
-  pid_t pid = 0;
-  uid_t uid = 0;
-  gboolean success;
-  char *session_id = NULL;
-
-  success = grd_get_pid_of_sender_sync (connection,
-                                        name,
-                                        &pid,
-                                        cancellable,
-                                        error);
-  if (!success)
-    return NULL;
-
-  session_id = grd_get_session_id_from_pid (pid);
-  if (session_id)
-    return session_id;
-
-  success = grd_get_uid_of_sender_sync (connection,
-                                        name,
-                                        &uid,
-                                        cancellable,
-                                        error);
-  if (!success)
-    return NULL;
-
-  session_id = grd_get_session_id_from_uid (uid);
-  if (!session_id)
-    {
-      g_set_error (error,
-                   G_IO_ERROR,
-                   G_IO_ERROR_NOT_FOUND,
-                   "Could not find a session for user %d",
-                   (int) uid);
-    }
-
-  return session_id;
-}
-
-static char *
-get_handover_object_path_for_call (GrdDaemonSystem        *daemon_system,
-                                   GDBusMethodInvocation  *invocation,
-                                   GError                **error)
-{
-  g_autofree char *session_id = NULL;
-  g_autofree char *object_path = NULL;
-  g_autoptr (GDBusObject) object = NULL;
-  GDBusConnection *connection = NULL;
-  const char *sender = NULL;
-  GCancellable *cancellable;
-
-  connection = g_dbus_method_invocation_get_connection (invocation);
-  sender = g_dbus_method_invocation_get_sender (invocation);
-  cancellable = grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
-
-  session_id = get_session_id_of_sender (connection,
-                                         sender,
-                                         cancellable,
-                                         error);
-  if (!session_id)
-      return NULL;
-
-  object_path = g_strdup_printf ("%s/session%s",
-                                 REMOTE_DESKTOP_HANDOVERS_OBJECT_PATH,
-                                 session_id);
-
-  object = g_dbus_object_manager_get_object (
-             G_DBUS_OBJECT_MANAGER (daemon_system->handover_manager_server),
-             object_path);
-  if (!object)
-    {
-      g_set_error (error,
-                   G_DBUS_ERROR,
-                   G_DBUS_ERROR_UNKNOWN_OBJECT,
-                   "No connection waiting for handover");
-      return NULL;
-    }
-
-  return g_steal_pointer (&object_path);
 }
 
 static void
