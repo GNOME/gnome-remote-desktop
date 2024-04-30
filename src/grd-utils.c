@@ -245,6 +245,7 @@ grd_rewrite_path_to_user_data_dir (char       **path,
 
   if (!input_path ||
       input_path[0] == '\0' ||
+      g_str_equal (input_path, ".") ||
       G_IS_DIR_SEPARATOR (input_path[strlen (input_path) - 1]))
     input_path = fallback_path;
 
