@@ -69,4 +69,9 @@ gboolean grd_write_fd_to_file (int            fd,
                                const char    *filename,
                                GCancellable  *cancellable,
                                GError       **error);
+
+gboolean grd_test_fd (int         fd,
+                      ssize_t     max_size,
+                      GFileTest  *test_results,
+                      GError    **error);
 #endif /* GRD_UTILS_H */
