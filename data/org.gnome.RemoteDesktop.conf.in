@@ -4,9 +4,13 @@
  "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
 <busconfig>
 
-  <!-- Only @GRD_USERNAME@ user can own the service -->
   <policy user="@GRD_USERNAME@">
+    <!-- Only @GRD_USERNAME@ user can own the service -->
     <allow own="org.gnome.RemoteDesktop"/>
+
+    <!-- Allow @GRD_USERNAME@ to talk to GDM -->
+    <allow send_destination="org.gnome.DisplayManager"
+           send_interface="org.gnome.DisplayManager.RemoteDisplayFactory"/>
   </policy>
 
   <!-- Anyone can send messages to the interfaces of the service -->
