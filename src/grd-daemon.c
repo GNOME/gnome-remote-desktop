@@ -50,6 +50,8 @@
 
 #define RDP_SERVER_RESTART_DELAY_MS 3000
 #define RDP_SERVER_USER_CERT_SUBDIR "certificates"
+#define RDP_MAX_CERTIFICATE_FILE_SIZE_BYTES (50 * 1024)
+#define RDP_MAX_PRIVATE_KEY_FILE_SIZE_BYTES (50 * 1024)
 
 enum
 {
@@ -309,8 +311,10 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
   g_autoptr (GError) error = NULL;
   g_autofd int certificate_fd = -1;
   g_autofd int key_fd = -1;
+  GFileTest fd_test_results;
   int certificate_fd_index;
   int key_fd_index;
+  gboolean success;
 
   g_variant_get (certificate, "(sh)", &certificate_filename,
                  &certificate_fd_index);
@@ -324,10 +328,46 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
+  success = grd_test_fd (certificate_fd, RDP_MAX_CERTIFICATE_FILE_SIZE_BYTES,
+                         &fd_test_results, &error);
+  if (!success)
+    {
+      g_prefix_error (&error, "Could not inspect certificate file descriptor");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!(fd_test_results & G_FILE_TEST_IS_REGULAR))
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_IO_ERROR,
+                                             G_IO_ERROR_NOT_REGULAR_FILE,
+                                             "Invalid certificate file");
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
   key_fd = g_unix_fd_list_get (fd_list, key_fd_index, &error);
   if (key_fd == -1)
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  success = grd_test_fd (key_fd, RDP_MAX_PRIVATE_KEY_FILE_SIZE_BYTES,
+                         &fd_test_results, &error);
+  if (!success)
+    {
+      g_prefix_error (&error, "Could not inspect private key file descriptor");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (!(fd_test_results & G_FILE_TEST_IS_REGULAR))
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_IO_ERROR,
+                                             G_IO_ERROR_NOT_REGULAR_FILE,
+                                             "Invalid private key file");
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
