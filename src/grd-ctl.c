@@ -67,6 +67,7 @@ process_options (GrdSettings       *settings,
                  const SubCommand  *subcommands,
                  int                n_subcommands)
 {
+  gboolean subcommand_exists = FALSE;
   int i;
 
   if (argc <= 0)
@@ -79,12 +80,10 @@ process_options (GrdSettings       *settings,
       if (g_strcmp0 (argv[0], subcommands[i].subcommand) != 0)
         continue;
 
+      subcommand_exists = TRUE;
+
       if (subcommands[i].n_args != argc - 1)
-        {
-          g_printerr ("Wrong number of arguments for subcommand '%s'\n",
-                      argv[0]);
-          return EX_USAGE;
-        }
+        continue;
 
       if (!subcommands[i].process (settings,
                                    argc - 1, argv + 1, &error))
@@ -99,7 +98,11 @@ process_options (GrdSettings       *settings,
       return EXIT_SUCCESS;
     }
 
-  g_printerr ("Unknown subcommand '%s'\n", argv[0]);
+  if (subcommand_exists)
+    g_printerr ("Wrong number of arguments for subcommand '%s'\n", argv[0]);
+  else
+    g_printerr ("Unknown subcommand '%s'\n", argv[0]);
+
   return EX_USAGE;
 }
 
