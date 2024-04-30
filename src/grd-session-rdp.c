@@ -2075,7 +2075,7 @@ socket_thread_func (gpointer data)
 
       if (!peer->CheckFileDescriptor (peer))
         {
-          g_message ("Unable to check file descriptor, closing connection");
+          g_message ("[RDP] Network or intentional disconnect, stopping session");
           handle_client_gone (session_rdp);
           break;
         }
