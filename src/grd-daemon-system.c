@@ -25,7 +25,6 @@
 #include "grd-daemon-system.h"
 
 #include <gio/gunixfdlist.h>
-#include <polkit/polkit.h>
 
 #include "grd-context.h"
 #include "grd-daemon.h"
@@ -36,10 +35,8 @@
 #include "grd-rdp-server.h"
 #include "grd-session-rdp.h"
 #include "grd-settings.h"
-#include "grd-settings-system.h"
 
 #define MAX_HANDOVER_WAIT_TIME_MS (30 * 1000)
-#define GRD_CONFIGURE_SYSTEM_DAEMON_POLKIT_ACTION "org.gnome.remotedesktop.configure-system-daemon"
 
 typedef struct
 {
@@ -71,7 +68,6 @@ struct _GrdDaemonSystem
 {
   GrdDaemon parent;
 
-  PolkitAuthority *authority;
   GrdDBusGdmRemoteDisplayFactory *remote_display_factory_proxy;
   GDBusObjectManager *display_objects;
 
@@ -1143,76 +1139,13 @@ grd_daemon_system_init (GrdDaemonSystem *daemon_system)
                            NULL, (GDestroyNotify) grd_remote_client_free);
 }
 
-static gboolean
-on_authorize_rdp_server_method (GrdDBusRemoteDesktopRdpServer *interface,
-                                GDBusMethodInvocation         *invocation,
-                                gpointer                       user_data)
-{
-  GrdDaemonSystem *daemon_system = GRD_DAEMON_SYSTEM (user_data);
-  g_autoptr (PolkitAuthorizationResult) result = NULL;
-  g_autoptr (PolkitSubject) subject = NULL;
-  PolkitCheckAuthorizationFlags flags;
-  g_autoptr (GError) error = NULL;
-  const char *sender = NULL;
-  const char *action = NULL;
-
-  if (!daemon_system->authority)
-    {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                             G_DBUS_ERROR_ACCESS_DENIED,
-                                             "RDP server is shutting down");
-      return FALSE;
-    }
-
-  sender = g_dbus_method_invocation_get_sender (invocation);
-  subject = polkit_system_bus_name_new (sender);
-  action = GRD_CONFIGURE_SYSTEM_DAEMON_POLKIT_ACTION;
-  flags = POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION;
-  result = polkit_authority_check_authorization_sync (daemon_system->authority,
-                                                      subject, action,
-                                                      NULL, flags, NULL,
-                                                      &error);
-  if (!result)
-    {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                             G_DBUS_ERROR_FAILED,
-                                             "Failed to check authorization: %s",
-                                             error->message);
-      return FALSE;
-    }
-
-  if (!polkit_authorization_result_get_is_authorized (result))
-    {
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
-                                             G_DBUS_ERROR_ACCESS_DENIED,
-                                             "Not authorized for action %s",
-                                             action);
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
 static void
 grd_daemon_system_startup (GApplication *app)
 {
   GrdDaemonSystem *daemon_system = GRD_DAEMON_SYSTEM (app);
   GCancellable *cancellable =
     grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
-  GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_system));
-  GrdSettings *settings = grd_context_get_settings (context);
-  GrdSettingsSystem *settings_system = GRD_SETTINGS_SYSTEM (settings);
-  GrdDBusRemoteDesktopRdpServer *rdp_server_interface;
   g_autoptr (GError) error = NULL;
-
-  grd_settings_system_use_local_state (settings_system);
-
-  daemon_system->authority = polkit_authority_get_sync (NULL, &error);
-  if (!daemon_system->authority)
-    {
-      g_critical ("Error getting polkit authority: %s", error->message);
-      g_clear_error (&error);
-    }
 
   daemon_system->dispatcher_skeleton =
     grd_dbus_remote_desktop_rdp_dispatcher_skeleton_new ();
@@ -1258,19 +1191,12 @@ grd_daemon_system_startup (GApplication *app)
                     G_CALLBACK (on_rdp_server_stopped), NULL);
 
   G_APPLICATION_CLASS (grd_daemon_system_parent_class)->startup (app);
-
-  rdp_server_interface = grd_context_get_rdp_server_interface (context);
-  g_signal_connect_object (rdp_server_interface, "g-authorize-method",
-                           G_CALLBACK (on_authorize_rdp_server_method),
-                           daemon_system, 0);
 }
 
 static void
 grd_daemon_system_shutdown (GApplication *app)
 {
   GrdDaemonSystem *daemon_system = GRD_DAEMON_SYSTEM (app);
-
-  g_clear_object (&daemon_system->authority);
 
   g_clear_pointer (&daemon_system->remote_clients, g_hash_table_unref);
 

@@ -182,7 +182,6 @@ if have_rdp
     freerdp_server_dep,
     fuse_dep,
     opus_dep,
-    polkit_dep,
     winpr_dep,
   ]
 endif
@@ -283,6 +282,7 @@ ctl_deps = [
 if have_rdp
   ctl_deps += [
     freerdp_dep,
+    polkit_dep,
   ]
 
   enable_service_sources = ([

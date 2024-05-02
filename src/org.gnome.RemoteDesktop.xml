@@ -34,24 +34,6 @@
     <property name="TlsKey" type="s" access="read" />
     <property name="ViewOnly" type="b" access="read" />
 
-    <method name="Enable" />
-
-    <method name="Disable" />
-
-    <method name="GetCredentials">
-      <arg name="credentials" direction="out" type="a{sv}" />
-    </method>
-
-    <method name="SetCredentials">
-      <arg name="credentials" direction="in" type="a{sv}" />
-    </method>
-
-    <method name="ImportCertificate">
-      <annotation name="org.gtk.GDBus.C.UnixFD" value="true" />
-      <arg name="Certificate" type="(sh)" direction="in" />
-      <arg name="PrivateKey" type="(sh)" direction="in" />
-    </method>
-
     <!--
         Binding:
 
@@ -72,6 +54,31 @@
       No compatibility between versions is promised.
   -->
   <interface name="org.gnome.RemoteDesktop.Configuration.Rdp.Server">
+
+    <property name="Enabled" type="b" access="read" />
+    <property name="Port" type="i" access="read" />
+    <property name="TlsCert" type="s" access="read" />
+    <property name="TlsFingerprint" type="s" access="read" />
+    <property name="TlsKey" type="s" access="read" />
+
+    <method name="Enable" />
+
+    <method name="Disable" />
+
+    <method name="GetCredentials">
+      <arg name="credentials" direction="out" type="a{sv}" />
+    </method>
+
+    <method name="SetCredentials">
+      <arg name="credentials" direction="in" type="a{sv}" />
+    </method>
+
+    <method name="ImportCertificate">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true" />
+      <arg name="Certificate" type="(sh)" direction="in" />
+      <arg name="PrivateKey" type="(sh)" direction="in" />
+    </method>
+
   </interface>
 
   <!--
