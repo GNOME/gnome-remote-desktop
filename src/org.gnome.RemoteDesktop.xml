@@ -65,6 +65,16 @@
   </interface>
 
   <!--
+      org.gnome.RemoteDesktop.Configuration.Rdp.Server:
+      @short_description: Configure RDP server interface
+
+      This API is intended to report status and configure the system server.
+      No compatibility between versions is promised.
+  -->
+  <interface name="org.gnome.RemoteDesktop.Configuration.Rdp.Server">
+  </interface>
+
+  <!--
       org.gnome.RemoteDesktop.Vnc.Server:
       @short_description: VNC server interface
 

@@ -29,6 +29,8 @@
 #define GRD_DAEMON_HANDOVER_APPLICATION_ID "org.gnome.RemoteDesktop.Handover"
 #define REMOTE_DESKTOP_BUS_NAME "org.gnome.RemoteDesktop"
 #define REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/RemoteDesktop"
+#define REMOTE_DESKTOP_CONFIGURATION_BUS_NAME "org.gnome.RemoteDesktop.Configuration"
+#define REMOTE_DESKTOP_CONFIGURATION_OBJECT_PATH "/org/gnome/RemoteDesktop/Configuration"
 #define REMOTE_DESKTOP_CLIENT_OBJECT_PATH "/org/gnome/RemoteDesktop/Client"
 #define REMOTE_DESKTOP_DISPATCHER_OBJECT_PATH "/org/gnome/RemoteDesktop/Rdp/Dispatcher"
 #define REMOTE_DESKTOP_HANDOVERS_OBJECT_PATH "/org/gnome/RemoteDesktop/Rdp/Handovers"
