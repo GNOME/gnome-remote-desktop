@@ -7,6 +7,7 @@
   <policy user="@GRD_USERNAME@">
     <!-- Only @GRD_USERNAME@ user can own the service -->
     <allow own="org.gnome.RemoteDesktop"/>
+    <allow own="org.gnome.RemoteDesktop.Configuration"/>
 
     <!-- Allow @GRD_USERNAME@ to talk to GDM -->
     <allow send_destination="org.gnome.DisplayManager"
@@ -29,6 +30,15 @@
            send_interface="org.freedesktop.DBus.Introspectable"/>
     <allow send_destination="org.gnome.RemoteDesktop"
            send_interface="org.freedesktop.DBus.ObjectManager"/>
+  </policy>
+
+  <policy context="default">
+    <allow send_destination="org.gnome.RemoteDesktop.Configuration"
+           send_interface="org.gnome.RemoteDesktop.Configuration.Rdp.Server"/>
+    <allow send_destination="org.gnome.RemoteDesktop.Configuration"
+           send_interface="org.freedesktop.DBus.Properties"/>
+    <allow send_destination="org.gnome.RemoteDesktop.Configuration"
+           send_interface="org.freedesktop.DBus.Introspectable"/>
   </policy>
 
 </busconfig>

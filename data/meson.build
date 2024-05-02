@@ -77,6 +77,14 @@ if get_option('systemd')
                      'libexecdir': libexecdir,
                    },
                    install_dir: userunitdir)
+
+    configure_file(input: 'gnome-remote-desktop-configuration.service.in',
+                   output: 'gnome-remote-desktop-configuration.service',
+                   configuration: {
+                     'libexecdir': libexecdir,
+                     'GRD_USERNAME': grd_username,
+                   },
+                   install_dir: systemunitdir)
   endif
 endif
 
@@ -104,8 +112,8 @@ configure_file(input: 'org.gnome.remotedesktop.enable-system-daemon.policy.in',
                },
                install_dir: join_paths(datadir, 'polkit-1', 'actions'))
 
-configure_file(input: 'org.gnome.RemoteDesktop.service.in',
-               output: 'org.gnome.RemoteDesktop.service',
+configure_file(input: 'org.gnome.RemoteDesktop.Configuration.service.in',
+               output: 'org.gnome.RemoteDesktop.Configuration.service',
                configuration: {
                  'libexecdir': libexecdir,
                  'GRD_USERNAME': grd_username,

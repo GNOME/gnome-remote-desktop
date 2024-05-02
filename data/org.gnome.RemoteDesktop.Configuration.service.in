@@ -1,0 +1,6 @@
+[D-BUS Service]
+Name=org.gnome.RemoteDesktop.Configuration
+Exec=@libexecdir@/gnome-remote-desktop-configuration-daemon
+User=@GRD_USERNAME@
+SystemdService=gnome-remote-desktop-configuration.service
+
