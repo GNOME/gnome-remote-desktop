@@ -35,6 +35,7 @@
 #include "grd-enums.h"
 #include "grd-settings-system.h"
 #include "grd-settings-user.h"
+#include "grd-utils.h"
 
 #define GRD_SYSTEMD_SERVICE "gnome-remote-desktop.service"
 
@@ -117,65 +118,6 @@ process_options (GrdSettings       *settings,
 }
 
 static gboolean
-systemd_unit_is_active (GBusType     bus_type,
-                        const char  *unit,
-                        GError     **error)
-{
-  g_autoptr (GDBusProxy) proxy = NULL;
-  g_autoptr (GVariant) result = NULL;
-  g_autofree char *object_path = NULL;
-  g_autofree char *active_state = NULL;
-  g_autoptr (GDBusProxy) unit_proxy = NULL;
-
-  proxy = g_dbus_proxy_new_for_bus_sync (bus_type,
-                                         G_DBUS_PROXY_FLAGS_NONE,
-                                         NULL,
-                                         "org.freedesktop.systemd1",
-                                         "/org/freedesktop/systemd1",
-                                         "org.freedesktop.systemd1.Manager",
-                                         NULL,
-                                         error);
-  if (!proxy)
-    return FALSE;
-
-  result = g_dbus_proxy_call_sync (proxy,
-                                   "GetUnit",
-                                   g_variant_new ("(s)", unit),
-                                   G_DBUS_CALL_FLAGS_NONE,
-                                   -1,
-                                   NULL,
-                                   error);
-  if (!result)
-    return FALSE;
-
-  g_variant_get (result, "(o)", &object_path);
-  g_clear_pointer (&result, g_variant_unref);
-
-  unit_proxy = g_dbus_proxy_new_for_bus_sync (bus_type,
-                                              G_DBUS_PROXY_FLAGS_NONE,
-                                              NULL,
-                                              "org.freedesktop.systemd1",
-                                              object_path,
-                                              "org.freedesktop.systemd1.Unit",
-                                              NULL,
-                                              error);
-  if (!unit_proxy)
-    return FALSE;
-
-  result = g_dbus_proxy_get_cached_property (unit_proxy, "ActiveState");
-  if (!result)
-    {
-      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_PROPERTY,
-                   "An error occurred while getting the ActiveState property");
-      return FALSE;
-    }
-
-  g_variant_get (result, "s", &active_state);
-
-  return g_str_equal (active_state, "active");
-}
-
-static gboolean
 is_numeric (const char *s)
 {
   while (*s)
@@ -209,57 +151,6 @@ rdp_set_port (GrdSettings  *settings,
 }
 
 static gboolean
-toggle_systemd_unit (gboolean   enabled,
-                     GError   **error)
-{
-
-  g_autoptr (GStrvBuilder) builder = NULL;
-  g_autofree char *error_output = NULL;
-  g_auto (GStrv) new_argv = NULL;
-  g_autofree char *pid = NULL;
-  int wait_status;
-  gboolean success;
-
-  builder = g_strv_builder_new ();
-
-  g_strv_builder_add (builder,
-                      GRD_LIBEXEC_DIR "/gnome-remote-desktop-enable-service");
-  pid = g_strdup_printf ("%d", getppid ());
-  g_strv_builder_add (builder, pid);
-  if (enabled)
-    g_strv_builder_add (builder, "true");
-  else
-    g_strv_builder_add (builder, "false");
-
-  new_argv = g_strv_builder_end (builder);
-
-  success = g_spawn_sync (NULL,
-                          new_argv,
-                          NULL,
-                          G_SPAWN_SEARCH_PATH |
-                          G_SPAWN_CHILD_INHERITS_STDOUT,
-                          NULL,
-                          NULL,
-                          NULL,
-                          &error_output,
-                          &wait_status,
-                          error);
-  if (!success)
-    return FALSE;
-
-  if (!WIFEXITED (wait_status) || WEXITSTATUS (wait_status) != 0)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Could not %s system service:\n%s",
-                   enabled? "enable" : "disable",
-                   error_output);
-      return FALSE;
-    }
-
-  return success;
-}
-
-static gboolean
 rdp_enable (GrdSettings  *settings,
             int           argc,
             char        **argv,
@@ -267,7 +158,7 @@ rdp_enable (GrdSettings  *settings,
 {
   if (GRD_IS_SETTINGS_SYSTEM (settings))
     {
-      if (!toggle_systemd_unit (TRUE, error))
+      if (!grd_toggle_systemd_unit (TRUE, error))
         return FALSE;
     }
 
@@ -284,7 +175,7 @@ rdp_disable (GrdSettings  *settings,
 {
   if (GRD_IS_SETTINGS_SYSTEM (settings))
     {
-      if (!toggle_systemd_unit (FALSE, error))
+      if (!grd_toggle_systemd_unit (FALSE, error))
         return FALSE;
     }
 
@@ -922,24 +813,41 @@ print_vnc_status (GrdSettings *settings,
 }
 #endif /* HAVE_VNC */
 
-static const char *
-unit_status_to_string (gboolean running,
-                       gboolean use_colors)
+static char *
+unit_active_state_to_string (GrdSystemdUnitActiveState active_state,
+                             gboolean                  use_colors)
 {
+  char *state = "";
+
+  switch (active_state)
+    {
+    case GRD_SYSTEMD_UNIT_ACTIVE_STATE_ACTIVE:
+      state = "active";
+      break;
+    case GRD_SYSTEMD_UNIT_ACTIVE_STATE_RELOADING:
+      state = "reloading";
+      break;
+    case GRD_SYSTEMD_UNIT_ACTIVE_STATE_INACTIVE:
+      state = "inactive";
+      break;
+    case GRD_SYSTEMD_UNIT_ACTIVE_STATE_FAILED:
+      state = "failed";
+      break;
+    case GRD_SYSTEMD_UNIT_ACTIVE_STATE_ACTIVATING:
+      state = "activating";
+      break;
+    case GRD_SYSTEMD_UNIT_ACTIVE_STATE_DEACTIVATING:
+      state = "deactivating";
+      break;
+    case GRD_SYSTEMD_UNIT_ACTIVE_STATE_UNKNOWN:
+      state = "unknown";
+      break;
+    }
+
   if (use_colors)
-    {
-      if (running)
-        return "\x1b[1mactive\033[m";
-      else
-        return "\x1b[1minactive\033[m";
-    }
+    return g_strdup_printf ("\x1b[1m%s\033[m", state);
   else
-    {
-      if (running)
-        return "active";
-      else
-        return "inactive";
-    }
+    return g_strdup (state);
 }
 
 static void
@@ -947,7 +855,8 @@ print_service_status (GrdSettings *settings,
                       gboolean    use_colors)
 {
   GBusType bus_type;
-  gboolean service_running;
+  GrdSystemdUnitActiveState active_state;
+  g_autofree char *active_state_str = NULL;
   g_autoptr (GError) error = NULL;
 
   if (GRD_IS_SETTINGS_SYSTEM (settings))
@@ -955,15 +864,16 @@ print_service_status (GrdSettings *settings,
   else
       bus_type = G_BUS_TYPE_SESSION;
 
-  service_running = systemd_unit_is_active (bus_type,
-                                            GRD_SYSTEMD_SERVICE,
-                                            &error);
-  if (error)
+  if (!grd_systemd_unit_get_active_state (bus_type,
+                                          GRD_SYSTEMD_SERVICE,
+                                          &active_state,
+                                          &error))
     return;
 
+  active_state_str = unit_active_state_to_string (active_state, use_colors);
+
   printf ("Overall:\n");
-  printf ("\tUnit status: %s\n", unit_status_to_string (service_running,
-                                                        use_colors));
+  printf ("\tUnit status: %s\n", active_state_str);
 }
 
 static int

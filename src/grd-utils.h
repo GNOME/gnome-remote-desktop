@@ -23,6 +23,17 @@
 #include <gio/gio.h>
 #include <stdint.h>
 
+typedef enum
+{
+  GRD_SYSTEMD_UNIT_ACTIVE_STATE_UNKNOWN = 0,
+  GRD_SYSTEMD_UNIT_ACTIVE_STATE_ACTIVE,
+  GRD_SYSTEMD_UNIT_ACTIVE_STATE_RELOADING,
+  GRD_SYSTEMD_UNIT_ACTIVE_STATE_INACTIVE,
+  GRD_SYSTEMD_UNIT_ACTIVE_STATE_FAILED,
+  GRD_SYSTEMD_UNIT_ACTIVE_STATE_ACTIVATING,
+  GRD_SYSTEMD_UNIT_ACTIVE_STATE_DEACTIVATING,
+} GrdSystemdUnitActiveState;
+
 typedef struct _GrdSyncPoint
 {
   GCond sync_cond;
@@ -74,4 +85,13 @@ gboolean grd_test_fd (int         fd,
                       ssize_t     max_size,
                       GFileTest  *test_results,
                       GError    **error);
+
+gboolean grd_toggle_systemd_unit (gboolean   enabled,
+                                  GError   **error);
+
+gboolean grd_systemd_unit_get_active_state (GBusType                    bus_type,
+                                            const char                 *unit,
+                                            GrdSystemdUnitActiveState  *active_state,
+                                            GError                    **error);
+
 #endif /* GRD_UTILS_H */

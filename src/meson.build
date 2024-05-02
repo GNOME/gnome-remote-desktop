@@ -255,6 +255,8 @@ ctl_sources = ([
   'grd-settings-system.h',
   'grd-settings-user.c',
   'grd-settings-user.h',
+  'grd-utils.c',
+  'grd-utils.h',
   credentials_sources,
   gen_enum_types,
 ])

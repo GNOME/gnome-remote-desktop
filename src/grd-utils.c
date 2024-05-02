@@ -324,3 +324,129 @@ grd_test_fd (int         fd,
 
   return TRUE;
 }
+
+gboolean
+grd_toggle_systemd_unit (gboolean   enabled,
+                         GError   **error)
+{
+
+  g_autoptr (GStrvBuilder) builder = NULL;
+  g_autofree char *error_output = NULL;
+  g_auto (GStrv) new_argv = NULL;
+  g_autofree char *pid = NULL;
+  int wait_status;
+  gboolean success;
+
+  builder = g_strv_builder_new ();
+
+  g_strv_builder_add (builder,
+                      GRD_LIBEXEC_DIR "/gnome-remote-desktop-enable-service");
+  pid = g_strdup_printf ("%d", getppid ());
+  g_strv_builder_add (builder, pid);
+  if (enabled)
+    g_strv_builder_add (builder, "true");
+  else
+    g_strv_builder_add (builder, "false");
+
+  new_argv = g_strv_builder_end (builder);
+
+  success = g_spawn_sync (NULL,
+                          new_argv,
+                          NULL,
+                          G_SPAWN_SEARCH_PATH |
+                          G_SPAWN_CHILD_INHERITS_STDOUT,
+                          NULL,
+                          NULL,
+                          NULL,
+                          &error_output,
+                          &wait_status,
+                          error);
+  if (!success)
+    return FALSE;
+
+  if (!WIFEXITED (wait_status) || WEXITSTATUS (wait_status) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Could not %s system service:\n%s",
+                   enabled? "enable" : "disable",
+                   error_output);
+      return FALSE;
+    }
+
+  return success;
+}
+
+gboolean
+grd_systemd_unit_get_active_state (GBusType                    bus_type,
+                                   const char                 *unit,
+                                   GrdSystemdUnitActiveState  *active_state,
+                                   GError                    **error)
+{
+  g_autoptr (GDBusProxy) proxy = NULL;
+  g_autoptr (GVariant) result = NULL;
+  g_autofree char *object_path = NULL;
+  g_autofree char *res_active_state = NULL;
+  g_autoptr (GDBusProxy) unit_proxy = NULL;
+
+  proxy = g_dbus_proxy_new_for_bus_sync (bus_type,
+                                         G_DBUS_PROXY_FLAGS_NONE,
+                                         NULL,
+                                         "org.freedesktop.systemd1",
+                                         "/org/freedesktop/systemd1",
+                                         "org.freedesktop.systemd1.Manager",
+                                         NULL,
+                                         error);
+  if (!proxy)
+    return FALSE;
+
+  result = g_dbus_proxy_call_sync (proxy,
+                                   "LoadUnit",
+                                   g_variant_new ("(s)", unit),
+                                   G_DBUS_CALL_FLAGS_NONE,
+                                   -1,
+                                   NULL,
+                                   error);
+  if (!result)
+    return FALSE;
+
+  g_variant_get (result, "(o)", &object_path);
+  g_clear_pointer (&result, g_variant_unref);
+
+  unit_proxy = g_dbus_proxy_new_for_bus_sync (bus_type,
+                                              G_DBUS_PROXY_FLAGS_NONE,
+                                              NULL,
+                                              "org.freedesktop.systemd1",
+                                              object_path,
+                                              "org.freedesktop.systemd1.Unit",
+                                              NULL,
+                                              error);
+  if (!unit_proxy)
+    return FALSE;
+
+  result = g_dbus_proxy_get_cached_property (unit_proxy, "ActiveState");
+  if (!result)
+    {
+      g_set_error (error, G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_PROPERTY,
+                   "An error occurred while getting the ActiveState property");
+      return FALSE;
+    }
+
+  g_variant_get (result, "s", &res_active_state);
+
+  if (g_str_equal (res_active_state, "active"))
+    *active_state = GRD_SYSTEMD_UNIT_ACTIVE_STATE_ACTIVE;
+  else if (g_str_equal (res_active_state, "reloading"))
+    *active_state = GRD_SYSTEMD_UNIT_ACTIVE_STATE_RELOADING;
+  else if (g_str_equal (res_active_state, "inactive"))
+    *active_state = GRD_SYSTEMD_UNIT_ACTIVE_STATE_INACTIVE;
+  else if (g_str_equal (res_active_state, "failed"))
+    *active_state = GRD_SYSTEMD_UNIT_ACTIVE_STATE_FAILED;
+  else if (g_str_equal (res_active_state, "activating"))
+    *active_state = GRD_SYSTEMD_UNIT_ACTIVE_STATE_ACTIVATING;
+  else if (g_str_equal (res_active_state, "deactivating"))
+    *active_state = GRD_SYSTEMD_UNIT_ACTIVE_STATE_DEACTIVATING;
+  else
+    *active_state = GRD_SYSTEMD_UNIT_ACTIVE_STATE_UNKNOWN;
+
+  return TRUE;
+}
