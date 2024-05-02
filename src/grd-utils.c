@@ -28,9 +28,6 @@
 #include <gio/gunixinputstream.h>
 #include <glib/gstdio.h>
 
-#include "grd-rdp-server.h"
-#include "grd-vnc-server.h"
-
 #define GRD_SERVER_PORT_RANGE 10
 
 typedef struct _GrdFdSource
@@ -167,21 +164,8 @@ grd_bind_socket (GSocketListener  *server,
                  gboolean          negotiate_port,
                  GError          **error)
 {
-  g_autofree char *message_tag = NULL;
   gboolean is_bound = FALSE;
   int i;
-
-#ifdef HAVE_RDP
-  if (GRD_IS_RDP_SERVER (server))
-    message_tag = g_strdup ("[RDP]");
-  else
-#endif
-#ifdef HAVE_VNC
-  if (GRD_IS_VNC_SERVER (server))
-    message_tag = g_strdup ("[VNC]");
-  else
-#endif
-    g_assert_not_reached ();
 
   if (!negotiate_port)
     {
@@ -204,8 +188,8 @@ grd_bind_socket (GSocketListener  *server,
                                                   &local_error);
       if (local_error)
         {
-          g_debug ("%s Server could not be bound to TCP port %hu: %s",
-                   message_tag, port, local_error->message);
+          g_debug ("\tServer could not be bound to TCP port %hu: %s",
+                   port, local_error->message);
         }
 
       if (is_bound)
@@ -220,7 +204,7 @@ grd_bind_socket (GSocketListener  *server,
 out:
   if (is_bound)
     {
-      g_debug ("%s Server bound to TCP port %hu", message_tag, port);
+      g_debug ("\tServer bound to TCP port %hu", port);
       *selected_port = port;
     }
 

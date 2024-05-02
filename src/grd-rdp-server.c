@@ -261,6 +261,7 @@ attempt_to_bind_port (gpointer user_data)
                 NULL);
   g_assert (rdp_port != 0);
 
+  g_debug ("[RDP] Trying to bind to TCP socket:");
   if (grd_bind_socket (G_SOCKET_LISTENER (rdp_server),
                        rdp_port,
                        &selected_rdp_port,
@@ -316,6 +317,7 @@ bind_socket (GrdRdpServer  *rdp_server,
     {
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
     case GRD_RUNTIME_MODE_HEADLESS:
+      g_debug ("[RDP] Trying to bind to TCP socket:");
       if (!grd_bind_socket (G_SOCKET_LISTENER (rdp_server),
                             rdp_port,
                             &selected_rdp_port,
@@ -324,6 +326,7 @@ bind_socket (GrdRdpServer  *rdp_server,
         return FALSE;
       break;
     case GRD_RUNTIME_MODE_SYSTEM:
+      g_debug ("[RDP] Trying to bind to TCP socket:");
       if (grd_bind_socket (G_SOCKET_LISTENER (rdp_server),
                            rdp_port,
                            &selected_rdp_port,

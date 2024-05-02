@@ -145,6 +145,7 @@ grd_vnc_server_start (GrdVncServer  *vnc_server,
                 "vnc-negotiate-port", &negotiate_port,
                 NULL);
 
+  g_debug ("[VNC] Trying to bind to TCP socket:");
   if (!grd_bind_socket (G_SOCKET_LISTENER (vnc_server),
                         vnc_port,
                         &selected_vnc_port,
