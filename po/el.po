@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2023-05-05 14:00+0000\n"
-"PO-Revision-Date: 2021-08-01 19:43+0300\n"
+"issues/\n"
+"POT-Creation-Date: 2024-03-14 15:00+0000\n"
+"PO-Revision-Date: 2024-05-06 20:50+0300\n"
 "Last-Translator: Efstathios Iosifidis <eiosifidis@gnome.org>\n"
 "Language-Team: Greek <gnome-el-list@gnome.org>\n"
 "Language: el\n"
@@ -17,46 +17,39 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: src/grd-daemon.c:612
-msgid "GNOME Remote Desktop"
-msgstr "Απομακρυσμένη επιφάνεια εργασίας GNOME"
-
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "Θέλετε να διαμοιραστείτε την επιφάνεια εργασίας σας;"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
 msgstr ""
-"Ένας χρήστης στον υπολογιστή «%s» προσπαθεί να δει ή να ελέγξει "
-"απομακρυσμένα την επιφάνεια εργασίας σας."
+"Να επιτρέπεται η διαμόρφωση των ρυθμίσεων υπηρεσίας συστήματος του gnome-"
+"remote-desktop."
 
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "Άρνηση"
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"Απαιτείται έλεγχος ταυτότητας για τη διαμόρφωση των ρυθμίσεων της υπηρεσίας "
+"συστήματος του gnome-remote-desktop."
 
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "Αποδοχή"
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "Handover υπηρεσία Απομακρυσμένης επιφάνειας εργασίας GNOME"
 
-#: src/grd-ctl.c:53
+#: src/grd-ctl.c:60
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Χρήση: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 
-#: src/grd-ctl.c:461
+#: src/grd-ctl.c:612
 msgid "Commands:\n"
 msgstr "Εντολές:\n"
 
-#: src/grd-ctl.c:466
+#: src/grd-ctl.c:617
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the RDP backend\n"
 "    disable                                  - Disable the RDP backend\n"
 "    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
@@ -71,26 +64,45 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - Υποεντολές RDP:\n"
 "    enable                                   - Ενεργοποίηση του backend RDP\n"
-"    disable                                  - Απενεργοποίηση του backend RDP\n"
-"    set-tls-cert <path-to-cert>              - Ορισμός διαδρομής προς πιστοποιητικό TLS\n"
-"    set-tls-key <path-to-key>                - Ορισμός διαδρομής προς κλειδί TLS\n"
-"    set-credentials <username> <password>    - Ορισμός ονομασίας χρήστη και κωδικού πρόσβασης\n"
+"    disable                                  - Απενεργοποίηση του backend "
+"RDP\n"
+"    set-tls-cert <path-to-cert>              - Ορισμός διαδρομής προς "
+"πιστοποιητικό TLS\n"
+"    set-tls-key <path-to-key>                - Ορισμός διαδρομής προς κλειδί "
+"TLS\n"
+"    set-credentials <username> <password>    - Ορισμός ονομασίας χρήστη και "
+"κωδικού πρόσβασης\n"
 "                                               διαπιστευτηρίων\n"
-"    clear-credentials                        - Εκκαθάριση ονομασίας χρήστη και κωδικού πρόσβασης\n"
+"    clear-credentials                        - Εκκαθάριση ονομασίας χρήστη "
+"και κωδικού πρόσβασης\n"
 "                                               διαπιστευτηρίων\n"
-"    enable-view-only                         - Απενεργοποίηση του απομακρυσμένου ελέγχου των\n"
+"    enable-view-only                         - Απενεργοποίηση του "
+"απομακρυσμένου ελέγχου των\n"
 "                                               συσκευών εισαγωγής\n"
-"    disable-view-only                        - Ενεργοποίηση του απομακρυσμένου ελέγχου των\n"
+"    disable-view-only                        - Ενεργοποίηση του "
+"απομακρυσμένου ελέγχου των\n"
 "                                               συσκευών εισαγωγής\n"
+"    enable-port-negotiation                  - Εάν δεν είναι διαθέσιμο, να "
+"ακούει\n"
+"                                               σε διαφορετική θύρα\n"
+"    disable-port-negotiation                 - Εάν δεν είναι διαθέσιμο, να "
+"μην ακούει\n"
+"                                               σε διαφορετική θύρα\n"
+"\n"
 "\n"
 
-#: src/grd-ctl.c:485
+#: src/grd-ctl.c:641
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
 "    set-password <password>                  - Set the VNC password\n"
@@ -102,49 +114,167 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 "  vnc                                        - Υποεντολές VNC:\n"
 "    enable                                   - Ενεργοποίηση του backend VNC\n"
-"    disable                                  - Απενεργοποίηση του backend VNC\n"
-"    set-password <password>                  - Ορισμός κωδικού πρόσβασης VNC\n"
-"    clear-password                           - Εκκαθάριση κωδικού πρόσβασης VNC\n"
-"    set-auth-method password|prompt          - Ορισμός μεθόδου εξουσιοδότησης\n"
-"    enable-view-only                         - Απενεργοποίηση του απομακρυσμένου ελέγχου των\n"
+"    disable                                  - Απενεργοποίηση του backend "
+"VNC\n"
+"    set-password <password>                  - Ορισμός κωδικού πρόσβασης "
+"VNC\n"
+"    clear-password                           - Εκκαθάριση κωδικού πρόσβασης "
+"VNC\n"
+"    set-auth-method password|prompt          - Ορισμός μεθόδου "
+"εξουσιοδότησης\n"
+"    enable-view-only                         - Απενεργοποίηση του "
+"απομακρυσμένου ελέγχου των\n"
 "                                               συσκευών εισαγωγής\n"
-"    disable-view-only                        - Ενεργοποίηση του απομακρυσμένου ελέγχου των\n"
+"    disable-view-only                        - Ενεργοποίηση του "
+"απομακρυσμένου ελέγχου των\n"
 "                                               συσκευών εισαγωγής\n"
+"    enable-port-negotiation                  - Εάν δεν είναι διαθέσιμο, τότε "
+"να ακούει\n"
+"                                               σε διαφρετική θύρα\n"
+"    disable-port-negotiation                 - Εάν δεν είναι διαθέσιμο, τότε "
+"να μην ακούει\n"
+"                                               σε διαφορετική θύρα\n"
+"\n"
 "\n"
 
-#: src/grd-ctl.c:500
+#: src/grd-ctl.c:661
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
-"  status [--show-credentials]                - Εμφάνιση τρέχουσας κατάστασης\n"
+"  status [--show-credentials]                - Εμφάνιση τρέχουσας "
+"κατάστασης\n"
 "\n"
 "Επιλογές:\n"
-"  --headless                                 - Χρήση αποθήκευσης διαπιστευτηρίων "
-"headless\n"
-"  --help                                     - Εκτύπωση αυτού του κειμένου βοήθειας\n"
+"  --headless                                 - Χρήση αποθήκευσης "
+"διαπιστευτηρίων headless\n"
+"  --system                                   - Ρύθμιση υπηρεσίας συστήματος\n"
+"  --help                                     - Εκτύπωση αυτού του κειμένου "
+"βοήθειας\n"
+
+#: src/grd-daemon.c:1222
+msgid "GNOME Remote Desktop"
+msgstr "Απομακρυσμένη επιφάνεια εργασίας GNOME"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "Αυτή η σύνδεση δεν είναι ασφαλής"
+
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
+msgstr ""
+"Θέλετε να συνεχίσετε με μια μη ασφαλή σύνδεση;\n"
+"Για να την κάνετε ασφαλή, ορίστε <b>“χρήση ονόματος διακομιστή "
+"ανακατεύθυνσης:i:1”</b> στο αρχείο ρυθμίσεων RDP."
+
+#: src/grd-daemon-handover.c:354
+#, c-format
+msgid "Disconnect"
+msgstr "Αποσύνδεση"
+
+#: src/grd-daemon-handover.c:355
+#, c-format
+msgid "Continue"
+msgstr "Συνέχεια"
+
+#: src/grd-daemon-user.c:99
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "Η θύρα κοινής χρήσης επιφάνειας εργασίας άλλαξε"
+
+#: src/grd-daemon-user.c:101
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"Η θύρα κοινής χρήσης επιφάνειας εργασίας άλλαξε από <b>%i</b> σε <b>%i</b>.\n"
+"Αυτό συμβαίνει επειδή η υπηρεσία Απομακρυσμένες Συνεδρίες έχει ενεργοποιηθεί "
+"και έχει μεγαλύτερη προτεραιότητα να χρησιμοποιήσει τη θύρα <b>%i</b>."
+
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "Αποδοχή"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Θέλετε να διαμοιραστείτε την επιφάνεια εργασίας σας;"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Ένας χρήστης στον υπολογιστή «%s» προσπαθεί να δει ή να ελέγξει "
+"απομακρυσμένα την επιφάνεια εργασίας σας."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "Άρνηση"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "Η πόρτα που χρησιμοποιείται από τον διακομιστή RDP"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr ""
+"Ο πελάτης RDP θα συνδεθεί σε αυτήν τη θύρα για να χρησιμοποιήσει αυτόν τον "
+"διακομιστή RDP."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr ""
+"Αναζητήστε μια διαφορετική θύρα RDP εάν χρησιμοποιείται αυτή βρίσκεται στο "
+"αρχείο ρυθμίσεων"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Όταν η θύρα διαπραγμάτευσης έχει οριστεί σε «true», ο διακομιστής RDP θα "
+"προσπαθήσει να ακούσει την πρώτη διαθέσιμη από τις επόμενες 10 θύρες "
+"ξεκινώντας από αυτή που βρίσκεται στο αρχείο ρυθμισεων."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Εάν το backend RDP είναι ενεργοποιημένο ή όχι"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Εάν οριστεί σε 'true', το backend RDP θα αρχικοποιηθεί."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "Λειτουργία κοινής χρήσης οθόνης συνδέσεων RDP"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -159,22 +289,27 @@ msgid ""
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
-"Η λειτουργία κοινής χρήσης οθόνης καθορίζει, εάν το backend RDP αντικατοπτρίζει την κύρια "
-"οθόνη ή εάν δημιουργείται εικονική οθόνη. Για την αρχική ανάλυση της εικονικής οθόνης, το backend RDP χρησιμοποιεί είτε τα δεδομένα πυρήνα πελάτη "
-"([MS-RDPBCGR] 2.2.1.3.2) είτε τα δεδομένα οθόνης πελάτη ([MS-RDPBCGR] "
-"2.2.1.3.6), ανάλογα με το τι είναι διαθέσιμο. Όταν χρησιμοποιείτε μια συνεδρία απομακρυσμένης επιφάνειας εργασίας με εικονική οθόνη, οι πελάτες μπορούν να αλλάξουν το μέγεθος της ανάλυσης της "
-"εικονικής οθόνης κατά τη διάρκεια μιας συνεδρίας με την επέκταση εικονικού καναλιού ενημέρωσης οθόνης ([MS-RDPEDISP]). Οι επιτρεπόμενες λειτουργίες κοινής χρήσης οθόνης περιλαμβάνουν: * mirror-"
-"primary - Εγγραφή της κύριας οθόνης της τρέχουσας συνεδρίας χρήστη. * extend - "
-"Δημιουργία μιας νέας εικονικής οθόνης και χρήση της για τη συνεδρία απομακρυσμένης επιφάνειας εργασίας. Η "
-"ανάλυση αυτής της εικονικής οθόνης προέρχεται από τη διαμόρφωση οθόνης, "
-"που υποβάλλεται από τον πελάτη απομακρυσμένης επιφάνειας εργασίας."
+"Η λειτουργία κοινής χρήσης οθόνης καθορίζει, εάν το backend RDP "
+"αντικατοπτρίζει την κύρια οθόνη ή εάν δημιουργείται εικονική οθόνη. Για την "
+"αρχική ανάλυση της εικονικής οθόνης, το backend RDP χρησιμοποιεί είτε τα "
+"δεδομένα πυρήνα πελάτη ([MS-RDPBCGR] 2.2.1.3.2) είτε τα δεδομένα οθόνης "
+"πελάτη ([MS-RDPBCGR] 2.2.1.3.6), ανάλογα με το τι είναι διαθέσιμο. Όταν "
+"χρησιμοποιείτε μια συνεδρία απομακρυσμένης επιφάνειας εργασίας με εικονική "
+"οθόνη, οι πελάτες μπορούν να αλλάξουν το μέγεθος της ανάλυσης της εικονικής "
+"οθόνης κατά τη διάρκεια μιας συνεδρίας με την επέκταση εικονικού καναλιού "
+"ενημέρωσης οθόνης ([MS-RDPEDISP]). Οι επιτρεπόμενες λειτουργίες κοινής "
+"χρήσης οθόνης περιλαμβάνουν: * mirror-primary - Εγγραφή της κύριας οθόνης "
+"της τρέχουσας συνεδρίας χρήστη. * extend - Δημιουργία μιας νέας εικονικής "
+"οθόνης και χρήση της για τη συνεδρία απομακρυσμένης επιφάνειας εργασίας. Η "
+"ανάλυση αυτής της εικονικής οθόνης προέρχεται από τη διαμόρφωση οθόνης, που "
+"υποβάλλεται από τον πελάτη απομακρυσμένης επιφάνειας εργασίας."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Διαδρομή για το αρχείο πιστοποίησης"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -183,18 +318,18 @@ msgstr ""
 "αρχείο ιδιωτικού κλειδιού όσο και το αρχείο πιστοποιητικού πρέπει να "
 "παρέχονται στον διακομιστή RDP."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Διαδρομή για το αρχείο προσωπικού κλειδιού"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
 msgstr ""
 "Να επιτρέπεται μόνο σε απομακρυσμένες συνδέσεις η προβολή του περιεχομένου "
 "της οθόνης"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -202,15 +337,39 @@ msgstr ""
 "Όταν είναι αληθές το μόνο για προβολή, οι απομακρυσμένες συνδέσεις RDP δεν "
 "μπορούν να χειριστούν συσκευές εισόδου (π.χ. ποντίκι και πληκτρολόγιο)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "Η θύρα που χρησιμοποιείται από τον διακομιστή VNC"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr ""
+"Ο πελάτης VNC θα συνδεθεί σε αυτήν τη θύρα για να χρησιμοποιήσει αυτόν τον "
+"διακομιστή VNC."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr ""
+"Αναζητήστε διαφορετική θύρα VNC εάν αυτή χρησιμοποιείται στο αρχείο ρυθμίσεων"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"Όταν η θύρα διαπραγμάτευσης έχει οριστεί σε «true», ο διακομιστής VNC θα "
+"προσπαθήσει να ακούσει την πρώτη διαθέσιμη από τις επόμενες 10 θύρες "
+"ξεκινώντας από αυτή που χρησιμοποιείται στο αρχείο ρυθμίσεων."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Εάν το backend VNC είναι ενεργοποιημένο ή όχι"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Εάν οριστεί σε 'true', το backend VNC θα αρχικοποιηθεί."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -218,11 +377,11 @@ msgstr ""
 "Όταν είναι αληθές το μόνο για προβολή, οι απομακρυσμένες συνδέσεις VNC δεν "
 "μπορούν να χειριστούν συσκευές εισόδου (π.χ. ποντίκι και πληκτρολόγιο)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
 msgstr "Μέθοδος που χρησιμοποιείται για την πιστοποίηση συνδέσεων VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -237,11 +396,11 @@ msgstr ""
 "τη νέα σύνδεση. * συνθηματικό - απαιτώντας από τον απομακρυσμένο πελάτη να "
 "παρέχει ένα γνωστό συνθηματικό"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
 msgstr "Λειτουργία κοινής χρήσης οθόνης συνδέσεων VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -255,14 +414,16 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr ""
-"Η λειτουργία κοινής χρήσης οθόνης καθορίζει, εάν το backend VNC αντικατοπτρίζει την κύρια "
-"οθόνη ή εάν δημιουργείται εικονική οθόνη. Για την αρχική ανάλυση της εικονικής οθόνης, το backend VNC χρησιμοποιεί προεπιλεγμένο μέγεθος 1920x1080 "
-"pixels. Όταν χρησιμοποιείτε μια συνεδρία απομακρυσμένης επιφάνειας εργασίας με εικονική οθόνη, οι πελάτες μπορούν να αλλάξουν το μέγεθος της ανάλυσης της "
-"εικονικής οθόνης κατά τη διάρκεια μιας συνεδρίας με το "
-"PDU setDesktopSize. Οι επιτρεπόμενες λειτουργίες κοινής χρήσης οθόνης περιλαμβάνουν: * mirror-"
-"primary - Εγγραφή της κύριας οθόνης της τρέχουσας συνεδρίας χρήστη. * extend - "
-"Δημιουργία μιας νέας εικονικής οθόνης και χρήση της για τη συνεδρία απομακρυσμένης επιφάνειας εργασίας. Η αρχική "
-"ανάλυση οθόνης αυτής της εικονικής οθόνης έχει οριστεί σε 1920x1080 pixels. "
-"Οι πελάτες μπορούν να υπερισχύσουν της αρχικής ανάλυσης με μεταγενέστερες ενημερώσεις διαμόρφωσης οθόνης."
-
-
+"Η λειτουργία κοινής χρήσης οθόνης καθορίζει, εάν το backend VNC "
+"αντικατοπτρίζει την κύρια οθόνη ή εάν δημιουργείται εικονική οθόνη. Για την "
+"αρχική ανάλυση της εικονικής οθόνης, το backend VNC χρησιμοποιεί "
+"προεπιλεγμένο μέγεθος 1920x1080 pixels. Όταν χρησιμοποιείτε μια συνεδρία "
+"απομακρυσμένης επιφάνειας εργασίας με εικονική οθόνη, οι πελάτες μπορούν να "
+"αλλάξουν το μέγεθος της ανάλυσης της εικονικής οθόνης κατά τη διάρκεια μιας "
+"συνεδρίας με το PDU setDesktopSize. Οι επιτρεπόμενες λειτουργίες κοινής "
+"χρήσης οθόνης περιλαμβάνουν: * mirror-primary - Εγγραφή της κύριας οθόνης "
+"της τρέχουσας συνεδρίας χρήστη. * extend - Δημιουργία μιας νέας εικονικής "
+"οθόνης και χρήση της για τη συνεδρία απομακρυσμένης επιφάνειας εργασίας. Η "
+"αρχική ανάλυση οθόνης αυτής της εικονικής οθόνης έχει οριστεί σε 1920x1080 "
+"pixels. Οι πελάτες μπορούν να υπερισχύσουν της αρχικής ανάλυσης με "
+"μεταγενέστερες ενημερώσεις διαμόρφωσης οθόνης."
