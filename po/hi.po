@@ -1,0 +1,389 @@
+# Hindi translation for gnome-remote-desktop.
+# Copyright (C) 2024 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# Scrambled777 <weblate.scrambled777@simplelogin.com>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop master\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues/\n"
+"POT-Creation-Date: 2024-04-14 16:33+0000\n"
+"PO-Revision-Date: 2024-04-17 09:28+0530\n"
+"Last-Translator: Scrambled777 <weblate.scrambled777@simplelogin.com>\n"
+"Language-Team: Hindi\n"
+"Language: hi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Gtranslator 46.0\n"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgstr "गनोम-रिमोट-डेस्कटॉप की सिस्टम डेमॉन सेटिंग्स को विन्यस्त करने की अनुमति दें।"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"गनोम-रिमोट-डेस्कटॉप की सिस्टम डेमॉन सेटिंग्स को विन्यस्त करने के लिए प्रमाणीकरण आवश्यक है।"
+
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "गनोम रिमोट डेस्कटॉप हैंडओवर डेमॉन"
+
+#: src/grd-ctl.c:60
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr "उपयोग: %s [विकल्प...] कमांड [उपकमांड]...\n"
+
+#: src/grd-ctl.c:612
+msgid "Commands:\n"
+msgstr "कमांड:\n"
+
+#: src/grd-ctl.c:617
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
+"\n"
+msgstr ""
+"  rdp                                        - RDP उपकमांड:\n"
+"    set-port                                 - सर्वर जिस पोर्ट से जुड़ता है उसे "
+"निर्धारित करें\n"
+"    enable                                   - RDP बैकएंड सक्षम करें\n"
+"    disable                                  - RDP बैकएंड अक्षम करें\n"
+"    set-tls-cert <path-to-cert>              - TLS प्रमाणपत्र के लिए पथ "
+"निर्धारित करें\n"
+"    set-tls-key <path-to-key>                - TLS कुंजी पर पथ निर्धारित करें\n"
+"    set-credentials <username> <password>    - उपयोगकर्ता नाम और पासवर्ड "
+"क्रेडेंशियल निर्धारित करें\n"
+"    clear-credentials                        - उपयोगकर्ता नाम और पासवर्ड "
+"क्रेडेंशियल साफ़ करें\n"
+"    enable-view-only                         - इनपुट डिवाइस का रिमोट कंट्रोल "
+"अक्षम करें\n"
+"    disable-view-only                        - इनपुट डिवाइस का रिमोट कंट्रोल "
+"सक्षम करें\n"
+"    enable-port-negotiation                  - यदि अनुपलब्ध है, तो किसी भिन्न "
+"पोर्ट को सुनें\n"
+"    disable-port-negotiation                 - यदि अनुपलब्ध है, तो किसी भिन्न "
+"पोर्ट को न सुनें\n"
+"\n"
+
+#: src/grd-ctl.c:641
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
+"\n"
+msgstr ""
+"vnc                                        - VNC उपकमांड:\n"
+"    set-port                                 - सर्वर जिस पोर्ट से जुड़ता है उसे "
+"निर्धारित करें\n"
+"    enable                                   - VNC बैकएंड सक्षम करें\n"
+"    disable                                  - VNC बैकएंड अक्षम करें\n"
+"    set-password <password>                  - VNC पासवर्ड निर्धारित करें\n"
+"    clear-password                           - VNC पासवर्ड साफ़ करें\n"
+"    set-auth-method password|prompt          - प्राधिकरण विधि निर्धारित करें\n"
+"    enable-view-only                         - इनपुट डिवाइस का रिमोट कंट्रोल "
+"अक्षम करें\n"
+"    disable-view-only                        - इनपुट डिवाइस का रिमोट कंट्रोल "
+"सक्षम करें\n"
+"    enable-port-negotiation                  - यदि अनुपलब्ध है, तो किसी भिन्न "
+"पोर्ट को सुनें\n"
+"    disable-port-negotiation                 - यदि अनुपलब्ध है, तो किसी भिन्न "
+"पोर्ट को न सुनें\n"
+"\n"
+
+#: src/grd-ctl.c:661
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
+"  --system                                   - Configure system daemon\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+"  स्थिति [--show-credentials]                - वर्तमान स्थिति दिखायें\n"
+"\n"
+"Options:\n"
+"  --headless                                 - हेडलेस क्रेडेंशियल स्टोरेज का उपयोग "
+"करें\n"
+"  --system                                   - सिस्टम डेमॉन को विन्यस्त करें\n"
+"  --help                                     - इस सहायता पाठ को प्रिंट करें\n"
+
+#: src/grd-daemon.c:1222
+msgid "GNOME Remote Desktop"
+msgstr "GNOME रिमोट डेस्कटॉप"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "यह कनेक्शन असुरक्षित है"
+
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
+msgstr ""
+"क्या आप असुरक्षित कनेक्शन जारी रखना चाहते हैं?\n"
+"इसे सुरक्षित बनाने के लिए RDP विन्यास फ़ाइल में <b>“पुनर्निर्देशन सर्वर नाम का उपयोग करें:"
+"i:1”</b> निर्धारित करें।"
+
+#: src/grd-daemon-handover.c:354
+#, c-format
+msgid "Disconnect"
+msgstr "डिस्कनेक्ट"
+
+#: src/grd-daemon-handover.c:355
+#, c-format
+msgid "Continue"
+msgstr "जारी रखें"
+
+#: src/grd-daemon-user.c:99
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "डेस्कटॉप शेयरिंग पोर्ट बदला गया"
+
+#: src/grd-daemon-user.c:101
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"डेस्कटॉप शेयरिंग पोर्ट <b>%i</b> से <b>%i</b> में बदल गया है।\n"
+"ऐसा इसलिए है क्योंकि दूरस्थ सत्र सेवा सक्रिय हो गई है और इसमें पोर्ट <b>%i</b> का उपयोग "
+"करने की उच्च प्राथमिकता है।"
+
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "स्वीकारें"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "क्या आप अपना डेस्कटॉप साझा करना चाहते हैं?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"कंप्यूटर '%s' पर एक उपयोगकर्ता आपके डेस्कटॉप को दूरस्थ रूप से देखने या नियंत्रित करने का "
+"प्रयास कर रहा है।"
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "अस्वीकारें"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "RDP सर्वर द्वारा उपयोग किया जाने वाला पोर्ट"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr "इस RDP सर्वर का उपयोग करने के लिए RDP क्लाइंट इस पोर्ट से कनेक्ट होगा।"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr "यदि विन्यस्त किया गया RDP पोर्ट उपयोग किया गया है तो एक भिन्न RDP पोर्ट खोजें"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"जब negotiate-port को 'सही' पर निर्धारित किया जाता है तो RDP सर्वर विन्यस्त किए गए "
+"पोर्ट से शुरू करके अगले 10 पोर्ट में से पहले उपलब्ध पोर्ट को सुनने का प्रयास करेगा।"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+msgid "Whether the RDP backend is enabled or not"
+msgstr "क्या RDP बैकएंड सक्षम है या नहीं"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr "यदि 'सही' पर निर्धारित किया गया है तो RDP बैकएंड आरंभ हो जाएगा।"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
+msgid "Screenshare mode of RDP connections"
+msgstr "RDP कनेक्शन का स्क्रीनशेयर मोड"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"स्क्रीनशेयर मोड निर्दिष्ट करता है कि क्या RDP बैकएंड प्राथमिक स्क्रीन को प्रतिबिंबित करता "
+"है, या क्या वर्चुअल मॉनिटर बनाया गया है। वर्चुअल मॉनिटर के प्रारंभिक रिज़ॉल्यूशन के लिए, "
+"RDP बैकएंड या तो क्लाइंट कोर डेटा ([MS-RDPBCGR] 2.2.1.3.2) या क्लाइंट मॉनिटर डेटा "
+"([MS-RDPBCGR] 2.2.1.3.6) का उपयोग करता है, जो इस पर निर्भर करता है क्या उपलब्ध है। "
+"वर्चुअल मॉनिटर के साथ रिमोट डेस्कटॉप सत्र का उपयोग करते समय, क्लाइंट डिस्प्ले अपडेट वर्चुअल "
+"चैनल एक्सटेंशन ([MS-RDPEDISP]) के साथ सत्र के दौरान वर्चुअल मॉनिटर के रिज़ॉल्यूशन का आकार "
+"बदल सकते हैं। अनुमत स्क्रीनशेयर मोड में शामिल हैं: * प्रतिबिंब-प्राथमिक - वर्तमान उपयोगकर्ता "
+"सत्र के प्राथमिक मॉनिटर को रिकॉर्ड करें। * विस्तार - एक नया वर्चुअल मॉनिटर बनाएं और "
+"दूरस्थ डेस्कटॉप सत्र के लिए इसका उपयोग करें। इस वर्चुअल मॉनिटर का रिज़ॉल्यूशन रिमोट "
+"डेस्कटॉप क्लाइंट द्वारा सबमिट किए गए मॉनिटर विन्यास से लिया गया है।"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+msgid "Path to the certificate file"
+msgstr "प्रमाणपत्र फ़ाइल का पथ"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"TLS सुरक्षा के साथ RDP का उपयोग करने में सक्षम होने के लिए, निजी कुंजी फ़ाइल और प्रमाणपत्र "
+"फ़ाइल दोनों को RDP सर्वर को प्रदान करने की आवश्यकता है।"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
+msgid "Path to the private key file"
+msgstr "निजी कुंजी फ़ाइल का पथ"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
+msgid "Only allow remote connections to view the screen content"
+msgstr "स्क्रीन सामग्री देखने के लिए केवल दूरस्थ कनेक्शन की अनुमति दें"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"जब view-only सत्य होता है, तो दूरस्थ RDP कनेक्शन इनपुट उपकरण (जैसे माउस और कीबोर्ड) में "
+"हेरफेर नहीं कर सकते हैं।"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "VNC सर्वर द्वारा उपयोग किया जाने वाला पोर्ट"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr "इस VNC सर्वर का उपयोग करने के लिए VNC क्लाइंट इस पोर्ट से कनेक्ट होगा।"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr "यदि विन्यस्त किया गया VNC पोर्ट उपयोग किया गया है तो कोई भिन्न VNC पोर्ट खोजें"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"जब negotiate-port को 'सही' पर निर्धारित किया जाता है तो VNC सर्वर विन्यस्त किए गए "
+"पोर्ट से शुरू करके अगले 10 पोर्ट में से पहले उपलब्ध पोर्ट को सुनने का प्रयास करेगा।"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+msgid "Whether the VNC backend is enabled or not"
+msgstr "VNC बैकएंड सक्षम है या नहीं"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+msgid "If set to 'true' the VNC backend will be initialized."
+msgstr "यदि 'सही' पर निर्धारित किया जाता है तो VNC बैकएंड प्रारंभ हो जाएगा।"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"जब view-only सत्य होता है, तो दूरस्थ VNC कनेक्शन इनपुट उपकरण (जैसे माउस और कीबोर्ड) में "
+"हेरफेर नहीं कर सकते हैं।"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
+msgid "Method used to authenticate VNC connections"
+msgstr "VNC कनेक्शन को प्रमाणित करने के लिए उपयोग की जाने वाली विधि"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"VNC प्रमाणीकरण विधि बताती है कि रिमोट कनेक्शन को कैसे प्रमाणित किया जाता है। यह "
+"वर्तमान में दो अलग-अलग तरीकों से किया जा सकता है: * संकेत - प्रत्येक नए कनेक्शन के लिए "
+"उपयोगकर्ता को संकेत देकर, नए कनेक्शन को स्पष्ट रूप से स्वीकृत करने के लिए कार्य केंद्र तक "
+"भौतिक पहुंच वाले व्यक्ति की आवश्यकता होती है। * पासवर्ड - दूरस्थ क्लाइंट को एक ज्ञात "
+"पासवर्ड प्रदान करने की आवश्यकता होती है"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+msgid "Screenshare mode of VNC connections"
+msgstr "VNC कनेक्शन का स्क्रीनशेयर मोड"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"स्क्रीनशेयर मोड निर्दिष्ट करता है कि क्या VNC बैकएंड प्राथमिक स्क्रीन को प्रतिबिंबित करता "
+"है, या क्या वर्चुअल मॉनिटर बनाया गया है। वर्चुअल मॉनिटर के प्रारंभिक रिज़ॉल्यूशन के लिए, "
+"VNC बैकएंड 1920x1080 पिक्सल के डिफ़ॉल्ट आकार का उपयोग करता है। वर्चुअल मॉनिटर के साथ "
+"दूरस्थ डेस्कटॉप सत्र का उपयोग करते समय, क्लाइंट setDesktopSize PDU के साथ सत्र के दौरान "
+"वर्चुअल मॉनिटर के रिज़ॉल्यूशन का आकार बदल सकते हैं। अनुमत स्क्रीनशेयर मोड में शामिल हैं: * "
+"प्रतिबिंब-प्राथमिक - वर्तमान उपयोगकर्ता सत्र के प्राथमिक मॉनिटर को रिकॉर्ड करें। * "
+"विस्तार - एक नया वर्चुअल मॉनिटर बनाएं और दूरस्थ डेस्कटॉप सत्र के लिए इसका उपयोग करें। इस "
+"वर्चुअल मॉनिटर का प्रारंभिक मॉनिटर रिज़ॉल्यूशन 1920x1080 पिक्सल पर सेट है। क्लाइंट बाद के "
+"मॉनिटर विन्यास अद्यतन के साथ प्रारंभिक रिज़ॉल्यूशन को ओवरराइड कर सकते हैं।"
