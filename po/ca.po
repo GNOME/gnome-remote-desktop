@@ -5,9 +5,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2023-11-21 16:04+0000\n"
-"PO-Revision-Date: 2023-11-21 21:48+0100\n"
+"issues/\n"
+"POT-Creation-Date: 2024-03-14 15:00+0000\n"
+"PO-Revision-Date: 2024-05-16 23:36+0200\n"
 "Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
 "Language-Team: Catalan <gnome@llistes.softcatala.org>\n"
 "Language: ca\n"
@@ -16,42 +16,36 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.4.2\n"
 
-#: src/grd-daemon.c:824
-msgid "GNOME Remote Desktop"
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgstr ""
+"Permet configura els paràmetres del dimoni de sistema de l'escriptori remot "
+"del GNOME"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"Es requereix autenticació per a configurar els paràmetres del dimoni de "
+"sistema de l'escriptori remot del GNOME."
+
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+#, fuzzy
+#| msgid "GNOME Remote Desktop"
+msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "Escriptori remot del GNOME"
 
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "Voleu compartir l'escriptori?"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr ""
-"Un usuari de l'ordinador «%s» està intentant visualitzar o controlar "
-"remotament l'escriptori."
-
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "Rebutja"
-
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "Accepta"
-
-#: src/grd-ctl.c:53
+#: src/grd-ctl.c:60
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Ús: %s [OPCIONS...] ORDRE [SUBORDRE]...\n"
 
-#: src/grd-ctl.c:421
+#: src/grd-ctl.c:612
 msgid "Commands:\n"
 msgstr "Ordres:\n"
 
-#: src/grd-ctl.c:426
+#: src/grd-ctl.c:617
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -103,7 +97,7 @@ msgstr ""
 "                                               un port diferent\n"
 "\n"
 
-#: src/grd-ctl.c:450
+#: src/grd-ctl.c:641
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -148,21 +142,96 @@ msgstr ""
 "                                               un port diferent\n"
 "\n"
 
-#: src/grd-ctl.c:470
+#: src/grd-ctl.c:661
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Mostra l'estat actual\n"
 "\n"
 "Opcions:\n"
 "  --headless                                 - Emmagatzema les credencials "
-"sense capçaleres  --help                                     - Mostra aquest "
-"text d'ajuda\n"
+"sense capçaleres\n"
+"  --system                                  - Configura el dimoni del "
+"sistema\n"
+"  --help                                     - Mostra aquest text d'ajuda\n"
+
+#: src/grd-daemon.c:1222
+msgid "GNOME Remote Desktop"
+msgstr "Escriptori remot del GNOME"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "Aquesta connexió no és segura"
+
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
+msgstr ""
+"Voleu tirar endavant amb una connexió insegura?\n"
+"Per fer-la segura, establiu <b>«use redirection server name:i:1»</b> al "
+"fitxer de configuració de l'RDP"
+
+#: src/grd-daemon-handover.c:354
+#, c-format
+msgid "Disconnect"
+msgstr "Desconnecta"
+
+#: src/grd-daemon-handover.c:355
+#, c-format
+msgid "Continue"
+msgstr "Continua"
+
+#: src/grd-daemon-user.c:99
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "S'ha canviat el port de compartició de l'escriptori"
+
+#: src/grd-daemon-user.c:101
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"El port de compartició de l'escriptori ha canviat de <b>%i</b> a <b>%i</b>.\n"
+"Això és perquè el servei de sessions remotes ha estat activat i té una major "
+"prioritat per a usar el port <b>%i</b>."
+
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "Accepta"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Voleu compartir l'escriptori?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Un usuari de l'ordinador «%s» està intentant visualitzar o controlar "
+"remotament l'escriptori."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "Rebutja"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "The port used by the RDP server"
@@ -179,12 +248,12 @@ msgstr "Cerca un port RDP diferent en cas que el port configurat estigui en ús"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 msgid ""
-"When negotiatie-port is set to 'true' the RDP server will attempt to listen "
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
 "Quan «negotiate-port» està establert a «true», el servidor RDP intentarà "
-"escoltar, d'entre els deu ports a partir del que s'hagi configurat, el "
-"primer que trobi disponible."
+"escoltar pel primer que trobi disponible d'entre els deu ports a partir del "
+"que s'hagi configurat."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
