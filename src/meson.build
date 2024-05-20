@@ -91,6 +91,7 @@ if have_rdp
     'grd-rdp-audio-playback.h',
     'grd-rdp-buffer.c',
     'grd-rdp-buffer.h',
+    'grd-rdp-buffer-info.h',
     'grd-rdp-buffer-pool.c',
     'grd-rdp-buffer-pool.h',
     'grd-rdp-connect-time-autodetection.c',
