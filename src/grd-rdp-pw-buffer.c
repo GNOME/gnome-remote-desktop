@@ -34,12 +34,19 @@ typedef struct
 struct _GrdRdpPwBuffer
 {
   struct pw_buffer *pw_buffer;
+  GrdRdpBufferType buffer_type;
 
   GMutex buffer_mutex;
   gboolean is_locked;
 
   GrdRdpMemFd mem_fd;
 };
+
+GrdRdpBufferType
+grd_rdp_pw_buffer_get_buffer_type (GrdRdpPwBuffer *rdp_pw_buffer)
+{
+  return rdp_pw_buffer->buffer_type;
+}
 
 uint8_t *
 grd_rdp_pw_buffer_get_mapped_data (GrdRdpPwBuffer *rdp_pw_buffer,
@@ -124,9 +131,15 @@ grd_rdp_pw_buffer_new (struct pw_buffer  *pw_buffer,
 
   g_mutex_init (&rdp_pw_buffer->buffer_mutex);
 
-  if (get_pw_buffer_type (pw_buffer) != SPA_DATA_MemFd &&
-      get_pw_buffer_type (pw_buffer) != SPA_DATA_DmaBuf)
+  switch (get_pw_buffer_type (pw_buffer))
     {
+    case SPA_DATA_MemFd:
+      rdp_pw_buffer->buffer_type = GRD_RDP_BUFFER_TYPE_MEM_FD;
+      break;
+    case SPA_DATA_DmaBuf:
+      rdp_pw_buffer->buffer_type = GRD_RDP_BUFFER_TYPE_DMA_BUF;
+      break;
+    default:
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "PipeWire buffer contains invalid data type 0x%08X",
                    get_pw_buffer_type (pw_buffer));

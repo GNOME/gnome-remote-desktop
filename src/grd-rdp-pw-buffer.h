@@ -23,12 +23,15 @@
 #include <gio/gio.h>
 #include <pipewire/stream.h>
 
+#include "grd-rdp-buffer-info.h"
 #include "grd-types.h"
 
 GrdRdpPwBuffer *grd_rdp_pw_buffer_new (struct pw_buffer  *pw_buffer,
                                        GError           **error);
 
 void grd_rdp_pw_buffer_free (GrdRdpPwBuffer *rdp_pw_buffer);
+
+GrdRdpBufferType grd_rdp_pw_buffer_get_buffer_type (GrdRdpPwBuffer *rdp_pw_buffer);
 
 uint8_t *grd_rdp_pw_buffer_get_mapped_data (GrdRdpPwBuffer *rdp_pw_buffer,
                                             int32_t        *stride);
