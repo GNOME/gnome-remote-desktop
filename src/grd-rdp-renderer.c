@@ -305,6 +305,34 @@ maybe_reset_graphics (GrdRdpRenderer *renderer)
   renderer->pending_gfx_graphics_reset = FALSE;
 }
 
+static void
+destroy_render_context_locked (GrdRdpRenderer *renderer,
+                               GrdRdpSurface  *rdp_surface)
+{
+  GrdRdpRenderContext *render_context = NULL;
+
+  if (!g_hash_table_lookup_extended (renderer->render_context_table,
+                                     rdp_surface,
+                                     NULL, (gpointer *) &render_context))
+    return;
+
+  g_assert (render_context);
+  g_assert (!g_hash_table_contains (renderer->acquired_render_contexts,
+                                    render_context));
+
+  g_hash_table_remove (renderer->render_context_table, rdp_surface);
+}
+
+static void
+destroy_render_context (GrdRdpRenderer *renderer,
+                        GrdRdpSurface  *rdp_surface)
+{
+  g_autoptr (GMutexLocker) locker = NULL;
+
+  locker = g_mutex_locker_new (&renderer->inhibition_mutex);
+  destroy_render_context_locked (renderer, rdp_surface);
+}
+
 static GrdRdpRenderContext *
 render_context_ref (GrdRdpRenderer      *renderer,
                     GrdRdpRenderContext *render_context)
@@ -358,8 +386,9 @@ handle_graphics_subsystem_failure (GrdRdpRenderer *renderer)
 }
 
 GrdRdpRenderContext *
-grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer *renderer,
-                                             GrdRdpSurface  *rdp_surface)
+grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer            *renderer,
+                                             GrdRdpSurface             *rdp_surface,
+                                             GrdRdpAcquireContextFlags  flags)
 {
   GrdRdpRenderContext *render_context = NULL;
   g_autoptr (GMutexLocker) locker = NULL;
@@ -372,6 +401,9 @@ grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer *renderer,
     return NULL;
 
   maybe_reset_graphics (renderer);
+
+  if (flags & GRD_RDP_ACQUIRE_CONTEXT_FLAG_FORCE_RESET)
+    destroy_render_context_locked (renderer, rdp_surface);
 
   if (g_hash_table_lookup_extended (renderer->render_context_table, rdp_surface,
                                     NULL, (gpointer *) &render_context))
@@ -449,27 +481,6 @@ grd_rdp_renderer_new (GrdSessionRdp    *session_rdp,
   renderer->hwaccel_nvidia = hwaccel_nvidia;
 
   return renderer;
-}
-
-static void
-destroy_render_context (GrdRdpRenderer *renderer,
-                        GrdRdpSurface  *rdp_surface)
-{
-  GrdRdpRenderContext *render_context = NULL;
-  g_autoptr (GMutexLocker) locker = NULL;
-
-  locker = g_mutex_locker_new (&renderer->inhibition_mutex);
-  if (!g_hash_table_lookup_extended (renderer->render_context_table,
-                                     rdp_surface,
-                                     NULL, (gpointer *) &render_context))
-    return;
-
-  g_assert (render_context);
-  if (g_hash_table_lookup_extended (renderer->acquired_render_contexts,
-                                    render_context, NULL, NULL))
-    g_assert_not_reached ();
-
-  g_hash_table_remove (renderer->render_context_table, rdp_surface);
 }
 
 static gboolean

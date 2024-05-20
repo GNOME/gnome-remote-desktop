@@ -29,6 +29,12 @@
 G_DECLARE_FINAL_TYPE (GrdRdpRenderer, grd_rdp_renderer,
                       GRD, RDP_RENDERER, GObject)
 
+typedef enum
+{
+  GRD_RDP_ACQUIRE_CONTEXT_FLAG_NONE = 0,
+  GRD_RDP_ACQUIRE_CONTEXT_FLAG_FORCE_RESET = 1 << 0,
+} GrdRdpAcquireContextFlags;
+
 GrdRdpRenderer *grd_rdp_renderer_new (GrdSessionRdp    *session_rdp,
                                       GrdHwAccelNvidia *hwaccel_nvidia);
 
@@ -61,8 +67,9 @@ GrdRdpSurface *grd_rdp_renderer_try_acquire_surface (GrdRdpRenderer *renderer,
 void grd_rdp_renderer_release_surface (GrdRdpRenderer *renderer,
                                        GrdRdpSurface  *rdp_surface);
 
-GrdRdpRenderContext *grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer *renderer,
-                                                                  GrdRdpSurface  *rdp_surface);
+GrdRdpRenderContext *grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer            *renderer,
+                                                                  GrdRdpSurface             *rdp_surface,
+                                                                  GrdRdpAcquireContextFlags  flags);
 
 void grd_rdp_renderer_release_render_context (GrdRdpRenderer      *renderer,
                                               GrdRdpRenderContext *render_context);

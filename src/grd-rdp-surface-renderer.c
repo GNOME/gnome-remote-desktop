@@ -149,6 +149,7 @@ maybe_render_frame (gpointer user_data)
   GrdRdpSurfaceRenderer *surface_renderer = user_data;
   GrdRdpRenderer *renderer = surface_renderer->renderer;
   GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+  GrdRdpAcquireContextFlags acquire_flags;
   GrdRdpRenderContext *render_context;
   g_autoptr (GMutexLocker) locker = NULL;
 
@@ -162,8 +163,11 @@ maybe_render_frame (gpointer user_data)
   if (surface_renderer->rendering_suspended)
     return G_SOURCE_CONTINUE;
 
-  render_context = grd_rdp_renderer_try_acquire_render_context (renderer,
-                                                                rdp_surface);
+  acquire_flags = GRD_RDP_ACQUIRE_CONTEXT_FLAG_NONE;
+
+  render_context =
+    grd_rdp_renderer_try_acquire_render_context (renderer, rdp_surface,
+                                                 acquire_flags);
   if (!render_context)
     return G_SOURCE_CONTINUE;
 
