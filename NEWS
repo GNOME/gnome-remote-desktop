@@ -1,3 +1,19 @@
+46.2
+====
+* Potential crasher fix
+* Improved disconnection messages
+* Broader client compatibility support
+* Various security hardening improvements
+* CVE-2024-5148 Limit login screen->user session handover access to appropriate user
+
+Contributors:
+ Pascal Nowack, Ray Strode
+
+Translators:
+  Balázs Úr [hu], Efstathios Iosifidis [el], Fabio Tomat [fur],
+  Hugo Carvalho [pt], Jordi Mas i Hernandez [ca],
+  Juliano de Souza Camargo [pt_BR]
+
 46.1
 ====
 * Fix running on big endian
