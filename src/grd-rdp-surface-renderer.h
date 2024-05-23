@@ -41,6 +41,14 @@ gboolean grd_rdp_surface_renderer_is_rendering_suspended (GrdRdpSurfaceRenderer 
 void grd_rdp_surface_renderer_update_suspension_state (GrdRdpSurfaceRenderer *surface_renderer,
                                                        gboolean               suspend_rendering);
 
+gboolean grd_rdp_surface_renderer_register_pw_buffer (GrdRdpSurfaceRenderer  *surface_renderer,
+                                                      GrdRdpPwBuffer         *rdp_pw_buffer,
+                                                      uint64_t                drm_format_modifier,
+                                                      GError                **error);
+
+void grd_rdp_surface_renderer_unregister_pw_buffer (GrdRdpSurfaceRenderer *surface_renderer,
+                                                    GrdRdpPwBuffer        *rdp_pw_buffer);
+
 void grd_rdp_surface_renderer_submit_buffer (GrdRdpSurfaceRenderer *surface_renderer,
                                              GrdRdpBuffer          *buffer);
 
