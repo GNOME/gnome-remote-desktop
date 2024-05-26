@@ -123,6 +123,7 @@ struct _GrdRdpPipeWireStream
   struct spa_hook pipewire_stream_listener;
 
   GHashTable *pipewire_buffers;
+  gboolean ignore_new_buffers;
 
   uint32_t src_node_id;
 
@@ -496,6 +497,7 @@ static void
 handle_graphics_subsystem_failure (GrdRdpPipeWireStream *stream)
 {
   stream->dequeuing_disallowed = TRUE;
+  stream->ignore_new_buffers = TRUE;
 
   grd_session_rdp_notify_error (stream->session_rdp,
                                 GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
@@ -506,13 +508,28 @@ on_stream_add_buffer (void             *user_data,
                       struct pw_buffer *buffer)
 {
   GrdRdpPipeWireStream *stream = user_data;
+  GrdRdpSurfaceRenderer *surface_renderer;
   GrdRdpPwBuffer *rdp_pw_buffer;
   g_autoptr (GError) error = NULL;
+
+  if (stream->ignore_new_buffers)
+    return;
 
   rdp_pw_buffer = grd_rdp_pw_buffer_new (buffer, &error);
   if (!rdp_pw_buffer)
     {
       g_warning ("[RDP] Failed to add PipeWire buffer: %s", error->message);
+      handle_graphics_subsystem_failure (stream);
+      return;
+    }
+
+  surface_renderer = grd_rdp_surface_get_surface_renderer (stream->rdp_surface);
+  if (!grd_rdp_surface_renderer_register_pw_buffer (surface_renderer,
+                                                    rdp_pw_buffer,
+                                                    stream->spa_format.modifier,
+                                                    &error))
+    {
+      g_warning ("[RDP] Failed to register PipeWire buffer: %s", error->message);
       handle_graphics_subsystem_failure (stream);
       return;
     }
@@ -525,6 +542,7 @@ on_stream_remove_buffer (void             *user_data,
                          struct pw_buffer *buffer)
 {
   GrdRdpPipeWireStream *stream = user_data;
+  GrdRdpSurfaceRenderer *surface_renderer;
   GrdRdpPwBuffer *rdp_pw_buffer = NULL;
   g_autoptr (GMutexLocker) locker = NULL;
 
@@ -534,6 +552,10 @@ on_stream_remove_buffer (void             *user_data,
 
   locker = g_mutex_locker_new (&stream->dequeue_mutex);
   grd_rdp_pw_buffer_ensure_unlocked (rdp_pw_buffer);
+
+  surface_renderer = grd_rdp_surface_get_surface_renderer (stream->rdp_surface);
+  grd_rdp_surface_renderer_unregister_pw_buffer (surface_renderer,
+                                                 rdp_pw_buffer);
 
   g_hash_table_remove (stream->pipewire_buffers, rdp_pw_buffer);
 }
