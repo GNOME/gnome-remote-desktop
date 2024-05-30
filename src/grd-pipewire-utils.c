@@ -143,7 +143,7 @@ grd_pipewire_buffer_has_pointer_bitmap (struct pw_buffer *buffer)
 gboolean
 grd_pipewire_buffer_has_frame_data (struct pw_buffer *buffer)
 {
-  return buffer->buffer->datas[0].chunk->size > 0;
+  return buffer->size > 0 && buffer->buffer->datas[0].chunk->size > 0;
 }
 
 gboolean
