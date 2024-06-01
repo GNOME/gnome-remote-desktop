@@ -259,17 +259,17 @@ if have_rdp
   ctl_deps += [
     freerdp_dep,
   ]
+
+  enable_service_sources = ([
+    'grd-enable-service.c',
+  ])
+
+  enable_service_deps = [
+    glib_dep,
+    gio_dep,
+    polkit_dep,
+  ]
 endif
-
-enable_service_sources = ([
-  'grd-enable-service.c',
-])
-
-enable_service_deps = [
-  glib_dep,
-  gio_dep,
-  polkit_dep,
-]
 
 executable('gnome-remote-desktop-daemon',
            daemon_sources,
@@ -290,12 +290,14 @@ executable('grdctl',
            include_directories: [configinc],
            install: true)
 
-executable('gnome-remote-desktop-enable-service',
-           enable_service_sources,
-           dependencies: enable_service_deps,
-           include_directories: [configinc],
-           install: true,
-           install_dir: libexecdir)
+if have_rdp
+  executable('gnome-remote-desktop-enable-service',
+             enable_service_sources,
+             dependencies: enable_service_deps,
+             include_directories: [configinc],
+             install: true,
+             install_dir: libexecdir)
+endif
 
 generated_enums_schema = custom_target('gsettings-enums',
               input: 'grd-enums.h',

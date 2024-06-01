@@ -104,57 +104,6 @@ process_options (GrdSettings       *settings,
 }
 
 static gboolean
-toggle_systemd_unit (gboolean   enabled,
-                     GError   **error)
-{
-
-  g_autoptr (GStrvBuilder) builder = NULL;
-  g_autofree char *error_output = NULL;
-  g_auto (GStrv) new_argv = NULL;
-  g_autofree char *pid = NULL;
-  int wait_status;
-  gboolean success;
-
-  builder = g_strv_builder_new ();
-
-  g_strv_builder_add (builder,
-                      GRD_LIBEXEC_DIR "/gnome-remote-desktop-enable-service");
-  pid = g_strdup_printf ("%d", getppid ());
-  g_strv_builder_add (builder, pid);
-  if (enabled)
-    g_strv_builder_add (builder, "true");
-  else
-    g_strv_builder_add (builder, "false");
-
-  new_argv = g_strv_builder_end (builder);
-
-  success = g_spawn_sync (NULL,
-                          new_argv,
-                          NULL,
-                          G_SPAWN_SEARCH_PATH |
-                          G_SPAWN_CHILD_INHERITS_STDOUT,
-                          NULL,
-                          NULL,
-                          NULL,
-                          &error_output,
-                          &wait_status,
-                          error);
-  if (!success)
-    return FALSE;
-
-  if (!WIFEXITED (wait_status) || WEXITSTATUS (wait_status) != 0)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Could not %s system service:\n%s",
-                   enabled? "enable" : "disable",
-                   error_output);
-      return FALSE;
-    }
-
-  return success;
-}
-
-static gboolean
 systemd_unit_is_active (GBusType     bus_type,
                         const char  *unit,
                         GError     **error)
@@ -244,6 +193,57 @@ rdp_set_port (GrdSettings  *settings,
   port = strtol (argv[0], NULL, 10);
   g_object_set (G_OBJECT (settings), "rdp-port", port, NULL);
   return TRUE;
+}
+
+static gboolean
+toggle_systemd_unit (gboolean   enabled,
+                     GError   **error)
+{
+
+  g_autoptr (GStrvBuilder) builder = NULL;
+  g_autofree char *error_output = NULL;
+  g_auto (GStrv) new_argv = NULL;
+  g_autofree char *pid = NULL;
+  int wait_status;
+  gboolean success;
+
+  builder = g_strv_builder_new ();
+
+  g_strv_builder_add (builder,
+                      GRD_LIBEXEC_DIR "/gnome-remote-desktop-enable-service");
+  pid = g_strdup_printf ("%d", getppid ());
+  g_strv_builder_add (builder, pid);
+  if (enabled)
+    g_strv_builder_add (builder, "true");
+  else
+    g_strv_builder_add (builder, "false");
+
+  new_argv = g_strv_builder_end (builder);
+
+  success = g_spawn_sync (NULL,
+                          new_argv,
+                          NULL,
+                          G_SPAWN_SEARCH_PATH |
+                          G_SPAWN_CHILD_INHERITS_STDOUT,
+                          NULL,
+                          NULL,
+                          NULL,
+                          &error_output,
+                          &wait_status,
+                          error);
+  if (!success)
+    return FALSE;
+
+  if (!WIFEXITED (wait_status) || WEXITSTATUS (wait_status) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Could not %s system service:\n%s",
+                   enabled? "enable" : "disable",
+                   error_output);
+      return FALSE;
+    }
+
+  return success;
 }
 
 static gboolean
