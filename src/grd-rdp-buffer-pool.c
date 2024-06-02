@@ -66,7 +66,6 @@ add_buffer_to_pool (GrdRdpBufferPool *buffer_pool,
                                buffer_pool->egl_thread,
                                buffer_pool->hwaccel_nvidia,
                                buffer_pool->cuda_stream,
-                               buffer_pool->buffer_width,
                                buffer_pool->buffer_height,
                                buffer_pool->buffer_stride,
                                preallocate_on_gpu);

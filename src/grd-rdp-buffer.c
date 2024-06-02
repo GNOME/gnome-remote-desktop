@@ -54,8 +54,6 @@ struct _GrdRdpBuffer
   GrdEglThread *egl_thread;
   GrdHwAccelNvidia *hwaccel_nvidia;
 
-  uint32_t width;
-  uint32_t height;
   uint32_t stride;
 
   uint8_t *local_data;
@@ -103,7 +101,6 @@ grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
                     GrdEglThread     *egl_thread,
                     GrdHwAccelNvidia *hwaccel_nvidia,
                     CUstream          cuda_stream,
-                    uint32_t          width,
                     uint32_t          height,
                     uint32_t          stride,
                     gboolean          preallocate_on_gpu)
@@ -118,8 +115,6 @@ grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
 
   rdp_buffer->cuda_stream = cuda_stream;
 
-  rdp_buffer->width = width;
-  rdp_buffer->height = height;
   rdp_buffer->stride = stride;
   rdp_buffer->local_data = g_malloc0 (stride * height * sizeof (uint8_t));
 
@@ -136,7 +131,7 @@ grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
       data.rdp_buffer = rdp_buffer;
 
       grd_egl_thread_allocate (rdp_buffer->egl_thread,
-                               rdp_buffer->height,
+                               height,
                                stride,
                                cuda_allocate_buffer,
                                &data,
@@ -197,18 +192,6 @@ grd_rdp_buffer_free (GrdRdpBuffer *rdp_buffer)
   g_clear_pointer (&rdp_buffer->local_data, g_free);
 
   g_free (rdp_buffer);
-}
-
-uint32_t
-grd_rdp_buffer_get_width (GrdRdpBuffer *rdp_buffer)
-{
-  return rdp_buffer->width;
-}
-
-uint32_t
-grd_rdp_buffer_get_height (GrdRdpBuffer *rdp_buffer)
-{
-  return rdp_buffer->height;
 }
 
 uint32_t

@@ -29,16 +29,11 @@ GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
                                   GrdEglThread     *egl_thread,
                                   GrdHwAccelNvidia *hwaccel_nvidia,
                                   CUstream          cuda_stream,
-                                  uint32_t          width,
                                   uint32_t          height,
                                   uint32_t          stride,
                                   gboolean          preallocate_on_gpu);
 
 void grd_rdp_buffer_free (GrdRdpBuffer *rdp_buffer);
-
-uint32_t grd_rdp_buffer_get_width (GrdRdpBuffer *rdp_buffer);
-
-uint32_t grd_rdp_buffer_get_height (GrdRdpBuffer *rdp_buffer);
 
 uint32_t grd_rdp_buffer_get_stride (GrdRdpBuffer *rdp_buffer);
 
