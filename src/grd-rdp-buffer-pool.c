@@ -39,7 +39,6 @@ struct _GrdRdpBufferPool
 
   CUstream cuda_stream;
 
-  uint32_t buffer_width;
   uint32_t buffer_height;
   uint32_t buffer_stride;
 
@@ -95,7 +94,6 @@ fill_buffer_pool (GrdRdpBufferPool *buffer_pool)
 
 gboolean
 grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
-                                    uint32_t          buffer_width,
                                     uint32_t          buffer_height,
                                     uint32_t          buffer_stride)
 {
@@ -104,7 +102,6 @@ grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
   locker = g_mutex_locker_new (&buffer_pool->pool_mutex);
   g_assert (buffer_pool->buffers_taken == 0);
 
-  buffer_pool->buffer_width = buffer_width;
   buffer_pool->buffer_height = buffer_height;
   buffer_pool->buffer_stride = buffer_stride;
 
@@ -133,7 +130,6 @@ grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool)
   BufferInfo *buffer_info;
   gboolean buffer_found = FALSE;
 
-  g_assert (buffer_pool->buffer_width > 0);
   g_assert (buffer_pool->buffer_height > 0);
   g_assert (buffer_pool->buffer_stride > 0);
 

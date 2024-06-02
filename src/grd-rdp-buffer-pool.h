@@ -36,7 +36,6 @@ GrdRdpBufferPool *grd_rdp_buffer_pool_new (GrdEglThread     *egl_thread,
                                            uint32_t          minimum_size);
 
 gboolean grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
-                                             uint32_t          buffer_width,
                                              uint32_t          buffer_height,
                                              uint32_t          buffer_stride);
 
