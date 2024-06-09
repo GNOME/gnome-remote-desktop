@@ -147,8 +147,9 @@ disp_monitor_layout (DispServerContext                        *disp_context,
       return CHANNEL_RC_OK;
     }
 
-  g_debug ("[RDP.DISP] Received new monitor layout. PDU contains %i monitors",
-           monitor_layout_pdu->NumMonitors);
+  g_debug ("[RDP.DISP] Received new monitor layout. PDU contains %u monitor%s",
+           monitor_layout_pdu->NumMonitors,
+           monitor_layout_pdu->NumMonitors == 1 ? "" : "s");
 
   grd_rdp_layout_manager_submit_new_monitor_config (layout_manager,
                                                     monitor_config);
