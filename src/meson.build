@@ -155,6 +155,8 @@ if have_rdp
     'grd-rdp-telemetry.h',
     'grd-session-rdp.c',
     'grd-session-rdp.h',
+    'grd-shell-dialog.c',
+    'grd-shell-dialog.h',
   ])
 
   if libsystemd_dep.found()
