@@ -22,7 +22,7 @@
 #include "grd-rdp-damage-detector-cuda.h"
 
 #include "grd-hwaccel-nvidia.h"
-#include "grd-rdp-buffer.h"
+#include "grd-rdp-legacy-buffer.h"
 
 #define TILE_WIDTH 64
 #define TILE_HEIGHT 64
@@ -45,7 +45,7 @@ typedef struct _GrdRdpDamageDetectorCuda
   uint32_t cols;
   uint32_t rows;
 
-  GrdRdpBuffer *last_framebuffer;
+  GrdRdpLegacyBuffer *last_framebuffer;
 
   CUdeviceptr region_is_damaged;
   CUdeviceptr damage_array;
@@ -65,7 +65,8 @@ invalidate_surface (GrdRdpDamageDetector *detector)
   uint32_t surface_width = detector_cuda->surface_width;
   uint32_t surface_height = detector_cuda->surface_height;
 
-  g_clear_pointer (&detector_cuda->last_framebuffer, grd_rdp_buffer_release);
+  g_clear_pointer (&detector_cuda->last_framebuffer,
+                   grd_rdp_legacy_buffer_release);
 
   if (!detector_cuda->damage_array)
     return TRUE;
@@ -105,7 +106,8 @@ resize_surface (GrdRdpDamageDetector *detector,
   uint32_t cols;
   uint32_t rows;
 
-  g_clear_pointer (&detector_cuda->last_framebuffer, grd_rdp_buffer_release);
+  g_clear_pointer (&detector_cuda->last_framebuffer,
+                   grd_rdp_legacy_buffer_release);
 
   clear_cuda_pointer (detector_cuda, &detector_cuda->simplified_damage_array);
   clear_cuda_pointer (detector_cuda, &detector_cuda->damage_array);
@@ -144,7 +146,7 @@ resize_surface (GrdRdpDamageDetector *detector,
 
 static gboolean
 submit_new_framebuffer (GrdRdpDamageDetector *detector,
-                        GrdRdpBuffer         *buffer)
+                        GrdRdpLegacyBuffer   *buffer)
 {
   GrdRdpDamageDetectorCuda *detector_cuda =
     GRD_RDP_DAMAGE_DETECTOR_CUDA (detector);
@@ -183,9 +185,9 @@ submit_new_framebuffer (GrdRdpDamageDetector *detector,
       return FALSE;
     }
 
-  current_data = grd_rdp_buffer_get_mapped_cuda_pointer (buffer);
+  current_data = grd_rdp_legacy_buffer_get_mapped_cuda_pointer (buffer);
   previous_data =
-    grd_rdp_buffer_get_mapped_cuda_pointer (detector_cuda->last_framebuffer);
+    grd_rdp_legacy_buffer_get_mapped_cuda_pointer (detector_cuda->last_framebuffer);
 
   /* Threads per blocks */
   block_dim_x = 32;
@@ -216,7 +218,8 @@ submit_new_framebuffer (GrdRdpDamageDetector *detector,
       return FALSE;
     }
 
-  g_clear_pointer (&detector_cuda->last_framebuffer, grd_rdp_buffer_release);
+  g_clear_pointer (&detector_cuda->last_framebuffer,
+                   grd_rdp_legacy_buffer_release);
   detector_cuda->last_framebuffer = buffer;
 
   return TRUE;

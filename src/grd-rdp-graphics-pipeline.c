@@ -25,12 +25,12 @@
 #include <winpr/sysinfo.h>
 
 #include "grd-hwaccel-nvidia.h"
-#include "grd-rdp-buffer.h"
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-dvc.h"
 #include "grd-rdp-frame-info.h"
 #include "grd-rdp-gfx-frame-controller.h"
 #include "grd-rdp-gfx-surface.h"
+#include "grd-rdp-legacy-buffer.h"
 #include "grd-rdp-network-autodetection.h"
 #include "grd-rdp-render-context.h"
 #include "grd-rdp-renderer.h"
@@ -574,7 +574,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
                             HWAccelContext         *hwaccel_context,
                             GrdRdpSurface          *rdp_surface,
                             GrdRdpGfxSurface       *gfx_surface,
-                            GrdRdpBuffer           *buffer,
+                            GrdRdpLegacyBuffer     *buffer,
                             int64_t                *enc_time_us)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
@@ -584,7 +584,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
     grd_rdp_gfx_surface_get_render_surface (gfx_surface);
   GrdRdpGfxFrameController *frame_controller =
     grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
-  CUdeviceptr src_data = grd_rdp_buffer_get_mapped_cuda_pointer (buffer);
+  CUdeviceptr src_data = grd_rdp_legacy_buffer_get_mapped_cuda_pointer (buffer);
   RDPGFX_SURFACE_COMMAND cmd = {0};
   RDPGFX_START_FRAME_PDU cmd_start = {0};
   RDPGFX_END_FRAME_PDU cmd_end = {0};
@@ -869,7 +869,7 @@ static gboolean
 refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
                                      GrdRdpSurface          *rdp_surface,
                                      GrdRdpGfxSurface       *gfx_surface,
-                                     GrdRdpBuffer           *buffer,
+                                     GrdRdpLegacyBuffer     *buffer,
                                      int64_t                *enc_time_us)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
@@ -879,7 +879,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
     grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
   uint16_t surface_width = grd_rdp_gfx_surface_get_width (gfx_surface);
   uint16_t surface_height = grd_rdp_gfx_surface_get_height (gfx_surface);
-  uint32_t src_stride = grd_rdp_buffer_get_stride (buffer);
+  uint32_t src_stride = grd_rdp_legacy_buffer_get_stride (buffer);
   RDPGFX_SURFACE_COMMAND cmd = {0};
   RDPGFX_START_FRAME_PDU cmd_start = {0};
   RDPGFX_END_FRAME_PDU cmd_end = {0};
@@ -927,7 +927,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
   rfx_message = rfx_encode_message (graphics_pipeline->rfx_context,
                                     rfx_rects,
                                     n_rects,
-                                    grd_rdp_buffer_get_local_data (buffer),
+                                    grd_rdp_legacy_buffer_get_local_data (buffer),
                                     surface_width,
                                     surface_height,
                                     src_stride);
@@ -1073,7 +1073,7 @@ gboolean
 grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline,
                                        GrdRdpSurface          *rdp_surface,
                                        GrdRdpRenderContext    *render_context,
-                                       GrdRdpBuffer           *buffer)
+                                       GrdRdpLegacyBuffer     *buffer)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;

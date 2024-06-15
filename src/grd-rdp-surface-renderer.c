@@ -23,8 +23,8 @@
 
 #include <drm_fourcc.h>
 
-#include "grd-rdp-buffer.h"
 #include "grd-rdp-damage-detector.h"
+#include "grd-rdp-legacy-buffer.h"
 #include "grd-rdp-pw-buffer.h"
 #include "grd-rdp-renderer.h"
 #include "grd-rdp-session-metrics.h"
@@ -196,13 +196,13 @@ grd_rdp_surface_renderer_unregister_pw_buffer (GrdRdpSurfaceRenderer *surface_re
 }
 
 void
-grd_rdp_surface_renderer_submit_buffer (GrdRdpSurfaceRenderer *surface_renderer,
-                                        GrdRdpBuffer          *buffer)
+grd_rdp_surface_renderer_submit_legacy_buffer (GrdRdpSurfaceRenderer *surface_renderer,
+                                               GrdRdpLegacyBuffer    *buffer)
 {
   GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
 
   g_mutex_lock (&surface_renderer->render_mutex);
-  g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_release);
+  g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_legacy_buffer_release);
 
   rdp_surface->pending_framebuffer = buffer;
   g_mutex_unlock (&surface_renderer->render_mutex);
@@ -222,7 +222,7 @@ grd_rdp_surface_renderer_reset (GrdRdpSurfaceRenderer *surface_renderer)
   GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
 
   g_mutex_lock (&surface_renderer->render_mutex);
-  g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_buffer_release);
+  g_clear_pointer (&rdp_surface->pending_framebuffer, grd_rdp_legacy_buffer_release);
   g_mutex_unlock (&surface_renderer->render_mutex);
 }
 
@@ -242,13 +242,13 @@ maybe_encode_pending_frame (GrdRdpSurfaceRenderer *surface_renderer,
   GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
   GrdRdpSessionMetrics *session_metrics =
     grd_session_rdp_get_session_metrics (surface_renderer->session_rdp);
-  GrdRdpBuffer *buffer;
+  GrdRdpLegacyBuffer *buffer;
 
   buffer = g_steal_pointer (&rdp_surface->pending_framebuffer);
   if (!grd_rdp_damage_detector_submit_new_framebuffer (rdp_surface->detector,
                                                        buffer))
     {
-      grd_rdp_buffer_release (buffer);
+      grd_rdp_legacy_buffer_release (buffer);
       handle_graphics_subsystem_failure (surface_renderer);
       return;
     }

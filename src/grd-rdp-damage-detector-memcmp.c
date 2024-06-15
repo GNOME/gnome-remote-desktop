@@ -22,7 +22,7 @@
 #include "grd-rdp-damage-detector-memcmp.h"
 
 #include "grd-damage-utils.h"
-#include "grd-rdp-buffer.h"
+#include "grd-rdp-legacy-buffer.h"
 
 #define TILE_WIDTH 64
 #define TILE_HEIGHT 64
@@ -37,7 +37,7 @@ typedef struct _GrdRdpDamageDetectorMemcmp
   uint32_t cols;
   uint32_t rows;
 
-  GrdRdpBuffer *last_framebuffer;
+  GrdRdpLegacyBuffer *last_framebuffer;
 
   gboolean region_is_damaged;
   uint8_t *damage_array;
@@ -55,7 +55,8 @@ invalidate_surface (GrdRdpDamageDetector *detector)
   uint32_t cols = detector_memcmp->cols;
   uint32_t rows = detector_memcmp->rows;
 
-  g_clear_pointer (&detector_memcmp->last_framebuffer, grd_rdp_buffer_release);
+  g_clear_pointer (&detector_memcmp->last_framebuffer,
+                   grd_rdp_legacy_buffer_release);
 
   if (!detector_memcmp->damage_array)
     return TRUE;
@@ -76,7 +77,8 @@ resize_surface (GrdRdpDamageDetector *detector,
   uint32_t cols;
   uint32_t rows;
 
-  g_clear_pointer (&detector_memcmp->last_framebuffer, grd_rdp_buffer_release);
+  g_clear_pointer (&detector_memcmp->last_framebuffer,
+                   grd_rdp_legacy_buffer_release);
   g_clear_pointer (&detector_memcmp->damage_array, g_free);
 
   detector_memcmp->surface_width = width;
@@ -97,7 +99,7 @@ resize_surface (GrdRdpDamageDetector *detector,
 
 static gboolean
 submit_new_framebuffer (GrdRdpDamageDetector *detector,
-                        GrdRdpBuffer         *buffer)
+                        GrdRdpLegacyBuffer   *buffer)
 {
   GrdRdpDamageDetectorMemcmp *detector_memcmp =
     GRD_RDP_DAMAGE_DETECTOR_MEMCMP (detector);
@@ -123,7 +125,7 @@ submit_new_framebuffer (GrdRdpDamageDetector *detector,
     {
       for (x = 0; x < detector_memcmp->cols; ++x)
         {
-          GrdRdpBuffer *last_framebuffer = detector_memcmp->last_framebuffer;
+          GrdRdpLegacyBuffer *last_framebuffer = detector_memcmp->last_framebuffer;
           cairo_rectangle_int_t tile;
           uint8_t tile_damaged = 0;
 
@@ -134,8 +136,8 @@ submit_new_framebuffer (GrdRdpDamageDetector *detector,
           tile.height = surface_height - tile.y < TILE_HEIGHT ? surface_height - tile.y
                                                               : TILE_HEIGHT;
 
-          if (grd_is_tile_dirty (&tile, grd_rdp_buffer_get_local_data (buffer),
-                                 grd_rdp_buffer_get_local_data (last_framebuffer),
+          if (grd_is_tile_dirty (&tile, grd_rdp_legacy_buffer_get_local_data (buffer),
+                                 grd_rdp_legacy_buffer_get_local_data (last_framebuffer),
                                  surface_width * 4, 4))
             {
               tile_damaged = 1;
@@ -146,7 +148,8 @@ submit_new_framebuffer (GrdRdpDamageDetector *detector,
         }
     }
 
-  g_clear_pointer (&detector_memcmp->last_framebuffer, grd_rdp_buffer_release);
+  g_clear_pointer (&detector_memcmp->last_framebuffer,
+                   grd_rdp_legacy_buffer_release);
   detector_memcmp->last_framebuffer = buffer;
   detector_memcmp->region_is_damaged = region_is_damaged;
 

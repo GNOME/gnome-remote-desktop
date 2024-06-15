@@ -39,9 +39,9 @@ gboolean grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
                                              uint32_t          buffer_height,
                                              uint32_t          buffer_stride);
 
-GrdRdpBuffer *grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool);
+GrdRdpLegacyBuffer *grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool);
 
-void grd_rdp_buffer_pool_release_buffer (GrdRdpBufferPool *buffer_pool,
-                                         GrdRdpBuffer     *buffer);
+void grd_rdp_buffer_pool_release_buffer (GrdRdpBufferPool   *buffer_pool,
+                                         GrdRdpLegacyBuffer *buffer);
 
 #endif /* GRD_RDP_BUFFER_POOL_H */

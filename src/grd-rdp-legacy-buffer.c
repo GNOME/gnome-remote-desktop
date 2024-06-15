@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#include "grd-rdp-buffer.h"
+#include "grd-rdp-legacy-buffer.h"
 
 #include "grd-egl-thread.h"
 #include "grd-hwaccel-nvidia.h"
@@ -37,7 +37,7 @@ typedef struct
 typedef struct
 {
   GrdHwAccelNvidia *hwaccel_nvidia;
-  GrdRdpBuffer *rdp_buffer;
+  GrdRdpLegacyBuffer *buffer;
 } AllocateBufferData;
 
 typedef struct
@@ -47,7 +47,7 @@ typedef struct
   CUstream cuda_stream;
 } UnmapBufferData;
 
-struct _GrdRdpBuffer
+struct _GrdRdpLegacyBuffer
 {
   GrdRdpBufferPool *buffer_pool;
 
@@ -70,14 +70,14 @@ cuda_allocate_buffer (gpointer user_data,
                       uint32_t pbo)
 {
   AllocateBufferData *data = user_data;
-  GrdRdpBuffer *rdp_buffer = data->rdp_buffer;
+  GrdRdpLegacyBuffer *buffer = data->buffer;
   gboolean success;
 
   success = grd_hwaccel_nvidia_register_read_only_gl_buffer (data->hwaccel_nvidia,
-                                                             &rdp_buffer->cuda_resource,
+                                                             &buffer->cuda_resource,
                                                              pbo);
   if (success)
-    rdp_buffer->pbo = pbo;
+    buffer->pbo = pbo;
 
   return success;
 }
@@ -96,41 +96,41 @@ resources_ready (gboolean success,
   grd_sync_point_complete (sync_point, success);
 }
 
-GrdRdpBuffer *
-grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
-                    GrdEglThread     *egl_thread,
-                    GrdHwAccelNvidia *hwaccel_nvidia,
-                    CUstream          cuda_stream,
-                    uint32_t          height,
-                    uint32_t          stride,
-                    gboolean          preallocate_on_gpu)
+GrdRdpLegacyBuffer *
+grd_rdp_legacy_buffer_new (GrdRdpBufferPool *buffer_pool,
+                           GrdEglThread     *egl_thread,
+                           GrdHwAccelNvidia *hwaccel_nvidia,
+                           CUstream          cuda_stream,
+                           uint32_t          height,
+                           uint32_t          stride,
+                           gboolean          preallocate_on_gpu)
 {
-  g_autoptr (GrdRdpBuffer) rdp_buffer = NULL;
+  g_autoptr (GrdRdpLegacyBuffer) buffer = NULL;
   gboolean success = TRUE;
 
-  rdp_buffer = g_new0 (GrdRdpBuffer, 1);
-  rdp_buffer->buffer_pool = buffer_pool;
-  rdp_buffer->egl_thread = egl_thread;
-  rdp_buffer->hwaccel_nvidia = hwaccel_nvidia;
+  buffer = g_new0 (GrdRdpLegacyBuffer, 1);
+  buffer->buffer_pool = buffer_pool;
+  buffer->egl_thread = egl_thread;
+  buffer->hwaccel_nvidia = hwaccel_nvidia;
 
-  rdp_buffer->cuda_stream = cuda_stream;
+  buffer->cuda_stream = cuda_stream;
 
-  rdp_buffer->stride = stride;
-  rdp_buffer->local_data = g_malloc0 (stride * height * sizeof (uint8_t));
+  buffer->stride = stride;
+  buffer->local_data = g_malloc0 (stride * height * sizeof (uint8_t));
 
   if (preallocate_on_gpu &&
-      rdp_buffer->hwaccel_nvidia)
+      buffer->hwaccel_nvidia)
     {
       AllocateBufferData data = {};
       GrdSyncPoint sync_point = {};
 
-      g_assert (rdp_buffer->egl_thread);
+      g_assert (buffer->egl_thread);
 
       grd_sync_point_init (&sync_point);
-      data.hwaccel_nvidia = rdp_buffer->hwaccel_nvidia;
-      data.rdp_buffer = rdp_buffer;
+      data.hwaccel_nvidia = buffer->hwaccel_nvidia;
+      data.buffer = buffer;
 
-      grd_egl_thread_allocate (rdp_buffer->egl_thread,
+      grd_egl_thread_allocate (buffer->egl_thread,
                                height,
                                stride,
                                cuda_allocate_buffer,
@@ -146,7 +146,7 @@ grd_rdp_buffer_new (GrdRdpBufferPool *buffer_pool,
   if (!success)
     return NULL;
 
-  return g_steal_pointer (&rdp_buffer);
+  return g_steal_pointer (&buffer);
 }
 
 static void
@@ -167,101 +167,101 @@ cuda_deallocate_buffer (gpointer user_data)
 }
 
 void
-grd_rdp_buffer_free (GrdRdpBuffer *rdp_buffer)
+grd_rdp_legacy_buffer_free (GrdRdpLegacyBuffer *buffer)
 {
-  if (rdp_buffer->cuda_resource)
+  if (buffer->cuda_resource)
     {
       ClearBufferData *data;
 
       data = g_new0 (ClearBufferData, 1);
-      data->hwaccel_nvidia = rdp_buffer->hwaccel_nvidia;
-      data->cuda_resource = rdp_buffer->cuda_resource;
-      data->cuda_stream = rdp_buffer->cuda_stream;
-      data->is_mapped = !!rdp_buffer->mapped_cuda_pointer;
-      grd_egl_thread_deallocate (rdp_buffer->egl_thread,
-                                 rdp_buffer->pbo,
+      data->hwaccel_nvidia = buffer->hwaccel_nvidia;
+      data->cuda_resource = buffer->cuda_resource;
+      data->cuda_stream = buffer->cuda_stream;
+      data->is_mapped = !!buffer->mapped_cuda_pointer;
+      grd_egl_thread_deallocate (buffer->egl_thread,
+                                 buffer->pbo,
                                  cuda_deallocate_buffer,
                                  data,
                                  NULL, data, g_free);
 
-      rdp_buffer->mapped_cuda_pointer = 0;
-      rdp_buffer->cuda_resource = NULL;
-      rdp_buffer->pbo = 0;
+      buffer->mapped_cuda_pointer = 0;
+      buffer->cuda_resource = NULL;
+      buffer->pbo = 0;
     }
 
-  g_clear_pointer (&rdp_buffer->local_data, g_free);
+  g_clear_pointer (&buffer->local_data, g_free);
 
-  g_free (rdp_buffer);
+  g_free (buffer);
 }
 
 uint32_t
-grd_rdp_buffer_get_stride (GrdRdpBuffer *rdp_buffer)
+grd_rdp_legacy_buffer_get_stride (GrdRdpLegacyBuffer *buffer)
 {
-  return rdp_buffer->stride;
+  return buffer->stride;
 }
 
 uint8_t *
-grd_rdp_buffer_get_local_data (GrdRdpBuffer *rdp_buffer)
+grd_rdp_legacy_buffer_get_local_data (GrdRdpLegacyBuffer *buffer)
 {
-  return rdp_buffer->local_data;
+  return buffer->local_data;
 }
 
 uint32_t
-grd_rdp_buffer_get_pbo (GrdRdpBuffer *rdp_buffer)
+grd_rdp_legacy_buffer_get_pbo (GrdRdpLegacyBuffer *buffer)
 {
-  return rdp_buffer->pbo;
+  return buffer->pbo;
 }
 
 CUdeviceptr
-grd_rdp_buffer_get_mapped_cuda_pointer (GrdRdpBuffer *rdp_buffer)
+grd_rdp_legacy_buffer_get_mapped_cuda_pointer (GrdRdpLegacyBuffer *buffer)
 {
-  return rdp_buffer->mapped_cuda_pointer;
+  return buffer->mapped_cuda_pointer;
 }
 
 void
-grd_rdp_buffer_release (GrdRdpBuffer *rdp_buffer)
+grd_rdp_legacy_buffer_release (GrdRdpLegacyBuffer *buffer)
 {
-  grd_rdp_buffer_pool_release_buffer (rdp_buffer->buffer_pool, rdp_buffer);
+  grd_rdp_buffer_pool_release_buffer (buffer->buffer_pool, buffer);
 }
 
 gboolean
-grd_rdp_buffer_register_read_only_gl_buffer (GrdRdpBuffer *rdp_buffer,
-                                             uint32_t      pbo)
+grd_rdp_legacy_buffer_register_read_only_gl_buffer (GrdRdpLegacyBuffer *buffer,
+                                                    uint32_t            pbo)
 {
   gboolean success;
 
   success =
-    grd_hwaccel_nvidia_register_read_only_gl_buffer (rdp_buffer->hwaccel_nvidia,
-                                                     &rdp_buffer->cuda_resource,
+    grd_hwaccel_nvidia_register_read_only_gl_buffer (buffer->hwaccel_nvidia,
+                                                     &buffer->cuda_resource,
                                                      pbo);
   if (success)
-    rdp_buffer->pbo = pbo;
+    buffer->pbo = pbo;
 
   return success;
 }
 
 gboolean
-grd_rdp_buffer_map_cuda_resource (GrdRdpBuffer *rdp_buffer)
+grd_rdp_legacy_buffer_map_cuda_resource (GrdRdpLegacyBuffer *buffer)
 {
   size_t mapped_size = 0;
 
-  return grd_hwaccel_nvidia_map_cuda_resource (rdp_buffer->hwaccel_nvidia,
-                                               rdp_buffer->cuda_resource,
-                                               &rdp_buffer->mapped_cuda_pointer,
+  return grd_hwaccel_nvidia_map_cuda_resource (buffer->hwaccel_nvidia,
+                                               buffer->cuda_resource,
+                                               &buffer->mapped_cuda_pointer,
                                                &mapped_size,
-                                               rdp_buffer->cuda_stream);
+                                               buffer->cuda_stream);
 }
 
 void
-grd_rdp_buffer_unmap_cuda_resource (GrdRdpBuffer *rdp_buffer)
+grd_rdp_legacy_buffer_unmap_cuda_resource (GrdRdpLegacyBuffer *buffer)
 {
-  if (!rdp_buffer->mapped_cuda_pointer)
+  if (!buffer->mapped_cuda_pointer)
     return;
 
-  grd_hwaccel_nvidia_unmap_cuda_resource (rdp_buffer->hwaccel_nvidia,
-                                          rdp_buffer->cuda_resource,
-                                          rdp_buffer->cuda_stream);
-  rdp_buffer->mapped_cuda_pointer = 0;
+  grd_hwaccel_nvidia_unmap_cuda_resource (buffer->hwaccel_nvidia,
+                                          buffer->cuda_resource,
+                                          buffer->cuda_stream);
+  buffer->mapped_cuda_pointer = 0;
 }
 
 static gboolean
@@ -277,18 +277,18 @@ cuda_unmap_resource (gpointer user_data)
 }
 
 void
-grd_rdp_buffer_queue_resource_unmap (GrdRdpBuffer *rdp_buffer)
+grd_rdp_legacy_buffer_queue_resource_unmap (GrdRdpLegacyBuffer *buffer)
 {
   UnmapBufferData *data;
 
-  if (!rdp_buffer->mapped_cuda_pointer)
+  if (!buffer->mapped_cuda_pointer)
     return;
 
   data = g_new0 (UnmapBufferData, 1);
-  data->hwaccel_nvidia = rdp_buffer->hwaccel_nvidia;
-  data->cuda_resource = rdp_buffer->cuda_resource;
-  data->cuda_stream = rdp_buffer->cuda_stream;
-  grd_egl_thread_run_custom_task (rdp_buffer->egl_thread,
+  data->hwaccel_nvidia = buffer->hwaccel_nvidia;
+  data->cuda_resource = buffer->cuda_resource;
+  data->cuda_stream = buffer->cuda_stream;
+  grd_egl_thread_run_custom_task (buffer->egl_thread,
                                   cuda_unmap_resource,
                                   data,
                                   NULL, data, g_free);
@@ -297,5 +297,5 @@ grd_rdp_buffer_queue_resource_unmap (GrdRdpBuffer *rdp_buffer)
    * The mapped CUDA pointer indicates whether the resource is mapped, but
    * it is itself not needed to unmap the resource.
    */
-  rdp_buffer->mapped_cuda_pointer = 0;
+  buffer->mapped_cuda_pointer = 0;
 }

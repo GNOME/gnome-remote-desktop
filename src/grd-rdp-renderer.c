@@ -463,11 +463,11 @@ gboolean
 grd_rdp_renderer_render_frame (GrdRdpRenderer      *renderer,
                                GrdRdpSurface       *rdp_surface,
                                GrdRdpRenderContext *render_context,
-                               GrdRdpBuffer        *rdp_buffer)
+                               GrdRdpLegacyBuffer  *buffer)
 {
   return grd_rdp_graphics_pipeline_refresh_gfx (renderer->graphics_pipeline,
                                                 rdp_surface, render_context,
-                                                rdp_buffer);
+                                                buffer);
 }
 
 GrdRdpRenderer *

@@ -45,7 +45,7 @@ grd_rdp_damage_detector_resize_surface (GrdRdpDamageDetector *detector,
 
 gboolean
 grd_rdp_damage_detector_submit_new_framebuffer (GrdRdpDamageDetector *detector,
-                                                GrdRdpBuffer         *buffer)
+                                                GrdRdpLegacyBuffer   *buffer)
 {
   GrdRdpDamageDetectorClass *klass =
     GRD_RDP_DAMAGE_DETECTOR_GET_CLASS (detector);

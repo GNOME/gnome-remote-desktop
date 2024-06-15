@@ -22,7 +22,7 @@
 #include "grd-rdp-buffer-pool.h"
 
 #include "grd-egl-thread.h"
-#include "grd-rdp-buffer.h"
+#include "grd-rdp-legacy-buffer.h"
 #include "grd-utils.h"
 
 typedef struct _BufferInfo
@@ -58,16 +58,16 @@ static gboolean
 add_buffer_to_pool (GrdRdpBufferPool *buffer_pool,
                     gboolean          preallocate_on_gpu)
 {
-  GrdRdpBuffer *buffer;
+  GrdRdpLegacyBuffer *buffer;
   BufferInfo *buffer_info;
 
-  buffer = grd_rdp_buffer_new (buffer_pool,
-                               buffer_pool->egl_thread,
-                               buffer_pool->hwaccel_nvidia,
-                               buffer_pool->cuda_stream,
-                               buffer_pool->buffer_height,
-                               buffer_pool->buffer_stride,
-                               preallocate_on_gpu);
+  buffer = grd_rdp_legacy_buffer_new (buffer_pool,
+                                      buffer_pool->egl_thread,
+                                      buffer_pool->hwaccel_nvidia,
+                                      buffer_pool->cuda_stream,
+                                      buffer_pool->buffer_height,
+                                      buffer_pool->buffer_stride,
+                                      preallocate_on_gpu);
   if (!buffer)
     return FALSE;
 
@@ -113,20 +113,20 @@ grd_rdp_buffer_pool_resize_buffers (GrdRdpBufferPool *buffer_pool,
 }
 
 static gboolean
-buffer_has_mapped_data (GrdRdpBuffer *buffer)
+buffer_has_mapped_data (GrdRdpLegacyBuffer *buffer)
 {
-  if (grd_rdp_buffer_get_mapped_cuda_pointer (buffer))
+  if (grd_rdp_legacy_buffer_get_mapped_cuda_pointer (buffer))
     return TRUE;
 
   return FALSE;
 }
 
-GrdRdpBuffer *
+GrdRdpLegacyBuffer *
 grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool)
 {
   g_autoptr (GMutexLocker) locker = NULL;
   GHashTableIter iter;
-  GrdRdpBuffer *buffer;
+  GrdRdpLegacyBuffer *buffer;
   BufferInfo *buffer_info;
   gboolean buffer_found = FALSE;
 
@@ -184,8 +184,8 @@ should_resize_buffer_pool (GrdRdpBufferPool *buffer_pool)
 }
 
 void
-grd_rdp_buffer_pool_release_buffer (GrdRdpBufferPool *buffer_pool,
-                                    GrdRdpBuffer     *buffer)
+grd_rdp_buffer_pool_release_buffer (GrdRdpBufferPool   *buffer_pool,
+                                    GrdRdpLegacyBuffer *buffer)
 {
   BufferInfo *buffer_info;
   gboolean queue_pool_resize;
@@ -236,7 +236,7 @@ unmap_untaken_buffers (gpointer user_data)
 {
   GrdRdpBufferPool *buffer_pool = user_data;
   GHashTableIter iter;
-  GrdRdpBuffer *buffer;
+  GrdRdpLegacyBuffer *buffer;
   BufferInfo *buffer_info;
 
   g_mutex_lock (&buffer_pool->pool_mutex);
@@ -245,7 +245,7 @@ unmap_untaken_buffers (gpointer user_data)
                                         (gpointer *) &buffer_info))
     {
       if (!buffer_info->buffer_taken)
-        grd_rdp_buffer_queue_resource_unmap (buffer);
+        grd_rdp_legacy_buffer_queue_resource_unmap (buffer);
     }
   g_mutex_unlock (&buffer_pool->pool_mutex);
 
@@ -365,9 +365,10 @@ grd_rdp_buffer_pool_finalize (GObject *object)
 static void
 grd_rdp_buffer_pool_init (GrdRdpBufferPool *buffer_pool)
 {
-  buffer_pool->buffer_table = g_hash_table_new_full (NULL, NULL,
-                                                     (GDestroyNotify) grd_rdp_buffer_free,
-                                                     g_free);
+  buffer_pool->buffer_table =
+    g_hash_table_new_full (NULL, NULL,
+                           (GDestroyNotify) grd_rdp_legacy_buffer_free,
+                           g_free);
 
   g_mutex_init (&buffer_pool->pool_mutex);
 }

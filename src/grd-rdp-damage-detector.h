@@ -39,7 +39,7 @@ struct _GrdRdpDamageDetectorClass
                                uint32_t              width,
                                uint32_t              height);
   gboolean (* submit_new_framebuffer) (GrdRdpDamageDetector *detector,
-                                       GrdRdpBuffer         *buffer);
+                                       GrdRdpLegacyBuffer   *buffer);
   gboolean (* is_region_damaged) (GrdRdpDamageDetector *detector);
   cairo_region_t *(* get_damage_region) (GrdRdpDamageDetector *detector);
 };
@@ -51,7 +51,7 @@ gboolean grd_rdp_damage_detector_resize_surface (GrdRdpDamageDetector *detector,
                                                  uint32_t              height);
 
 gboolean grd_rdp_damage_detector_submit_new_framebuffer (GrdRdpDamageDetector *detector,
-                                                         GrdRdpBuffer         *buffer);
+                                                         GrdRdpLegacyBuffer   *buffer);
 
 gboolean grd_rdp_damage_detector_is_region_damaged (GrdRdpDamageDetector *detector);
 

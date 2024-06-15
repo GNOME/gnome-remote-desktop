@@ -50,7 +50,7 @@ struct _GrdRdpSurface
 
   GrdRdpSurfaceRenderer *surface_renderer;
 
-  GrdRdpBuffer *pending_framebuffer;
+  GrdRdpLegacyBuffer *pending_framebuffer;
   GrdRdpDamageDetector *detector;
 
   GrdHwAccelNvidia *hwaccel_nvidia;
