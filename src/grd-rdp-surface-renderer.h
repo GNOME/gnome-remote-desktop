@@ -32,6 +32,7 @@ G_DECLARE_FINAL_TYPE (GrdRdpSurfaceRenderer, grd_rdp_surface_renderer,
 GrdRdpSurfaceRenderer *grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
                                                      GrdRdpRenderer *renderer,
                                                      GrdSessionRdp  *session_rdp,
+                                                     GrdVkDevice    *vk_device,
                                                      uint32_t        refresh_rate);
 
 uint32_t grd_rdp_surface_renderer_get_refresh_rate (GrdRdpSurfaceRenderer *surface_renderer);
@@ -43,6 +44,7 @@ void grd_rdp_surface_renderer_update_suspension_state (GrdRdpSurfaceRenderer *su
 
 gboolean grd_rdp_surface_renderer_register_pw_buffer (GrdRdpSurfaceRenderer  *surface_renderer,
                                                       GrdRdpPwBuffer         *rdp_pw_buffer,
+                                                      uint32_t                drm_format,
                                                       uint64_t                drm_format_modifier,
                                                       GError                **error);
 

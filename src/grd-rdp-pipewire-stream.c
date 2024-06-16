@@ -503,6 +503,8 @@ on_stream_add_buffer (void             *user_data,
   GrdRdpSurfaceRenderer *surface_renderer;
   GrdRdpPwBuffer *rdp_pw_buffer;
   g_autoptr (GError) error = NULL;
+  uint32_t drm_format;
+  int bpp;
 
   if (stream->ignore_new_buffers)
     return;
@@ -515,9 +517,13 @@ on_stream_add_buffer (void             *user_data,
       return;
     }
 
+  grd_get_spa_format_details (stream->spa_format.format,
+                              &drm_format, &bpp);
+
   surface_renderer = grd_rdp_surface_get_surface_renderer (stream->rdp_surface);
   if (!grd_rdp_surface_renderer_register_pw_buffer (surface_renderer,
                                                     rdp_pw_buffer,
+                                                    drm_format,
                                                     stream->spa_format.modifier,
                                                     &error))
     {

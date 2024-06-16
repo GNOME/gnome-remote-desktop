@@ -265,6 +265,7 @@ grd_rdp_renderer_try_acquire_surface (GrdRdpRenderer *renderer,
 
   surface_renderer = grd_rdp_surface_renderer_new (rdp_surface, renderer,
                                                    renderer->session_rdp,
+                                                   renderer->vk_device,
                                                    refresh_rate);
   grd_rdp_surface_attach_surface_renderer (rdp_surface, surface_renderer);
 

@@ -23,6 +23,7 @@
 
 #include <drm_fourcc.h>
 
+#include "grd-rdp-buffer.h"
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-legacy-buffer.h"
 #include "grd-rdp-pw-buffer.h"
@@ -38,6 +39,7 @@ struct _GrdRdpSurfaceRenderer
   GrdRdpSurface *rdp_surface;
   GrdRdpRenderer *renderer;
   GrdSessionRdp *session_rdp;
+  GrdVkDevice *vk_device;
 
   uint32_t refresh_rate;
 
@@ -141,6 +143,7 @@ is_render_context_reset_required (GrdRdpSurfaceRenderer *surface_renderer,
 
 static GrdRdpBufferInfo *
 rdp_buffer_info_new (GrdRdpPwBuffer *rdp_pw_buffer,
+                     uint32_t        drm_format,
                      uint64_t        drm_format_modifier)
 {
   GrdRdpBufferType buffer_type =
@@ -149,6 +152,7 @@ rdp_buffer_info_new (GrdRdpPwBuffer *rdp_pw_buffer,
 
   rdp_buffer_info = g_new0 (GrdRdpBufferInfo, 1);
   rdp_buffer_info->buffer_type = buffer_type;
+  rdp_buffer_info->drm_format = drm_format;
   rdp_buffer_info->drm_format_modifier = drm_format_modifier;
 
   return rdp_buffer_info;
@@ -157,10 +161,23 @@ rdp_buffer_info_new (GrdRdpPwBuffer *rdp_pw_buffer,
 gboolean
 grd_rdp_surface_renderer_register_pw_buffer (GrdRdpSurfaceRenderer  *surface_renderer,
                                              GrdRdpPwBuffer         *rdp_pw_buffer,
+                                             uint32_t                drm_format,
                                              uint64_t                drm_format_modifier,
                                              GError                **error)
 {
+  GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+  g_autofree GrdRdpBufferInfo *rdp_buffer_info = NULL;
+  GrdRdpBuffer *rdp_buffer;
+
   if (!is_buffer_combination_valid (surface_renderer, rdp_pw_buffer, error))
+    return FALSE;
+
+  rdp_buffer_info = rdp_buffer_info_new (rdp_pw_buffer, drm_format,
+                                         drm_format_modifier);
+
+  rdp_buffer = grd_rdp_buffer_new (rdp_pw_buffer, rdp_buffer_info, rdp_surface,
+                                   surface_renderer->vk_device, error);
+  if (!rdp_buffer)
     return FALSE;
 
   if (is_render_context_reset_required (surface_renderer, rdp_pw_buffer,
@@ -179,11 +196,10 @@ grd_rdp_surface_renderer_register_pw_buffer (GrdRdpSurfaceRenderer  *surface_ren
     g_assert (!surface_renderer->rdp_buffer_info);
 
   if (!surface_renderer->rdp_buffer_info)
-    {
-      surface_renderer->rdp_buffer_info =
-        rdp_buffer_info_new (rdp_pw_buffer, drm_format_modifier);
-    }
-  g_hash_table_add (surface_renderer->registered_buffers, rdp_pw_buffer);
+    surface_renderer->rdp_buffer_info = g_steal_pointer (&rdp_buffer_info);
+
+  g_hash_table_insert (surface_renderer->registered_buffers,
+                       rdp_pw_buffer, rdp_buffer);
 
   return TRUE;
 }
@@ -324,6 +340,7 @@ GrdRdpSurfaceRenderer *
 grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
                               GrdRdpRenderer *renderer,
                               GrdSessionRdp  *session_rdp,
+                              GrdVkDevice    *vk_device,
                               uint32_t        refresh_rate)
 {
   GMainContext *graphics_context =
@@ -335,6 +352,7 @@ grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
   surface_renderer->rdp_surface = rdp_surface;
   surface_renderer->renderer = renderer;
   surface_renderer->session_rdp = session_rdp;
+  surface_renderer->vk_device = vk_device;
   surface_renderer->refresh_rate = refresh_rate;
 
   render_source = g_source_new (&render_source_funcs, sizeof (GSource));
@@ -377,7 +395,9 @@ grd_rdp_surface_renderer_finalize (GObject *object)
 static void
 grd_rdp_surface_renderer_init (GrdRdpSurfaceRenderer *surface_renderer)
 {
-  surface_renderer->registered_buffers = g_hash_table_new (NULL, NULL);
+  surface_renderer->registered_buffers =
+    g_hash_table_new_full (NULL, NULL,
+                           NULL, g_object_unref);
 
   g_mutex_init (&surface_renderer->render_mutex);
 }
