@@ -35,6 +35,7 @@ struct _GrdRdpPwBuffer
 {
   struct pw_buffer *pw_buffer;
   GrdRdpBufferType buffer_type;
+  GrdRdpPwBufferDmaBufInfo *dma_buf_info;
 
   GMutex buffer_mutex;
   gboolean is_locked;
@@ -46,6 +47,12 @@ GrdRdpBufferType
 grd_rdp_pw_buffer_get_buffer_type (GrdRdpPwBuffer *rdp_pw_buffer)
 {
   return rdp_pw_buffer->buffer_type;
+}
+
+const GrdRdpPwBufferDmaBufInfo *
+grd_rdp_pw_buffer_get_dma_buf_info (GrdRdpPwBuffer *rdp_pw_buffer)
+{
+  return rdp_pw_buffer->dma_buf_info;
 }
 
 uint8_t *
@@ -113,6 +120,22 @@ is_supported_dma_buf_buffer (struct pw_buffer  *pw_buffer,
   return TRUE;
 }
 
+static GrdRdpPwBufferDmaBufInfo *
+dma_buf_info_new (struct pw_buffer *pw_buffer)
+{
+  struct spa_buffer *spa_buffer = pw_buffer->buffer;
+  GrdRdpPwBufferDmaBufInfo *dma_buf_info;
+
+  g_assert (spa_buffer->n_datas == 1);
+
+  dma_buf_info = g_new0 (GrdRdpPwBufferDmaBufInfo, 1);
+  dma_buf_info->fd = spa_buffer->datas[0].fd;
+  dma_buf_info->offset = spa_buffer->datas[0].chunk->offset;
+  dma_buf_info->stride = spa_buffer->datas[0].chunk->stride;
+
+  return dma_buf_info;
+}
+
 static gboolean
 try_mmap_buffer (GrdRdpPwBuffer  *rdp_pw_buffer,
                  GError         **error)
@@ -167,6 +190,9 @@ grd_rdp_pw_buffer_new (struct pw_buffer  *pw_buffer,
       !is_supported_dma_buf_buffer (pw_buffer, error))
     return NULL;
 
+  if (get_pw_buffer_type (pw_buffer) == SPA_DATA_DmaBuf)
+    rdp_pw_buffer->dma_buf_info = dma_buf_info_new (pw_buffer);
+
   if (get_pw_buffer_type (pw_buffer) == SPA_DATA_MemFd &&
       !try_mmap_buffer (rdp_pw_buffer, error))
     return NULL;
@@ -190,6 +216,7 @@ void
 grd_rdp_pw_buffer_free (GrdRdpPwBuffer *rdp_pw_buffer)
 {
   maybe_unmap_buffer (rdp_pw_buffer);
+  g_clear_pointer (&rdp_pw_buffer->dma_buf_info, g_free);
 
   g_mutex_clear (&rdp_pw_buffer->buffer_mutex);
   g_free (rdp_pw_buffer);
