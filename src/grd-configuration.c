@@ -62,6 +62,9 @@ struct _GrdConfiguration
   GrdDBusRemoteDesktopConfigurationRdpServer *configuration_rdp_server;
   unsigned int own_name_source_id;
 
+  GDBusProxy *unit_proxy;
+  GrdSystemdUnitActiveState unit_state;
+
   unsigned int timeout_source_id;
   unsigned int sigint_source_id;
   unsigned int sigterm_source_id;
@@ -120,26 +123,58 @@ grd_configuration_init (GrdConfiguration *app)
 {
 }
 
+static void
+on_unit_active_state_changed (GrdConfiguration *configuration)
+{
+  if (!grd_systemd_unit_get_active_state (configuration->unit_proxy,
+                                          &configuration->unit_state,
+                                          NULL))
+    return;
+
+  g_object_notify (G_OBJECT (configuration->settings), "rdp-enabled");
+}
+
+static void
+watch_grd_system_unit_active_state (GrdConfiguration *configuration)
+{
+  GDBusProxy *unit_proxy = NULL;
+  g_autoptr (GError) error = NULL;
+
+  if (!grd_systemd_get_unit (G_BUS_TYPE_SYSTEM,
+                             GRD_SYSTEMD_SERVICE,
+                             &unit_proxy,
+                             &error))
+    {
+      g_warning ("Could not load %s: %s",
+                 GRD_SYSTEMD_SERVICE, error->message);
+      return;
+    }
+
+  grd_systemd_unit_get_active_state (unit_proxy,
+                                     &configuration->unit_state,
+                                     NULL);
+
+  g_signal_connect_object (G_OBJECT (unit_proxy),
+                           "g-properties-changed",
+                           G_CALLBACK (on_unit_active_state_changed),
+                           configuration,
+                           G_CONNECT_SWAPPED);
+
+  configuration->unit_proxy = unit_proxy;
+}
+
 static gboolean
 transform_enabled (GBinding     *binding,
                    const GValue *from_value,
                    GValue       *to_value,
                    gpointer      user_data)
 {
+  GrdConfiguration *configuration = user_data;
   gboolean enabled;
   GrdSystemdUnitActiveState active_state;
-  g_autoptr (GError) error = NULL;
 
   enabled = g_value_get_boolean (from_value);
-
-  if (!grd_systemd_unit_get_active_state (G_BUS_TYPE_SYSTEM,
-                                          GRD_SYSTEMD_SERVICE,
-                                          &active_state,
-                                          &error))
-    {
-      g_warning ("[Configuration] Failed checking unit state: %s", error->message);
-      return FALSE;
-    }
+  active_state = configuration->unit_state;
 
   g_value_set_boolean (to_value,
                        enabled &&
@@ -580,7 +615,6 @@ static void
 grd_configuration_startup (GApplication *application)
 {
   GrdConfiguration *configuration = GRD_CONFIGURATION (application);
-  g_autoptr (GError) error = NULL;
 
   configuration->settings = grd_settings_system_new ();
   grd_settings_system_use_local_state (configuration->settings);
@@ -588,12 +622,14 @@ grd_configuration_startup (GApplication *application)
   configuration->configuration_rdp_server =
     grd_dbus_remote_desktop_configuration_rdp_server_skeleton_new ();
 
+  watch_grd_system_unit_active_state (configuration);
+
   g_object_bind_property_full (configuration->settings, "rdp-enabled",
                                configuration->configuration_rdp_server, "enabled",
                                G_BINDING_SYNC_CREATE,
                                transform_enabled,
                                NULL,
-                               NULL,
+                               configuration,
                                NULL);
   g_object_bind_property (configuration->settings, "rdp-port",
                           configuration->configuration_rdp_server, "port",
@@ -650,6 +686,7 @@ grd_configuration_shutdown (GApplication *application)
   g_clear_object (&configuration->authority);
 
   g_clear_object (&configuration->settings);
+  g_clear_object (&configuration->unit_proxy);
 
   g_dbus_interface_skeleton_unexport (
     G_DBUS_INTERFACE_SKELETON (configuration->configuration_rdp_server));
