@@ -682,6 +682,21 @@ on_incoming_new_connection (GrdRdpServer    *rdp_server,
 }
 
 static void
+inform_configuration_service (void)
+{
+  g_autoptr (GrdDBusRemoteDesktopConfigurationRdpServer) configuration = NULL;
+
+  configuration =
+    grd_dbus_remote_desktop_configuration_rdp_server_proxy_new_for_bus_sync (
+      G_BUS_TYPE_SYSTEM,
+      G_DBUS_PROXY_FLAGS_NONE,
+      REMOTE_DESKTOP_CONFIGURATION_BUS_NAME,
+      REMOTE_DESKTOP_CONFIGURATION_OBJECT_PATH,
+      NULL,
+      NULL);
+}
+
+static void
 on_rdp_server_started (GrdDaemonSystem *daemon_system)
 {
   GrdRdpServer *rdp_server =
@@ -693,6 +708,8 @@ on_rdp_server_started (GrdDaemonSystem *daemon_system)
   g_signal_connect (rdp_server, "incoming-redirected-connection",
                     G_CALLBACK (on_incoming_redirected_connection),
                     daemon_system);
+
+  inform_configuration_service ();
 }
 
 static void
@@ -707,6 +724,8 @@ on_rdp_server_stopped (GrdDaemonSystem *daemon_system)
   g_signal_handlers_disconnect_by_func (rdp_server,
                                         G_CALLBACK (on_incoming_redirected_connection),
                                         daemon_system);
+
+  inform_configuration_service ();
 }
 
 static void
