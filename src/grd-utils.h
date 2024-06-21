@@ -89,8 +89,12 @@ gboolean grd_test_fd (int         fd,
 gboolean grd_toggle_systemd_unit (gboolean   enabled,
                                   GError   **error);
 
-gboolean grd_systemd_unit_get_active_state (GBusType                    bus_type,
-                                            const char                 *unit,
+gboolean grd_systemd_get_unit (GBusType     bus_type,
+                               const char  *unit,
+                               GDBusProxy **proxy,
+                               GError     **error);
+
+gboolean grd_systemd_unit_get_active_state (GDBusProxy                 *unit_proxy,
                                             GrdSystemdUnitActiveState  *active_state,
                                             GError                    **error);
 

@@ -377,29 +377,29 @@ grd_toggle_systemd_unit (gboolean   enabled,
 }
 
 gboolean
-grd_systemd_unit_get_active_state (GBusType                    bus_type,
-                                   const char                 *unit,
-                                   GrdSystemdUnitActiveState  *active_state,
-                                   GError                    **error)
+grd_systemd_get_unit (GBusType     bus_type,
+                      const char  *unit,
+                      GDBusProxy **proxy,
+                      GError     **error)
 {
-  g_autoptr (GDBusProxy) proxy = NULL;
+  g_autoptr (GDBusProxy) manager_proxy = NULL;
+  g_autoptr (GDBusProxy) unit_proxy = NULL;
   g_autoptr (GVariant) result = NULL;
   g_autofree char *object_path = NULL;
-  g_autofree char *res_active_state = NULL;
-  g_autoptr (GDBusProxy) unit_proxy = NULL;
 
-  proxy = g_dbus_proxy_new_for_bus_sync (bus_type,
-                                         G_DBUS_PROXY_FLAGS_NONE,
-                                         NULL,
-                                         "org.freedesktop.systemd1",
-                                         "/org/freedesktop/systemd1",
-                                         "org.freedesktop.systemd1.Manager",
-                                         NULL,
-                                         error);
-  if (!proxy)
+  manager_proxy = g_dbus_proxy_new_for_bus_sync (
+                    bus_type,
+                    G_DBUS_PROXY_FLAGS_NONE,
+                    NULL,
+                    "org.freedesktop.systemd1",
+                    "/org/freedesktop/systemd1",
+                    "org.freedesktop.systemd1.Manager",
+                    NULL,
+                    error);
+  if (!manager_proxy)
     return FALSE;
 
-  result = g_dbus_proxy_call_sync (proxy,
+  result = g_dbus_proxy_call_sync (manager_proxy,
                                    "LoadUnit",
                                    g_variant_new ("(s)", unit),
                                    G_DBUS_CALL_FLAGS_NONE,
@@ -410,7 +410,6 @@ grd_systemd_unit_get_active_state (GBusType                    bus_type,
     return FALSE;
 
   g_variant_get (result, "(o)", &object_path);
-  g_clear_pointer (&result, g_variant_unref);
 
   unit_proxy = g_dbus_proxy_new_for_bus_sync (bus_type,
                                               G_DBUS_PROXY_FLAGS_NONE,
@@ -422,6 +421,18 @@ grd_systemd_unit_get_active_state (GBusType                    bus_type,
                                               error);
   if (!unit_proxy)
     return FALSE;
+
+  *proxy = g_steal_pointer (&unit_proxy);
+  return TRUE;
+}
+
+gboolean
+grd_systemd_unit_get_active_state (GDBusProxy                 *unit_proxy,
+                                   GrdSystemdUnitActiveState  *active_state,
+                                   GError                    **error)
+{
+  g_autoptr (GVariant) result = NULL;
+  g_autofree char *res_active_state = NULL;
 
   result = g_dbus_proxy_get_cached_property (unit_proxy, "ActiveState");
   if (!result)

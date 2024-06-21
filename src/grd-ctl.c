@@ -857,17 +857,22 @@ print_service_status (GrdSettings *settings,
   GBusType bus_type;
   GrdSystemdUnitActiveState active_state;
   g_autofree char *active_state_str = NULL;
-  g_autoptr (GError) error = NULL;
+  g_autoptr (GDBusProxy) unit_proxy = NULL;
 
   if (GRD_IS_SETTINGS_SYSTEM (settings))
       bus_type = G_BUS_TYPE_SYSTEM;
   else
       bus_type = G_BUS_TYPE_SESSION;
 
-  if (!grd_systemd_unit_get_active_state (bus_type,
-                                          GRD_SYSTEMD_SERVICE,
+  if (!grd_systemd_get_unit (bus_type,
+                             GRD_SYSTEMD_SERVICE,
+                             &unit_proxy,
+                             NULL))
+    return;
+
+  if (!grd_systemd_unit_get_active_state (unit_proxy,
                                           &active_state,
-                                          &error))
+                                          NULL))
     return;
 
   active_state_str = unit_active_state_to_string (active_state, use_colors);
