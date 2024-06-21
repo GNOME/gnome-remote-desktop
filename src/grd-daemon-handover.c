@@ -286,7 +286,7 @@ show_insecure_connection_dialog (GrdDaemonHandover *daemon_handover)
                             daemon_handover->session);
 
   grd_shell_dialog_open (daemon_handover->dialog,
-                         _("Continue with an insecure connection?"),
+                         _("Continue With Insecure Connection?"),
                          _("This Remote Desktop connection is insecure. "
                            "To secure this connection, enable RDSTLS Security "
                            "in your client by saving the connection settings "
@@ -347,10 +347,9 @@ show_insecure_connection_prompt (GrdDaemonHandover *daemon_handover)
 
   prompt_definition = g_new0 (GrdPromptDefinition, 1);
   prompt_definition->summary =
-    g_strdup_printf (_("This connection is insecure"));
+    g_strdup_printf (_("Continue With Insecure Connection?"));
   prompt_definition->body =
-    g_strdup_printf (_("Continue with an insecure connection?\n"
-                       "This Remote Desktop connection is insecure. "
+    g_strdup_printf (_("This Remote Desktop connection is insecure. "
                        "To secure this connection, enable RDSTLS Security "
                        "in your client by saving the connection settings "
                        "in your client as an RDP file and set "
