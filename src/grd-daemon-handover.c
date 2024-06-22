@@ -287,12 +287,12 @@ show_insecure_connection_dialog (GrdDaemonHandover *daemon_handover)
 
   grd_shell_dialog_open (daemon_handover->dialog,
                          _("Continue With Insecure Connection?"),
+                         /* Translators: Don't translate “use redirection server name:i:1”.
+                          * It's a menu option, and it's the same for all languages. */
                          _("This Remote Desktop connection is insecure. "
                            "To secure this connection, enable RDSTLS Security "
                            "in your client by saving the connection settings "
                            "in your client as an RDP file and set "
-                           /* Translators: Don't translate “use redirection server name:i:1”.
-                           * It's a menu option, and it's the same for all languages. */
                            "“use redirection server name:i:1” in it."),
                          _("Disconnect"),
                          _("Continue"));
@@ -349,12 +349,12 @@ show_insecure_connection_prompt (GrdDaemonHandover *daemon_handover)
   prompt_definition->summary =
     g_strdup_printf (_("Continue With Insecure Connection?"));
   prompt_definition->body =
+  /* Translators: Don't translate “use redirection server name:i:1”.
+   * It's a menu option, and it's the same for all languages. */
     g_strdup_printf (_("This Remote Desktop connection is insecure. "
                        "To secure this connection, enable RDSTLS Security "
                        "in your client by saving the connection settings "
                        "in your client as an RDP file and set "
-                       /* Translators: Don't translate “use redirection server name:i:1”.
-                       * It's a menu option, and it's the same for all languages. */
                        "“use redirection server name:i:1” in it."));
   prompt_definition->cancel_label = g_strdup_printf (_("Disconnect"));
   prompt_definition->accept_label = g_strdup_printf (_("Continue"));
