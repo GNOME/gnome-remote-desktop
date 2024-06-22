@@ -763,7 +763,6 @@ process_frame_data (GrdRdpPipeWireStream *stream,
       frame->buffer = grd_rdp_buffer_pool_acquire (stream->buffer_pool);
       if (!frame->buffer)
         {
-          maybe_release_pipewire_buffer_lock (stream, pw_buffer);
           grd_session_rdp_notify_error (stream->session_rdp,
                                         GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
           grd_rdp_frame_invoke_callback (g_steal_pointer (&frame), FALSE);
@@ -792,7 +791,6 @@ process_frame_data (GrdRdpPipeWireStream *stream,
 
       if (!hwaccel_nvidia)
         {
-          maybe_release_pipewire_buffer_lock (stream, pw_buffer);
           grd_rdp_frame_invoke_callback (g_steal_pointer (&frame), TRUE);
           return;
         }
