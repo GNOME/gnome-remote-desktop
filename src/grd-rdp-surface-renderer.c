@@ -25,12 +25,21 @@
 
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-damage-detector.h"
+#include "grd-rdp-frame.h"
 #include "grd-rdp-legacy-buffer.h"
 #include "grd-rdp-pw-buffer.h"
 #include "grd-rdp-renderer.h"
 #include "grd-rdp-session-metrics.h"
 #include "grd-rdp-surface.h"
 #include "grd-session-rdp.h"
+
+typedef struct
+{
+  GrdRdpSurfaceRenderer *surface_renderer;
+
+  GrdRdpBuffer *current_buffer;
+  GrdRdpBuffer *last_buffer;
+} GrdRdpFrameContext;
 
 struct _GrdRdpSurfaceRenderer
 {
@@ -43,14 +52,21 @@ struct _GrdRdpSurfaceRenderer
 
   uint32_t refresh_rate;
 
+  GSource *buffer_unref_source;
+  GAsyncQueue *unref_queue;
+
   GSource *render_source;
   gboolean pending_render_context_reset;
 
   gboolean graphics_subsystem_failed;
 
   uint32_t total_frame_slots;
+  GHashTable *assigned_frame_slots;
 
   GMutex render_mutex;
+  GrdRdpBuffer *pending_buffer;
+  GrdRdpBuffer *last_buffer;
+  GHashTable *acquired_buffers;
 
   GHashTable *registered_buffers;
   GrdRdpBufferInfo *rdp_buffer_info;
@@ -205,11 +221,64 @@ grd_rdp_surface_renderer_register_pw_buffer (GrdRdpSurfaceRenderer  *surface_ren
   return TRUE;
 }
 
+static void
+release_pw_buffer (GrdRdpBuffer *rdp_buffer)
+{
+  GrdRdpPwBuffer *rdp_pw_buffer = grd_rdp_buffer_get_rdp_pw_buffer (rdp_buffer);
+
+  grd_rdp_pw_buffer_queue_pw_buffer (rdp_pw_buffer);
+}
+
 void
 grd_rdp_surface_renderer_unregister_pw_buffer (GrdRdpSurfaceRenderer *surface_renderer,
                                                GrdRdpPwBuffer        *rdp_pw_buffer)
 {
+  GrdRdpBuffer *rdp_buffer = NULL;
+  GrdRdpBuffer *buffer_to_release = NULL;
+
+  if (!g_hash_table_lookup_extended (surface_renderer->registered_buffers,
+                                     rdp_pw_buffer,
+                                     NULL, (gpointer *) &rdp_buffer))
+    g_assert_not_reached ();
+
+  /* Ensure buffer cannot be acquired anymore */
+  g_mutex_lock (&surface_renderer->render_mutex);
+  if (surface_renderer->pending_buffer || surface_renderer->last_buffer)
+    g_assert (surface_renderer->pending_buffer != surface_renderer->last_buffer);
+
+  if (surface_renderer->pending_buffer == rdp_buffer)
+    buffer_to_release = g_steal_pointer (&surface_renderer->pending_buffer);
+  if (surface_renderer->last_buffer == rdp_buffer)
+    buffer_to_release = g_steal_pointer (&surface_renderer->last_buffer);
+
+  grd_rdp_buffer_mark_for_removal (rdp_buffer);
+  g_mutex_unlock (&surface_renderer->render_mutex);
+
+  /* Ensure buffer lock is released and PipeWire buffer queued again */
+  grd_rdp_pw_buffer_ensure_unlocked (rdp_pw_buffer);
+  g_clear_pointer (&buffer_to_release, release_pw_buffer);
+
   g_hash_table_remove (surface_renderer->registered_buffers, rdp_pw_buffer);
+}
+
+void
+grd_rdp_surface_renderer_submit_buffer (GrdRdpSurfaceRenderer *surface_renderer,
+                                        GrdRdpPwBuffer        *rdp_pw_buffer)
+{
+  GrdRdpBuffer *rdp_buffer = NULL;
+
+  if (!g_hash_table_lookup_extended (surface_renderer->registered_buffers,
+                                     rdp_pw_buffer,
+                                     NULL, (gpointer *) &rdp_buffer))
+    g_assert_not_reached ();
+
+  g_mutex_lock (&surface_renderer->render_mutex);
+  g_clear_pointer (&surface_renderer->pending_buffer, release_pw_buffer);
+
+  surface_renderer->pending_buffer = rdp_buffer;
+  g_mutex_unlock (&surface_renderer->render_mutex);
+
+  grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
 }
 
 void
@@ -239,6 +308,14 @@ grd_rdp_surface_renderer_invalidate_surface (GrdRdpSurfaceRenderer *surface_rend
 void
 grd_rdp_surface_renderer_invalidate_surface_unlocked (GrdRdpSurfaceRenderer *surface_renderer)
 {
+  g_assert (g_hash_table_size (surface_renderer->acquired_buffers) == 0);
+
+  if (!surface_renderer->pending_buffer)
+    {
+      surface_renderer->pending_buffer =
+        g_steal_pointer (&surface_renderer->last_buffer);
+    }
+  g_clear_pointer (&surface_renderer->last_buffer, release_pw_buffer);
 }
 
 void
@@ -257,10 +334,184 @@ grd_rdp_surface_renderer_reset (GrdRdpSurfaceRenderer *surface_renderer)
   g_mutex_unlock (&surface_renderer->render_mutex);
 }
 
+static GrdRdpBuffer *
+rdp_buffer_ref (GrdRdpSurfaceRenderer *surface_renderer,
+                GrdRdpBuffer          *rdp_buffer)
+{
+  GrdRdpPwBuffer *rdp_pw_buffer = grd_rdp_buffer_get_rdp_pw_buffer (rdp_buffer);
+  uint32_t *ref_count = NULL;
+
+  if (g_hash_table_lookup_extended (surface_renderer->acquired_buffers,
+                                    rdp_buffer,
+                                    NULL, (gpointer *) &ref_count))
+    {
+      g_assert (*ref_count > 0);
+      ++(*ref_count);
+
+      return rdp_buffer;
+    }
+
+  ref_count = g_new0 (uint32_t, 1);
+  *ref_count = 1;
+
+  grd_rdp_pw_buffer_acquire_lock (rdp_pw_buffer);
+  g_hash_table_insert (surface_renderer->acquired_buffers,
+                       rdp_buffer, ref_count);
+
+  return rdp_buffer;
+}
+
+static void
+rdp_buffer_unref (GrdRdpSurfaceRenderer *surface_renderer,
+                  GrdRdpBuffer          *rdp_buffer)
+{
+  GrdRdpPwBuffer *rdp_pw_buffer = grd_rdp_buffer_get_rdp_pw_buffer (rdp_buffer);
+  uint32_t *ref_count = NULL;
+
+  if (!g_hash_table_lookup_extended (surface_renderer->acquired_buffers,
+                                     rdp_buffer,
+                                     NULL, (gpointer *) &ref_count))
+    g_assert_not_reached ();
+
+  g_assert (*ref_count > 0);
+  --(*ref_count);
+
+  if (*ref_count == 0)
+    {
+      g_assert (surface_renderer->pending_buffer != rdp_buffer);
+
+      /*
+       * unregister_pw_buffer () already takes care of the PW buffer release
+       * here. In such case, the second condition
+       * (surface_renderer->last_buffer != rdp_buffer) is always true.
+       */
+      if (!grd_rdp_buffer_is_marked_for_removal (rdp_buffer) &&
+          surface_renderer->last_buffer != rdp_buffer)
+        release_pw_buffer (rdp_buffer);
+
+      g_hash_table_remove (surface_renderer->acquired_buffers, rdp_buffer);
+      grd_rdp_pw_buffer_maybe_release_lock (rdp_pw_buffer);
+    }
+}
+
+static gboolean
+unref_buffers (gpointer user_data)
+{
+  GrdRdpSurfaceRenderer *surface_renderer = user_data;
+  GrdRdpBuffer *rdp_buffer;
+
+  while ((rdp_buffer = g_async_queue_try_pop (surface_renderer->unref_queue)))
+    {
+      g_mutex_lock (&surface_renderer->render_mutex);
+      g_assert (surface_renderer->pending_buffer != rdp_buffer);
+
+      rdp_buffer_unref (surface_renderer, rdp_buffer);
+      g_mutex_unlock (&surface_renderer->render_mutex);
+    }
+
+  return G_SOURCE_CONTINUE;
+}
+
 static gboolean
 can_prepare_new_frame (GrdRdpSurfaceRenderer *surface_renderer)
 {
-  return surface_renderer->total_frame_slots > 0;
+  uint32_t total_frame_slots = surface_renderer->total_frame_slots;
+  uint32_t used_frame_slots;
+
+  used_frame_slots = g_hash_table_size (surface_renderer->assigned_frame_slots);
+
+  return total_frame_slots > used_frame_slots;
+}
+
+static void
+on_frame_picked_up (GrdRdpFrame *rdp_frame,
+                    gpointer     user_data)
+{
+  GrdRdpFrameContext *frame_context = user_data;
+  GrdRdpSurfaceRenderer *surface_renderer = frame_context->surface_renderer;
+  GrdRdpBuffer *current_buffer = frame_context->current_buffer;
+
+  g_hash_table_add (surface_renderer->assigned_frame_slots, rdp_frame);
+
+  g_mutex_lock (&surface_renderer->render_mutex);
+  if (!grd_rdp_buffer_is_marked_for_removal (current_buffer))
+    surface_renderer->last_buffer = current_buffer;
+  else
+    surface_renderer->last_buffer = NULL;
+  g_mutex_unlock (&surface_renderer->render_mutex);
+}
+
+static void
+on_view_finalization (GrdRdpFrame *rdp_frame,
+                      gpointer     user_data)
+{
+  GrdRdpFrameContext *frame_context = user_data;
+  GrdRdpSurfaceRenderer *surface_renderer = frame_context->surface_renderer;
+  GrdRdpBuffer *current_buffer = frame_context->current_buffer;
+  GrdRdpBuffer *last_buffer = frame_context->last_buffer;
+
+  g_async_queue_push (surface_renderer->unref_queue, current_buffer);
+  if (last_buffer)
+    g_async_queue_push (surface_renderer->unref_queue, last_buffer);
+
+  g_source_set_ready_time (surface_renderer->buffer_unref_source, 0);
+}
+
+static void
+on_frame_submission (GrdRdpFrame *rdp_frame,
+                     gpointer     user_data)
+{
+  GrdRdpFrameContext *frame_context = user_data;
+  GrdRdpSurfaceRenderer *surface_renderer = frame_context->surface_renderer;
+  GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+  GrdRdpSessionMetrics *session_metrics =
+    grd_session_rdp_get_session_metrics (surface_renderer->session_rdp);
+
+  grd_rdp_session_metrics_notify_frame_transmission (session_metrics,
+                                                     rdp_surface);
+}
+
+static void
+on_frame_finalization (GrdRdpFrame *rdp_frame,
+                       gpointer     user_data)
+{
+  GrdRdpFrameContext *frame_context = user_data;
+  GrdRdpSurfaceRenderer *surface_renderer = frame_context->surface_renderer;
+
+  g_hash_table_remove (surface_renderer->assigned_frame_slots, rdp_frame);
+  grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
+}
+
+static void
+handle_pending_buffer (GrdRdpSurfaceRenderer *surface_renderer,
+                       GrdRdpRenderContext   *render_context)
+{
+  GrdRdpRenderer *renderer = surface_renderer->renderer;
+  GrdRdpFrameContext *frame_context;
+  GrdRdpBuffer *current_buffer = NULL;
+  GrdRdpBuffer *last_buffer = NULL;
+  GrdRdpFrame *rdp_frame;
+
+  frame_context = g_new0 (GrdRdpFrameContext, 1);
+  frame_context->surface_renderer = surface_renderer;
+
+  current_buffer = g_steal_pointer (&surface_renderer->pending_buffer);
+  frame_context->current_buffer = rdp_buffer_ref (surface_renderer,
+                                                  current_buffer);
+
+  if (surface_renderer->last_buffer)
+    {
+      last_buffer = surface_renderer->last_buffer;
+      frame_context->last_buffer = rdp_buffer_ref (surface_renderer,
+                                                   last_buffer);
+    }
+
+  rdp_frame = grd_rdp_frame_new (render_context,
+                                 current_buffer, last_buffer,
+                                 on_frame_picked_up, on_view_finalization,
+                                 on_frame_submission, on_frame_finalization,
+                                 frame_context, g_free);
+  grd_rdp_renderer_submit_frame (renderer, render_context, rdp_frame);
 }
 
 static void
@@ -318,8 +569,12 @@ maybe_render_frame (gpointer user_data)
     return G_SOURCE_CONTINUE;
 
   locker = g_mutex_locker_new (&surface_renderer->render_mutex);
-  if (!rdp_surface->pending_framebuffer)
+  if (!surface_renderer->pending_buffer &&
+      !rdp_surface->pending_framebuffer)
     return G_SOURCE_CONTINUE;
+
+  g_assert (!surface_renderer->pending_buffer ||
+            !rdp_surface->pending_framebuffer);
 
   if (!can_prepare_new_frame (surface_renderer))
     return G_SOURCE_CONTINUE;
@@ -336,25 +591,36 @@ maybe_render_frame (gpointer user_data)
 
   surface_renderer->pending_render_context_reset = FALSE;
 
-  maybe_encode_pending_frame (surface_renderer, render_context);
-  grd_rdp_renderer_release_render_context (renderer, render_context);
+  if (surface_renderer->pending_buffer)
+    {
+      handle_pending_buffer (surface_renderer, render_context);
+    }
+  else if (rdp_surface->pending_framebuffer) /* Legacy render handling */
+    {
+      maybe_encode_pending_frame (surface_renderer, render_context);
+      grd_rdp_renderer_release_render_context (renderer, render_context);
+    }
+  else
+    {
+      g_assert_not_reached ();
+    }
 
   return G_SOURCE_CONTINUE;
 }
 
 static gboolean
-render_source_dispatch (GSource     *source,
-                        GSourceFunc  callback,
-                        gpointer     user_data)
+source_dispatch (GSource     *source,
+                 GSourceFunc  callback,
+                 gpointer     user_data)
 {
   g_source_set_ready_time (source, -1);
 
   return callback (user_data);
 }
 
-static GSourceFuncs render_source_funcs =
+static GSourceFuncs source_funcs =
 {
-  .dispatch = render_source_dispatch,
+  .dispatch = source_dispatch,
 };
 
 GrdRdpSurfaceRenderer *
@@ -367,6 +633,7 @@ grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
   GMainContext *graphics_context =
     grd_rdp_renderer_get_graphics_context (renderer);
   GrdRdpSurfaceRenderer *surface_renderer;
+  GSource *buffer_unref_source;
   GSource *render_source;
 
   surface_renderer = g_object_new (GRD_TYPE_RDP_SURFACE_RENDERER, NULL);
@@ -376,7 +643,14 @@ grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
   surface_renderer->vk_device = vk_device;
   surface_renderer->refresh_rate = refresh_rate;
 
-  render_source = g_source_new (&render_source_funcs, sizeof (GSource));
+  buffer_unref_source = g_source_new (&source_funcs, sizeof (GSource));
+  g_source_set_callback (buffer_unref_source, unref_buffers,
+                         surface_renderer, NULL);
+  g_source_set_ready_time (buffer_unref_source, -1);
+  g_source_attach (buffer_unref_source, graphics_context);
+  surface_renderer->buffer_unref_source = buffer_unref_source;
+
+  render_source = g_source_new (&source_funcs, sizeof (GSource));
   g_source_set_callback (render_source, maybe_render_frame,
                          surface_renderer, NULL);
   g_source_set_ready_time (render_source, -1);
@@ -391,12 +665,30 @@ grd_rdp_surface_renderer_dispose (GObject *object)
 {
   GrdRdpSurfaceRenderer *surface_renderer = GRD_RDP_SURFACE_RENDERER (object);
 
+  /*
+   * No need to lock the render mutex here, the surface renderer outlives the
+   * PipeWire stream.
+   */
+  if (surface_renderer->acquired_buffers)
+    g_assert (g_hash_table_size (surface_renderer->acquired_buffers) == 0);
+  if (surface_renderer->assigned_frame_slots)
+    g_assert (g_hash_table_size (surface_renderer->assigned_frame_slots) == 0);
+
+  g_assert (g_async_queue_try_pop (surface_renderer->unref_queue) == NULL);
+
   if (surface_renderer->render_source)
     {
       g_source_destroy (surface_renderer->render_source);
       g_clear_pointer (&surface_renderer->render_source, g_source_unref);
     }
+  if (surface_renderer->buffer_unref_source)
+    {
+      g_source_destroy (surface_renderer->buffer_unref_source);
+      g_clear_pointer (&surface_renderer->buffer_unref_source, g_source_unref);
+    }
 
+  g_clear_pointer (&surface_renderer->assigned_frame_slots, g_hash_table_unref);
+  g_clear_pointer (&surface_renderer->acquired_buffers, g_hash_table_unref);
   g_clear_pointer (&surface_renderer->registered_buffers, g_hash_table_unref);
   g_clear_pointer (&surface_renderer->rdp_buffer_info, g_free);
 
@@ -407,6 +699,8 @@ static void
 grd_rdp_surface_renderer_finalize (GObject *object)
 {
   GrdRdpSurfaceRenderer *surface_renderer = GRD_RDP_SURFACE_RENDERER (object);
+
+  g_clear_pointer (&surface_renderer->unref_queue, g_async_queue_unref);
 
   g_mutex_clear (&surface_renderer->render_mutex);
 
@@ -421,6 +715,12 @@ grd_rdp_surface_renderer_init (GrdRdpSurfaceRenderer *surface_renderer)
   surface_renderer->registered_buffers =
     g_hash_table_new_full (NULL, NULL,
                            NULL, g_object_unref);
+  surface_renderer->acquired_buffers =
+    g_hash_table_new_full (NULL, NULL,
+                           NULL, g_free);
+  surface_renderer->assigned_frame_slots =
+    g_hash_table_new (NULL, NULL);
+  surface_renderer->unref_queue = g_async_queue_new ();
 
   g_mutex_init (&surface_renderer->render_mutex);
 }

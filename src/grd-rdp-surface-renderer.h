@@ -51,6 +51,9 @@ gboolean grd_rdp_surface_renderer_register_pw_buffer (GrdRdpSurfaceRenderer  *su
 void grd_rdp_surface_renderer_unregister_pw_buffer (GrdRdpSurfaceRenderer *surface_renderer,
                                                     GrdRdpPwBuffer        *rdp_pw_buffer);
 
+void grd_rdp_surface_renderer_submit_buffer (GrdRdpSurfaceRenderer *surface_renderer,
+                                             GrdRdpPwBuffer        *rdp_pw_buffer);
+
 void grd_rdp_surface_renderer_submit_legacy_buffer (GrdRdpSurfaceRenderer *surface_renderer,
                                                     GrdRdpLegacyBuffer    *buffer);
 
