@@ -495,7 +495,9 @@ grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer            *renderer
     return render_context_ref (renderer, render_context);
 
   render_context = grd_rdp_render_context_new (renderer->graphics_pipeline,
-                                               rdp_surface);
+                                               rdp_surface,
+                                               renderer->vk_device,
+                                               renderer->hwaccel_vaapi);
   if (!render_context)
     {
       handle_graphics_subsystem_failure (renderer);
