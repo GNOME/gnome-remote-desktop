@@ -1,3 +1,16 @@
+47.alpha
+========
+* Support persistent remote login sessions
+* Support entering new credentials via standard input when using grdctl
+* Use access portal dialogs for warning about connection insecurity
+* Avoid crash when getting invalid PipeWire buffers
+
+Contributors:
+  Dudemanguy, Pascal Nowack, Ray Strode, Joan Torres
+
+Translators:
+  Martin [sl], Balázs Úr [hu]
+
 46.2
 ====
 * Potential crasher fix
