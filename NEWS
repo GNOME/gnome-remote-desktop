@@ -1,3 +1,13 @@
+46.3
+====
+* Avoid crash when getting invalid PipeWire buffers
+
+Contributors:
+  Dudemanguy, Pascal Nowack
+
+Translators:
+  Daniel Mustieles [es]
+
 46.2
 ====
 * Potential crasher fix
