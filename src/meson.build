@@ -89,6 +89,8 @@ if have_rdp
     'grd-hwaccel-nvidia.h',
     'grd-hwaccel-vulkan.c',
     'grd-hwaccel-vulkan.h',
+    'grd-image-view.c',
+    'grd-image-view.h',
     'grd-rdp-audio-input.c',
     'grd-rdp-audio-input.h',
     'grd-rdp-audio-output-stream.c',
