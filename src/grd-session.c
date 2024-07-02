@@ -754,7 +754,7 @@ grd_session_selection_write (GrdSession    *session,
   g_autoptr (GError) error = NULL;
   g_autoptr (GVariant) fd_variant = NULL;
   g_autoptr (GUnixFDList) fd_list = NULL;
-  int fd_idx;
+  int fd_idx = -1;
   int fd;
 
   if (!data || !size)
@@ -774,6 +774,14 @@ grd_session_selection_write (GrdSession    *session,
     }
 
   g_variant_get (fd_variant, "h", &fd_idx);
+  if (!G_IS_UNIX_FD_LIST (fd_list) ||
+      fd_idx < 0 || fd_idx >= g_unix_fd_list_get_length (fd_list))
+    {
+      g_warning ("Failed to acquire file descriptor for serial %u: Invalid "
+                 "file descriptor list sent by display server", serial);
+      return;
+    }
+
   fd = g_unix_fd_list_get (fd_list, fd_idx, &error);
   if (fd == -1)
     {
@@ -805,7 +813,7 @@ grd_session_selection_read (GrdSession  *session,
   g_autoptr (GError) error = NULL;
   g_autoptr (GVariant) fd_variant = NULL;
   g_autoptr (GUnixFDList) fd_list = NULL;
-  int fd_idx;
+  int fd_idx = -1;
   int fd;
   const char *mime_type_string;
 
@@ -819,6 +827,14 @@ grd_session_selection_read (GrdSession  *session,
     }
 
   g_variant_get (fd_variant, "h", &fd_idx);
+  if (!G_IS_UNIX_FD_LIST (fd_list) ||
+      fd_idx < 0 || fd_idx >= g_unix_fd_list_get_length (fd_list))
+    {
+      g_warning ("Failed to acquire file descriptor: Invalid file descriptor "
+                 "list sent by display server");
+      return -1;
+    }
+
   fd = g_unix_fd_list_get (fd_list, fd_idx, &error);
   if (fd == -1)
     {
@@ -1344,6 +1360,7 @@ on_eis_connected (GObject      *object,
   GrdSession *session;
   GrdSessionPrivate *priv;
   GrdSessionClass *klass;
+  int fd_idx = -1;
   int fd;
   g_autoptr (GError) error = NULL;
   const char *remote_desktop_session_id;
@@ -1371,7 +1388,17 @@ on_eis_connected (GObject      *object,
   priv = grd_session_get_instance_private (session);
   klass = GRD_SESSION_GET_CLASS (session);
 
-  fd = g_unix_fd_list_get (fd_list, g_variant_get_handle (fd_variant), &error);
+  fd_idx = g_variant_get_handle (fd_variant);
+  if (!G_IS_UNIX_FD_LIST (fd_list) ||
+      fd_idx < 0 || fd_idx >= g_unix_fd_list_get_length (fd_list))
+    {
+      g_warning ("Failed to acquire file descriptor for EI backend: Invalid "
+                 "file descriptor list sent by display server");
+      grd_session_stop (GRD_SESSION (user_data));
+      return;
+    }
+
+  fd = g_unix_fd_list_get (fd_list, fd_idx, &error);
 
   priv->ei = ei_new_sender (session);
   ei_configure_name (priv->ei, "gnome-remote-desktop");
