@@ -79,7 +79,7 @@ on_take_client_finished (GObject      *object,
 {
   GrdDaemonHandover *daemon_handover = user_data;
   int fd;
-  int fd_idx;
+  int fd_idx = -1;
   g_autoptr (GError) error = NULL;
   g_autoptr (GSocket) socket = NULL;
   g_autoptr (GVariant) fd_variant = NULL;
@@ -98,6 +98,14 @@ on_take_client_finished (GObject      *object,
     }
 
   g_variant_get (fd_variant, "h", &fd_idx);
+  if (!G_IS_UNIX_FD_LIST (fd_list) ||
+      fd_idx < 0 || fd_idx >= g_unix_fd_list_get_length (fd_list))
+    {
+      g_warning ("Failed to acquire file descriptor: The fd list or fd index "
+                 "is invalid");
+      return;
+    }
+
   fd = g_unix_fd_list_get (fd_list, fd_idx, &error);
   if (fd == -1)
     {
