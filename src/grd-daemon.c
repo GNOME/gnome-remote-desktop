@@ -315,14 +315,42 @@ on_handle_import_certificate (GrdDBusRemoteDesktopRdpServer *rdp_server_interfac
   g_autofd int certificate_fd = -1;
   g_autofd int key_fd = -1;
   GFileTest fd_test_results;
-  int certificate_fd_index;
-  int key_fd_index;
+  int certificate_fd_index = -1;
+  int key_fd_index = -1;
   gboolean success;
 
   g_variant_get (certificate, "(sh)", &certificate_filename,
                  &certificate_fd_index);
   g_variant_get (private_key, "(sh)", &key_filename,
                  &key_fd_index);
+
+  if (!G_IS_UNIX_FD_LIST (fd_list))
+    {
+      g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to acquire "
+                   "file descriptor for certificate and private key: "
+                   "The sender supplied an invalid fd list");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+
+  if (certificate_fd_index < 0 ||
+      certificate_fd_index >= g_unix_fd_list_get_length (fd_list))
+    {
+      g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to acquire "
+                   "file descriptor for certificate: "
+                   "The sender supplied an invalid fd index");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
+  if (key_fd_index < 0 ||
+      key_fd_index >= g_unix_fd_list_get_length (fd_list))
+    {
+      g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to acquire "
+                   "file descriptor for private key: "
+                   "The sender supplied an invalid fd index");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
 
   certificate_fd = g_unix_fd_list_get (fd_list, certificate_fd_index, &error);
   if (certificate_fd == -1)
