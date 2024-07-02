@@ -640,7 +640,7 @@ on_incoming_redirected_connection (GrdRdpServer      *rdp_server,
                                      remote_id, NULL,
                                      (gpointer *) &remote_client))
     {
-      g_warning ("[DaemonSystem] Not found routing token on "
+      g_warning ("[DaemonSystem] Could not find routing token on "
                  "remote_clients list");
       return;
     }
