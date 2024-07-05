@@ -1,0 +1,199 @@
+/*
+ * Copyright (C) 2024 Pascal Nowack
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ */
+
+#include "config.h"
+
+#include "grd-rdp-frame.h"
+
+#include "grd-rdp-renderer.h"
+
+struct _GrdRdpFrame
+{
+  GrdRdpRenderer *renderer;
+  GrdRdpRenderContext *render_context;
+
+  GrdRdpFrameCallback frame_picked_up;
+  GrdRdpFrameCallback view_finalized;
+  GrdRdpFrameCallback frame_submitted;
+  GrdRdpFrameCallback frame_finalized;
+  gpointer callback_user_data;
+  GDestroyNotify user_data_destroy;
+
+  gboolean pending_view_finalization;
+
+  GrdRdpBuffer *src_buffer_new;
+  GrdRdpBuffer *src_buffer_old;
+
+  GrdRdpFrameViewType view_type;
+
+  cairo_region_t *damage_region;
+  GList *bitstreams;
+};
+
+GrdRdpRenderer *
+grd_rdp_frame_get_renderer (GrdRdpFrame *rdp_frame)
+{
+  return rdp_frame->renderer;
+}
+
+GrdRdpRenderContext *
+grd_rdp_frame_get_render_context (GrdRdpFrame *rdp_frame)
+{
+  return rdp_frame->render_context;
+}
+
+GrdRdpBuffer *
+grd_rdp_frame_get_source_buffer (GrdRdpFrame *rdp_frame)
+{
+  return rdp_frame->src_buffer_new;
+}
+
+GrdRdpBuffer *
+grd_rdp_frame_get_last_source_buffer (GrdRdpFrame *rdp_frame)
+{
+  return rdp_frame->src_buffer_old;
+}
+
+GrdRdpFrameViewType
+grd_rdp_frame_get_avc_view_type (GrdRdpFrame *rdp_frame)
+{
+  return rdp_frame->view_type;
+}
+
+cairo_region_t *
+grd_rdp_frame_get_damage_region (GrdRdpFrame *rdp_frame)
+{
+  return rdp_frame->damage_region;
+}
+
+GList *
+grd_rdp_frame_get_bitstreams (GrdRdpFrame *rdp_frame)
+{
+  return rdp_frame->bitstreams;
+}
+
+gboolean
+grd_rdp_frame_has_valid_view (GrdRdpFrame *rdp_frame)
+{
+  return !!rdp_frame->damage_region;
+}
+
+gboolean
+grd_rdp_frame_is_surface_damaged (GrdRdpFrame *rdp_frame)
+{
+  return cairo_region_num_rectangles (rdp_frame->damage_region) > 0;
+}
+
+void
+grd_rdp_frame_set_renderer (GrdRdpFrame    *rdp_frame,
+                            GrdRdpRenderer *renderer)
+{
+  rdp_frame->renderer = renderer;
+}
+
+static void
+finalize_view (GrdRdpFrame *rdp_frame)
+{
+  g_assert (rdp_frame->pending_view_finalization);
+
+  rdp_frame->view_finalized (rdp_frame, rdp_frame->callback_user_data);
+  rdp_frame->pending_view_finalization = FALSE;
+}
+
+void
+grd_rdp_frame_set_damage_region (GrdRdpFrame    *rdp_frame,
+                                 cairo_region_t *damage_region)
+{
+  g_assert (!rdp_frame->damage_region);
+
+  rdp_frame->damage_region = damage_region;
+  finalize_view (rdp_frame);
+}
+
+void
+grd_rdp_frame_set_bitstreams (GrdRdpFrame *rdp_frame,
+                              GList       *bitstreams)
+{
+  rdp_frame->bitstreams = bitstreams;
+}
+
+void
+grd_rdp_frame_notify_picked_up (GrdRdpFrame *rdp_frame)
+{
+  rdp_frame->frame_picked_up (rdp_frame, rdp_frame->callback_user_data);
+}
+
+void
+grd_rdp_frame_notify_frame_submission (GrdRdpFrame *rdp_frame)
+{
+  rdp_frame->frame_submitted (rdp_frame, rdp_frame->callback_user_data);
+}
+
+GrdRdpFrame *
+grd_rdp_frame_new (GrdRdpRenderContext *render_context,
+                   GrdRdpBuffer        *src_buffer_new,
+                   GrdRdpBuffer        *src_buffer_old,
+                   GrdRdpFrameCallback  frame_picked_up,
+                   GrdRdpFrameCallback  view_finalized,
+                   GrdRdpFrameCallback  frame_submitted,
+                   GrdRdpFrameCallback  frame_finalized,
+                   gpointer             callback_user_data,
+                   GDestroyNotify       user_data_destroy)
+{
+  GrdRdpFrame *rdp_frame;
+
+  rdp_frame = g_new0 (GrdRdpFrame, 1);
+  rdp_frame->render_context = render_context;
+  rdp_frame->src_buffer_new = src_buffer_new;
+  rdp_frame->src_buffer_old = src_buffer_old;
+
+  rdp_frame->frame_picked_up = frame_picked_up;
+  rdp_frame->view_finalized = view_finalized;
+  rdp_frame->frame_submitted = frame_submitted;
+  rdp_frame->frame_finalized = frame_finalized;
+  rdp_frame->callback_user_data = callback_user_data;
+  rdp_frame->user_data_destroy = user_data_destroy;
+
+  rdp_frame->pending_view_finalization = TRUE;
+
+  rdp_frame->view_type = GRD_RDP_FRAME_VIEW_TYPE_MAIN;
+
+  return rdp_frame;
+}
+
+void
+grd_rdp_frame_free (GrdRdpFrame *rdp_frame)
+{
+  g_assert (!rdp_frame->bitstreams);
+  g_assert (rdp_frame->renderer);
+
+  if (rdp_frame->pending_view_finalization)
+    finalize_view (rdp_frame);
+
+  rdp_frame->frame_finalized (rdp_frame, rdp_frame->callback_user_data);
+
+  g_clear_pointer (&rdp_frame->damage_region, cairo_region_destroy);
+  g_clear_pointer (&rdp_frame->callback_user_data,
+                   rdp_frame->user_data_destroy);
+
+  grd_rdp_renderer_release_render_context (rdp_frame->renderer,
+                                           rdp_frame->render_context);
+
+  g_free (rdp_frame);
+}

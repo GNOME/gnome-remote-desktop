@@ -116,6 +116,8 @@ if have_rdp
     'grd-rdp-dvc.h',
     'grd-rdp-event-queue.c',
     'grd-rdp-event-queue.h',
+    'grd-rdp-frame.c',
+    'grd-rdp-frame.h',
     'grd-rdp-frame-info.h',
     'grd-rdp-fuse-clipboard.c',
     'grd-rdp-fuse-clipboard.h',
