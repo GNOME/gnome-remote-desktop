@@ -33,6 +33,7 @@ typedef struct _GrdCredentials GrdCredentials;
 typedef struct _GrdEglThread GrdEglThread;
 typedef struct _GrdEncodeSession GrdEncodeSession;
 typedef struct _GrdHwAccelNvidia GrdHwAccelNvidia;
+typedef struct _GrdHwAccelVaapi GrdHwAccelVaapi;
 typedef struct _GrdHwAccelVulkan GrdHwAccelVulkan;
 typedef struct _GrdImageView GrdImageView;
 typedef struct _GrdRdpAudioInput GrdRdpAudioInput;
