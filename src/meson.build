@@ -85,6 +85,8 @@ if have_rdp
     'grd-bitstream.h',
     'grd-clipboard-rdp.c',
     'grd-clipboard-rdp.h',
+    'grd-encode-session.c',
+    'grd-encode-session.h',
     'grd-hwaccel-nvidia.c',
     'grd-hwaccel-nvidia.h',
     'grd-hwaccel-vulkan.c',

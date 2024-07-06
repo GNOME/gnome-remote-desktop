@@ -31,6 +31,7 @@ typedef struct _GrdClipboardVnc GrdClipboardVnc;
 typedef struct _GrdContext GrdContext;
 typedef struct _GrdCredentials GrdCredentials;
 typedef struct _GrdEglThread GrdEglThread;
+typedef struct _GrdEncodeSession GrdEncodeSession;
 typedef struct _GrdHwAccelNvidia GrdHwAccelNvidia;
 typedef struct _GrdHwAccelVulkan GrdHwAccelVulkan;
 typedef struct _GrdImageView GrdImageView;
