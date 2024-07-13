@@ -120,7 +120,6 @@ void
 grd_rdp_renderer_invoke_shutdown (GrdRdpRenderer *renderer)
 {
   g_assert (renderer->graphics_context);
-  g_assert (renderer->graphics_thread);
 
   stop_rendering (renderer);
 
@@ -130,6 +129,23 @@ grd_rdp_renderer_invoke_shutdown (GrdRdpRenderer *renderer)
   g_clear_pointer (&renderer->graphics_thread, g_thread_join);
 }
 
+static gpointer
+graphics_thread_func (gpointer data)
+{
+  GrdRdpRenderer *renderer = data;
+
+  if (renderer->hwaccel_nvidia)
+    grd_hwaccel_nvidia_push_cuda_context (renderer->hwaccel_nvidia);
+
+  while (!renderer->in_shutdown)
+    g_main_context_iteration (renderer->graphics_context, TRUE);
+
+  if (renderer->hwaccel_nvidia)
+    grd_hwaccel_nvidia_pop_cuda_context (renderer->hwaccel_nvidia);
+
+  return NULL;
+}
+
 void
 grd_rdp_renderer_notify_session_started (GrdRdpRenderer         *renderer,
                                          GrdRdpGraphicsPipeline *graphics_pipeline,
@@ -137,6 +153,10 @@ grd_rdp_renderer_notify_session_started (GrdRdpRenderer         *renderer,
 {
   renderer->graphics_pipeline = graphics_pipeline;
   renderer->rdp_context = rdp_context;
+
+  renderer->graphics_thread = g_thread_new ("RDP graphics thread",
+                                            graphics_thread_func,
+                                            renderer);
 }
 
 void
@@ -418,23 +438,6 @@ grd_rdp_renderer_render_frame (GrdRdpRenderer      *renderer,
                                                 rdp_buffer);
 }
 
-static gpointer
-graphics_thread_func (gpointer data)
-{
-  GrdRdpRenderer *renderer = data;
-
-  if (renderer->hwaccel_nvidia)
-    grd_hwaccel_nvidia_push_cuda_context (renderer->hwaccel_nvidia);
-
-  while (!renderer->in_shutdown)
-    g_main_context_iteration (renderer->graphics_context, TRUE);
-
-  if (renderer->hwaccel_nvidia)
-    grd_hwaccel_nvidia_pop_cuda_context (renderer->hwaccel_nvidia);
-
-  return NULL;
-}
-
 GrdRdpRenderer *
 grd_rdp_renderer_new (GrdSessionRdp    *session_rdp,
                       GrdHwAccelNvidia *hwaccel_nvidia)
@@ -444,10 +447,6 @@ grd_rdp_renderer_new (GrdSessionRdp    *session_rdp,
   renderer = g_object_new (GRD_TYPE_RDP_RENDERER, NULL);
   renderer->session_rdp = session_rdp;
   renderer->hwaccel_nvidia = hwaccel_nvidia;
-
-  renderer->graphics_thread = g_thread_new ("RDP graphics thread",
-                                            graphics_thread_func,
-                                            renderer);
 
   return renderer;
 }
@@ -498,8 +497,7 @@ grd_rdp_renderer_dispose (GObject *object)
 {
   GrdRdpRenderer *renderer = GRD_RDP_RENDERER (object);
 
-  if (renderer->graphics_thread)
-    grd_rdp_renderer_invoke_shutdown (renderer);
+  grd_rdp_renderer_invoke_shutdown (renderer);
 
   if (renderer->acquired_render_contexts)
     g_assert (g_hash_table_size (renderer->acquired_render_contexts) == 0);
