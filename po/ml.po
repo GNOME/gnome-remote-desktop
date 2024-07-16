@@ -1,0 +1,345 @@
+# Malayalam translation for gnome-remote-desktop.
+# Copyright (C) 2024 gnome-remote-desktop's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-remote-desktop package.
+# murukesh s kumar <murukesh.cvv230159@cvv.ac.in>,  2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-remote-desktop gnome-46\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues/\n"
+"POT-Creation-Date: 2024-07-11 20:45+0000\n"
+"PO-Revision-Date: 2024-07-11 20:45+0000\n"
+"Last-Translator: \n"
+"Language-Team: Malayalam <Malayalam>\n"
+"Language: ml\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n==1) ? 0 : 1;\n"
+"X-Generator: Poedit 3.4.4\n"
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgstr "Gnome-remote-desktop's system daemon settings കോൺഫിഗർ ചെയ്യാൻ അനുവദിക്കുക."
+
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"Gnome-remote-desktop-ൻ്റെ സിസ്റ്റം ഡെമൺ ക്രമീകരണങ്ങൾ ക്രമീകരിക്കുന്നതിന് ആധികാരികത "
+"ആവശ്യമാണ്."
+
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "ഗ്നോം റിമോട്ട് ഡെസ്ക്ടോപ്പ് ഹാൻഡ്ഓവർ ഡെമൺ"
+
+#: src/grd-ctl.c:59
+#, c-format
+msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
+msgstr ""
+
+#: src/grd-ctl.c:576
+msgid "Commands:\n"
+msgstr "കമാൻഡുകൾ:\n"
+
+#: src/grd-ctl.c:581
+msgid ""
+"  rdp                                        - RDP subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
+"    enable                                   - Enable the RDP backend\n"
+"    disable                                  - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                - Set path to TLS key\n"
+"    set-credentials <username> <password>    - Set username and password\n"
+"                                               credentials\n"
+"    clear-credentials                        - Clear username and password\n"
+"                                               credentials\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
+"\n"
+msgstr ""
+
+#: src/grd-ctl.c:605
+msgid ""
+"  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
+"    enable                                   - Enable the VNC backend\n"
+"    disable                                  - Disable the VNC backend\n"
+"    set-password <password>                  - Set the VNC password\n"
+"    clear-password                           - Clear the VNC password\n"
+"    set-auth-method password|prompt          - Set the authorization method\n"
+"    enable-view-only                         - Disable remote control of "
+"input\n"
+"                                               devices\n"
+"    disable-view-only                        - Enable remote control of "
+"input\n"
+"                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
+"\n"
+msgstr ""
+
+#: src/grd-ctl.c:625
+msgid ""
+"  status [--show-credentials]                - Show current status\n"
+"\n"
+"Options:\n"
+"  --headless                                 - Use headless credentials "
+"storage\n"
+"  --system                                   - Configure system daemon\n"
+"  --help                                     - Print this help text\n"
+msgstr ""
+
+#: src/grd-daemon.c:1263
+msgid "GNOME Remote Desktop"
+msgstr "GNOME റിമോട്ട് ഡെസ്ക്ടോപ്പ്"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "ഈ ബന്ധം അരക്ഷിതമാണ്"
+
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
+msgstr ""
+"നിങ്ങൾക്ക് സുരക്ഷിതമല്ലാത്ത കണക്ഷനുമായി തുടരണോ? ഇത് സുരക്ഷിതമായി സജ്ജമാക്കാൻ "
+"<b>“use redirection server name:i:1”</b> RDP കോൺഫിഗറേഷൻ ഫയലിൽ."
+
+#: src/grd-daemon-handover.c:354
+#, c-format
+msgid "Disconnect"
+msgstr "വിച്ഛേദിക്കുക"
+
+#: src/grd-daemon-handover.c:355
+#, c-format
+msgid "Continue"
+msgstr "തുടരുക"
+
+#: src/grd-daemon-user.c:99
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "ഡെസ്ക്ടോപ്പ് പങ്കിടൽ പോർട്ട് മാറ്റി"
+
+#: src/grd-daemon-user.c:101
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"ഡെസ്ക്ടോപ്പ് പങ്കിടൽ പോർട്ട് <b>%i</b> എന്നതിൽ നിന്ന് മാറി <b>%i</b> ആയി. റിമോട്ട് സെഷൻസ് "
+"സേവനം സജീവമാക്കിയതിനാലും <b>%i</b> പോർട്ട് ഉപയോഗിക്കുന്നതിന് ഉയർന്ന മുൻഗണനയുള്ളതിനാലുമാണ് ഇത്."
+
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "അംഗീകരിക്കുക"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "നിങ്ങളുടെ ഡെസ്ക്ടോപ്പ് പങ്കിടാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"'%s' എന്ന കമ്പ്യൂട്ടറിലെ ഒരു ഉപയോക്താവ് നിങ്ങളുടെ ഡെസ്ക്ടോപ്പ് വിദൂരമായി കാണാനോ "
+"നിയന്ത്രിക്കാനോ ശ്രമിക്കുന്നു."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "നിരസിക്കുക"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+msgid "The port used by the RDP server"
+msgstr "RDP സെർവർ ഉപയോഗിക്കുന്ന പോർട്ട്"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr "ഈ RDP സെർവർ ഉപയോഗിക്കുന്നതിന് RDP ക്ലയൻ്റ് ഈ പോർട്ടിലേക്ക് ബന്ധിപ്പിക്കും."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+msgid "Search a different RDP port if the configured one is used"
+msgstr "കോൺഫിഗർ ചെയ്‌തത് ഉപയോഗിക്കുകയാണെങ്കിൽ മറ്റൊരു RDP പോർട്ട് തിരയുക"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"നെഗോഷ്യേറ്റ്-പോർട്ട് 'true'മായി സജ്ജമാക്കുമ്പോൾ, കോൺഫിഗർ ചെയ്ത ഒന്നിൽ നിന്ന് ആരംഭിക്കുന്ന "
+"അടുത്ത 10 പോർട്ടുകളിൽ ലഭ്യമായ ആദ്യത്തേത് കേൾക്കാൻ ആർഡിപി സെർവർ ശ്രമിക്കും."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+msgid "Whether the RDP backend is enabled or not"
+msgstr "RDP ബാക്കെൻഡ് പ്രവർത്തനക്ഷമമാക്കിയാലും ഇല്ലെങ്കിലും"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+msgid "If set to 'true' the RDP backend will be initialized."
+msgstr "'true' എന്ന് ക്രമീകരിച്ചാൽ ആർഡിപി ബാക്ക്എൻഡ് ആരംഭിക്കും."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
+msgid "Screenshare mode of RDP connections"
+msgstr "RDP കണക്ഷനുകളുടെ സ്ക്രീൻഷെയർ മോഡ്"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
+msgid ""
+"The screenshare mode specifies, whether the RDP backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the RDP backend uses either the client core data "
+"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
+"2.2.1.3.6), depending on what is available. When using a remote desktop "
+"session with a virtual monitor, clients can resize the resolution of the "
+"virtual monitor during a session with the Display Update Virtual Channel "
+"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
+"primary - Record the primary monitor of the current user session. * extend - "
+"Create a new virtual monitor and use it for the remote desktop session. The "
+"resolution of this virtual monitor is derived from the monitor "
+"configuration, submitted by the remote desktop client."
+msgstr ""
+"RDP ബാക്കെൻഡ് പ്രൈമറി സ്ക്രീനിനെ മിറർ ചെയ്യുന്നുണ്ടോ, അല്ലെങ്കിൽ ഒരു വെർച്വൽ മോണിറ്റർ "
+"സൃഷ്ടിച്ചിട്ടുണ്ടോ എന്ന് സ്ക്രീൻഷെയർ മോഡ് വ്യക്തമാക്കുന്നു. വെർച്വൽ മോണിറ്ററിൻ്റെ പ്രാരംഭ റെസല്യൂഷനു "
+"വേണ്ടി, ലഭ്യമായതനുസരിച്ച് RDP ബാക്കെൻഡ് ഒന്നുകിൽ ക്ലയൻ്റ് കോർ ഡാറ്റ ([MS-RDPBCGR] 2.2.1.3.2) "
+"അല്ലെങ്കിൽ ക്ലയൻ്റ് മോണിറ്റർ ഡാറ്റ ([MS-RDPBCGR] 2.2.1.3.6) ഉപയോഗിക്കുന്നു. ഒരു "
+"വെർച്വൽ മോണിറ്ററിനൊപ്പം വിദൂര ഡെസ്‌ക്‌ടോപ്പ് സെഷൻ ഉപയോഗിക്കുമ്പോൾ, ഡിസ്‌പ്ലേ അപ്‌ഡേറ്റ് വെർച്വൽ "
+"ചാനൽ എക്സ്റ്റൻഷൻ ([MS-RDPEDISP]) ഉള്ള ഒരു സെഷനിൽ ക്ലയൻ്റുകൾക്ക് വെർച്വൽ മോണിറ്ററിൻ്റെ "
+"റെസല്യൂഷൻ വലുപ്പം മാറ്റാനാകും. അനുവദനീയമായ സ്ക്രീൻഷെയർ മോഡുകളിൽ ഇവ ഉൾപ്പെടുന്നു: * മിറർ-"
+"പ്രൈമറി - നിലവിലെ ഉപയോക്തൃ സെഷൻ്റെ പ്രാഥമിക മോണിറ്റർ രേഖപ്പെടുത്തുക. * നീട്ടുക - ഒരു പുതിയ "
+"വെർച്വൽ മോണിറ്റർ സൃഷ്‌ടിച്ച് റിമോട്ട് ഡെസ്‌ക്‌ടോപ്പ് സെഷനു വേണ്ടി ഉപയോഗിക്കുക. റിമോട്ട് ഡെസ്ക്ടോപ്പ് "
+"ക്ലയൻ്റ് സമർപ്പിച്ച മോണിറ്റർ കോൺഫിഗറേഷനിൽ നിന്നാണ് ഈ വെർച്വൽ മോണിറ്ററിൻ്റെ റെസല്യൂഷൻ "
+"ഉരുത്തിരിഞ്ഞത്."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
+msgid "Path to the certificate file"
+msgstr "സർട്ടിഫിക്കറ്റ് ഫയലിലേക്കുള്ള വഴി"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
+msgid ""
+"In order to be able to use RDP with TLS Security, both the private key file "
+"and the certificate file need to be provided to the RDP server."
+msgstr ""
+"TLS സുരക്ഷയ്‌ക്കൊപ്പം RDP ഉപയോഗിക്കുന്നതിന്, സ്വകാര്യ കീ ഫയലും സർട്ടിഫിക്കറ്റ് ഫയലും RDP "
+"സെർവറിന് നൽകേണ്ടതുണ്ട്."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
+msgid "Path to the private key file"
+msgstr "Private കീ ഫയലിലേക്കുള്ള വഴി"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
+msgid "Only allow remote connections to view the screen content"
+msgstr "സ്‌ക്രീൻ ഉള്ളടക്കം കാണാൻ മാത്രം റിമോട്ട് കണക്ഷനുകളെ അനുവദിക്കുക"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+msgid ""
+"When view-only is true, remote RDP connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"കാഴ്ച-മാത്രം ശരിയാണെങ്കിൽ, വിദൂര RDP കണക്ഷനുകൾക്ക് ഇൻപുട്ട് ഉപകരണങ്ങൾ കൈകാര്യം ചെയ്യാൻ "
+"കഴിയില്ല (ഉദാ. മൗസും കീബോർഡും)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+msgid "The port used by the VNC server"
+msgstr "VNC സെർവർ ഉപയോഗിക്കുന്ന പോർട്ട്"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr "ഈ VNC സെർവർ ഉപയോഗിക്കുന്നതിന് VNC ക്ലയൻ്റ് ഈ പോർട്ടിലേക്ക് കണക്റ്റുചെയ്യും."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+msgid "Search a different VNC port if the configured one is used"
+msgstr "കോൺഫിഗർ ചെയ്ത ഒന്ന് ഉപയോഗിക്കുകയാണെങ്കിൽ മറ്റൊരു VNC പോർട്ട് തിരയുക"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+"egotiate-port 'true'മായി സജ്ജമാക്കുമ്പോൾ, കോൺഫിഗർ ചെയ്ത ഒന്നിൽ നിന്ന് ആരംഭിക്കുന്ന "
+"അടുത്ത 10 പോർട്ടുകളിൽ ലഭ്യമായ ആദ്യത്തേത് കേൾക്കാൻ വിഎൻസി സെർവർ ശ്രമിക്കും."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+msgid "Whether the VNC backend is enabled or not"
+msgstr "VNC ബാക്കെൻഡ് പ്രവർത്തനക്ഷമമാക്കിയാലും ഇല്ലെങ്കിലും"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+msgid "If set to 'true' the VNC backend will be initialized."
+msgstr "'true' എന്ന് ക്രമീകരിച്ചാൽ VNC ബാക്ക് എൻഡ് ആരംഭിക്കും."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
+msgid ""
+"When view-only is true, remote VNC connections cannot manipulate input "
+"devices (e.g. mouse and keyboard)."
+msgstr ""
+"വ്യൂ-മാത്രം ശരിയാകുമ്പോൾ, വിദൂര VNC കണക്ഷനുകൾക്ക് ഇൻപുട്ട് ഉപകരണങ്ങൾ കൈകാര്യം ചെയ്യാൻ "
+"കഴിയില്ല (ഉദാ. മൗസ്, കീബോർഡ്)."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
+msgid "Method used to authenticate VNC connections"
+msgstr "VNC കണക്ഷനുകൾ ആധികാരികമാക്കാൻ ഉപയോഗിക്കുന്ന രീതി"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+msgid ""
+"The VNC authentication method describes how a remote connection is "
+"authenticated. It can currently be done in two different ways: * prompt - by "
+"prompting the user for each new connection, requiring a person with physical "
+"access to the workstation to explicitly approve the new connection. * "
+"password - by requiring the remote client to provide a known password"
+msgstr ""
+"ഒരു വിദൂര കണക്ഷൻ എങ്ങനെ ആധികാരികമാക്കുന്നുവെന്ന് വിഎൻസി ഓതന്റിക്കേഷൻ രീതി വിവരിക്കുന്നു. ഇത് "
+"നിലവിൽ രണ്ട് വ്യത്യസ്ത രീതികളിൽ ചെയ്യാൻ കഴിയും: * prompt - ഓരോ പുതിയ കണക്ഷനും "
+"ഉപയോക്താവിനെ പ്രേരിപ്പിക്കുന്നതിലൂടെ, വർക്ക്സ്റ്റേഷനിലേക്ക് ശാരീരിക പ്രവേശനമുള്ള ഒരു വ്യക്തി "
+"പുതിയ കണക്ഷൻ വ്യക്തമായി അംഗീകരിക്കേണ്ടതുണ്ട്. * password - അറിയപ്പെടുന്ന ഒരു പാസ് വേഡ് നൽകാൻ "
+"വിദൂര ക്ലയന്റിനോട് ആവശ്യപ്പെടുന്നതിലൂടെ"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+msgid "Screenshare mode of VNC connections"
+msgstr "വിഎൻസി കണക്ഷനുകളുടെ സ്ക്രീൻഷെയർ മോഡ്"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+msgid ""
+"The screenshare mode specifies, whether the VNC backend mirrors the primary "
+"screen, or whether a virtual monitor is created. For the initial resolution "
+"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
+"pixels. When using a remote desktop session with a virtual monitor, clients "
+"can resize the resolution of the virtual monitor during a session with the "
+"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
+"Record the primary monitor of the current user session. * extend - Create a "
+"new virtual monitor and use it for the remote desktop session. The initial "
+"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
+"Clients can override the initial resolution with subsequent monitor "
+"configuration updates."
+msgstr ""
+"വിഎൻസി ബാക്കെൻഡ് പ്രൈമറി സ്ക്രീനിനെ മിറർ ചെയ്യുന്നുണ്ടോ, അല്ലെങ്കിൽ ഒരു വെർച്വൽ മോണിറ്റർ "
+"സൃഷ്ടിച്ചിട്ടുണ്ടോ എന്ന് സ്ക്രീൻഷെയർ മോഡ് വ്യക്തമാക്കുന്നു. വെർച്വൽ മോണിറ്ററിൻ്റെ പ്രാരംഭ റെസല്യൂഷനു "
+"വേണ്ടി, വിഎൻസി ബാക്കെൻഡ് 1920x1080 പിക്സലുകളുടെ ഡിഫോൾട്ട് സൈസ് ഉപയോഗിക്കുന്നു. ഒരു വെർച്വൽ "
+"മോണിറ്ററിനൊപ്പം ഒരു റിമോട്ട് ഡെസ്‌ക്‌ടോപ്പ് സെഷൻ ഉപയോഗിക്കുമ്പോൾ, setDesktopSize PDU ഉള്ള "
+"ഒരു സെഷനിൽ ക്ലയൻ്റുകൾക്ക് വെർച്വൽ മോണിറ്ററിൻ്റെ റെസല്യൂഷൻ വലുപ്പം മാറ്റാൻ കഴിയും. "
+"അനുവദനീയമായ സ്ക്രീൻഷെയർ മോഡുകളിൽ ഇവ ഉൾപ്പെടുന്നു: * mirror-primary - നിലവിലെ ഉപയോക്തൃ "
+"സെഷൻ്റെ പ്രാഥമിക മോണിറ്റർ രേഖപ്പെടുത്തുക. * extend - ഒരു പുതിയ വെർച്വൽ മോണിറ്റർ സൃഷ്‌ടിച്ച് "
+"റിമോട്ട് ഡെസ്‌ക്‌ടോപ്പ് സെഷനു വേണ്ടി ഉപയോഗിക്കുക. ഈ വെർച്വൽ മോണിറ്ററിൻ്റെ പ്രാരംഭ മോണിറ്റർ "
+"റെസലൂഷൻ 1920x1080 പിക്സലുകളായി സജ്ജീകരിച്ചിരിക്കുന്നു. തുടർന്നുള്ള മോണിറ്റർ കോൺഫിഗറേഷൻ "
+"അപ്‌ഡേറ്റുകൾ ഉപയോഗിച്ച് ക്ലയൻ്റുകൾക്ക് പ്രാരംഭ റെസല്യൂഷൻ അസാധുവാക്കാനാകും."
