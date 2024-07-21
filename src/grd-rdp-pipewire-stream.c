@@ -30,7 +30,6 @@
 
 #include "grd-context.h"
 #include "grd-egl-thread.h"
-#include "grd-hwaccel-nvidia.h"
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-buffer-pool.h"
