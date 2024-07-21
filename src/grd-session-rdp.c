@@ -31,7 +31,6 @@
 
 #include "grd-clipboard-rdp.h"
 #include "grd-context.h"
-#include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-audio-input.h"
 #include "grd-rdp-audio-playback.h"
 #include "grd-rdp-cursor-renderer.h"
