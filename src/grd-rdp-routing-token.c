@@ -207,6 +207,12 @@ peek_routing_token (int            fd,
                    "The TPKT Header doesn't have version 3");
       return FALSE;
     }
+  if (tpkt_length < 4 + 7)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "The x224Crq TPDU length is too short");
+      return FALSE;
+    }
 
   /* Peek full PDU */
   Stream_Free (s, TRUE);
