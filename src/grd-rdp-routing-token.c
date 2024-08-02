@@ -104,6 +104,7 @@ peek_bytes (int            fd,
           g_set_error (error, G_IO_ERROR,
                        g_io_error_from_errno (errno),
                        "On poll command: %s", strerror (errno));
+          g_cancellable_release_fd (cancellable);
           return FALSE;
         }
 
@@ -111,6 +112,7 @@ peek_bytes (int            fd,
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_CANCELLED,
                        "Cancelled");
+          g_cancellable_release_fd (cancellable);
           return FALSE;
         }
 
@@ -126,6 +128,7 @@ peek_bytes (int            fd,
           g_set_error (error, G_IO_ERROR,
                        g_io_error_from_errno (errno),
                        "On recv command: %s", strerror (errno));
+          g_cancellable_release_fd (cancellable);
           return FALSE;
         }
 
