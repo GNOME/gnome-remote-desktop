@@ -85,37 +85,37 @@ if get_option('systemd')
                      'GRD_USERNAME': grd_username,
                    },
                    install_dir: systemunitdir)
+
+    configure_file(input: '20-gnome-remote-desktop.rules.in',
+                   output: '20-gnome-remote-desktop.rules',
+                   configuration: {
+                     'GRD_USERNAME': grd_username,
+                   },
+                   install: true,
+                   install_dir: join_paths(datadir, 'polkit-1', 'rules.d'))
+
+    configure_file(input: 'org.gnome.remotedesktop.configure-system-daemon.policy.in',
+                   output: 'org.gnome.remotedesktop.configure-system-daemon.policy',
+                   configuration: {
+                     'bindir': bindir,
+                     'GRD_USERNAME': grd_username,
+                   },
+                   install_dir: join_paths(datadir, 'polkit-1', 'actions'))
+
+    configure_file(input: 'org.gnome.remotedesktop.enable-system-daemon.policy.in',
+                   output: 'org.gnome.remotedesktop.enable-system-daemon.policy',
+                   configuration: {
+                     'libexecdir': libexecdir,
+                     'GRD_USERNAME': grd_username,
+                   },
+                   install_dir: join_paths(datadir, 'polkit-1', 'actions'))
+
+    configure_file(input: 'org.gnome.RemoteDesktop.Configuration.service.in',
+                   output: 'org.gnome.RemoteDesktop.Configuration.service',
+                   configuration: {
+                     'libexecdir': libexecdir,
+                     'GRD_USERNAME': grd_username,
+                   },
+                   install_dir: dbus_system_services_dir)
   endif
 endif
-
-configure_file(input: '20-gnome-remote-desktop.rules.in',
-               output: '20-gnome-remote-desktop.rules',
-               configuration: {
-                 'GRD_USERNAME': grd_username,
-               },
-               install: true,
-               install_dir: join_paths(datadir, 'polkit-1', 'rules.d'))
-
-configure_file(input: 'org.gnome.remotedesktop.configure-system-daemon.policy.in',
-               output: 'org.gnome.remotedesktop.configure-system-daemon.policy',
-               configuration: {
-                 'bindir': bindir,
-                 'GRD_USERNAME': grd_username,
-               },
-               install_dir: join_paths(datadir, 'polkit-1', 'actions'))
-
-configure_file(input: 'org.gnome.remotedesktop.enable-system-daemon.policy.in',
-               output: 'org.gnome.remotedesktop.enable-system-daemon.policy',
-               configuration: {
-                 'libexecdir': libexecdir,
-                 'GRD_USERNAME': grd_username,
-               },
-               install_dir: join_paths(datadir, 'polkit-1', 'actions'))
-
-configure_file(input: 'org.gnome.RemoteDesktop.Configuration.service.in',
-               output: 'org.gnome.RemoteDesktop.Configuration.service',
-               configuration: {
-                 'libexecdir': libexecdir,
-                 'GRD_USERNAME': grd_username,
-               },
-               install_dir: dbus_system_services_dir)
