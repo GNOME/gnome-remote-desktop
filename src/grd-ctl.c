@@ -129,6 +129,75 @@ is_numeric (const char *s)
   return TRUE;
 }
 
+static char *
+prompt_for_input (const char  *prompt,
+                  PromptType   prompt_type,
+                  GError     **error)
+{
+  g_autoptr (GInputStream) input_stream = NULL;
+  g_autoptr (GOutputStream) output_stream = NULL;
+  g_autoptr (GDataInputStream) data_input_stream = NULL;
+  gboolean terminal_attributes_changed = FALSE;
+  struct termios terminal_attributes;
+  g_autofree char *input = NULL;
+  gboolean success;
+  int output_fd;
+  int input_fd;
+
+  input_fd = STDIN_FILENO;
+  output_fd = STDOUT_FILENO;
+
+  input_stream = g_unix_input_stream_new (input_fd, FALSE);
+  data_input_stream = g_data_input_stream_new (input_stream);
+
+  if (isatty (output_fd))
+    output_stream = g_unix_output_stream_new (output_fd, FALSE);
+
+  if (output_stream)
+    {
+      success = g_output_stream_write_all (output_stream, prompt, strlen (prompt), NULL, NULL, error);
+      if (!success)
+        return NULL;
+
+      if (prompt_type == PROMPT_TYPE_HIDDEN_TEXT && isatty (input_fd))
+        {
+          struct termios updated_terminal_attributes;
+          int ret;
+
+          ret = tcgetattr (input_fd, &terminal_attributes);
+          if (ret < 0)
+            {
+              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           "Could not query terminal attributes");
+              return NULL;
+            }
+
+          updated_terminal_attributes = terminal_attributes;
+          updated_terminal_attributes.c_lflag &= ~ECHO;
+
+          ret = tcsetattr (input_fd, TCSANOW, &updated_terminal_attributes);
+          if (ret < 0)
+            {
+              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           "Could not disable input echo in terminal");
+              return NULL;
+            }
+
+          terminal_attributes_changed = TRUE;
+        }
+    }
+
+  input = g_data_input_stream_read_line_utf8 (data_input_stream, NULL, NULL, error);
+
+  if (terminal_attributes_changed)
+    {
+      g_output_stream_write_all (output_stream, "\n", strlen ("\n"), NULL, NULL, NULL);
+      tcsetattr (input_fd, TCSANOW, &terminal_attributes);
+    }
+
+  return g_steal_pointer (&input);
+}
+
 #ifdef HAVE_RDP
 static gboolean
 rdp_set_port (GrdSettings  *settings,
@@ -220,75 +289,6 @@ rdp_set_tls_key (GrdSettings  *settings,
 
   g_object_set (G_OBJECT (settings), "rdp-server-key-path", argv[0], NULL);
   return TRUE;
-}
-
-static char *
-prompt_for_input (const char  *prompt,
-                  PromptType   prompt_type,
-                  GError     **error)
-{
-  g_autoptr (GInputStream) input_stream = NULL;
-  g_autoptr (GOutputStream) output_stream = NULL;
-  g_autoptr (GDataInputStream) data_input_stream = NULL;
-  gboolean terminal_attributes_changed = FALSE;
-  struct termios terminal_attributes;
-  g_autofree char *input = NULL;
-  gboolean success;
-  int output_fd;
-  int input_fd;
-
-  input_fd = STDIN_FILENO;
-  output_fd = STDOUT_FILENO;
-
-  input_stream = g_unix_input_stream_new (input_fd, FALSE);
-  data_input_stream = g_data_input_stream_new (input_stream);
-
-  if (isatty (output_fd))
-    output_stream = g_unix_output_stream_new (output_fd, FALSE);
-
-  if (output_stream)
-    {
-      success = g_output_stream_write_all (output_stream, prompt, strlen (prompt), NULL, NULL, error);
-      if (!success)
-        return NULL;
-
-      if (prompt_type == PROMPT_TYPE_HIDDEN_TEXT && isatty (input_fd))
-        {
-          struct termios updated_terminal_attributes;
-          int ret;
-
-          ret = tcgetattr (input_fd, &terminal_attributes);
-          if (ret < 0)
-            {
-              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                           "Could not query terminal attributes");
-              return NULL;
-            }
-
-          updated_terminal_attributes = terminal_attributes;
-          updated_terminal_attributes.c_lflag &= ~ECHO;
-
-          ret = tcsetattr (input_fd, TCSANOW, &updated_terminal_attributes);
-          if (ret < 0)
-            {
-              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                           "Could not disable input echo in terminal");
-              return NULL;
-            }
-
-          terminal_attributes_changed = TRUE;
-        }
-    }
-
-  input = g_data_input_stream_read_line_utf8 (data_input_stream, NULL, NULL, error);
-
-  if (terminal_attributes_changed)
-    {
-      g_output_stream_write_all (output_stream, "\n", strlen ("\n"), NULL, NULL, NULL);
-      tcsetattr (input_fd, TCSANOW, &terminal_attributes);
-    }
-
-  return g_steal_pointer (&input);
 }
 
 static gboolean
