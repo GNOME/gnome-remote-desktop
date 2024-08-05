@@ -1,3 +1,14 @@
+46.4
+====
+* Gracefully handle invalid x224Crq data
+* Fix file descriptor leak
+
+Contributors:
+  Pascal Nowack
+
+Translators:
+  Jose Riha [sk], Mohammed Sadiq [ml]
+
 46.3
 ====
 * Avoid crash when getting invalid PipeWire buffers
