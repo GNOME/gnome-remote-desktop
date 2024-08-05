@@ -1,3 +1,18 @@
+47.beta
+=======
+* Gracefully handle file descriptor limits
+* Introduce standalone configuration D-Bus service
+* Improve grdctl status reporting
+* Gracefully handle invalid x224Crq data
+* Fix file descriptor leak
+
+Contributors:
+  Pascal Nowack, Joan Torres
+
+Translators:
+  Artur S0 [ru], Scrambled 777 [hi], Yaron Shahrabani [he], Junting Wu [zh_TW],
+  Emin Tufan Çetin [tr]
+
 47.alpha
 ========
 * Support persistent remote login sessions
