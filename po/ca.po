@@ -6,8 +6,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-03-14 15:00+0000\n"
-"PO-Revision-Date: 2024-05-16 23:36+0200\n"
+"POT-Creation-Date: 2024-06-02 12:39+0000\n"
+"PO-Revision-Date: 2024-06-06 18:51+0200\n"
 "Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
 "Language-Team: Catalan <gnome@llistes.softcatala.org>\n"
 "Language: ca\n"
@@ -31,21 +31,19 @@ msgstr ""
 "sistema de l'escriptori remot del GNOME."
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
-#, fuzzy
-#| msgid "GNOME Remote Desktop"
 msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "Escriptori remot del GNOME"
+msgstr "Dimoni de transferència de l'escriptori remot del GNOME"
 
-#: src/grd-ctl.c:60
+#: src/grd-ctl.c:59
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Ús: %s [OPCIONS...] ORDRE [SUBORDRE]...\n"
 
-#: src/grd-ctl.c:612
+#: src/grd-ctl.c:576
 msgid "Commands:\n"
 msgstr "Ordres:\n"
 
-#: src/grd-ctl.c:617
+#: src/grd-ctl.c:581
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -97,7 +95,7 @@ msgstr ""
 "                                               un port diferent\n"
 "\n"
 
-#: src/grd-ctl.c:641
+#: src/grd-ctl.c:605
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -142,7 +140,7 @@ msgstr ""
 "                                               un port diferent\n"
 "\n"
 
-#: src/grd-ctl.c:661
+#: src/grd-ctl.c:625
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -161,7 +159,7 @@ msgstr ""
 "sistema\n"
 "  --help                                     - Mostra aquest text d'ajuda\n"
 
-#: src/grd-daemon.c:1222
+#: src/grd-daemon.c:1263
 msgid "GNOME Remote Desktop"
 msgstr "Escriptori remot del GNOME"
 
