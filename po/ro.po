@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues\n"
-"POT-Creation-Date: 2023-11-26 11:48+0000\n"
-"PO-Revision-Date: 2023-12-27 16:48+0200\n"
+"issues/\n"
+"POT-Creation-Date: 2024-08-02 12:54+0000\n"
+"PO-Revision-Date: 2024-08-07 13:17+0300\n"
 "Last-Translator: Florentina Mușat <florentina [dot] musat [dot] 28 [at] "
 "gmail [dot] com>\n"
 "Language-Team: Romanian <gnomero-list@lists.sourceforge.net>\n"
@@ -19,44 +19,36 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
 "20)) ? 1 : 2);;\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.4.4\n"
 
-#: src/grd-daemon.c:824
-msgid "GNOME Remote Desktop"
-msgstr "Desktop la distanță GNOME"
-
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "Doriți să vă partajați desktop-ul?"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings."
 msgstr ""
-"Un utilizator de pe calculatorul „%s” încearcă să vizualizeze sau să "
-"controleze de la distanță desktop-ul."
+"Permite configurarea setărilor daemon-ului de sistem ale gnome-remote-"
+"desktop."
 
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "Refuză"
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings."
+msgstr ""
+"Autentificarea este necesară pentru a configura setările daemon-ului de "
+"sistem ale gnome-remote-desktop."
 
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "Acceptă"
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+msgid "GNOME Remote Desktop Handover Daemon"
+msgstr "Daemon-ul de transfer al desktopului de la distanță GNOME"
 
-#: src/grd-ctl.c:53
+#: src/grd-ctl.c:59
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Utilizare: %s [OPȚIUNI...] COMANDĂ [SUBCOMANDĂ]...\n"
 
-#: src/grd-ctl.c:421
+#: src/grd-ctl.c:576
 msgid "Commands:\n"
 msgstr "Comenzi:\n"
 
-#: src/grd-ctl.c:426
+#: src/grd-ctl.c:581
 msgid ""
 "  rdp                                        - RDP subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -110,7 +102,7 @@ msgstr ""
 "\n"
 "\n"
 
-#: src/grd-ctl.c:450
+#: src/grd-ctl.c:605
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -154,22 +146,97 @@ msgstr ""
 "                                               un port diferit\n"
 "\n"
 
-#: src/grd-ctl.c:470
+#: src/grd-ctl.c:625
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
 "  --headless                                 - Use headless credentials "
 "storage\n"
+"  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Arată starea curentă\n"
 "\n"
-"Options:\n"
+"Opțiuni:\n"
 "  --headless                                 - Utilizează stocarea "
-"autorizărilor fără cap\n"
+"acreditărilor headless\n"
+"  --system                                   - Configurează daemon-ul de "
+"sistem\n"
 "  --help                                     - Tipărește acest text de "
 "ajutor\n"
+
+#: src/grd-daemon.c:1263
+msgid "GNOME Remote Desktop"
+msgstr "Desktop la distanță GNOME"
+
+#: src/grd-daemon-handover.c:346
+#, c-format
+msgid "This connection is insecure"
+msgstr "Această conexiune nu este sigură"
+
+#. Translators: Don't translate "use redirection server name:i:1".
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:350
+#, c-format
+msgid ""
+"Do you want to continue with an insecure connection?\n"
+"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+"config file."
+msgstr ""
+"Doriți să continuați cu o conexiune nesigură?\n"
+"Pentru a o face sigură, stabiliți <b>“use redirection server name:i:1”</b> "
+"în fișierul de configurare RDP."
+
+#: src/grd-daemon-handover.c:354
+#, c-format
+msgid "Disconnect"
+msgstr "Deconectează"
+
+#: src/grd-daemon-handover.c:355
+#, c-format
+msgid "Continue"
+msgstr "Continuă"
+
+#: src/grd-daemon-user.c:99
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "Portul de partajare desktop a fost modificat"
+
+#: src/grd-daemon-user.c:101
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+"Portul de partajare desktop a fost modificat de la <b>%i</b> la <b>%i</b>.\n"
+"Acest lucru se datorează faptului că serviciul sesiuni de la distanță a fost "
+"activat și are o prioritate mai mare să utilizeze portul <b>%i</b>."
+
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#, c-format
+msgid "Accept"
+msgstr "Acceptă"
+
+#: src/grd-session-vnc.c:305
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Doriți să vă partajați desktop-ul?"
+
+#: src/grd-session-vnc.c:307
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Un utilizator de pe calculatorul „%s” încearcă să vizualizeze sau să "
+"controleze de la distanță desktop-ul."
+
+#: src/grd-session-vnc.c:309
+#, c-format
+msgid "Refuse"
+msgstr "Refuză"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "The port used by the RDP server"
