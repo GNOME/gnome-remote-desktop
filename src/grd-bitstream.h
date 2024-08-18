@@ -33,4 +33,9 @@ uint8_t *grd_bitstream_get_data (GrdBitstream *bitstream);
 
 uint32_t grd_bitstream_get_data_size (GrdBitstream *bitstream);
 
+GrdAVCFrameInfo *grd_bitstream_get_avc_frame_info (GrdBitstream *bitstream);
+
+void grd_bitstream_set_avc_frame_info (GrdBitstream    *bitstream,
+                                       GrdAVCFrameInfo *avc_frame_info);
+
 #endif /* GRD_BITSTREAM_H */

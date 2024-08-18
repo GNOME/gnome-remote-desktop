@@ -27,6 +27,8 @@ struct _GrdBitstream
 {
   uint8_t *data;
   uint32_t data_size;
+
+  GrdAVCFrameInfo *avc_frame_info;
 };
 
 uint8_t *
@@ -39,6 +41,21 @@ uint32_t
 grd_bitstream_get_data_size (GrdBitstream *bitstream)
 {
   return bitstream->data_size;
+}
+
+GrdAVCFrameInfo *
+grd_bitstream_get_avc_frame_info (GrdBitstream *bitstream)
+{
+  return bitstream->avc_frame_info;
+}
+
+void
+grd_bitstream_set_avc_frame_info (GrdBitstream    *bitstream,
+                                  GrdAVCFrameInfo *avc_frame_info)
+{
+  g_assert (!bitstream->avc_frame_info);
+
+  bitstream->avc_frame_info = avc_frame_info;
 }
 
 GrdBitstream *
@@ -57,5 +74,6 @@ grd_bitstream_new (uint8_t  *data,
 void
 grd_bitstream_free (GrdBitstream *bitstream)
 {
+  g_clear_pointer (&bitstream->avc_frame_info, g_free);
   g_free (bitstream);
 }
