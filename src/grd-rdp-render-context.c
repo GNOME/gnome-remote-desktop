@@ -29,10 +29,18 @@ struct _GrdRdpRenderContext
 {
   GObject parent;
 
+  GrdRdpCodec codec;
+
   GrdRdpGfxSurface *gfx_surface;
 };
 
 G_DEFINE_TYPE (GrdRdpRenderContext, grd_rdp_render_context, G_TYPE_OBJECT)
+
+GrdRdpCodec
+grd_rdp_render_context_get_codec (GrdRdpRenderContext *render_context)
+{
+  return render_context->codec;
+}
 
 GrdRdpGfxSurface *
 grd_rdp_render_context_get_gfx_surface (GrdRdpRenderContext *render_context)
@@ -56,6 +64,7 @@ grd_rdp_render_context_new (GrdRdpGraphicsPipeline *graphics_pipeline,
   render_context->gfx_surface =
     grd_rdp_graphics_pipeline_acquire_gfx_surface (graphics_pipeline,
                                                    rdp_surface);
+  render_context->codec = GRD_RDP_CODEC_CAPROGRESSIVE;
 
   return render_context;
 }

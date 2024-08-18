@@ -28,8 +28,17 @@
 G_DECLARE_FINAL_TYPE (GrdRdpRenderContext, grd_rdp_render_context,
                       GRD, RDP_RENDER_CONTEXT, GObject)
 
+typedef enum
+{
+  GRD_RDP_CODEC_CAPROGRESSIVE,
+  GRD_RDP_CODEC_AVC420,
+  GRD_RDP_CODEC_AVC444v2,
+} GrdRdpCodec;
+
 GrdRdpRenderContext *grd_rdp_render_context_new (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                  GrdRdpSurface          *rdp_surface);
+
+GrdRdpCodec grd_rdp_render_context_get_codec (GrdRdpRenderContext *render_context);
 
 GrdRdpGfxSurface *grd_rdp_render_context_get_gfx_surface (GrdRdpRenderContext *render_context);
 
