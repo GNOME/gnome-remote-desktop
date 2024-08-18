@@ -35,6 +35,8 @@ struct _GrdRdpBuffer
   GrdRdpPwBuffer *rdp_pw_buffer;
 
   GrdVkImage *dma_buf_image;
+
+  gboolean marked_for_removal;
 };
 
 G_DEFINE_TYPE (GrdRdpBuffer, grd_rdp_buffer, G_TYPE_OBJECT)
@@ -43,6 +45,18 @@ GrdRdpPwBuffer *
 grd_rdp_buffer_get_rdp_pw_buffer (GrdRdpBuffer *rdp_buffer)
 {
   return rdp_buffer->rdp_pw_buffer;
+}
+
+gboolean
+grd_rdp_buffer_is_marked_for_removal (GrdRdpBuffer *rdp_buffer)
+{
+  return rdp_buffer->marked_for_removal;
+}
+
+void
+grd_rdp_buffer_mark_for_removal (GrdRdpBuffer *rdp_buffer)
+{
+  rdp_buffer->marked_for_removal = TRUE;
 }
 
 static gboolean
