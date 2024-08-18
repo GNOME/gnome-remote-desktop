@@ -44,10 +44,11 @@ struct _GrdRdpSurfaceRenderer
   uint32_t refresh_rate;
 
   GSource *render_source;
-  gboolean rendering_suspended;
   gboolean pending_render_context_reset;
 
   gboolean graphics_subsystem_failed;
+
+  uint32_t total_frame_slots;
 
   GMutex render_mutex;
 
@@ -63,20 +64,20 @@ grd_rdp_surface_renderer_get_refresh_rate (GrdRdpSurfaceRenderer *surface_render
   return surface_renderer->refresh_rate;
 }
 
-gboolean
-grd_rdp_surface_renderer_is_rendering_suspended (GrdRdpSurfaceRenderer *surface_renderer)
+uint32_t
+grd_rdp_surface_renderer_get_total_frame_slots (GrdRdpSurfaceRenderer *surface_renderer)
 {
-  return surface_renderer->rendering_suspended;
+  return surface_renderer->total_frame_slots;
 }
 
 void
-grd_rdp_surface_renderer_update_suspension_state (GrdRdpSurfaceRenderer *surface_renderer,
-                                                  gboolean               suspend_rendering)
+grd_rdp_surface_renderer_update_total_frame_slots (GrdRdpSurfaceRenderer *surface_renderer,
+                                                   uint32_t               total_frame_slots)
 {
-  gboolean rendering_was_suspended = surface_renderer->rendering_suspended;
+  uint32_t old_slot_count = surface_renderer->total_frame_slots;
 
-  surface_renderer->rendering_suspended = suspend_rendering;
-  if (rendering_was_suspended && !surface_renderer->rendering_suspended)
+  surface_renderer->total_frame_slots = total_frame_slots;
+  if (old_slot_count < surface_renderer->total_frame_slots)
     grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
 }
 
@@ -256,6 +257,12 @@ grd_rdp_surface_renderer_reset (GrdRdpSurfaceRenderer *surface_renderer)
   g_mutex_unlock (&surface_renderer->render_mutex);
 }
 
+static gboolean
+can_prepare_new_frame (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  return surface_renderer->total_frame_slots > 0;
+}
+
 static void
 handle_graphics_subsystem_failure (GrdRdpSurfaceRenderer *surface_renderer)
 {
@@ -314,7 +321,7 @@ maybe_render_frame (gpointer user_data)
   if (!rdp_surface->pending_framebuffer)
     return G_SOURCE_CONTINUE;
 
-  if (surface_renderer->rendering_suspended)
+  if (!can_prepare_new_frame (surface_renderer))
     return G_SOURCE_CONTINUE;
 
   acquire_flags = GRD_RDP_ACQUIRE_CONTEXT_FLAG_NONE;
@@ -409,6 +416,8 @@ grd_rdp_surface_renderer_finalize (GObject *object)
 static void
 grd_rdp_surface_renderer_init (GrdRdpSurfaceRenderer *surface_renderer)
 {
+  surface_renderer->total_frame_slots = UINT32_MAX;
+
   surface_renderer->registered_buffers =
     g_hash_table_new_full (NULL, NULL,
                            NULL, g_object_unref);

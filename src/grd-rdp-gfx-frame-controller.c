@@ -28,6 +28,8 @@
 #define ACTIVATE_THROTTLING_TH_DEFAULT 2
 #define DEACTIVATE_THROTTLING_TH_DEFAULT 1
 
+#define UNLIMITED_FRAME_SLOTS (UINT32_MAX)
+
 typedef enum _ThrottlingState
 {
   THROTTLING_STATE_INACTIVE,
@@ -55,6 +57,18 @@ struct _GrdRdpGfxFrameController
 G_DEFINE_TYPE (GrdRdpGfxFrameController,
                grd_rdp_gfx_frame_controller,
                G_TYPE_OBJECT)
+
+static gboolean
+is_rendering_suspended (GrdRdpGfxFrameController *frame_controller)
+{
+  GrdRdpSurface *rdp_surface = frame_controller->rdp_surface;
+  GrdRdpSurfaceRenderer *surface_renderer =
+    grd_rdp_surface_get_surface_renderer (rdp_surface);
+  uint32_t total_frame_slots =
+    grd_rdp_surface_renderer_get_total_frame_slots (surface_renderer);
+
+  return total_frame_slots == 0;
+}
 
 static uint32_t
 get_activate_throttling_th_from_rtt (GrdRdpGfxFrameController *frame_controller,
@@ -85,8 +99,6 @@ grd_rdp_gfx_frame_controller_unack_frame (GrdRdpGfxFrameController *frame_contro
   GrdRdpGfxFrameLog *frame_log = frame_controller->frame_log;
   GrdRdpSurfaceRenderer *surface_renderer =
     grd_rdp_surface_get_surface_renderer (rdp_surface);
-  gboolean rendering_suspended =
-    grd_rdp_surface_renderer_is_rendering_suspended (surface_renderer);
   uint32_t current_activate_throttling_th;
   uint32_t n_unacked_frames;
   uint32_t enc_rate = 0;
@@ -107,7 +119,7 @@ grd_rdp_gfx_frame_controller_unack_frame (GrdRdpGfxFrameController *frame_contro
       if (n_unacked_frames >= frame_controller->activate_throttling_th)
         {
           frame_controller->throttling_state = THROTTLING_STATE_ACTIVE;
-          grd_rdp_surface_renderer_update_suspension_state (surface_renderer, TRUE);
+          grd_rdp_surface_renderer_update_total_frame_slots (surface_renderer, 0);
         }
       break;
     case THROTTLING_STATE_ACTIVE:
@@ -118,17 +130,21 @@ grd_rdp_gfx_frame_controller_unack_frame (GrdRdpGfxFrameController *frame_contro
       if (current_activate_throttling_th < frame_controller->activate_throttling_th)
         {
           frame_controller->throttling_state = THROTTLING_STATE_ACTIVE_LOWERING_LATENCY;
-          grd_rdp_surface_renderer_update_suspension_state (surface_renderer, TRUE);
+          grd_rdp_surface_renderer_update_total_frame_slots (surface_renderer, 0);
         }
       else
         {
+          uint32_t total_frame_slots;
+
           frame_controller->activate_throttling_th = current_activate_throttling_th;
-          grd_rdp_surface_renderer_update_suspension_state (surface_renderer,
-                                                            enc_rate > ack_rate + 1);
+
+          total_frame_slots = enc_rate > ack_rate + 1 ? 0 : ack_rate + 2 - enc_rate;
+          grd_rdp_surface_renderer_update_total_frame_slots (surface_renderer,
+                                                             total_frame_slots);
         }
       break;
     case THROTTLING_STATE_ACTIVE_LOWERING_LATENCY:
-      g_assert (rendering_suspended);
+      g_assert (is_rendering_suspended (frame_controller));
       break;
     }
 }
@@ -160,7 +176,8 @@ grd_rdp_gfx_frame_controller_ack_frame (GrdRdpGfxFrameController *frame_controll
       if (n_unacked_frames <= frame_controller->deactivate_throttling_th)
         {
           frame_controller->throttling_state = THROTTLING_STATE_INACTIVE;
-          grd_rdp_surface_renderer_update_suspension_state (surface_renderer, FALSE);
+          grd_rdp_surface_renderer_update_total_frame_slots (surface_renderer,
+                                                             UNLIMITED_FRAME_SLOTS);
           break;
         }
 
@@ -170,13 +187,17 @@ grd_rdp_gfx_frame_controller_ack_frame (GrdRdpGfxFrameController *frame_controll
       if (current_activate_throttling_th < frame_controller->activate_throttling_th)
         {
           frame_controller->throttling_state = THROTTLING_STATE_ACTIVE_LOWERING_LATENCY;
-          grd_rdp_surface_renderer_update_suspension_state (surface_renderer, TRUE);
+          grd_rdp_surface_renderer_update_total_frame_slots (surface_renderer, 0);
         }
       else
         {
+          uint32_t total_frame_slots;
+
           frame_controller->activate_throttling_th = current_activate_throttling_th;
-          grd_rdp_surface_renderer_update_suspension_state (surface_renderer,
-                                                            enc_rate > ack_rate);
+
+          total_frame_slots = enc_rate > ack_rate ? 0 : ack_rate + 1 - enc_rate;
+          grd_rdp_surface_renderer_update_total_frame_slots (surface_renderer,
+                                                             total_frame_slots);
         }
       break;
     case THROTTLING_STATE_ACTIVE_LOWERING_LATENCY:
@@ -187,20 +208,22 @@ grd_rdp_gfx_frame_controller_ack_frame (GrdRdpGfxFrameController *frame_controll
       if (n_unacked_frames < current_activate_throttling_th)
         {
           frame_controller->throttling_state = THROTTLING_STATE_INACTIVE;
-          grd_rdp_surface_renderer_update_suspension_state (surface_renderer, FALSE);
+          grd_rdp_surface_renderer_update_total_frame_slots (surface_renderer,
+                                                             UNLIMITED_FRAME_SLOTS);
         }
       else if (n_unacked_frames == current_activate_throttling_th)
         {
+          uint32_t total_frame_slots;
+
           frame_controller->throttling_state = THROTTLING_STATE_ACTIVE;
-          grd_rdp_surface_renderer_update_suspension_state (surface_renderer,
-                                                            enc_rate > ack_rate);
+
+          total_frame_slots = enc_rate > ack_rate ? 0 : ack_rate + 1 - enc_rate;
+          grd_rdp_surface_renderer_update_total_frame_slots (surface_renderer,
+                                                             total_frame_slots);
         }
       else if (n_unacked_frames > current_activate_throttling_th)
         {
-          gboolean rendering_suspended =
-            grd_rdp_surface_renderer_is_rendering_suspended (surface_renderer);
-
-          g_assert (rendering_suspended);
+          g_assert (is_rendering_suspended (frame_controller));
         }
       else
         {
@@ -217,8 +240,6 @@ reevaluate_encoding_suspension_state (GrdRdpGfxFrameController *frame_controller
   GrdRdpGfxFrameLog *frame_log = frame_controller->frame_log;
   GrdRdpSurfaceRenderer *surface_renderer =
     grd_rdp_surface_get_surface_renderer (rdp_surface);
-  gboolean rendering_suspended =
-    grd_rdp_surface_renderer_is_rendering_suspended (surface_renderer);
   uint32_t n_unacked_frames;
   uint32_t enc_rate = 0;
   uint32_t ack_rate = 0;
@@ -236,14 +257,14 @@ reevaluate_encoding_suspension_state (GrdRdpGfxFrameController *frame_controller
       if (n_unacked_frames >= frame_controller->activate_throttling_th)
         {
           frame_controller->throttling_state = THROTTLING_STATE_ACTIVE;
-          grd_rdp_surface_renderer_update_suspension_state (surface_renderer, TRUE);
+          grd_rdp_surface_renderer_update_total_frame_slots (surface_renderer, 0);
         }
       break;
     case THROTTLING_STATE_ACTIVE:
       g_assert (frame_controller->activate_throttling_th >
                 frame_controller->deactivate_throttling_th);
       g_assert (n_unacked_frames > frame_controller->deactivate_throttling_th);
-      g_assert (rendering_suspended);
+      g_assert (is_rendering_suspended (frame_controller));
       break;
     case THROTTLING_STATE_ACTIVE_LOWERING_LATENCY:
       /*
@@ -275,7 +296,8 @@ grd_rdp_gfx_frame_controller_clear_all_unacked_frames (GrdRdpGfxFrameController 
   grd_rdp_gfx_frame_log_clear (frame_controller->frame_log);
 
   frame_controller->throttling_state = THROTTLING_STATE_INACTIVE;
-  grd_rdp_surface_renderer_update_suspension_state (surface_renderer, FALSE);
+  grd_rdp_surface_renderer_update_total_frame_slots (surface_renderer,
+                                                     UNLIMITED_FRAME_SLOTS);
 }
 
 void
