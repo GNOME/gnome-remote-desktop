@@ -33,7 +33,8 @@ typedef struct
   int32_t stride;
 } GrdRdpPwBufferDmaBufInfo;
 
-GrdRdpPwBuffer *grd_rdp_pw_buffer_new (struct pw_buffer  *pw_buffer,
+GrdRdpPwBuffer *grd_rdp_pw_buffer_new (struct pw_stream  *pw_stream,
+                                       struct pw_buffer  *pw_buffer,
                                        GError           **error);
 
 void grd_rdp_pw_buffer_free (GrdRdpPwBuffer *rdp_pw_buffer);
@@ -44,6 +45,8 @@ const GrdRdpPwBufferDmaBufInfo *grd_rdp_pw_buffer_get_dma_buf_info (GrdRdpPwBuff
 
 uint8_t *grd_rdp_pw_buffer_get_mapped_data (GrdRdpPwBuffer *rdp_pw_buffer,
                                             int32_t        *stride);
+
+void grd_rdp_pw_buffer_queue_pw_buffer (GrdRdpPwBuffer *rdp_pw_buffer);
 
 void grd_rdp_pw_buffer_ensure_unlocked (GrdRdpPwBuffer *rdp_pw_buffer);
 

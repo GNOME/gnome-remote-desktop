@@ -509,7 +509,8 @@ on_stream_add_buffer (void             *user_data,
   if (stream->ignore_new_buffers)
     return;
 
-  rdp_pw_buffer = grd_rdp_pw_buffer_new (buffer, &error);
+  rdp_pw_buffer = grd_rdp_pw_buffer_new (stream->pipewire_stream, buffer,
+                                         &error);
   if (!rdp_pw_buffer)
     {
       g_warning ("[RDP] Failed to add PipeWire buffer: %s", error->message);

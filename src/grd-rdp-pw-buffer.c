@@ -33,7 +33,9 @@ typedef struct
 
 struct _GrdRdpPwBuffer
 {
+  struct pw_stream *pw_stream;
   struct pw_buffer *pw_buffer;
+
   GrdRdpBufferType buffer_type;
   GrdRdpPwBufferDmaBufInfo *dma_buf_info;
 
@@ -68,6 +70,12 @@ grd_rdp_pw_buffer_get_mapped_data (GrdRdpPwBuffer *rdp_pw_buffer,
   *stride = spa_buffer->datas[0].chunk->stride;
 
   return mem_fd->data;
+}
+
+void
+grd_rdp_pw_buffer_queue_pw_buffer (GrdRdpPwBuffer *rdp_pw_buffer)
+{
+  pw_stream_queue_buffer (rdp_pw_buffer->pw_stream, rdp_pw_buffer->pw_buffer);
 }
 
 void
@@ -161,12 +169,14 @@ try_mmap_buffer (GrdRdpPwBuffer  *rdp_pw_buffer,
 }
 
 GrdRdpPwBuffer *
-grd_rdp_pw_buffer_new (struct pw_buffer  *pw_buffer,
+grd_rdp_pw_buffer_new (struct pw_stream  *pw_stream,
+                       struct pw_buffer  *pw_buffer,
                        GError           **error)
 {
   g_autoptr (GrdRdpPwBuffer) rdp_pw_buffer = NULL;
 
   rdp_pw_buffer = g_new0 (GrdRdpPwBuffer, 1);
+  rdp_pw_buffer->pw_stream = pw_stream;
   rdp_pw_buffer->pw_buffer = pw_buffer;
 
   g_mutex_init (&rdp_pw_buffer->buffer_mutex);
