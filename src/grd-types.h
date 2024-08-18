@@ -23,6 +23,7 @@
 #ifndef GRD_TYPES_H
 #define GRD_TYPES_H
 
+typedef struct _GrdAVCFrameInfo GrdAVCFrameInfo;
 typedef struct _GrdBitstream GrdBitstream;
 typedef struct _GrdClipboard GrdClipboard;
 typedef struct _GrdClipboardRdp GrdClipboardRdp;

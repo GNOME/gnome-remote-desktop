@@ -79,6 +79,8 @@ daemon_sources = files([
 
 if have_rdp
   daemon_sources += files([
+    'grd-avc-frame-info.c',
+    'grd-avc-frame-info.h',
     'grd-bitstream.c',
     'grd-bitstream.h',
     'grd-clipboard-rdp.c',
