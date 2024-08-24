@@ -9,16 +9,16 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-03-14 15:00+0000\n"
-"PO-Revision-Date: 2024-03-15 14:19+0800\n"
+"POT-Creation-Date: 2024-07-29 21:03+0000\n"
+"PO-Revision-Date: 2024-08-24 15:24+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
-"Language-Team: Chinese - China <i18n-zh@googlegroups.com>\n"
+"Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Gtranslator 46.1\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings."
@@ -34,37 +34,51 @@ msgstr "需要身份验证才能配置 GNOME 远程桌面的系统守护进程�
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "GNOME 远程桌面移交守护进程"
 
-#: src/grd-ctl.c:60
+#: src/grd-ctl.c:69
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "使用：%s [选项…] 命令 [子命令]…\n"
 
-#: src/grd-ctl.c:612
+#: src/grd-ctl.c:414
+msgid "Username: "
+msgstr "用户名："
+
+#: src/grd-ctl.c:426 src/grd-ctl.c:569
+msgid "Password: "
+msgstr "密码："
+
+#: src/grd-ctl.c:699
 msgid "Commands:\n"
 msgstr "命令：\n"
 
-#: src/grd-ctl.c:617
+#: src/grd-ctl.c:704
 msgid ""
-"  rdp                                        - RDP subcommands:\n"
-"    set-port                                 - Set port the server binds to\n"
-"    enable                                   - Enable the RDP backend\n"
-"    disable                                  - Disable the RDP backend\n"
-"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
-"    set-tls-key <path-to-key>                - Set path to TLS key\n"
-"    set-credentials <username> <password>    - Set username and password\n"
-"                                               credentials\n"
-"    clear-credentials                        - Clear username and password\n"
-"                                               credentials\n"
-"    enable-view-only                         - Disable remote control of "
+"  rdp                                            - RDP subcommands:\n"
+"    set-port                                     - Set port the server binds "
+"to\n"
+"    enable                                       - Enable the RDP backend\n"
+"    disable                                      - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>                  - Set path to TLS "
+"certificate\n"
+"    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-credentials [<username> [<password>]]    - Set username and "
+"password\n"
+"                                                   credentials\n"
+"    clear-credentials                            - Clear username and "
+"password\n"
+"                                                   credentials\n"
+"    enable-view-only                             - Disable remote control of "
 "input\n"
-"                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
+"                                                   devices\n"
+"    disable-view-only                            - Enable remote control of "
 "input\n"
-"                                               devices\n"
-"    enable-port-negotiation                  - If unavailable, listen to\n"
-"                                               a different port\n"
-"    disable-port-negotiation                 - If unavailable, don't listen\n"
-"                                               to a different port\n"
+"                                                   devices\n"
+"    enable-port-negotiation                      - If unavailable, listen "
+"to\n"
+"                                                   a different port\n"
+"    disable-port-negotiation                     - If unavailable, don't "
+"listen\n"
+"                                                   to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - RDP 子命令：\n"
@@ -73,7 +87,7 @@ msgstr ""
 "    disable                                  - 禁用 RDP 后端\n"
 "    set-tls-cert <path-to-cert>              - 设置到 TLS 证书的路径\n"
 "    set-tls-key <path-to-key>                - 设置到 TLS 密钥的路径\n"
-"    set-credentials <username> <password>    - 设置用户名和密码\n"
+"    set-credentials [<username> [<password>]]    - 设置用户名和密码\n"
 "                                               认证\n"
 "    clear-credentials                        - 清除用户名和密码\n"
 "                                               认证\n"
@@ -87,13 +101,13 @@ msgstr ""
 "                                               另外的端口\n"
 "\n"
 
-#: src/grd-ctl.c:641
+#: src/grd-ctl.c:728
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
-"    set-password <password>                  - Set the VNC password\n"
+"    set-password [<password>]                - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
 "    enable-view-only                         - Disable remote control of "
@@ -109,9 +123,10 @@ msgid ""
 "\n"
 msgstr ""
 "  vnc                                        - VNC 子命令：\n"
+"    set-port                                 - 设置服务器绑定的端口\n"
 "    enable                                   - 启用 VNC 后端\n"
 "    disable                                  - 禁用 VNC 后端\n"
-"    set-password <password>                  - 设置 VNC 密码\n"
+"    set-password [<password>]                  - 设置 VNC 密码\n"
 "    clear-password                           - 清除 VNC 密码\n"
 "    set-auth-method password|prompt          - 设置认证方式\n"
 "    enable-view-only                         - 禁用输入设备的远程\n"
@@ -124,7 +139,7 @@ msgstr ""
 "                                               不同的端口\n"
 "\n"
 
-#: src/grd-ctl.c:661
+#: src/grd-ctl.c:748
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -141,34 +156,33 @@ msgstr ""
 "  --system                                   - 配置系统守护进程\n"
 "  --help                                     - 显示该帮助文本\n"
 
-#: src/grd-daemon.c:1222
+#: src/grd-daemon.c:1291
 msgid "GNOME Remote Desktop"
 msgstr "GNOME 远程桌面"
 
-#: src/grd-daemon-handover.c:346
+#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
 #, c-format
-msgid "This connection is insecure"
-msgstr "此连接不安全"
+msgid "Continue With Insecure Connection?"
+msgstr "使用不安全连接继续吗？"
 
-#. Translators: Don't translate "use redirection server name:i:1".
+#. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:350
+#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
 #, c-format
 msgid ""
-"Do you want to continue with an insecure connection?\n"
-"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
-"config file."
+"This Remote Desktop connection is insecure. To secure this connection, "
+"enable RDSTLS Security in your client by saving the connection settings in "
+"your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
-"您想要继续使用不安全的连接吗？\n"
-"若要确保安全，请在 RDP 配置文件中设置 <b>“use redirection server name:i:1”</"
-"b>。"
+"该远程桌面连接不安全。要使连接安全，请通过将您客户端里的连接设置保存为 RDP 文"
+"件并在其中设定“use redirection server name:i:1”来启用 RDSTLS 安全。"
 
-#: src/grd-daemon-handover.c:354
+#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
 msgid "Disconnect"
 msgstr "断开连接"
 
-#: src/grd-daemon-handover.c:355
+#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
 #, c-format
 msgid "Continue"
 msgstr "继续"
@@ -367,3 +381,17 @@ msgstr ""
 "辨率大小。允许的屏幕共享模式包括：* mirror-primary - 镜像当前用户会话的主监视"
 "器。* extend - 创建新的虚拟监视器并为远程桌面会话使用它。虚拟监视器的初始分辨"
 "率设为 1920x1080 像素。客户端可以通过随后的监视器配置更新来覆盖初始分辨率。"
+
+#, c-format
+#~ msgid "This connection is insecure"
+#~ msgstr "此连接不安全"
+
+#, c-format
+#~ msgid ""
+#~ "Do you want to continue with an insecure connection?\n"
+#~ "To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+#~ "config file."
+#~ msgstr ""
+#~ "您想要继续使用不安全的连接吗？\n"
+#~ "若要确保安全，请在 RDP 配置文件中设置 <b>“use redirection server name:"
+#~ "i:1”</b>。"
