@@ -6,8 +6,8 @@
 msgid ""
 msgstr "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues/\n"
-"POT-Creation-Date: 2024-03-14 15:00+0000\n"
-"PO-Revision-Date: 2024-03-28 19:16+0000\n"
+"POT-Creation-Date: 2024-07-29 21:03+0000\n"
+"PO-Revision-Date: 2024-08-25 19:16+0000\n"
 "Last-Translator: Asier Sarasua Garmendia <asiersarasua@ni.eus>\n"
 "Language-Team: Basque <librezale@librezale.eus>\n"
 "Language: eu\n"
@@ -29,37 +29,51 @@ msgstr "Autentifikatu behar da gnome-remote-desktop aplikazioaren sistemaren dae
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "GNOME Urruneko Mahaigainaren lagapeneko daemon-a"
 
-#: src/grd-ctl.c:60
+#: src/grd-ctl.c:69
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Erabilera: %s [AUKERAK...] KOMANDOA [AZPIKOMANDOA]...\n"
 
-#: src/grd-ctl.c:612
+#: src/grd-ctl.c:414
+msgid "Username: "
+msgstr "Erabiltzaile-izena: "
+
+#: src/grd-ctl.c:426 src/grd-ctl.c:569
+msgid "Password: "
+msgstr "Pasahitza: "
+
+#: src/grd-ctl.c:699
 msgid "Commands:\n"
 msgstr "Komandoak:\n"
 
-#: src/grd-ctl.c:617
+#: src/grd-ctl.c:704
 msgid ""
-"  rdp                                        - RDP subcommands:\n"
-"    set-port                                 - Set port the server binds to\n"
-"    enable                                   - Enable the RDP backend\n"
-"    disable                                  - Disable the RDP backend\n"
-"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
-"    set-tls-key <path-to-key>                - Set path to TLS key\n"
-"    set-credentials <username> <password>    - Set username and password\n"
-"                                               credentials\n"
-"    clear-credentials                        - Clear username and password\n"
-"                                               credentials\n"
-"    enable-view-only                         - Disable remote control of "
+"  rdp                                            - RDP subcommands:\n"
+"    set-port                                     - Set port the server binds "
+"to\n"
+"    enable                                       - Enable the RDP backend\n"
+"    disable                                      - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>                  - Set path to TLS "
+"certificate\n"
+"    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-credentials [<username> [<password>]]    - Set username and "
+"password\n"
+"                                                   credentials\n"
+"    clear-credentials                            - Clear username and "
+"password\n"
+"                                                   credentials\n"
+"    enable-view-only                             - Disable remote control of "
 "input\n"
-"                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
+"                                                   devices\n"
+"    disable-view-only                            - Enable remote control of "
 "input\n"
-"                                               devices\n"
-"    enable-port-negotiation                  - If unavailable, listen to\n"
-"                                               a different port\n"
-"    disable-port-negotiation                 - If unavailable, don't listen\n"
-"                                               to a different port\n"
+"                                                   devices\n"
+"    enable-port-negotiation                      - If unavailable, listen "
+"to\n"
+"                                                   a different port\n"
+"    disable-port-negotiation                     - If unavailable, don't "
+"listen\n"
+"                                                   to a different port\n"
 "\n"
 msgstr "  rdp                                        - RDP azpikomandoak:\n"
 "    set-port                                - Ezarri zerbitzaria zein atakari lotuko zaion\n"
@@ -67,7 +81,7 @@ msgstr "  rdp                                        - RDP azpikomandoak:\n"
 "    disable                                  - Desgaitu RDP motorra\n"
 "    set-tls-cert <ziurtagiriaren-bide-izena>              - Ezarri TLS ziurtagiriaren bide-izena\n"
 "    set-tls-key <gakoaren-bide-izena>                - Ezarria TLS gakoaren bide-izena\n"
-"    set-credentials <erabiltzaile-izena> <pasahitza>    - Ezarri erabiltzaile-izenaren eta pasahitzaren\n"
+"    set-credentials [<erabiltzaile-izena> [<pasahitza>]]    - Ezarri erabiltzaile-izenaren eta pasahitzaren\n"
 "                                               kredentzialak\n"
 "    clear-credentials                        - Garbitu erabiltzaile-izenaren eta pasahitzaren\n"
 "                                               kredentzialak\n"
@@ -81,13 +95,13 @@ msgstr "  rdp                                        - RDP azpikomandoak:\n"
 "                                               beste ataka batean\n"
 "\n"
 
-#: src/grd-ctl.c:641
+#: src/grd-ctl.c:728
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
-"    set-password <password>                  - Set the VNC password\n"
+"    set-password [<password>]                - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
 "    enable-view-only                         - Disable remote control of "
@@ -105,7 +119,7 @@ msgstr "  vnc                                        - VNC azpikomandoak:\n"
 "    set-port                                - Ezarri zerbitzaria zein atakari lotuko zaion\n"
 "    enable                                   - Gaitu VNC motorra\n"
 "    disable                                  - Desgaitu VNC motorra\n"
-"    set-password <pasahitza>                  - Ezarri VNC pasahitza\n"
+"    set-password [<pasahitza>]                  - Ezarri VNC pasahitza\n"
 "    clear-password                           - Garbitu VNC pasahitza\n"
 "    set-auth-method password|prompt          - Ezarri baimen-metodoa\n"
 "    enable-view-only                         - Desgaitu sarrerako gailuen urruneko\n"
@@ -118,7 +132,7 @@ msgstr "  vnc                                        - VNC azpikomandoak:\n"
 "                                               beste ataka batean\n"
 "\n"
 
-#: src/grd-ctl.c:661
+#: src/grd-ctl.c:748
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -134,32 +148,31 @@ msgstr "  status [--show-credentials]                - Erakutsi uneko egoera\n"
 "  --sistema                                - Konfiguratu sistemaren daemon-a\n"
 "  --help                                     - Inprimatu laguntza-testu hau\n"
 
-#: src/grd-daemon.c:1222
+#: src/grd-daemon.c:1291
 msgid "GNOME Remote Desktop"
 msgstr "GNOMEren Urruneko Mahaigaina"
 
-#: src/grd-daemon-handover.c:346
+#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
 #, c-format
-msgid "This connection is insecure"
-msgstr "Konexio hau ez da segurua"
+msgid "Continue With Insecure Connection?"
+msgstr "Jarraitu segurua ez den konexioarekin?"
 
-#. Translators: Don't translate "use redirection server name:i:1".
+#. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:350
+#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
 #, c-format
 msgid ""
-"Do you want to continue with an insecure connection?\n"
-"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
-"config file."
-msgstr "Aurrera jarraitu nahi duzu segurua ez den konexio batean?\n"
-"Konexioa seguru bihurtzeko, ezarri <b><i>“use redirection server name:i:1”</i></b> RDP konfigurazio-fitxategian."
+"This Remote Desktop connection is insecure. To secure this connection, "
+"enable RDSTLS Security in your client by saving the connection settings in "
+"your client as an RDP file and set “use redirection server name:i:1” in it."
+msgstr "Urruneko mahaigain honen konexioa ez da segurua. Konexioa seguru bihurtzeko, gaitu RDSLTS segurtasuna zure bezeroan konexio-ezarpenak RDP fitxategi gisa gordez eta bertan “use redirection server name:i:1” ezarriz."
 
-#: src/grd-daemon-handover.c:354
+#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
 msgid "Disconnect"
 msgstr "Deskonektatu"
 
-#: src/grd-daemon-handover.c:355
+#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
 #, c-format
 msgid "Continue"
 msgstr "Jarraitu"
@@ -335,3 +348,17 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr "Pantaila partekatuko moduak zehazten du VNC motorrak pantaila nagusia ispilatuko duen ala monitore birtual bat sortuko den. Monitore birtualaren hasierako bereizmenerako, VNC motorrak 1920x1080 pixeletako tamaina lehenetsia erabiltzen ditu. Urruneko mahaigaineko saio bat monitore birtual batekin erabiltzean, bezeroek monitore birtualaren bereizmena aldatu dezakete setDesktopSize PDUrekin. Onartutako pantaila partekatuko moduak honakoak dira: * mirror-primary - Grabatu uneko erabiltzaile-saioaren monitore nagusia. * extend - Sortu monitore birtual berria urruneko mahaigaineko saiorako. Monitore birtual horren hasierako bereizmena 1920x1080 pixeletakoa da. Bezeroek hasierako bereizmena indargabetu dezakete geroago, monitore-konfigurazioa eguneratuz."
+
+#, c-format
+#~ msgid "This connection is insecure"
+#~ msgstr "Konexio hau ez da segurua"
+
+#, c-format
+#~ msgid ""
+#~ "Do you want to continue with an insecure connection?\n"
+#~ "To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+#~ "config file."
+#~ msgstr ""
+#~ "Aurrera jarraitu nahi duzu segurua ez den konexio batean?\n"
+#~ "Konexioa seguru bihurtzeko, ezarri <b><i>“use redirection server name:"
+#~ "i:1”</i></b> RDP konfigurazio-fitxategian."
