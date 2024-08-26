@@ -2,25 +2,25 @@
 # Copyright (C) 2022 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Enrico Nicoletto <hiko@duck.com>, 2021-2022.
-# Rafael Fontenelle <rafaelff@gnome.org>, 2021.
 # Matheus Barbosa <mdpb.matheus@gmail.com>, 2022.
 # Leônidas Araújo <leorusvellt@hotmail.com>, 2022.
+# Rafael Fontenelle <rafaelff@gnome.org>, 2021-2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-04-04 14:44+0000\n"
-"PO-Revision-Date: 2024-04-04 19:11-0300\n"
-"Last-Translator: Leônidas Araújo <leorusvellt@hotmail.com>\n"
-"Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
+"POT-Creation-Date: 2024-07-29 21:03+0000\n"
+"PO-Revision-Date: 2024-08-26 13:00-0300\n"
+"Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
+"Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.4.2\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"X-Generator: Gtranslator 46.1\n"
 "X-DL-Team: pt_BR\n"
 "X-DL-Module: gnome-remote-desktop\n"
 "X-DL-Branch: master\n"
@@ -45,69 +45,90 @@ msgstr ""
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "Daemon de transferência de área de trabalho remota GNOME"
 
-#: src/grd-ctl.c:60
+#: src/grd-ctl.c:69
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Uso: %s [OPÇÕES...] COMANDO [SUBCOMANDO]...\n"
 
-#: src/grd-ctl.c:612
+#: src/grd-ctl.c:414
+msgid "Username: "
+msgstr "Nome de usuário: "
+
+#: src/grd-ctl.c:426 src/grd-ctl.c:569
+msgid "Password: "
+msgstr "Senha: "
+
+#: src/grd-ctl.c:699
 msgid "Commands:\n"
 msgstr "Comandos:\n"
 
-# Leônidas -- Aqui, parece haver um erro de digitação na string original.
-#: src/grd-ctl.c:617
+#: src/grd-ctl.c:704
 msgid ""
-"  rdp                                        - RDP subcommands:\n"
-"    set-port                                 - Set port the server binds to\n"
-"    enable                                   - Enable the RDP backend\n"
-"    disable                                  - Disable the RDP backend\n"
-"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
-"    set-tls-key <path-to-key>                - Set path to TLS key\n"
-"    set-credentials <username> <password>    - Set username and password\n"
-"                                               credentials\n"
-"    clear-credentials                        - Clear username and password\n"
-"                                               credentials\n"
-"    enable-view-only                         - Disable remote control of "
+"  rdp                                            - RDP subcommands:\n"
+"    set-port                                     - Set port the server binds "
+"to\n"
+"    enable                                       - Enable the RDP backend\n"
+"    disable                                      - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>                  - Set path to TLS "
+"certificate\n"
+"    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-credentials [<username> [<password>]]    - Set username and "
+"password\n"
+"                                                   credentials\n"
+"    clear-credentials                            - Clear username and "
+"password\n"
+"                                                   credentials\n"
+"    enable-view-only                             - Disable remote control of "
 "input\n"
-"                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
+"                                                   devices\n"
+"    disable-view-only                            - Enable remote control of "
 "input\n"
-"                                               devices\n"
-"    enable-port-negotiation                  - If unavailable, listen to\n"
-"                                               a different port\n"
-"    disable-port-negotiation                 - If unavailable, don't listen\n"
-"                                               to a different port\n"
+"                                                   devices\n"
+"    enable-port-negotiation                      - If unavailable, listen "
+"to\n"
+"                                                   a different port\n"
+"    disable-port-negotiation                     - If unavailable, don't "
+"listen\n"
+"                                                   to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - Subcomandos RDP:\n"
 "    set-port                                 - Define a porta à qual o "
-"servidor se liga\n"
+"servidor\n"
+"                                               se liga\n"
 "    enable                                   - Habilita o backend RDP\n"
-"    disable                                  - Desativa o backend RDP\n"
-"    set-tls-cert <path-to-cert>              - Define caminho para "
-"certificado TLS\n"
-"    set-tls-key <path-to-key>                - Define caminho para chave "
+"    disable                                  - Desabilita o backend RDP\n"
+"    set-tls-cert <caminho-do-cert>           - Define caminho para "
+"certificado\n"
+"                                               TLS\n"
+"    set-tls-key <caminho-do-cert>            - Define caminho para chave "
 "TLS\n"
-"    set-credentials <username> <password>    - Definir credenciais de nome "
-"de usuário e senha\n"
-"    clear-credentials                        - Limpa credenciais de nome de "
-"usuário e senha\n"
+"    set-credentials <usuário> <senha>        - Define credenciais de nome "
+"de\n"
+"                                               usuário e senha\n"
+"    clear-credentials                        - Limpa credenciais de nome de\n"
+"                                               usuário e senha\n"
 "    enable-view-only                         - Desabilita o controle remoto "
-"do dispositivo de entrada\n"
-"    disable-view-only                        - Habilita o controle remoto do "
-"dispositivo de entrada\n"
-"    enable-port-negotiation                  - Se não estiver disponível, "
-"escuta uma porta diferente\n"
-"    disable-port-negotiation                 - Se não estiver disponível, "
-"não escuta uma porta diferente\n"
+"de\n"
+"                                               dispositivos de entrada\n"
+"    disable-view-only                        - Habilita o controle remoto "
+"de\n"
+"                                               dispositivos de entrada\n"
+"    enable-port-negotiation                  - Se não disponível, escuta "
+"uma\n"
+"                                               porta diferente\n"
+"    disable-port-negotiation                 - Se não disponível, não "
+"escuta\n"
+"                                               uma porta diferente\n"
+"\n"
 
-#: src/grd-ctl.c:641
+#: src/grd-ctl.c:728
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
-"    set-password <password>                  - Set the VNC password\n"
+"    set-password [<password>]                - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
 "    enable-view-only                         - Disable remote control of "
@@ -124,23 +145,29 @@ msgid ""
 msgstr ""
 "  vnc                                        - Subcomandos VNC:\n"
 "    set-port                                 - Define a porta à qual o "
-"servidor se liga\n"
+"servidor\n"
+"                                               se liga\n"
 "    enable                                   - Habilita o backend VNC\n"
 "    disable                                  - Desabilita o backend VNC\n"
-"    set-password <password>                  - Define a senha do VNC\n"
+"    set-password <senha>                     - Define a senha do VNC\n"
 "    clear-password                           - Limpa a senha do VNC\n"
 "    set-auth-method password|prompt          - Define o método de "
 "autorização\n"
 "    enable-view-only                         - Desabilita o controle remoto "
-"do dispositivo de entrada\n"
-"    disable-view-only                        - Habilita o controle remoto do "
-"dispositivo de entrada\n"
-"    enable-port-negotiation                  -Se não estiver disponível, "
-"escuta uma porta diferente\n"
-"    disable-port-negotiation                 - Se não estiver disponível, "
-"não escuta uma porta diferente\n"
+"de\n"
+"                                               dispositivos de entrada\n"
+"    disable-view-only                        - Habilita o controle remoto "
+"de\n"
+"                                               dispositivos de entrada\n"
+"    enable-port-negotiation                  - Se não disponível, escuta "
+"uma\n"
+"                                               porta diferente\n"
+"    disable-port-negotiation                 - Se não disponível, não "
+"escuta\n"
+"                                               uma porta diferente\n"
+"\n"
 
-#: src/grd-ctl.c:661
+#: src/grd-ctl.c:748
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -154,39 +181,41 @@ msgstr ""
 "\n"
 "Opções:\n"
 "  --headless                                 - Usa armazenamento de "
-"credenciais sem periféricos\n"
+"credenciais\n"
+"                                               sem periféricos\n"
 "  --system                                   - Configura o daemon do "
 "sistema\n"
 "  --help                                     - Imprime este texto de ajuda\n"
 
-#: src/grd-daemon.c:1222
+#: src/grd-daemon.c:1291
 msgid "GNOME Remote Desktop"
 msgstr "Área de Trabalho Remota do GNOME"
 
-#: src/grd-daemon-handover.c:346
+#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
 #, c-format
-msgid "This connection is insecure"
-msgstr "Esta conexão não é segura"
+msgid "Continue With Insecure Connection?"
+msgstr "Continuar com conexão insegura?"
 
-#. Translators: Don't translate "use redirection server name:i:1".
+#. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:350
+#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
 #, c-format
 msgid ""
-"Do you want to continue with an insecure connection?\n"
-"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
-"config file."
+"This Remote Desktop connection is insecure. To secure this connection, "
+"enable RDSTLS Security in your client by saving the connection settings in "
+"your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
-"Quer continuar com uma conexão não segura?\n"
-"Para torná-la segura, <b>“use o nome do servidor de redirecionamento:i:1”</"
-"b> no arquivo de configuração RDP."
+"Esta conexão de Área de Trabalho Remota é insegura. Para proteger esta "
+"conexão, habilite a Segurança RDSTLS no seu cliente salvando as "
+"configurações de conexão no seu cliente como um arquivo RDP e defina “use "
+"redirection server name:i:1” nele."
 
-#: src/grd-daemon-handover.c:354
+#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
 msgid "Disconnect"
 msgstr "Desconectar"
 
-#: src/grd-daemon-handover.c:355
+#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
 #, c-format
 msgid "Continue"
 msgstr "Continuar"
@@ -410,3 +439,17 @@ msgstr ""
 "virtual é definida como 1920x1080 pixels. Os clientes podem substituir a "
 "resolução inicial com atualizações das configurações do monitor "
 "posteriormente."
+
+#, c-format
+#~ msgid "This connection is insecure"
+#~ msgstr "Esta conexão não é segura"
+
+#, c-format
+#~ msgid ""
+#~ "Do you want to continue with an insecure connection?\n"
+#~ "To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+#~ "config file."
+#~ msgstr ""
+#~ "Quer continuar com uma conexão não segura?\n"
+#~ "Para torná-la segura, <b>“use o nome do servidor de redirecionamento:"
+#~ "i:1”</b> no arquivo de configuração RDP."
