@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-03-14 15:00+0000\n"
-"PO-Revision-Date: 2024-03-15 23:07+0900\n"
-"Last-Translator: Seong-ho Cho <darkcircle.0426@gmail.com>\n"
+"POT-Creation-Date: 2024-07-29 21:03+0000\n"
+"PO-Revision-Date: 2024-08-25 00:50+0900\n"
+"Last-Translator: Seong-ho Cho <shcho@gnome.org>\n"
 "Language-Team: Korean <gnome-kr@googlegroups.com>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.4.4\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings."
@@ -34,62 +34,77 @@ msgstr ""
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "그놈 원격 데스크톱 핸드오버 데몬"
 
-#: src/grd-ctl.c:60
+#: src/grd-ctl.c:69
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "사용법: %s [옵션...] <명령> [하위명령]...\n"
 
-#: src/grd-ctl.c:612
+#: src/grd-ctl.c:414
+msgid "Username: "
+msgstr "사용자이름: "
+
+#: src/grd-ctl.c:426 src/grd-ctl.c:569
+msgid "Password: "
+msgstr "암    호: "
+
+#: src/grd-ctl.c:699
 msgid "Commands:\n"
 msgstr "명령:\n"
 
-#: src/grd-ctl.c:617
+#: src/grd-ctl.c:704
 msgid ""
-"  rdp                                        - RDP subcommands:\n"
-"    set-port                                 - Set port the server binds to\n"
-"    enable                                   - Enable the RDP backend\n"
-"    disable                                  - Disable the RDP backend\n"
-"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
-"    set-tls-key <path-to-key>                - Set path to TLS key\n"
-"    set-credentials <username> <password>    - Set username and password\n"
-"                                               credentials\n"
-"    clear-credentials                        - Clear username and password\n"
-"                                               credentials\n"
-"    enable-view-only                         - Disable remote control of "
+"  rdp                                            - RDP subcommands:\n"
+"    set-port                                     - Set port the server binds "
+"to\n"
+"    enable                                       - Enable the RDP backend\n"
+"    disable                                      - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>                  - Set path to TLS "
+"certificate\n"
+"    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-credentials [<username> [<password>]]    - Set username and "
+"password\n"
+"                                                   credentials\n"
+"    clear-credentials                            - Clear username and "
+"password\n"
+"                                                   credentials\n"
+"    enable-view-only                             - Disable remote control of "
 "input\n"
-"                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
+"                                                   devices\n"
+"    disable-view-only                            - Enable remote control of "
 "input\n"
-"                                               devices\n"
-"    enable-port-negotiation                  - If unavailable, listen to\n"
-"                                               a different port\n"
-"    disable-port-negotiation                 - If unavailable, don't listen\n"
-"                                               to a different port\n"
+"                                                   devices\n"
+"    enable-port-negotiation                      - If unavailable, listen "
+"to\n"
+"                                                   a different port\n"
+"    disable-port-negotiation                     - If unavailable, don't "
+"listen\n"
+"                                                   to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - RDP 하위 명령:\n"
+"    set-port                                 - 서버에 연결할 포트 설정\n"
 "    enable                                   - RDP 백엔드 사용\n"
 "    disable                                  - RDP 백엔드 미사용\n"
 "    set-tls-cert <인증서경로>                  - TLS 인증서 경로 설정\n"
 "    set-tls-key <키-경로>                     - TLS 키 경로 설정\n"
-"    set-credentials <사용자이름> <암호>        - 사용자이름과 암호 인증 설"
+"    set-credentials [<사용자이름> [<암호>]]    - 사용자이름과 암호 인증 설"
 "정\n"
 "    clear-credentials                        - 사용자이름과 암호 인증 지움\n"
 "    enable-view-only                         - 입력 장치 원격 제어 미사용\n"
 "    disable-view-only                        - 입력 장치 원격 제어 사용\n"
 "    enable-port-negotiation                  - 사용할 수 없다면 다른\n"
-"                                               포트 번호 감청\n"
+"                                               포트 번호로 연결 수락\n"
 "    disable-port-negotiation                 - 사용할 수 없다면 다른 \n"
-"                                               포트 번호 감청 안함\n"
+"                                               포트 번호로 연결 수락 안함\n"
 "\n"
 
-#: src/grd-ctl.c:641
+#: src/grd-ctl.c:728
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
-"    set-password <password>                  - Set the VNC password\n"
+"    set-password [<password>]                - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
 "    enable-view-only                         - Disable remote control of "
@@ -105,20 +120,21 @@ msgid ""
 "\n"
 msgstr ""
 "  vnc                                        - VNC 하위 명령:\n"
+"    set-port                                 - 서버에 연결할 포트 설정\n"
 "    enable                                   - VNC 백엔드 사용\n"
 "    disable                                  - VNC 백엔드 미사용\n"
-"    set-password <password>                  - VNC 암호 설정\n"
+"    set-password [<암호>]                    - VNC 암호 설정\n"
 "    clear-password                           - VNC 암호 지움\n"
-"    set-auth-method password|prompt          - 인증 방식 설정\n"
+"    set-auth-method 암호|프롬프트              - 인증 방식 설정\n"
 "    enable-view-only                         - 원격 입력 장치 제어 미사용\n"
 "    disable-view-only                        - 원격 입력 장치 제어 사용\n"
 "    enable-port-negotiation                  - 사용할 수 없다면 다른\n"
-"                                               포트 번호 감청\n"
+"                                               포트 번호로 연결 수락\n"
 "    disable-port-negotiation                 - 사용할 수 없다면 다른 \n"
-"                                               포트 번호 감청 안함\n"
+"                                               포트 번호로 연결 수락 안함\n"
 "\n"
 
-#: src/grd-ctl.c:661
+#: src/grd-ctl.c:748
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -136,34 +152,34 @@ msgstr ""
 "  --system                                   - 시스템 데몬을 설정합니다\n"
 "  --help                                     - 도움말 문구를 출력합니다\n"
 
-#: src/grd-daemon.c:1222
+#: src/grd-daemon.c:1291
 msgid "GNOME Remote Desktop"
 msgstr "그놈 원격 데스크톱"
 
-#: src/grd-daemon-handover.c:346
+#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
 #, c-format
-msgid "This connection is insecure"
-msgstr "이 연결은 안전하지 않습니다"
+msgid "Continue With Insecure Connection?"
+msgstr "비보안 연결을 계속하시겠습니까?"
 
-#. Translators: Don't translate "use redirection server name:i:1".
+#. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:350
+#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
 #, c-format
 msgid ""
-"Do you want to continue with an insecure connection?\n"
-"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
-"config file."
+"This Remote Desktop connection is insecure. To secure this connection, "
+"enable RDSTLS Security in your client by saving the connection settings in "
+"your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
-"안전하지 않은 연결을 계속하시겠습니까?\n"
-"안전한 연결을 진행하려면 RDP 설정 파일에 <b>“use redirection server name:"
-"i:1”</b> 설정을 추가하십시오."
+"원격 데스크톱 연결은 안전하지 않습니다. 연결을 안전하게 하려면 RDSTLS 보안을 "
+"클라이언트 단에서 활성화한 연결 설정을 RDP 파일로 저장하고 해당 파일에서 "
+"“use redirection server name:i:1”을 설정하십시오."
 
-#: src/grd-daemon-handover.c:354
+#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
 msgid "Disconnect"
 msgstr "연결 끊기"
 
-#: src/grd-daemon-handover.c:355
+#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
 #, c-format
 msgid "Continue"
 msgstr "계속"
@@ -373,3 +389,17 @@ msgstr ""
 "새 가상 모니터를 만들어 활용하는 extend가 있습니다. 이 가상 모니터의 초기 모"
 "니터 해상도는 1920x1080으로 설정합니다. 클라이언트에서는 모니터 설정을 업데이"
 "트할 때마다 해당 설정 값으로 초기 해상도 값을 대신할 수 있습니다."
+
+#, c-format
+#~ msgid "This connection is insecure"
+#~ msgstr "이 연결은 안전하지 않습니다"
+
+#, c-format
+#~ msgid ""
+#~ "Do you want to continue with an insecure connection?\n"
+#~ "To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+#~ "config file."
+#~ msgstr ""
+#~ "안전하지 않은 연결을 계속하시겠습니까?\n"
+#~ "안전한 연결을 진행하려면 RDP 설정 파일에 <b>“use redirection server name:"
+#~ "i:1”</b> 설정을 추가하십시오."
