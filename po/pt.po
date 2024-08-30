@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-05-07 16:55+0000\n"
-"PO-Revision-Date: 2024-05-09 16:33+0100\n"
+"POT-Creation-Date: 2024-07-29 21:03+0000\n"
+"PO-Revision-Date: 2024-08-30 16:17+0100\n"
 "Last-Translator: Hugo Carvalho <hugokarvalho@hotmail.com>\n"
 "Language-Team: Portuguese <hugokarvalho@hotmail.com>\n"
 "Language: pt\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.4.4\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings."
@@ -37,37 +37,51 @@ msgstr ""
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "Daemon transferência do Ambiente de trabalho remoto do GNOME"
 
-#: src/grd-ctl.c:60
+#: src/grd-ctl.c:69
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Utilização: %s [OPÇÕES...] COMANDO [SUBCOMANDO]...\n"
 
-#: src/grd-ctl.c:612
+#: src/grd-ctl.c:414
+msgid "Username: "
+msgstr "Nome de utilizador: "
+
+#: src/grd-ctl.c:426 src/grd-ctl.c:569
+msgid "Password: "
+msgstr "Palavra-passe: "
+
+#: src/grd-ctl.c:699
 msgid "Commands:\n"
 msgstr "Comandos:\n"
 
-#: src/grd-ctl.c:617
+#: src/grd-ctl.c:704
 msgid ""
-"  rdp                                        - RDP subcommands:\n"
-"    set-port                                 - Set port the server binds to\n"
-"    enable                                   - Enable the RDP backend\n"
-"    disable                                  - Disable the RDP backend\n"
-"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
-"    set-tls-key <path-to-key>                - Set path to TLS key\n"
-"    set-credentials <username> <password>    - Set username and password\n"
-"                                               credentials\n"
-"    clear-credentials                        - Clear username and password\n"
-"                                               credentials\n"
-"    enable-view-only                         - Disable remote control of "
+"  rdp                                            - RDP subcommands:\n"
+"    set-port                                     - Set port the server binds "
+"to\n"
+"    enable                                       - Enable the RDP backend\n"
+"    disable                                      - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>                  - Set path to TLS "
+"certificate\n"
+"    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-credentials [<username> [<password>]]    - Set username and "
+"password\n"
+"                                                   credentials\n"
+"    clear-credentials                            - Clear username and "
+"password\n"
+"                                                   credentials\n"
+"    enable-view-only                             - Disable remote control of "
 "input\n"
-"                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
+"                                                   devices\n"
+"    disable-view-only                            - Enable remote control of "
 "input\n"
-"                                               devices\n"
-"    enable-port-negotiation                  - If unavailable, listen to\n"
-"                                               a different port\n"
-"    disable-port-negotiation                 - If unavailable, don't listen\n"
-"                                               to a different port\n"
+"                                                   devices\n"
+"    enable-port-negotiation                      - If unavailable, listen "
+"to\n"
+"                                                   a different port\n"
+"    disable-port-negotiation                     - If unavailable, don't "
+"listen\n"
+"                                                   to a different port\n"
 "\n"
 msgstr ""
 "  rdp                                        - Subcomandos RDP:\n"
@@ -82,24 +96,30 @@ msgstr ""
 "    set-credentials <username> <password>    - Define nome de utilizador e "
 "palavra-passe\n"
 "                                               credenciais\n"
-"    clear-credentials                        - Limpar nome de utilizador e "
-"palavra-passe\n"
-"                                               credenciais\n"
+"    clear-credentials                        - Limpar credenciais de nomes "
+"de utilizador\n"
+"                                               e palavras-passe\n"
 "    enable-view-only                         - Desativa o controlo remoto de "
-"entrada\n"
-"                                               dispositivos\n"
+"dispositivos\n"
+"                                               de entrada\n"
 "    disable-view-only                        - Ativa o controlo remoto de "
-"entrada\n"
-"                                               dispositivos\n"
+"dispositivos\n"
+"                                               de entrada\n"
+"    enable-port-negotiation                      - Se não estiver "
+"disponível, ouvir uma\n"
+"                                                   porta diferente\n"
+"    disable-port-negotiation                     - Se não estiver "
+"disponível, não ouvir uma\n"
+"                                                   porta diferente\n"
 "\n"
 
-#: src/grd-ctl.c:641
+#: src/grd-ctl.c:728
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
-"    set-password <password>                  - Set the VNC password\n"
+"    set-password [<password>]                - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
 "    enable-view-only                         - Disable remote control of "
@@ -124,14 +144,20 @@ msgstr ""
 "    set-auth-method password|prompt          - Define o método de "
 "autorização\n"
 "    enable-view-only                         - Desativa o controlo remoto de "
-"entrada\n"
-"                                               dispositivos\n"
+"dispositivos\n"
+"                                               de entrada\n"
 "    disable-view-only                        - Ativa o controlo remoto de "
-"entrada\n"
-"                                               dispositivos\n"
+"dispositivos\n"
+"                                               de entrada\n"
+"    enable-port-negotiation                      - Se não estiver "
+"disponível, ouvir uma\n"
+"                                                   porta diferente\n"
+"    disable-port-negotiation                     - Se não estiver "
+"disponível, não ouvir uma\n"
+"                                                   porta diferente\n"
 "\n"
 
-#: src/grd-ctl.c:661
+#: src/grd-ctl.c:748
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -149,34 +175,35 @@ msgstr ""
 "  —system                                   - Configure o daenon do sistema\n"
 "  --help                                     - Mostra este texto de ajuda\n"
 
-#: src/grd-daemon.c:1222
+#: src/grd-daemon.c:1291
 msgid "GNOME Remote Desktop"
 msgstr "Ambiente de trabalho remoto do GNOME"
 
-#: src/grd-daemon-handover.c:346
+#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
 #, c-format
-msgid "This connection is insecure"
-msgstr "Esta ligação não é segura"
+msgid "Continue With Insecure Connection?"
+msgstr "Continuar com a ligação insegura?"
 
-#. Translators: Don't translate "use redirection server name:i:1".
+#. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:350
+#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
 #, c-format
 msgid ""
-"Do you want to continue with an insecure connection?\n"
-"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
-"config file."
+"This Remote Desktop connection is insecure. To secure this connection, "
+"enable RDSTLS Security in your client by saving the connection settings in "
+"your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
-"Pretende continuar com uma ligação insegura?\n"
-"Para a tornar segura active: <b> “Usar o nome de servidor de redirecção:"
-"i:1”</b>no ficheiro de configuração RDP."
+"Esta ligação de Ambiente de Trabalho Remoto é insegura. Para proteger esta "
+"ligação, ative a segurança RDSTLS no seu cliente, guardando as definições de "
+"ligação no seu cliente como um ficheiro RDP e defina “usar nome do servidor "
+"de redirecionamento:i:1” no mesmo."
 
-#: src/grd-daemon-handover.c:354
+#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
 msgid "Disconnect"
 msgstr "Desligar"
 
-#: src/grd-daemon-handover.c:355
+#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
 #, c-format
 msgid "Continue"
 msgstr "Continuar"
@@ -402,3 +429,17 @@ msgstr ""
 "sessão remota do ambiente de trabalho. A resolução inicial deste monitor "
 "virtual está definida para 1920x1080 píxeis. Os clientes podem anular a "
 "resolução inicial com subsequentes atualizações da configuração do monitor."
+
+#, c-format
+#~ msgid "This connection is insecure"
+#~ msgstr "Esta ligação não é segura"
+
+#, c-format
+#~ msgid ""
+#~ "Do you want to continue with an insecure connection?\n"
+#~ "To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+#~ "config file."
+#~ msgstr ""
+#~ "Pretende continuar com uma ligação insegura?\n"
+#~ "Para a tornar segura active: <b> “Usar o nome de servidor de redirecção:"
+#~ "i:1”</b>no ficheiro de configuração RDP."
