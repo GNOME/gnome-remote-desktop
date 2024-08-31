@@ -1,3 +1,17 @@
+47.rc
+=====
+* Reduce resource usage of unauthenticated sessions
+
+Contributors:
+  Pascal Nowack
+
+Translators:
+  Jordi Mas i Hernandez [ca], Daniel Șerbănescu [ro], Vasil Pupkin [be],
+  Ekaterine Papava [ka], Yuri Chornoivan [uk], Luming Zh [zh_CN],
+  Asier Sarasua Garmendia [eu], Jiri Grönroos [fi], Rafael Fontenelle [pt_BR],
+  Jose Riha [sk], Danial Behzadi [fa], Daniel Rusek [cs], Seong-ho Cho [ko],
+  Hugo Carvalho [pt]
+
 47.beta
 =======
 * Gracefully handle file descriptor limits
