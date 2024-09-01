@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-07-05 08:11+0000\n"
+"POT-Creation-Date: 2024-08-21 00:48+0000\n"
 "PO-Revision-Date: 2024-06-25 14:12+0300\n"
 "Last-Translator: Sabri Ünal <yakushabb@gmail.com>\n"
 "Language-Team: Turkish <takim@gnome.org.tr>\n"
@@ -39,24 +39,24 @@ msgstr ""
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "GNOME Uzaktan Masaüstü Handover Art Alan Hizmeti"
 
-#: src/grd-ctl.c:69
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Kullanım: %s [SEÇENEKLER...] KOMUT [ALT KOMUT]...\n"
 
-#: src/grd-ctl.c:414
+#: src/grd-ctl.c:305
 msgid "Username: "
 msgstr "Kullanıcı Adı: "
 
-#: src/grd-ctl.c:426 src/grd-ctl.c:569
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
 msgid "Password: "
 msgstr "Parola: "
 
-#: src/grd-ctl.c:699
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
 msgstr "Komutlar:\n"
 
-#: src/grd-ctl.c:704
+#: src/grd-ctl.c:595
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -117,7 +117,7 @@ msgstr ""
 "                                                   noktası dinleme\n"
 "\n"
 
-#: src/grd-ctl.c:728
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -161,7 +161,7 @@ msgstr ""
 "                                               noktası dinleme\n"
 "\n"
 
-#: src/grd-ctl.c:748
+#: src/grd-ctl.c:639
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -180,7 +180,7 @@ msgstr ""
 "yapılandır\n"
 "  --help                                     - Bu yardım metnini yazdır\n"
 
-#: src/grd-daemon.c:1291
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Uzaktan Masaüstü"
 
@@ -427,15 +427,3 @@ msgstr ""
 "oturumu için yeni sanal monitör oluştur ve kullan. Bu sanal monitörün ilk "
 "ekran çözünürlüğü 1920x1080 pikseldir.İstemciler, bu ilk çözünürlüğü sonraki "
 "ekran yapılandırma güncellemeleriyle değiştirebilirler."
-
-#~ msgid "This connection is insecure"
-#~ msgstr "Bu bağlantı güvensiz"
-
-#~ msgid ""
-#~ "Do you want to continue with an insecure connection?\n"
-#~ "To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
-#~ "config file."
-#~ msgstr ""
-#~ "Güvensiz bağlantıyla sürdürmek ister misiniz?\n"
-#~ "Güvenli yapmak için RDP yapılandırma dosyasında <b>“use redirection "
-#~ "server name:i:1”</b> belirtin."
