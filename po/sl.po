@@ -10,8 +10,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-06-21 18:20+0000\n"
-"PO-Revision-Date: 2024-06-22 08:14+0200\n"
+"POT-Creation-Date: 2024-09-08 16:47+0000\n"
+"PO-Revision-Date: 2024-09-08 22:51+0200\n"
 "Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenščina <gnome-si@googlegroups.com>\n"
 "Language: sl\n"
@@ -37,28 +37,42 @@ msgstr ""
 "Preverjanje pristnosti je potrebno za prilagoditev nastavitev sistemskega "
 "prikritega procesa gnome-remote-desktop."
 
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr ""
+"Dovoli omogočanje in onemogočanje sistemskega prikritega procesa gnome-"
+"remote-desktop"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon."
+msgstr ""
+"Preverjanje pristnosti je potrebno za omogočanje/onemogočanje sistemskega "
+"prikritega procesa gnome-remote-desktop."
+
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "Podajni prikriti proces za oddaljeno namizje GNOME"
 
-#: src/grd-ctl.c:69
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Uporaba: %s [MOŽNOSTI ...] UKAZ [PODUKAZ] ...\n"
 
-#: src/grd-ctl.c:414
+#: src/grd-ctl.c:305
 msgid "Username: "
 msgstr "Uporabniško ime: "
 
-#: src/grd-ctl.c:426 src/grd-ctl.c:569
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
 msgid "Password: "
 msgstr "Geslo:"
 
-#: src/grd-ctl.c:699
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
 msgstr "Ukazi:\n"
 
-#: src/grd-ctl.c:704
+#: src/grd-ctl.c:595
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -115,7 +129,7 @@ msgstr ""
 "                                                   na drugih vratih\n"
 "\n"
 
-#: src/grd-ctl.c:728
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -158,7 +172,7 @@ msgstr ""
 "                                               vhodnih naprav\n"
 "\n"
 
-#: src/grd-ctl.c:748
+#: src/grd-ctl.c:639
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -177,16 +191,18 @@ msgstr ""
 "program\n"
 "  --help                                     – Izpiše to besedilo pomoči\n"
 
-#: src/grd-daemon.c:1263
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
 msgstr "Oddaljeno namizje GNOME"
 
-#: src/grd-daemon-handover.c:289 src/grd-daemon-handover.c:350
+#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "Ali želite nadaljevati s povezavo, ki ni varna?"
 
-#: src/grd-daemon-handover.c:290 src/grd-daemon-handover.c:352
+#. Translators: Don't translate “use redirection server name:i:1”.
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -198,12 +214,12 @@ msgstr ""
 "povezave v odjemalcu kot datoteko RDP in v njej nastavite »uporabi ime "
 "strežnika za preusmeritev:i:1«."
 
-#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:359
+#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
 msgid "Disconnect"
 msgstr "Odklopi"
 
-#: src/grd-daemon-handover.c:298 src/grd-daemon-handover.c:360
+#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
 #, c-format
 msgid "Continue"
 msgstr "Nadaljuj"
