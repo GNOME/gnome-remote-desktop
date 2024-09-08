@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-07-29 21:03+0000\n"
-"PO-Revision-Date: 2024-08-27 15:32+0330\n"
+"POT-Creation-Date: 2024-09-08 16:47+0000\n"
+"PO-Revision-Date: 2024-09-09 00:23+0330\n"
 "Last-Translator: Danial Behzadi <dani.behzi@ubuntu.com>\n"
 "Language-Team: Persian <fa@li.org>\n"
 "Language: fa\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-DamnedLies-Scope: partial\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings."
@@ -29,28 +29,39 @@ msgid ""
 "settings."
 msgstr "نیازمند هویت‌سنجی برای پیکربندی تنظیمات خدمت سامانهٔ gnome-remote-desktop."
 
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr "اجازهٔ به و از کار انداختن خدمت سامانهٔ gnome-remote-desktop"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's system "
+"daemon."
+msgstr ""
+"نیازمند هویت‌سنجی برای به یا از کار انداختن خدمت سامانهٔ gnome-remote-desktop."
+
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "خدمت تحویل میزکار دوردست گنوم"
 
-#: src/grd-ctl.c:69
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "استفاده: ‪%s [OPTIONS...] COMMAND [SUBCOMMAND]...‬\n"
 
-#: src/grd-ctl.c:414
+#: src/grd-ctl.c:305
 msgid "Username: "
 msgstr "نام کاربری: "
 
-#: src/grd-ctl.c:426 src/grd-ctl.c:569
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
 msgid "Password: "
 msgstr "گذرواژه: "
 
-#: src/grd-ctl.c:699
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
 msgstr "دستورها:\n"
 
-#: src/grd-ctl.c:704
+#: src/grd-ctl.c:595
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -96,7 +107,7 @@ msgstr ""
 "نبودن\n"
 "\n"
 
-#: src/grd-ctl.c:728
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -134,7 +145,7 @@ msgstr ""
 "نبودن\n"
 "\n"
 
-#: src/grd-ctl.c:748
+#: src/grd-ctl.c:639
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -152,7 +163,7 @@ msgstr ""
 "  --system                                   - پیکربندی خدمت سامانه\n"
 "  --help                                     - چاپ این متن راهنما\n"
 
-#: src/grd-daemon.c:1291
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
 msgstr "میزکار دوردست گنوم"
 
