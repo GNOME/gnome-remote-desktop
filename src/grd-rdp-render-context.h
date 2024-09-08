@@ -42,6 +42,10 @@ GrdRdpCodec grd_rdp_render_context_get_codec (GrdRdpRenderContext *render_contex
 
 GrdRdpGfxSurface *grd_rdp_render_context_get_gfx_surface (GrdRdpRenderContext *render_context);
 
+GrdRdpViewCreator *grd_rdp_render_context_get_view_creator (GrdRdpRenderContext *render_context);
+
+GrdEncodeSession *grd_rdp_render_context_get_encode_session (GrdRdpRenderContext *render_context);
+
 GrdImageView *grd_rdp_render_context_acquire_image_view (GrdRdpRenderContext *render_context);
 
 void grd_rdp_render_context_release_image_view (GrdRdpRenderContext *render_context,

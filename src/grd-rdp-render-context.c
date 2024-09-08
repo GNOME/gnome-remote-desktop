@@ -32,6 +32,8 @@ struct _GrdRdpRenderContext
   GrdRdpCodec codec;
 
   GrdRdpGfxSurface *gfx_surface;
+  GrdRdpViewCreator *view_creator;
+  GrdEncodeSession *encode_session;
 
   GHashTable *image_views;
   GHashTable *acquired_image_views;
@@ -49,6 +51,18 @@ GrdRdpGfxSurface *
 grd_rdp_render_context_get_gfx_surface (GrdRdpRenderContext *render_context)
 {
   return render_context->gfx_surface;
+}
+
+GrdRdpViewCreator *
+grd_rdp_render_context_get_view_creator (GrdRdpRenderContext *render_context)
+{
+  return render_context->view_creator;
+}
+
+GrdEncodeSession *
+grd_rdp_render_context_get_encode_session (GrdRdpRenderContext *render_context)
+{
+  return render_context->encode_session;
 }
 
 GrdImageView *
@@ -109,6 +123,8 @@ grd_rdp_render_context_dispose (GObject *object)
   if (render_context->acquired_image_views)
     g_assert (g_hash_table_size (render_context->acquired_image_views) == 0);
 
+  g_clear_object (&render_context->view_creator);
+  g_clear_object (&render_context->encode_session);
   g_clear_object (&render_context->gfx_surface);
 
   G_OBJECT_CLASS (grd_rdp_render_context_parent_class)->dispose (object);
