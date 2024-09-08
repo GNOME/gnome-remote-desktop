@@ -80,6 +80,12 @@ grd_rdp_surface_renderer_get_refresh_rate (GrdRdpSurfaceRenderer *surface_render
   return surface_renderer->refresh_rate;
 }
 
+GrdRdpBufferInfo *
+grd_rdp_surface_renderer_get_buffer_info (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  return surface_renderer->rdp_buffer_info;
+}
+
 uint32_t
 grd_rdp_surface_renderer_get_total_frame_slots (GrdRdpSurfaceRenderer *surface_renderer)
 {

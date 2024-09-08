@@ -37,6 +37,8 @@ GrdRdpSurfaceRenderer *grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface
 
 uint32_t grd_rdp_surface_renderer_get_refresh_rate (GrdRdpSurfaceRenderer *surface_renderer);
 
+GrdRdpBufferInfo *grd_rdp_surface_renderer_get_buffer_info (GrdRdpSurfaceRenderer *surface_renderer);
+
 uint32_t grd_rdp_surface_renderer_get_total_frame_slots (GrdRdpSurfaceRenderer *surface_renderer);
 
 void grd_rdp_surface_renderer_update_total_frame_slots (GrdRdpSurfaceRenderer *surface_renderer,
