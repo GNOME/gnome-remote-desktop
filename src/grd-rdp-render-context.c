@@ -32,6 +32,9 @@ struct _GrdRdpRenderContext
   GrdRdpCodec codec;
 
   GrdRdpGfxSurface *gfx_surface;
+
+  GHashTable *image_views;
+  GHashTable *acquired_image_views;
 };
 
 G_DEFINE_TYPE (GrdRdpRenderContext, grd_rdp_render_context, G_TYPE_OBJECT)
@@ -46,6 +49,35 @@ GrdRdpGfxSurface *
 grd_rdp_render_context_get_gfx_surface (GrdRdpRenderContext *render_context)
 {
   return render_context->gfx_surface;
+}
+
+GrdImageView *
+grd_rdp_render_context_acquire_image_view (GrdRdpRenderContext *render_context)
+{
+  GrdImageView *image_view = NULL;
+  GHashTableIter iter;
+
+  g_hash_table_iter_init (&iter, render_context->image_views);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &image_view))
+    {
+      if (g_hash_table_contains (render_context->acquired_image_views,
+                                 image_view))
+        continue;
+
+      g_hash_table_add (render_context->acquired_image_views, image_view);
+      return image_view;
+    }
+
+  g_assert_not_reached ();
+  return NULL;
+}
+
+void
+grd_rdp_render_context_release_image_view (GrdRdpRenderContext *render_context,
+                                           GrdImageView        *image_view)
+{
+  if (!g_hash_table_remove (render_context->acquired_image_views, image_view))
+    g_assert_not_reached ();
 }
 
 GrdRdpRenderContext *
@@ -74,14 +106,30 @@ grd_rdp_render_context_dispose (GObject *object)
 {
   GrdRdpRenderContext *render_context = GRD_RDP_RENDER_CONTEXT (object);
 
+  if (render_context->acquired_image_views)
+    g_assert (g_hash_table_size (render_context->acquired_image_views) == 0);
+
   g_clear_object (&render_context->gfx_surface);
 
   G_OBJECT_CLASS (grd_rdp_render_context_parent_class)->dispose (object);
 }
 
 static void
+grd_rdp_render_context_finalize (GObject *object)
+{
+  GrdRdpRenderContext *render_context = GRD_RDP_RENDER_CONTEXT (object);
+
+  g_clear_pointer (&render_context->acquired_image_views, g_hash_table_unref);
+  g_clear_pointer (&render_context->image_views, g_hash_table_unref);
+
+  G_OBJECT_CLASS (grd_rdp_render_context_parent_class)->finalize (object);
+}
+
+static void
 grd_rdp_render_context_init (GrdRdpRenderContext *render_context)
 {
+  render_context->image_views = g_hash_table_new (NULL, NULL);
+  render_context->acquired_image_views = g_hash_table_new (NULL, NULL);
 }
 
 static void
@@ -90,4 +138,5 @@ grd_rdp_render_context_class_init (GrdRdpRenderContextClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->dispose = grd_rdp_render_context_dispose;
+  object_class->finalize = grd_rdp_render_context_finalize;
 }
