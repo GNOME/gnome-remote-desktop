@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-08-02 11:41+0000\n"
-"PO-Revision-Date: 2024-09-07 02:13+0200\n"
+"POT-Creation-Date: 2024-09-08 16:47+0000\n"
+"PO-Revision-Date: 2024-09-08 21:46+0200\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -32,6 +32,19 @@ msgid ""
 msgstr ""
 "Autentisering krävs för att konfigurera systemdemoninställningar för gnome-"
 "remote-desktop."
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr ""
+"Tillåt aktivering och inaktivering av systemdemonen för gnome-remote-desktop"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon."
+msgstr ""
+"Autentisering krävs för att aktivera eller inaktivera systemdemonen för "
+"gnome-remote-desktop."
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
