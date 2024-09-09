@@ -9,7 +9,7 @@
 
   <action id="org.gnome.remotedesktop.enable-system-daemon">
     <description>Allow to enable and disable gnome-remote-desktop's system daemon</description>
-    <message>Authentication is required to enable or disable gnome-remote-desktop's system daemon.</message>
+    <message>Authentication is required to enable or disable gnome-remote-desktop's system daemon</message>
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
