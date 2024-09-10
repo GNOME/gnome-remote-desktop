@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-07-29 21:03+0000\n"
-"PO-Revision-Date: 2024-09-08 17:27+0200\n"
+"POT-Creation-Date: 2024-09-09 22:06+0000\n"
+"PO-Revision-Date: 2024-09-10 01:32+0200\n"
 "Last-Translator: Ask Hjorth Larsen <asklarsen@gmail.com>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
 "Language: da\n"
@@ -20,37 +20,50 @@ msgstr ""
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings."
-msgstr "Tillad ændring af indstillingerne for gnome-remote-desktops systemdæmon."
+msgstr ""
+"Tillad ændring af indstillingerne for gnome-remote-desktops systemdæmon."
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
 "settings."
-msgstr "Ændring af indstillingerne for gnome-remote-desktops systemdæmon kræver godkendelse."
+msgstr ""
+"Ændring af indstillingerne for gnome-remote-desktops systemdæmon kræver "
+"godkendelse."
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr "Tillad aktivering og deaktivering af gnome-remote-desktops systemdæmon"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon."
+msgstr "Aktivering og deaktivering af gnome-remote-desktops systemdæmon kræver godkendelse."
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "GNOME Fjernskrivebords “handover”-dæemon"
 
-#: src/grd-ctl.c:69
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Brug: %s [TILVALG...] KOMMANDO [UNDERKOMMANDO]...\n"
 
-#: src/grd-ctl.c:414
+#: src/grd-ctl.c:305
 msgid "Username: "
 msgstr "Brugernavn: "
 
-#: src/grd-ctl.c:426 src/grd-ctl.c:569
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
 msgid "Password: "
 msgstr "Adgangskode: "
 
-#: src/grd-ctl.c:699
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
 msgstr "Kommandoer:\n"
 
 # (Oversættelsen bruger med vilje lidt mindre indrykning end på engelsk)
-#: src/grd-ctl.c:704
+#: src/grd-ctl.c:595
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -81,7 +94,8 @@ msgid ""
 "\n"
 msgstr ""
 "  rdp                                        - RDP-underkommandoer:\n"
-"    set-port                                 - Angiv den port, serveren binder\n"
+"    set-port                                 - Angiv den port, serveren "
+"binder\n"
 "                                               til\n"
 "    enable                                   - Slå RDP-motor til\n"
 "    disable                                  - Slå RDP-motor fra\n"
@@ -89,17 +103,22 @@ msgstr ""
 "    set-tls-key <sti-til-nøgle>              - Angiv sti til TLS-nøgle\n"
 "    set-credentials [<brugernavn> [<adgangskode>]]  - Angiv brugernavn og\n"
 "                                               adgangskode\n"
-"    clear-credentials                        - Ryd brugernavn og adgangskode\n"
-"    enable-view-only                         - Slå fjernstyring af inputenheder\n"
+"    clear-credentials                        - Ryd brugernavn og "
+"adgangskode\n"
+"    enable-view-only                         - Slå fjernstyring af "
+"inputenheder\n"
 "                                               fra\n"
-"    disable-view-only                        - Slå fjernstyring af inputenheder\n"
+"    disable-view-only                        - Slå fjernstyring af "
+"inputenheder\n"
 "                                               til\n"
-"    enable-port-negotiation                  - Hvis utilgængelig så lyt på en\n"
+"    enable-port-negotiation                  - Hvis utilgængelig så lyt på "
+"en\n"
 "                                               anden port\n"
-"    disable-port-negotiation                 - Hvis utilgængelig så lyt ikke\n"
+"    disable-port-negotiation                 - Hvis utilgængelig så lyt "
+"ikke\n"
 "                                               på en anden port\n"
 
-#: src/grd-ctl.c:728
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -121,24 +140,29 @@ msgid ""
 "\n"
 msgstr ""
 "  vnc                                        - VNC-underkommandoer:\n"
-"    set-port                                 - Angiv den port, serveren binder\n"
+"    set-port                                 - Angiv den port, serveren "
+"binder\n"
 "                                               til\n"
 "    enable                                   - Slå VNC-motor til\n"
 "    disable                                  - Slå VNC-motor fra\n"
 "    set-password [<adgangskode>]             - Angiv VNC-adgangskode\n"
 "    clear-password                           - Ryd VNC-adgangskode\n"
 "    set-auth-method password|prompt          - Angiv godkendelsesmetode\n"
-"    enable-view-only                         - Slå fjernstyring af inputenheder\n"
+"    enable-view-only                         - Slå fjernstyring af "
+"inputenheder\n"
 "                                               fra\n"
-"    disable-view-only                        - Slå fjernstyring af inputenheder\n"
+"    disable-view-only                        - Slå fjernstyring af "
+"inputenheder\n"
 "                                               til\n"
-"    enable-port-negotiation                  - Hvis utilgængelig så lyt på en\n"
+"    enable-port-negotiation                  - Hvis utilgængelig så lyt på "
+"en\n"
 "                                               anden port\n"
-"    disable-port-negotiation                 - Hvis utilgængelig så lyt ikke\n"
+"    disable-port-negotiation                 - Hvis utilgængelig så lyt "
+"ikke\n"
 "                                               på en anden port\n"
 "\n"
 
-#: src/grd-ctl.c:748
+#: src/grd-ctl.c:639
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -156,7 +180,7 @@ msgstr ""
 "  --system                                   - Konfigurér systemdæmonen\n"
 "  --help                                     - Udskriv denne hjælpetekst\n"
 
-#: src/grd-daemon.c:1291
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Fjernskrivebord"
 
@@ -173,7 +197,11 @@ msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
 "enable RDSTLS Security in your client by saving the connection settings in "
 "your client as an RDP file and set “use redirection server name:i:1” in it."
-msgstr "Denne fjernskrivebordsforbindelse er usikker. For at sikre forbindelsen skal du aktivere RDSTLS-sikkerhed i din klient ved at gemme forbindelsesindstillingerne i din klient som en RDP-fil og angive “use redirection server name:i:1” i den."
+msgstr ""
+"Denne fjernskrivebordsforbindelse er usikker. For at sikre forbindelsen skal "
+"du aktivere RDSTLS-sikkerhed i din klient ved at gemme "
+"forbindelsesindstillingerne i din klient som en RDP-fil og angive “use "
+"redirection server name:i:1” i den."
 
 #: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
