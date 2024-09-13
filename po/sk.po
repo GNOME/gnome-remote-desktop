@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-08-21 00:48+0000\n"
-"PO-Revision-Date: 2024-08-27 00:24+0200\n"
+"POT-Creation-Date: 2024-09-08 16:47+0000\n"
+"PO-Revision-Date: 2024-09-13 21:00+0200\n"
 "Last-Translator: Jose Riha <jose1711@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
 "Language: sk\n"
@@ -31,6 +31,23 @@ msgid ""
 "settings."
 msgstr ""
 "Pre konfiguráciu nastavenia systémového démona gnome-remote-desktop sa "
+"vyžaduje overenie."
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+#| msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr ""
+"Umožniť povolenie a zakázanie systémového démona gnome-remote-desktop."
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+#| msgid ""
+#| "Authentication is required to configure gnome-remote-desktop's system "
+#| "daemon settings."
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon."
+msgstr ""
+"Pre povolenie alebo zakázanie systémového démona gnome-remote-desktop sa "
 "vyžaduje overenie."
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
@@ -181,9 +198,10 @@ msgid ""
 "enable RDSTLS Security in your client by saving the connection settings in "
 "your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
-"Toto pripojenie k vzdialenej ploche nie je zabezpečené. Ak chcete toto pripojenie zabezpečiť, "
-"zapnite zabezpečenie RDSTLS vo vašom klientovi uložením nastavenia pripojenia "
-"do súboru RDP a následne v ňom nastavte „use redirection server name:i:1“."
+"Toto pripojenie k vzdialenej ploche nie je zabezpečené. Ak chcete toto "
+"pripojenie zabezpečiť, zapnite zabezpečenie RDSTLS vo vašom klientovi "
+"uložením nastavenia pripojenia do súboru RDP a následne v ňom nastavte „use "
+"redirection server name:i:1“."
 
 #: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
