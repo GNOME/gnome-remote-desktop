@@ -1,3 +1,17 @@
+47.0
+====
+
+Translators:
+  Sabri Ünal [tr], Davide Ferracin [it], Fran Dieguez [gl],
+  Aurimas Černius [lt], Efstathios Iosifidis [el], twlvnn kraftwerk [bg],
+  Alexander Shopov [bg], Daniel [es], Irénée THIRION [fr], Anders Jonsson [sv],
+  Andika Triwidada [id], Andi Chandler [en_GB], Piotr Drąg [pl], Martin [sl],
+  Danial Behzadi [fa], Balázs Úr [hu], Jordi Mas i Hernandez [ca],
+  Emin Tufan Çetin [tr], Luming Zh [zh_CN], Ekaterine Papava [ka],
+  Juliano de Souza Camargo [pt_BR], Daniel Rusek [cs], Yuri Chornoivan [uk],
+  Tim Sabsch [de], Ask Hjorth Larsen [da], Bruce Cowan [en_GB], Artur S0 [ru],
+  Quentin PAGÈS [oc], Vasil Pupkin [be], Jose Riha [sk], Yaron Shahrabani [he]
+
 47.rc
 =====
 * Reduce resource usage of unauthenticated sessions
