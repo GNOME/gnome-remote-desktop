@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-07-29 21:03+0000\n"
-"PO-Revision-Date: 2024-08-30 16:17+0100\n"
+"POT-Creation-Date: 2024-09-09 10:17+0000\n"
+"PO-Revision-Date: 2024-09-15 00:53+0100\n"
 "Last-Translator: Hugo Carvalho <hugokarvalho@hotmail.com>\n"
 "Language-Team: Portuguese <hugokarvalho@hotmail.com>\n"
 "Language: pt\n"
@@ -18,17 +18,31 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings."
 msgstr ""
-"Permitir a configuração do sistema de Ambiente de Trabalho Remoto do GNOME."
+"Permitir configurar as definições do sistema de Ambiente de Trabalho Remoto "
+"do GNOME."
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
 "settings."
+msgstr ""
+"É necessário a autenticação para configurar as definições do sistema de "
+"Ambiente de Trabalho Remoto."
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr ""
+"Permitir a ativar/desativar o sistema de Ambiente de Trabalho Remoto do GNOME"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon."
 msgstr ""
 "É necessário a autenticação para configurar o sistema de Ambiente de "
 "Trabalho Remoto."
@@ -37,24 +51,24 @@ msgstr ""
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "Daemon transferência do Ambiente de trabalho remoto do GNOME"
 
-#: src/grd-ctl.c:69
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Utilização: %s [OPÇÕES...] COMANDO [SUBCOMANDO]...\n"
 
-#: src/grd-ctl.c:414
+#: src/grd-ctl.c:305
 msgid "Username: "
 msgstr "Nome de utilizador: "
 
-#: src/grd-ctl.c:426 src/grd-ctl.c:569
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
 msgid "Password: "
 msgstr "Palavra-passe: "
 
-#: src/grd-ctl.c:699
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
 msgstr "Comandos:\n"
 
-#: src/grd-ctl.c:704
+#: src/grd-ctl.c:595
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -113,7 +127,7 @@ msgstr ""
 "                                                   porta diferente\n"
 "\n"
 
-#: src/grd-ctl.c:728
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -157,7 +171,7 @@ msgstr ""
 "                                                   porta diferente\n"
 "\n"
 
-#: src/grd-ctl.c:748
+#: src/grd-ctl.c:639
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -175,7 +189,7 @@ msgstr ""
 "  —system                                   - Configure o daenon do sistema\n"
 "  --help                                     - Mostra este texto de ajuda\n"
 
-#: src/grd-daemon.c:1291
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
 msgstr "Ambiente de trabalho remoto do GNOME"
 
