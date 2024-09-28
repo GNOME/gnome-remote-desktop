@@ -330,6 +330,9 @@ create_shader_modules (GrdVkDevice              *device,
   if (!create_shader_module (device, spirv_sources->avc_main_view,
                              &shader_modules->create_avc_main_view, error))
     return FALSE;
+  if (!create_shader_module (device, spirv_sources->avc_stereo_view,
+                             &shader_modules->create_avc_stereo_view, error))
+    return FALSE;
 
   return TRUE;
 }
@@ -489,6 +492,7 @@ destroy_shader_modules (GrdVkDevice *device)
 {
   GrdVkShaderModules *shader_modules = &device->shader_modules;
 
+  clear_shader_module (device, &shader_modules->create_avc_stereo_view);
   clear_shader_module (device, &shader_modules->create_avc_main_view);
 }
 

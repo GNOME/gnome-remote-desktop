@@ -1,0 +1,328 @@
+/*
+ * Copyright (C) 2024 Pascal Nowack
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ */
+
+#version 460
+#extension GL_EXT_null_initializer : require
+#extension GL_EXT_shader_explicit_arithmetic_types_int32 : require
+
+layout (local_size_x = 16, local_size_y = 16) in;
+
+layout (constant_id = 0) const uint32_t SOURCE_WIDTH = 256;
+layout (constant_id = 1) const uint32_t SOURCE_HEIGHT = 256;
+
+layout (constant_id = 2) const uint32_t TARGET_WIDTH = 256;
+layout (constant_id = 3) const uint32_t TARGET_HEIGHT = 256;
+
+layout (constant_id = 4) const uint32_t PERFORM_DMG_DETECTION = 0;
+layout (constant_id = 5) const uint32_t STATE_BUFFER_STRIDE = 0;
+
+layout (set = 0, binding = 0, r8) uniform writeonly image2D main_y_layer;
+layout (set = 0, binding = 1, rg8) uniform writeonly image2D main_uv_layer;
+
+layout (set = 1, binding = 0, r8) uniform writeonly image2D aux_y_layer;
+layout (set = 1, binding = 1, rg8) uniform writeonly image2D aux_uv_layer;
+
+layout (set = 2, binding = 0) buffer writeonly DamageBuffer
+{
+  uint32_t data[];
+} needs_update;
+
+layout (set = 2, binding = 1) buffer writeonly AuxiliaryViewInfoBuffer
+{
+  uint32_t data[];
+} needs_auxiliary_view;
+
+layout (set = 3, binding = 0) uniform sampler2D src_new_sampler;
+layout (set = 3, binding = 1) uniform sampler2D src_old_sampler;
+
+float
+rgb_to_y (int32_t r,
+          int32_t g,
+          int32_t b)
+{
+  return float ((54 * r + 183 * g + 18 * b) >> 8);
+}
+
+float
+rgb_to_u (int32_t r,
+          int32_t g,
+          int32_t b)
+{
+  return float (((-29 * r - 99 * g + 128 * b) >> 8) + 128);
+}
+
+float
+rgb_to_v (int32_t r,
+          int32_t g,
+          int32_t b)
+{
+  return float (((128 * r - 116 * g - 12 * b) >> 8) + 128);
+}
+
+shared uint32_t have_block_damage = {};
+shared float block_u2[16][16] = {};
+shared float block_v2[16][16] = {};
+
+void
+main ()
+{
+  const uint32_t x_2x2 = gl_GlobalInvocationID.x;
+  const uint32_t y_2x2 = gl_GlobalInvocationID.y;
+  const uint32_t local_x = gl_LocalInvocationID.x;
+  const uint32_t local_y = gl_LocalInvocationID.y;
+  const uint32_t tw_half = TARGET_WIDTH >> 1;
+  uint32_t x_1x1;
+  uint32_t y_1x1;
+  uint32_t x_4x4;
+  float y0, y1, y2, y3;
+  float u0, u1, u2, u3;
+  float v0, v1, v2, v3;
+  float u_filtered, v_filtered;
+  uint32_t dmg_p0, dmg_p1, dmg_p2, dmg_p3;
+  vec4 uv_filtered;
+
+  x_1x1 = x_2x2 << 1;
+  y_1x1 = y_2x2 << 1;
+  x_4x4 = x_2x2 >> 1;
+
+  dmg_p0 = dmg_p1 = dmg_p2 = dmg_p3 = 0;
+
+  /*
+   * YUV444:
+   *
+   *  Y              U              V
+   *  -----------    -----------    -----------
+   *  | y0 | y1 |    | u0 | u1 |    | v0 | v1 |
+   *  -----------    -----------    -----------
+   *  | y2 | y3 |    | u2 | u3 |    | v2 | v3 |
+   *  -----------    -----------    -----------
+   */
+  if (x_1x1 < SOURCE_WIDTH && y_1x1 < SOURCE_HEIGHT)
+    {
+      vec4 bgrx_new;
+      vec4 bgrx_old;
+      int32_t b, g, r;
+
+      bgrx_new = texture (src_new_sampler, ivec2 (x_1x1, y_1x1));
+      bgrx_old = texture (src_old_sampler, ivec2 (x_1x1, y_1x1));
+
+      dmg_p0 = bgrx_new.bgr != bgrx_old.bgr ? 1 : 0;
+
+      b = int32_t (bgrx_new.b * 255.0f);
+      g = int32_t (bgrx_new.g * 255.0f);
+      r = int32_t (bgrx_new.r * 255.0f);
+
+      y0 = rgb_to_y (r, g, b);
+      u0 = rgb_to_u (r, g, b);
+      v0 = rgb_to_v (r, g, b);
+    }
+  else
+    {
+      y0 = 0.0f;
+      u0 = 128.0f;
+      v0 = 128.0f;
+    }
+
+  if (x_1x1 + 1 < SOURCE_WIDTH && y_1x1 < SOURCE_HEIGHT)
+    {
+      vec4 bgrx_new;
+      vec4 bgrx_old;
+      int32_t b, g, r;
+
+      bgrx_new = texture (src_new_sampler, ivec2 (x_1x1 + 1, y_1x1));
+      bgrx_old = texture (src_old_sampler, ivec2 (x_1x1 + 1, y_1x1));
+
+      dmg_p1 = bgrx_new.bgr != bgrx_old.bgr ? 1 : 0;
+
+      b = int32_t (bgrx_new.b * 255.0f);
+      g = int32_t (bgrx_new.g * 255.0f);
+      r = int32_t (bgrx_new.r * 255.0f);
+
+      y1 = rgb_to_y (r, g, b);
+      u1 = rgb_to_u (r, g, b);
+      v1 = rgb_to_v (r, g, b);
+    }
+  else
+    {
+      y1 = y0;
+      u1 = u0;
+      v1 = v0;
+    }
+
+  if (x_1x1 < SOURCE_WIDTH && y_1x1 + 1 < SOURCE_HEIGHT)
+    {
+      vec4 bgrx_new;
+      vec4 bgrx_old;
+      int32_t b, g, r;
+
+      bgrx_new = texture (src_new_sampler, ivec2 (x_1x1, y_1x1 + 1));
+      bgrx_old = texture (src_old_sampler, ivec2 (x_1x1, y_1x1 + 1));
+
+      dmg_p2 = bgrx_new.bgr != bgrx_old.bgr ? 1 : 0;
+
+      b = int32_t (bgrx_new.b * 255.0f);
+      g = int32_t (bgrx_new.g * 255.0f);
+      r = int32_t (bgrx_new.r * 255.0f);
+
+      y2 = rgb_to_y (r, g, b);
+      u2 = rgb_to_u (r, g, b);
+      v2 = rgb_to_v (r, g, b);
+
+      if (x_1x1 + 1 < SOURCE_WIDTH)
+        {
+          bgrx_new = texture (src_new_sampler, ivec2 (x_1x1 + 1, y_1x1 + 1));
+          bgrx_old = texture (src_old_sampler, ivec2 (x_1x1 + 1, y_1x1 + 1));
+
+          dmg_p3 = bgrx_new.bgr != bgrx_old.bgr ? 1 : 0;
+
+          b = int32_t (bgrx_new.b * 255.0f);
+          g = int32_t (bgrx_new.g * 255.0f);
+          r = int32_t (bgrx_new.r * 255.0f);
+
+          y3 = rgb_to_y (r, g, b);
+          u3 = rgb_to_u (r, g, b);
+          v3 = rgb_to_v (r, g, b);
+        }
+      else
+        {
+          y3 = y2;
+          u3 = u2;
+          v3 = v2;
+        }
+    }
+  else
+    {
+      y2 = y0;
+      u2 = u0;
+      v2 = v0;
+      y3 = y1;
+      u3 = u1;
+      v3 = v1;
+    }
+
+  block_u2[local_x][local_y] = u2;
+  block_v2[local_x][local_y] = v2;
+
+  /* We cannot bail out early here due to the barrier() call */
+  if (x_2x2 < TARGET_WIDTH >> 1 && y_2x2 < TARGET_HEIGHT >> 1)
+    {
+      if (PERFORM_DMG_DETECTION == 0 ||
+          dmg_p0 != 0 || dmg_p1 != 0 || dmg_p2 != 0 || dmg_p3 != 0)
+        have_block_damage = 1;
+    }
+
+  barrier ();
+  if (x_2x2 >= TARGET_WIDTH >> 1 || y_2x2 >= TARGET_HEIGHT >> 1)
+    return;
+
+  if (local_x == 0 &&
+      local_y == 0 &&
+      have_block_damage == 1)
+    {
+      uint32_t x_64x64 = x_2x2 >> 5;
+      uint32_t y_64x64 = y_2x2 >> 5;
+      uint32_t state_pos;
+
+      state_pos = y_64x64 * STATE_BUFFER_STRIDE + x_64x64;
+      needs_update.data[state_pos] = 1;
+    }
+
+  /*
+   * See also 3.3.8.3.3 YUV420p Stream Combination for YUV444v2 mode
+   * ([MS-RDPEGFX]) for the construction of the main and auxiliary view.
+   */
+
+  /*
+   * The main view is constructed the same way as in the AVC420 case
+   * (4 Luma values (4Y), 2 Chroma values (1U, 1V) per 2x2 BGRX block).
+   *
+   * The chroma values are calculated from the average U/V values.
+   */
+
+  imageStore (main_y_layer, ivec2 (x_1x1, y_1x1), vec4 (y0 / 255.0f));
+  imageStore (main_y_layer, ivec2 (x_1x1 + 1, y_1x1), vec4 (y1 / 255.0f));
+  imageStore (main_y_layer, ivec2 (x_1x1, y_1x1 + 1), vec4 (y2 / 255.0f));
+  imageStore (main_y_layer, ivec2 (x_1x1 + 1, y_1x1 + 1), vec4 (y3 / 255.0f));
+
+  u_filtered = (u0 + u1 + u2 + u3) / 4;
+  v_filtered = (v0 + v1 + v2 + v3) / 4;
+
+  uv_filtered = vec4 (u_filtered / 255.0f,
+                      v_filtered / 255.0f,
+                      0,
+                      0);
+  imageStore (main_uv_layer, ivec2 (x_2x2, y_2x2), uv_filtered);
+
+  /*
+   * The auxiliary view is constructed as follows (simplified):
+   *
+   * Luma:
+   *  -----------------------------------------------
+   *  | u1 | u1 | u1 | u1 | ... | v1 | v1 | v1 | v1 |
+   *  -----------------------------------------------
+   *  | u3 | u3 | u3 | u3 | ... | v3 | v3 | v3 | v3 |
+   *  -----------------------------------------------
+   *  | u1 | u1 | u1 | u1 | ... | v1 | v1 | v1 | v1 |
+   *  -----------------------------------------------
+   *  | u3 | u3 | u3 | u3 | ... | v3 | v3 | v3 | v3 |
+   *  -----------------------------------------------
+   *  ...
+   *
+   * Chroma U:
+   *  -----------------------------------------------
+   *  | u2 | u2 | u2 | u2 | ... | v2 | v2 | v2 | v2 |
+   *  -----------------------------------------------
+   *  ...
+   *
+   * Chroma V:
+   *  -----------------------------------------------
+   *  | u2 | u2 | u2 | u2 | ... | v2 | v2 | v2 | v2 |
+   *  -----------------------------------------------
+   *  ...
+   *
+   * If x_1x1 MOD 4 == 0, then u2 and v2 are written to U,
+   * otherwise they will be written to V.
+   */
+
+  imageStore (aux_y_layer, ivec2 (x_2x2, y_1x1), vec4 (u1 / 255.0f));
+  imageStore (aux_y_layer, ivec2 (x_2x2 + tw_half, y_1x1), vec4 (v1 / 255.0f));
+  imageStore (aux_y_layer, ivec2 (x_2x2, y_1x1 + 1), vec4 (u3 / 255.0f));
+  imageStore (aux_y_layer, ivec2 (x_2x2 + tw_half, y_1x1 + 1), vec4 (v3 / 255.0f));
+
+  if (x_2x2 == x_4x4 << 1)
+    {
+      vec4 u2s;
+
+      u2s = vec4 (block_u2[local_x][local_y] / 255.0f,
+                  block_u2[local_x + 1][local_y] / 255.0f,
+                  0,
+                  0);
+      imageStore (aux_uv_layer, ivec2 (x_4x4, y_2x2), u2s);
+    }
+  else
+    {
+      vec4 v2s;
+
+      v2s = vec4 (block_v2[local_x - 1][local_y] / 255.0f,
+                  block_v2[local_x][local_y] / 255.0f,
+                  0,
+                  0);
+      imageStore (aux_uv_layer, ivec2 (x_4x4 + (tw_half >> 1), y_2x2), v2s);
+    }
+}

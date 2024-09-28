@@ -1,6 +1,7 @@
 if have_rdp
   shaders = [
     'grd-avc-main-view',
+    'grd-avc-stereo-view',
   ]
 
   spirv_sources = []

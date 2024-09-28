@@ -38,6 +38,7 @@ struct _GrdVkSPIRVSource
 struct _GrdVkSPIRVSources
 {
   GrdVkSPIRVSource *avc_main_view;
+  GrdVkSPIRVSource *avc_stereo_view;
 };
 
 GrdHwAccelVulkan *grd_hwaccel_vulkan_new (GrdEglThread  *egl_thread,
