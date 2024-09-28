@@ -54,8 +54,8 @@ typedef struct
   VkCommandBuffer synchronize_state_buffer;
 
   VkCommandBuffer init_layouts;
-  VkCommandBuffer create_main_view_simple;
-  VkCommandBuffer create_main_view_difference;
+  VkCommandBuffer create_stereo_view_simple;
+  VkCommandBuffer create_stereo_view_difference;
 } CommandBuffers;
 
 typedef struct
@@ -91,6 +91,7 @@ struct _GrdRdpViewCreatorAVC
   VkDescriptorPool vk_image_descriptor_pool;
   VkDescriptorPool vk_buffer_descriptor_pool;
   VkDescriptorSet vk_descriptor_set_main_view;
+  VkDescriptorSet vk_descriptor_set_aux_view;
   VkDescriptorSet vk_descriptor_set_state;
   VkDescriptorSet vk_descriptor_set_sources;
 
@@ -103,8 +104,8 @@ struct _GrdRdpViewCreatorAVC
   CommandBuffers command_buffers;
   VkFence vk_fence;
 
-  Pipeline *main_view_pipeline;
-  Pipeline *main_view_dmg_pipeline;
+  Pipeline *stereo_view_pipeline;
+  Pipeline *stereo_view_dmg_pipeline;
 };
 
 G_DEFINE_TYPE (GrdRdpViewCreatorAVC, grd_rdp_view_creator_avc,
@@ -134,14 +135,17 @@ pipeline_free (Pipeline *pipeline)
 static void
 write_image_descriptor_sets (GrdRdpViewCreatorAVC *view_creator_avc,
                              GrdImageViewNV12     *main_image_view,
+                             GrdImageViewNV12     *aux_image_view,
                              GrdVkImage           *src_image_new,
                              GrdVkImage           *src_image_old)
 {
   VkDevice vk_device = grd_vk_device_get_device (view_creator_avc->device);
   GrdVkImage *main_view_y = grd_image_view_nv12_get_y_layer (main_image_view);
   GrdVkImage *main_view_uv = grd_image_view_nv12_get_uv_layer (main_image_view);
-  VkWriteDescriptorSet write_descriptor_sets[4] = {};
-  VkDescriptorImageInfo image_infos[4] = {};
+  GrdVkImage *aux_view_y = grd_image_view_nv12_get_y_layer (aux_image_view);
+  GrdVkImage *aux_view_uv = grd_image_view_nv12_get_uv_layer (aux_image_view);
+  VkWriteDescriptorSet write_descriptor_sets[6] = {};
+  VkDescriptorImageInfo image_infos[6] = {};
 
   image_infos[0].sampler = VK_NULL_HANDLE;
   image_infos[0].imageView = grd_vk_image_get_image_view (main_view_y);
@@ -150,14 +154,20 @@ write_image_descriptor_sets (GrdRdpViewCreatorAVC *view_creator_avc,
   image_infos[1] = image_infos[0];
   image_infos[1].imageView = grd_vk_image_get_image_view (main_view_uv);
 
-  image_infos[2].sampler = view_creator_avc->vk_src_new_sampler;
-  image_infos[2].imageView = grd_vk_image_get_image_view (src_image_new);
-  image_infos[2].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  image_infos[2] = image_infos[0];
+  image_infos[2].imageView = grd_vk_image_get_image_view (aux_view_y);
 
-  image_infos[3] = image_infos[2];
-  image_infos[3].sampler = view_creator_avc->vk_src_old_sampler;
+  image_infos[3] = image_infos[0];
+  image_infos[3].imageView = grd_vk_image_get_image_view (aux_view_uv);
+
+  image_infos[4].sampler = view_creator_avc->vk_src_new_sampler;
+  image_infos[4].imageView = grd_vk_image_get_image_view (src_image_new);
+  image_infos[4].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+  image_infos[5] = image_infos[4];
+  image_infos[5].sampler = view_creator_avc->vk_src_old_sampler;
   if (src_image_old)
-    image_infos[3].imageView = grd_vk_image_get_image_view (src_image_old);
+    image_infos[5].imageView = grd_vk_image_get_image_view (src_image_old);
 
   write_descriptor_sets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   write_descriptor_sets[0].dstSet =
@@ -173,17 +183,27 @@ write_image_descriptor_sets (GrdRdpViewCreatorAVC *view_creator_avc,
 
   write_descriptor_sets[2] = write_descriptor_sets[0];
   write_descriptor_sets[2].dstSet =
-    view_creator_avc->vk_descriptor_set_sources;
+    view_creator_avc->vk_descriptor_set_aux_view;
   write_descriptor_sets[2].dstBinding = 0;
-  write_descriptor_sets[2].descriptorType =
-    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   write_descriptor_sets[2].pImageInfo = &image_infos[2];
 
   write_descriptor_sets[3] = write_descriptor_sets[2];
   write_descriptor_sets[3].dstBinding = 1;
   write_descriptor_sets[3].pImageInfo = &image_infos[3];
 
-  vkUpdateDescriptorSets (vk_device, 4, write_descriptor_sets, 0, NULL);
+  write_descriptor_sets[4] = write_descriptor_sets[0];
+  write_descriptor_sets[4].dstSet =
+    view_creator_avc->vk_descriptor_set_sources;
+  write_descriptor_sets[4].dstBinding = 0;
+  write_descriptor_sets[4].descriptorType =
+    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  write_descriptor_sets[4].pImageInfo = &image_infos[4];
+
+  write_descriptor_sets[5] = write_descriptor_sets[4];
+  write_descriptor_sets[5].dstBinding = 1;
+  write_descriptor_sets[5].pImageInfo = &image_infos[5];
+
+  vkUpdateDescriptorSets (vk_device, 6, write_descriptor_sets, 0, NULL);
 }
 
 static void
@@ -229,12 +249,15 @@ maybe_init_image_layout (GrdRdpViewCreatorAVC *view_creator_avc,
 static gboolean
 maybe_record_init_layouts (GrdRdpViewCreatorAVC  *view_creator_avc,
                            GrdImageViewNV12      *main_image_view,
+                           GrdImageViewNV12      *aux_image_view,
                            GrdVkImage            *src_image_new,
                            GrdVkImage            *src_image_old,
                            GError               **error)
 {
   GrdVkImage *main_view_y = grd_image_view_nv12_get_y_layer (main_image_view);
   GrdVkImage *main_view_uv = grd_image_view_nv12_get_uv_layer (main_image_view);
+  GrdVkImage *aux_view_y = grd_image_view_nv12_get_y_layer (aux_image_view);
+  GrdVkImage *aux_view_uv = grd_image_view_nv12_get_uv_layer (aux_image_view);
   VkCommandBuffer command_buffer =
     view_creator_avc->command_buffers.init_layouts;
   VkCommandBufferBeginInfo begin_info = {};
@@ -243,6 +266,8 @@ maybe_record_init_layouts (GrdRdpViewCreatorAVC  *view_creator_avc,
   view_creator_avc->pending_layout_transition =
     grd_vk_image_get_image_layout (main_view_y) != VK_IMAGE_LAYOUT_GENERAL ||
     grd_vk_image_get_image_layout (main_view_uv) != VK_IMAGE_LAYOUT_GENERAL ||
+    grd_vk_image_get_image_layout (aux_view_y) != VK_IMAGE_LAYOUT_GENERAL ||
+    grd_vk_image_get_image_layout (aux_view_uv) != VK_IMAGE_LAYOUT_GENERAL ||
     grd_vk_image_get_image_layout (src_image_new) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL ||
     (src_image_old &&
      grd_vk_image_get_image_layout (src_image_old) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -264,6 +289,12 @@ maybe_record_init_layouts (GrdRdpViewCreatorAVC  *view_creator_avc,
                            VK_IMAGE_LAYOUT_GENERAL,
                            VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
   maybe_init_image_layout (view_creator_avc, command_buffer, main_view_uv,
+                           VK_IMAGE_LAYOUT_GENERAL,
+                           VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
+  maybe_init_image_layout (view_creator_avc, command_buffer, aux_view_y,
+                           VK_IMAGE_LAYOUT_GENERAL,
+                           VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
+  maybe_init_image_layout (view_creator_avc, command_buffer, aux_view_uv,
                            VK_IMAGE_LAYOUT_GENERAL,
                            VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
   maybe_init_image_layout (view_creator_avc, command_buffer, src_image_new,
@@ -297,7 +328,7 @@ record_create_view (GrdRdpViewCreatorAVC  *view_creator_avc,
   GrdVkDeviceFuncs *device_funcs = grd_vk_device_get_device_funcs (device);
   ViewCreateInfo *view_create_info = &view_creator_avc->view_create_info;
   VkCommandBufferBeginInfo begin_info = {};
-  VkDescriptorSet descriptor_sets[3] = {};
+  VkDescriptorSet descriptor_sets[4] = {};
   uint32_t n_groups_x;
   uint32_t n_groups_y;
   VkResult vk_result;
@@ -327,14 +358,15 @@ record_create_view (GrdRdpViewCreatorAVC  *view_creator_avc,
                                          0);
 
   descriptor_sets[0] = view_creator_avc->vk_descriptor_set_main_view;
-  descriptor_sets[1] = view_creator_avc->vk_descriptor_set_state;
-  descriptor_sets[2] = view_creator_avc->vk_descriptor_set_sources;
+  descriptor_sets[1] = view_creator_avc->vk_descriptor_set_aux_view;
+  descriptor_sets[2] = view_creator_avc->vk_descriptor_set_state;
+  descriptor_sets[3] = view_creator_avc->vk_descriptor_set_sources;
 
   vkCmdBindPipeline (command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE,
                      pipeline->vk_pipeline);
   vkCmdBindDescriptorSets (command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE,
                            pipeline->vk_pipeline_layout,
-                           0, 3, descriptor_sets, 0, NULL);
+                           0, 4, descriptor_sets, 0, NULL);
 
   n_groups_x = view_create_info->target_width / 16;
   n_groups_y = view_create_info->target_height / 16;
@@ -366,15 +398,15 @@ record_create_view_command_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
 
   if (record_create_simple_view &&
       !record_create_view (view_creator_avc,
-                           command_buffers->create_main_view_simple,
-                           view_creator_avc->main_view_pipeline,
+                           command_buffers->create_stereo_view_simple,
+                           view_creator_avc->stereo_view_pipeline,
                            error))
     return FALSE;
 
   if (record_create_difference_view &&
       !record_create_view (view_creator_avc,
-                           command_buffers->create_main_view_difference,
-                           view_creator_avc->main_view_dmg_pipeline,
+                           command_buffers->create_stereo_view_difference,
+                           view_creator_avc->stereo_view_dmg_pipeline,
                            error))
     return FALSE;
 
@@ -384,11 +416,13 @@ record_create_view_command_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
 static gboolean
 record_command_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
                         GrdImageViewNV12      *main_image_view,
+                        GrdImageViewNV12      *aux_image_view,
                         GrdVkImage            *src_image_new,
                         GrdVkImage            *src_image_old,
                         GError               **error)
 {
-  if (!maybe_record_init_layouts (view_creator_avc, main_image_view,
+  if (!maybe_record_init_layouts (view_creator_avc,
+                                  main_image_view, aux_image_view,
                                   src_image_new, src_image_old, error))
     return FALSE;
   if (view_creator_avc->pending_view_creation_recording &&
@@ -402,14 +436,19 @@ record_command_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
 
 static void
 update_image_layout_states (GrdImageViewNV12 *main_image_view,
+                            GrdImageViewNV12 *aux_image_view,
                             GrdVkImage       *src_image_new,
                             GrdVkImage       *src_image_old)
 {
   GrdVkImage *main_view_y = grd_image_view_nv12_get_y_layer (main_image_view);
   GrdVkImage *main_view_uv = grd_image_view_nv12_get_uv_layer (main_image_view);
+  GrdVkImage *aux_view_y = grd_image_view_nv12_get_y_layer (aux_image_view);
+  GrdVkImage *aux_view_uv = grd_image_view_nv12_get_uv_layer (aux_image_view);
 
   grd_vk_image_set_image_layout (main_view_y, VK_IMAGE_LAYOUT_GENERAL);
   grd_vk_image_set_image_layout (main_view_uv, VK_IMAGE_LAYOUT_GENERAL);
+  grd_vk_image_set_image_layout (aux_view_y, VK_IMAGE_LAYOUT_GENERAL);
+  grd_vk_image_set_image_layout (aux_view_uv, VK_IMAGE_LAYOUT_GENERAL);
 
   grd_vk_image_set_image_layout (src_image_new,
                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -434,24 +473,29 @@ grd_rdp_view_creator_avc_create_view (GrdRdpViewCreator  *view_creator,
   GrdVkImage *src_image_new = NULL;
   GrdVkImage *src_image_old = NULL;
   VkCommandBufferSubmitInfo buffer_submit_infos[4] = {};
-  VkCommandBuffer create_main_view = VK_NULL_HANDLE;
+  VkCommandBuffer create_stereo_view = VK_NULL_HANDLE;
   uint32_t n_buffer_submit_infos = 0;
   VkSubmitInfo2 submit_info_2 = {};
   GrdImageViewNV12 *main_image_view;
+  GrdImageViewNV12 *aux_image_view;
   VkResult vk_result;
 
   g_assert (image_views);
+  g_assert (image_views->next);
 
   main_image_view = GRD_IMAGE_VIEW_NV12 (image_views->data);
+  aux_image_view = GRD_IMAGE_VIEW_NV12 (image_views->next->data);
 
   src_image_new = grd_rdp_buffer_get_dma_buf_image (src_buffer_new);
   if (src_buffer_old)
     src_image_old = grd_rdp_buffer_get_dma_buf_image (src_buffer_old);
 
-  write_image_descriptor_sets (view_creator_avc, main_image_view,
+  write_image_descriptor_sets (view_creator_avc,
+                               main_image_view, aux_image_view,
                                src_image_new, src_image_old);
 
-  if (!record_command_buffers (view_creator_avc, main_image_view,
+  if (!record_command_buffers (view_creator_avc,
+                               main_image_view, aux_image_view,
                                src_image_new, src_image_old, error))
     return FALSE;
 
@@ -479,13 +523,13 @@ grd_rdp_view_creator_avc_create_view (GrdRdpViewCreator  *view_creator,
   ++n_buffer_submit_infos;
 
   if (src_image_old)
-    create_main_view = command_buffers->create_main_view_difference;
+    create_stereo_view = command_buffers->create_stereo_view_difference;
   else
-    create_main_view = command_buffers->create_main_view_simple;
+    create_stereo_view = command_buffers->create_stereo_view_simple;
 
   buffer_submit_infos[n_buffer_submit_infos].sType =
     VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
-  buffer_submit_infos[n_buffer_submit_infos].commandBuffer = create_main_view;
+  buffer_submit_infos[n_buffer_submit_infos].commandBuffer = create_stereo_view;
   ++n_buffer_submit_infos;
 
   buffer_submit_infos[n_buffer_submit_infos].sType =
@@ -502,7 +546,8 @@ grd_rdp_view_creator_avc_create_view (GrdRdpViewCreator  *view_creator,
                             view_creator_avc->vk_fence, error))
     return FALSE;
 
-  update_image_layout_states (main_image_view, src_image_new, src_image_old);
+  update_image_layout_states (main_image_view, aux_image_view,
+                              src_image_new, src_image_old);
 
   return TRUE;
 }
@@ -833,18 +878,18 @@ create_image_descriptor_sets (GrdRdpViewCreatorAVC  *view_creator_avc,
   VkDescriptorPoolCreateInfo pool_create_info = {};
   VkDescriptorPoolSize pool_sizes[2] = {};
   VkDescriptorSetAllocateInfo allocate_info = {};
-  VkDescriptorSetLayout descriptor_set_layouts[2] = {};
-  VkDescriptorSet descriptor_sets[2] = {};
+  VkDescriptorSetLayout descriptor_set_layouts[3] = {};
+  VkDescriptorSet descriptor_sets[3] = {};
   VkResult vk_result;
 
   pool_sizes[0].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-  pool_sizes[0].descriptorCount = 2;
+  pool_sizes[0].descriptorCount = 4;
 
   pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   pool_sizes[1].descriptorCount = 2;
 
   pool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  pool_create_info.maxSets = 2;
+  pool_create_info.maxSets = 3;
   pool_create_info.poolSizeCount = 2;
   pool_create_info.pPoolSizes = pool_sizes;
 
@@ -862,11 +907,12 @@ create_image_descriptor_sets (GrdRdpViewCreatorAVC  *view_creator_avc,
   g_assert (view_creator_avc->vk_image_descriptor_pool != VK_NULL_HANDLE);
 
   descriptor_set_layouts[0] = view_creator_avc->vk_target_descriptor_set_layout;
-  descriptor_set_layouts[1] = view_creator_avc->vk_source_descriptor_set_layout;
+  descriptor_set_layouts[1] = view_creator_avc->vk_target_descriptor_set_layout;
+  descriptor_set_layouts[2] = view_creator_avc->vk_source_descriptor_set_layout;
 
   allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   allocate_info.descriptorPool = view_creator_avc->vk_image_descriptor_pool;
-  allocate_info.descriptorSetCount = 2;
+  allocate_info.descriptorSetCount = 3;
   allocate_info.pSetLayouts = descriptor_set_layouts;
 
   vk_result = vkAllocateDescriptorSets (vk_device, &allocate_info,
@@ -879,9 +925,11 @@ create_image_descriptor_sets (GrdRdpViewCreatorAVC  *view_creator_avc,
     }
   g_assert (descriptor_sets[0] != VK_NULL_HANDLE);
   g_assert (descriptor_sets[1] != VK_NULL_HANDLE);
+  g_assert (descriptor_sets[2] != VK_NULL_HANDLE);
 
   view_creator_avc->vk_descriptor_set_main_view = descriptor_sets[0];
-  view_creator_avc->vk_descriptor_set_sources = descriptor_sets[1];
+  view_creator_avc->vk_descriptor_set_aux_view  = descriptor_sets[1];
+  view_creator_avc->vk_descriptor_set_sources = descriptor_sets[2];
 
   return TRUE;
 }
@@ -1038,48 +1086,49 @@ create_pipeline (GrdRdpViewCreatorAVC  *view_creator_avc,
 }
 
 static Pipeline *
-main_view_pipeline_new (GrdRdpViewCreatorAVC  *view_creator_avc,
-                        gboolean               perform_dmg_detection,
-                        GError               **error)
+stereo_view_pipeline_new (GrdRdpViewCreatorAVC  *view_creator_avc,
+                          gboolean               perform_dmg_detection,
+                          GError               **error)
 {
   ViewCreateInfo *view_create_info = &view_creator_avc->view_create_info;
   const GrdVkShaderModules *shader_modules =
     grd_vk_device_get_shader_modules (view_creator_avc->device);
-  g_autoptr (Pipeline) main_view_pipeline = NULL;
-  VkDescriptorSetLayout descriptor_set_layouts[3] = {};
+  g_autoptr (Pipeline) stereo_view_pipeline = NULL;
+  VkDescriptorSetLayout descriptor_set_layouts[4] = {};
 
-  main_view_pipeline = g_new0 (Pipeline, 1);
-  main_view_pipeline->view_creator_avc = view_creator_avc;
+  stereo_view_pipeline = g_new0 (Pipeline, 1);
+  stereo_view_pipeline->view_creator_avc = view_creator_avc;
 
   descriptor_set_layouts[0] = view_creator_avc->vk_target_descriptor_set_layout;
-  descriptor_set_layouts[1] = view_creator_avc->vk_state_descriptor_set_layout;
-  descriptor_set_layouts[2] = view_creator_avc->vk_source_descriptor_set_layout;
+  descriptor_set_layouts[1] = view_creator_avc->vk_target_descriptor_set_layout;
+  descriptor_set_layouts[2] = view_creator_avc->vk_state_descriptor_set_layout;
+  descriptor_set_layouts[3] = view_creator_avc->vk_source_descriptor_set_layout;
 
-  if (!create_pipeline_layout (view_creator_avc, descriptor_set_layouts, 3,
-                               &main_view_pipeline->vk_pipeline_layout, error))
+  if (!create_pipeline_layout (view_creator_avc, descriptor_set_layouts, 4,
+                               &stereo_view_pipeline->vk_pipeline_layout, error))
     return NULL;
 
   view_create_info->perform_dmg_detection = perform_dmg_detection;
-  if (!create_pipeline (view_creator_avc, shader_modules->create_avc_main_view,
-                        main_view_pipeline->vk_pipeline_layout,
-                        &main_view_pipeline->vk_pipeline, error))
+  if (!create_pipeline (view_creator_avc, shader_modules->create_avc_stereo_view,
+                        stereo_view_pipeline->vk_pipeline_layout,
+                        &stereo_view_pipeline->vk_pipeline, error))
     return NULL;
 
-  return g_steal_pointer (&main_view_pipeline);
+  return g_steal_pointer (&stereo_view_pipeline);
 }
 
 static gboolean
 create_pipelines (GrdRdpViewCreatorAVC  *view_creator_avc,
                   GError               **error)
 {
-  view_creator_avc->main_view_pipeline =
-    main_view_pipeline_new (view_creator_avc, FALSE, error);
-  if (!view_creator_avc->main_view_pipeline)
+  view_creator_avc->stereo_view_pipeline =
+    stereo_view_pipeline_new (view_creator_avc, FALSE, error);
+  if (!view_creator_avc->stereo_view_pipeline)
     return FALSE;
 
-  view_creator_avc->main_view_dmg_pipeline =
-    main_view_pipeline_new (view_creator_avc, TRUE, error);
-  if (!view_creator_avc->main_view_dmg_pipeline)
+  view_creator_avc->stereo_view_dmg_pipeline =
+    stereo_view_pipeline_new (view_creator_avc, TRUE, error);
+  if (!view_creator_avc->stereo_view_dmg_pipeline)
     return FALSE;
 
   return TRUE;
@@ -1158,8 +1207,8 @@ create_command_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
   command_buffers->init_state_buffer = vk_command_buffers[0];
   command_buffers->synchronize_state_buffer = vk_command_buffers[1];
   command_buffers->init_layouts = vk_command_buffers[2];
-  command_buffers->create_main_view_simple = vk_command_buffers[3];
-  command_buffers->create_main_view_difference = vk_command_buffers[4];
+  command_buffers->create_stereo_view_simple = vk_command_buffers[3];
+  command_buffers->create_stereo_view_difference = vk_command_buffers[4];
 
   return TRUE;
 }
@@ -1453,8 +1502,8 @@ grd_rdp_view_creator_avc_dispose (GObject *object)
       view_creator_avc->queue = NULL;
     }
 
-  g_clear_pointer (&view_creator_avc->main_view_dmg_pipeline, pipeline_free);
-  g_clear_pointer (&view_creator_avc->main_view_pipeline, pipeline_free);
+  g_clear_pointer (&view_creator_avc->stereo_view_dmg_pipeline, pipeline_free);
+  g_clear_pointer (&view_creator_avc->stereo_view_pipeline, pipeline_free);
 
   grd_vk_clear_descriptor_pool (device, &view_creator_avc->vk_buffer_descriptor_pool);
   grd_vk_clear_descriptor_pool (device, &view_creator_avc->vk_image_descriptor_pool);

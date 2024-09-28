@@ -173,7 +173,7 @@ get_n_required_image_views (GrdRdpFrame *rdp_frame)
       return 1;
     case GRD_RDP_CODEC_AVC420:
     case GRD_RDP_CODEC_AVC444v2:
-      return 1;
+      return 2;
     }
 
   g_assert_not_reached ();
