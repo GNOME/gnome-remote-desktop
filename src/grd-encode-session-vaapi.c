@@ -53,9 +53,10 @@
  * and one is needed to prepare a new pending frame before it is submitted to
  * the renderer, where it then replaces the old pending frame
  *
- * In total, this makes four needed source surfaces
+ * In total, this makes four needed source surfaces per view
  */
-#define N_SRC_SURFACES 4
+#define N_SRC_SURFACES_PER_VIEW 4
+#define N_SRC_SURFACES (N_SRC_SURFACES_PER_VIEW * 2)
 
 typedef struct
 {
