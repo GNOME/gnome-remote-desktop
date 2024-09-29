@@ -76,6 +76,7 @@ rgb_to_v (int32_t r,
 }
 
 shared uint32_t have_block_damage = {};
+shared uint32_t have_chroma_offset = {};
 shared float block_u2[16][16] = {};
 shared float block_v2[16][16] = {};
 
@@ -90,6 +91,8 @@ main ()
   uint32_t x_1x1;
   uint32_t y_1x1;
   uint32_t x_4x4;
+  uint32_t x_64x64;
+  uint32_t y_64x64;
   float y0, y1, y2, y3;
   float u0, u1, u2, u3;
   float v0, v1, v2, v3;
@@ -100,6 +103,8 @@ main ()
   x_1x1 = x_2x2 << 1;
   y_1x1 = y_2x2 << 1;
   x_4x4 = x_2x2 >> 1;
+  x_64x64 = x_2x2 >> 5;
+  y_64x64 = y_2x2 >> 5;
 
   dmg_p0 = dmg_p1 = dmg_p2 = dmg_p3 = 0;
 
@@ -219,6 +224,29 @@ main ()
   block_u2[local_x][local_y] = u2;
   block_v2[local_x][local_y] = v2;
 
+  u_filtered = (u0 + u1 + u2 + u3) / 4;
+  v_filtered = (v0 + v1 + v2 + v3) / 4;
+
+  /*
+   * When decoding and reassembling the original frame, the client side should
+   * use the filtered value over the reversed value, when their value
+   * difference is lower than a specific threshold, due to potential artifacts
+   * stemming from the quantization process of the AVC encoding.
+   * As a threshold 3.3.8.3.3 YUV420p Stream Combination for YUV444v2 mode
+   * ([MS-RDPEGFX]) considers the value 30.
+   * This threshold can also serve the server side here by checking whether an
+   * auxiliary view is actually needed.
+   */
+  if (abs (u_filtered - u0) > 30 ||
+      abs (u_filtered - u1) > 30 ||
+      abs (u_filtered - u2) > 30 ||
+      abs (u_filtered - u3) > 30 ||
+      abs (v_filtered - v0) > 30 ||
+      abs (v_filtered - v1) > 30 ||
+      abs (v_filtered - v2) > 30 ||
+      abs (v_filtered - v3) > 30)
+    have_chroma_offset = 1;
+
   /* We cannot bail out early here due to the barrier() call */
   if (x_2x2 < TARGET_WIDTH >> 1 && y_2x2 < TARGET_HEIGHT >> 1)
     {
@@ -231,16 +259,17 @@ main ()
   if (x_2x2 >= TARGET_WIDTH >> 1 || y_2x2 >= TARGET_HEIGHT >> 1)
     return;
 
-  if (local_x == 0 &&
-      local_y == 0 &&
-      have_block_damage == 1)
+  if (local_y == 0 &&
+      (local_x == 0 || local_x == 1))
     {
-      uint32_t x_64x64 = x_2x2 >> 5;
-      uint32_t y_64x64 = y_2x2 >> 5;
       uint32_t state_pos;
 
       state_pos = y_64x64 * STATE_BUFFER_STRIDE + x_64x64;
-      needs_update.data[state_pos] = 1;
+
+      if (local_x == 0 && have_block_damage == 1)
+        needs_update.data[state_pos] = 1;
+      if (local_x == 1 && have_chroma_offset == 1 && have_block_damage == 1)
+        needs_auxiliary_view.data[state_pos] = 1;
     }
 
   /*
@@ -259,9 +288,6 @@ main ()
   imageStore (main_y_layer, ivec2 (x_1x1 + 1, y_1x1), vec4 (y1 / 255.0f));
   imageStore (main_y_layer, ivec2 (x_1x1, y_1x1 + 1), vec4 (y2 / 255.0f));
   imageStore (main_y_layer, ivec2 (x_1x1 + 1, y_1x1 + 1), vec4 (y3 / 255.0f));
-
-  u_filtered = (u0 + u1 + u2 + u3) / 4;
-  v_filtered = (v0 + v1 + v2 + v3) / 4;
 
   uv_filtered = vec4 (u_filtered / 255.0f,
                       v_filtered / 255.0f,

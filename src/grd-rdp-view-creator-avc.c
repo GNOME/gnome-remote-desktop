@@ -50,8 +50,8 @@ typedef struct
 
 typedef struct
 {
-  VkCommandBuffer init_state_buffer;
-  VkCommandBuffer synchronize_state_buffer;
+  VkCommandBuffer init_state_buffers;
+  VkCommandBuffer synchronize_state_buffers;
 
   VkCommandBuffer init_layouts;
   VkCommandBuffer create_stereo_view_simple;
@@ -81,6 +81,10 @@ struct _GrdRdpViewCreatorAVC
   GrdVkBuffer *dmg_buffer_device;
   GrdVkBuffer *dmg_buffer_host;
   uint32_t *mapped_dmg_buffer;
+
+  GrdVkBuffer *chroma_check_buffer_device;
+  GrdVkBuffer *chroma_check_buffer_host;
+  uint32_t *mapped_chroma_check_buffer;
 
   VkSampler vk_src_new_sampler;
   VkSampler vk_src_old_sampler;
@@ -520,7 +524,7 @@ grd_rdp_view_creator_avc_create_view (GrdRdpViewCreator  *view_creator,
   buffer_submit_infos[n_buffer_submit_infos].sType =
     VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
   buffer_submit_infos[n_buffer_submit_infos].commandBuffer =
-    command_buffers->init_state_buffer;
+    command_buffers->init_state_buffers;
   ++n_buffer_submit_infos;
 
   if (src_image_old)
@@ -536,7 +540,7 @@ grd_rdp_view_creator_avc_create_view (GrdRdpViewCreator  *view_creator,
   buffer_submit_infos[n_buffer_submit_infos].sType =
     VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
   buffer_submit_infos[n_buffer_submit_infos].commandBuffer =
-    command_buffers->synchronize_state_buffer;
+    command_buffers->synchronize_state_buffers;
   ++n_buffer_submit_infos;
 
   submit_info_2.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
@@ -742,6 +746,12 @@ create_state_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
                             &view_creator_avc->dmg_buffer_device,
                             &view_creator_avc->dmg_buffer_host,
                             &view_creator_avc->mapped_dmg_buffer,
+                            error))
+    return FALSE;
+  if (!create_state_buffer (view_creator_avc,
+                            &view_creator_avc->chroma_check_buffer_device,
+                            &view_creator_avc->chroma_check_buffer_host,
+                            &view_creator_avc->mapped_chroma_check_buffer,
                             error))
     return FALSE;
 
@@ -1218,8 +1228,8 @@ create_command_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
   g_assert (vk_command_buffers[3] != VK_NULL_HANDLE);
   g_assert (vk_command_buffers[4] != VK_NULL_HANDLE);
 
-  command_buffers->init_state_buffer = vk_command_buffers[0];
-  command_buffers->synchronize_state_buffer = vk_command_buffers[1];
+  command_buffers->init_state_buffers = vk_command_buffers[0];
+  command_buffers->synchronize_state_buffers = vk_command_buffers[1];
   command_buffers->init_layouts = vk_command_buffers[2];
   command_buffers->create_stereo_view_simple = vk_command_buffers[3];
   command_buffers->create_stereo_view_difference = vk_command_buffers[4];
@@ -1254,40 +1264,53 @@ static void
 write_state_descriptor_set (GrdRdpViewCreatorAVC *view_creator_avc)
 {
   VkDevice vk_device = grd_vk_device_get_device (view_creator_avc->device);
-  VkWriteDescriptorSet write_descriptor_set = {};
-  VkDescriptorBufferInfo buffer_info = {};
+  VkWriteDescriptorSet write_descriptor_sets[2] = {};
+  VkDescriptorBufferInfo buffer_infos[2] = {};
   GrdVkBuffer *dmg_buffer;
+  GrdVkBuffer *chroma_check_buffer;
 
   dmg_buffer = view_creator_avc->dmg_buffer_device;
   if (!dmg_buffer)
     dmg_buffer = view_creator_avc->dmg_buffer_host;
 
-  buffer_info.buffer = grd_vk_buffer_get_buffer (dmg_buffer);
-  buffer_info.offset = 0;
-  buffer_info.range = VK_WHOLE_SIZE;
+  chroma_check_buffer = view_creator_avc->chroma_check_buffer_device;
+  if (!chroma_check_buffer)
+    chroma_check_buffer = view_creator_avc->chroma_check_buffer_host;
 
-  write_descriptor_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  write_descriptor_set.dstSet = view_creator_avc->vk_descriptor_set_state;
-  write_descriptor_set.dstBinding = 0;
-  write_descriptor_set.descriptorCount = 1;
-  write_descriptor_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  write_descriptor_set.pBufferInfo = &buffer_info;
+  buffer_infos[0].buffer = grd_vk_buffer_get_buffer (dmg_buffer);
+  buffer_infos[0].offset = 0;
+  buffer_infos[0].range = VK_WHOLE_SIZE;
 
-  vkUpdateDescriptorSets (vk_device, 1, &write_descriptor_set, 0, NULL);
+  buffer_infos[1] = buffer_infos[0];
+  buffer_infos[1].buffer = grd_vk_buffer_get_buffer (chroma_check_buffer);
+
+  write_descriptor_sets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write_descriptor_sets[0].dstSet = view_creator_avc->vk_descriptor_set_state;
+  write_descriptor_sets[0].dstBinding = 0;
+  write_descriptor_sets[0].descriptorCount = 1;
+  write_descriptor_sets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  write_descriptor_sets[0].pBufferInfo = &buffer_infos[0];
+
+  write_descriptor_sets[1] = write_descriptor_sets[0];
+  write_descriptor_sets[1].dstBinding = 1;
+  write_descriptor_sets[1].pBufferInfo = &buffer_infos[1];
+
+  vkUpdateDescriptorSets (vk_device, 2, write_descriptor_sets, 0, NULL);
 }
 
 static gboolean
-record_init_state_buffer (GrdRdpViewCreatorAVC  *view_creator_avc,
-                          GError               **error)
+record_init_state_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
+                           GError               **error)
 {
   CommandBuffers *command_buffers = &view_creator_avc->command_buffers;
-  VkCommandBuffer command_buffer = command_buffers->init_state_buffer;
+  VkCommandBuffer command_buffer = command_buffers->init_state_buffers;
   GrdVkDevice *device = view_creator_avc->device;
   GrdVkDeviceFuncs *device_funcs = grd_vk_device_get_device_funcs (device);
   VkCommandBufferBeginInfo begin_info = {};
   VkDependencyInfo dependency_info = {};
   VkMemoryBarrier2 memory_barrier_2 = {};
   GrdVkBuffer *dmg_buffer;
+  GrdVkBuffer *chroma_check_buffer;
   VkResult vk_result;
 
   begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1304,8 +1327,16 @@ record_init_state_buffer (GrdRdpViewCreatorAVC  *view_creator_avc,
   if (!dmg_buffer)
     dmg_buffer = view_creator_avc->dmg_buffer_host;
 
+  chroma_check_buffer = view_creator_avc->chroma_check_buffer_device;
+  if (!chroma_check_buffer)
+    chroma_check_buffer = view_creator_avc->chroma_check_buffer_host;
+
   vkCmdFillBuffer (command_buffer,
                    grd_vk_buffer_get_buffer (dmg_buffer),
+                   0, VK_WHOLE_SIZE,
+                   0);
+  vkCmdFillBuffer (command_buffer,
+                   grd_vk_buffer_get_buffer (chroma_check_buffer),
                    0, VK_WHOLE_SIZE,
                    0);
 
@@ -1332,12 +1363,34 @@ record_init_state_buffer (GrdRdpViewCreatorAVC  *view_creator_avc,
   return TRUE;
 }
 
+static gboolean
+have_device_state_buffers (GrdRdpViewCreatorAVC *view_creator_avc)
+{
+  gboolean have_device_state_buffers;
+
+  have_device_state_buffers = view_creator_avc->dmg_buffer_device ||
+                              view_creator_avc->chroma_check_buffer_device;
+  if (have_device_state_buffers)
+    {
+      g_assert (view_creator_avc->dmg_buffer_device &&
+                view_creator_avc->chroma_check_buffer_device);
+    }
+
+  return have_device_state_buffers;
+}
+
 static void
-record_synchronize_device_state_buffer (GrdRdpViewCreatorAVC *view_creator_avc,
-                                        VkCommandBuffer       command_buffer)
+record_synchronize_device_state_buffers (GrdRdpViewCreatorAVC *view_creator_avc,
+                                         VkCommandBuffer       command_buffer)
 {
   GrdVkDevice *device = view_creator_avc->device;
   GrdVkDeviceFuncs *device_funcs = grd_vk_device_get_device_funcs (device);
+  GrdVkBuffer *dmg_buffer_device = view_creator_avc->dmg_buffer_device;
+  GrdVkBuffer *dmg_buffer_host = view_creator_avc->dmg_buffer_host;
+  GrdVkBuffer *chroma_check_buffer_device =
+    view_creator_avc->chroma_check_buffer_device;
+  GrdVkBuffer *chroma_check_buffer_host =
+    view_creator_avc->chroma_check_buffer_host;
   VkDependencyInfo dependency_info = {};
   VkMemoryBarrier2 memory_barrier_2 = {};
   VkBufferCopy buffer_copy = {};
@@ -1359,8 +1412,12 @@ record_synchronize_device_state_buffer (GrdRdpViewCreatorAVC *view_creator_avc,
   buffer_copy.size = view_creator_avc->state_buffer_size;
 
   vkCmdCopyBuffer (command_buffer,
-                   grd_vk_buffer_get_buffer (view_creator_avc->dmg_buffer_device),
-                   grd_vk_buffer_get_buffer (view_creator_avc->dmg_buffer_host),
+                   grd_vk_buffer_get_buffer (dmg_buffer_device),
+                   grd_vk_buffer_get_buffer (dmg_buffer_host),
+                   1, &buffer_copy);
+  vkCmdCopyBuffer (command_buffer,
+                   grd_vk_buffer_get_buffer (chroma_check_buffer_device),
+                   grd_vk_buffer_get_buffer (chroma_check_buffer_host),
                    1, &buffer_copy);
 
   memory_barrier_2.srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT;
@@ -1372,8 +1429,8 @@ record_synchronize_device_state_buffer (GrdRdpViewCreatorAVC *view_creator_avc,
 }
 
 static void
-record_synchronize_host_state_buffer (GrdRdpViewCreatorAVC *view_creator_avc,
-                                      VkCommandBuffer       command_buffer)
+record_synchronize_host_state_buffers (GrdRdpViewCreatorAVC *view_creator_avc,
+                                       VkCommandBuffer       command_buffer)
 {
   GrdVkDevice *device = view_creator_avc->device;
   GrdVkDeviceFuncs *device_funcs = grd_vk_device_get_device_funcs (device);
@@ -1394,11 +1451,11 @@ record_synchronize_host_state_buffer (GrdRdpViewCreatorAVC *view_creator_avc,
 }
 
 static gboolean
-record_synchronize_state_buffer (GrdRdpViewCreatorAVC  *view_creator_avc,
-                                 GError               **error)
+record_synchronize_state_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
+                                  GError               **error)
 {
   CommandBuffers *command_buffers = &view_creator_avc->command_buffers;
-  VkCommandBuffer command_buffer = command_buffers->synchronize_state_buffer;
+  VkCommandBuffer command_buffer = command_buffers->synchronize_state_buffers;
   VkCommandBufferBeginInfo begin_info = {};
   VkResult vk_result;
 
@@ -1412,10 +1469,10 @@ record_synchronize_state_buffer (GrdRdpViewCreatorAVC  *view_creator_avc,
       return FALSE;
     }
 
-  if (view_creator_avc->dmg_buffer_device)
-    record_synchronize_device_state_buffer (view_creator_avc, command_buffer);
+  if (have_device_state_buffers (view_creator_avc))
+    record_synchronize_device_state_buffers (view_creator_avc, command_buffer);
   else
-    record_synchronize_host_state_buffer (view_creator_avc, command_buffer);
+    record_synchronize_host_state_buffers (view_creator_avc, command_buffer);
 
   vk_result = vkEndCommandBuffer (command_buffer);
   if (vk_result != VK_SUCCESS)
@@ -1432,9 +1489,9 @@ static gboolean
 record_state_handling_command_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
                                        GError               **error)
 {
-  if (!record_init_state_buffer (view_creator_avc, error))
+  if (!record_init_state_buffers (view_creator_avc, error))
     return FALSE;
-  if (!record_synchronize_state_buffer (view_creator_avc, error))
+  if (!record_synchronize_state_buffers (view_creator_avc, error))
     return FALSE;
 
   return TRUE;
@@ -1530,6 +1587,8 @@ grd_rdp_view_creator_avc_dispose (GObject *object)
   grd_vk_clear_sampler (device, &view_creator_avc->vk_src_old_sampler);
   grd_vk_clear_sampler (device, &view_creator_avc->vk_src_new_sampler);
 
+  g_clear_object (&view_creator_avc->chroma_check_buffer_device);
+  g_clear_object (&view_creator_avc->chroma_check_buffer_host);
   g_clear_object (&view_creator_avc->dmg_buffer_device);
   g_clear_object (&view_creator_avc->dmg_buffer_host);
 
