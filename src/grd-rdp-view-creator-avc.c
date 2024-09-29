@@ -76,9 +76,10 @@ struct _GrdRdpViewCreatorAVC
 
   ViewCreateInfo view_create_info;
 
+  VkDeviceSize state_buffer_size;
+
   GrdVkBuffer *dmg_buffer_device;
   GrdVkBuffer *dmg_buffer_host;
-  VkDeviceSize dmg_buffer_size;
   uint32_t *mapped_dmg_buffer;
 
   VkSampler vk_src_new_sampler;
@@ -681,40 +682,33 @@ prepare_view_create_info (GrdRdpViewCreatorAVC *view_creator_avc,
 }
 
 static gboolean
-create_damage_buffer (GrdRdpViewCreatorAVC  *view_creator_avc,
-                      uint32_t               source_width,
-                      uint32_t               source_height,
-                      GError               **error)
+create_state_buffer (GrdRdpViewCreatorAVC  *view_creator_avc,
+                     GrdVkBuffer          **state_buffer_device,
+                     GrdVkBuffer          **state_buffer_host,
+                     uint32_t             **mapped_state_buffer,
+                     GError               **error)
 {
   GrdVkBufferDescriptor buffer_descriptor = {};
   VkMemoryPropertyFlagBits memory_flags;
   GrdVkMemory *memory;
 
-  view_creator_avc->dmg_buffer_size =
-    (grd_get_aligned_size (source_width, 64) / 64) *
-    (grd_get_aligned_size (source_height, 64) / 64) *
-    sizeof (uint32_t);
-
   buffer_descriptor.usage_flags = VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-  buffer_descriptor.size = view_creator_avc->dmg_buffer_size;
+  buffer_descriptor.size = view_creator_avc->state_buffer_size;
   buffer_descriptor.memory_flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
                                    VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
 
-  view_creator_avc->dmg_buffer_host =
-    grd_vk_buffer_new (view_creator_avc->device,
-                       &buffer_descriptor,
-                       error);
-  if (!view_creator_avc->dmg_buffer_host)
+  *state_buffer_host = grd_vk_buffer_new (view_creator_avc->device,
+                                          &buffer_descriptor,
+                                          error);
+  if (!(*state_buffer_host))
     return FALSE;
 
-  memory = grd_vk_buffer_get_memory (view_creator_avc->dmg_buffer_host);
+  memory = grd_vk_buffer_get_memory (*state_buffer_host);
 
-  view_creator_avc->mapped_dmg_buffer =
-    grd_vk_memory_get_mapped_pointer (memory,
-                                      error);
-  if (!view_creator_avc->mapped_dmg_buffer)
+  *mapped_state_buffer = grd_vk_memory_get_mapped_pointer (memory, error);
+  if (!(*mapped_state_buffer))
     return FALSE;
 
   memory_flags = grd_vk_memory_get_memory_flags (memory);
@@ -724,11 +718,31 @@ create_damage_buffer (GrdRdpViewCreatorAVC  *view_creator_avc,
   buffer_descriptor.usage_flags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
   buffer_descriptor.memory_flags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
-  view_creator_avc->dmg_buffer_device =
-    grd_vk_buffer_new (view_creator_avc->device,
-                       &buffer_descriptor,
-                       error);
-  if (!view_creator_avc->dmg_buffer_device)
+  *state_buffer_device = grd_vk_buffer_new (view_creator_avc->device,
+                                            &buffer_descriptor,
+                                            error);
+  if (!(*state_buffer_device))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+create_state_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
+                      uint32_t               source_width,
+                      uint32_t               source_height,
+                      GError               **error)
+{
+  view_creator_avc->state_buffer_size =
+    (grd_get_aligned_size (source_width, 64) / 64) *
+    (grd_get_aligned_size (source_height, 64) / 64) *
+    sizeof (uint32_t);
+
+  if (!create_state_buffer (view_creator_avc,
+                            &view_creator_avc->dmg_buffer_device,
+                            &view_creator_avc->dmg_buffer_host,
+                            &view_creator_avc->mapped_dmg_buffer,
+                            error))
     return FALSE;
 
   return TRUE;
@@ -1342,7 +1356,7 @@ record_synchronize_device_state_buffer (GrdRdpViewCreatorAVC *view_creator_avc,
 
   buffer_copy.srcOffset = 0;
   buffer_copy.dstOffset = 0;
-  buffer_copy.size = view_creator_avc->dmg_buffer_size;
+  buffer_copy.size = view_creator_avc->state_buffer_size;
 
   vkCmdCopyBuffer (command_buffer,
                    grd_vk_buffer_get_buffer (view_creator_avc->dmg_buffer_device),
@@ -1449,7 +1463,7 @@ grd_rdp_view_creator_avc_new (GrdVkDevice  *device,
                             target_width, target_height,
                             source_width, source_height);
 
-  if (!create_damage_buffer (view_creator_avc,
+  if (!create_state_buffers (view_creator_avc,
                              source_width, source_height,
                              error))
     return NULL;
