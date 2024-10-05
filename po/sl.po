@@ -10,8 +10,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-09-08 16:47+0000\n"
-"PO-Revision-Date: 2024-09-08 22:51+0200\n"
+"POT-Creation-Date: 2024-10-04 18:48+0000\n"
+"PO-Revision-Date: 2024-10-05 08:07+0200\n"
 "Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenščina <gnome-si@googlegroups.com>\n"
 "Language: sl\n"
@@ -24,18 +24,18 @@ msgstr ""
 "X-Generator: Poedit 2.2.1\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
 "Dovoli prilagajanje nastavitev sistemskega prikritega procesa gnome-remote-"
-"desktop."
+"desktop"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
-"Preverjanje pristnosti je potrebno za prilagoditev nastavitev sistemskega "
-"prikritega procesa gnome-remote-desktop."
+"Za prilagoditev nastavitev sistemskega prikritega procesa gnome-remote-"
+"desktop je potrebno preverjanje pristnosti"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
@@ -46,10 +46,10 @@ msgstr ""
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
-"Preverjanje pristnosti je potrebno za omogočanje/onemogočanje sistemskega "
-"prikritega procesa gnome-remote-desktop."
+"Za omogočanje/onemogočanje sistemskega prikritega procesa gnome-remote-"
+"desktop je potrebno preverjanje pristnosti"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
