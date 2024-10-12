@@ -88,14 +88,6 @@ typedef struct
   GrdRdpLegacyBuffer *rdp_legacy_buffer;
 } RealizeBufferData;
 
-typedef struct
-{
-  AllocateBufferData allocate;
-  RealizeBufferData realize;
-
-  GrdRdpLegacyBuffer *rdp_legacy_buffer;
-} ImportBufferData;
-
 struct _GrdRdpPipeWireStream
 {
   GObject parent;
@@ -704,29 +696,12 @@ cuda_allocate_buffer (gpointer user_data,
 }
 
 static gboolean
-allocate_buffer (gpointer user_data,
-                 uint32_t pbo)
-{
-  ImportBufferData *data = user_data;
-
-  return cuda_allocate_buffer (&data->allocate, pbo);
-}
-
-static gboolean
 cuda_map_resource (gpointer user_data)
 {
   RealizeBufferData *data = user_data;
   GrdRdpLegacyBuffer *rdp_legacy_buffer = data->rdp_legacy_buffer;
 
   return grd_rdp_legacy_buffer_map_cuda_resource (rdp_legacy_buffer);
-}
-
-static gboolean
-realize_buffer (gpointer user_data)
-{
-  ImportBufferData *data = user_data;
-
-  return cuda_map_resource (&data->realize);
 }
 
 static void
@@ -846,9 +821,6 @@ process_frame_data (GrdRdpPipeWireStream *stream,
       GrdSession *session = GRD_SESSION (stream->session_rdp);
       GrdContext *context = grd_session_get_context (session);
       GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
-      GrdHwAccelNvidia *hwaccel_nvidia = stream->rdp_surface->hwaccel_nvidia;
-      GrdEglThreadImportIface iface;
-      ImportBufferData *import_buffer_data = NULL;
       GrdRdpLegacyBuffer *rdp_legacy_buffer;
       int row_width;
       int *fds;
@@ -892,28 +864,10 @@ process_frame_data (GrdRdpPipeWireStream *stream,
       if (!stream->rdp_surface->needs_no_local_data)
         dst_data = grd_rdp_legacy_buffer_get_local_data (frame->buffer);
 
-      if (hwaccel_nvidia)
-        {
-          unmap_cuda_resources (egl_thread, rdp_legacy_buffer);
-
-          iface.allocate = allocate_buffer;
-          iface.realize = realize_buffer;
-
-          import_buffer_data = g_new0 (ImportBufferData, 1);
-          import_buffer_data->allocate.rdp_legacy_buffer = rdp_legacy_buffer;
-          import_buffer_data->realize.rdp_legacy_buffer = rdp_legacy_buffer;
-
-          import_buffer_data->rdp_legacy_buffer = rdp_legacy_buffer;
-        }
-
       grd_egl_thread_download (egl_thread,
                                stream->egl_slot,
-                               grd_rdp_legacy_buffer_get_pbo (rdp_legacy_buffer),
-                               height,
-                               dst_stride,
-                               hwaccel_nvidia ? &iface : NULL,
-                               import_buffer_data,
-                               g_free,
+                               0, 0, 0,
+                               NULL, NULL, NULL,
                                dst_data,
                                row_width,
                                drm_format,
