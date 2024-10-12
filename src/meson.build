@@ -91,6 +91,8 @@ if have_rdp
     'grd-hwaccel-vulkan.h',
     'grd-image-view.c',
     'grd-image-view.h',
+    'grd-image-view-nv12.c',
+    'grd-image-view-nv12.h',
     'grd-rdp-audio-input.c',
     'grd-rdp-audio-input.h',
     'grd-rdp-audio-output-stream.c',
