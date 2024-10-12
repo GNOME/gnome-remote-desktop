@@ -309,8 +309,6 @@ run_dma_buf_tests (struct gbm_device *gbm_device,
     g_malloc0 (dma_buf->height * dma_buf->read_back_stride);
 
   grd_egl_thread_download (egl_thread, NULL,
-                           0, 0, 0,
-                           NULL, NULL, NULL,
                            dma_buf->read_back_data,
                            dst_row_width,
                            dma_buf->format,

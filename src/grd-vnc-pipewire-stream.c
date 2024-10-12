@@ -739,8 +739,6 @@ process_frame_data (GrdVncPipeWireStream *stream,
       acquire_pipewire_buffer_lock (stream, pw_buffer);
       grd_egl_thread_download (egl_thread,
                                stream->egl_slot,
-                               0, 0, 0,
-                               NULL, NULL, NULL,
                                dst_data,
                                row_width,
                                drm_format,

@@ -127,14 +127,6 @@ typedef struct _GrdEglTaskDownload
 {
   GrdEglTask base;
 
-  GLuint pbo;
-  uint32_t pbo_height;
-  uint32_t pbo_stride;
-
-  GrdEglThreadImportIface iface;
-  gpointer import_user_data;
-  GDestroyNotify import_destroy_notify;
-
   uint8_t *dst_data;
   int dst_row_width;
 
@@ -484,9 +476,6 @@ grd_egl_task_download_free (GrdEglTask *task_base)
   g_free (task->strides);
   g_free (task->offsets);
   g_free (task->modifiers);
-
-  if (task->import_destroy_notify)
-    task->import_destroy_notify (task->import_user_data);
 
   grd_egl_task_free (task_base);
 }
@@ -868,30 +857,8 @@ download_in_impl (gpointer data,
   GrdEglTaskDownload *task = user_data;
   EGLImageKHR egl_image = EGL_NO_IMAGE;
   gboolean success = FALSE;
-  uint32_t buffer_size;
   GLuint tex = 0;
   GLuint fbo = 0;
-
-  buffer_size = task->pbo_stride * task->pbo_height * sizeof (uint8_t);
-  if (task->iface.allocate && !task->pbo)
-    {
-      GLuint pbo = 0;
-
-      glGenBuffers (1, &pbo);
-      glBindBuffer (GL_PIXEL_PACK_BUFFER, pbo);
-      glBufferData (GL_PIXEL_PACK_BUFFER, buffer_size, NULL, GL_DYNAMIC_DRAW);
-      glBindBuffer (GL_PIXEL_PACK_BUFFER, 0);
-
-      if (!task->iface.allocate (task->import_user_data, pbo))
-        {
-          g_warning ("[EGL Thread] Failed to allocate GL resources");
-          glDeleteBuffers (1, &pbo);
-          goto out;
-        }
-
-      g_debug ("[EGL Thread] Allocating GL resources was successful");
-      task->pbo = pbo;
-    }
 
   egl_image =
     create_dmabuf_image (egl_thread,
@@ -909,27 +876,6 @@ download_in_impl (gpointer data,
   if (!bind_egl_image (egl_thread, egl_image, task->dst_row_width, &tex,
                        task->dst_data ? &fbo : NULL))
     goto out;
-
-  if (task->iface.realize)
-    {
-      GLenum error;
-
-      glBindBuffer (GL_PIXEL_PACK_BUFFER, task->pbo);
-      glBufferData (GL_PIXEL_PACK_BUFFER, buffer_size, NULL, GL_DYNAMIC_DRAW);
-      glReadPixels (0, 0, task->width, task->height,
-                    GL_BGRA, GL_UNSIGNED_BYTE, NULL);
-      error = glGetError ();
-      if (error != GL_NO_ERROR)
-        {
-          g_warning ("[EGL Thread] Failed to update buffer data: %u", error);
-          goto out;
-        }
-
-      glBindBuffer (GL_PIXEL_PACK_BUFFER, 0);
-
-      if (!task->iface.realize (task->import_user_data))
-        goto out;
-    }
 
   if (task->dst_data)
     read_pixels (task->dst_data, task->width, task->height);
@@ -1095,12 +1041,6 @@ push_replaceable_task (GrdEglThread     *egl_thread,
 void
 grd_egl_thread_download (GrdEglThread                  *egl_thread,
                          GrdEglThreadSlot               slot,
-                         uint32_t                       pbo,
-                         uint32_t                       pbo_height,
-                         uint32_t                       pbo_stride,
-                         const GrdEglThreadImportIface *iface,
-                         gpointer                       import_user_data,
-                         GDestroyNotify                 import_destroy_notify,
                          uint8_t                       *dst_data,
                          int                            dst_row_width,
                          uint32_t                       format,
@@ -1118,14 +1058,6 @@ grd_egl_thread_download (GrdEglThread                  *egl_thread,
   GrdEglTaskDownload *task;
 
   task = g_new0 (GrdEglTaskDownload, 1);
-
-  task->pbo = pbo;
-  task->pbo_height = pbo_height;
-  task->pbo_stride = pbo_stride;
-
-  task->iface = iface ? *iface : (GrdEglThreadImportIface) {};
-  task->import_user_data = import_user_data;
-  task->import_destroy_notify = import_destroy_notify;
 
   task->dst_data = dst_data;
   task->dst_row_width = dst_row_width;
