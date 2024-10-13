@@ -1481,7 +1481,6 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   if (!init_rdp_session (session_rdp, username, password, &error))
     {
       g_warning ("[RDP] Couldn't initialize session: %s", error->message);
-      g_clear_object (&session_rdp->connection);
       g_free (password);
       g_free (username);
       return NULL;
@@ -1754,6 +1753,7 @@ grd_session_rdp_dispose (GObject *object)
 
   g_clear_object (&session_rdp->layout_manager);
   clear_rdp_peer (session_rdp);
+  g_clear_object (&session_rdp->connection);
 
   g_clear_object (&session_rdp->renderer);
 
