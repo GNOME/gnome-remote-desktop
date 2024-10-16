@@ -33,6 +33,15 @@
 #include "grd-rdp-surface.h"
 #include "grd-session-rdp.h"
 
+#define UNLIMITED_FRAME_SLOTS (UINT32_MAX)
+/*
+ * The value of the transition time is based upon testing. During times where
+ * a lot of frames are submitted, the frame-controller could quickly alternate
+ * between throttling and no-throttling. In these situations, the client is
+ * ready for a frame containing only a main view, but not for a stereo view.
+ */
+#define TRANSITION_TIME_US (200 * 1000)
+
 typedef struct
 {
   GrdRdpSurfaceRenderer *surface_renderer;
@@ -62,6 +71,7 @@ struct _GrdRdpSurfaceRenderer
 
   uint32_t total_frame_slots;
   GHashTable *assigned_frame_slots;
+  int64_t unthrottled_since_us;
 
   GMutex render_mutex;
   GrdRdpBuffer *pending_buffer;
@@ -97,6 +107,10 @@ grd_rdp_surface_renderer_update_total_frame_slots (GrdRdpSurfaceRenderer *surfac
                                                    uint32_t               total_frame_slots)
 {
   uint32_t old_slot_count = surface_renderer->total_frame_slots;
+
+  if (old_slot_count < UNLIMITED_FRAME_SLOTS &&
+      total_frame_slots == UNLIMITED_FRAME_SLOTS)
+    surface_renderer->unthrottled_since_us = g_get_monotonic_time ();
 
   surface_renderer->total_frame_slots = total_frame_slots;
   if (old_slot_count < surface_renderer->total_frame_slots)
@@ -489,6 +503,25 @@ on_frame_finalization (GrdRdpFrame *rdp_frame,
 }
 
 static void
+maybe_downgrade_view_type (GrdRdpSurfaceRenderer *surface_renderer,
+                           GrdRdpFrame           *rdp_frame)
+{
+  GrdRdpFrameViewType view_type;
+  int64_t current_time_us;
+
+  view_type = grd_rdp_frame_get_avc_view_type (rdp_frame);
+  if (view_type != GRD_RDP_FRAME_VIEW_TYPE_STEREO)
+    return;
+
+  current_time_us = g_get_monotonic_time ();
+
+  if (g_hash_table_size (surface_renderer->assigned_frame_slots) > 0 ||
+      surface_renderer->total_frame_slots < UNLIMITED_FRAME_SLOTS ||
+      current_time_us - surface_renderer->unthrottled_since_us < TRANSITION_TIME_US)
+    grd_rdp_frame_set_avc_view_type (rdp_frame, GRD_RDP_FRAME_VIEW_TYPE_MAIN);
+}
+
+static void
 handle_pending_buffer (GrdRdpSurfaceRenderer *surface_renderer,
                        GrdRdpRenderContext   *render_context)
 {
@@ -517,6 +550,8 @@ handle_pending_buffer (GrdRdpSurfaceRenderer *surface_renderer,
                                  on_frame_picked_up, on_view_finalization,
                                  on_frame_submission, on_frame_finalization,
                                  frame_context, g_free);
+  maybe_downgrade_view_type (surface_renderer, rdp_frame);
+
   grd_rdp_renderer_submit_frame (renderer, render_context, rdp_frame);
 }
 
@@ -716,7 +751,7 @@ grd_rdp_surface_renderer_finalize (GObject *object)
 static void
 grd_rdp_surface_renderer_init (GrdRdpSurfaceRenderer *surface_renderer)
 {
-  surface_renderer->total_frame_slots = UINT32_MAX;
+  surface_renderer->total_frame_slots = UNLIMITED_FRAME_SLOTS;
 
   surface_renderer->registered_buffers =
     g_hash_table_new_full (NULL, NULL,
