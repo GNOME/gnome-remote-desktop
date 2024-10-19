@@ -125,7 +125,7 @@
       org.gnome.RemoteDesktop.Rdp.Handover:
       @short_description: Handover interface
 
-      This API is intended to be used to process a Handover of an RDP client 
+      This API is intended to be used to process a Handover of an RDP client
       between two grd-daemons.
       No compatibility between versions is promised.
   -->
