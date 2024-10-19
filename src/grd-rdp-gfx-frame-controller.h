@@ -33,6 +33,7 @@ GrdRdpGfxFrameController *grd_rdp_gfx_frame_controller_new (GrdRdpSurface *rdp_s
 
 void grd_rdp_gfx_frame_controller_unack_frame (GrdRdpGfxFrameController *frame_controller,
                                                uint32_t                  frame_id,
+                                               uint32_t                  n_subframes,
                                                int64_t                   enc_time_us);
 
 void grd_rdp_gfx_frame_controller_ack_frame (GrdRdpGfxFrameController *frame_controller,
@@ -41,6 +42,7 @@ void grd_rdp_gfx_frame_controller_ack_frame (GrdRdpGfxFrameController *frame_con
 
 void grd_rdp_gfx_frame_controller_unack_last_acked_frame (GrdRdpGfxFrameController *frame_controller,
                                                           uint32_t                  frame_id,
+                                                          uint32_t                  n_subframes,
                                                           int64_t                   enc_ack_time_us);
 
 void grd_rdp_gfx_frame_controller_clear_all_unacked_frames (GrdRdpGfxFrameController *frame_controller);

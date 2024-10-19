@@ -23,6 +23,7 @@
 typedef struct _GrdRdpFrameInfo
 {
   uint32_t frame_id;
+  uint32_t n_subframes;
 
   int64_t enc_time_us;
   int64_t ack_time_us;

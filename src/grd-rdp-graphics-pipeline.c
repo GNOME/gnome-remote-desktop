@@ -652,6 +652,22 @@ prepare_avc_update (RDPGFX_SURFACE_COMMAND      *cmd,
     }
 }
 
+static uint32_t
+get_subframe_count (GrdRdpFrame *rdp_frame)
+{
+  GrdRdpRenderContext *render_context =
+    grd_rdp_frame_get_render_context (rdp_frame);
+  GrdRdpCodec codec = grd_rdp_render_context_get_codec (render_context);
+  GrdRdpFrameViewType view_type;
+
+  if (codec != GRD_RDP_CODEC_AVC444v2)
+    return 1;
+
+  view_type = grd_rdp_frame_get_avc_view_type (rdp_frame);
+
+  return view_type == GRD_RDP_FRAME_VIEW_TYPE_STEREO ? 2 : 1;
+}
+
 static void
 surface_serial_ref (GrdRdpGraphicsPipeline *graphics_pipeline,
                     uint32_t                surface_serial)
@@ -716,6 +732,7 @@ static void
 enqueue_tracked_frame_info (GrdRdpGraphicsPipeline *graphics_pipeline,
                             uint32_t                surface_serial,
                             uint32_t                frame_id,
+                            uint32_t                n_subframes,
                             int64_t                 enc_time_us)
 {
   GfxFrameInfo *gfx_frame_info;
@@ -725,6 +742,7 @@ enqueue_tracked_frame_info (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   gfx_frame_info = g_malloc0 (sizeof (GfxFrameInfo));
   gfx_frame_info->frame_info.frame_id = frame_id;
+  gfx_frame_info->frame_info.n_subframes = n_subframes;
   gfx_frame_info->frame_info.enc_time_us = enc_time_us;
   gfx_frame_info->surface_serial = surface_serial;
 
@@ -876,6 +894,7 @@ grd_rdp_graphics_pipeline_submit_frame (GrdRdpGraphicsPipeline *graphics_pipelin
   int n_rects = 0;
   GrdBitstream *bitstream0;
   uint32_t surface_serial;
+  uint32_t n_subframes;
   int64_t enc_ack_time_us;
 
   g_assert (bitstreams);
@@ -911,6 +930,7 @@ grd_rdp_graphics_pipeline_submit_frame (GrdRdpGraphicsPipeline *graphics_pipelin
       n_rects = avc444.bitstream[0].meta.numRegionRects;
       break;
     }
+  n_subframes = get_subframe_count (rdp_frame);
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
   if (codec == GRD_RDP_CODEC_CAPROGRESSIVE &&
@@ -923,7 +943,7 @@ grd_rdp_graphics_pipeline_submit_frame (GrdRdpGraphicsPipeline *graphics_pipelin
 
   enc_ack_time_us = g_get_monotonic_time ();
   grd_rdp_gfx_frame_controller_unack_frame (frame_controller, cmd_start.frameId,
-                                            enc_ack_time_us);
+                                            n_subframes, enc_ack_time_us);
 
   surface_serial = grd_rdp_gfx_surface_get_serial (gfx_surface);
   g_hash_table_insert (graphics_pipeline->frame_serial_table,
@@ -937,7 +957,8 @@ grd_rdp_graphics_pipeline_submit_frame (GrdRdpGraphicsPipeline *graphics_pipelin
       grd_rdp_gfx_frame_controller_ack_frame (frame_controller, cmd_start.frameId,
                                               enc_ack_time_us);
       enqueue_tracked_frame_info (graphics_pipeline, surface_serial,
-                                  cmd_start.frameId, enc_ack_time_us);
+                                  cmd_start.frameId, n_subframes,
+                                  enc_ack_time_us);
     }
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
@@ -1085,7 +1106,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
   enc_ack_time_us = g_get_monotonic_time ();
   grd_rdp_gfx_frame_controller_unack_frame (frame_controller, cmd_start.frameId,
-                                            enc_ack_time_us);
+                                            1, enc_ack_time_us);
 
   surface_serial = grd_rdp_gfx_surface_get_serial (gfx_surface);
   g_hash_table_insert (graphics_pipeline->frame_serial_table,
@@ -1099,7 +1120,7 @@ refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
       grd_rdp_gfx_frame_controller_ack_frame (frame_controller, cmd_start.frameId,
                                               enc_ack_time_us);
       enqueue_tracked_frame_info (graphics_pipeline, surface_serial,
-                                  cmd_start.frameId, enc_ack_time_us);
+                                  cmd_start.frameId, 1, enc_ack_time_us);
     }
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
@@ -1371,7 +1392,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
 
   enc_ack_time_us = g_get_monotonic_time ();
   grd_rdp_gfx_frame_controller_unack_frame (frame_controller, cmd_start.frameId,
-                                            enc_ack_time_us);
+                                            1, enc_ack_time_us);
 
   surface_serial = grd_rdp_gfx_surface_get_serial (gfx_surface);
   g_hash_table_insert (graphics_pipeline->frame_serial_table,
@@ -1385,7 +1406,7 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
       grd_rdp_gfx_frame_controller_ack_frame (frame_controller, cmd_start.frameId,
                                               enc_ack_time_us);
       enqueue_tracked_frame_info (graphics_pipeline, surface_serial,
-                                  cmd_start.frameId, enc_ack_time_us);
+                                  cmd_start.frameId, 1, enc_ack_time_us);
     }
   g_mutex_unlock (&graphics_pipeline->gfx_mutex);
 
@@ -1744,6 +1765,7 @@ maybe_rewrite_frame_history (GrdRdpGraphicsPipeline *graphics_pipeline,
 
           grd_rdp_gfx_frame_controller_unack_last_acked_frame (frame_controller,
                                                                frame_info->frame_id,
+                                                               frame_info->n_subframes,
                                                                frame_info->enc_time_us);
         }
 

@@ -33,6 +33,7 @@ GrdRdpGfxFrameLog *grd_rdp_gfx_frame_log_new (void);
 
 void grd_rdp_gfx_frame_log_track_frame (GrdRdpGfxFrameLog *frame_log,
                                         uint32_t           frame_id,
+                                        uint32_t           n_subframes,
                                         int64_t            enc_time_us);
 
 void grd_rdp_gfx_frame_log_ack_tracked_frame (GrdRdpGfxFrameLog *frame_log,
@@ -41,6 +42,7 @@ void grd_rdp_gfx_frame_log_ack_tracked_frame (GrdRdpGfxFrameLog *frame_log,
 
 void grd_rdp_gfx_frame_log_unack_last_acked_frame (GrdRdpGfxFrameLog *frame_log,
                                                    uint32_t           frame_id,
+                                                   uint32_t           n_subframes,
                                                    int64_t            enc_ack_time_us);
 
 void grd_rdp_gfx_frame_log_update_rates (GrdRdpGfxFrameLog *frame_log,
@@ -48,6 +50,8 @@ void grd_rdp_gfx_frame_log_update_rates (GrdRdpGfxFrameLog *frame_log,
                                          uint32_t          *ack_rate);
 
 uint32_t grd_rdp_gfx_frame_log_get_unacked_frames_count (GrdRdpGfxFrameLog *frame_log);
+
+uint32_t grd_rdp_gfx_frame_log_get_unacked_stereo_frames_count (GrdRdpGfxFrameLog *frame_log);
 
 void grd_rdp_gfx_frame_log_clear (GrdRdpGfxFrameLog *frame_log);
 

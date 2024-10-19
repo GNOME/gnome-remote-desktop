@@ -93,6 +93,7 @@ get_activate_throttling_th_from_rtt (GrdRdpGfxFrameController *frame_controller,
 void
 grd_rdp_gfx_frame_controller_unack_frame (GrdRdpGfxFrameController *frame_controller,
                                           uint32_t                  frame_id,
+                                          uint32_t                  n_subframes,
                                           int64_t                   enc_time_us)
 {
   GrdRdpSurface *rdp_surface = frame_controller->rdp_surface;
@@ -104,7 +105,8 @@ grd_rdp_gfx_frame_controller_unack_frame (GrdRdpGfxFrameController *frame_contro
   uint32_t enc_rate = 0;
   uint32_t ack_rate = 0;
 
-  grd_rdp_gfx_frame_log_track_frame (frame_log, frame_id, enc_time_us);
+  grd_rdp_gfx_frame_log_track_frame (frame_log, frame_id, n_subframes,
+                                     enc_time_us);
 
   n_unacked_frames = grd_rdp_gfx_frame_log_get_unacked_frames_count (frame_log);
   grd_rdp_gfx_frame_log_update_rates (frame_log, &enc_rate, &ack_rate);
@@ -279,10 +281,12 @@ reevaluate_encoding_suspension_state (GrdRdpGfxFrameController *frame_controller
 void
 grd_rdp_gfx_frame_controller_unack_last_acked_frame (GrdRdpGfxFrameController *frame_controller,
                                                      uint32_t                  frame_id,
+                                                     uint32_t                  n_subframes,
                                                      int64_t                   enc_ack_time_us)
 {
   grd_rdp_gfx_frame_log_unack_last_acked_frame (frame_controller->frame_log,
-                                                frame_id, enc_ack_time_us);
+                                                frame_id, n_subframes,
+                                                enc_ack_time_us);
   reevaluate_encoding_suspension_state (frame_controller);
 }
 
