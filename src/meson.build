@@ -158,6 +158,8 @@ if have_rdp
     'grd-rdp-pw-buffer.h',
     'grd-rdp-render-context.c',
     'grd-rdp-render-context.h',
+    'grd-rdp-render-state.c',
+    'grd-rdp-render-state.h',
     'grd-rdp-renderer.c',
     'grd-rdp-renderer.h',
     'grd-rdp-routing-token.c',

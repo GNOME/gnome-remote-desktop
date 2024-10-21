@@ -59,6 +59,7 @@ typedef struct _GrdRdpLegacyBuffer GrdRdpLegacyBuffer;
 typedef struct _GrdRdpNetworkAutodetection GrdRdpNetworkAutodetection;
 typedef struct _GrdRdpPwBuffer GrdRdpPwBuffer;
 typedef struct _GrdRdpRenderContext GrdRdpRenderContext;
+typedef struct _GrdRdpRenderState GrdRdpRenderState;
 typedef struct _GrdRdpRenderer GrdRdpRenderer;
 typedef struct _GrdRdpSAMFile GrdRdpSAMFile;
 typedef struct _GrdRdpServer GrdRdpServer;
