@@ -24,6 +24,7 @@
 #include "grd-debug.h"
 #include "grd-image-view-nv12.h"
 #include "grd-rdp-buffer.h"
+#include "grd-rdp-render-state.h"
 #include "grd-utils.h"
 #include "grd-vk-buffer.h"
 #include "grd-vk-device.h"
@@ -33,8 +34,6 @@
 #include "grd-vk-utils.h"
 
 #define N_SPECIALIZATION_CONSTANTS 6
-#define STATE_TILE_WIDTH 64
-#define STATE_TILE_HEIGHT 64
 
 typedef struct
 {
@@ -590,54 +589,14 @@ print_view_creation_time (GrdRdpViewCreatorAVC  *view_creator_avc,
   return TRUE;
 }
 
-static cairo_region_t *
-create_damage_region (GrdRdpViewCreatorAVC *view_creator_avc)
-{
-  ViewCreateInfo *view_create_info = &view_creator_avc->view_create_info;
-  uint32_t source_width = view_create_info->source_width;
-  uint32_t source_height = view_create_info->source_height;
-  uint32_t state_buffer_width;
-  uint32_t state_buffer_height;
-  cairo_region_t *damage_region;
-  uint32_t x, y;
-
-  state_buffer_width = grd_get_aligned_size (source_width, 64) / 64;
-  state_buffer_height = grd_get_aligned_size (source_height, 64) / 64;
-
-  damage_region = cairo_region_create ();
-
-  for (y = 0; y < state_buffer_height; ++y)
-    {
-      for (x = 0; x < state_buffer_width; ++x)
-        {
-          cairo_rectangle_int_t tile = {};
-          uint32_t target_pos;
-
-          target_pos = y * view_create_info->state_buffer_stride + x;
-          if (view_creator_avc->mapped_dmg_buffer[target_pos] == 0)
-            continue;
-
-          tile.x = x * STATE_TILE_WIDTH;
-          tile.y = y * STATE_TILE_HEIGHT;
-          tile.width = source_width - tile.x < STATE_TILE_WIDTH ?
-                         source_width - tile.x : STATE_TILE_WIDTH;
-          tile.height = source_height - tile.y < STATE_TILE_HEIGHT ?
-                          source_height - tile.y : STATE_TILE_HEIGHT;
-
-          cairo_region_union_rectangle (damage_region, &tile);
-        }
-    }
-
-  return damage_region;
-}
-
-static cairo_region_t *
+static GrdRdpRenderState *
 grd_rdp_view_creator_avc_finish_view (GrdRdpViewCreator  *view_creator,
                                       GError            **error)
 {
   GrdRdpViewCreatorAVC *view_creator_avc =
     GRD_RDP_VIEW_CREATOR_AVC (view_creator);
   VkDevice vk_device = grd_vk_device_get_device (view_creator_avc->device);
+  uint32_t state_buffer_length;
   VkResult vk_result;
 
   do
@@ -658,7 +617,12 @@ grd_rdp_view_creator_avc_finish_view (GrdRdpViewCreator  *view_creator,
       !print_view_creation_time (view_creator_avc, error))
     return NULL;
 
-  return create_damage_region (view_creator_avc);
+  state_buffer_length = view_creator_avc->state_buffer_size /
+                        sizeof (uint32_t);
+
+  return grd_rdp_render_state_new (view_creator_avc->mapped_dmg_buffer,
+                                   view_creator_avc->mapped_chroma_check_buffer,
+                                   state_buffer_length);
 }
 
 static void

@@ -22,6 +22,7 @@
 #include "grd-rdp-view-creator.h"
 
 #include "grd-rdp-frame.h"
+#include "grd-rdp-render-context.h"
 
 typedef struct
 {
@@ -145,13 +146,21 @@ finish_views (gpointer user_data)
 
   while ((task = g_async_queue_try_pop (priv->task_queue)))
     {
-      cairo_region_t *damage_region;
+      GrdRdpFrame *rdp_frame = task->rdp_frame;
+      GrdRdpRenderState *render_state;
       g_autoptr (GError) error = NULL;
 
-      damage_region = klass->finish_view (view_creator, &error);
-      grd_rdp_frame_set_damage_region (task->rdp_frame, damage_region);
+      render_state = klass->finish_view (view_creator, &error);
+      if (render_state)
+        {
+          GrdRdpRenderContext *render_context =
+            grd_rdp_frame_get_render_context (rdp_frame);
 
-      task->callback (task->rdp_frame, error);
+          grd_rdp_render_context_update_frame_state (render_context, rdp_frame,
+                                                     render_state);
+        }
+
+      task->callback (rdp_frame, error);
 
       g_free (task);
     }

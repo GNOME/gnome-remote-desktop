@@ -20,7 +20,6 @@
 #ifndef GRD_RDP_VIEW_CREATOR_H
 #define GRD_RDP_VIEW_CREATOR_H
 
-#include <cairo/cairo.h>
 #include <glib-object.h>
 
 #include "grd-types.h"
@@ -41,8 +40,8 @@ struct _GrdRdpViewCreatorClass
                             GrdRdpBuffer       *src_buffer_new,
                             GrdRdpBuffer       *src_buffer_old,
                             GError            **error);
-  cairo_region_t *(* finish_view) (GrdRdpViewCreator  *view_creator,
-                                   GError            **error);
+  GrdRdpRenderState *(* finish_view) (GrdRdpViewCreator  *view_creator,
+                                      GError            **error);
 };
 
 gboolean grd_rdp_view_creator_create_view (GrdRdpViewCreator                   *view_creator,
