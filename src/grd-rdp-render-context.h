@@ -53,4 +53,8 @@ GrdImageView *grd_rdp_render_context_acquire_image_view (GrdRdpRenderContext *re
 void grd_rdp_render_context_release_image_view (GrdRdpRenderContext *render_context,
                                                 GrdImageView        *image_view);
 
+void grd_rdp_render_context_update_frame_state (GrdRdpRenderContext *render_context,
+                                                GrdRdpFrame         *rdp_frame,
+                                                GrdRdpRenderState   *render_state);
+
 #endif /* GRD_RDP_RENDER_CONTEXT_H */

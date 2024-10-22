@@ -27,10 +27,17 @@
 #include "grd-hwaccel-vaapi.h"
 #include "grd-rdp-buffer-info.h"
 #include "grd-rdp-damage-detector.h"
+#include "grd-rdp-frame.h"
+#include "grd-rdp-gfx-surface.h"
 #include "grd-rdp-graphics-pipeline.h"
+#include "grd-rdp-render-state.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
 #include "grd-rdp-view-creator-avc.h"
+#include "grd-utils.h"
+
+#define STATE_TILE_WIDTH 64
+#define STATE_TILE_HEIGHT 64
 
 struct _GrdRdpRenderContext
 {
@@ -47,6 +54,9 @@ struct _GrdRdpRenderContext
 
   GHashTable *image_views;
   GHashTable *acquired_image_views;
+
+  uint32_t *chroma_state_buffer;
+  uint32_t state_buffer_length;
 };
 
 G_DEFINE_TYPE (GrdRdpRenderContext, grd_rdp_render_context, G_TYPE_OBJECT)
@@ -102,6 +112,195 @@ grd_rdp_render_context_release_image_view (GrdRdpRenderContext *render_context,
 {
   if (!g_hash_table_remove (render_context->acquired_image_views, image_view))
     g_assert_not_reached ();
+}
+
+static gboolean
+is_auxiliary_view_needed (GrdRdpRenderState *render_state)
+{
+  uint32_t *chroma_state_buffer =
+    grd_rdp_render_state_get_chroma_state_buffer (render_state);
+  uint32_t state_buffer_length =
+    grd_rdp_render_state_get_state_buffer_length (render_state);
+  uint32_t i;
+
+  for (i = 0; i < state_buffer_length; ++i)
+    {
+      if (chroma_state_buffer[i] != 0)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static void
+update_stereo_frame (GrdRdpRenderContext *render_context,
+                     GrdRdpFrame         *rdp_frame,
+                     GrdRdpRenderState   *render_state)
+{
+  uint32_t *damage_buffer =
+    grd_rdp_render_state_get_damage_buffer (render_state);
+  uint32_t state_buffer_length =
+    grd_rdp_render_state_get_state_buffer_length (render_state);
+  uint32_t i;
+
+  if (!render_context->chroma_state_buffer)
+    {
+      if (!is_auxiliary_view_needed (render_state))
+        {
+          grd_rdp_frame_set_avc_view_type (rdp_frame,
+                                           GRD_RDP_FRAME_VIEW_TYPE_MAIN);
+        }
+
+      return;
+    }
+
+  g_assert (render_context->state_buffer_length == state_buffer_length);
+
+  for (i = 0; i < render_context->state_buffer_length; ++i)
+    {
+      if (render_context->chroma_state_buffer[i] != 0)
+        damage_buffer[i] = 1;
+    }
+  g_clear_pointer (&render_context->chroma_state_buffer, g_free);
+}
+
+static void
+update_main_frame (GrdRdpRenderContext *render_context,
+                   GrdRdpFrame         *rdp_frame,
+                   GrdRdpRenderState   *render_state)
+{
+  uint32_t *damage_buffer =
+    grd_rdp_render_state_get_damage_buffer (render_state);
+  uint32_t *chroma_state_buffer =
+    grd_rdp_render_state_get_chroma_state_buffer (render_state);
+  uint32_t state_buffer_length =
+    grd_rdp_render_state_get_state_buffer_length (render_state);
+  gboolean pending_auxiliary_view = FALSE;
+  uint32_t i;
+
+  if (!render_context->chroma_state_buffer)
+    {
+      if (is_auxiliary_view_needed (render_state))
+        {
+          render_context->chroma_state_buffer =
+            g_memdup2 (chroma_state_buffer,
+                       state_buffer_length * sizeof (uint32_t));
+          render_context->state_buffer_length = state_buffer_length;
+        }
+
+      return;
+    }
+
+  g_assert (render_context->state_buffer_length == state_buffer_length);
+
+  for (i = 0; i < render_context->state_buffer_length; ++i)
+    {
+      if (chroma_state_buffer[i] != 0)
+        render_context->chroma_state_buffer[i] = 1;
+      else if (damage_buffer[i] != 0)
+        render_context->chroma_state_buffer[i] = 0;
+
+      if (render_context->chroma_state_buffer[i] != 0)
+        pending_auxiliary_view = TRUE;
+    }
+  if (!pending_auxiliary_view)
+    g_clear_pointer (&render_context->chroma_state_buffer, g_free);
+}
+
+static void
+update_avc444_render_state (GrdRdpRenderContext *render_context,
+                            GrdRdpFrame         *rdp_frame,
+                            GrdRdpRenderState   *render_state)
+{
+  switch (grd_rdp_frame_get_avc_view_type (rdp_frame))
+    {
+    case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
+      update_stereo_frame (render_context, rdp_frame, render_state);
+      break;
+    case GRD_RDP_FRAME_VIEW_TYPE_MAIN:
+      update_main_frame (render_context, rdp_frame, render_state);
+      break;
+    case GRD_RDP_FRAME_VIEW_TYPE_AUX:
+      g_assert_not_reached ();
+      break;
+    }
+}
+
+static cairo_region_t *
+create_damage_region (GrdRdpRenderContext *render_context,
+                      GrdRdpRenderState   *render_state)
+{
+  GrdRdpGfxSurface *gfx_surface = render_context->gfx_surface;
+  uint32_t *damage_buffer =
+    grd_rdp_render_state_get_damage_buffer (render_state);
+  GrdRdpSurface *rdp_surface;
+  uint32_t surface_width;
+  uint32_t surface_height;
+  uint32_t state_buffer_width;
+  uint32_t state_buffer_height;
+  uint32_t state_buffer_stride;
+  cairo_region_t *damage_region;
+  uint32_t x, y;
+
+  g_assert (gfx_surface);
+  rdp_surface = grd_rdp_gfx_surface_get_rdp_surface (gfx_surface);
+
+  surface_width = grd_rdp_surface_get_width (rdp_surface);
+  surface_height = grd_rdp_surface_get_height (rdp_surface);
+
+  state_buffer_width = grd_get_aligned_size (surface_width, 64) / 64;
+  state_buffer_height = grd_get_aligned_size (surface_height, 64) / 64;
+  state_buffer_stride = state_buffer_width;
+
+  damage_region = cairo_region_create ();
+  g_assert (cairo_region_status (damage_region) == CAIRO_STATUS_SUCCESS);
+
+  for (y = 0; y < state_buffer_height; ++y)
+    {
+      for (x = 0; x < state_buffer_width; ++x)
+        {
+          cairo_rectangle_int_t tile = {};
+          uint32_t target_pos;
+
+          target_pos = y * state_buffer_stride + x;
+          if (damage_buffer[target_pos] == 0)
+            continue;
+
+          tile.x = x * STATE_TILE_WIDTH;
+          tile.y = y * STATE_TILE_HEIGHT;
+          tile.width = surface_width - tile.x < STATE_TILE_WIDTH ?
+                         surface_width - tile.x : STATE_TILE_WIDTH;
+          tile.height = surface_height - tile.y < STATE_TILE_HEIGHT ?
+                          surface_height - tile.y : STATE_TILE_HEIGHT;
+
+          cairo_region_union_rectangle (damage_region, &tile);
+        }
+    }
+
+  return damage_region;
+}
+
+void
+grd_rdp_render_context_update_frame_state (GrdRdpRenderContext *render_context,
+                                           GrdRdpFrame         *rdp_frame,
+                                           GrdRdpRenderState   *render_state)
+{
+  cairo_region_t *damage_region;
+
+  switch (render_context->codec)
+    {
+    case GRD_RDP_CODEC_CAPROGRESSIVE:
+    case GRD_RDP_CODEC_AVC420:
+      break;
+    case GRD_RDP_CODEC_AVC444v2:
+      update_avc444_render_state (render_context, rdp_frame, render_state);
+      break;
+    }
+
+  damage_region = create_damage_region (render_context, render_state);
+  grd_rdp_frame_set_damage_region (rdp_frame, damage_region);
+
+  grd_rdp_render_state_free (render_state);
 }
 
 static void
@@ -223,6 +422,8 @@ grd_rdp_render_context_dispose (GObject *object)
 
   if (render_context->acquired_image_views)
     g_assert (g_hash_table_size (render_context->acquired_image_views) == 0);
+
+  g_clear_pointer (&render_context->chroma_state_buffer, g_free);
 
   g_clear_object (&render_context->view_creator);
   g_clear_object (&render_context->encode_session);
