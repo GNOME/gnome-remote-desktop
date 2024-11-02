@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-09-08 16:47+0000\n"
-"PO-Revision-Date: 2024-09-10 21:19+0200\n"
+"POT-Creation-Date: 2024-10-05 10:10+0000\n"
+"PO-Revision-Date: 2024-11-02 22:00+0100\n"
 "Last-Translator: Quentin PAGÈS\n"
 "Language-Team: Occitan <totenoc@gmail.com>\n"
 "Language: oc\n"
@@ -46,10 +46,8 @@ msgstr ""
 "de gnome-remote-desktop."
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
-#, fuzzy
-#| msgid "GNOME Remote Desktop"
 msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "Burèu distant de GNOME"
+msgstr "Demòni de remesa de burèu distant de GNOME"
 
 #: src/grd-ctl.c:70
 #, c-format
@@ -254,6 +252,9 @@ msgid ""
 "This is because the Remote Sessions service has been activated and it has a "
 "higher priority to use port <b>%i</b>."
 msgstr ""
+"Lo pòrt de partiment de burèu a cambiat de <b>%i</b> a <b>%i</b>.\n"
+"Aquò ven de l’activacion del servici de sessions a distància qu’a una "
+"prioritat mai nauta per utilizar lo pòrt <b>%i</b>."
 
 #: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
 #, c-format
@@ -286,6 +287,7 @@ msgstr "Lo pòrt qu’utiliza lo servida RDP"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr ""
+"Lo client RDP se connectarà a aqueste pòrt per utilizar aqueste servidor RDP."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Search a different RDP port if the configured one is used"
