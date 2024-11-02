@@ -464,7 +464,7 @@ vnc_set_credentials (GrdSettings  *settings,
     }
   else
     {
-      password = g_strdup (argv[1]);
+      password = g_strdup (argv[0]);
     }
 
   if (strlen (password) > MAX_VNC_PASSWORD_SIZE)
