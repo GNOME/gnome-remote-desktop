@@ -547,13 +547,41 @@ grd_rdp_renderer_clear_render_contexts (GrdRdpRenderer *renderer)
   clear_render_contexts (renderer, TRUE);
 }
 
+static void
+queue_prepared_frame (GrdRdpRenderer      *renderer,
+                      GrdRdpRenderContext *render_context,
+                      GrdRdpFrame         *rdp_frame)
+{
+  GHashTable *acquired_resources = NULL;
+  GrdRdpViewCreator *view_creator;
+
+  if (!g_hash_table_lookup_extended (renderer->render_resource_mappings,
+                                     render_context,
+                                     NULL, (gpointer *) &acquired_resources))
+    g_assert_not_reached ();
+
+  view_creator = grd_rdp_render_context_get_view_creator (render_context);
+  g_assert (!g_hash_table_contains (acquired_resources, view_creator));
+
+  grd_rdp_frame_notify_picked_up (rdp_frame);
+  g_hash_table_insert (acquired_resources, view_creator, rdp_frame);
+
+  g_mutex_lock (&renderer->view_creations_mutex);
+  g_hash_table_add (renderer->finished_view_creations, rdp_frame);
+  g_mutex_unlock (&renderer->view_creations_mutex);
+}
+
 void
 grd_rdp_renderer_submit_frame (GrdRdpRenderer      *renderer,
                                GrdRdpRenderContext *render_context,
                                GrdRdpFrame         *rdp_frame)
 {
   grd_rdp_frame_set_renderer (rdp_frame, renderer);
-  g_hash_table_insert (renderer->queued_frames, render_context, rdp_frame);
+
+  if (grd_rdp_frame_has_valid_view (rdp_frame))
+    queue_prepared_frame (renderer, render_context, rdp_frame);
+  else
+    g_hash_table_insert (renderer->queued_frames, render_context, rdp_frame);
 
   g_source_set_ready_time (renderer->surface_render_source, 0);
 }
