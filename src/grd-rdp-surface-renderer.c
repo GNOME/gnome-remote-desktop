@@ -34,6 +34,7 @@
 #include "grd-rdp-surface.h"
 #include "grd-session-rdp.h"
 
+#define FRAME_UPGRADE_DELAY_US (60 * 1000)
 #define UNLIMITED_FRAME_SLOTS (UINT32_MAX)
 /*
  * The value of the transition time is based upon testing. During times where
@@ -67,6 +68,11 @@ struct _GrdRdpSurfaceRenderer
 
   GSource *render_source;
   gboolean pending_render_context_reset;
+
+  GSource *frame_upgrade_source;
+  gboolean pending_frame_upgrade;
+
+  GSource *trigger_frame_upgrade_source;
 
   gboolean graphics_subsystem_failed;
 
@@ -103,6 +109,12 @@ grd_rdp_surface_renderer_get_total_frame_slots (GrdRdpSurfaceRenderer *surface_r
   return surface_renderer->total_frame_slots;
 }
 
+static void
+trigger_frame_upgrade_schedule (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  g_source_set_ready_time (surface_renderer->trigger_frame_upgrade_source, 0);
+}
+
 void
 grd_rdp_surface_renderer_update_total_frame_slots (GrdRdpSurfaceRenderer *surface_renderer,
                                                    uint32_t               total_frame_slots)
@@ -116,6 +128,17 @@ grd_rdp_surface_renderer_update_total_frame_slots (GrdRdpSurfaceRenderer *surfac
   surface_renderer->total_frame_slots = total_frame_slots;
   if (old_slot_count < surface_renderer->total_frame_slots)
     grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
+
+  if (old_slot_count < UNLIMITED_FRAME_SLOTS &&
+      surface_renderer->total_frame_slots == UNLIMITED_FRAME_SLOTS)
+    trigger_frame_upgrade_schedule (surface_renderer);
+}
+
+void
+grd_rdp_surface_renderer_notify_frame_upgrade_state (GrdRdpSurfaceRenderer *surface_renderer,
+                                                     gboolean               can_upgrade_frame)
+{
+  surface_renderer->pending_frame_upgrade = can_upgrade_frame;
 }
 
 static gboolean
@@ -343,6 +366,8 @@ void
 grd_rdp_surface_renderer_trigger_render_source (GrdRdpSurfaceRenderer *surface_renderer)
 {
   g_source_set_ready_time (surface_renderer->render_source, 0);
+
+  trigger_frame_upgrade_schedule (surface_renderer);
 }
 
 void
@@ -454,6 +479,9 @@ on_frame_picked_up (GrdRdpFrame *rdp_frame,
 
   g_hash_table_add (surface_renderer->assigned_frame_slots, rdp_frame);
 
+  if (!current_buffer)
+    return;
+
   g_mutex_lock (&surface_renderer->render_mutex);
   if (!grd_rdp_buffer_is_marked_for_removal (current_buffer))
     surface_renderer->last_buffer = current_buffer;
@@ -493,6 +521,14 @@ on_frame_submission (GrdRdpFrame *rdp_frame,
 }
 
 static void
+reset_frame_upgrade_schedule (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  g_source_set_ready_time (surface_renderer->frame_upgrade_source, -1);
+
+  trigger_frame_upgrade_schedule (surface_renderer);
+}
+
+static void
 on_frame_finalization (GrdRdpFrame *rdp_frame,
                        gpointer     user_data)
 {
@@ -501,6 +537,20 @@ on_frame_finalization (GrdRdpFrame *rdp_frame,
 
   g_hash_table_remove (surface_renderer->assigned_frame_slots, rdp_frame);
   grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
+
+  reset_frame_upgrade_schedule (surface_renderer);
+}
+
+static gboolean
+should_avoid_auxiliary_frame (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  int64_t current_time_us;
+
+  current_time_us = g_get_monotonic_time ();
+
+  return g_hash_table_size (surface_renderer->assigned_frame_slots) > 0 ||
+         surface_renderer->total_frame_slots < UNLIMITED_FRAME_SLOTS ||
+         current_time_us - surface_renderer->unthrottled_since_us < TRANSITION_TIME_US;
 }
 
 static void
@@ -509,17 +559,12 @@ maybe_downgrade_view_type (GrdRdpSurfaceRenderer *surface_renderer,
                            GrdRdpFrame           *rdp_frame)
 {
   GrdRdpFrameViewType view_type;
-  int64_t current_time_us;
 
   view_type = grd_rdp_frame_get_avc_view_type (rdp_frame);
   if (view_type != GRD_RDP_FRAME_VIEW_TYPE_STEREO)
     return;
 
-  current_time_us = g_get_monotonic_time ();
-
-  if (g_hash_table_size (surface_renderer->assigned_frame_slots) > 0 ||
-      surface_renderer->total_frame_slots < UNLIMITED_FRAME_SLOTS ||
-      current_time_us - surface_renderer->unthrottled_since_us < TRANSITION_TIME_US ||
+  if (should_avoid_auxiliary_frame (surface_renderer) ||
       grd_rdp_render_context_should_avoid_stereo_frame (render_context))
     grd_rdp_frame_set_avc_view_type (rdp_frame, GRD_RDP_FRAME_VIEW_TYPE_MAIN);
 }
@@ -620,6 +665,8 @@ maybe_render_frame (gpointer user_data)
   g_assert (!surface_renderer->pending_buffer ||
             !rdp_surface->pending_framebuffer);
 
+  g_source_set_ready_time (surface_renderer->frame_upgrade_source, -1);
+
   if (!can_prepare_new_frame (surface_renderer))
     return G_SOURCE_CONTINUE;
 
@@ -653,6 +700,95 @@ maybe_render_frame (gpointer user_data)
 }
 
 static gboolean
+should_retry_frame_upgrade (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  /*
+   * should_avoid_auxiliary_frame() returned true. If the following conditions
+   * are true too, then the transition period from throttled to unthrottled is
+   * not over yet.
+   */
+  return g_hash_table_size (surface_renderer->assigned_frame_slots) == 0 &&
+         surface_renderer->total_frame_slots == UNLIMITED_FRAME_SLOTS;
+}
+
+static void
+upgrade_frame (GrdRdpSurfaceRenderer *surface_renderer,
+               GrdRdpRenderContext   *render_context)
+{
+  GrdRdpRenderer *renderer = surface_renderer->renderer;
+  GrdRdpFrameContext *frame_context;
+  GrdRdpFrame *rdp_frame;
+
+  frame_context = g_new0 (GrdRdpFrameContext, 1);
+  frame_context->surface_renderer = surface_renderer;
+
+  rdp_frame = grd_rdp_frame_new (render_context, NULL, NULL,
+                                 on_frame_picked_up, NULL,
+                                 on_frame_submission, on_frame_finalization,
+                                 frame_context, g_free);
+  grd_rdp_renderer_submit_frame (renderer, render_context, rdp_frame);
+}
+
+static gboolean
+maybe_upgrade_frame (gpointer user_data)
+{
+  GrdRdpSurfaceRenderer *surface_renderer = user_data;
+  GrdRdpRenderer *renderer = surface_renderer->renderer;
+  GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+  GrdRdpAcquireContextFlags acquire_flags;
+  GrdRdpRenderContext *render_context;
+  g_autoptr (GMutexLocker) locker = NULL;
+
+  locker = g_mutex_locker_new (&surface_renderer->render_mutex);
+  if (surface_renderer->pending_buffer)
+    return G_SOURCE_CONTINUE;
+
+  g_clear_pointer (&locker, g_mutex_locker_free);
+
+  if (!surface_renderer->pending_frame_upgrade)
+    return G_SOURCE_CONTINUE;
+
+  if (!can_prepare_new_frame (surface_renderer))
+    return G_SOURCE_CONTINUE;
+
+  if (should_avoid_auxiliary_frame (surface_renderer))
+    {
+      if (should_retry_frame_upgrade (surface_renderer))
+        trigger_frame_upgrade_schedule (surface_renderer);
+
+      return G_SOURCE_CONTINUE;
+    }
+
+  acquire_flags = GRD_RDP_ACQUIRE_CONTEXT_FLAG_RETAIN_OR_NULL;
+
+  render_context =
+    grd_rdp_renderer_try_acquire_render_context (renderer, rdp_surface,
+                                                 acquire_flags);
+  if (!render_context)
+    return G_SOURCE_CONTINUE;
+
+  upgrade_frame (surface_renderer, render_context);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean
+trigger_frame_upgrade (gpointer user_data)
+{
+  GrdRdpSurfaceRenderer *surface_renderer = user_data;
+  int64_t current_time_us;
+
+  if (g_source_get_ready_time (surface_renderer->frame_upgrade_source) != -1)
+    return G_SOURCE_CONTINUE;
+
+  current_time_us = g_source_get_time (surface_renderer->frame_upgrade_source);
+  g_source_set_ready_time (surface_renderer->frame_upgrade_source,
+                           current_time_us + FRAME_UPGRADE_DELAY_US);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean
 source_dispatch (GSource     *source,
                  GSourceFunc  callback,
                  gpointer     user_data)
@@ -679,6 +815,8 @@ grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
   GrdRdpSurfaceRenderer *surface_renderer;
   GSource *buffer_unref_source;
   GSource *render_source;
+  GSource *frame_upgrade_source;
+  GSource *trigger_frame_upgrade_source;
 
   surface_renderer = g_object_new (GRD_TYPE_RDP_SURFACE_RENDERER, NULL);
   surface_renderer->rdp_surface = rdp_surface;
@@ -701,6 +839,20 @@ grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
   g_source_attach (render_source, graphics_context);
   surface_renderer->render_source = render_source;
 
+  frame_upgrade_source = g_source_new (&source_funcs, sizeof (GSource));
+  g_source_set_callback (frame_upgrade_source, maybe_upgrade_frame,
+                         surface_renderer, NULL);
+  g_source_set_ready_time (frame_upgrade_source, -1);
+  g_source_attach (frame_upgrade_source, graphics_context);
+  surface_renderer->frame_upgrade_source = frame_upgrade_source;
+
+  trigger_frame_upgrade_source = g_source_new (&source_funcs, sizeof (GSource));
+  g_source_set_callback (trigger_frame_upgrade_source, trigger_frame_upgrade,
+                         surface_renderer, NULL);
+  g_source_set_ready_time (trigger_frame_upgrade_source, -1);
+  g_source_attach (trigger_frame_upgrade_source, graphics_context);
+  surface_renderer->trigger_frame_upgrade_source = trigger_frame_upgrade_source;
+
   return surface_renderer;
 }
 
@@ -720,6 +872,16 @@ grd_rdp_surface_renderer_dispose (GObject *object)
 
   g_assert (g_async_queue_try_pop (surface_renderer->unref_queue) == NULL);
 
+  if (surface_renderer->trigger_frame_upgrade_source)
+    {
+      g_source_destroy (surface_renderer->trigger_frame_upgrade_source);
+      g_clear_pointer (&surface_renderer->trigger_frame_upgrade_source, g_source_unref);
+    }
+  if (surface_renderer->frame_upgrade_source)
+    {
+      g_source_destroy (surface_renderer->frame_upgrade_source);
+      g_clear_pointer (&surface_renderer->frame_upgrade_source, g_source_unref);
+    }
   if (surface_renderer->render_source)
     {
       g_source_destroy (surface_renderer->render_source);

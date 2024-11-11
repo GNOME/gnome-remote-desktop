@@ -44,6 +44,9 @@ uint32_t grd_rdp_surface_renderer_get_total_frame_slots (GrdRdpSurfaceRenderer *
 void grd_rdp_surface_renderer_update_total_frame_slots (GrdRdpSurfaceRenderer *surface_renderer,
                                                         uint32_t               total_frame_slots);
 
+void grd_rdp_surface_renderer_notify_frame_upgrade_state (GrdRdpSurfaceRenderer *surface_renderer,
+                                                          gboolean               can_upgrade_frame);
+
 gboolean grd_rdp_surface_renderer_register_pw_buffer (GrdRdpSurfaceRenderer  *surface_renderer,
                                                       GrdRdpPwBuffer         *rdp_pw_buffer,
                                                       uint32_t                drm_format,
