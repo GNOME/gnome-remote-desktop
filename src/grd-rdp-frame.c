@@ -185,7 +185,8 @@ grd_rdp_frame_pop_image_view (GrdRdpFrame *rdp_frame)
 }
 
 static void
-set_view_type (GrdRdpFrame *rdp_frame)
+set_view_type (GrdRdpFrame *rdp_frame,
+               gboolean     frame_upgrade)
 {
   GrdRdpRenderContext *render_context = rdp_frame->render_context;
   GrdRdpCodec codec = grd_rdp_render_context_get_codec (render_context);
@@ -197,7 +198,9 @@ set_view_type (GrdRdpFrame *rdp_frame)
       rdp_frame->view_type = GRD_RDP_FRAME_VIEW_TYPE_MAIN;
       break;
     case GRD_RDP_CODEC_AVC444v2:
-      rdp_frame->view_type = GRD_RDP_FRAME_VIEW_TYPE_STEREO;
+      rdp_frame->view_type =
+        frame_upgrade ? GRD_RDP_FRAME_VIEW_TYPE_AUX
+                      : GRD_RDP_FRAME_VIEW_TYPE_STEREO;
       break;
     }
 }
@@ -259,6 +262,37 @@ acquire_image_views (GrdRdpFrame *rdp_frame)
     }
 }
 
+static void
+prepare_new_frame (GrdRdpFrame *rdp_frame)
+{
+  rdp_frame->pending_view_finalization = TRUE;
+
+  set_view_type (rdp_frame, FALSE);
+  acquire_image_views (rdp_frame);
+}
+
+static void
+prepare_frame_upgrade (GrdRdpFrame *rdp_frame)
+{
+  GrdRdpRenderContext *render_context = rdp_frame->render_context;
+  cairo_region_t *damage_region = NULL;
+  GrdImageView *image_view = NULL;
+
+  set_view_type (rdp_frame, TRUE);
+
+  grd_rdp_render_context_fetch_progressive_render_state (render_context,
+                                                         &image_view,
+                                                         &damage_region);
+  g_assert (image_view);
+  g_assert (damage_region);
+
+  rdp_frame->acquired_image_views =
+    g_list_append (rdp_frame->acquired_image_views, image_view);
+  g_queue_push_tail (rdp_frame->unused_image_views, image_view);
+
+  rdp_frame->damage_region = damage_region;
+}
+
 GrdRdpFrame *
 grd_rdp_frame_new (GrdRdpRenderContext *render_context,
                    GrdRdpBuffer        *src_buffer_new,
@@ -284,12 +318,12 @@ grd_rdp_frame_new (GrdRdpRenderContext *render_context,
   rdp_frame->callback_user_data = callback_user_data;
   rdp_frame->user_data_destroy = user_data_destroy;
 
-  rdp_frame->pending_view_finalization = TRUE;
-
-  set_view_type (rdp_frame);
-
   rdp_frame->unused_image_views = g_queue_new ();
-  acquire_image_views (rdp_frame);
+
+  if (src_buffer_new)
+    prepare_new_frame (rdp_frame);
+  else
+    prepare_frame_upgrade (rdp_frame);
 
   return rdp_frame;
 }
