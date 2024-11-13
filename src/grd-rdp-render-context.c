@@ -104,6 +104,34 @@ grd_rdp_render_context_should_avoid_stereo_frame (GrdRdpRenderContext *render_co
   return grd_rdp_gfx_framerate_log_should_avoid_stereo_frame (framerate_log);
 }
 
+static void
+notify_frame_upgrade_state (GrdRdpRenderContext *render_context,
+                            gboolean             can_upgrade_frame)
+{
+  GrdRdpGfxSurface *gfx_surface = render_context->gfx_surface;
+  GrdRdpSurface *rdp_surface;
+  GrdRdpSurfaceRenderer *surface_renderer;
+
+  g_assert (gfx_surface);
+  rdp_surface = grd_rdp_gfx_surface_get_rdp_surface (gfx_surface);
+  surface_renderer = grd_rdp_surface_get_surface_renderer (rdp_surface);
+
+  grd_rdp_surface_renderer_notify_frame_upgrade_state (surface_renderer,
+                                                       can_upgrade_frame);
+}
+
+static void
+update_frame_upgrade_state (GrdRdpRenderContext *render_context)
+{
+  gboolean can_upgrade_frame;
+
+  can_upgrade_frame =
+    !!render_context->chroma_state_buffer &&
+    g_hash_table_size (render_context->acquired_image_views) == 0;
+
+  notify_frame_upgrade_state (render_context, can_upgrade_frame);
+}
+
 GrdImageView *
 grd_rdp_render_context_acquire_image_view (GrdRdpRenderContext *render_context)
 {
@@ -120,6 +148,8 @@ grd_rdp_render_context_acquire_image_view (GrdRdpRenderContext *render_context)
       g_hash_table_add (render_context->acquired_image_views, image_view);
       render_context->last_acquired_image_view = image_view;
 
+      update_frame_upgrade_state (render_context);
+
       return image_view;
     }
 
@@ -133,6 +163,8 @@ grd_rdp_render_context_release_image_view (GrdRdpRenderContext *render_context,
 {
   if (!g_hash_table_remove (render_context->acquired_image_views, image_view))
     g_assert_not_reached ();
+
+  update_frame_upgrade_state (render_context);
 }
 
 static void
@@ -261,6 +293,7 @@ update_avc444_render_state (GrdRdpRenderContext *render_context,
       g_assert_not_reached ();
       break;
     }
+  update_frame_upgrade_state (render_context);
 }
 
 static cairo_region_t *
@@ -361,6 +394,7 @@ grd_rdp_render_context_fetch_progressive_render_state (GrdRdpRenderContext  *ren
   g_hash_table_add (render_context->acquired_image_views, *image_view);
 
   g_clear_pointer (&render_context->chroma_state_buffer, g_free);
+  update_frame_upgrade_state (render_context);
 }
 
 static void
@@ -484,6 +518,7 @@ grd_rdp_render_context_dispose (GObject *object)
     g_assert (g_hash_table_size (render_context->acquired_image_views) == 0);
 
   g_clear_pointer (&render_context->chroma_state_buffer, g_free);
+  update_frame_upgrade_state (render_context);
 
   g_clear_object (&render_context->view_creator);
   g_clear_object (&render_context->encode_session);
