@@ -28,6 +28,8 @@
 #include "grd-rdp-buffer-info.h"
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-frame.h"
+#include "grd-rdp-gfx-frame-controller.h"
+#include "grd-rdp-gfx-framerate-log.h"
 #include "grd-rdp-gfx-surface.h"
 #include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-render-state.h"
@@ -85,6 +87,21 @@ grd_rdp_render_context_get_encode_session (GrdRdpRenderContext *render_context)
   return render_context->encode_session;
 }
 
+gboolean
+grd_rdp_render_context_should_avoid_stereo_frame (GrdRdpRenderContext *render_context)
+{
+  GrdRdpGfxSurface *gfx_surface = render_context->gfx_surface;
+  GrdRdpGfxFrameController *frame_controller;
+  GrdRdpGfxFramerateLog *framerate_log;
+
+  g_assert (gfx_surface);
+
+  frame_controller = grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
+  framerate_log = grd_rdp_gfx_frame_controller_get_framerate_log (frame_controller);
+
+  return grd_rdp_gfx_framerate_log_should_avoid_stereo_frame (framerate_log);
+}
+
 GrdImageView *
 grd_rdp_render_context_acquire_image_view (GrdRdpRenderContext *render_context)
 {
@@ -112,6 +129,20 @@ grd_rdp_render_context_release_image_view (GrdRdpRenderContext *render_context,
 {
   if (!g_hash_table_remove (render_context->acquired_image_views, image_view))
     g_assert_not_reached ();
+}
+
+static void
+maybe_downgrade_view_type (GrdRdpRenderContext *render_context,
+                           GrdRdpFrame         *rdp_frame)
+{
+  GrdRdpFrameViewType view_type;
+
+  view_type = grd_rdp_frame_get_avc_view_type (rdp_frame);
+  if (view_type != GRD_RDP_FRAME_VIEW_TYPE_STEREO)
+    return;
+
+  if (grd_rdp_render_context_should_avoid_stereo_frame (render_context))
+    grd_rdp_frame_set_avc_view_type (rdp_frame, GRD_RDP_FRAME_VIEW_TYPE_MAIN);
 }
 
 static gboolean
@@ -212,6 +243,8 @@ update_avc444_render_state (GrdRdpRenderContext *render_context,
                             GrdRdpFrame         *rdp_frame,
                             GrdRdpRenderState   *render_state)
 {
+  maybe_downgrade_view_type (render_context, rdp_frame);
+
   switch (grd_rdp_frame_get_avc_view_type (rdp_frame))
     {
     case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
