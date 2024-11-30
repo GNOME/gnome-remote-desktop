@@ -57,6 +57,8 @@ struct _GrdRdpRenderContext
   GHashTable *image_views;
   GHashTable *acquired_image_views;
 
+  GrdImageView *last_acquired_image_view;
+
   uint32_t *chroma_state_buffer;
   uint32_t state_buffer_length;
 };
@@ -116,6 +118,8 @@ grd_rdp_render_context_acquire_image_view (GrdRdpRenderContext *render_context)
         continue;
 
       g_hash_table_add (render_context->acquired_image_views, image_view);
+      render_context->last_acquired_image_view = image_view;
+
       return image_view;
     }
 
@@ -334,6 +338,29 @@ grd_rdp_render_context_update_frame_state (GrdRdpRenderContext *render_context,
   grd_rdp_frame_set_damage_region (rdp_frame, damage_region);
 
   grd_rdp_render_state_free (render_state);
+}
+
+void
+grd_rdp_render_context_fetch_progressive_render_state (GrdRdpRenderContext  *render_context,
+                                                       GrdImageView        **image_view,
+                                                       cairo_region_t      **damage_region)
+{
+  g_autoptr (GrdRdpRenderState) render_state = NULL;
+
+  g_assert (render_context->chroma_state_buffer);
+
+  render_state = grd_rdp_render_state_new (render_context->chroma_state_buffer,
+                                           NULL,
+                                           render_context->state_buffer_length);
+  *damage_region = create_damage_region (render_context, render_state);
+
+  *image_view = render_context->last_acquired_image_view;
+  g_assert (!g_hash_table_contains (render_context->acquired_image_views,
+                                    *image_view));
+
+  g_hash_table_add (render_context->acquired_image_views, *image_view);
+
+  g_clear_pointer (&render_context->chroma_state_buffer, g_free);
 }
 
 static void

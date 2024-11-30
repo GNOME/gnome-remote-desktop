@@ -20,6 +20,7 @@
 #ifndef GRD_RDP_RENDER_CONTEXT_H
 #define GRD_RDP_RENDER_CONTEXT_H
 
+#include <cairo/cairo.h>
 #include <glib-object.h>
 
 #include "grd-types.h"
@@ -58,5 +59,9 @@ void grd_rdp_render_context_release_image_view (GrdRdpRenderContext *render_cont
 void grd_rdp_render_context_update_frame_state (GrdRdpRenderContext *render_context,
                                                 GrdRdpFrame         *rdp_frame,
                                                 GrdRdpRenderState   *render_state);
+
+void grd_rdp_render_context_fetch_progressive_render_state (GrdRdpRenderContext  *render_context,
+                                                            GrdImageView        **image_view,
+                                                            cairo_region_t      **damage_region);
 
 #endif /* GRD_RDP_RENDER_CONTEXT_H */
