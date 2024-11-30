@@ -1737,15 +1737,28 @@ rdpgfx_cache_import_offer (RdpgfxServerContext                 *rdpgfx_context,
 }
 
 static void
+notify_updated_frame_controllers (GHashTable *updated_frame_controllers)
+{
+  GrdRdpGfxFrameController *frame_controller = NULL;
+  GHashTableIter iter;
+
+  g_hash_table_iter_init (&iter, updated_frame_controllers);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *) &frame_controller))
+    grd_rdp_gfx_frame_controller_notify_history_changed (frame_controller);
+}
+
+static void
 maybe_rewrite_frame_history (GrdRdpGraphicsPipeline *graphics_pipeline,
                              uint32_t                pending_frame_acks)
 {
   GfxFrameInfo *gfx_frame_info;
+  GHashTable *updated_frame_controllers;
 
   if (g_queue_get_length (graphics_pipeline->encoded_frames) == 0)
     return;
 
   reduce_tracked_frame_infos (graphics_pipeline, pending_frame_acks + 1);
+  updated_frame_controllers = g_hash_table_new (NULL, NULL);
 
   while ((gfx_frame_info = g_queue_pop_tail (graphics_pipeline->encoded_frames)))
     {
@@ -1767,10 +1780,14 @@ maybe_rewrite_frame_history (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                                frame_info->frame_id,
                                                                frame_info->n_subframes,
                                                                frame_info->enc_time_us);
+          g_hash_table_add (updated_frame_controllers, frame_controller);
         }
 
       g_free (gfx_frame_info);
     }
+
+  notify_updated_frame_controllers (updated_frame_controllers);
+  g_hash_table_unref (updated_frame_controllers);
 }
 
 static void
