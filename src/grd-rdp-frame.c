@@ -117,6 +117,29 @@ grd_rdp_frame_set_renderer (GrdRdpFrame    *rdp_frame,
   rdp_frame->renderer = renderer;
 }
 
+void
+grd_rdp_frame_set_avc_view_type (GrdRdpFrame         *rdp_frame,
+                                 GrdRdpFrameViewType  view_type)
+{
+  g_assert (view_type != GRD_RDP_FRAME_VIEW_TYPE_STEREO);
+  g_assert (view_type == GRD_RDP_FRAME_VIEW_TYPE_MAIN ||
+            view_type == GRD_RDP_FRAME_VIEW_TYPE_AUX);
+
+  switch (rdp_frame->view_type)
+    {
+    case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
+      g_assert (g_queue_get_length (rdp_frame->unused_image_views) == 2);
+      g_queue_pop_tail (rdp_frame->unused_image_views);
+      break;
+    case GRD_RDP_FRAME_VIEW_TYPE_MAIN:
+    case GRD_RDP_FRAME_VIEW_TYPE_AUX:
+      g_assert (g_queue_get_length (rdp_frame->unused_image_views) == 1);
+      break;
+    }
+
+  rdp_frame->view_type = view_type;
+}
+
 static void
 finalize_view (GrdRdpFrame *rdp_frame)
 {

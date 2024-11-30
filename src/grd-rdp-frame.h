@@ -70,6 +70,9 @@ gboolean grd_rdp_frame_is_surface_damaged (GrdRdpFrame *rdp_frame);
 void grd_rdp_frame_set_renderer (GrdRdpFrame    *rdp_frame,
                                  GrdRdpRenderer *renderer);
 
+void grd_rdp_frame_set_avc_view_type (GrdRdpFrame         *rdp_frame,
+                                      GrdRdpFrameViewType  view_type);
+
 void grd_rdp_frame_set_damage_region (GrdRdpFrame    *rdp_frame,
                                       cairo_region_t *damage_region);
 
