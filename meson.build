@@ -57,6 +57,7 @@ if have_rdp
   fuse_dep = dependency('fuse3', version: fuse_req)
   libva_dep = dependency('libva')
   libva_drm_dep = dependency('libva-drm')
+  m_dep = cc.find_library('m')
   opus_dep = dependency('opus')
   polkit_dep = dependency('polkit-gobject-1', version: polkit_req)
   vulkan_dep = dependency('vulkan', version: vulkan_req)

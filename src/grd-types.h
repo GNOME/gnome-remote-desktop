@@ -53,6 +53,7 @@ typedef struct _GrdRdpFrame GrdRdpFrame;
 typedef struct _GrdRdpFrameStats GrdRdpFrameStats;
 typedef struct _GrdRdpGfxFrameController GrdRdpGfxFrameController;
 typedef struct _GrdRdpGfxFrameLog GrdRdpGfxFrameLog;
+typedef struct _GrdRdpGfxFramerateLog GrdRdpGfxFramerateLog;
 typedef struct _GrdRdpGfxSurface GrdRdpGfxSurface;
 typedef struct _GrdRdpGraphicsPipeline GrdRdpGraphicsPipeline;
 typedef struct _GrdRdpLayoutManager GrdRdpLayoutManager;
