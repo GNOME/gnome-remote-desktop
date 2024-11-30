@@ -478,6 +478,9 @@ grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer            *renderer
   GrdRdpRenderContext *render_context = NULL;
   g_autoptr (GMutexLocker) locker = NULL;
 
+  g_assert (!((flags & GRD_RDP_ACQUIRE_CONTEXT_FLAG_FORCE_RESET) &&
+              (flags & GRD_RDP_ACQUIRE_CONTEXT_FLAG_RETAIN_OR_NULL)));
+
   locker = g_mutex_locker_new (&renderer->inhibition_mutex);
   if (renderer->stop_rendering ||
       renderer->rendering_inhibited ||
@@ -493,6 +496,9 @@ grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer            *renderer
   if (g_hash_table_lookup_extended (renderer->render_context_table, rdp_surface,
                                     NULL, (gpointer *) &render_context))
     return render_context_ref (renderer, render_context);
+
+  if (flags & GRD_RDP_ACQUIRE_CONTEXT_FLAG_RETAIN_OR_NULL)
+    return NULL;
 
   render_context = grd_rdp_render_context_new (renderer->graphics_pipeline,
                                                rdp_surface,

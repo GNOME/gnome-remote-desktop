@@ -33,6 +33,7 @@ typedef enum
 {
   GRD_RDP_ACQUIRE_CONTEXT_FLAG_NONE = 0,
   GRD_RDP_ACQUIRE_CONTEXT_FLAG_FORCE_RESET = 1 << 0,
+  GRD_RDP_ACQUIRE_CONTEXT_FLAG_RETAIN_OR_NULL = 1 << 1,
 } GrdRdpAcquireContextFlags;
 
 GrdRdpRenderer *grd_rdp_renderer_new (GrdSessionRdp    *session_rdp,
