@@ -161,6 +161,24 @@ grd_rdp_frame_pop_image_view (GrdRdpFrame *rdp_frame)
   return g_queue_pop_head (rdp_frame->unused_image_views);
 }
 
+static void
+set_view_type (GrdRdpFrame *rdp_frame)
+{
+  GrdRdpRenderContext *render_context = rdp_frame->render_context;
+  GrdRdpCodec codec = grd_rdp_render_context_get_codec (render_context);
+
+  switch (codec)
+    {
+    case GRD_RDP_CODEC_CAPROGRESSIVE:
+    case GRD_RDP_CODEC_AVC420:
+      rdp_frame->view_type = GRD_RDP_FRAME_VIEW_TYPE_MAIN;
+      break;
+    case GRD_RDP_CODEC_AVC444v2:
+      rdp_frame->view_type = GRD_RDP_FRAME_VIEW_TYPE_STEREO;
+      break;
+    }
+}
+
 static uint32_t
 get_n_required_image_views (GrdRdpFrame *rdp_frame)
 {
@@ -245,7 +263,7 @@ grd_rdp_frame_new (GrdRdpRenderContext *render_context,
 
   rdp_frame->pending_view_finalization = TRUE;
 
-  rdp_frame->view_type = GRD_RDP_FRAME_VIEW_TYPE_MAIN;
+  set_view_type (rdp_frame);
 
   rdp_frame->unused_image_views = g_queue_new ();
   acquire_image_views (rdp_frame);
