@@ -31,6 +31,8 @@ G_DECLARE_FINAL_TYPE (GrdRdpGfxFrameController, grd_rdp_gfx_frame_controller,
 
 GrdRdpGfxFrameController *grd_rdp_gfx_frame_controller_new (GrdRdpSurface *rdp_surface);
 
+GrdRdpGfxFramerateLog *grd_rdp_gfx_frame_controller_get_framerate_log (GrdRdpGfxFrameController *frame_controller);
+
 void grd_rdp_gfx_frame_controller_notify_history_changed (GrdRdpGfxFrameController *frame_controller);
 
 void grd_rdp_gfx_frame_controller_unack_frame (GrdRdpGfxFrameController *frame_controller,

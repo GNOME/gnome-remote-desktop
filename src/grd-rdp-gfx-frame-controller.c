@@ -61,6 +61,12 @@ G_DEFINE_TYPE (GrdRdpGfxFrameController,
                grd_rdp_gfx_frame_controller,
                G_TYPE_OBJECT)
 
+GrdRdpGfxFramerateLog *
+grd_rdp_gfx_frame_controller_get_framerate_log (GrdRdpGfxFrameController *frame_controller)
+{
+  return frame_controller->framerate_log;
+}
+
 static void
 notify_frame_stats (GrdRdpGfxFrameController *frame_controller,
                     uint32_t                  enc_rate,
