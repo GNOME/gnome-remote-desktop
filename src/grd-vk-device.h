@@ -48,7 +48,6 @@ typedef struct
 
 typedef struct
 {
-  VkShaderModule create_avc_main_view;
   VkShaderModule create_avc_stereo_view;
 } GrdVkShaderModules;
 
