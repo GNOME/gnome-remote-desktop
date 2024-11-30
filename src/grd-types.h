@@ -50,6 +50,7 @@ typedef struct _GrdRdpDisplayControl GrdRdpDisplayControl;
 typedef struct _GrdRdpDvc GrdRdpDvc;
 typedef struct _GrdRdpEventQueue GrdRdpEventQueue;
 typedef struct _GrdRdpFrame GrdRdpFrame;
+typedef struct _GrdRdpFrameStats GrdRdpFrameStats;
 typedef struct _GrdRdpGfxFrameController GrdRdpGfxFrameController;
 typedef struct _GrdRdpGfxFrameLog GrdRdpGfxFrameLog;
 typedef struct _GrdRdpGfxSurface GrdRdpGfxSurface;

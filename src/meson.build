@@ -133,6 +133,8 @@ if have_rdp
     'grd-rdp-frame.c',
     'grd-rdp-frame.h',
     'grd-rdp-frame-info.h',
+    'grd-rdp-frame-stats.c',
+    'grd-rdp-frame-stats.h',
     'grd-rdp-fuse-clipboard.c',
     'grd-rdp-fuse-clipboard.h',
     'grd-rdp-gfx-frame-controller.c',
