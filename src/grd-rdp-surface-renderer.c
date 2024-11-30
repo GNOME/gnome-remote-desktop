@@ -28,6 +28,7 @@
 #include "grd-rdp-frame.h"
 #include "grd-rdp-legacy-buffer.h"
 #include "grd-rdp-pw-buffer.h"
+#include "grd-rdp-render-context.h"
 #include "grd-rdp-renderer.h"
 #include "grd-rdp-session-metrics.h"
 #include "grd-rdp-surface.h"
@@ -504,6 +505,7 @@ on_frame_finalization (GrdRdpFrame *rdp_frame,
 
 static void
 maybe_downgrade_view_type (GrdRdpSurfaceRenderer *surface_renderer,
+                           GrdRdpRenderContext   *render_context,
                            GrdRdpFrame           *rdp_frame)
 {
   GrdRdpFrameViewType view_type;
@@ -517,7 +519,8 @@ maybe_downgrade_view_type (GrdRdpSurfaceRenderer *surface_renderer,
 
   if (g_hash_table_size (surface_renderer->assigned_frame_slots) > 0 ||
       surface_renderer->total_frame_slots < UNLIMITED_FRAME_SLOTS ||
-      current_time_us - surface_renderer->unthrottled_since_us < TRANSITION_TIME_US)
+      current_time_us - surface_renderer->unthrottled_since_us < TRANSITION_TIME_US ||
+      grd_rdp_render_context_should_avoid_stereo_frame (render_context))
     grd_rdp_frame_set_avc_view_type (rdp_frame, GRD_RDP_FRAME_VIEW_TYPE_MAIN);
 }
 
@@ -550,7 +553,7 @@ handle_pending_buffer (GrdRdpSurfaceRenderer *surface_renderer,
                                  on_frame_picked_up, on_view_finalization,
                                  on_frame_submission, on_frame_finalization,
                                  frame_context, g_free);
-  maybe_downgrade_view_type (surface_renderer, rdp_frame);
+  maybe_downgrade_view_type (surface_renderer, render_context, rdp_frame);
 
   grd_rdp_renderer_submit_frame (renderer, render_context, rdp_frame);
 }
