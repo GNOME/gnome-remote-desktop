@@ -164,6 +164,8 @@ if have_rdp
     'grd-vk-buffer.h',
     'grd-vk-device.c',
     'grd-vk-device.h',
+    'grd-vk-image.c',
+    'grd-vk-image.h',
     'grd-vk-memory.c',
     'grd-vk-memory.h',
     'grd-vk-queue.c',
