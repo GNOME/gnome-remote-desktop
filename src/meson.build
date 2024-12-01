@@ -162,6 +162,8 @@ if have_rdp
     'grd-shell-dialog.h',
     'grd-vk-device.c',
     'grd-vk-device.h',
+    'grd-vk-memory.c',
+    'grd-vk-memory.h',
     'grd-vk-queue.c',
     'grd-vk-queue.h',
     'grd-vk-utils.c',

@@ -65,6 +65,7 @@ typedef struct _GrdSessionRdp GrdSessionRdp;
 typedef struct _GrdSessionVnc GrdSessionVnc;
 typedef struct _GrdStream GrdStream;
 typedef struct _GrdVkDevice GrdVkDevice;
+typedef struct _GrdVkMemory GrdVkMemory;
 typedef struct _GrdVkQueue GrdVkQueue;
 typedef struct _GrdVncServer GrdVncServer;
 
