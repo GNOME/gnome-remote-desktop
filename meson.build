@@ -9,6 +9,7 @@ epoxy_req = '>= 1.4'
 freerdp_req = '>= 3.1.0'
 fuse_req = '>= 3.9.1'
 polkit_req = '>= 122'
+vulkan_req = '>= 1.2.0'
 xkbcommon_req = '>= 1.0.0'
 libei_req = '>= 1.2.0'
 
@@ -56,6 +57,7 @@ if have_rdp
   fuse_dep = dependency('fuse3', version: fuse_req)
   opus_dep = dependency('opus')
   polkit_dep = dependency('polkit-gobject-1', version: polkit_req)
+  vulkan_dep = dependency('vulkan', version: vulkan_req)
   winpr_dep = dependency('winpr3', version: freerdp_req)
 endif
 

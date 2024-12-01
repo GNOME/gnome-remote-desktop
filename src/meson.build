@@ -158,6 +158,8 @@ if have_rdp
     'grd-session-rdp.h',
     'grd-shell-dialog.c',
     'grd-shell-dialog.h',
+    'grd-vk-utils.c',
+    'grd-vk-utils.h',
   ])
 
   if libsystemd_dep.found()
