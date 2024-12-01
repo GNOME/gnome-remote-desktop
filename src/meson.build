@@ -160,6 +160,8 @@ if have_rdp
     'grd-session-rdp.h',
     'grd-shell-dialog.c',
     'grd-shell-dialog.h',
+    'grd-vk-buffer.c',
+    'grd-vk-buffer.h',
     'grd-vk-device.c',
     'grd-vk-device.h',
     'grd-vk-memory.c',
