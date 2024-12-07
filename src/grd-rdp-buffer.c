@@ -32,10 +32,18 @@ struct _GrdRdpBuffer
 {
   GObject parent;
 
+  GrdRdpPwBuffer *rdp_pw_buffer;
+
   GrdVkImage *dma_buf_image;
 };
 
 G_DEFINE_TYPE (GrdRdpBuffer, grd_rdp_buffer, G_TYPE_OBJECT)
+
+GrdRdpPwBuffer *
+grd_rdp_buffer_get_rdp_pw_buffer (GrdRdpBuffer *rdp_buffer)
+{
+  return rdp_buffer->rdp_pw_buffer;
+}
 
 static gboolean
 get_vk_format_from_drm_format (uint32_t   drm_format,
@@ -102,6 +110,7 @@ grd_rdp_buffer_new (GrdRdpPwBuffer    *rdp_pw_buffer,
   GrdRdpBufferType buffer_type;
 
   rdp_buffer = g_object_new (GRD_TYPE_RDP_BUFFER, NULL);
+  rdp_buffer->rdp_pw_buffer = rdp_pw_buffer;
 
   buffer_type = grd_rdp_pw_buffer_get_buffer_type (rdp_pw_buffer);
   if (buffer_type == GRD_RDP_BUFFER_TYPE_DMA_BUF &&
