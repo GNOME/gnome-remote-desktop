@@ -54,6 +54,10 @@ void grd_rdp_surface_renderer_unregister_pw_buffer (GrdRdpSurfaceRenderer *surfa
 void grd_rdp_surface_renderer_submit_legacy_buffer (GrdRdpSurfaceRenderer *surface_renderer,
                                                     GrdRdpLegacyBuffer    *buffer);
 
+void grd_rdp_surface_renderer_invalidate_surface (GrdRdpSurfaceRenderer *surface_renderer);
+
+void grd_rdp_surface_renderer_invalidate_surface_unlocked (GrdRdpSurfaceRenderer *surface_renderer);
+
 void grd_rdp_surface_renderer_trigger_render_source (GrdRdpSurfaceRenderer *surface_renderer);
 
 void grd_rdp_surface_renderer_reset (GrdRdpSurfaceRenderer *surface_renderer);

@@ -227,6 +227,20 @@ grd_rdp_surface_renderer_submit_legacy_buffer (GrdRdpSurfaceRenderer *surface_re
 }
 
 void
+grd_rdp_surface_renderer_invalidate_surface (GrdRdpSurfaceRenderer *surface_renderer)
+{
+  g_autoptr (GMutexLocker) locker = NULL;
+
+  locker = g_mutex_locker_new (&surface_renderer->render_mutex);
+  grd_rdp_surface_renderer_invalidate_surface_unlocked (surface_renderer);
+}
+
+void
+grd_rdp_surface_renderer_invalidate_surface_unlocked (GrdRdpSurfaceRenderer *surface_renderer)
+{
+}
+
+void
 grd_rdp_surface_renderer_trigger_render_source (GrdRdpSurfaceRenderer *surface_renderer)
 {
   g_source_set_ready_time (surface_renderer->render_source, 0);
