@@ -47,6 +47,12 @@ grd_rdp_buffer_get_rdp_pw_buffer (GrdRdpBuffer *rdp_buffer)
   return rdp_buffer->rdp_pw_buffer;
 }
 
+GrdVkImage *
+grd_rdp_buffer_get_dma_buf_image (GrdRdpBuffer *rdp_buffer)
+{
+  return rdp_buffer->dma_buf_image;
+}
+
 gboolean
 grd_rdp_buffer_is_marked_for_removal (GrdRdpBuffer *rdp_buffer)
 {
