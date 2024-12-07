@@ -77,6 +77,10 @@ void grd_rdp_renderer_release_render_context (GrdRdpRenderer      *renderer,
 
 void grd_rdp_renderer_clear_render_contexts (GrdRdpRenderer *renderer);
 
+void grd_rdp_renderer_submit_frame (GrdRdpRenderer      *renderer,
+                                    GrdRdpRenderContext *render_context,
+                                    GrdRdpFrame         *rdp_frame);
+
 gboolean grd_rdp_renderer_render_frame (GrdRdpRenderer      *renderer,
                                         GrdRdpSurface       *rdp_surface,
                                         GrdRdpRenderContext *render_context,
