@@ -51,6 +51,8 @@ GrdRdpRenderer *grd_rdp_frame_get_renderer (GrdRdpFrame *rdp_frame);
 
 GrdRdpRenderContext *grd_rdp_frame_get_render_context (GrdRdpFrame *rdp_frame);
 
+GList *grd_rdp_frame_get_image_views (GrdRdpFrame *rdp_frame);
+
 GrdRdpBuffer *grd_rdp_frame_get_source_buffer (GrdRdpFrame *rdp_frame);
 
 GrdRdpBuffer *grd_rdp_frame_get_last_source_buffer (GrdRdpFrame *rdp_frame);
@@ -77,5 +79,7 @@ void grd_rdp_frame_set_bitstreams (GrdRdpFrame *rdp_frame,
 void grd_rdp_frame_notify_picked_up (GrdRdpFrame *rdp_frame);
 
 void grd_rdp_frame_notify_frame_submission (GrdRdpFrame *rdp_frame);
+
+GrdImageView *grd_rdp_frame_pop_image_view (GrdRdpFrame *rdp_frame);
 
 #endif /* GRD_RDP_FRAME_H */

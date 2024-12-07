@@ -21,6 +21,7 @@
 
 #include "grd-rdp-frame.h"
 
+#include "grd-rdp-render-context.h"
 #include "grd-rdp-renderer.h"
 
 struct _GrdRdpFrame
@@ -36,6 +37,9 @@ struct _GrdRdpFrame
   GDestroyNotify user_data_destroy;
 
   gboolean pending_view_finalization;
+
+  GList *acquired_image_views;
+  GQueue *unused_image_views;
 
   GrdRdpBuffer *src_buffer_new;
   GrdRdpBuffer *src_buffer_old;
@@ -56,6 +60,12 @@ GrdRdpRenderContext *
 grd_rdp_frame_get_render_context (GrdRdpFrame *rdp_frame)
 {
   return rdp_frame->render_context;
+}
+
+GList *
+grd_rdp_frame_get_image_views (GrdRdpFrame *rdp_frame)
+{
+  return rdp_frame->acquired_image_views;
 }
 
 GrdRdpBuffer *
@@ -145,6 +155,69 @@ grd_rdp_frame_notify_frame_submission (GrdRdpFrame *rdp_frame)
   rdp_frame->frame_submitted (rdp_frame, rdp_frame->callback_user_data);
 }
 
+GrdImageView *
+grd_rdp_frame_pop_image_view (GrdRdpFrame *rdp_frame)
+{
+  return g_queue_pop_head (rdp_frame->unused_image_views);
+}
+
+static uint32_t
+get_n_required_image_views (GrdRdpFrame *rdp_frame)
+{
+  GrdRdpRenderContext *render_context = rdp_frame->render_context;
+  GrdRdpCodec codec = grd_rdp_render_context_get_codec (render_context);
+
+  switch (codec)
+    {
+    case GRD_RDP_CODEC_CAPROGRESSIVE:
+      return 1;
+    case GRD_RDP_CODEC_AVC420:
+    case GRD_RDP_CODEC_AVC444v2:
+      return 1;
+    }
+
+  g_assert_not_reached ();
+}
+
+static uint32_t
+get_n_image_views_to_be_encoded (GrdRdpFrame *rdp_frame)
+{
+  switch (grd_rdp_frame_get_avc_view_type (rdp_frame))
+    {
+    case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
+      return 2;
+    case GRD_RDP_FRAME_VIEW_TYPE_MAIN:
+    case GRD_RDP_FRAME_VIEW_TYPE_AUX:
+      return 1;
+    }
+
+  g_assert_not_reached ();
+}
+
+static void
+acquire_image_views (GrdRdpFrame *rdp_frame)
+{
+  uint32_t n_image_views = get_n_required_image_views (rdp_frame);
+  uint32_t n_image_views_to_be_encoded =
+    get_n_image_views_to_be_encoded (rdp_frame);
+  uint32_t i;
+
+  g_assert (n_image_views_to_be_encoded <= n_image_views);
+
+  for (i = 0; i < n_image_views; ++i)
+    {
+      GrdRdpRenderContext *render_context = rdp_frame->render_context;
+      GrdImageView *image_view;
+
+      image_view = grd_rdp_render_context_acquire_image_view (render_context);
+      rdp_frame->acquired_image_views =
+        g_list_append (rdp_frame->acquired_image_views, image_view);
+
+      if (i < n_image_views_to_be_encoded)
+        g_queue_push_tail (rdp_frame->unused_image_views, image_view);
+    }
+}
+
 GrdRdpFrame *
 grd_rdp_frame_new (GrdRdpRenderContext *render_context,
                    GrdRdpBuffer        *src_buffer_new,
@@ -174,7 +247,25 @@ grd_rdp_frame_new (GrdRdpRenderContext *render_context,
 
   rdp_frame->view_type = GRD_RDP_FRAME_VIEW_TYPE_MAIN;
 
+  rdp_frame->unused_image_views = g_queue_new ();
+  acquire_image_views (rdp_frame);
+
   return rdp_frame;
+}
+
+static void
+release_image_views (GrdRdpFrame *rdp_frame)
+{
+  GList *l;
+
+  for (l = rdp_frame->acquired_image_views; l; l = l->next)
+    {
+      GrdImageView *image_view = l->data;
+
+      grd_rdp_render_context_release_image_view (rdp_frame->render_context,
+                                                 image_view);
+    }
+  g_clear_pointer (&rdp_frame->acquired_image_views, g_list_free);
 }
 
 void
@@ -192,6 +283,8 @@ grd_rdp_frame_free (GrdRdpFrame *rdp_frame)
   g_clear_pointer (&rdp_frame->callback_user_data,
                    rdp_frame->user_data_destroy);
 
+  g_clear_pointer (&rdp_frame->unused_image_views, g_queue_free);
+  release_image_views (rdp_frame);
   grd_rdp_renderer_release_render_context (rdp_frame->renderer,
                                            rdp_frame->render_context);
 
