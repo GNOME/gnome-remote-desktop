@@ -89,6 +89,8 @@ if have_rdp
     'grd-encode-context.h',
     'grd-encode-session.c',
     'grd-encode-session.h',
+    'grd-encode-session-ca-sw.c',
+    'grd-encode-session-ca-sw.h',
     'grd-encode-session-vaapi.c',
     'grd-encode-session-vaapi.h',
     'grd-hwaccel-nvidia.c',
