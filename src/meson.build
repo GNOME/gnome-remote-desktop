@@ -101,6 +101,8 @@ if have_rdp
     'grd-image-view.h',
     'grd-image-view-nv12.c',
     'grd-image-view-nv12.h',
+    'grd-image-view-rgb.c',
+    'grd-image-view-rgb.h',
     'grd-local-buffer.c',
     'grd-local-buffer.h',
     'grd-local-buffer-copy.c',
