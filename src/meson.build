@@ -180,6 +180,8 @@ if have_rdp
     'grd-rdp-surface.h',
     'grd-rdp-surface-renderer.c',
     'grd-rdp-surface-renderer.h',
+    'grd-rdp-sw-encoder-ca.c',
+    'grd-rdp-sw-encoder-ca.h',
     'grd-rdp-telemetry.c',
     'grd-rdp-telemetry.h',
     'grd-rdp-view-creator.c',
