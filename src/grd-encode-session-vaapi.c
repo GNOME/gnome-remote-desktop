@@ -1223,6 +1223,7 @@ prepare_next_frame (GrdEncodeSessionVaapi *encode_session_vaapi,
 
 static gboolean
 grd_encode_session_vaapi_encode_frame (GrdEncodeSession  *encode_session,
+                                       GrdEncodeContext  *encode_context,
                                        GrdImageView      *image_view,
                                        GError           **error)
 {

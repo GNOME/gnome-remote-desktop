@@ -796,8 +796,11 @@ encode_image_views (GrdRdpRenderer *renderer,
         grd_rdp_frame_get_render_context (rdp_frame);
       GrdEncodeSession *encode_session =
         grd_rdp_render_context_get_encode_session (render_context);
+      GrdEncodeContext *encode_context =
+        grd_rdp_frame_get_encode_context (rdp_frame);
 
-      if (!grd_encode_session_encode_frame (encode_session, image_view, &error))
+      if (!grd_encode_session_encode_frame (encode_session, encode_context,
+                                            image_view, &error))
         {
           g_warning ("[RDP] Failed to encode frame: %s", error->message);
 

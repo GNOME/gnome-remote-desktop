@@ -44,6 +44,7 @@ struct _GrdEncodeSessionClass
   GList *(* get_image_views) (GrdEncodeSession *encode_session);
   gboolean (* has_pending_frames) (GrdEncodeSession *encode_session);
   gboolean (* encode_frame) (GrdEncodeSession  *encode_session,
+                             GrdEncodeContext  *encode_context,
                              GrdImageView      *image_view,
                              GError           **error);
   GrdBitstream *(* lock_bitstream) (GrdEncodeSession  *encode_session,
@@ -63,6 +64,7 @@ GList *grd_encode_session_get_image_views (GrdEncodeSession *encode_session);
 gboolean grd_encode_session_has_pending_frames (GrdEncodeSession *encode_session);
 
 gboolean grd_encode_session_encode_frame (GrdEncodeSession  *encode_session,
+                                          GrdEncodeContext  *encode_context,
                                           GrdImageView      *image_view,
                                           GError           **error);
 

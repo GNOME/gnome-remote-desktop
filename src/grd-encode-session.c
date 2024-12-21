@@ -71,12 +71,13 @@ grd_encode_session_has_pending_frames (GrdEncodeSession *encode_session)
 
 gboolean
 grd_encode_session_encode_frame (GrdEncodeSession  *encode_session,
+                                 GrdEncodeContext  *encode_context,
                                  GrdImageView      *image_view,
                                  GError           **error)
 {
   GrdEncodeSessionClass *klass = GRD_ENCODE_SESSION_GET_CLASS (encode_session);
 
-  return klass->encode_frame (encode_session, image_view, error);
+  return klass->encode_frame (encode_session, encode_context, image_view, error);
 }
 
 void
