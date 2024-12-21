@@ -21,6 +21,7 @@
 
 #include "grd-rdp-frame.h"
 
+#include "grd-encode-context.h"
 #include "grd-rdp-render-context.h"
 #include "grd-rdp-renderer.h"
 
@@ -37,6 +38,8 @@ struct _GrdRdpFrame
   GDestroyNotify user_data_destroy;
 
   gboolean pending_view_finalization;
+
+  GrdEncodeContext *encode_context;
 
   GList *acquired_image_views;
   GQueue *unused_image_views;
@@ -60,6 +63,12 @@ GrdRdpRenderContext *
 grd_rdp_frame_get_render_context (GrdRdpFrame *rdp_frame)
 {
   return rdp_frame->render_context;
+}
+
+GrdEncodeContext *
+grd_rdp_frame_get_encode_context (GrdRdpFrame *rdp_frame)
+{
+  return rdp_frame->encode_context;
 }
 
 GList *
@@ -156,6 +165,9 @@ grd_rdp_frame_set_damage_region (GrdRdpFrame    *rdp_frame,
   g_assert (!rdp_frame->damage_region);
 
   rdp_frame->damage_region = damage_region;
+  grd_encode_context_set_damage_region (rdp_frame->encode_context,
+                                        damage_region);
+
   finalize_view (rdp_frame);
 }
 
@@ -318,6 +330,7 @@ grd_rdp_frame_new (GrdRdpRenderContext *render_context,
   rdp_frame->callback_user_data = callback_user_data;
   rdp_frame->user_data_destroy = user_data_destroy;
 
+  rdp_frame->encode_context = grd_encode_context_new ();
   rdp_frame->unused_image_views = g_queue_new ();
 
   if (src_buffer_new)
@@ -354,6 +367,7 @@ grd_rdp_frame_free (GrdRdpFrame *rdp_frame)
 
   rdp_frame->frame_finalized (rdp_frame, rdp_frame->callback_user_data);
 
+  g_clear_pointer (&rdp_frame->encode_context, grd_encode_context_free);
   g_clear_pointer (&rdp_frame->damage_region, cairo_region_destroy);
   g_clear_pointer (&rdp_frame->callback_user_data,
                    rdp_frame->user_data_destroy);

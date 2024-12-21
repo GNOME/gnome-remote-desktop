@@ -51,6 +51,8 @@ GrdRdpRenderer *grd_rdp_frame_get_renderer (GrdRdpFrame *rdp_frame);
 
 GrdRdpRenderContext *grd_rdp_frame_get_render_context (GrdRdpFrame *rdp_frame);
 
+GrdEncodeContext *grd_rdp_frame_get_encode_context (GrdRdpFrame *rdp_frame);
+
 GList *grd_rdp_frame_get_image_views (GrdRdpFrame *rdp_frame);
 
 GrdRdpBuffer *grd_rdp_frame_get_source_buffer (GrdRdpFrame *rdp_frame);
