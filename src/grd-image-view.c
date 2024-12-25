@@ -24,6 +24,14 @@
 G_DEFINE_ABSTRACT_TYPE (GrdImageView, grd_image_view,
                         G_TYPE_OBJECT)
 
+void
+grd_image_view_notify_image_view_release (GrdImageView *image_view)
+{
+  GrdImageViewClass *klass = GRD_IMAGE_VIEW_GET_CLASS (image_view);
+
+  klass->notify_image_view_release (image_view);
+}
+
 static void
 grd_image_view_init (GrdImageView *image_view)
 {

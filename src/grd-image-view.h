@@ -29,6 +29,10 @@ G_DECLARE_DERIVABLE_TYPE (GrdImageView, grd_image_view,
 struct _GrdImageViewClass
 {
   GObjectClass parent_class;
+
+  void (* notify_image_view_release) (GrdImageView *image_view);
 };
+
+void grd_image_view_notify_image_view_release (GrdImageView *image_view);
 
 #endif /* GRD_IMAGE_VIEW_H */

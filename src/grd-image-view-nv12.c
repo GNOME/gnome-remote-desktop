@@ -44,6 +44,11 @@ grd_image_view_nv12_get_uv_layer (GrdImageViewNV12 *image_view_nv12)
   return image_view_nv12->vk_uv_layer;
 }
 
+void
+grd_image_view_nv12_notify_image_view_release (GrdImageView *image_view)
+{
+}
+
 GrdImageViewNV12 *
 grd_image_view_nv12_new (GrdVkImage *vk_y_layer,
                          GrdVkImage *vk_uv_layer)
@@ -77,6 +82,10 @@ static void
 grd_image_view_nv12_class_init (GrdImageViewNV12Class *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GrdImageViewClass *image_view_class = GRD_IMAGE_VIEW_CLASS (klass);
 
   object_class->dispose = grd_image_view_nv12_dispose;
+
+  image_view_class->notify_image_view_release =
+    grd_image_view_nv12_notify_image_view_release;
 }
