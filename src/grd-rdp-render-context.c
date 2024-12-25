@@ -25,6 +25,7 @@
 
 #include "grd-encode-session.h"
 #include "grd-hwaccel-vaapi.h"
+#include "grd-image-view.h"
 #include "grd-rdp-buffer-info.h"
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-frame.h"
@@ -164,6 +165,7 @@ grd_rdp_render_context_release_image_view (GrdRdpRenderContext *render_context,
   if (!g_hash_table_remove (render_context->acquired_image_views, image_view))
     g_assert_not_reached ();
 
+  grd_image_view_notify_image_view_release (image_view);
   update_frame_upgrade_state (render_context);
 }
 
