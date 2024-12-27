@@ -37,6 +37,7 @@ typedef struct _GrdHwAccelNvidia GrdHwAccelNvidia;
 typedef struct _GrdHwAccelVaapi GrdHwAccelVaapi;
 typedef struct _GrdHwAccelVulkan GrdHwAccelVulkan;
 typedef struct _GrdImageView GrdImageView;
+typedef struct _GrdLocalBuffer GrdLocalBuffer;
 typedef struct _GrdRdpAudioInput GrdRdpAudioInput;
 typedef struct _GrdRdpAudioOutputStream GrdRdpAudioOutputStream;
 typedef struct _GrdRdpAudioPlayback GrdRdpAudioPlayback;
