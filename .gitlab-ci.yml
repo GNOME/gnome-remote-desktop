@@ -1,5 +1,5 @@
 include:
-  - remote: 'https://gitlab.freedesktop.org/freedesktop/ci-templates/-/raw/7402203527f61d6473d55ad701172d1606508c52/templates/fedora.yml'
+  - remote: 'https://gitlab.gnome.org/Infrastructure/freedesktop-ci-templates/-/raw/7402203527f61d6473d55ad701172d1606508c52/templates/fedora.yml'
 
 stages:
   - prepare
