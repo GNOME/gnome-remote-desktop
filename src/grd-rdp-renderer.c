@@ -31,6 +31,7 @@
 #include "grd-rdp-render-context.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
+#include "grd-rdp-sw-encoder-ca.h"
 #include "grd-rdp-view-creator.h"
 #include "grd-session-rdp.h"
 
@@ -54,6 +55,7 @@ struct _GrdRdpRenderer
   GrdVkDevice *vk_device;
   GrdHwAccelNvidia *hwaccel_nvidia;
   GrdHwAccelVaapi *hwaccel_vaapi;
+  GrdRdpSwEncoderCa *encoder_ca;
 
   GrdRdpGraphicsPipeline *graphics_pipeline;
   rdpContext *rdp_context;
@@ -194,12 +196,22 @@ grd_rdp_renderer_start (GrdRdpRenderer         *renderer,
                         GrdRdpGraphicsPipeline *graphics_pipeline,
                         rdpContext             *rdp_context)
 {
+  g_autoptr (GError) error = NULL;
+
   renderer->graphics_pipeline = graphics_pipeline;
   renderer->rdp_context = rdp_context;
 
   if (hwaccel_vulkan &&
       !maybe_initialize_hardware_acceleration (renderer, hwaccel_vulkan))
     return FALSE;
+
+  renderer->encoder_ca = grd_rdp_sw_encoder_ca_new (&error);
+  if (!renderer->encoder_ca)
+    {
+      g_warning ("[RDP] Failed to create fallback software renderer: %s",
+                 error->message);
+      return FALSE;
+    }
 
   renderer->graphics_thread = g_thread_new ("RDP graphics thread",
                                             graphics_thread_func,
@@ -679,6 +691,7 @@ grd_rdp_renderer_dispose (GObject *object)
 
   g_assert (g_hash_table_size (renderer->surface_renderer_table) == 0);
 
+  g_clear_object (&renderer->encoder_ca);
   g_clear_object (&renderer->hwaccel_vaapi);
   g_clear_object (&renderer->vk_device);
 
