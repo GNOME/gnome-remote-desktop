@@ -33,6 +33,7 @@ struct _GrdRdpBuffer
   GObject parent;
 
   GrdRdpPwBuffer *rdp_pw_buffer;
+  GrdRdpBufferInfo *rdp_buffer_info;
 
   GrdVkImage *dma_buf_image;
 
@@ -45,6 +46,12 @@ GrdRdpPwBuffer *
 grd_rdp_buffer_get_rdp_pw_buffer (GrdRdpBuffer *rdp_buffer)
 {
   return rdp_buffer->rdp_pw_buffer;
+}
+
+const GrdRdpBufferInfo *
+grd_rdp_buffer_get_rdp_buffer_info (GrdRdpBuffer *rdp_buffer)
+{
+  return rdp_buffer->rdp_buffer_info;
 }
 
 GrdVkImage *
@@ -131,6 +138,8 @@ grd_rdp_buffer_new (GrdRdpPwBuffer    *rdp_pw_buffer,
 
   rdp_buffer = g_object_new (GRD_TYPE_RDP_BUFFER, NULL);
   rdp_buffer->rdp_pw_buffer = rdp_pw_buffer;
+  rdp_buffer->rdp_buffer_info =
+    g_memdup2 (rdp_buffer_info, sizeof (GrdRdpBufferInfo));
 
   buffer_type = grd_rdp_pw_buffer_get_buffer_type (rdp_pw_buffer);
   if (buffer_type == GRD_RDP_BUFFER_TYPE_DMA_BUF &&
@@ -151,6 +160,7 @@ grd_rdp_buffer_dispose (GObject *object)
   GrdRdpBuffer *rdp_buffer = GRD_RDP_BUFFER (object);
 
   g_clear_object (&rdp_buffer->dma_buf_image);
+  g_clear_pointer (&rdp_buffer->rdp_buffer_info, g_free);
 
   G_OBJECT_CLASS (grd_rdp_buffer_parent_class)->dispose (object);
 }

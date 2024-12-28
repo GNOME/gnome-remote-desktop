@@ -36,6 +36,8 @@ GrdRdpBuffer *grd_rdp_buffer_new (GrdRdpPwBuffer    *rdp_pw_buffer,
 
 GrdRdpPwBuffer *grd_rdp_buffer_get_rdp_pw_buffer (GrdRdpBuffer *rdp_buffer);
 
+const GrdRdpBufferInfo *grd_rdp_buffer_get_rdp_buffer_info (GrdRdpBuffer *rdp_buffer);
+
 GrdVkImage *grd_rdp_buffer_get_dma_buf_image (GrdRdpBuffer *rdp_buffer);
 
 gboolean grd_rdp_buffer_is_marked_for_removal (GrdRdpBuffer *rdp_buffer);
