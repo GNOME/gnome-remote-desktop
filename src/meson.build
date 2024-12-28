@@ -200,6 +200,8 @@ if have_rdp
     'grd-rdp-view-creator.h',
     'grd-rdp-view-creator-avc.c',
     'grd-rdp-view-creator-avc.h',
+    'grd-rdp-view-creator-gen-gl.c',
+    'grd-rdp-view-creator-gen-gl.h',
     'grd-session-rdp.c',
     'grd-session-rdp.h',
     'grd-shell-dialog.c',
