@@ -38,8 +38,10 @@ typedef enum
 
 GrdRdpRenderContext *grd_rdp_render_context_new (GrdRdpGraphicsPipeline *graphics_pipeline,
                                                  GrdRdpSurface          *rdp_surface,
+                                                 GrdEglThread           *egl_thread,
                                                  GrdVkDevice            *vk_device,
-                                                 GrdHwAccelVaapi        *hwaccel_vaapi);
+                                                 GrdHwAccelVaapi        *hwaccel_vaapi,
+                                                 GrdRdpSwEncoderCa      *encoder_ca);
 
 GrdRdpCodec grd_rdp_render_context_get_codec (GrdRdpRenderContext *render_context);
 

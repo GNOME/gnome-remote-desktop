@@ -21,6 +21,7 @@
 
 #include "grd-rdp-renderer.h"
 
+#include "grd-context.h"
 #include "grd-encode-session.h"
 #include "grd-hwaccel-nvidia.h"
 #include "grd-hwaccel-vaapi.h"
@@ -52,6 +53,7 @@ struct _GrdRdpRenderer
   gboolean in_shutdown;
 
   GrdSessionRdp *session_rdp;
+  GrdEglThread *egl_thread;
   GrdVkDevice *vk_device;
   GrdHwAccelNvidia *hwaccel_nvidia;
   GrdHwAccelVaapi *hwaccel_vaapi;
@@ -514,8 +516,10 @@ grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer            *renderer
 
   render_context = grd_rdp_render_context_new (renderer->graphics_pipeline,
                                                rdp_surface,
+                                               renderer->egl_thread,
                                                renderer->vk_device,
-                                               renderer->hwaccel_vaapi);
+                                               renderer->hwaccel_vaapi,
+                                               renderer->encoder_ca);
   if (!render_context)
     {
       handle_graphics_subsystem_failure (renderer);
@@ -619,10 +623,14 @@ GrdRdpRenderer *
 grd_rdp_renderer_new (GrdSessionRdp    *session_rdp,
                       GrdHwAccelNvidia *hwaccel_nvidia)
 {
+  GrdSession *session = GRD_SESSION (session_rdp);
+  GrdContext *context = grd_session_get_context (session);
+  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
   GrdRdpRenderer *renderer;
 
   renderer = g_object_new (GRD_TYPE_RDP_RENDERER, NULL);
   renderer->session_rdp = session_rdp;
+  renderer->egl_thread = egl_thread;
   renderer->hwaccel_nvidia = hwaccel_nvidia;
 
   return renderer;
