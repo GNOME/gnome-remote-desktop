@@ -37,7 +37,7 @@ sanitize_value (uint32_t value,
   return value;
 }
 
-GrdRdpMonitorOrientation
+static GrdRdpMonitorOrientation
 transform_monitor_orientation (uint32_t value)
 {
   switch (value)
