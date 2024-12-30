@@ -30,6 +30,7 @@ static const GDebugKey grd_debug_keys[] = {
   { "vk-validation", GRD_DEBUG_VK_VALIDATION },
   { "vk-times", GRD_DEBUG_VK_TIMES },
   { "va-times", GRD_DEBUG_VA_TIMES },
+  { "vkva-renderer", GRD_DEBUG_VKVA },
 };
 
 static GrdDebugFlags debug_flags;
