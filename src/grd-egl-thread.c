@@ -26,6 +26,10 @@
 #include <epoxy/gl.h>
 #include <gio/gio.h>
 
+#ifndef EGL_DRM_RENDER_NODE_FILE_EXT
+#define EGL_DRM_RENDER_NODE_FILE_EXT 0x3377
+#endif
+
 struct _GrdEglThread
 {
   GThread *thread;
@@ -47,6 +51,8 @@ struct _GrdEglThread
 
     EGLDisplay egl_display;
     EGLContext egl_context;
+
+    const char *drm_render_node;
 
     GSource *egl_thread_source;
   } impl;
@@ -316,6 +322,52 @@ query_format_modifiers (GrdEglThread  *egl_thread,
 }
 
 static gboolean
+lookup_drm_render_node (GrdEglThread  *egl_thread,
+                        EGLDisplay     egl_display,
+                        GError       **error)
+{
+  EGLAttrib egl_attrib = 0;
+  EGLDeviceEXT egl_device;
+  const char *egl_extensions;
+
+  if (!eglQueryDisplayAttribEXT (egl_display, EGL_DEVICE_EXT, &egl_attrib))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Failed to retrieve EGL device");
+      return FALSE;
+    }
+  g_assert (egl_attrib);
+
+  egl_device = (EGLDeviceEXT) egl_attrib;
+
+  egl_extensions = eglQueryDeviceStringEXT (egl_device, EGL_EXTENSIONS);
+  if (!egl_extensions)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Failed to retrieve EGL device extensions");
+      return FALSE;
+    }
+
+  if (!strstr (egl_extensions, "EGL_EXT_device_drm_render_node"))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Missing extension 'EGL_EXT_device_drm_render_node'");
+      return FALSE;
+    }
+
+  egl_thread->impl.drm_render_node =
+    eglQueryDeviceStringEXT (egl_device, EGL_DRM_RENDER_NODE_FILE_EXT);
+  if (!egl_thread->impl.drm_render_node)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Failed to retrieve EGL device extensions");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
 initialize_egl_context (GrdEglThread  *egl_thread,
                         EGLenum        egl_platform,
                         GError       **error)
@@ -424,6 +476,17 @@ initialize_egl_context (GrdEglThread  *egl_thread,
                    "EGL context not hardware accelerated");
       return FALSE;
     }
+
+  if (!lookup_drm_render_node (egl_thread, egl_display, error))
+    {
+      eglMakeCurrent (egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
+                      EGL_NO_CONTEXT);
+      eglDestroyContext (egl_display, egl_context);
+      eglTerminate (egl_display);
+      return FALSE;
+    }
+
+  g_debug ("[EGL] DRM render node path: %s", egl_thread->impl.drm_render_node);
 
   egl_thread->impl.egl_display = egl_display;
   egl_thread->impl.egl_context = egl_context;
@@ -686,6 +749,12 @@ grd_egl_thread_free (GrdEglThread *egl_thread)
   g_clear_pointer (&egl_thread->slot_table, g_hash_table_unref);
 
   g_free (egl_thread);
+}
+
+const char *
+grd_egl_thread_get_drm_render_node (GrdEglThread *egl_thread)
+{
+  return egl_thread->impl.drm_render_node;
 }
 
 void *

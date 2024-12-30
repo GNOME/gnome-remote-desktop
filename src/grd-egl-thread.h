@@ -39,6 +39,8 @@ GrdEglThread * grd_egl_thread_new (GError **error);
 
 void grd_egl_thread_free (GrdEglThread *egl_thread);
 
+const char * grd_egl_thread_get_drm_render_node (GrdEglThread *egl_thread);
+
 void * grd_egl_thread_acquire_slot (GrdEglThread *egl_thread);
 
 void grd_egl_thread_release_slot (GrdEglThread     *egl_thread,
