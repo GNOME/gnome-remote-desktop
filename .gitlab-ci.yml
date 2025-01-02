@@ -9,7 +9,7 @@ stages:
 .gnome-remote-desktop.fedora@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 41
-    BASE_TAG: '2024-12-05.0.vk'
+    BASE_TAG: '2024-12-05.2.spirv'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -24,6 +24,7 @@ stages:
       dnf install -y 'pkgconfig(ffnvcodec)' &&
       dnf install -y 'pkgconfig(fuse3)' &&
       dnf install -y 'pkgconfig(fdk-aac)' &&
+      dnf install -y 'pkgconfig(libva)' &&
       dnf install -y 'pkgconfig(opus)' &&
       dnf install -y 'pkgconfig(polkit-gobject-1)' &&
       dnf install -y 'pkgconfig(tss2-esys)' \
@@ -31,6 +32,8 @@ stages:
                      'pkgconfig(tss2-tctildr)' &&
       dnf install -y 'pkgconfig(vulkan)' &&
       dnf install -y asciidoc &&
+      dnf install -y glslc &&
+      dnf install -y spirv-tools &&
       dnf builddep -y mutter --setopt=install_weak_deps=False &&
       dnf install -y git cmake gcc-c++ libusb1-devel &&
       dnf install -y pkcs11-helper-devel 'pkgconfig(krb5)' 'pkgconfig(libcjson)' \
