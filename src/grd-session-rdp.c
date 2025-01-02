@@ -698,6 +698,9 @@ rdp_input_keyboard_event (rdpInput *rdp_input,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
+  rdpSettings *rdp_settings = rdp_input->context->settings;
+  uint32_t keyboard_type =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_KeyboardType);
   GrdKeyState key_state;
   uint16_t scancode;
   uint16_t fullcode;
@@ -710,7 +713,7 @@ rdp_input_keyboard_event (rdpInput *rdp_input,
 
   scancode = code;
   fullcode = flags & KBD_FLAGS_EXTENDED ? scancode | KBDEXT : scancode;
-  vkcode = GetVirtualKeyCodeFromVirtualScanCode (fullcode, 4);
+  vkcode = GetVirtualKeyCodeFromVirtualScanCode (fullcode, keyboard_type);
   vkcode = flags & KBD_FLAGS_EXTENDED ? vkcode | KBDEXT : vkcode;
   keycode = GetKeycodeFromVirtualKeyCode (vkcode, WINPR_KEYCODE_TYPE_EVDEV);
 
@@ -983,6 +986,8 @@ rdp_peer_post_connect (freerdp_peer *peer)
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   rdpSettings *rdp_settings = peer->context->settings;
+  uint32_t keyboard_type =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_KeyboardType);
   uint32_t os_major_type =
     freerdp_settings_get_uint32 (rdp_settings, FreeRDP_OsMajorType);
 
@@ -1000,6 +1005,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
   g_debug ("New RDP client: [OS major type, OS minor type]: [%s, %s]",
            freerdp_peer_os_major_type_string (peer),
            freerdp_peer_os_minor_type_string (peer));
+  g_debug ("[RDP] Client uses keyboard type %u", keyboard_type);
 
   g_debug ("[RDP] Virtual Channels: compression flags: %u, "
            "compression level: %u, chunk size: %u",
