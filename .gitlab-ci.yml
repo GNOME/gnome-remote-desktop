@@ -1,10 +1,19 @@
 include:
   - remote: 'https://gitlab.freedesktop.org/freedesktop/ci-templates/-/raw/7402203527f61d6473d55ad701172d1606508c52/templates/fedora.yml'
+  - component: gitlab.gnome.org/GNOME/citemplates/release-service@master
+    inputs:
+      job-stage: deploy
+      dist-job-name: "dist-gnome-remote-desktop-tarball"
+      tarball-artifact-path: $TARBALL_ARTIFACT_PATH
 
 stages:
   - prepare
   - build
   - test
+  - deploy
+
+variables:
+  TARBALL_ARTIFACT_PATH: build/meson-dist/$CI_PROJECT_NAME-$CI_COMMIT_TAG.tar.xz
 
 .gnome-remote-desktop.fedora@common:
   variables:
@@ -79,6 +88,19 @@ default:
       - 'scheduler_failure'
       - 'api_failure'
 
+workflow:
+  rules:
+    # Allow to switch from branch pipelines to MR pipelines seamlessly
+    # https://docs.gitlab.com/ee/ci/jobs/job_control.html#avoid-duplicate-pipelines
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Don't trigger a branch pipeline if there is an open MR
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+
 build-fedora-container@x86_64:
   extends:
     - .fdo.container-build@fedora@x86_64
@@ -114,3 +136,44 @@ test-gnome-remote-desktop:
     - meson test -C build --no-rebuild --verbose --no-stdsplit -t 10
   needs:
     - build-gnome-remote-desktop
+
+dist-gnome-remote-desktop:
+  extends:
+    - .fdo.distribution-image@fedora
+    - .gnome-remote-desktop.fedora@x86_64
+  stage: deploy
+  needs:
+    - job: build-fedora-container@x86_64
+      artifacts: false
+  script:
+    - meson setup . build -Dvnc=true --werror
+    - meson dist -C build --include-subprojects
+  artifacts:
+    expire_in: 7 day
+    name: "gnome-remote-desktop-${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}"
+    when: always
+    paths:
+      - build/meson-private/dist-build/meson-logs
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "merge_request_event"'
+      when: manual
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - "**/meson.build"
+        - meson/*
+      when: on_success
+    - if: '$GITLAB_USER_LOGIN == "marge-bot"'
+      when: on_success
+    - if: '$CI_MERGE_REQUEST_ASSIGNEES == "marge-bot"'
+      when: on_success
+
+dist-gnome-remote-desktop-tarball:
+  extends: dist-gnome-remote-desktop
+  artifacts:
+    expose_as: 'Get tarball here'
+    name: "${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}"
+    when: always
+    paths:
+      - $TARBALL_ARTIFACT_PATH
+  rules:
+    - if: '$CI_COMMIT_TAG'
