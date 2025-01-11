@@ -1,3 +1,11 @@
+47.3
+====
+* Fix gdctl crash when setting VNC password
+* Don't hard code keyboard type
+
+Contributors:
+  Jonas Ådahl, Jerry, Pascal Nowack
+
 47.2
 ====
 
