@@ -1,3 +1,21 @@
+48.alpha
+========
+* General code improvements
+* Fix gdctl crash when setting VNC password
+* Prepare for Vulkan and libva based hardware acceleration
+* Add user documentation
+* Don't hard code keyboard type
+
+Contributors:
+  Jonas Ådahl, Jerry, Pascal Nowack, Bartłomiej Piotrowski, Daniel Rusek
+
+Translators:
+  Hugo Carvalho [pt], Jordi Mas i Hernandez [ca],
+  Juliano de Souza Camargo [pt_BR], Rūdolfs Mazurs [lv], Danial Behzadi [fa],
+  Luming Zh [zh_CN], Martin [sl], Vasil Pupkin [be], Nathan Follens [nl],
+  Artur S0 [ru], Милош Поповић [sr], Quentin PAGÈS [oc], Yaron Shahrabani [he],
+  Sabri Ünal [tr]
+
 47.0
 ====
 
