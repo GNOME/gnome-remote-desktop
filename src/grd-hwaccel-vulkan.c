@@ -454,8 +454,8 @@ get_queue_family_properties (VkPhysicalDevice           vk_physical_device,
 }
 
 static gboolean
-find_queue_family_index_with_bitmask (VkPhysicalDevice vk_physical_device,
-                                      VkQueueFlags     bitmask)
+has_queue_family_with_bitmask (VkPhysicalDevice vk_physical_device,
+                               VkQueueFlags     bitmask)
 {
   g_autofree VkQueueFamilyProperties2 *properties_2 = NULL;
   uint32_t n_properties_2 = 0;
@@ -549,9 +549,9 @@ check_physical_device (GrdHwAccelVulkan *hwaccel_vulkan,
   hwaccel_vulkan->supports_storage_image_update_after_bind =
     !!vulkan12_features.descriptorBindingStorageImageUpdateAfterBind;
 
-  if (!find_queue_family_index_with_bitmask (vk_physical_device,
-                                             VK_QUEUE_COMPUTE_BIT |
-                                             VK_QUEUE_TRANSFER_BIT))
+  if (!has_queue_family_with_bitmask (vk_physical_device,
+                                      VK_QUEUE_COMPUTE_BIT |
+                                      VK_QUEUE_TRANSFER_BIT))
     {
       g_debug ("[HWAccel.Vulkan] Skipping device. Missing device queue family "
                "with (VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT) bitmask");
