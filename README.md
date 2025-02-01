@@ -223,7 +223,7 @@ winpr-makecert -silent -rdp -path ~/.local/share/gnome-remote-desktop tls
 ```sh
 mkdir -p ~/.local/share/gnome-remote-desktop/
 certtool --generate-privkey --outfile ~/.local/share/gnome-remote-desktop/tls.key
-certtool --generate-self-signed --load-privkey ~/.local/share/gnome-remote-desktop/tls.crt
+certtool --generate-self-signed --load-privkey ~/.local/share/gnome-remote-desktop/tls.key
 ```
 
 ### OpenSSL
