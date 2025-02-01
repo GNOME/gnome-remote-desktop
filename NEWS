@@ -1,3 +1,12 @@
+48.beta
+=======
+* Add support for zero copy rendering with Vulkan and VAAPI
+  (disabled by default)
+
+Contributors:
+  Pascal Nowack, traze
+
+
 48.alpha
 ========
 * General code improvements
