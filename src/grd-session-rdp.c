@@ -36,6 +36,7 @@
 #include "grd-rdp-cursor-renderer.h"
 #include "grd-rdp-display-control.h"
 #include "grd-rdp-dvc-handler.h"
+#include "grd-rdp-dvc-telemetry.h"
 #include "grd-rdp-event-queue.h"
 #include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-layout-manager.h"
@@ -45,7 +46,6 @@
 #include "grd-rdp-sam.h"
 #include "grd-rdp-server.h"
 #include "grd-rdp-session-metrics.h"
-#include "grd-rdp-telemetry.h"
 #include "grd-settings.h"
 
 #define MAX_MONITOR_COUNT_HEADLESS 16
@@ -1366,7 +1366,7 @@ socket_thread_func (gpointer data)
       if (peer->connected &&
           WTSVirtualChannelManagerIsChannelJoined (vcm, DRDYNVC_SVC_CHANNEL_NAME))
         {
-          GrdRdpTelemetry *telemetry;
+          GrdRdpDvcTelemetry *telemetry;
           GrdRdpGraphicsPipeline *graphics_pipeline;
           GrdRdpAudioPlayback *audio_playback;
           GrdRdpDisplayControl *display_control;
@@ -1390,7 +1390,7 @@ socket_thread_func (gpointer data)
               audio_input = rdp_peer_context->audio_input;
 
               if (telemetry && !session_rdp->session_should_stop)
-                grd_rdp_telemetry_maybe_init (telemetry);
+                grd_rdp_dvc_maybe_init (GRD_RDP_DVC (telemetry));
               if (graphics_pipeline && !session_rdp->session_should_stop)
                 grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
               if (audio_playback && !session_rdp->session_should_stop)
@@ -1616,15 +1616,15 @@ initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
   rdpContext *rdp_context = session_rdp->peer->context;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   GrdRdpGraphicsPipeline *graphics_pipeline;
-  GrdRdpTelemetry *telemetry;
+  GrdRdpDvcTelemetry *telemetry;
 
   g_assert (!rdp_peer_context->telemetry);
   g_assert (!rdp_peer_context->graphics_pipeline);
 
-  telemetry = grd_rdp_telemetry_new (session_rdp,
-                                     rdp_peer_context->dvc_handler,
-                                     rdp_peer_context->vcm,
-                                     rdp_context);
+  telemetry = grd_rdp_dvc_telemetry_new (session_rdp,
+                                         rdp_peer_context->dvc_handler,
+                                         rdp_peer_context->vcm,
+                                         rdp_context);
   rdp_peer_context->telemetry = telemetry;
 
   graphics_pipeline =

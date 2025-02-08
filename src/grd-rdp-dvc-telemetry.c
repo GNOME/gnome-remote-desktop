@@ -19,34 +19,32 @@
 
 #include "config.h"
 
-#include "grd-rdp-telemetry.h"
+#include "grd-rdp-dvc-telemetry.h"
 
-#include "grd-rdp-dvc-handler.h"
+#include <freerdp/server/telemetry.h>
+
 #include "grd-session-rdp.h"
 
-struct _GrdRdpTelemetry
+struct _GrdRdpDvcTelemetry
 {
-  GObject parent;
+  GrdRdpDvc parent;
 
   TelemetryServerContext *telemetry_context;
   gboolean channel_opened;
   gboolean channel_unavailable;
 
-  uint32_t channel_id;
-  uint32_t dvc_subscription_id;
-  gboolean subscribed_status;
-
   GrdSessionRdp *session_rdp;
-  GrdRdpDvcHandler *dvc_handler;
 
   GSource *channel_teardown_source;
 };
 
-G_DEFINE_TYPE (GrdRdpTelemetry, grd_rdp_telemetry, G_TYPE_OBJECT)
+G_DEFINE_TYPE (GrdRdpDvcTelemetry, grd_rdp_dvc_telemetry,
+               GRD_TYPE_RDP_DVC)
 
-void
-grd_rdp_telemetry_maybe_init (GrdRdpTelemetry *telemetry)
+static void
+grd_rdp_dvc_telemetry_maybe_init (GrdRdpDvc *dvc)
 {
+  GrdRdpDvcTelemetry *telemetry = GRD_RDP_DVC_TELEMETRY (dvc);
   TelemetryServerContext *telemetry_context;
 
   if (telemetry->channel_opened || telemetry->channel_unavailable)
@@ -68,7 +66,7 @@ static void
 dvc_creation_status (gpointer user_data,
                      int32_t  creation_status)
 {
-  GrdRdpTelemetry *telemetry = user_data;
+  GrdRdpDvcTelemetry *telemetry = user_data;
 
   if (creation_status < 0)
     {
@@ -82,18 +80,14 @@ static BOOL
 telemetry_channel_id_assigned (TelemetryServerContext *telemetry_context,
                                uint32_t                channel_id)
 {
-  GrdRdpTelemetry *telemetry = telemetry_context->userdata;
-  GrdRdpDvcHandler *dvc_handler = telemetry->dvc_handler;
+  GrdRdpDvcTelemetry *telemetry = telemetry_context->userdata;
+  GrdRdpDvc *dvc = GRD_RDP_DVC (telemetry);
 
   g_debug ("[RDP.TELEMETRY] DVC channel id assigned to id %u", channel_id);
-  telemetry->channel_id = channel_id;
 
-  telemetry->dvc_subscription_id =
-    grd_rdp_dvc_handler_subscribe_dvc_creation_status (dvc_handler,
-                                                       channel_id,
-                                                       dvc_creation_status,
-                                                       telemetry);
-  telemetry->subscribed_status = TRUE;
+  grd_rdp_dvc_subscribe_creation_status (dvc, channel_id,
+                                         dvc_creation_status,
+                                         telemetry);
 
   return TRUE;
 }
@@ -102,7 +96,7 @@ static uint32_t
 telemetry_rdp_telemetry (TelemetryServerContext            *telemetry_context,
                          const TELEMETRY_RDP_TELEMETRY_PDU *rdp_telemetry)
 {
-  GrdRdpTelemetry *telemetry = telemetry_context->userdata;
+  GrdRdpDvcTelemetry *telemetry = telemetry_context->userdata;
 
   g_debug ("[RDP.TELEMETRY] Client connection metrics: "
            "PromptForCredentialsMillis: %u, "
@@ -129,23 +123,24 @@ telemetry_rdp_telemetry (TelemetryServerContext            *telemetry_context,
   return CHANNEL_RC_OK;
 }
 
-GrdRdpTelemetry *
-grd_rdp_telemetry_new (GrdSessionRdp    *session_rdp,
-                       GrdRdpDvcHandler *dvc_handler,
-                       HANDLE            vcm,
-                       rdpContext       *rdp_context)
+GrdRdpDvcTelemetry *
+grd_rdp_dvc_telemetry_new (GrdSessionRdp    *session_rdp,
+                           GrdRdpDvcHandler *dvc_handler,
+                           HANDLE            vcm,
+                           rdpContext       *rdp_context)
 {
-  GrdRdpTelemetry *telemetry;
+  GrdRdpDvcTelemetry *telemetry;
   TelemetryServerContext *telemetry_context;
 
-  telemetry = g_object_new (GRD_TYPE_RDP_TELEMETRY, NULL);
+  telemetry = g_object_new (GRD_TYPE_RDP_DVC_TELEMETRY, NULL);
   telemetry_context = telemetry_server_context_new (vcm);
   if (!telemetry_context)
     g_error ("[RDP.TELEMETRY] Failed to allocate server context (OOM)");
 
   telemetry->telemetry_context = telemetry_context;
   telemetry->session_rdp = session_rdp;
-  telemetry->dvc_handler = dvc_handler;
+
+  grd_rdp_dvc_set_dvc_handler (GRD_RDP_DVC (telemetry), dvc_handler);
 
   telemetry_context->ChannelIdAssigned = telemetry_channel_id_assigned;
   telemetry_context->RdpTelemetry = telemetry_rdp_telemetry;
@@ -156,22 +151,17 @@ grd_rdp_telemetry_new (GrdSessionRdp    *session_rdp,
 }
 
 static void
-grd_rdp_telemetry_dispose (GObject *object)
+grd_rdp_dvc_telemetry_dispose (GObject *object)
 {
-  GrdRdpTelemetry *telemetry = GRD_RDP_TELEMETRY (object);
+  GrdRdpDvcTelemetry *telemetry = GRD_RDP_DVC_TELEMETRY (object);
+  GrdRdpDvc *dvc = GRD_RDP_DVC (telemetry);
 
   if (telemetry->channel_opened)
     {
       telemetry->telemetry_context->Close (telemetry->telemetry_context);
       telemetry->channel_opened = FALSE;
     }
-  if (telemetry->subscribed_status)
-    {
-      grd_rdp_dvc_handler_unsubscribe_dvc_creation_status (telemetry->dvc_handler,
-                                                           telemetry->channel_id,
-                                                           telemetry->dvc_subscription_id);
-      telemetry->subscribed_status = FALSE;
-    }
+  grd_rdp_dvc_maybe_unsubscribe_creation_status (dvc);
 
   if (telemetry->channel_teardown_source)
     {
@@ -182,13 +172,13 @@ grd_rdp_telemetry_dispose (GObject *object)
   g_clear_pointer (&telemetry->telemetry_context,
                    telemetry_server_context_free);
 
-  G_OBJECT_CLASS (grd_rdp_telemetry_parent_class)->dispose (object);
+  G_OBJECT_CLASS (grd_rdp_dvc_telemetry_parent_class)->dispose (object);
 }
 
 static gboolean
 tear_down_channel (gpointer user_data)
 {
-  GrdRdpTelemetry *telemetry = user_data;
+  GrdRdpDvcTelemetry *telemetry = user_data;
 
   g_debug ("[RDP.TELEMETRY] Tearing down channel");
 
@@ -216,7 +206,7 @@ static GSourceFuncs source_funcs =
 };
 
 static void
-grd_rdp_telemetry_init (GrdRdpTelemetry *telemetry)
+grd_rdp_dvc_telemetry_init (GrdRdpDvcTelemetry *telemetry)
 {
   GSource *channel_teardown_source;
 
@@ -229,9 +219,12 @@ grd_rdp_telemetry_init (GrdRdpTelemetry *telemetry)
 }
 
 static void
-grd_rdp_telemetry_class_init (GrdRdpTelemetryClass *klass)
+grd_rdp_dvc_telemetry_class_init (GrdRdpDvcTelemetryClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GrdRdpDvcClass *dvc_class = GRD_RDP_DVC_CLASS (klass);
 
-  object_class->dispose = grd_rdp_telemetry_dispose;
+  object_class->dispose = grd_rdp_dvc_telemetry_dispose;
+
+  dvc_class->maybe_init = grd_rdp_dvc_telemetry_maybe_init;
 }

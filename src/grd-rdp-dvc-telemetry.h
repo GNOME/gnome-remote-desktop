@@ -17,23 +17,19 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_TELEMETRY_H
-#define GRD_RDP_TELEMETRY_H
+#ifndef GRD_RDP_DVC_TELEMETRY_H
+#define GRD_RDP_DVC_TELEMETRY_H
 
-#include <freerdp/server/telemetry.h>
-#include <glib-object.h>
-
+#include "grd-rdp-dvc.h"
 #include "grd-types.h"
 
-#define GRD_TYPE_RDP_TELEMETRY (grd_rdp_telemetry_get_type ())
-G_DECLARE_FINAL_TYPE (GrdRdpTelemetry, grd_rdp_telemetry,
-                      GRD, RDP_TELEMETRY, GObject)
+#define GRD_TYPE_RDP_DVC_TELEMETRY (grd_rdp_dvc_telemetry_get_type ())
+G_DECLARE_FINAL_TYPE (GrdRdpDvcTelemetry, grd_rdp_dvc_telemetry,
+                      GRD, RDP_DVC_TELEMETRY, GrdRdpDvc)
 
-GrdRdpTelemetry *grd_rdp_telemetry_new (GrdSessionRdp    *session_rdp,
-                                        GrdRdpDvcHandler *dvc_handler,
-                                        HANDLE            vcm,
-                                        rdpContext       *rdp_context);
+GrdRdpDvcTelemetry *grd_rdp_dvc_telemetry_new (GrdSessionRdp    *session_rdp,
+                                               GrdRdpDvcHandler *dvc_handler,
+                                               HANDLE            vcm,
+                                               rdpContext       *rdp_context);
 
-void grd_rdp_telemetry_maybe_init (GrdRdpTelemetry *telemetry);
-
-#endif /* GRD_RDP_TELEMETRY_H */
+#endif /* GRD_RDP_DVC_TELEMETRY_H */
