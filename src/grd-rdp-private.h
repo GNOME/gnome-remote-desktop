@@ -44,7 +44,7 @@ typedef struct _RdpPeerContext
 
   GrdClipboardRdp *clipboard_rdp;
   GrdRdpDvcAudioInput *audio_input;
-  GrdRdpAudioPlayback *audio_playback;
+  GrdRdpDvcAudioPlayback *audio_playback;
   GrdRdpDvcDisplayControl *display_control;
   GrdRdpGraphicsPipeline *graphics_pipeline;
   GrdRdpDvcTelemetry *telemetry;

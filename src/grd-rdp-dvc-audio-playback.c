@@ -19,12 +19,13 @@
 
 #include "config.h"
 
-#include "grd-rdp-audio-playback.h"
+#include "grd-rdp-dvc-audio-playback.h"
+
+#include <freerdp/server/rdpsnd.h>
 
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-audio-output-stream.h"
 #include "grd-rdp-dsp.h"
-#include "grd-rdp-dvc-handler.h"
 #include "grd-session-rdp.h"
 
 #define PROTOCOL_TIMEOUT_MS (10 * 1000)
@@ -57,20 +58,15 @@ typedef struct _BlockInfo
   int64_t render_latency_set_us;
 } BlockInfo;
 
-struct _GrdRdpAudioPlayback
+struct _GrdRdpDvcAudioPlayback
 {
-  GObject parent;
+  GrdRdpDvc parent;
 
   RdpsndServerContext *rdpsnd_context;
   gboolean channel_opened;
   gboolean channel_unavailable;
 
-  uint32_t channel_id;
-  uint32_t dvc_subscription_id;
-  gboolean subscribed_status;
-
   GrdSessionRdp *session_rdp;
-  GrdRdpDvcHandler *dvc_handler;
 
   gboolean prevent_dvc_initialization;
   GSource *svc_setup_source;
@@ -124,12 +120,13 @@ struct _GrdRdpAudioPlayback
   GQueue *pending_frames;
 };
 
-G_DEFINE_TYPE (GrdRdpAudioPlayback, grd_rdp_audio_playback, G_TYPE_OBJECT)
+G_DEFINE_TYPE (GrdRdpDvcAudioPlayback, grd_rdp_dvc_audio_playback,
+               GRD_TYPE_RDP_DVC)
 
 static gboolean
 initiate_channel_teardown (gpointer user_data)
 {
-  GrdRdpAudioPlayback *audio_playback = user_data;
+  GrdRdpDvcAudioPlayback *audio_playback = user_data;
 
   g_warning ("[RDP.AUDIO_PLAYBACK] Client did not respond to protocol "
              "initiation. Terminating protocol");
@@ -143,9 +140,10 @@ initiate_channel_teardown (gpointer user_data)
   return G_SOURCE_REMOVE;
 }
 
-void
-grd_rdp_audio_playback_maybe_init (GrdRdpAudioPlayback *audio_playback)
+static void
+grd_rdp_dvc_audio_playback_maybe_init (GrdRdpDvc *dvc)
 {
+  GrdRdpDvcAudioPlayback *audio_playback = GRD_RDP_DVC_AUDIO_PLAYBACK (dvc);
   RdpsndServerContext *rdpsnd_context;
 
   if (audio_playback->channel_opened || audio_playback->channel_unavailable)
@@ -234,7 +232,7 @@ is_audio_data_empty (int16_t  *data,
 }
 
 static void
-set_other_streams_inactive (GrdRdpAudioPlayback *audio_playback)
+set_other_streams_inactive (GrdRdpDvcAudioPlayback *audio_playback)
 {
   GrdRdpAudioOutputStream *audio_output_stream;
   gpointer key;
@@ -259,8 +257,8 @@ set_other_streams_inactive (GrdRdpAudioPlayback *audio_playback)
 }
 
 static void
-acquire_stream_lock (GrdRdpAudioPlayback *audio_playback,
-                     uint32_t             node_id)
+acquire_stream_lock (GrdRdpDvcAudioPlayback *audio_playback,
+                     uint32_t                node_id)
 {
   g_assert (!audio_playback->has_stream_lock);
 
@@ -282,7 +280,7 @@ audio_data_free (gpointer data)
 }
 
 static void
-set_all_streams_active (GrdRdpAudioPlayback *audio_playback)
+set_all_streams_active (GrdRdpDvcAudioPlayback *audio_playback)
 {
   GrdRdpAudioOutputStream *audio_output_stream;
   GHashTableIter iter;
@@ -297,7 +295,7 @@ set_all_streams_active (GrdRdpAudioPlayback *audio_playback)
 }
 
 static void
-release_stream_lock (GrdRdpAudioPlayback *audio_playback)
+release_stream_lock (GrdRdpDvcAudioPlayback *audio_playback)
 {
   uint16_t i;
 
@@ -325,7 +323,7 @@ release_stream_lock (GrdRdpAudioPlayback *audio_playback)
 }
 
 static gboolean
-is_locked_stream_idling_too_long (GrdRdpAudioPlayback *audio_playback)
+is_locked_stream_idling_too_long (GrdRdpDvcAudioPlayback *audio_playback)
 {
   int64_t first_empty_audio_data_us = audio_playback->first_empty_audio_data_us;
   int64_t max_idling_time_us;
@@ -347,7 +345,7 @@ is_locked_stream_idling_too_long (GrdRdpAudioPlayback *audio_playback)
 }
 
 static uint32_t
-get_pending_audio_data_size (GrdRdpAudioPlayback *audio_playback)
+get_pending_audio_data_size (GrdRdpDvcAudioPlayback *audio_playback)
 {
   AudioData *audio_data;
   uint32_t pending_size = 0;
@@ -363,11 +361,11 @@ get_pending_audio_data_size (GrdRdpAudioPlayback *audio_playback)
 }
 
 void
-grd_rdp_audio_playback_maybe_submit_samples (GrdRdpAudioPlayback   *audio_playback,
-                                             uint32_t               node_id,
-                                             GrdRdpAudioVolumeData *volume_data,
-                                             int16_t               *data,
-                                             uint32_t               size)
+grd_rdp_dvc_audio_playback_maybe_submit_samples (GrdRdpDvcAudioPlayback *audio_playback,
+                                                 uint32_t                node_id,
+                                                 GrdRdpAudioVolumeData  *volume_data,
+                                                 int16_t                *data,
+                                                 uint32_t                size)
 {
   g_autoptr (GMutexLocker) locker = NULL;
   gboolean audio_muted;
@@ -442,7 +440,7 @@ static void
 dvc_creation_status (gpointer user_data,
                      int32_t  creation_status)
 {
-  GrdRdpAudioPlayback *audio_playback = user_data;
+  GrdRdpDvcAudioPlayback *audio_playback = user_data;
 
   if (creation_status < 0)
     {
@@ -457,18 +455,14 @@ static BOOL
 rdpsnd_channel_id_assigned (RdpsndServerContext *rdpsnd_context,
                             uint32_t             channel_id)
 {
-  GrdRdpAudioPlayback *audio_playback = rdpsnd_context->data;
-  GrdRdpDvcHandler *dvc_handler = audio_playback->dvc_handler;
+  GrdRdpDvcAudioPlayback *audio_playback = rdpsnd_context->data;
+  GrdRdpDvc *dvc = GRD_RDP_DVC (audio_playback);
 
   g_debug ("[RDP.AUDIO_PLAYBACK] DVC channel id assigned to id %u", channel_id);
-  audio_playback->channel_id = channel_id;
 
-  audio_playback->dvc_subscription_id =
-    grd_rdp_dvc_handler_subscribe_dvc_creation_status (dvc_handler,
-                                                       channel_id,
-                                                       dvc_creation_status,
-                                                       audio_playback);
-  audio_playback->subscribed_status = TRUE;
+  grd_rdp_dvc_subscribe_creation_status (dvc, channel_id,
+                                         dvc_creation_status,
+                                         audio_playback);
 
   return TRUE;
 }
@@ -548,7 +542,7 @@ static AUDIO_FORMAT server_formats[] =
 };
 
 static uint32_t
-get_sample_rate (GrdRdpAudioPlayback *audio_playback)
+get_sample_rate (GrdRdpDvcAudioPlayback *audio_playback)
 {
   switch (audio_playback->codec)
     {
@@ -564,7 +558,7 @@ get_sample_rate (GrdRdpAudioPlayback *audio_playback)
 }
 
 static void
-prepare_client_format (GrdRdpAudioPlayback *audio_playback)
+prepare_client_format (GrdRdpDvcAudioPlayback *audio_playback)
 {
   uint32_t frames_per_packet;
 
@@ -615,7 +609,7 @@ prepare_client_format (GrdRdpAudioPlayback *audio_playback)
 static void
 rdpsnd_activated (RdpsndServerContext *rdpsnd_context)
 {
-  GrdRdpAudioPlayback *audio_playback = rdpsnd_context->data;
+  GrdRdpDvcAudioPlayback *audio_playback = rdpsnd_context->data;
   uint8_t training_data[TRAINING_PACKSIZE] = {};
   uint16_t i;
 
@@ -678,7 +672,7 @@ rdpsnd_training_confirm (RdpsndServerContext *rdpsnd_context,
                          uint16_t             timestamp,
                          uint16_t             packsize)
 {
-  GrdRdpAudioPlayback *audio_playback = rdpsnd_context->data;
+  GrdRdpDvcAudioPlayback *audio_playback = rdpsnd_context->data;
 
   if (audio_playback->pending_client_formats ||
       !audio_playback->pending_training_confirm)
@@ -724,7 +718,7 @@ rdpsnd_confirm_block (RdpsndServerContext *rdpsnd_context,
                       uint8_t              confirm_block_num,
                       uint16_t             wtimestamp)
 {
-  GrdRdpAudioPlayback *audio_playback = rdpsnd_context->data;
+  GrdRdpDvcAudioPlayback *audio_playback = rdpsnd_context->data;
   BlockInfo *block_info;
 
   g_mutex_lock (&audio_playback->block_mutex);
@@ -743,7 +737,7 @@ rdpsnd_confirm_block (RdpsndServerContext *rdpsnd_context,
 static gpointer
 encode_thread_func (gpointer data)
 {
-  GrdRdpAudioPlayback *audio_playback = data;
+  GrdRdpDvcAudioPlayback *audio_playback = data;
 
   while (!audio_playback->protocol_stopped)
     g_main_context_iteration (audio_playback->encode_context, TRUE);
@@ -751,25 +745,26 @@ encode_thread_func (gpointer data)
   return NULL;
 }
 
-GrdRdpAudioPlayback *
-grd_rdp_audio_playback_new (GrdSessionRdp    *session_rdp,
-                            GrdRdpDvcHandler *dvc_handler,
-                            HANDLE            vcm,
-                            rdpContext       *rdp_context)
+GrdRdpDvcAudioPlayback *
+grd_rdp_dvc_audio_playback_new (GrdSessionRdp    *session_rdp,
+                                GrdRdpDvcHandler *dvc_handler,
+                                HANDLE            vcm,
+                                rdpContext       *rdp_context)
 {
-  g_autoptr (GrdRdpAudioPlayback) audio_playback = NULL;
+  g_autoptr (GrdRdpDvcAudioPlayback) audio_playback = NULL;
   RdpsndServerContext *rdpsnd_context;
   GrdRdpDspDescriptor dsp_descriptor = {};
   g_autoptr (GError) error = NULL;
 
-  audio_playback = g_object_new (GRD_TYPE_RDP_AUDIO_PLAYBACK, NULL);
+  audio_playback = g_object_new (GRD_TYPE_RDP_DVC_AUDIO_PLAYBACK, NULL);
   rdpsnd_context = rdpsnd_server_context_new (vcm);
   if (!rdpsnd_context)
     g_error ("[RDP.AUDIO_PLAYBACK] Failed to create server context");
 
   audio_playback->rdpsnd_context = rdpsnd_context;
   audio_playback->session_rdp = session_rdp;
-  audio_playback->dvc_handler = dvc_handler;
+
+  grd_rdp_dvc_set_dvc_handler (GRD_RDP_DVC (audio_playback), dvc_handler);
 
   rdpsnd_context->use_dynamic_virtual_channel = TRUE;
   rdpsnd_context->server_formats = server_formats;
@@ -807,9 +802,10 @@ grd_rdp_audio_playback_new (GrdSessionRdp    *session_rdp,
 }
 
 static void
-grd_rdp_audio_playback_dispose (GObject *object)
+grd_rdp_dvc_audio_playback_dispose (GObject *object)
 {
-  GrdRdpAudioPlayback *audio_playback = GRD_RDP_AUDIO_PLAYBACK (object);
+  GrdRdpDvcAudioPlayback *audio_playback = GRD_RDP_DVC_AUDIO_PLAYBACK (object);
+  GrdRdpDvc *dvc = GRD_RDP_DVC (audio_playback);
 
   audio_playback->protocol_stopped = TRUE;
   if (audio_playback->encode_thread)
@@ -823,13 +819,7 @@ grd_rdp_audio_playback_dispose (GObject *object)
       audio_playback->rdpsnd_context->Stop (audio_playback->rdpsnd_context);
       audio_playback->channel_opened = FALSE;
     }
-  if (audio_playback->subscribed_status)
-    {
-      grd_rdp_dvc_handler_unsubscribe_dvc_creation_status (audio_playback->dvc_handler,
-                                                           audio_playback->channel_id,
-                                                           audio_playback->dvc_subscription_id);
-      audio_playback->subscribed_status = FALSE;
-    }
+  grd_rdp_dvc_maybe_unsubscribe_creation_status (dvc);
 
   if (audio_playback->rdpsnd_context)
     audio_playback->rdpsnd_context->server_formats = NULL;
@@ -895,13 +885,13 @@ grd_rdp_audio_playback_dispose (GObject *object)
 
   g_clear_pointer (&audio_playback->rdpsnd_context, rdpsnd_server_context_free);
 
-  G_OBJECT_CLASS (grd_rdp_audio_playback_parent_class)->dispose (object);
+  G_OBJECT_CLASS (grd_rdp_dvc_audio_playback_parent_class)->dispose (object);
 }
 
 static void
-grd_rdp_audio_playback_finalize (GObject *object)
+grd_rdp_dvc_audio_playback_finalize (GObject *object)
 {
-  GrdRdpAudioPlayback *audio_playback = GRD_RDP_AUDIO_PLAYBACK (object);
+  GrdRdpDvcAudioPlayback *audio_playback = GRD_RDP_DVC_AUDIO_PLAYBACK (object);
 
   g_mutex_clear (&audio_playback->pending_frames_mutex);
   g_mutex_clear (&audio_playback->stream_lock_mutex);
@@ -914,14 +904,15 @@ grd_rdp_audio_playback_finalize (GObject *object)
 
   pw_deinit ();
 
-  G_OBJECT_CLASS (grd_rdp_audio_playback_parent_class)->finalize (object);
+  G_OBJECT_CLASS (grd_rdp_dvc_audio_playback_parent_class)->finalize (object);
 }
 
 static gboolean
 set_up_static_virtual_channel (gpointer user_data)
 {
-  GrdRdpAudioPlayback *audio_playback = user_data;
+  GrdRdpDvcAudioPlayback *audio_playback = user_data;
   RdpsndServerContext *rdpsnd_context = audio_playback->rdpsnd_context;
+  GrdRdpDvc *dvc = GRD_RDP_DVC (audio_playback);
 
   g_clear_pointer (&audio_playback->svc_setup_source, g_source_unref);
 
@@ -931,13 +922,7 @@ set_up_static_virtual_channel (gpointer user_data)
   rdpsnd_context->Stop (rdpsnd_context);
   audio_playback->channel_opened = FALSE;
 
-  if (audio_playback->subscribed_status)
-    {
-      grd_rdp_dvc_handler_unsubscribe_dvc_creation_status (audio_playback->dvc_handler,
-                                                           audio_playback->channel_id,
-                                                           audio_playback->dvc_subscription_id);
-      audio_playback->subscribed_status = FALSE;
-    }
+  grd_rdp_dvc_maybe_unsubscribe_creation_status (dvc);
 
   rdpsnd_context->use_dynamic_virtual_channel = FALSE;
 
@@ -957,7 +942,7 @@ set_up_static_virtual_channel (gpointer user_data)
 static gboolean
 tear_down_channel (gpointer user_data)
 {
-  GrdRdpAudioPlayback *audio_playback = user_data;
+  GrdRdpDvcAudioPlayback *audio_playback = user_data;
 
   g_debug ("[RDP.AUDIO_PLAYBACK] Tearing down channel");
 
@@ -970,7 +955,7 @@ tear_down_channel (gpointer user_data)
 }
 
 static void
-clear_old_frames (GrdRdpAudioPlayback *audio_playback)
+clear_old_frames (GrdRdpDvcAudioPlayback *audio_playback)
 {
   int64_t current_time_us;
   AudioData *audio_data;
@@ -991,7 +976,7 @@ clear_old_frames (GrdRdpAudioPlayback *audio_playback)
 }
 
 static uint32_t
-get_current_render_latency (GrdRdpAudioPlayback *audio_playback)
+get_current_render_latency (GrdRdpDvcAudioPlayback *audio_playback)
 {
   uint32_t accumulated_render_latency_ms = 0;
   uint32_t n_latencies = 0;
@@ -1021,7 +1006,7 @@ get_current_render_latency (GrdRdpAudioPlayback *audio_playback)
 }
 
 static void
-maybe_drop_pending_frames (GrdRdpAudioPlayback *audio_playback)
+maybe_drop_pending_frames (GrdRdpDvcAudioPlayback *audio_playback)
 {
   uint32_t render_latency_ms;
   uint16_t i;
@@ -1043,7 +1028,7 @@ maybe_drop_pending_frames (GrdRdpAudioPlayback *audio_playback)
 }
 
 static void
-apply_volume_to_audio_data (GrdRdpAudioPlayback         *audio_playback,
+apply_volume_to_audio_data (GrdRdpDvcAudioPlayback      *audio_playback,
                             const GrdRdpAudioVolumeData *volume_data,
                             int16_t                     *data,
                             uint32_t                     frames)
@@ -1065,7 +1050,7 @@ apply_volume_to_audio_data (GrdRdpAudioPlayback         *audio_playback,
 }
 
 static void
-maybe_send_frames (GrdRdpAudioPlayback         *audio_playback,
+maybe_send_frames (GrdRdpDvcAudioPlayback      *audio_playback,
                    const GrdRdpAudioVolumeData *volume_data)
 {
   RdpsndServerContext *rdpsnd_context = audio_playback->rdpsnd_context;
@@ -1175,7 +1160,7 @@ maybe_send_frames (GrdRdpAudioPlayback         *audio_playback,
 static gboolean
 maybe_encode_frames (gpointer user_data)
 {
-  GrdRdpAudioPlayback *audio_playback = user_data;
+  GrdRdpDvcAudioPlayback *audio_playback = user_data;
   g_autoptr (GMutexLocker) streams_locker = NULL;
   g_autoptr (GMutexLocker) stream_lock_locker = NULL;
   GrdRdpAudioOutputStream *audio_output_stream;
@@ -1225,7 +1210,7 @@ pipewire_core_error (void       *user_data,
                      int         res,
                      const char *message)
 {
-  GrdRdpAudioPlayback *audio_playback = user_data;
+  GrdRdpDvcAudioPlayback *audio_playback = user_data;
 
   g_warning ("[RDP.AUDIO_PLAYBACK] PipeWire core error: "
              "id: %u, seq: %i, res: %i, %s", id, seq, res, message);
@@ -1248,7 +1233,7 @@ registry_event_global (void                  *user_data,
                        uint32_t               version,
                        const struct spa_dict *props)
 {
-  GrdRdpAudioPlayback *audio_playback = user_data;
+  GrdRdpDvcAudioPlayback *audio_playback = user_data;
   GrdRdpAudioOutputStream *audio_output_stream;
   g_autoptr (GMutexLocker) locker = NULL;
   const struct spa_dict_item *item;
@@ -1317,7 +1302,7 @@ static void
 registry_event_global_remove (void     *user_data,
                               uint32_t  id)
 {
-  GrdRdpAudioPlayback *audio_playback = user_data;
+  GrdRdpDvcAudioPlayback *audio_playback = user_data;
 
   g_mutex_lock (&audio_playback->streams_mutex);
   g_hash_table_remove (audio_playback->audio_streams, GUINT_TO_POINTER (id));
@@ -1338,8 +1323,8 @@ static const struct pw_registry_events registry_events =
 };
 
 static gboolean
-set_up_registry_listener (GrdRdpAudioPlayback  *audio_playback,
-                          GError              **error)
+set_up_registry_listener (GrdRdpDvcAudioPlayback  *audio_playback,
+                          GError                 **error)
 {
   GrdPipeWireSource *pipewire_source;
 
@@ -1392,7 +1377,7 @@ set_up_registry_listener (GrdRdpAudioPlayback  *audio_playback,
 static gboolean
 set_up_pipewire (gpointer user_data)
 {
-  GrdRdpAudioPlayback *audio_playback = user_data;
+  GrdRdpDvcAudioPlayback *audio_playback = user_data;
   g_autoptr (GError) error = NULL;
 
   g_clear_pointer (&audio_playback->pipewire_setup_source, g_source_unref);
@@ -1423,7 +1408,7 @@ static GSourceFuncs source_funcs =
 };
 
 static void
-grd_rdp_audio_playback_init (GrdRdpAudioPlayback *audio_playback)
+grd_rdp_dvc_audio_playback_init (GrdRdpDvcAudioPlayback *audio_playback)
 {
   GSource *svc_setup_source;
   GSource *channel_teardown_source;
@@ -1479,10 +1464,13 @@ grd_rdp_audio_playback_init (GrdRdpAudioPlayback *audio_playback)
 }
 
 static void
-grd_rdp_audio_playback_class_init (GrdRdpAudioPlaybackClass *klass)
+grd_rdp_dvc_audio_playback_class_init (GrdRdpDvcAudioPlaybackClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GrdRdpDvcClass *dvc_class = GRD_RDP_DVC_CLASS (klass);
 
-  object_class->dispose = grd_rdp_audio_playback_dispose;
-  object_class->finalize = grd_rdp_audio_playback_finalize;
+  object_class->dispose = grd_rdp_dvc_audio_playback_dispose;
+  object_class->finalize = grd_rdp_dvc_audio_playback_finalize;
+
+  dvc_class->maybe_init = grd_rdp_dvc_audio_playback_maybe_init;
 }

@@ -31,9 +31,9 @@
 
 #include "grd-clipboard-rdp.h"
 #include "grd-context.h"
-#include "grd-rdp-audio-playback.h"
 #include "grd-rdp-cursor-renderer.h"
 #include "grd-rdp-dvc-audio-input.h"
+#include "grd-rdp-dvc-audio-playback.h"
 #include "grd-rdp-dvc-display-control.h"
 #include "grd-rdp-dvc-handler.h"
 #include "grd-rdp-dvc-telemetry.h"
@@ -1368,7 +1368,7 @@ socket_thread_func (gpointer data)
         {
           GrdRdpDvcTelemetry *telemetry;
           GrdRdpGraphicsPipeline *graphics_pipeline;
-          GrdRdpAudioPlayback *audio_playback;
+          GrdRdpDvcAudioPlayback *audio_playback;
           GrdRdpDvcDisplayControl *display_control;
           GrdRdpDvcAudioInput *audio_input;
 
@@ -1394,7 +1394,7 @@ socket_thread_func (gpointer data)
               if (graphics_pipeline && !session_rdp->session_should_stop)
                 grd_rdp_graphics_pipeline_maybe_init (graphics_pipeline);
               if (audio_playback && !session_rdp->session_should_stop)
-                grd_rdp_audio_playback_maybe_init (audio_playback);
+                grd_rdp_dvc_maybe_init (GRD_RDP_DVC (audio_playback));
               if (display_control && !session_rdp->session_should_stop)
                 grd_rdp_dvc_maybe_init (GRD_RDP_DVC (display_control));
               if (audio_input && !session_rdp->session_should_stop)
@@ -1673,7 +1673,8 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
       !freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteConsoleAudio))
     {
       rdp_peer_context->audio_playback =
-        grd_rdp_audio_playback_new (session_rdp, dvc_handler, vcm, rdp_context);
+        grd_rdp_dvc_audio_playback_new (session_rdp, dvc_handler, vcm,
+                                        rdp_context);
     }
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_AudioCapture))
     {

@@ -25,7 +25,7 @@
 #include <spa/param/audio/format-utils.h>
 #include <spa/param/props.h>
 
-#include "grd-rdp-audio-playback.h"
+#include "grd-rdp-dvc-audio-playback.h"
 
 struct _GrdRdpAudioOutputStream
 {
@@ -33,7 +33,7 @@ struct _GrdRdpAudioOutputStream
 
   uint32_t target_node_id;
 
-  GrdRdpAudioPlayback *audio_playback;
+  GrdRdpDvcAudioPlayback *audio_playback;
 
   struct pw_node *pipewire_node;
   struct spa_hook pipewire_node_listener;
@@ -217,14 +217,15 @@ pipewire_stream_process (void *user_data)
 
   if (size > 0)
     {
-      GrdRdpAudioPlayback *audio_playback = audio_output_stream->audio_playback;
+      GrdRdpDvcAudioPlayback *audio_playback =
+        audio_output_stream->audio_playback;
       uint32_t node_id = audio_output_stream->target_node_id;
       GrdRdpAudioVolumeData volume_data = {};
 
       grd_rdp_audio_output_stream_get_volume_data (audio_output_stream,
                                                    &volume_data);
-      grd_rdp_audio_playback_maybe_submit_samples (audio_playback, node_id,
-                                                   &volume_data, data, size);
+      grd_rdp_dvc_audio_playback_maybe_submit_samples (audio_playback, node_id,
+                                                       &volume_data, data, size);
     }
 
   pw_stream_queue_buffer (audio_output_stream->pipewire_stream, buffer);
@@ -301,14 +302,14 @@ connect_to_stream (GrdRdpAudioOutputStream  *audio_output_stream,
 }
 
 GrdRdpAudioOutputStream *
-grd_rdp_audio_output_stream_new (GrdRdpAudioPlayback  *audio_playback,
-                                 struct pw_core       *pipewire_core,
-                                 struct pw_registry   *pipewire_registry,
-                                 uint32_t              target_node_id,
-                                 uint32_t              n_samples_per_sec,
-                                 uint32_t              n_channels,
-                                 uint32_t             *position,
-                                 GError              **error)
+grd_rdp_audio_output_stream_new (GrdRdpDvcAudioPlayback  *audio_playback,
+                                 struct pw_core          *pipewire_core,
+                                 struct pw_registry      *pipewire_registry,
+                                 uint32_t                 target_node_id,
+                                 uint32_t                 n_samples_per_sec,
+                                 uint32_t                 n_channels,
+                                 uint32_t                *position,
+                                 GError                 **error)
 {
   g_autoptr (GrdRdpAudioOutputStream) audio_output_stream = NULL;
 
