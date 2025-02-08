@@ -21,14 +21,14 @@
 
 #include "grd-rdp-gfx-surface.h"
 
-#include "grd-rdp-graphics-pipeline.h"
+#include "grd-rdp-dvc-graphics-pipeline.h"
 #include "grd-rdp-surface.h"
 
 struct _GrdRdpGfxSurface
 {
   GObject parent;
 
-  GrdRdpGraphicsPipeline *graphics_pipeline;
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline;
   GrdRdpGfxSurfaceFlag flags;
   GrdRdpSurface *rdp_surface;
   gboolean created;
@@ -123,7 +123,7 @@ grd_rdp_gfx_surface_attach_frame_controller (GrdRdpGfxSurface         *gfx_surfa
 }
 
 GrdRdpGfxSurface *
-grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline           *graphics_pipeline,
+grd_rdp_gfx_surface_new (GrdRdpDvcGraphicsPipeline        *graphics_pipeline,
                          const GrdRdpGfxSurfaceDescriptor *surface_descriptor)
 {
   GrdRdpGfxSurface *gfx_surface;
@@ -151,7 +151,7 @@ grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline           *graphics_pipeline,
       gfx_surface->height = grd_rdp_surface_get_height (gfx_surface->rdp_surface);
     }
 
-  grd_rdp_graphics_pipeline_create_surface (graphics_pipeline, gfx_surface);
+  grd_rdp_dvc_graphics_pipeline_create_surface (graphics_pipeline, gfx_surface);
   gfx_surface->created = TRUE;
 
   return gfx_surface;
@@ -161,11 +161,12 @@ static void
 grd_rdp_gfx_surface_dispose (GObject *object)
 {
   GrdRdpGfxSurface *gfx_surface = GRD_RDP_GFX_SURFACE (object);
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline = gfx_surface->graphics_pipeline;
 
   if (gfx_surface->created)
     {
-      grd_rdp_graphics_pipeline_delete_surface (gfx_surface->graphics_pipeline,
-                                                gfx_surface);
+      grd_rdp_dvc_graphics_pipeline_delete_surface (graphics_pipeline,
+                                                    gfx_surface);
       gfx_surface->created = FALSE;
     }
 

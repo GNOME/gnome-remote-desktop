@@ -36,12 +36,12 @@ typedef enum
   GRD_RDP_CODEC_AVC444v2,
 } GrdRdpCodec;
 
-GrdRdpRenderContext *grd_rdp_render_context_new (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                                 GrdRdpSurface          *rdp_surface,
-                                                 GrdEglThread           *egl_thread,
-                                                 GrdVkDevice            *vk_device,
-                                                 GrdHwAccelVaapi        *hwaccel_vaapi,
-                                                 GrdRdpSwEncoderCa      *encoder_ca);
+GrdRdpRenderContext *grd_rdp_render_context_new (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                                 GrdRdpSurface             *rdp_surface,
+                                                 GrdEglThread              *egl_thread,
+                                                 GrdVkDevice               *vk_device,
+                                                 GrdHwAccelVaapi           *hwaccel_vaapi,
+                                                 GrdRdpSwEncoderCa         *encoder_ca);
 
 GrdRdpCodec grd_rdp_render_context_get_codec (GrdRdpRenderContext *render_context);
 

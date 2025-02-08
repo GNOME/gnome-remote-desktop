@@ -30,11 +30,11 @@
 #include "grd-image-view.h"
 #include "grd-rdp-buffer-info.h"
 #include "grd-rdp-damage-detector.h"
+#include "grd-rdp-dvc-graphics-pipeline.h"
 #include "grd-rdp-frame.h"
 #include "grd-rdp-gfx-frame-controller.h"
 #include "grd-rdp-gfx-framerate-log.h"
 #include "grd-rdp-gfx-surface.h"
-#include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-render-state.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
@@ -535,18 +535,18 @@ create_egl_based_rfx_progressive_encode_session (GrdRdpRenderContext  *render_co
 }
 
 static gboolean
-create_hw_accelerated_encode_session (GrdRdpRenderContext     *render_context,
-                                      GrdRdpGraphicsPipeline  *graphics_pipeline,
-                                      GrdRdpSurface           *rdp_surface,
-                                      GrdEglThread            *egl_thread,
-                                      GrdRdpSwEncoderCa       *encoder_ca,
-                                      GError                 **error)
+create_hw_accelerated_encode_session (GrdRdpRenderContext        *render_context,
+                                      GrdRdpDvcGraphicsPipeline  *graphics_pipeline,
+                                      GrdRdpSurface              *rdp_surface,
+                                      GrdEglThread               *egl_thread,
+                                      GrdRdpSwEncoderCa          *encoder_ca,
+                                      GError                    **error)
 {
   gboolean have_avc444 = FALSE;
   gboolean have_avc420 = FALSE;
 
-  grd_rdp_graphics_pipeline_get_capabilities (graphics_pipeline,
-                                              &have_avc444, &have_avc420);
+  grd_rdp_dvc_graphics_pipeline_get_capabilities (graphics_pipeline,
+                                                  &have_avc444, &have_avc420);
   if ((have_avc444 || have_avc420) && render_context->hwaccel_vaapi &&
       grd_get_debug_flags () & GRD_DEBUG_VKVA)
     try_create_vaapi_session (render_context, rdp_surface, have_avc444);
@@ -605,11 +605,11 @@ create_sw_based_rfx_progressive_encode_session (GrdRdpRenderContext  *render_con
 }
 
 static gboolean
-create_sw_based_encode_session (GrdRdpRenderContext     *render_context,
-                                GrdRdpGraphicsPipeline  *graphics_pipeline,
-                                GrdRdpSurface           *rdp_surface,
-                                GrdRdpSwEncoderCa       *encoder_ca,
-                                GError                 **error)
+create_sw_based_encode_session (GrdRdpRenderContext        *render_context,
+                                GrdRdpDvcGraphicsPipeline  *graphics_pipeline,
+                                GrdRdpSurface              *rdp_surface,
+                                GrdRdpSwEncoderCa          *encoder_ca,
+                                GError                    **error)
 {
   return create_sw_based_rfx_progressive_encode_session (render_context,
                                                          rdp_surface,
@@ -618,12 +618,12 @@ create_sw_based_encode_session (GrdRdpRenderContext     *render_context,
 }
 
 static gboolean
-create_encode_session (GrdRdpRenderContext     *render_context,
-                       GrdRdpGraphicsPipeline  *graphics_pipeline,
-                       GrdRdpSurface           *rdp_surface,
-                       GrdEglThread            *egl_thread,
-                       GrdRdpSwEncoderCa       *encoder_ca,
-                       GError                 **error)
+create_encode_session (GrdRdpRenderContext        *render_context,
+                       GrdRdpDvcGraphicsPipeline  *graphics_pipeline,
+                       GrdRdpSurface              *rdp_surface,
+                       GrdEglThread               *egl_thread,
+                       GrdRdpSwEncoderCa          *encoder_ca,
+                       GError                    **error)
 {
   GrdRdpSurfaceRenderer *surface_renderer =
     grd_rdp_surface_get_surface_renderer (rdp_surface);
@@ -655,12 +655,12 @@ create_encode_session (GrdRdpRenderContext     *render_context,
 }
 
 GrdRdpRenderContext *
-grd_rdp_render_context_new (GrdRdpGraphicsPipeline *graphics_pipeline,
-                            GrdRdpSurface          *rdp_surface,
-                            GrdEglThread           *egl_thread,
-                            GrdVkDevice            *vk_device,
-                            GrdHwAccelVaapi        *hwaccel_vaapi,
-                            GrdRdpSwEncoderCa      *encoder_ca)
+grd_rdp_render_context_new (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                            GrdRdpSurface             *rdp_surface,
+                            GrdEglThread              *egl_thread,
+                            GrdVkDevice               *vk_device,
+                            GrdHwAccelVaapi           *hwaccel_vaapi,
+                            GrdRdpSwEncoderCa         *encoder_ca)
 {
   g_autoptr (GrdRdpRenderContext) render_context = NULL;
   g_autoptr (GError) error = NULL;
@@ -675,8 +675,8 @@ grd_rdp_render_context_new (GrdRdpGraphicsPipeline *graphics_pipeline,
   render_context->hwaccel_vaapi = hwaccel_vaapi;
 
   render_context->gfx_surface =
-    grd_rdp_graphics_pipeline_acquire_gfx_surface (graphics_pipeline,
-                                                   rdp_surface);
+    grd_rdp_dvc_graphics_pipeline_acquire_gfx_surface (graphics_pipeline,
+                                                       rdp_surface);
 
   if (!create_encode_session (render_context, graphics_pipeline, rdp_surface,
                               egl_thread, encoder_ca, &error))

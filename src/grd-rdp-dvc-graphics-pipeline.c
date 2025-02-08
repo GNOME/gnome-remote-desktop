@@ -19,16 +19,16 @@
 
 #include "config.h"
 
-#include "grd-rdp-graphics-pipeline.h"
+#include "grd-rdp-dvc-graphics-pipeline.h"
 
 #include <cairo/cairo.h>
+#include <freerdp/server/rdpgfx.h>
 #include <winpr/sysinfo.h>
 
 #include "grd-avc-frame-info.h"
 #include "grd-bitstream.h"
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-damage-detector.h"
-#include "grd-rdp-dvc-handler.h"
 #include "grd-rdp-frame.h"
 #include "grd-rdp-frame-info.h"
 #include "grd-rdp-gfx-frame-controller.h"
@@ -73,9 +73,9 @@ typedef struct _GfxFrameInfo
   uint32_t surface_serial;
 } GfxFrameInfo;
 
-struct _GrdRdpGraphicsPipeline
+struct _GrdRdpDvcGraphicsPipeline
 {
-  GObject parent;
+  GrdRdpDvc parent;
 
   RdpgfxServerContext *rdpgfx_context;
   gboolean channel_opened;
@@ -83,13 +83,8 @@ struct _GrdRdpGraphicsPipeline
   gboolean initialized;
   uint32_t initial_version;
 
-  uint32_t channel_id;
-  uint32_t dvc_subscription_id;
-  gboolean subscribed_status;
-
   GrdSessionRdp *session_rdp;
   GrdRdpRenderer *renderer;
-  GrdRdpDvcHandler *dvc_handler;
   GrdRdpNetworkAutodetection *network_autodetection;
   wStream *encode_stream;
   RFX_CONTEXT *rfx_context;
@@ -127,12 +122,61 @@ struct _GrdRdpGraphicsPipeline
   uint32_t next_serial;
 };
 
-G_DEFINE_TYPE (GrdRdpGraphicsPipeline, grd_rdp_graphics_pipeline, G_TYPE_OBJECT)
+G_DEFINE_TYPE (GrdRdpDvcGraphicsPipeline, grd_rdp_dvc_graphics_pipeline,
+               GRD_TYPE_RDP_DVC)
+
+static gboolean
+initiate_session_teardown (gpointer user_data)
+{
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline = user_data;
+
+  g_warning ("[RDP.RDPGFX] Client did not respond to protocol initiation. "
+             "Terminating session");
+
+  g_clear_pointer (&graphics_pipeline->protocol_timeout_source, g_source_unref);
+
+  grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
+                                GRD_SESSION_RDP_ERROR_BAD_CAPS);
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+grd_rdp_dvc_graphics_pipeline_maybe_init (GrdRdpDvc *dvc)
+{
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline =
+    GRD_RDP_DVC_GRAPHICS_PIPELINE (dvc);
+  GMainContext *graphics_context =
+    grd_rdp_renderer_get_graphics_context (graphics_pipeline->renderer);
+  RdpgfxServerContext *rdpgfx_context;
+
+  if (graphics_pipeline->channel_opened)
+    return;
+
+  rdpgfx_context = graphics_pipeline->rdpgfx_context;
+  if (!rdpgfx_context->Open (rdpgfx_context))
+    {
+      g_warning ("[RDP.RDPGFX] Failed to open channel. Terminating session");
+      grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
+                                    GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
+      return;
+    }
+  graphics_pipeline->channel_opened = TRUE;
+
+  g_assert (!graphics_pipeline->protocol_timeout_source);
+
+  graphics_pipeline->protocol_timeout_source =
+    g_timeout_source_new (PROTOCOL_TIMEOUT_MS);
+  g_source_set_callback (graphics_pipeline->protocol_timeout_source,
+                         initiate_session_teardown, graphics_pipeline, NULL);
+  g_source_attach (graphics_pipeline->protocol_timeout_source,
+                   graphics_context);
+}
 
 void
-grd_rdp_graphics_pipeline_get_capabilities (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                            gboolean               *have_avc444,
-                                            gboolean               *have_avc420)
+grd_rdp_dvc_graphics_pipeline_get_capabilities (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                                gboolean                  *have_avc444,
+                                                gboolean                  *have_avc420)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
@@ -142,14 +186,14 @@ grd_rdp_graphics_pipeline_get_capabilities (GrdRdpGraphicsPipeline *graphics_pip
 }
 
 void
-grd_rdp_graphics_pipeline_set_hwaccel_nvidia (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                              GrdHwAccelNvidia       *hwaccel_nvidia)
+grd_rdp_dvc_graphics_pipeline_set_hwaccel_nvidia (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                                  GrdHwAccelNvidia          *hwaccel_nvidia)
 {
   graphics_pipeline->hwaccel_nvidia = hwaccel_nvidia;
 }
 
 static uint16_t
-get_next_free_surface_id (GrdRdpGraphicsPipeline *graphics_pipeline)
+get_next_free_surface_id (GrdRdpDvcGraphicsPipeline *graphics_pipeline)
 {
   uint16_t surface_id = graphics_pipeline->next_surface_id;
 
@@ -165,7 +209,7 @@ get_next_free_surface_id (GrdRdpGraphicsPipeline *graphics_pipeline)
 }
 
 static uint32_t
-get_next_free_serial (GrdRdpGraphicsPipeline *graphics_pipeline)
+get_next_free_serial (GrdRdpDvcGraphicsPipeline *graphics_pipeline)
 {
   uint32_t serial = graphics_pipeline->next_serial;
 
@@ -181,8 +225,8 @@ get_next_free_serial (GrdRdpGraphicsPipeline *graphics_pipeline)
 }
 
 void
-grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                          GrdRdpGfxSurface       *gfx_surface)
+grd_rdp_dvc_graphics_pipeline_create_surface (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                              GrdRdpGfxSurface          *gfx_surface)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
@@ -279,8 +323,8 @@ grd_rdp_graphics_pipeline_create_surface (GrdRdpGraphicsPipeline *graphics_pipel
 }
 
 void
-grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                          GrdRdpGfxSurface       *gfx_surface)
+grd_rdp_dvc_graphics_pipeline_delete_surface (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                              GrdRdpGfxSurface          *gfx_surface)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   RDPGFX_DELETE_ENCODING_CONTEXT_PDU delete_encoding_context = {0};
@@ -352,9 +396,9 @@ grd_rdp_graphics_pipeline_delete_surface (GrdRdpGraphicsPipeline *graphics_pipel
 }
 
 static void
-map_surface_to_output (GrdRdpGraphicsPipeline *graphics_pipeline,
-                       GrdRdpGfxSurface       *gfx_surface,
-                       GrdRdpSurfaceMapping   *surface_mapping)
+map_surface_to_output (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                       GrdRdpGfxSurface          *gfx_surface,
+                       GrdRdpSurfaceMapping      *surface_mapping)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   GrdRdpSurfaceMappingType mapping_type = surface_mapping->mapping_type;
@@ -371,8 +415,8 @@ map_surface_to_output (GrdRdpGraphicsPipeline *graphics_pipeline,
 }
 
 static void
-map_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
-             GrdRdpGfxSurface       *gfx_surface)
+map_surface (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+             GrdRdpGfxSurface          *gfx_surface)
 {
   GrdRdpSurface *rdp_surface = grd_rdp_gfx_surface_get_rdp_surface (gfx_surface);
   GrdRdpSurfaceMapping *surface_mapping;
@@ -387,8 +431,8 @@ map_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
 }
 
 GrdRdpGfxSurface *
-grd_rdp_graphics_pipeline_acquire_gfx_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                               GrdRdpSurface          *rdp_surface)
+grd_rdp_dvc_graphics_pipeline_acquire_gfx_surface (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                                   GrdRdpSurface             *rdp_surface)
 {
 
   GrdRdpGfxSurfaceDescriptor surface_descriptor = {};
@@ -410,11 +454,11 @@ grd_rdp_graphics_pipeline_acquire_gfx_surface (GrdRdpGraphicsPipeline *graphics_
 }
 
 void
-grd_rdp_graphics_pipeline_reset_graphics (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                          uint32_t                width,
-                                          uint32_t                height,
-                                          MONITOR_DEF            *monitors,
-                                          uint32_t                n_monitors)
+grd_rdp_dvc_graphics_pipeline_reset_graphics (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                              uint32_t                   width,
+                                              uint32_t                   height,
+                                              MONITOR_DEF               *monitors,
+                                              uint32_t                   n_monitors)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   RDPGFX_RESET_GRAPHICS_PDU reset_graphics = {0};
@@ -438,8 +482,8 @@ grd_rdp_graphics_pipeline_reset_graphics (GrdRdpGraphicsPipeline *graphics_pipel
 }
 
 void
-grd_rdp_graphics_pipeline_notify_new_round_trip_time (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                                      uint64_t                round_trip_time_us)
+grd_rdp_dvc_graphics_pipeline_notify_new_round_trip_time (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                                          uint64_t                   round_trip_time_us)
 {
   GrdRdpGfxSurface *gfx_surface;
   GrdRdpGfxFrameController *frame_controller;
@@ -460,7 +504,7 @@ grd_rdp_graphics_pipeline_notify_new_round_trip_time (GrdRdpGraphicsPipeline *gr
 }
 
 static uint32_t
-get_next_free_frame_id (GrdRdpGraphicsPipeline *graphics_pipeline)
+get_next_free_frame_id (GrdRdpDvcGraphicsPipeline *graphics_pipeline)
 {
   uint32_t frame_id = graphics_pipeline->next_frame_id;
 
@@ -669,8 +713,8 @@ get_subframe_count (GrdRdpFrame *rdp_frame)
 }
 
 static void
-surface_serial_ref (GrdRdpGraphicsPipeline *graphics_pipeline,
-                    uint32_t                surface_serial)
+surface_serial_ref (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                    uint32_t                   surface_serial)
 {
   GfxSurfaceContext *surface_context;
 
@@ -683,8 +727,8 @@ surface_serial_ref (GrdRdpGraphicsPipeline *graphics_pipeline,
 }
 
 static void
-surface_serial_unref (GrdRdpGraphicsPipeline *graphics_pipeline,
-                      uint32_t                surface_serial)
+surface_serial_unref (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                      uint32_t                   surface_serial)
 {
   GfxSurfaceContext *surface_context;
 
@@ -704,8 +748,8 @@ surface_serial_unref (GrdRdpGraphicsPipeline *graphics_pipeline,
 }
 
 static void
-gfx_frame_info_free (GrdRdpGraphicsPipeline *graphics_pipeline,
-                     GfxFrameInfo           *gfx_frame_info)
+gfx_frame_info_free (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                     GfxFrameInfo              *gfx_frame_info)
 {
   uint32_t surface_serial = gfx_frame_info->surface_serial;
 
@@ -717,8 +761,8 @@ gfx_frame_info_free (GrdRdpGraphicsPipeline *graphics_pipeline,
 }
 
 static void
-reduce_tracked_frame_infos (GrdRdpGraphicsPipeline *graphics_pipeline,
-                            uint32_t                max_tracked_frames)
+reduce_tracked_frame_infos (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                            uint32_t                   max_tracked_frames)
 {
   while (g_queue_peek_head (graphics_pipeline->encoded_frames) &&
          g_queue_get_length (graphics_pipeline->encoded_frames) > max_tracked_frames)
@@ -729,11 +773,11 @@ reduce_tracked_frame_infos (GrdRdpGraphicsPipeline *graphics_pipeline,
 }
 
 static void
-enqueue_tracked_frame_info (GrdRdpGraphicsPipeline *graphics_pipeline,
-                            uint32_t                surface_serial,
-                            uint32_t                frame_id,
-                            uint32_t                n_subframes,
-                            int64_t                 enc_time_us)
+enqueue_tracked_frame_info (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                            uint32_t                   surface_serial,
+                            uint32_t                   frame_id,
+                            uint32_t                   n_subframes,
+                            int64_t                    enc_time_us)
 {
   GfxFrameInfo *gfx_frame_info;
 
@@ -767,11 +811,11 @@ get_frame_size (GrdRdpFrame *rdp_frame)
 }
 
 static void
-blit_surface_to_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
-                         GrdRdpGfxSurface       *dst_surface,
-                         GrdRdpGfxSurface       *src_surface,
-                         RECTANGLE_16           *region_rects,
-                         int                     n_rects)
+blit_surface_to_surface (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                         GrdRdpGfxSurface          *dst_surface,
+                         GrdRdpGfxSurface          *src_surface,
+                         RECTANGLE_16              *region_rects,
+                         int                        n_rects)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   RDPGFX_SURFACE_TO_SURFACE_PDU surface_to_surface = {};
@@ -797,8 +841,8 @@ blit_surface_to_surface (GrdRdpGraphicsPipeline *graphics_pipeline,
 }
 
 static void
-clear_old_enc_times (GrdRdpGraphicsPipeline *graphics_pipeline,
-                     int64_t                 current_time_us)
+clear_old_enc_times (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                     int64_t                    current_time_us)
 {
   int64_t *tracked_enc_time_us;
 
@@ -808,8 +852,8 @@ clear_old_enc_times (GrdRdpGraphicsPipeline *graphics_pipeline,
 }
 
 static void
-track_enc_time (GrdRdpGraphicsPipeline *graphics_pipeline,
-                int64_t                 enc_time_us)
+track_enc_time (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                int64_t                    enc_time_us)
 {
   int64_t *tracked_enc_time_us;
 
@@ -822,7 +866,7 @@ track_enc_time (GrdRdpGraphicsPipeline *graphics_pipeline,
 static gboolean
 maybe_slow_down_rtts (gpointer user_data)
 {
-  GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline = user_data;
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
   clear_old_enc_times (graphics_pipeline, g_get_monotonic_time ());
@@ -845,7 +889,7 @@ maybe_slow_down_rtts (gpointer user_data)
 }
 
 static void
-ensure_rtt_receivement (GrdRdpGraphicsPipeline *graphics_pipeline)
+ensure_rtt_receivement (GrdRdpDvcGraphicsPipeline *graphics_pipeline)
 {
   GMainContext *graphics_context =
     grd_rdp_renderer_get_graphics_context (graphics_pipeline->renderer);
@@ -865,8 +909,8 @@ ensure_rtt_receivement (GrdRdpGraphicsPipeline *graphics_pipeline)
 }
 
 void
-grd_rdp_graphics_pipeline_submit_frame (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                        GrdRdpFrame            *rdp_frame)
+grd_rdp_dvc_graphics_pipeline_submit_frame (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                            GrdRdpFrame               *rdp_frame)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
@@ -998,12 +1042,12 @@ grd_rdp_graphics_pipeline_submit_frame (GrdRdpGraphicsPipeline *graphics_pipelin
 }
 
 static gboolean
-refresh_gfx_surface_avc420 (GrdRdpGraphicsPipeline *graphics_pipeline,
-                            HWAccelContext         *hwaccel_context,
-                            GrdRdpSurface          *rdp_surface,
-                            GrdRdpGfxSurface       *gfx_surface,
-                            GrdRdpLegacyBuffer     *buffer,
-                            int64_t                *enc_time_us)
+refresh_gfx_surface_avc420 (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                            HWAccelContext            *hwaccel_context,
+                            GrdRdpSurface             *rdp_surface,
+                            GrdRdpGfxSurface          *gfx_surface,
+                            GrdRdpLegacyBuffer        *buffer,
+                            int64_t                   *enc_time_us)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   GrdRdpNetworkAutodetection *network_autodetection =
@@ -1294,11 +1338,11 @@ rfx_progressive_write_message (RFX_MESSAGE *rfx_message,
 }
 
 static gboolean
-refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                     GrdRdpSurface          *rdp_surface,
-                                     GrdRdpGfxSurface       *gfx_surface,
-                                     GrdRdpLegacyBuffer     *buffer,
-                                     int64_t                *enc_time_us)
+refresh_gfx_surface_rfx_progressive (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                     GrdRdpSurface             *rdp_surface,
+                                     GrdRdpGfxSurface          *gfx_surface,
+                                     GrdRdpLegacyBuffer        *buffer,
+                                     int64_t                   *enc_time_us)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   GrdRdpNetworkAutodetection *network_autodetection =
@@ -1430,10 +1474,10 @@ refresh_gfx_surface_rfx_progressive (GrdRdpGraphicsPipeline *graphics_pipeline,
 }
 
 gboolean
-grd_rdp_graphics_pipeline_refresh_gfx (GrdRdpGraphicsPipeline *graphics_pipeline,
-                                       GrdRdpSurface          *rdp_surface,
-                                       GrdRdpRenderContext    *render_context,
-                                       GrdRdpLegacyBuffer     *buffer)
+grd_rdp_dvc_graphics_pipeline_refresh_gfx (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                                           GrdRdpSurface             *rdp_surface,
+                                           GrdRdpRenderContext       *render_context,
+                                           GrdRdpLegacyBuffer        *buffer)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
@@ -1487,7 +1531,7 @@ static void
 dvc_creation_status (gpointer user_data,
                      int32_t  creation_status)
 {
-  GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline = user_data;
 
   if (creation_status < 0)
     {
@@ -1502,18 +1546,14 @@ static BOOL
 rdpgfx_channel_id_assigned (RdpgfxServerContext *rdpgfx_context,
                             uint32_t             channel_id)
 {
-  GrdRdpGraphicsPipeline *graphics_pipeline = rdpgfx_context->custom;
-  GrdRdpDvcHandler *dvc_handler = graphics_pipeline->dvc_handler;
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline = rdpgfx_context->custom;
+  GrdRdpDvc *dvc = GRD_RDP_DVC (graphics_pipeline);
 
   g_debug ("[RDP.RDPGFX] DVC channel id assigned to id %u", channel_id);
-  graphics_pipeline->channel_id = channel_id;
 
-  graphics_pipeline->dvc_subscription_id =
-    grd_rdp_dvc_handler_subscribe_dvc_creation_status (dvc_handler,
-                                                       channel_id,
-                                                       dvc_creation_status,
-                                                       graphics_pipeline);
-  graphics_pipeline->subscribed_status = TRUE;
+  grd_rdp_dvc_subscribe_creation_status (dvc, channel_id,
+                                         dvc_creation_status,
+                                         graphics_pipeline);
 
   return TRUE;
 }
@@ -1671,7 +1711,7 @@ static uint32_t
 rdpgfx_caps_advertise (RdpgfxServerContext             *rdpgfx_context,
                        const RDPGFX_CAPS_ADVERTISE_PDU *caps_advertise)
 {
-  GrdRdpGraphicsPipeline *graphics_pipeline = rdpgfx_context->custom;
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline = rdpgfx_context->custom;
   GrdRdpRenderer *renderer = graphics_pipeline->renderer;
 
   g_debug ("[RDP.RDPGFX] Received a CapsAdvertise PDU");
@@ -1749,8 +1789,8 @@ notify_updated_frame_controllers (GHashTable *updated_frame_controllers)
 }
 
 static void
-maybe_rewrite_frame_history (GrdRdpGraphicsPipeline *graphics_pipeline,
-                             uint32_t                pending_frame_acks)
+maybe_rewrite_frame_history (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                             uint32_t                   pending_frame_acks)
 {
   GfxFrameInfo *gfx_frame_info;
   GHashTable *updated_frame_controllers;
@@ -1811,7 +1851,7 @@ frame_serial_free (gpointer key,
                    gpointer value,
                    gpointer user_data)
 {
-  GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline = user_data;
   uint32_t surface_serial = GPOINTER_TO_UINT (value);
 
   surface_serial_unref (graphics_pipeline, surface_serial);
@@ -1820,7 +1860,7 @@ frame_serial_free (gpointer key,
 }
 
 static void
-suspend_frame_acknowledgement (GrdRdpGraphicsPipeline *graphics_pipeline)
+suspend_frame_acknowledgement (GrdRdpDvcGraphicsPipeline *graphics_pipeline)
 {
   graphics_pipeline->frame_acks_suspended = TRUE;
 
@@ -1833,7 +1873,7 @@ suspend_frame_acknowledgement (GrdRdpGraphicsPipeline *graphics_pipeline)
 }
 
 static void
-handle_frame_ack_event (GrdRdpGraphicsPipeline             *graphics_pipeline,
+handle_frame_ack_event (GrdRdpDvcGraphicsPipeline          *graphics_pipeline,
                         const RDPGFX_FRAME_ACKNOWLEDGE_PDU *frame_acknowledge)
 {
   uint32_t pending_frame_acks;
@@ -1884,7 +1924,7 @@ static uint32_t
 rdpgfx_frame_acknowledge (RdpgfxServerContext                *rdpgfx_context,
                           const RDPGFX_FRAME_ACKNOWLEDGE_PDU *frame_acknowledge)
 {
-  GrdRdpGraphicsPipeline *graphics_pipeline = rdpgfx_context->custom;
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline = rdpgfx_context->custom;
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
   handle_frame_ack_event (graphics_pipeline, frame_acknowledge);
@@ -1900,54 +1940,8 @@ rdpgfx_qoe_frame_acknowledge (RdpgfxServerContext                    *rdpgfx_con
   return CHANNEL_RC_OK;
 }
 
-static gboolean
-initiate_session_teardown (gpointer user_data)
-{
-  GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
-
-  g_warning ("[RDP.RDPGFX] Client did not respond to protocol initiation. "
-             "Terminating session");
-
-  g_clear_pointer (&graphics_pipeline->protocol_timeout_source, g_source_unref);
-
-  grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
-                                GRD_SESSION_RDP_ERROR_BAD_CAPS);
-
-  return G_SOURCE_REMOVE;
-}
-
-void
-grd_rdp_graphics_pipeline_maybe_init (GrdRdpGraphicsPipeline *graphics_pipeline)
-{
-  GMainContext *graphics_context =
-    grd_rdp_renderer_get_graphics_context (graphics_pipeline->renderer);
-  RdpgfxServerContext *rdpgfx_context;
-
-  if (graphics_pipeline->channel_opened)
-    return;
-
-  rdpgfx_context = graphics_pipeline->rdpgfx_context;
-  if (!rdpgfx_context->Open (rdpgfx_context))
-    {
-      g_warning ("[RDP.RDPGFX] Failed to open channel. Terminating session");
-      grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
-                                    GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
-      return;
-    }
-  graphics_pipeline->channel_opened = TRUE;
-
-  g_assert (!graphics_pipeline->protocol_timeout_source);
-
-  graphics_pipeline->protocol_timeout_source =
-    g_timeout_source_new (PROTOCOL_TIMEOUT_MS);
-  g_source_set_callback (graphics_pipeline->protocol_timeout_source,
-                         initiate_session_teardown, graphics_pipeline, NULL);
-  g_source_attach (graphics_pipeline->protocol_timeout_source,
-                   graphics_context);
-}
-
 static void
-reset_graphics_pipeline (GrdRdpGraphicsPipeline *graphics_pipeline)
+reset_graphics_pipeline (GrdRdpDvcGraphicsPipeline *graphics_pipeline)
 {
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
   g_hash_table_steal_all (graphics_pipeline->surface_table);
@@ -1972,10 +1966,10 @@ reset_graphics_pipeline (GrdRdpGraphicsPipeline *graphics_pipeline)
 }
 
 static gboolean
-test_caps_version (GrdRdpGraphicsPipeline *graphics_pipeline,
-                   RDPGFX_CAPSET          *cap_sets,
-                   uint16_t                n_cap_sets,
-                   uint32_t                caps_version)
+test_caps_version (GrdRdpDvcGraphicsPipeline *graphics_pipeline,
+                   RDPGFX_CAPSET             *cap_sets,
+                   uint16_t                   n_cap_sets,
+                   uint32_t                   caps_version)
 {
   RdpgfxServerContext *rdpgfx_context = graphics_pipeline->rdpgfx_context;
   rdpSettings *rdp_settings = rdpgfx_context->rdpcontext->settings;
@@ -2041,7 +2035,7 @@ test_caps_version (GrdRdpGraphicsPipeline *graphics_pipeline,
 static gboolean
 reset_protocol (gpointer user_data)
 {
-  GrdRdpGraphicsPipeline *graphics_pipeline = user_data;
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline = user_data;
   GrdRdpRenderer *renderer = graphics_pipeline->renderer;
   g_autofree RDPGFX_CAPSET *cap_sets = NULL;
   uint16_t n_cap_sets;
@@ -2108,30 +2102,30 @@ static GSourceFuncs protocol_reset_source_funcs =
 };
 
 static void
-on_gfx_initable (GrdRdpRenderer         *renderer,
-                 GrdRdpGraphicsPipeline *graphics_pipeline)
+on_gfx_initable (GrdRdpRenderer            *renderer,
+                 GrdRdpDvcGraphicsPipeline *graphics_pipeline)
 {
   g_source_set_ready_time (graphics_pipeline->protocol_reset_source, 0);
 }
 
-GrdRdpGraphicsPipeline *
-grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
-                               GrdRdpRenderer             *renderer,
-                               GrdRdpDvcHandler           *dvc_handler,
-                               HANDLE                      vcm,
-                               rdpContext                 *rdp_context,
-                               GrdRdpNetworkAutodetection *network_autodetection,
-                               wStream                    *encode_stream,
-                               RFX_CONTEXT                *rfx_context)
+GrdRdpDvcGraphicsPipeline *
+grd_rdp_dvc_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
+                                   GrdRdpRenderer             *renderer,
+                                   GrdRdpDvcHandler           *dvc_handler,
+                                   HANDLE                      vcm,
+                                   rdpContext                 *rdp_context,
+                                   GrdRdpNetworkAutodetection *network_autodetection,
+                                   wStream                    *encode_stream,
+                                   RFX_CONTEXT                *rfx_context)
 {
   GMainContext *graphics_context =
     grd_rdp_renderer_get_graphics_context (renderer);
   rdpSettings *rdp_settings = rdp_context->settings;
-  GrdRdpGraphicsPipeline *graphics_pipeline;
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline;
   RdpgfxServerContext *rdpgfx_context;
   GSource *protocol_reset_source;
 
-  graphics_pipeline = g_object_new (GRD_TYPE_RDP_GRAPHICS_PIPELINE, NULL);
+  graphics_pipeline = g_object_new (GRD_TYPE_RDP_DVC_GRAPHICS_PIPELINE, NULL);
   rdpgfx_context = rdpgfx_server_context_new (vcm);
   if (!rdpgfx_context)
     g_error ("[RDP.RDPGFX] Failed to create server context");
@@ -2139,10 +2133,11 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
   graphics_pipeline->rdpgfx_context = rdpgfx_context;
   graphics_pipeline->session_rdp = session_rdp;
   graphics_pipeline->renderer = renderer;
-  graphics_pipeline->dvc_handler = dvc_handler;
   graphics_pipeline->network_autodetection = network_autodetection;
   graphics_pipeline->encode_stream = encode_stream;
   graphics_pipeline->rfx_context = rfx_context;
+
+  grd_rdp_dvc_set_dvc_handler (GRD_RDP_DVC (graphics_pipeline), dvc_handler);
 
   rdpgfx_context->ChannelIdAssigned = rdpgfx_channel_id_assigned;
   rdpgfx_context->CapsAdvertise = rdpgfx_caps_advertise;
@@ -2175,9 +2170,11 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
 }
 
 static void
-grd_rdp_graphics_pipeline_dispose (GObject *object)
+grd_rdp_dvc_graphics_pipeline_dispose (GObject *object)
 {
-  GrdRdpGraphicsPipeline *graphics_pipeline = GRD_RDP_GRAPHICS_PIPELINE (object);
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline =
+    GRD_RDP_DVC_GRAPHICS_PIPELINE (object);
+  GrdRdpDvc *dvc = GRD_RDP_DVC (graphics_pipeline);
 
   if (graphics_pipeline->channel_opened)
     {
@@ -2185,13 +2182,7 @@ grd_rdp_graphics_pipeline_dispose (GObject *object)
       graphics_pipeline->rdpgfx_context->Close (graphics_pipeline->rdpgfx_context);
       graphics_pipeline->channel_opened = FALSE;
     }
-  if (graphics_pipeline->subscribed_status)
-    {
-      grd_rdp_dvc_handler_unsubscribe_dvc_creation_status (graphics_pipeline->dvc_handler,
-                                                           graphics_pipeline->channel_id,
-                                                           graphics_pipeline->dvc_subscription_id);
-      graphics_pipeline->subscribed_status = FALSE;
-    }
+  grd_rdp_dvc_maybe_unsubscribe_creation_status (dvc);
 
   g_clear_signal_handler (&graphics_pipeline->gfx_initable_id,
                           graphics_pipeline->renderer);
@@ -2236,22 +2227,23 @@ grd_rdp_graphics_pipeline_dispose (GObject *object)
   g_clear_pointer (&graphics_pipeline->surface_table, g_hash_table_destroy);
   g_clear_pointer (&graphics_pipeline->rdpgfx_context, rdpgfx_server_context_free);
 
-  G_OBJECT_CLASS (grd_rdp_graphics_pipeline_parent_class)->dispose (object);
+  G_OBJECT_CLASS (grd_rdp_dvc_graphics_pipeline_parent_class)->dispose (object);
 }
 
 static void
-grd_rdp_graphics_pipeline_finalize (GObject *object)
+grd_rdp_dvc_graphics_pipeline_finalize (GObject *object)
 {
-  GrdRdpGraphicsPipeline *graphics_pipeline = GRD_RDP_GRAPHICS_PIPELINE (object);
+  GrdRdpDvcGraphicsPipeline *graphics_pipeline =
+    GRD_RDP_DVC_GRAPHICS_PIPELINE (object);
 
   g_mutex_clear (&graphics_pipeline->gfx_mutex);
   g_mutex_clear (&graphics_pipeline->caps_mutex);
 
-  G_OBJECT_CLASS (grd_rdp_graphics_pipeline_parent_class)->finalize (object);
+  G_OBJECT_CLASS (grd_rdp_dvc_graphics_pipeline_parent_class)->finalize (object);
 }
 
 static void
-grd_rdp_graphics_pipeline_init (GrdRdpGraphicsPipeline *graphics_pipeline)
+grd_rdp_dvc_graphics_pipeline_init (GrdRdpDvcGraphicsPipeline *graphics_pipeline)
 {
   graphics_pipeline->surface_table = g_hash_table_new (NULL, NULL);
   graphics_pipeline->codec_context_table = g_hash_table_new (NULL, NULL);
@@ -2268,10 +2260,13 @@ grd_rdp_graphics_pipeline_init (GrdRdpGraphicsPipeline *graphics_pipeline)
 }
 
 static void
-grd_rdp_graphics_pipeline_class_init (GrdRdpGraphicsPipelineClass *klass)
+grd_rdp_dvc_graphics_pipeline_class_init (GrdRdpDvcGraphicsPipelineClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GrdRdpDvcClass *dvc_class = GRD_RDP_DVC_CLASS (klass);
 
-  object_class->dispose = grd_rdp_graphics_pipeline_dispose;
-  object_class->finalize = grd_rdp_graphics_pipeline_finalize;
+  object_class->dispose = grd_rdp_dvc_graphics_pipeline_dispose;
+  object_class->finalize = grd_rdp_dvc_graphics_pipeline_finalize;
+
+  dvc_class->maybe_init = grd_rdp_dvc_graphics_pipeline_maybe_init;
 }

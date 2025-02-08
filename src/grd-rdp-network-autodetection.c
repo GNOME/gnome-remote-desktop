@@ -22,7 +22,7 @@
 #include "grd-rdp-network-autodetection.h"
 
 #include "grd-rdp-connect-time-autodetection.h"
-#include "grd-rdp-graphics-pipeline.h"
+#include "grd-rdp-dvc-graphics-pipeline.h"
 #include "grd-rdp-private.h"
 
 #define BW_MEASURE_SEQUENCE_NUMBER 0
@@ -558,7 +558,7 @@ autodetect_rtt_measure_response (rdpAutoDetect      *rdp_autodetect,
   if (!network_autodetection->in_shutdown && has_rtt_consumer_rdpgfx &&
       rdp_peer_context->graphics_pipeline)
     {
-      grd_rdp_graphics_pipeline_notify_new_round_trip_time (
+      grd_rdp_dvc_graphics_pipeline_notify_new_round_trip_time (
         rdp_peer_context->graphics_pipeline, avg_round_trip_time_us);
     }
   g_mutex_unlock (&network_autodetection->shutdown_mutex);

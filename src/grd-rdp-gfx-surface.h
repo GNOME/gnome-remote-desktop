@@ -50,7 +50,7 @@ typedef struct _GrdRdpGfxSurfaceDescriptor
   uint16_t aligned_height;
 } GrdRdpGfxSurfaceDescriptor;
 
-GrdRdpGfxSurface *grd_rdp_gfx_surface_new (GrdRdpGraphicsPipeline           *graphics_pipeline,
+GrdRdpGfxSurface *grd_rdp_gfx_surface_new (GrdRdpDvcGraphicsPipeline        *graphics_pipeline,
                                            const GrdRdpGfxSurfaceDescriptor *surface_descriptor);
 
 uint16_t grd_rdp_gfx_surface_get_surface_id (GrdRdpGfxSurface *gfx_surface);
