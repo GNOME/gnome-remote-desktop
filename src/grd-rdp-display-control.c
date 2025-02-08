@@ -21,7 +21,7 @@
 
 #include "grd-rdp-display-control.h"
 
-#include "grd-rdp-dvc.h"
+#include "grd-rdp-dvc-handler.h"
 #include "grd-rdp-layout-manager.h"
 #include "grd-rdp-monitor-config.h"
 #include "grd-session-rdp.h"
@@ -41,7 +41,7 @@ struct _GrdRdpDisplayControl
 
   GrdRdpLayoutManager *layout_manager;
   GrdSessionRdp *session_rdp;
-  GrdRdpDvc *rdp_dvc;
+  GrdRdpDvcHandler *dvc_handler;
 
   GSource *channel_teardown_source;
 };
@@ -93,15 +93,16 @@ disp_channel_id_assigned (DispServerContext *disp_context,
                           uint32_t           channel_id)
 {
   GrdRdpDisplayControl *display_control = disp_context->custom;
+  GrdRdpDvcHandler *dvc_handler = display_control->dvc_handler;
 
   g_debug ("[RDP.DISP] DVC channel id assigned to id %u", channel_id);
   display_control->channel_id = channel_id;
 
   display_control->dvc_subscription_id =
-    grd_rdp_dvc_subscribe_dvc_creation_status (display_control->rdp_dvc,
-                                               channel_id,
-                                               dvc_creation_status,
-                                               display_control);
+    grd_rdp_dvc_handler_subscribe_dvc_creation_status (dvc_handler,
+                                                       channel_id,
+                                                       dvc_creation_status,
+                                                       display_control);
   display_control->subscribed_status = TRUE;
 
   return TRUE;
@@ -160,7 +161,7 @@ disp_monitor_layout (DispServerContext                        *disp_context,
 GrdRdpDisplayControl *
 grd_rdp_display_control_new (GrdRdpLayoutManager *layout_manager,
                              GrdSessionRdp       *session_rdp,
-                             GrdRdpDvc           *rdp_dvc,
+                             GrdRdpDvcHandler    *dvc_handler,
                              HANDLE               vcm,
                              uint32_t             max_monitor_count)
 {
@@ -175,7 +176,7 @@ grd_rdp_display_control_new (GrdRdpLayoutManager *layout_manager,
   display_control->disp_context = disp_context;
   display_control->layout_manager = layout_manager;
   display_control->session_rdp = session_rdp;
-  display_control->rdp_dvc = rdp_dvc;
+  display_control->dvc_handler = dvc_handler;
 
   disp_context->MaxNumMonitors = max_monitor_count;
   disp_context->MaxMonitorAreaFactorA = 8192;
@@ -200,9 +201,9 @@ grd_rdp_display_control_dispose (GObject *object)
     }
   if (display_control->subscribed_status)
     {
-      grd_rdp_dvc_unsubscribe_dvc_creation_status (display_control->rdp_dvc,
-                                                   display_control->channel_id,
-                                                   display_control->dvc_subscription_id);
+      grd_rdp_dvc_handler_unsubscribe_dvc_creation_status (display_control->dvc_handler,
+                                                           display_control->channel_id,
+                                                           display_control->dvc_subscription_id);
       display_control->subscribed_status = FALSE;
     }
 

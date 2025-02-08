@@ -49,7 +49,7 @@ typedef struct _GrdRdpConnectTimeAutodetection GrdRdpConnectTimeAutodetection;
 typedef struct _GrdRdpCursorRenderer GrdRdpCursorRenderer;
 typedef struct _GrdRdpDamageDetector GrdRdpDamageDetector;
 typedef struct _GrdRdpDisplayControl GrdRdpDisplayControl;
-typedef struct _GrdRdpDvc GrdRdpDvc;
+typedef struct _GrdRdpDvcHandler GrdRdpDvcHandler;
 typedef struct _GrdRdpEventQueue GrdRdpEventQueue;
 typedef struct _GrdRdpFrame GrdRdpFrame;
 typedef struct _GrdRdpFrameStats GrdRdpFrameStats;

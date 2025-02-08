@@ -25,7 +25,7 @@
 
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-dsp.h"
-#include "grd-rdp-dvc.h"
+#include "grd-rdp-dvc-handler.h"
 #include "grd-session-rdp.h"
 
 #define PROTOCOL_TIMEOUT_MS (10 * 1000)
@@ -79,7 +79,7 @@ struct _GrdRdpAudioInput
   gboolean subscribed_status;
 
   GrdSessionRdp *session_rdp;
-  GrdRdpDvc *rdp_dvc;
+  GrdRdpDvcHandler *dvc_handler;
 
   GMutex protocol_timeout_mutex;
   GSource *channel_teardown_source;
@@ -197,15 +197,16 @@ audin_channel_id_assigned (audin_server_context *audin_context,
                            uint32_t              channel_id)
 {
   GrdRdpAudioInput *audio_input = audin_context->userdata;
+  GrdRdpDvcHandler *dvc_handler = audio_input->dvc_handler;
 
   g_debug ("[RDP.AUDIO_INPUT] DVC channel id assigned to id %u", channel_id);
   audio_input->channel_id = channel_id;
 
   audio_input->dvc_subscription_id =
-    grd_rdp_dvc_subscribe_dvc_creation_status (audio_input->rdp_dvc,
-                                               channel_id,
-                                               dvc_creation_status,
-                                               audio_input);
+    grd_rdp_dvc_handler_subscribe_dvc_creation_status (dvc_handler,
+                                                       channel_id,
+                                                       dvc_creation_status,
+                                                       audio_input);
   audio_input->subscribed_status = TRUE;
 
   return TRUE;
@@ -716,9 +717,9 @@ ensure_dvc_is_closed (GrdRdpAudioInput *audio_input)
     }
   if (audio_input->subscribed_status)
     {
-      grd_rdp_dvc_unsubscribe_dvc_creation_status (audio_input->rdp_dvc,
-                                                   audio_input->channel_id,
-                                                   audio_input->dvc_subscription_id);
+      grd_rdp_dvc_handler_unsubscribe_dvc_creation_status (audio_input->dvc_handler,
+                                                           audio_input->channel_id,
+                                                           audio_input->dvc_subscription_id);
       audio_input->subscribed_status = FALSE;
     }
 
@@ -965,10 +966,10 @@ set_up_audio_source (GrdRdpAudioInput  *audio_input,
 }
 
 GrdRdpAudioInput *
-grd_rdp_audio_input_new (GrdSessionRdp *session_rdp,
-                         GrdRdpDvc     *rdp_dvc,
-                         HANDLE         vcm,
-                         rdpContext    *rdp_context)
+grd_rdp_audio_input_new (GrdSessionRdp    *session_rdp,
+                         GrdRdpDvcHandler *dvc_handler,
+                         HANDLE            vcm,
+                         rdpContext       *rdp_context)
 {
   g_autoptr (GrdRdpAudioInput) audio_input = NULL;
   audin_server_context *audin_context;
@@ -982,7 +983,7 @@ grd_rdp_audio_input_new (GrdSessionRdp *session_rdp,
 
   audio_input->audin_context = audin_context;
   audio_input->session_rdp = session_rdp;
-  audio_input->rdp_dvc = rdp_dvc;
+  audio_input->dvc_handler = dvc_handler;
 
   audin_context->serverVersion = SNDIN_VERSION_Version_2;
 

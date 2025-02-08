@@ -29,10 +29,10 @@
 G_DECLARE_FINAL_TYPE (GrdRdpAudioInput, grd_rdp_audio_input,
                       GRD, RDP_AUDIO_INPUT, GObject)
 
-GrdRdpAudioInput *grd_rdp_audio_input_new (GrdSessionRdp *session_rdp,
-                                           GrdRdpDvc     *rdp_dvc,
-                                           HANDLE         vcm,
-                                           rdpContext    *rdp_context);
+GrdRdpAudioInput *grd_rdp_audio_input_new (GrdSessionRdp    *session_rdp,
+                                           GrdRdpDvcHandler *dvc_handler,
+                                           HANDLE            vcm,
+                                           rdpContext       *rdp_context);
 
 void grd_rdp_audio_input_maybe_init (GrdRdpAudioInput *audio_input);
 

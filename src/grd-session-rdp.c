@@ -35,7 +35,7 @@
 #include "grd-rdp-audio-playback.h"
 #include "grd-rdp-cursor-renderer.h"
 #include "grd-rdp-display-control.h"
-#include "grd-rdp-dvc.h"
+#include "grd-rdp-dvc-handler.h"
 #include "grd-rdp-event-queue.h"
 #include "grd-rdp-graphics-pipeline.h"
 #include "grd-rdp-layout-manager.h"
@@ -1075,7 +1075,7 @@ rdp_peer_context_free (freerdp_peer   *peer,
   if (!rdp_peer_context)
     return;
 
-  g_clear_object (&rdp_peer_context->rdp_dvc);
+  g_clear_object (&rdp_peer_context->dvc_handler);
 
   if (rdp_peer_context->vcm != INVALID_HANDLE_VALUE)
     g_clear_pointer (&rdp_peer_context->vcm, WTSCloseServer);
@@ -1125,8 +1125,9 @@ rdp_peer_context_new (freerdp_peer   *peer,
       return FALSE;
     }
 
-  rdp_peer_context->rdp_dvc = grd_rdp_dvc_new (rdp_peer_context->vcm,
-                                               &rdp_peer_context->rdp_context);
+  rdp_peer_context->dvc_handler =
+    grd_rdp_dvc_handler_new (rdp_peer_context->vcm,
+                             &rdp_peer_context->rdp_context);
 
   return TRUE;
 }
@@ -1621,7 +1622,7 @@ initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
   g_assert (!rdp_peer_context->graphics_pipeline);
 
   telemetry = grd_rdp_telemetry_new (session_rdp,
-                                     rdp_peer_context->rdp_dvc,
+                                     rdp_peer_context->dvc_handler,
                                      rdp_peer_context->vcm,
                                      rdp_context);
   rdp_peer_context->telemetry = telemetry;
@@ -1629,7 +1630,7 @@ initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
   graphics_pipeline =
     grd_rdp_graphics_pipeline_new (session_rdp,
                                    session_rdp->renderer,
-                                   rdp_peer_context->rdp_dvc,
+                                   rdp_peer_context->dvc_handler,
                                    rdp_peer_context->vcm,
                                    rdp_context,
                                    rdp_peer_context->network_autodetection,
@@ -1646,7 +1647,7 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
   rdpContext *rdp_context = session_rdp->peer->context;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
   rdpSettings *rdp_settings = rdp_context->settings;
-  GrdRdpDvc *rdp_dvc = rdp_peer_context->rdp_dvc;
+  GrdRdpDvcHandler *dvc_handler = rdp_peer_context->dvc_handler;
   HANDLE vcm = rdp_peer_context->vcm;
 
   if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND)
@@ -1654,7 +1655,7 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
       rdp_peer_context->display_control =
         grd_rdp_display_control_new (session_rdp->layout_manager,
                                      session_rdp,
-                                     rdp_peer_context->rdp_dvc,
+                                     dvc_handler,
                                      rdp_peer_context->vcm,
                                      get_max_monitor_count (session_rdp));
     }
@@ -1672,12 +1673,12 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
       !freerdp_settings_get_bool (rdp_settings, FreeRDP_RemoteConsoleAudio))
     {
       rdp_peer_context->audio_playback =
-        grd_rdp_audio_playback_new (session_rdp, rdp_dvc, vcm, rdp_context);
+        grd_rdp_audio_playback_new (session_rdp, dvc_handler, vcm, rdp_context);
     }
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_AudioCapture))
     {
       rdp_peer_context->audio_input =
-        grd_rdp_audio_input_new (session_rdp, rdp_dvc, vcm, rdp_context);
+        grd_rdp_audio_input_new (session_rdp, dvc_handler, vcm, rdp_context);
     }
 }
 

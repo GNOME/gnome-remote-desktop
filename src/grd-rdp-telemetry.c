@@ -21,7 +21,7 @@
 
 #include "grd-rdp-telemetry.h"
 
-#include "grd-rdp-dvc.h"
+#include "grd-rdp-dvc-handler.h"
 #include "grd-session-rdp.h"
 
 struct _GrdRdpTelemetry
@@ -37,7 +37,7 @@ struct _GrdRdpTelemetry
   gboolean subscribed_status;
 
   GrdSessionRdp *session_rdp;
-  GrdRdpDvc *rdp_dvc;
+  GrdRdpDvcHandler *dvc_handler;
 
   GSource *channel_teardown_source;
 };
@@ -83,15 +83,16 @@ telemetry_channel_id_assigned (TelemetryServerContext *telemetry_context,
                                uint32_t                channel_id)
 {
   GrdRdpTelemetry *telemetry = telemetry_context->userdata;
+  GrdRdpDvcHandler *dvc_handler = telemetry->dvc_handler;
 
   g_debug ("[RDP.TELEMETRY] DVC channel id assigned to id %u", channel_id);
   telemetry->channel_id = channel_id;
 
   telemetry->dvc_subscription_id =
-    grd_rdp_dvc_subscribe_dvc_creation_status (telemetry->rdp_dvc,
-                                               channel_id,
-                                               dvc_creation_status,
-                                               telemetry);
+    grd_rdp_dvc_handler_subscribe_dvc_creation_status (dvc_handler,
+                                                       channel_id,
+                                                       dvc_creation_status,
+                                                       telemetry);
   telemetry->subscribed_status = TRUE;
 
   return TRUE;
@@ -129,10 +130,10 @@ telemetry_rdp_telemetry (TelemetryServerContext            *telemetry_context,
 }
 
 GrdRdpTelemetry *
-grd_rdp_telemetry_new (GrdSessionRdp *session_rdp,
-                       GrdRdpDvc     *rdp_dvc,
-                       HANDLE         vcm,
-                       rdpContext    *rdp_context)
+grd_rdp_telemetry_new (GrdSessionRdp    *session_rdp,
+                       GrdRdpDvcHandler *dvc_handler,
+                       HANDLE            vcm,
+                       rdpContext       *rdp_context)
 {
   GrdRdpTelemetry *telemetry;
   TelemetryServerContext *telemetry_context;
@@ -144,7 +145,7 @@ grd_rdp_telemetry_new (GrdSessionRdp *session_rdp,
 
   telemetry->telemetry_context = telemetry_context;
   telemetry->session_rdp = session_rdp;
-  telemetry->rdp_dvc = rdp_dvc;
+  telemetry->dvc_handler = dvc_handler;
 
   telemetry_context->ChannelIdAssigned = telemetry_channel_id_assigned;
   telemetry_context->RdpTelemetry = telemetry_rdp_telemetry;
@@ -166,9 +167,9 @@ grd_rdp_telemetry_dispose (GObject *object)
     }
   if (telemetry->subscribed_status)
     {
-      grd_rdp_dvc_unsubscribe_dvc_creation_status (telemetry->rdp_dvc,
-                                                   telemetry->channel_id,
-                                                   telemetry->dvc_subscription_id);
+      grd_rdp_dvc_handler_unsubscribe_dvc_creation_status (telemetry->dvc_handler,
+                                                           telemetry->channel_id,
+                                                           telemetry->dvc_subscription_id);
       telemetry->subscribed_status = FALSE;
     }
 

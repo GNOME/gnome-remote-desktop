@@ -38,7 +38,7 @@ typedef struct _RdpPeerContext
   /* Virtual Channel Manager */
   HANDLE vcm;
 
-  GrdRdpDvc *rdp_dvc;
+  GrdRdpDvcHandler *dvc_handler;
 
   GMutex channel_mutex;
 

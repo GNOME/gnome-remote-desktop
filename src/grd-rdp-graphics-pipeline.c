@@ -28,7 +28,7 @@
 #include "grd-bitstream.h"
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-damage-detector.h"
-#include "grd-rdp-dvc.h"
+#include "grd-rdp-dvc-handler.h"
 #include "grd-rdp-frame.h"
 #include "grd-rdp-frame-info.h"
 #include "grd-rdp-gfx-frame-controller.h"
@@ -89,7 +89,7 @@ struct _GrdRdpGraphicsPipeline
 
   GrdSessionRdp *session_rdp;
   GrdRdpRenderer *renderer;
-  GrdRdpDvc *rdp_dvc;
+  GrdRdpDvcHandler *dvc_handler;
   GrdRdpNetworkAutodetection *network_autodetection;
   wStream *encode_stream;
   RFX_CONTEXT *rfx_context;
@@ -1503,15 +1503,16 @@ rdpgfx_channel_id_assigned (RdpgfxServerContext *rdpgfx_context,
                             uint32_t             channel_id)
 {
   GrdRdpGraphicsPipeline *graphics_pipeline = rdpgfx_context->custom;
+  GrdRdpDvcHandler *dvc_handler = graphics_pipeline->dvc_handler;
 
   g_debug ("[RDP.RDPGFX] DVC channel id assigned to id %u", channel_id);
   graphics_pipeline->channel_id = channel_id;
 
   graphics_pipeline->dvc_subscription_id =
-    grd_rdp_dvc_subscribe_dvc_creation_status (graphics_pipeline->rdp_dvc,
-                                               channel_id,
-                                               dvc_creation_status,
-                                               graphics_pipeline);
+    grd_rdp_dvc_handler_subscribe_dvc_creation_status (dvc_handler,
+                                                       channel_id,
+                                                       dvc_creation_status,
+                                                       graphics_pipeline);
   graphics_pipeline->subscribed_status = TRUE;
 
   return TRUE;
@@ -2116,7 +2117,7 @@ on_gfx_initable (GrdRdpRenderer         *renderer,
 GrdRdpGraphicsPipeline *
 grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
                                GrdRdpRenderer             *renderer,
-                               GrdRdpDvc                  *rdp_dvc,
+                               GrdRdpDvcHandler           *dvc_handler,
                                HANDLE                      vcm,
                                rdpContext                 *rdp_context,
                                GrdRdpNetworkAutodetection *network_autodetection,
@@ -2138,7 +2139,7 @@ grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
   graphics_pipeline->rdpgfx_context = rdpgfx_context;
   graphics_pipeline->session_rdp = session_rdp;
   graphics_pipeline->renderer = renderer;
-  graphics_pipeline->rdp_dvc = rdp_dvc;
+  graphics_pipeline->dvc_handler = dvc_handler;
   graphics_pipeline->network_autodetection = network_autodetection;
   graphics_pipeline->encode_stream = encode_stream;
   graphics_pipeline->rfx_context = rfx_context;
@@ -2186,9 +2187,9 @@ grd_rdp_graphics_pipeline_dispose (GObject *object)
     }
   if (graphics_pipeline->subscribed_status)
     {
-      grd_rdp_dvc_unsubscribe_dvc_creation_status (graphics_pipeline->rdp_dvc,
-                                                   graphics_pipeline->channel_id,
-                                                   graphics_pipeline->dvc_subscription_id);
+      grd_rdp_dvc_handler_unsubscribe_dvc_creation_status (graphics_pipeline->dvc_handler,
+                                                           graphics_pipeline->channel_id,
+                                                           graphics_pipeline->dvc_subscription_id);
       graphics_pipeline->subscribed_status = FALSE;
     }
 

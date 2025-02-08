@@ -32,7 +32,7 @@ G_DECLARE_FINAL_TYPE (GrdRdpGraphicsPipeline, grd_rdp_graphics_pipeline,
 
 GrdRdpGraphicsPipeline *grd_rdp_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
                                                        GrdRdpRenderer             *renderer,
-                                                       GrdRdpDvc                  *rdp_dvc,
+                                                       GrdRdpDvcHandler           *dvc_handler,
                                                        HANDLE                      vcm,
                                                        rdpContext                 *rdp_context,
                                                        GrdRdpNetworkAutodetection *network_autodetection,

@@ -24,7 +24,7 @@
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-audio-output-stream.h"
 #include "grd-rdp-dsp.h"
-#include "grd-rdp-dvc.h"
+#include "grd-rdp-dvc-handler.h"
 #include "grd-session-rdp.h"
 
 #define PROTOCOL_TIMEOUT_MS (10 * 1000)
@@ -70,7 +70,7 @@ struct _GrdRdpAudioPlayback
   gboolean subscribed_status;
 
   GrdSessionRdp *session_rdp;
-  GrdRdpDvc *rdp_dvc;
+  GrdRdpDvcHandler *dvc_handler;
 
   gboolean prevent_dvc_initialization;
   GSource *svc_setup_source;
@@ -458,15 +458,16 @@ rdpsnd_channel_id_assigned (RdpsndServerContext *rdpsnd_context,
                             uint32_t             channel_id)
 {
   GrdRdpAudioPlayback *audio_playback = rdpsnd_context->data;
+  GrdRdpDvcHandler *dvc_handler = audio_playback->dvc_handler;
 
   g_debug ("[RDP.AUDIO_PLAYBACK] DVC channel id assigned to id %u", channel_id);
   audio_playback->channel_id = channel_id;
 
   audio_playback->dvc_subscription_id =
-    grd_rdp_dvc_subscribe_dvc_creation_status (audio_playback->rdp_dvc,
-                                               channel_id,
-                                               dvc_creation_status,
-                                               audio_playback);
+    grd_rdp_dvc_handler_subscribe_dvc_creation_status (dvc_handler,
+                                                       channel_id,
+                                                       dvc_creation_status,
+                                                       audio_playback);
   audio_playback->subscribed_status = TRUE;
 
   return TRUE;
@@ -751,10 +752,10 @@ encode_thread_func (gpointer data)
 }
 
 GrdRdpAudioPlayback *
-grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
-                            GrdRdpDvc     *rdp_dvc,
-                            HANDLE         vcm,
-                            rdpContext    *rdp_context)
+grd_rdp_audio_playback_new (GrdSessionRdp    *session_rdp,
+                            GrdRdpDvcHandler *dvc_handler,
+                            HANDLE            vcm,
+                            rdpContext       *rdp_context)
 {
   g_autoptr (GrdRdpAudioPlayback) audio_playback = NULL;
   RdpsndServerContext *rdpsnd_context;
@@ -768,7 +769,7 @@ grd_rdp_audio_playback_new (GrdSessionRdp *session_rdp,
 
   audio_playback->rdpsnd_context = rdpsnd_context;
   audio_playback->session_rdp = session_rdp;
-  audio_playback->rdp_dvc = rdp_dvc;
+  audio_playback->dvc_handler = dvc_handler;
 
   rdpsnd_context->use_dynamic_virtual_channel = TRUE;
   rdpsnd_context->server_formats = server_formats;
@@ -824,9 +825,9 @@ grd_rdp_audio_playback_dispose (GObject *object)
     }
   if (audio_playback->subscribed_status)
     {
-      grd_rdp_dvc_unsubscribe_dvc_creation_status (audio_playback->rdp_dvc,
-                                                   audio_playback->channel_id,
-                                                   audio_playback->dvc_subscription_id);
+      grd_rdp_dvc_handler_unsubscribe_dvc_creation_status (audio_playback->dvc_handler,
+                                                           audio_playback->channel_id,
+                                                           audio_playback->dvc_subscription_id);
       audio_playback->subscribed_status = FALSE;
     }
 
@@ -932,9 +933,9 @@ set_up_static_virtual_channel (gpointer user_data)
 
   if (audio_playback->subscribed_status)
     {
-      grd_rdp_dvc_unsubscribe_dvc_creation_status (audio_playback->rdp_dvc,
-                                                   audio_playback->channel_id,
-                                                   audio_playback->dvc_subscription_id);
+      grd_rdp_dvc_handler_unsubscribe_dvc_creation_status (audio_playback->dvc_handler,
+                                                           audio_playback->channel_id,
+                                                           audio_playback->dvc_subscription_id);
       audio_playback->subscribed_status = FALSE;
     }
 
