@@ -34,7 +34,7 @@
 #include "grd-rdp-audio-input.h"
 #include "grd-rdp-audio-playback.h"
 #include "grd-rdp-cursor-renderer.h"
-#include "grd-rdp-display-control.h"
+#include "grd-rdp-dvc-display-control.h"
 #include "grd-rdp-dvc-handler.h"
 #include "grd-rdp-dvc-telemetry.h"
 #include "grd-rdp-event-queue.h"
@@ -1369,7 +1369,7 @@ socket_thread_func (gpointer data)
           GrdRdpDvcTelemetry *telemetry;
           GrdRdpGraphicsPipeline *graphics_pipeline;
           GrdRdpAudioPlayback *audio_playback;
-          GrdRdpDisplayControl *display_control;
+          GrdRdpDvcDisplayControl *display_control;
           GrdRdpAudioInput *audio_input;
 
           switch (WTSVirtualChannelManagerGetDrdynvcState (vcm))
@@ -1396,7 +1396,7 @@ socket_thread_func (gpointer data)
               if (audio_playback && !session_rdp->session_should_stop)
                 grd_rdp_audio_playback_maybe_init (audio_playback);
               if (display_control && !session_rdp->session_should_stop)
-                grd_rdp_display_control_maybe_init (display_control);
+                grd_rdp_dvc_maybe_init (GRD_RDP_DVC (display_control));
               if (audio_input && !session_rdp->session_should_stop)
                 grd_rdp_audio_input_maybe_init (audio_input);
               g_mutex_unlock (&rdp_peer_context->channel_mutex);
@@ -1653,11 +1653,11 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
   if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND)
     {
       rdp_peer_context->display_control =
-        grd_rdp_display_control_new (session_rdp->layout_manager,
-                                     session_rdp,
-                                     dvc_handler,
-                                     rdp_peer_context->vcm,
-                                     get_max_monitor_count (session_rdp));
+        grd_rdp_dvc_display_control_new (session_rdp->layout_manager,
+                                         session_rdp,
+                                         dvc_handler,
+                                         rdp_peer_context->vcm,
+                                         get_max_monitor_count (session_rdp));
     }
   if (WTSVirtualChannelManagerIsChannelJoined (vcm, CLIPRDR_SVC_CHANNEL_NAME))
     {
