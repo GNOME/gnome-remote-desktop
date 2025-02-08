@@ -23,19 +23,12 @@
 
 #include <freerdp/server/telemetry.h>
 
-#include "grd-session-rdp.h"
-
 struct _GrdRdpDvcTelemetry
 {
   GrdRdpDvc parent;
 
   TelemetryServerContext *telemetry_context;
   gboolean channel_opened;
-  gboolean channel_unavailable;
-
-  GrdSessionRdp *session_rdp;
-
-  GSource *channel_teardown_source;
 };
 
 G_DEFINE_TYPE (GrdRdpDvcTelemetry, grd_rdp_dvc_telemetry,
@@ -47,7 +40,7 @@ grd_rdp_dvc_telemetry_maybe_init (GrdRdpDvc *dvc)
   GrdRdpDvcTelemetry *telemetry = GRD_RDP_DVC_TELEMETRY (dvc);
   TelemetryServerContext *telemetry_context;
 
-  if (telemetry->channel_opened || telemetry->channel_unavailable)
+  if (telemetry->channel_opened)
     return;
 
   telemetry_context = telemetry->telemetry_context;
@@ -55,8 +48,7 @@ grd_rdp_dvc_telemetry_maybe_init (GrdRdpDvc *dvc)
     {
       g_warning ("[RDP.TELEMETRY] Failed to open channel. "
                  "Terminating protocol");
-      telemetry->channel_unavailable = TRUE;
-      g_source_set_ready_time (telemetry->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (telemetry));
       return;
     }
   telemetry->channel_opened = TRUE;
@@ -72,7 +64,7 @@ dvc_creation_status (gpointer user_data,
     {
       g_debug ("[RDP.TELEMETRY] Failed to open channel (CreationStatus %i). "
                "Terminating protocol", creation_status);
-      g_source_set_ready_time (telemetry->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (telemetry));
     }
 }
 
@@ -118,7 +110,7 @@ telemetry_rdp_telemetry (TelemetryServerContext            *telemetry_context,
            rdp_telemetry->FirstGraphicsReceivedMillis -
            rdp_telemetry->PromptForCredentialsDoneMillis);
 
-  g_source_set_ready_time (telemetry->channel_teardown_source, 0);
+  grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (telemetry));
 
   return CHANNEL_RC_OK;
 }
@@ -138,7 +130,6 @@ grd_rdp_dvc_telemetry_new (GrdSessionRdp    *session_rdp,
     g_error ("[RDP.TELEMETRY] Failed to allocate server context (OOM)");
 
   telemetry->telemetry_context = telemetry_context;
-  telemetry->session_rdp = session_rdp;
 
   grd_rdp_dvc_initialize_base (GRD_RDP_DVC (telemetry),
                                dvc_handler, session_rdp,
@@ -165,59 +156,15 @@ grd_rdp_dvc_telemetry_dispose (GObject *object)
     }
   grd_rdp_dvc_maybe_unsubscribe_creation_status (dvc);
 
-  if (telemetry->channel_teardown_source)
-    {
-      g_source_destroy (telemetry->channel_teardown_source);
-      g_clear_pointer (&telemetry->channel_teardown_source, g_source_unref);
-    }
-
   g_clear_pointer (&telemetry->telemetry_context,
                    telemetry_server_context_free);
 
   G_OBJECT_CLASS (grd_rdp_dvc_telemetry_parent_class)->dispose (object);
 }
 
-static gboolean
-tear_down_channel (gpointer user_data)
-{
-  GrdRdpDvcTelemetry *telemetry = user_data;
-
-  g_debug ("[RDP.TELEMETRY] Tearing down channel");
-
-  g_clear_pointer (&telemetry->channel_teardown_source, g_source_unref);
-
-  grd_session_rdp_tear_down_channel (telemetry->session_rdp,
-                                     GRD_RDP_CHANNEL_TELEMETRY);
-
-  return G_SOURCE_REMOVE;
-}
-
-static gboolean
-source_dispatch (GSource     *source,
-                 GSourceFunc  callback,
-                 gpointer     user_data)
-{
-  g_source_set_ready_time (source, -1);
-
-  return callback (user_data);
-}
-
-static GSourceFuncs source_funcs =
-{
-  .dispatch = source_dispatch,
-};
-
 static void
 grd_rdp_dvc_telemetry_init (GrdRdpDvcTelemetry *telemetry)
 {
-  GSource *channel_teardown_source;
-
-  channel_teardown_source = g_source_new (&source_funcs, sizeof (GSource));
-  g_source_set_callback (channel_teardown_source, tear_down_channel,
-                         telemetry, NULL);
-  g_source_set_ready_time (channel_teardown_source, -1);
-  g_source_attach (channel_teardown_source, NULL);
-  telemetry->channel_teardown_source = channel_teardown_source;
 }
 
 static void

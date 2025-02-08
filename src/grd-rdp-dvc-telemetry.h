@@ -21,7 +21,6 @@
 #define GRD_RDP_DVC_TELEMETRY_H
 
 #include "grd-rdp-dvc.h"
-#include "grd-types.h"
 
 #define GRD_TYPE_RDP_DVC_TELEMETRY (grd_rdp_dvc_telemetry_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpDvcTelemetry, grd_rdp_dvc_telemetry,
