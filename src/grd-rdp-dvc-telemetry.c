@@ -140,7 +140,9 @@ grd_rdp_dvc_telemetry_new (GrdSessionRdp    *session_rdp,
   telemetry->telemetry_context = telemetry_context;
   telemetry->session_rdp = session_rdp;
 
-  grd_rdp_dvc_set_dvc_handler (GRD_RDP_DVC (telemetry), dvc_handler);
+  grd_rdp_dvc_initialize_base (GRD_RDP_DVC (telemetry),
+                               dvc_handler, session_rdp,
+                               GRD_RDP_CHANNEL_TELEMETRY);
 
   telemetry_context->ChannelIdAssigned = telemetry_channel_id_assigned;
   telemetry_context->RdpTelemetry = telemetry_rdp_telemetry;

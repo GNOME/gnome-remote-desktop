@@ -171,7 +171,9 @@ grd_rdp_dvc_display_control_new (GrdRdpLayoutManager *layout_manager,
   display_control->layout_manager = layout_manager;
   display_control->session_rdp = session_rdp;
 
-  grd_rdp_dvc_set_dvc_handler (GRD_RDP_DVC (display_control), dvc_handler);
+  grd_rdp_dvc_initialize_base (GRD_RDP_DVC (display_control),
+                               dvc_handler, session_rdp,
+                               GRD_RDP_CHANNEL_DISPLAY_CONTROL);
 
   disp_context->MaxNumMonitors = max_monitor_count;
   disp_context->MaxMonitorAreaFactorA = 8192;

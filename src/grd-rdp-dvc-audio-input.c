@@ -973,7 +973,9 @@ grd_rdp_dvc_audio_input_new (GrdSessionRdp    *session_rdp,
   audio_input->audin_context = audin_context;
   audio_input->session_rdp = session_rdp;
 
-  grd_rdp_dvc_set_dvc_handler (GRD_RDP_DVC (audio_input), dvc_handler);
+  grd_rdp_dvc_initialize_base (GRD_RDP_DVC (audio_input),
+                               dvc_handler, session_rdp,
+                               GRD_RDP_CHANNEL_AUDIO_INPUT);
 
   audin_context->serverVersion = SNDIN_VERSION_Version_2;
 

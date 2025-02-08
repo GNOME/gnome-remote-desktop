@@ -2137,7 +2137,9 @@ grd_rdp_dvc_graphics_pipeline_new (GrdSessionRdp              *session_rdp,
   graphics_pipeline->encode_stream = encode_stream;
   graphics_pipeline->rfx_context = rfx_context;
 
-  grd_rdp_dvc_set_dvc_handler (GRD_RDP_DVC (graphics_pipeline), dvc_handler);
+  grd_rdp_dvc_initialize_base (GRD_RDP_DVC (graphics_pipeline),
+                               dvc_handler, session_rdp,
+                               GRD_RDP_CHANNEL_GRAPHICS_PIPELINE);
 
   rdpgfx_context->ChannelIdAssigned = rdpgfx_channel_id_assigned;
   rdpgfx_context->CapsAdvertise = rdpgfx_caps_advertise;

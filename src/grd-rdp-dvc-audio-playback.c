@@ -764,7 +764,9 @@ grd_rdp_dvc_audio_playback_new (GrdSessionRdp    *session_rdp,
   audio_playback->rdpsnd_context = rdpsnd_context;
   audio_playback->session_rdp = session_rdp;
 
-  grd_rdp_dvc_set_dvc_handler (GRD_RDP_DVC (audio_playback), dvc_handler);
+  grd_rdp_dvc_initialize_base (GRD_RDP_DVC (audio_playback),
+                               dvc_handler, session_rdp,
+                               GRD_RDP_CHANNEL_AUDIO_PLAYBACK);
 
   rdpsnd_context->use_dynamic_virtual_channel = TRUE;
   rdpsnd_context->server_formats = server_formats;

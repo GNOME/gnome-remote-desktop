@@ -23,6 +23,7 @@
 #include <glib-object.h>
 
 #include "grd-rdp-dvc-handler.h"
+#include "grd-session-rdp.h"
 
 #define GRD_TYPE_RDP_DVC (grd_rdp_dvc_get_type ())
 G_DECLARE_DERIVABLE_TYPE (GrdRdpDvc, grd_rdp_dvc,
@@ -35,10 +36,14 @@ struct _GrdRdpDvcClass
   void (* maybe_init) (GrdRdpDvc *dvc);
 };
 
-void grd_rdp_dvc_set_dvc_handler (GrdRdpDvc        *dvc,
-                                  GrdRdpDvcHandler *dvc_handler);
+void grd_rdp_dvc_initialize_base (GrdRdpDvc        *dvc,
+                                  GrdRdpDvcHandler *dvc_handler,
+                                  GrdSessionRdp    *session_rdp,
+                                  GrdRdpChannel     channel);
 
 void grd_rdp_dvc_maybe_init (GrdRdpDvc *dvc);
+
+void grd_rdp_dvc_queue_channel_tear_down (GrdRdpDvc *dvc);
 
 void grd_rdp_dvc_subscribe_creation_status (GrdRdpDvc                       *dvc,
                                             uint32_t                         channel_id,
