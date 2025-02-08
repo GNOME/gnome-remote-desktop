@@ -43,7 +43,7 @@ typedef struct _RdpPeerContext
   GMutex channel_mutex;
 
   GrdClipboardRdp *clipboard_rdp;
-  GrdRdpAudioInput *audio_input;
+  GrdRdpDvcAudioInput *audio_input;
   GrdRdpAudioPlayback *audio_playback;
   GrdRdpDvcDisplayControl *display_control;
   GrdRdpGraphicsPipeline *graphics_pipeline;
