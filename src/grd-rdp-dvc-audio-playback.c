@@ -26,7 +26,6 @@
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-audio-output-stream.h"
 #include "grd-rdp-dsp.h"
-#include "grd-session-rdp.h"
 
 #define PROTOCOL_TIMEOUT_MS (10 * 1000)
 
@@ -64,15 +63,11 @@ struct _GrdRdpDvcAudioPlayback
 
   RdpsndServerContext *rdpsnd_context;
   gboolean channel_opened;
-  gboolean channel_unavailable;
-
-  GrdSessionRdp *session_rdp;
 
   gboolean prevent_dvc_initialization;
   GSource *svc_setup_source;
 
   GMutex protocol_timeout_mutex;
-  GSource *channel_teardown_source;
   GSource *protocol_timeout_source;
 
   gboolean pending_client_formats;
@@ -135,7 +130,7 @@ initiate_channel_teardown (gpointer user_data)
   g_clear_pointer (&audio_playback->protocol_timeout_source, g_source_unref);
   g_mutex_unlock (&audio_playback->protocol_timeout_mutex);
 
-  g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+  grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_playback));
 
   return G_SOURCE_REMOVE;
 }
@@ -146,7 +141,7 @@ grd_rdp_dvc_audio_playback_maybe_init (GrdRdpDvc *dvc)
   GrdRdpDvcAudioPlayback *audio_playback = GRD_RDP_DVC_AUDIO_PLAYBACK (dvc);
   RdpsndServerContext *rdpsnd_context;
 
-  if (audio_playback->channel_opened || audio_playback->channel_unavailable)
+  if (audio_playback->channel_opened)
     return;
 
   if (audio_playback->prevent_dvc_initialization)
@@ -157,8 +152,7 @@ grd_rdp_dvc_audio_playback_maybe_init (GrdRdpDvc *dvc)
     {
       g_warning ("[RDP.AUDIO_PLAYBACK] Failed to open AUDIO_PLAYBACK_DVC "
                  "channel. Terminating protocol");
-      audio_playback->channel_unavailable = TRUE;
-      g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_playback));
       return;
     }
   audio_playback->channel_opened = TRUE;
@@ -618,7 +612,7 @@ rdpsnd_activated (RdpsndServerContext *rdpsnd_context)
       g_warning ("[RDP.AUDIO_PLAYBACK] Protocol violation: Received stray "
                  "Client Audio Formats or Quality Mode PDU. "
                  "Terminating protocol");
-      g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_playback));
       return;
     }
 
@@ -626,7 +620,7 @@ rdpsnd_activated (RdpsndServerContext *rdpsnd_context)
     {
       g_message ("[RDP.AUDIO_PLAYBACK] Client protocol version (%u) too old. "
                  "Terminating protocol", rdpsnd_context->clientVersion);
-      g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_playback));
       return;
     }
 
@@ -651,7 +645,7 @@ rdpsnd_activated (RdpsndServerContext *rdpsnd_context)
     {
       g_warning ("[RDP.AUDIO_PLAYBACK] Audio Format negotiation with client "
                  "failed. Terminating protocol");
-      g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_playback));
       return;
     }
   audio_playback->pending_client_formats = FALSE;
@@ -679,7 +673,7 @@ rdpsnd_training_confirm (RdpsndServerContext *rdpsnd_context,
     {
       g_warning ("[RDP.AUDIO_PLAYBACK] Protocol violation: Received unexpected "
                  "Training Confirm PDU. Terminating protocol");
-      g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_playback));
       return CHANNEL_RC_OK;
     }
 
@@ -762,7 +756,6 @@ grd_rdp_dvc_audio_playback_new (GrdSessionRdp    *session_rdp,
     g_error ("[RDP.AUDIO_PLAYBACK] Failed to create server context");
 
   audio_playback->rdpsnd_context = rdpsnd_context;
-  audio_playback->session_rdp = session_rdp;
 
   grd_rdp_dvc_initialize_base (GRD_RDP_DVC (audio_playback),
                                dvc_handler, session_rdp,
@@ -866,11 +859,6 @@ grd_rdp_dvc_audio_playback_dispose (GObject *object)
       g_source_destroy (audio_playback->encode_source);
       g_clear_pointer (&audio_playback->encode_source, g_source_unref);
     }
-  if (audio_playback->channel_teardown_source)
-    {
-      g_source_destroy (audio_playback->channel_teardown_source);
-      g_clear_pointer (&audio_playback->channel_teardown_source, g_source_unref);
-    }
   if (audio_playback->svc_setup_source)
     {
       g_source_destroy (audio_playback->svc_setup_source);
@@ -932,26 +920,10 @@ set_up_static_virtual_channel (gpointer user_data)
     {
       g_warning ("[RDP.AUDIO_PLAYBACK] Failed to open RDPSND channel. "
                  "Terminating protocol");
-      audio_playback->channel_unavailable = TRUE;
-      g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_playback));
       return G_SOURCE_REMOVE;
     }
   audio_playback->channel_opened = TRUE;
-
-  return G_SOURCE_REMOVE;
-}
-
-static gboolean
-tear_down_channel (gpointer user_data)
-{
-  GrdRdpDvcAudioPlayback *audio_playback = user_data;
-
-  g_debug ("[RDP.AUDIO_PLAYBACK] Tearing down channel");
-
-  g_clear_pointer (&audio_playback->channel_teardown_source, g_source_unref);
-
-  grd_session_rdp_tear_down_channel (audio_playback->session_rdp,
-                                     GRD_RDP_CHANNEL_AUDIO_PLAYBACK);
 
   return G_SOURCE_REMOVE;
 }
@@ -1218,7 +1190,7 @@ pipewire_core_error (void       *user_data,
              "id: %u, seq: %i, res: %i, %s", id, seq, res, message);
 
   if (id == PW_ID_CORE && res == -EPIPE)
-    g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+    grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_playback));
 }
 
 static const struct pw_core_events pipewire_core_events =
@@ -1388,7 +1360,7 @@ set_up_pipewire (gpointer user_data)
     {
       g_warning ("[RDP.AUDIO_PLAYBACK] Failed to setup registry listener: %s",
                  error->message);
-      g_source_set_ready_time (audio_playback->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_playback));
     }
 
   return G_SOURCE_REMOVE;
@@ -1413,7 +1385,6 @@ static void
 grd_rdp_dvc_audio_playback_init (GrdRdpDvcAudioPlayback *audio_playback)
 {
   GSource *svc_setup_source;
-  GSource *channel_teardown_source;
   GSource *encode_source;
   GSource *pipewire_setup_source;
 
@@ -1442,13 +1413,6 @@ grd_rdp_dvc_audio_playback_init (GrdRdpDvcAudioPlayback *audio_playback)
   g_source_set_ready_time (svc_setup_source, -1);
   g_source_attach (svc_setup_source, NULL);
   audio_playback->svc_setup_source = svc_setup_source;
-
-  channel_teardown_source = g_source_new (&source_funcs, sizeof (GSource));
-  g_source_set_callback (channel_teardown_source, tear_down_channel,
-                         audio_playback, NULL);
-  g_source_set_ready_time (channel_teardown_source, -1);
-  g_source_attach (channel_teardown_source, NULL);
-  audio_playback->channel_teardown_source = channel_teardown_source;
 
   encode_source = g_source_new (&source_funcs, sizeof (GSource));
   g_source_set_callback (encode_source, maybe_encode_frames,

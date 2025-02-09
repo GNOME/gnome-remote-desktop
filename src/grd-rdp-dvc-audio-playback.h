@@ -21,7 +21,6 @@
 #define GRD_RDP_DVC_AUDIO_PLAYBACK_H
 
 #include "grd-rdp-dvc.h"
-#include "grd-types.h"
 
 #define GRD_TYPE_RDP_DVC_AUDIO_PLAYBACK (grd_rdp_dvc_audio_playback_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpDvcAudioPlayback, grd_rdp_dvc_audio_playback,
