@@ -26,7 +26,6 @@
 
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-dsp.h"
-#include "grd-session-rdp.h"
 
 #define PROTOCOL_TIMEOUT_MS (10 * 1000)
 
@@ -69,15 +68,11 @@ struct _GrdRdpDvcAudioInput
 
   audin_server_context *audin_context;
   gboolean channel_opened;
-  gboolean channel_unavailable;
 
   GMutex prevent_dvc_init_mutex;
   gboolean prevent_dvc_initialization;
 
-  GrdSessionRdp *session_rdp;
-
   GMutex protocol_timeout_mutex;
-  GSource *channel_teardown_source;
   GSource *protocol_timeout_source;
 
   NegotiationState negotiation_state;
@@ -134,7 +129,7 @@ initiate_channel_teardown (gpointer user_data)
   g_clear_pointer (&audio_input->protocol_timeout_source, g_source_unref);
   g_mutex_unlock (&audio_input->protocol_timeout_mutex);
 
-  g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+  grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
   return G_SOURCE_REMOVE;
 }
@@ -146,7 +141,7 @@ grd_rdp_dvc_audio_input_maybe_init (GrdRdpDvc *dvc)
   audin_server_context *audin_context;
   g_autoptr (GMutexLocker) locker = NULL;
 
-  if (audio_input->channel_opened || audio_input->channel_unavailable)
+  if (audio_input->channel_opened)
     return;
 
   locker = g_mutex_locker_new (&audio_input->prevent_dvc_init_mutex);
@@ -160,8 +155,7 @@ grd_rdp_dvc_audio_input_maybe_init (GrdRdpDvc *dvc)
     {
       g_warning ("[RDP.AUDIO_INPUT] Failed to open channel. "
                  "Terminating protocol");
-      audio_input->channel_unavailable = TRUE;
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
       return;
     }
   audio_input->channel_opened = TRUE;
@@ -185,7 +179,7 @@ dvc_creation_status (gpointer user_data,
     {
       g_warning ("[RDP.AUDIO_INPUT] Failed to open channel "
                  "(CreationStatus %i). Terminating protocol", creation_status);
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
     }
 }
 
@@ -267,7 +261,7 @@ audin_receive_version (audin_server_context *audin_context,
       g_warning ("[RDP.AUDIO_INPUT] Protocol violation: Received stray Version "
                  "PDU (Negotiation state: %s). Terminating protocol",
                  negotiation_state_to_string (audio_input->negotiation_state));
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
       return CHANNEL_RC_INITIALIZATION_ERROR;
     }
@@ -276,7 +270,7 @@ audin_receive_version (audin_server_context *audin_context,
     {
       g_warning ("[RDP.AUDIO_INPUT] Protocol violation: Received invalid "
                  "Version PDU. Terminating protocol");
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
       return CHANNEL_RC_INITIALIZATION_ERROR;
     }
@@ -360,7 +354,7 @@ audin_receive_formats (audin_server_context *audin_context,
       g_warning ("[RDP.AUDIO_INPUT] Protocol violation: Received stray Sound "
                  "Formats PDU (Negotiation state: %s). Terminating protocol",
                  negotiation_state_to_string (audio_input->negotiation_state));
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
       return CHANNEL_RC_INITIALIZATION_ERROR;
     }
@@ -382,7 +376,7 @@ audin_receive_formats (audin_server_context *audin_context,
     {
       g_warning ("[RDP.AUDIO_INPUT] Audio Format negotiation with client "
                  "failed. Terminating protocol");
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
       return CHANNEL_RC_INITIALIZATION_ERROR;
     }
@@ -437,7 +431,7 @@ audin_open_reply (audin_server_context   *audin_context,
       g_warning ("[RDP.AUDIO_INPUT] Protocol violation: Received stray Open "
                  "Reply PDU (Negotiation state: %s). Terminating protocol",
                  negotiation_state_to_string (audio_input->negotiation_state));
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
       return CHANNEL_RC_INITIALIZATION_ERROR;
     }
@@ -454,7 +448,7 @@ audin_open_reply (audin_server_context   *audin_context,
     {
       g_warning ("[RDP.AUDIO_INPUT] Failed to open audio capture device. "
                  "Terminating protocol");
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
       return CHANNEL_RC_INITIALIZATION_ERROR;
     }
@@ -535,7 +529,7 @@ audin_data (audin_server_context *audin_context,
                  "Terminating protocol",
                  negotiation_state_to_string (audio_input->negotiation_state),
                  runtime_state_to_string (audio_input->runtime_state));
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
       return CHANNEL_RC_UNSUPPORTED_VERSION;
     }
@@ -590,7 +584,7 @@ audin_receive_format_change (audin_server_context     *audin_context,
       g_warning ("[RDP.AUDIO_INPUT] Protocol violation: Received stray Format "
                  "Change PDU (Negotiation state: %s). Terminating protocol",
                  negotiation_state_to_string (audio_input->negotiation_state));
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
       return CHANNEL_RC_INITIALIZATION_ERROR;
     }
@@ -600,7 +594,7 @@ audin_receive_format_change (audin_server_context     *audin_context,
       g_warning ("[RDP.AUDIO_INPUT] Protocol violation: Received stray Format "
                  "Change PDU (Runtime state: %s). Terminating protocol",
                  runtime_state_to_string (audio_input->runtime_state));
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
       return CHANNEL_RC_UNSUPPORTED_VERSION;
     }
@@ -611,7 +605,7 @@ audin_receive_format_change (audin_server_context     *audin_context,
                  "PDU with invalid new format (%u), expected %li. "
                  "Terminating protocol",
                  format_change->NewFormat, audio_input->requested_format_idx);
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 
       return CHANNEL_RC_INITIALIZATION_ERROR;
     }
@@ -648,7 +642,7 @@ pipewire_core_error (void       *user_data,
              "id: %u, seq: %i, res: %i, %s", id, seq, res, message);
 
   if (id == PW_ID_CORE && res == -EPIPE)
-    g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+    grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
 }
 
 static const struct pw_core_events pipewire_core_events =
@@ -756,7 +750,7 @@ pipewire_stream_state_changed (void                 *user_data,
     {
     case PW_STREAM_STATE_ERROR:
       g_warning ("[RDP.AUDIO_INPUT] PipeWire stream error: %s", error);
-      g_source_set_ready_time (audio_input->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_input));
       break;
     case PW_STREAM_STATE_PAUSED:
       ensure_dvc_is_closed (audio_input);
@@ -971,7 +965,6 @@ grd_rdp_dvc_audio_input_new (GrdSessionRdp    *session_rdp,
     g_error ("[RDP.AUDIO_INPUT] Failed to create server context (OOM)");
 
   audio_input->audin_context = audin_context;
-  audio_input->session_rdp = session_rdp;
 
   grd_rdp_dvc_initialize_base (GRD_RDP_DVC (audio_input),
                                dvc_handler, session_rdp,
@@ -1044,12 +1037,6 @@ grd_rdp_dvc_audio_input_dispose (GObject *object)
 
   g_clear_object (&audio_input->rdp_dsp);
 
-  if (audio_input->channel_teardown_source)
-    {
-      g_source_destroy (audio_input->channel_teardown_source);
-      g_clear_pointer (&audio_input->channel_teardown_source, g_source_unref);
-    }
-
   if (audio_input->pending_frames)
     {
       g_queue_free_full (audio_input->pending_frames, audio_data_free);
@@ -1075,41 +1062,9 @@ grd_rdp_dvc_audio_input_finalize (GObject *object)
   G_OBJECT_CLASS (grd_rdp_dvc_audio_input_parent_class)->finalize (object);
 }
 
-static gboolean
-tear_down_channel (gpointer user_data)
-{
-  GrdRdpDvcAudioInput *audio_input = user_data;
-
-  g_debug ("[RDP.AUDIO_INPUT] Tearing down channel");
-
-  g_clear_pointer (&audio_input->channel_teardown_source, g_source_unref);
-
-  grd_session_rdp_tear_down_channel (audio_input->session_rdp,
-                                     GRD_RDP_CHANNEL_AUDIO_INPUT);
-
-  return G_SOURCE_REMOVE;
-}
-
-static gboolean
-source_dispatch (GSource     *source,
-                 GSourceFunc  callback,
-                 gpointer     user_data)
-{
-  g_source_set_ready_time (source, -1);
-
-  return callback (user_data);
-}
-
-static GSourceFuncs source_funcs =
-{
-  .dispatch = source_dispatch,
-};
-
 static void
 grd_rdp_dvc_audio_input_init (GrdRdpDvcAudioInput *audio_input)
 {
-  GSource *channel_teardown_source;
-
   audio_input->prevent_dvc_initialization = TRUE;
   audio_input->negotiation_state = NEGOTIATION_STATE_AWAIT_VERSION;
   audio_input->runtime_state = RT_STATE_AWAIT_INCOMING_DATA;
@@ -1126,13 +1081,6 @@ grd_rdp_dvc_audio_input_init (GrdRdpDvcAudioInput *audio_input)
   g_mutex_init (&audio_input->pending_frames_mutex);
 
   pw_init (NULL, NULL);
-
-  channel_teardown_source = g_source_new (&source_funcs, sizeof (GSource));
-  g_source_set_callback (channel_teardown_source, tear_down_channel,
-                         audio_input, NULL);
-  g_source_set_ready_time (channel_teardown_source, -1);
-  g_source_attach (channel_teardown_source, NULL);
-  audio_input->channel_teardown_source = channel_teardown_source;
 }
 
 static void

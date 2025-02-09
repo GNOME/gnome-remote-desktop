@@ -21,7 +21,6 @@
 #define GRD_RDP_DVC_AUDIO_INPUT_H
 
 #include "grd-rdp-dvc.h"
-#include "grd-types.h"
 
 #define GRD_TYPE_RDP_DVC_AUDIO_INPUT (grd_rdp_dvc_audio_input_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpDvcAudioInput, grd_rdp_dvc_audio_input,
