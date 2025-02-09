@@ -79,6 +79,7 @@ struct _GrdRdpDvcGraphicsPipeline
 
   RdpgfxServerContext *rdpgfx_context;
   gboolean channel_opened;
+  gboolean channel_unavailable;
   gboolean received_first_cap_sets;
   gboolean initialized;
   uint32_t initial_version;
@@ -150,13 +151,15 @@ grd_rdp_dvc_graphics_pipeline_maybe_init (GrdRdpDvc *dvc)
     grd_rdp_renderer_get_graphics_context (graphics_pipeline->renderer);
   RdpgfxServerContext *rdpgfx_context;
 
-  if (graphics_pipeline->channel_opened)
+  if (graphics_pipeline->channel_opened ||
+      graphics_pipeline->channel_unavailable)
     return;
 
   rdpgfx_context = graphics_pipeline->rdpgfx_context;
   if (!rdpgfx_context->Open (rdpgfx_context))
     {
       g_warning ("[RDP.RDPGFX] Failed to open channel. Terminating session");
+      graphics_pipeline->channel_unavailable = TRUE;
       grd_session_rdp_notify_error (graphics_pipeline->session_rdp,
                                     GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
       return;
