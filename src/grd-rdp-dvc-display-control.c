@@ -33,13 +33,10 @@ struct _GrdRdpDvcDisplayControl
 
   DispServerContext *disp_context;
   gboolean channel_opened;
-  gboolean channel_unavailable;
   gboolean pending_caps;
 
   GrdRdpLayoutManager *layout_manager;
   GrdSessionRdp *session_rdp;
-
-  GSource *channel_teardown_source;
 };
 
 G_DEFINE_TYPE (GrdRdpDvcDisplayControl, grd_rdp_dvc_display_control,
@@ -51,15 +48,14 @@ grd_rdp_dvc_display_control_maybe_init (GrdRdpDvc *dvc)
   GrdRdpDvcDisplayControl *display_control = GRD_RDP_DVC_DISPLAY_CONTROL (dvc);
   DispServerContext *disp_context;
 
-  if (display_control->channel_opened || display_control->channel_unavailable)
+  if (display_control->channel_opened)
     return;
 
   disp_context = display_control->disp_context;
   if (disp_context->Open (disp_context))
     {
       g_warning ("[RDP.DISP] Failed to open channel. Terminating protocol");
-      display_control->channel_unavailable = TRUE;
-      g_source_set_ready_time (display_control->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (display_control));
       return;
     }
   display_control->channel_opened = TRUE;
@@ -76,7 +72,7 @@ dvc_creation_status (gpointer user_data,
     {
       g_debug ("[RDP.DISP] Failed to open channel (CreationStatus %i). "
                "Terminating protocol", creation_status);
-      g_source_set_ready_time (display_control->channel_teardown_source, 0);
+      grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (display_control));
       return;
     }
 
@@ -200,60 +196,15 @@ grd_rdp_dvc_display_control_dispose (GObject *object)
     }
   grd_rdp_dvc_maybe_unsubscribe_creation_status (dvc);
 
-  if (display_control->channel_teardown_source)
-    {
-      g_source_destroy (display_control->channel_teardown_source);
-      g_clear_pointer (&display_control->channel_teardown_source, g_source_unref);
-    }
-
   g_clear_pointer (&display_control->disp_context, disp_server_context_free);
 
   G_OBJECT_CLASS (grd_rdp_dvc_display_control_parent_class)->dispose (object);
 }
 
-static gboolean
-tear_down_channel (gpointer user_data)
-{
-  GrdRdpDvcDisplayControl *display_control = user_data;
-
-  g_debug ("[RDP.DISP] Tearing down channel");
-
-  g_clear_pointer (&display_control->channel_teardown_source, g_source_unref);
-
-  grd_session_rdp_tear_down_channel (display_control->session_rdp,
-                                     GRD_RDP_CHANNEL_DISPLAY_CONTROL);
-
-  return G_SOURCE_REMOVE;
-}
-
-static gboolean
-source_dispatch (GSource     *source,
-                 GSourceFunc  callback,
-                 gpointer     user_data)
-{
-  g_source_set_ready_time (source, -1);
-
-  return callback (user_data);
-}
-
-static GSourceFuncs source_funcs =
-{
-  .dispatch = source_dispatch,
-};
-
 static void
 grd_rdp_dvc_display_control_init (GrdRdpDvcDisplayControl *display_control)
 {
-  GSource *channel_teardown_source;
-
   display_control->pending_caps = TRUE;
-
-  channel_teardown_source = g_source_new (&source_funcs, sizeof (GSource));
-  g_source_set_callback (channel_teardown_source, tear_down_channel,
-                         display_control, NULL);
-  g_source_set_ready_time (channel_teardown_source, -1);
-  g_source_attach (channel_teardown_source, NULL);
-  display_control->channel_teardown_source = channel_teardown_source;
 }
 
 static void

@@ -21,7 +21,6 @@
 #define GRD_RDP_DVC_DISPLAY_CONTROL_H
 
 #include "grd-rdp-dvc.h"
-#include "grd-types.h"
 
 #define GRD_TYPE_RDP_DVC_DISPLAY_CONTROL (grd_rdp_dvc_display_control_get_type ())
 G_DECLARE_FINAL_TYPE (GrdRdpDvcDisplayControl, grd_rdp_dvc_display_control,
