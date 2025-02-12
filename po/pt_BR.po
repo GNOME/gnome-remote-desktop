@@ -1,27 +1,27 @@
 # Brazilian Portuguese translation for gnome-remote-desktop.
-# Copyright (C) 2022 gnome-remote-desktop's COPYRIGHT HOLDER
+# Copyright (C) 2025 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Enrico Nicoletto <hiko@duck.com>, 2021-2022.
 # Matheus Barbosa <mdpb.matheus@gmail.com>, 2022.
 # Leônidas Araújo <leorusvellt@hotmail.com>, 2022.
-# Rafael Fontenelle <rafaelff@gnome.org>, 2021-2024.
 # Juliano de Souza Camargo <julianosc@pm.me>, 2024.
+# Rafael Fontenelle <rafaelff@gnome.org>, 2021-2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-09-14 23:55+0000\n"
-"PO-Revision-Date: 2024-09-09 10:04-0300\n"
-"Last-Translator: Juliano de Souza Camargo <julianosc@pm.me>\n"
+"POT-Creation-Date: 2025-01-12 21:04+0000\n"
+"PO-Revision-Date: 2025-02-12 13:27-0300\n"
+"Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Gtranslator 46.1\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"X-Generator: Gtranslator 47.1\n"
 "X-DL-Team: pt_BR\n"
 "X-DL-Module: gnome-remote-desktop\n"
 "X-DL-Branch: master\n"
@@ -29,18 +29,18 @@ msgstr ""
 "X-DL-State: Translating\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
 "Permitir definir as configurações do daemon do sistema do gnome-remote-"
-"desktop."
+"desktop"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
 "A autenticação é necessária para definir as configurações do daemon do "
-"sistema do gnome-remote-desktop."
+"sistema do gnome-remote-desktop"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
@@ -50,10 +50,10 @@ msgstr ""
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
 "A autenticação é necessária para ativar ou desativar o daemon do sistema do "
-"gnome-remote-desktop."
+"gnome-remote-desktop"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
@@ -465,5 +465,5 @@ msgstr ""
 #~ "config file."
 #~ msgstr ""
 #~ "Quer continuar com uma conexão não segura?\n"
-#~ "Para torná-la segura, <b>“use o nome do servidor de redirecionamento:"
-#~ "i:1”</b> no arquivo de configuração RDP."
+#~ "Para torná-la segura, <b>“use o nome do servidor de "
+#~ "redirecionamento:i:1”</b> no arquivo de configuração RDP."
