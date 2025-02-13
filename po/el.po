@@ -8,9 +8,9 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-07-29 21:03+0000\n"
+"POT-Creation-Date: 2024-10-05 10:10+0000\n"
 "PO-Revision-Date: 2024-09-03 00:09+0300\n"
-"Last-Translator: Efstathios Iosifidis <eiosifidis@gnome.org>\n"
+"Last-Translator: Giannis Antypas <gianni.antypas@gmail.com>\n"
 "Language-Team: Greek <gnome-el-list@gnome.org>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
@@ -33,28 +33,46 @@ msgstr ""
 "Απαιτείται έλεγχος ταυτότητας για τη διαμόρφωση των ρυθμίσεων της υπηρεσίας "
 "συστήματος του gnome-remote-desktop."
 
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+#| msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr ""
+"Να επιτρέπεται η ενεργοποίηση και η απενεργοποίηση των ρυθμίσεων υπηρεσίας συστήματος του gnome-"
+"remote-desktop."
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+#| msgid ""
+#| "Authentication is required to configure gnome-remote-desktop's system "
+#| "daemon settings."
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon."
+msgstr ""
+"Απαιτείται έλεγχος ταυτότητας για την ενεργοποίηση και την απενεργοποίηση των ρυθμίσεων της υπηρεσίας "
+"συστήματος του gnome-remote-desktop."
+
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "Handover υπηρεσία Απομακρυσμένης επιφάνειας εργασίας GNOME"
 
-#: src/grd-ctl.c:69
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Χρήση: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 
-#: src/grd-ctl.c:414
+#: src/grd-ctl.c:305
 msgid "Username: "
 msgstr "Όνομα χρήστη:"
 
-#: src/grd-ctl.c:426 src/grd-ctl.c:569
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
 msgid "Password: "
 msgstr "Συνθηματικό: "
 
-#: src/grd-ctl.c:699
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
 msgstr "Εντολές:\n"
 
-#: src/grd-ctl.c:704
+#: src/grd-ctl.c:595
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -114,7 +132,7 @@ msgstr ""
 "                                               σε διαφορετική θύρα\n"
 "\n"
 
-#: src/grd-ctl.c:728
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -159,7 +177,7 @@ msgstr ""
 "                                               σε διαφορετική θύρα\n"
 "\n"
 
-#: src/grd-ctl.c:748
+#: src/grd-ctl.c:639
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -179,7 +197,7 @@ msgstr ""
 "  --help                                     - Εκτύπωση αυτού του κειμένου "
 "βοήθειας\n"
 
-#: src/grd-daemon.c:1291
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
 msgstr "Απομακρυσμένη επιφάνεια εργασίας GNOME"
 
