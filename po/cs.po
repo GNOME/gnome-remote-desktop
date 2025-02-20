@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-09-08 16:47+0000\n"
-"PO-Revision-Date: 2024-09-09 16:40+0200\n"
+"POT-Creation-Date: 2025-02-12 23:14+0000\n"
+"PO-Revision-Date: 2025-02-20 22:30+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -18,19 +18,19 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
-msgstr "Povolit konfiguraci nastavení systémového démona gnome-remote-desktop."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
+msgstr "Povolit konfiguraci nastavení systémového démona gnome-remote-desktop"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
 "Pro konfiguraci nastavení systémového démona gnome-remote-desktop je "
-"vyžadováno ověření."
+"vyžadováno ověření"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
@@ -39,10 +39,10 @@ msgstr "Povolit povolení a zakázání systémového démona gnome-remote-deskt
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
 "Pro povolení nebo zakázání systémového démona gnome-remote-desktop je "
-"vyžadováno ověření."
+"vyžadováno ověření"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
