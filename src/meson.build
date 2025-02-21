@@ -111,6 +111,8 @@ if have_rdp
     'grd-local-buffer.h',
     'grd-local-buffer-copy.c',
     'grd-local-buffer-copy.h',
+    'grd-local-buffer-wrapper-rdp.c',
+    'grd-local-buffer-wrapper-rdp.h',
     'grd-nal-writer.c',
     'grd-nal-writer.h',
     'grd-rdp-audio-input.c',
