@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-09-08 16:47+0000\n"
+"POT-Creation-Date: 2025-02-20 21:34+0000\n"
 "PO-Revision-Date: 2024-09-08 19:03+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -21,16 +21,16 @@ msgstr ""
 "|| n%100>=20) ? 1 : 2);\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr "Skonfigurowanie ustawień systemowej usługi zdalnego pulpitu GNOME"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby skonfigurować ustawienia systemowej "
-"usługi zdalnego pulpitu GNOME."
+"usługi zdalnego pulpitu GNOME"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
@@ -39,10 +39,10 @@ msgstr "Włączanie i wyłączanie systemowej usługi zdalnego pulpitu GNOME"
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby włączyć lub wyłączyć systemową usługę "
-"zdalnego pulpitu GNOME."
+"zdalnego pulpitu GNOME"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
