@@ -1,15 +1,15 @@
 # Georgian translation for gnome-rdp.
 # Copyright (C) 2023 gnome-rdp authors
 # This file is distributed under the same license as the gnome-rdp package.
-# Ekaterine Papava <papava.e@gtu.ge>, 2023-2024.
+# Ekaterine Papava <papava.e@gtu.ge>, 2023-2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-09-08 16:47+0000\n"
-"PO-Revision-Date: 2024-09-09 14:51+0200\n"
+"POT-Creation-Date: 2025-02-20 21:34+0000\n"
+"PO-Revision-Date: 2025-02-23 07:56+0100\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
 "Language: ka\n"
@@ -17,20 +17,20 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
-"'gnome-remote-desktop'-ის სისტემური დემონის პარამეტრების მორგების დაშვება."
+"'gnome-remote-desktop'-ის სისტემური დემონის პარამეტრების მორგების დაშვება"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
 "'gnome-remove-desktop'-ის სისტემური დემონის პარამეტრების მოსარგებად "
-"აუცილებელია ავთენტიკაცია."
+"აუცილებელია ავთენტიკაცია"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
@@ -39,10 +39,10 @@ msgstr "'gnome-remote-desktop'-ის სისტემური დემო�
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
 "'gnome-remove-desktop'-ის სისტემური დემონის გასათიშად ან ჩასართავად "
-"აუცილებელია ავთენტიკაცია."
+"აუცილებელია ავთენტიკაცია"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
