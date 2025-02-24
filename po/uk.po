@@ -2,14 +2,14 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 #
-# Yuri Chornoivan <yurchor@ukr.net>, 2021, 2022, 2023, 2024.
+# Yuri Chornoivan <yurchor@ukr.net>, 2021, 2022, 2023, 2024, 2025.
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/iss"
 "ues/\n"
-"POT-Creation-Date: 2024-09-08 16:47+0000\n"
-"PO-Revision-Date: 2024-09-09 17:48+0300\n"
+"POT-Creation-Date: 2025-02-20 21:34+0000\n"
+"PO-Revision-Date: 2025-02-24 17:13+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -21,33 +21,36 @@ msgstr ""
 "X-Generator: Lokalize 23.04.3\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+#| msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
 "Дозволити доступ до налаштовування параметрів загальносистемної фонової "
-"служби gnome-remote-desktop."
+"служби gnome-remote-desktop"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+#| msgid ""
+#| "Authentication is required to configure gnome-remote-desktop's system "
+#| "daemon settings."
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
 "Щоб отримати доступ до налаштовування параметрів загальносистемної фонової "
 "служби gnome-remote-desktop, слід пройти розпізнавання"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
-#| msgid "Allow to configure gnome-remote-desktop's system daemon settings."
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
 msgstr ""
-"Дозволити вмикати і вимикати загальносистемну фонову службу"
-" gnome-remote-desktop"
+"Дозволити вмикати і вимикати загальносистемну фонову службу gnome-remote-"
+"desktop"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 #| msgid ""
-#| "Authentication is required to configure gnome-remote-desktop's system "
-#| "daemon settings."
+#| "Authentication is required to enable or disable gnome-remote-desktop's "
+#| "system daemon."
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
 "Щоб отримати доступ до вмикання або вимикання загальносистемної фонової "
 "служби gnome-remote-desktop, слід пройти розпізнавання"
