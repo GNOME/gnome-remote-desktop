@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-06-21 18:20+0000\n"
-"PO-Revision-Date: 2024-07-01 10:05+0530\n"
+"POT-Creation-Date: 2024-09-14 23:55+0000\n"
+"PO-Revision-Date: 2024-09-24 22:08-0700\n"
 "Last-Translator: Scrambled777 <weblate.scrambled777@simplelogin.com>\n"
 "Language-Team: Hindi <indlinux-hindi@lists.sourceforge.net>\n"
 "Language: hi\n"
@@ -30,28 +30,39 @@ msgid ""
 msgstr ""
 "गनोम-रिमोट-डेस्कटॉप की सिस्टम डेमॉन सेटिंग्स को विन्यस्त करने के लिए प्रमाणीकरण आवश्यक है।"
 
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr "गनोम-रिमोट-डेस्कटॉप के सिस्टम डेमॉन को सक्षम और अक्षम करने की अनुमति दें"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon."
+msgstr ""
+"गनोम-रिमोट-डेस्कटॉप के सिस्टम डेमॉन को सक्षम या अक्षम करने के लिए प्रमाणीकरण आवश्यक है।"
+
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "गनोम रिमोट डेस्कटॉप हैंडओवर डेमॉन"
 
-#: src/grd-ctl.c:69
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "उपयोग: %s [विकल्प...] कमांड [उपकमांड]...\n"
 
-#: src/grd-ctl.c:414
+#: src/grd-ctl.c:305
 msgid "Username: "
 msgstr "उपयोक्तानाम: "
 
-#: src/grd-ctl.c:426 src/grd-ctl.c:569
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
 msgid "Password: "
 msgstr "पासवर्ड: "
 
-#: src/grd-ctl.c:699
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
 msgstr "कमांड:\n"
 
-#: src/grd-ctl.c:704
+#: src/grd-ctl.c:595
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -104,7 +115,7 @@ msgstr ""
 "अन्य पोर्ट पर न सुनें\n"
 "\n"
 
-#: src/grd-ctl.c:728
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -143,7 +154,7 @@ msgstr ""
 "पोर्ट पर न सुनें\n"
 "\n"
 
-#: src/grd-ctl.c:748
+#: src/grd-ctl.c:639
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -161,16 +172,18 @@ msgstr ""
 "  --system                                   - सिस्टम डेमॉन को विन्यस्त करें\n"
 "  --help                                     - इस सहायता पाठ को छापें\n"
 
-#: src/grd-daemon.c:1263
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
 msgstr "गनोम रिमोट डेस्कटॉप"
 
-#: src/grd-daemon-handover.c:289 src/grd-daemon-handover.c:350
+#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "असुरक्षित कनेक्शन के साथ जारी रखें?"
 
-#: src/grd-daemon-handover.c:290 src/grd-daemon-handover.c:352
+#. Translators: Don't translate “use redirection server name:i:1”.
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -181,12 +194,12 @@ msgstr ""
 "कनेक्शन सेटिंग को RDP फाइल के रूप में सहेजकर अपने क्लाइंट में RDSTLS सुरक्षा सक्षम करें और उसमें "
 "“use redirection server name:i:1” निर्धारित करें।"
 
-#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:359
+#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
 msgid "Disconnect"
 msgstr "डिस्कनेक्ट करें"
 
-#: src/grd-daemon-handover.c:298 src/grd-daemon-handover.c:360
+#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
 #, c-format
 msgid "Continue"
 msgstr "जारी रखें"
