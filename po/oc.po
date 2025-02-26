@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-10-05 10:10+0000\n"
-"PO-Revision-Date: 2024-11-02 22:00+0100\n"
+"POT-Creation-Date: 2025-02-20 21:34+0000\n"
+"PO-Revision-Date: 2025-02-27 10:57+1100\n"
 "Last-Translator: Quentin PAGÈS\n"
 "Language-Team: Occitan <totenoc@gmail.com>\n"
 "Language: oc\n"
@@ -19,18 +19,18 @@ msgstr ""
 "X-Generator: Poedit 3.5\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
 "Permetre de configurar los paramètres del demòni del sistèma de gnome-remote-"
-"desktop."
+"desktop"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
 "L'autentificacion es necessària per configurar los paramètres del demòni del "
-"sistèma de gnome-remote-desktop."
+"sistèma de gnome-remote-desktop"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
@@ -40,10 +40,10 @@ msgstr ""
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
 "L'autentificacion es necessària per activar o desactivar lo demòni sistèma "
-"de gnome-remote-desktop."
+"de gnome-remote-desktop"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
