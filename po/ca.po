@@ -6,8 +6,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-09-14 23:55+0000\n"
-"PO-Revision-Date: 2024-09-15 21:40+0200\n"
+"POT-Creation-Date: 2025-02-20 21:34+0000\n"
+"PO-Revision-Date: 2025-02-27 22:25+0100\n"
 "Last-Translator: Jordi Mas i Hernàndez <jmas@softcatala.org>\n"
 "Language-Team: Catalan <gnome@llistes.softcatala.org>\n"
 "Language: ca\n"
@@ -17,18 +17,18 @@ msgstr ""
 "X-Generator: Poedit 2.4.2\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
-"Permet configurar els paràmetres del dimoni de sistema de l'escriptori remot "
-"del GNOME."
+"Permet configurar els paràmetres del dimoni de sistema del «gnome-remote-"
+"desktop»"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
 "Es requereix autenticació per a configurar els paràmetres del dimoni de "
-"sistema de l'escriptori remot del GNOME."
+"sistema del «gnome-remote-desktop»"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
@@ -38,9 +38,9 @@ msgstr ""
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
-"Es requereix autenticació per a activar o desactivar el domoni de sistema "
+"Es requereix autenticació per a activar o desactivar el dimoni de sistema "
 "del «gnome-remote-desktop»."
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
@@ -439,4 +439,3 @@ msgstr ""
 "inicial del monitor d'aquest monitor virtual s'estableix a 1920x1080 píxels. "
 "Els clients poden anul·lar la resolució inicial amb actualitzacions de "
 "configuració posteriors del monitor."
-
