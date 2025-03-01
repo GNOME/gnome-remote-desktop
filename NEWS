@@ -1,3 +1,17 @@
+48.rc
+=====
+* Add support for hardware encoded AVC444
+
+Contributors:
+  Pascal Nowack
+
+Translators:
+  Rafael Fontenelle [pt_BR], Giannis Antypas [el], Daniel Rusek [cs],
+  Piotr Drąg [pl], Anders Jonsson [sv], Ekaterine Papava [ka],
+  Alexandre Franke [fr], Yuri Chornoivan [uk], twlvnn kraftwerk [bg],
+  Scrambled 777 [hi], Quentin PAGÈS [oc], Asier Sarasua Garmendia [eu],
+  Hugo Carvalho [pt], Fran Dieguez [gl], Jordi Mas i Hernandez [ca]
+
 48.beta
 =======
 * Add support for zero copy rendering with Vulkan and VAAPI
