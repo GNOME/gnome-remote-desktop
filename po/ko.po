@@ -1,15 +1,15 @@
 # Korean translation for gnome-remote-desktop.
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
-# Seong-ho Cho <shcho@gnome.org>, 2021-2022, 2024.
+# Seong-ho Cho <shcho@gnome.org>, 2021-2022, 2024-2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-07-29 21:03+0000\n"
-"PO-Revision-Date: 2024-08-25 00:50+0900\n"
+"POT-Creation-Date: 2025-02-20 21:34+0000\n"
+"PO-Revision-Date: 2025-03-01 04:02+0900\n"
 "Last-Translator: Seong-ho Cho <shcho@gnome.org>\n"
 "Language-Team: Korean <gnome-kr@googlegroups.com>\n"
 "Language: ko\n"
@@ -17,41 +17,50 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
-msgstr "gnome-remote-desktop의 시스템 데몬 설정 구성을 허용합니다."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
+msgstr "gnome-remote-desktop의 시스템 데몬 설정 구성을 허용합니다"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
-msgstr ""
-"gnome-remote-desktop의 시스템 데몬 설정을 구성하려면 인증이 필요합니다."
+"settings"
+msgstr "gnome-remote-desktop의 시스템 데몬 설정을 구성하려면 인증이 필요합니다"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr "gnome-remote-desktop의 시스템 데몬 설정 구성을 허용합니다"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon"
+msgstr "gnome-remote-desktop의 시스템 데몬 설정을 구성하려면 인증이 필요합니다"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "그놈 원격 데스크톱 핸드오버 데몬"
 
-#: src/grd-ctl.c:69
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "사용법: %s [옵션...] <명령> [하위명령]...\n"
 
-#: src/grd-ctl.c:414
+#: src/grd-ctl.c:305
 msgid "Username: "
 msgstr "사용자이름: "
 
-#: src/grd-ctl.c:426 src/grd-ctl.c:569
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
 msgid "Password: "
 msgstr "암    호: "
 
-#: src/grd-ctl.c:699
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
 msgstr "명령:\n"
 
-#: src/grd-ctl.c:704
+#: src/grd-ctl.c:595
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -98,7 +107,7 @@ msgstr ""
 "                                               포트 번호로 연결 수락 안함\n"
 "\n"
 
-#: src/grd-ctl.c:728
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -134,7 +143,7 @@ msgstr ""
 "                                               포트 번호로 연결 수락 안함\n"
 "\n"
 
-#: src/grd-ctl.c:748
+#: src/grd-ctl.c:639
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -152,7 +161,7 @@ msgstr ""
 "  --system                                   - 시스템 데몬을 설정합니다\n"
 "  --help                                     - 도움말 문구를 출력합니다\n"
 
-#: src/grd-daemon.c:1291
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
 msgstr "그놈 원격 데스크톱"
 
