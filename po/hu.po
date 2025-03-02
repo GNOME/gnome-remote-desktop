@@ -1,16 +1,16 @@
 # Hungarian translation for gnome-remote-desktop.
-# Copyright (C) 2021, 2022, 2024 Free Software Foundation, Inc.
+# Copyright (C) 2021, 2022, 2024, 2025 Free Software Foundation, Inc.
 # This file is distributed under the same license as the epiphany package.
 #
 # Balázs Meskó <mesko.balazs at fsf dot hu>, 2021, 2024.
-# Balázs Úr <ur.balazs at fsf dot hu>, 2022, 2024.
+# Balázs Úr <ur.balazs at fsf dot hu>, 2022, 2024, 2025.
 msgid ""
 msgstr ""
 "Project-Id-Version: epiphany master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issu"
 "es/\n"
-"POT-Creation-Date: 2024-09-08 16:47+0000\n"
-"PO-Revision-Date: 2024-09-09 01:03+0200\n"
+"POT-Creation-Date: 2025-02-20 21:34+0000\n"
+"PO-Revision-Date: 2025-03-02 21:01+0100\n"
 "Last-Translator: Balázs Úr <ur.balazs at fsf dot hu>\n"
 "Language-Team: Hungarian <openscope at fsf dot hu>\n"
 "Language: hu\n"
@@ -18,39 +18,42 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Lokalize 23.08.4\n"
+"X-Generator: Lokalize 23.08.5\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+#| msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
-"Engedélyezés, hogy megadhassa a gnome-remote-desktop rendszerdémonjának "
-"beállításait."
+"Engedélyezés, hogy megadhassa a gnome-remote-desktop rendszerdémonjának"
+" beállításait"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
-msgid ""
-"Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
-msgstr ""
-"Hitelesítés szükséges a gnome-remote-desktop rendszerdémonja beállításainak "
-"megadásához."
-
-#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
-#| msgid "Allow to configure gnome-remote-desktop's system daemon settings."
-msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
-msgstr ""
-"A gnome-remote-desktop rendszerdémonja engedélyezésének és letiltásának"
-" lehetővé tétele"
-
-#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 #| msgid ""
 #| "Authentication is required to configure gnome-remote-desktop's system "
 #| "daemon settings."
 msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings"
+msgstr ""
+"Hitelesítés szükséges a gnome-remote-desktop rendszerdémonja beállításainak"
+" megadásához"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr ""
+"A gnome-remote-desktop rendszerdémonja engedélyezésének és letiltásának "
+"lehetővé tétele"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+#| msgid ""
+#| "Authentication is required to enable or disable gnome-remote-desktop's "
+#| "system daemon."
+msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
 "Hitelesítés szükséges a gnome-remote-desktop rendszerdémonja engedélyezéséhez"
-" vagy letiltásához."
+" vagy letiltásához"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
