@@ -39,6 +39,7 @@
 #include "grd-rdp-surface-renderer.h"
 #include "grd-rdp-view-creator-avc.h"
 #include "grd-rdp-view-creator-gen-gl.h"
+#include "grd-rdp-view-creator-gen-sw.h"
 #include "grd-utils.h"
 
 #define STATE_TILE_WIDTH 64
@@ -559,6 +560,62 @@ create_hw_accelerated_encode_session (GrdRdpRenderContext     *render_context,
 }
 
 static gboolean
+create_sw_based_rfx_progressive_encode_session (GrdRdpRenderContext  *render_context,
+                                                GrdRdpSurface        *rdp_surface,
+                                                GrdRdpSwEncoderCa    *encoder_ca,
+                                                GError              **error)
+{
+  uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
+  uint32_t surface_height = grd_rdp_surface_get_height (rdp_surface);
+  GrdEncodeSessionCaSw *encode_session_ca;
+  GrdRdpViewCreatorGenSW *view_creator_gen_sw;
+  GrdEncodeSession *encode_session;
+  g_autoptr (GList) image_views = NULL;
+  GList *l;
+
+  encode_session_ca =
+    grd_encode_session_ca_sw_new (encoder_ca,
+                                  surface_width, surface_height,
+                                  error);
+  if (!encode_session_ca)
+    return FALSE;
+
+  view_creator_gen_sw = grd_rdp_view_creator_gen_sw_new (surface_width,
+                                                         surface_height);
+
+  encode_session = GRD_ENCODE_SESSION (encode_session_ca);
+  image_views = grd_encode_session_get_image_views (encode_session);
+
+  for (l = image_views; l; l = l->next)
+    {
+      GrdImageView *image_view = l->data;
+
+      g_hash_table_add (render_context->image_views, image_view);
+    }
+
+  render_context->view_creator = GRD_RDP_VIEW_CREATOR (view_creator_gen_sw);
+  render_context->encode_session = encode_session;
+
+  render_context->codec = GRD_RDP_CODEC_CAPROGRESSIVE;
+  render_context->delay_view_finalization = TRUE;
+
+  return TRUE;
+}
+
+static gboolean
+create_sw_based_encode_session (GrdRdpRenderContext     *render_context,
+                                GrdRdpGraphicsPipeline  *graphics_pipeline,
+                                GrdRdpSurface           *rdp_surface,
+                                GrdRdpSwEncoderCa       *encoder_ca,
+                                GError                 **error)
+{
+  return create_sw_based_rfx_progressive_encode_session (render_context,
+                                                         rdp_surface,
+                                                         encoder_ca,
+                                                         error);
+}
+
+static gboolean
 create_encode_session (GrdRdpRenderContext     *render_context,
                        GrdRdpGraphicsPipeline  *graphics_pipeline,
                        GrdRdpSurface           *rdp_surface,
@@ -581,7 +638,11 @@ create_encode_session (GrdRdpRenderContext     *render_context,
                                                    encoder_ca,
                                                    error);
     case GRD_RDP_BUFFER_TYPE_MEM_FD:
-      return TRUE;
+      return create_sw_based_encode_session (render_context,
+                                             graphics_pipeline,
+                                             rdp_surface,
+                                             encoder_ca,
+                                             error);
     case GRD_RDP_BUFFER_TYPE_NONE:
       g_assert_not_reached ();
       return FALSE;
