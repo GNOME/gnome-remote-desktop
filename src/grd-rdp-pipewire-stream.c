@@ -29,7 +29,6 @@
 #include <spa/param/video/format-utils.h>
 
 #include "grd-context.h"
-#include "grd-debug.h"
 #include "grd-egl-thread.h"
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-buffer-pool.h"
@@ -980,8 +979,7 @@ on_stream_process (void *user_data)
   if (!last_frame_buffer)
     return;
 
-  if (!(grd_get_debug_flags () & GRD_DEBUG_VKVA) ||
-      stream->rdp_surface->hwaccel_nvidia)
+  if (stream->rdp_surface->hwaccel_nvidia)
     process_frame_data (stream, last_frame_buffer);
   else
     submit_framebuffer (stream, last_frame_buffer);
