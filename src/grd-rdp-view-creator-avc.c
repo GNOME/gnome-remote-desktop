@@ -53,8 +53,8 @@ typedef struct
   VkCommandBuffer synchronize_state_buffers;
 
   VkCommandBuffer init_layouts;
-  VkCommandBuffer create_stereo_view_simple;
-  VkCommandBuffer create_stereo_view_difference;
+  VkCommandBuffer create_dual_view_simple;
+  VkCommandBuffer create_dual_view_difference;
 } CommandBuffers;
 
 typedef struct
@@ -108,8 +108,8 @@ struct _GrdRdpViewCreatorAVC
   CommandBuffers command_buffers;
   VkFence vk_fence;
 
-  Pipeline *stereo_view_pipeline;
-  Pipeline *stereo_view_dmg_pipeline;
+  Pipeline *dual_view_pipeline;
+  Pipeline *dual_view_dmg_pipeline;
 };
 
 G_DEFINE_TYPE (GrdRdpViewCreatorAVC, grd_rdp_view_creator_avc,
@@ -402,15 +402,15 @@ record_create_view_command_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
 
   if (record_create_simple_view &&
       !record_create_view (view_creator_avc,
-                           command_buffers->create_stereo_view_simple,
-                           view_creator_avc->stereo_view_pipeline,
+                           command_buffers->create_dual_view_simple,
+                           view_creator_avc->dual_view_pipeline,
                            error))
     return FALSE;
 
   if (record_create_difference_view &&
       !record_create_view (view_creator_avc,
-                           command_buffers->create_stereo_view_difference,
-                           view_creator_avc->stereo_view_dmg_pipeline,
+                           command_buffers->create_dual_view_difference,
+                           view_creator_avc->dual_view_dmg_pipeline,
                            error))
     return FALSE;
 
@@ -477,7 +477,7 @@ grd_rdp_view_creator_avc_create_view (GrdRdpViewCreator  *view_creator,
   GrdVkImage *src_image_new = NULL;
   GrdVkImage *src_image_old = NULL;
   VkCommandBufferSubmitInfo buffer_submit_infos[4] = {};
-  VkCommandBuffer create_stereo_view = VK_NULL_HANDLE;
+  VkCommandBuffer create_dual_view = VK_NULL_HANDLE;
   uint32_t n_buffer_submit_infos = 0;
   VkSubmitInfo2 submit_info_2 = {};
   GrdImageViewNV12 *main_image_view;
@@ -527,13 +527,13 @@ grd_rdp_view_creator_avc_create_view (GrdRdpViewCreator  *view_creator,
   ++n_buffer_submit_infos;
 
   if (src_image_old)
-    create_stereo_view = command_buffers->create_stereo_view_difference;
+    create_dual_view = command_buffers->create_dual_view_difference;
   else
-    create_stereo_view = command_buffers->create_stereo_view_simple;
+    create_dual_view = command_buffers->create_dual_view_simple;
 
   buffer_submit_infos[n_buffer_submit_infos].sType =
     VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
-  buffer_submit_infos[n_buffer_submit_infos].commandBuffer = create_stereo_view;
+  buffer_submit_infos[n_buffer_submit_infos].commandBuffer = create_dual_view;
   ++n_buffer_submit_infos;
 
   buffer_submit_infos[n_buffer_submit_infos].sType =
@@ -1074,18 +1074,18 @@ create_pipeline (GrdRdpViewCreatorAVC  *view_creator_avc,
 }
 
 static Pipeline *
-stereo_view_pipeline_new (GrdRdpViewCreatorAVC  *view_creator_avc,
-                          gboolean               perform_dmg_detection,
-                          GError               **error)
+dual_view_pipeline_new (GrdRdpViewCreatorAVC  *view_creator_avc,
+                        gboolean               perform_dmg_detection,
+                        GError               **error)
 {
   ViewCreateInfo *view_create_info = &view_creator_avc->view_create_info;
   const GrdVkShaderModules *shader_modules =
     grd_vk_device_get_shader_modules (view_creator_avc->device);
-  g_autoptr (Pipeline) stereo_view_pipeline = NULL;
+  g_autoptr (Pipeline) dual_view_pipeline = NULL;
   VkDescriptorSetLayout descriptor_set_layouts[4] = {};
 
-  stereo_view_pipeline = g_new0 (Pipeline, 1);
-  stereo_view_pipeline->view_creator_avc = view_creator_avc;
+  dual_view_pipeline = g_new0 (Pipeline, 1);
+  dual_view_pipeline->view_creator_avc = view_creator_avc;
 
   descriptor_set_layouts[0] = view_creator_avc->vk_target_descriptor_set_layout;
   descriptor_set_layouts[1] = view_creator_avc->vk_target_descriptor_set_layout;
@@ -1093,30 +1093,30 @@ stereo_view_pipeline_new (GrdRdpViewCreatorAVC  *view_creator_avc,
   descriptor_set_layouts[3] = view_creator_avc->vk_source_descriptor_set_layout;
 
   if (!create_pipeline_layout (view_creator_avc, descriptor_set_layouts, 4,
-                               &stereo_view_pipeline->vk_pipeline_layout, error))
+                               &dual_view_pipeline->vk_pipeline_layout, error))
     return NULL;
 
   view_create_info->perform_dmg_detection = perform_dmg_detection;
-  if (!create_pipeline (view_creator_avc, shader_modules->create_avc_stereo_view,
-                        stereo_view_pipeline->vk_pipeline_layout,
-                        &stereo_view_pipeline->vk_pipeline, error))
+  if (!create_pipeline (view_creator_avc, shader_modules->create_avc_dual_view,
+                        dual_view_pipeline->vk_pipeline_layout,
+                        &dual_view_pipeline->vk_pipeline, error))
     return NULL;
 
-  return g_steal_pointer (&stereo_view_pipeline);
+  return g_steal_pointer (&dual_view_pipeline);
 }
 
 static gboolean
 create_pipelines (GrdRdpViewCreatorAVC  *view_creator_avc,
                   GError               **error)
 {
-  view_creator_avc->stereo_view_pipeline =
-    stereo_view_pipeline_new (view_creator_avc, FALSE, error);
-  if (!view_creator_avc->stereo_view_pipeline)
+  view_creator_avc->dual_view_pipeline =
+    dual_view_pipeline_new (view_creator_avc, FALSE, error);
+  if (!view_creator_avc->dual_view_pipeline)
     return FALSE;
 
-  view_creator_avc->stereo_view_dmg_pipeline =
-    stereo_view_pipeline_new (view_creator_avc, TRUE, error);
-  if (!view_creator_avc->stereo_view_dmg_pipeline)
+  view_creator_avc->dual_view_dmg_pipeline =
+    dual_view_pipeline_new (view_creator_avc, TRUE, error);
+  if (!view_creator_avc->dual_view_dmg_pipeline)
     return FALSE;
 
   return TRUE;
@@ -1195,8 +1195,8 @@ create_command_buffers (GrdRdpViewCreatorAVC  *view_creator_avc,
   command_buffers->init_state_buffers = vk_command_buffers[0];
   command_buffers->synchronize_state_buffers = vk_command_buffers[1];
   command_buffers->init_layouts = vk_command_buffers[2];
-  command_buffers->create_stereo_view_simple = vk_command_buffers[3];
-  command_buffers->create_stereo_view_difference = vk_command_buffers[4];
+  command_buffers->create_dual_view_simple = vk_command_buffers[3];
+  command_buffers->create_dual_view_difference = vk_command_buffers[4];
 
   return TRUE;
 }
@@ -1537,8 +1537,8 @@ grd_rdp_view_creator_avc_dispose (GObject *object)
       view_creator_avc->queue = NULL;
     }
 
-  g_clear_pointer (&view_creator_avc->stereo_view_dmg_pipeline, pipeline_free);
-  g_clear_pointer (&view_creator_avc->stereo_view_pipeline, pipeline_free);
+  g_clear_pointer (&view_creator_avc->dual_view_dmg_pipeline, pipeline_free);
+  g_clear_pointer (&view_creator_avc->dual_view_pipeline, pipeline_free);
 
   grd_vk_clear_descriptor_pool (device, &view_creator_avc->vk_buffer_descriptor_pool);
   grd_vk_clear_descriptor_pool (device, &view_creator_avc->vk_image_descriptor_pool);

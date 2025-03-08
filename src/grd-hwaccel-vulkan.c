@@ -684,7 +684,7 @@ free_spirv_sources (GrdHwAccelVulkan *hwaccel_vulkan)
 {
   GrdVkSPIRVSources *spirv_sources = &hwaccel_vulkan->spirv_sources;
 
-  g_clear_pointer (&spirv_sources->avc_stereo_view, spirv_source_free);
+  g_clear_pointer (&spirv_sources->avc_dual_view, spirv_source_free);
 }
 
 static void
@@ -743,12 +743,12 @@ static void
 load_spirv_sources (GrdHwAccelVulkan *hwaccel_vulkan)
 {
   GrdVkSPIRVSources *spirv_sources = &hwaccel_vulkan->spirv_sources;
-  g_autofree char *avc_stereo_view_path = NULL;
+  g_autofree char *avc_dual_view_path = NULL;
   g_autoptr (GError) error = NULL;
 
-  avc_stereo_view_path = g_strdup_printf ("%s/grd-avc-stereo-view_opt.spv",
-                                          GRD_SHADER_DIR);
-  if (!load_spirv_source (avc_stereo_view_path, &spirv_sources->avc_stereo_view,
+  avc_dual_view_path = g_strdup_printf ("%s/grd-avc-dual-view_opt.spv",
+                                        GRD_SHADER_DIR);
+  if (!load_spirv_source (avc_dual_view_path, &spirv_sources->avc_dual_view,
                           &error))
     g_error ("[HWAccel.Vulkan] Failed to load shader: %s", error->message);
 }
