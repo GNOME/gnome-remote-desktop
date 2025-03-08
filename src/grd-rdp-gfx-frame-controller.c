@@ -73,11 +73,11 @@ notify_frame_stats (GrdRdpGfxFrameController *frame_controller,
                     uint32_t                  ack_rate)
 {
   GrdRdpGfxFrameLog *frame_log = frame_controller->frame_log;
-  uint32_t missing_stereo_frame_acks =
-    grd_rdp_gfx_frame_log_get_unacked_stereo_frames_count (frame_log);
+  uint32_t missing_dual_frame_acks =
+    grd_rdp_gfx_frame_log_get_unacked_dual_frames_count (frame_log);
   g_autoptr (GrdRdpFrameStats) frame_stats = NULL;
 
-  frame_stats = grd_rdp_frame_stats_new (missing_stereo_frame_acks,
+  frame_stats = grd_rdp_frame_stats_new (missing_dual_frame_acks,
                                          enc_rate, ack_rate);
 
   grd_rdp_gfx_framerate_log_notify_frame_stats (frame_controller->framerate_log,

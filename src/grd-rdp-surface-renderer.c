@@ -40,7 +40,7 @@
  * The value of the transition time is based upon testing. During times where
  * a lot of frames are submitted, the frame-controller could quickly alternate
  * between throttling and no-throttling. In these situations, the client is
- * ready for a frame containing only a main view, but not for a stereo view.
+ * ready for a frame containing only a main view, but not for a dual view.
  */
 #define TRANSITION_TIME_US (200 * 1000)
 
@@ -561,11 +561,11 @@ maybe_downgrade_view_type (GrdRdpSurfaceRenderer *surface_renderer,
   GrdRdpFrameViewType view_type;
 
   view_type = grd_rdp_frame_get_avc_view_type (rdp_frame);
-  if (view_type != GRD_RDP_FRAME_VIEW_TYPE_STEREO)
+  if (view_type != GRD_RDP_FRAME_VIEW_TYPE_DUAL)
     return;
 
   if (should_avoid_auxiliary_frame (surface_renderer) ||
-      grd_rdp_render_context_should_avoid_stereo_frame (render_context))
+      grd_rdp_render_context_should_avoid_dual_frame (render_context))
     grd_rdp_frame_set_avc_view_type (rdp_frame, GRD_RDP_FRAME_VIEW_TYPE_MAIN);
 }
 

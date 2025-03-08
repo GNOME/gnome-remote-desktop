@@ -31,7 +31,7 @@ struct _GrdRdpGfxFrameLog
   GQueue *acked_frames;
 
   GHashTable *tracked_frames;
-  GHashTable *tracked_stereo_frames;
+  GHashTable *tracked_dual_frames;
 };
 
 G_DEFINE_TYPE (GrdRdpGfxFrameLog, grd_rdp_gfx_frame_log, G_TYPE_OBJECT)
@@ -75,7 +75,7 @@ track_frame (GrdRdpGfxFrameLog *frame_log,
   g_hash_table_add (frame_log->tracked_frames, GUINT_TO_POINTER (frame_id));
   if (n_subframes == 2)
     {
-      g_hash_table_add (frame_log->tracked_stereo_frames,
+      g_hash_table_add (frame_log->tracked_dual_frames,
                         GUINT_TO_POINTER (frame_id));
     }
 }
@@ -95,7 +95,7 @@ grd_rdp_gfx_frame_log_ack_tracked_frame (GrdRdpGfxFrameLog *frame_log,
                                          uint32_t           frame_id,
                                          int64_t            ack_time_us)
 {
-  g_hash_table_remove (frame_log->tracked_stereo_frames,
+  g_hash_table_remove (frame_log->tracked_dual_frames,
                        GUINT_TO_POINTER (frame_id));
   if (!g_hash_table_remove (frame_log->tracked_frames,
                             GUINT_TO_POINTER (frame_id)))
@@ -172,15 +172,15 @@ grd_rdp_gfx_frame_log_get_unacked_frames_count (GrdRdpGfxFrameLog *frame_log)
 }
 
 uint32_t
-grd_rdp_gfx_frame_log_get_unacked_stereo_frames_count (GrdRdpGfxFrameLog *frame_log)
+grd_rdp_gfx_frame_log_get_unacked_dual_frames_count (GrdRdpGfxFrameLog *frame_log)
 {
-  return g_hash_table_size (frame_log->tracked_stereo_frames);
+  return g_hash_table_size (frame_log->tracked_dual_frames);
 }
 
 void
 grd_rdp_gfx_frame_log_clear (GrdRdpGfxFrameLog *frame_log)
 {
-  g_hash_table_remove_all (frame_log->tracked_stereo_frames);
+  g_hash_table_remove_all (frame_log->tracked_dual_frames);
   g_hash_table_remove_all (frame_log->tracked_frames);
 }
 
@@ -211,7 +211,7 @@ grd_rdp_gfx_frame_log_dispose (GObject *object)
       frame_log->encoded_frames = NULL;
     }
 
-  g_clear_pointer (&frame_log->tracked_stereo_frames, g_hash_table_destroy);
+  g_clear_pointer (&frame_log->tracked_dual_frames, g_hash_table_destroy);
   g_clear_pointer (&frame_log->tracked_frames, g_hash_table_destroy);
 
   G_OBJECT_CLASS (grd_rdp_gfx_frame_log_parent_class)->dispose (object);
@@ -221,7 +221,7 @@ static void
 grd_rdp_gfx_frame_log_init (GrdRdpGfxFrameLog *frame_log)
 {
   frame_log->tracked_frames = g_hash_table_new (NULL, NULL);
-  frame_log->tracked_stereo_frames = g_hash_table_new (NULL, NULL);
+  frame_log->tracked_dual_frames = g_hash_table_new (NULL, NULL);
 
   frame_log->encoded_frames = g_queue_new ();
   frame_log->acked_frames = g_queue_new ();

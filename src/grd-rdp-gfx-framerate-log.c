@@ -45,7 +45,7 @@ struct _GrdRdpGfxFramerateLog
   GQueue *enc_rates;
   uint32_t last_ack_rate;
 
-  uint32_t missing_stereo_frame_acks;
+  uint32_t missing_dual_frame_acks;
 };
 
 G_DEFINE_TYPE (GrdRdpGfxFramerateLog, grd_rdp_gfx_framerate_log,
@@ -78,8 +78,8 @@ grd_rdp_gfx_framerate_log_notify_frame_stats (GrdRdpGfxFramerateLog *framerate_l
   g_queue_push_tail (framerate_log->enc_rates, enc_rate_info);
 
   framerate_log->last_ack_rate = grd_rdp_frame_stats_get_ack_rate (frame_stats);
-  framerate_log->missing_stereo_frame_acks =
-    grd_rdp_frame_stats_get_missing_stereo_frame_acks (frame_stats);
+  framerate_log->missing_dual_frame_acks =
+    grd_rdp_frame_stats_get_missing_dual_frame_acks (frame_stats);
   g_mutex_unlock (&framerate_log->framerate_log_mutex);
 }
 
@@ -105,7 +105,7 @@ has_stable_enc_rate (double enc_rate_min,
 }
 
 gboolean
-grd_rdp_gfx_framerate_log_should_avoid_stereo_frame (GrdRdpGfxFramerateLog *framerate_log)
+grd_rdp_gfx_framerate_log_should_avoid_dual_frame (GrdRdpGfxFramerateLog *framerate_log)
 {
   g_autoptr (GMutexLocker) locker = NULL;
   g_autoptr (GQueue) tmp = NULL;
@@ -115,7 +115,7 @@ grd_rdp_gfx_framerate_log_should_avoid_stereo_frame (GrdRdpGfxFramerateLog *fram
   uint32_t enc_rate_quartile3;
   uint32_t enc_rate_median;
   uint32_t last_ack_rate;
-  uint32_t missing_stereo_frame_acks;
+  uint32_t missing_dual_frame_acks;
   uint32_t i;
 
   locker = g_mutex_locker_new (&framerate_log->framerate_log_mutex);
@@ -144,7 +144,7 @@ grd_rdp_gfx_framerate_log_should_avoid_stereo_frame (GrdRdpGfxFramerateLog *fram
   enc_rate_median = enc_rate_info->enc_rate;
 
   last_ack_rate = framerate_log->last_ack_rate;
-  missing_stereo_frame_acks = framerate_log->missing_stereo_frame_acks;
+  missing_dual_frame_acks = framerate_log->missing_dual_frame_acks;
   g_clear_pointer (&locker, g_mutex_locker_free);
 
   if (enc_rate_median < MIN_ENC_RATE_THRESHOLD)
@@ -152,7 +152,7 @@ grd_rdp_gfx_framerate_log_should_avoid_stereo_frame (GrdRdpGfxFramerateLog *fram
 
   if (enc_rate_median >= MIN_VIDEO_FRAMERATE ||
       has_stable_enc_rate (enc_rate_min, enc_rate_median))
-    return enc_rate_quartile3 + 3 * missing_stereo_frame_acks >= last_ack_rate;
+    return enc_rate_quartile3 + 3 * missing_dual_frame_acks >= last_ack_rate;
 
   return FALSE;
 }

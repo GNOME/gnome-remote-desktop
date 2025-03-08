@@ -130,13 +130,13 @@ void
 grd_rdp_frame_set_avc_view_type (GrdRdpFrame         *rdp_frame,
                                  GrdRdpFrameViewType  view_type)
 {
-  g_assert (view_type != GRD_RDP_FRAME_VIEW_TYPE_STEREO);
+  g_assert (view_type != GRD_RDP_FRAME_VIEW_TYPE_DUAL);
   g_assert (view_type == GRD_RDP_FRAME_VIEW_TYPE_MAIN ||
             view_type == GRD_RDP_FRAME_VIEW_TYPE_AUX);
 
   switch (rdp_frame->view_type)
     {
-    case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
+    case GRD_RDP_FRAME_VIEW_TYPE_DUAL:
       g_assert (g_queue_get_length (rdp_frame->unused_image_views) == 2);
       g_queue_pop_tail (rdp_frame->unused_image_views);
       break;
@@ -215,7 +215,7 @@ set_view_type (GrdRdpFrame *rdp_frame,
     case GRD_RDP_CODEC_AVC444v2:
       rdp_frame->view_type =
         frame_upgrade ? GRD_RDP_FRAME_VIEW_TYPE_AUX
-                      : GRD_RDP_FRAME_VIEW_TYPE_STEREO;
+                      : GRD_RDP_FRAME_VIEW_TYPE_DUAL;
       break;
     }
 }
@@ -243,7 +243,7 @@ get_n_image_views_to_be_encoded (GrdRdpFrame *rdp_frame)
 {
   switch (grd_rdp_frame_get_avc_view_type (rdp_frame))
     {
-    case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
+    case GRD_RDP_FRAME_VIEW_TYPE_DUAL:
       return 2;
     case GRD_RDP_FRAME_VIEW_TYPE_MAIN:
     case GRD_RDP_FRAME_VIEW_TYPE_AUX:

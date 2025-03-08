@@ -571,7 +571,7 @@ prepare_avc444_bitstream (RDPGFX_AVC444_BITMAP_STREAM *avc444,
 
   switch (view_type)
     {
-    case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
+    case GRD_RDP_FRAME_VIEW_TYPE_DUAL:
       g_assert (g_list_length (bitstreams) == 2);
       avc444->LC = 0;
       break;
@@ -591,7 +591,7 @@ prepare_avc444_bitstream (RDPGFX_AVC444_BITMAP_STREAM *avc444,
 
   switch (view_type)
     {
-    case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
+    case GRD_RDP_FRAME_VIEW_TYPE_DUAL:
     case GRD_RDP_FRAME_VIEW_TYPE_MAIN:
       n_rects = cairo_region_num_rectangles (region);
 
@@ -665,7 +665,7 @@ get_subframe_count (GrdRdpFrame *rdp_frame)
 
   view_type = grd_rdp_frame_get_avc_view_type (rdp_frame);
 
-  return view_type == GRD_RDP_FRAME_VIEW_TYPE_STEREO ? 2 : 1;
+  return view_type == GRD_RDP_FRAME_VIEW_TYPE_DUAL ? 2 : 1;
 }
 
 static void

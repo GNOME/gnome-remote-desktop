@@ -51,7 +51,7 @@ void grd_rdp_gfx_frame_log_update_rates (GrdRdpGfxFrameLog *frame_log,
 
 uint32_t grd_rdp_gfx_frame_log_get_unacked_frames_count (GrdRdpGfxFrameLog *frame_log);
 
-uint32_t grd_rdp_gfx_frame_log_get_unacked_stereo_frames_count (GrdRdpGfxFrameLog *frame_log);
+uint32_t grd_rdp_gfx_frame_log_get_unacked_dual_frames_count (GrdRdpGfxFrameLog *frame_log);
 
 void grd_rdp_gfx_frame_log_clear (GrdRdpGfxFrameLog *frame_log);
 

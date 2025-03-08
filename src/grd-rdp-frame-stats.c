@@ -24,14 +24,14 @@
 struct _GrdRdpFrameStats
 {
   /*
-   * Amount of stereo frames (frames containing both a main view and an
+   * Amount of dual frames (frames containing both a main view and an
    * auxiliary view), that were sent to the client, but not acknowledged yet.
    * Each of those frames is either in the sending process, waiting on the
    * client side to be processed, currently being decoded, currently in the
    * process of being displayed, or their respective frame acknowledge message
    * is currently in the process of being sent to the server side.
    */
-  uint32_t missing_stereo_frame_acks;
+  uint32_t missing_dual_frame_acks;
 
   /*
    * Current encoding rate per second showing how many frames are currently on
@@ -48,9 +48,9 @@ struct _GrdRdpFrameStats
 };
 
 uint32_t
-grd_rdp_frame_stats_get_missing_stereo_frame_acks (GrdRdpFrameStats *frame_stats)
+grd_rdp_frame_stats_get_missing_dual_frame_acks (GrdRdpFrameStats *frame_stats)
 {
-  return frame_stats->missing_stereo_frame_acks;
+  return frame_stats->missing_dual_frame_acks;
 }
 
 uint32_t
@@ -66,14 +66,14 @@ grd_rdp_frame_stats_get_ack_rate (GrdRdpFrameStats *frame_stats)
 }
 
 GrdRdpFrameStats *
-grd_rdp_frame_stats_new (uint32_t missing_stereo_frame_acks,
+grd_rdp_frame_stats_new (uint32_t missing_dual_frame_acks,
                          uint32_t enc_rate,
                          uint32_t ack_rate)
 {
   GrdRdpFrameStats *frame_stats;
 
   frame_stats = g_new0 (GrdRdpFrameStats, 1);
-  frame_stats->missing_stereo_frame_acks = missing_stereo_frame_acks;
+  frame_stats->missing_dual_frame_acks = missing_dual_frame_acks;
   frame_stats->enc_rate = enc_rate;
   frame_stats->ack_rate = ack_rate;
 

@@ -103,7 +103,7 @@ grd_rdp_render_context_must_delay_view_finalization (GrdRdpRenderContext *render
 }
 
 gboolean
-grd_rdp_render_context_should_avoid_stereo_frame (GrdRdpRenderContext *render_context)
+grd_rdp_render_context_should_avoid_dual_frame (GrdRdpRenderContext *render_context)
 {
   GrdRdpGfxSurface *gfx_surface = render_context->gfx_surface;
   GrdRdpGfxFrameController *frame_controller;
@@ -114,7 +114,7 @@ grd_rdp_render_context_should_avoid_stereo_frame (GrdRdpRenderContext *render_co
   frame_controller = grd_rdp_gfx_surface_get_frame_controller (gfx_surface);
   framerate_log = grd_rdp_gfx_frame_controller_get_framerate_log (frame_controller);
 
-  return grd_rdp_gfx_framerate_log_should_avoid_stereo_frame (framerate_log);
+  return grd_rdp_gfx_framerate_log_should_avoid_dual_frame (framerate_log);
 }
 
 static void
@@ -188,10 +188,10 @@ maybe_downgrade_view_type (GrdRdpRenderContext *render_context,
   GrdRdpFrameViewType view_type;
 
   view_type = grd_rdp_frame_get_avc_view_type (rdp_frame);
-  if (view_type != GRD_RDP_FRAME_VIEW_TYPE_STEREO)
+  if (view_type != GRD_RDP_FRAME_VIEW_TYPE_DUAL)
     return;
 
-  if (grd_rdp_render_context_should_avoid_stereo_frame (render_context))
+  if (grd_rdp_render_context_should_avoid_dual_frame (render_context))
     grd_rdp_frame_set_avc_view_type (rdp_frame, GRD_RDP_FRAME_VIEW_TYPE_MAIN);
 }
 
@@ -214,9 +214,9 @@ is_auxiliary_view_needed (GrdRdpRenderState *render_state)
 }
 
 static void
-update_stereo_frame (GrdRdpRenderContext *render_context,
-                     GrdRdpFrame         *rdp_frame,
-                     GrdRdpRenderState   *render_state)
+update_dual_frame (GrdRdpRenderContext *render_context,
+                   GrdRdpFrame         *rdp_frame,
+                   GrdRdpRenderState   *render_state)
 {
   uint32_t *damage_buffer =
     grd_rdp_render_state_get_damage_buffer (render_state);
@@ -297,8 +297,8 @@ update_avc444_render_state (GrdRdpRenderContext *render_context,
 
   switch (grd_rdp_frame_get_avc_view_type (rdp_frame))
     {
-    case GRD_RDP_FRAME_VIEW_TYPE_STEREO:
-      update_stereo_frame (render_context, rdp_frame, render_state);
+    case GRD_RDP_FRAME_VIEW_TYPE_DUAL:
+      update_dual_frame (render_context, rdp_frame, render_state);
       break;
     case GRD_RDP_FRAME_VIEW_TYPE_MAIN:
       update_main_frame (render_context, rdp_frame, render_state);

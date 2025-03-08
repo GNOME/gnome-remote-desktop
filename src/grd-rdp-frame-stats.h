@@ -25,13 +25,13 @@
 
 #include "grd-types.h"
 
-GrdRdpFrameStats *grd_rdp_frame_stats_new (uint32_t missing_stereo_frame_acks,
+GrdRdpFrameStats *grd_rdp_frame_stats_new (uint32_t missing_dual_frame_acks,
                                            uint32_t enc_rate,
                                            uint32_t ack_rate);
 
 void grd_rdp_frame_stats_free (GrdRdpFrameStats *frame_stats);
 
-uint32_t grd_rdp_frame_stats_get_missing_stereo_frame_acks (GrdRdpFrameStats *frame_stats);
+uint32_t grd_rdp_frame_stats_get_missing_dual_frame_acks (GrdRdpFrameStats *frame_stats);
 
 uint32_t grd_rdp_frame_stats_get_enc_rate (GrdRdpFrameStats *frame_stats);
 

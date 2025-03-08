@@ -33,6 +33,6 @@ GrdRdpGfxFramerateLog *grd_rdp_gfx_framerate_log_new (void);
 void grd_rdp_gfx_framerate_log_notify_frame_stats (GrdRdpGfxFramerateLog *framerate_log,
                                                    GrdRdpFrameStats      *frame_stats);
 
-gboolean grd_rdp_gfx_framerate_log_should_avoid_stereo_frame (GrdRdpGfxFramerateLog *framerate_log);
+gboolean grd_rdp_gfx_framerate_log_should_avoid_dual_frame (GrdRdpGfxFramerateLog *framerate_log);
 
 #endif /* GRD_RDP_GFX_FRAMERATE_LOG_H */
