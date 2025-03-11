@@ -1,15 +1,15 @@
 # Indonesian translation for gnome-remote-desktop.
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
-# Andika Triwidada <atriwidada@gnome.org>, 2021, 2024.
+# Andika Triwidada <atriwidada@gnome.org>, 2021, 2024, 2025.
 # Kukuh Syafaat <kukuhsyafaat@gnome.org, 2021-2022, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-09-08 16:47+0000\n"
-"PO-Revision-Date: 2024-09-09 14:43+0700\n"
+"POT-Creation-Date: 2025-03-10 20:09+0000\n"
+"PO-Revision-Date: 2025-03-12 04:24+0700\n"
 "Last-Translator: Andika Triwidada <andika@gmail.com>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
@@ -20,17 +20,17 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
-"Izinkan untuk mengonfigurasi pengaturan daemon sistem gnome-remote-desktop."
+"Izinkan untuk mengonfigurasi pengaturan daemon sistem gnome-remote-desktop"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
-"Autentikasi diperlukan untuk mengonfigurasi pengaturan daemon sistem gnome-"
-"remote-desktop."
+"Otentikasi diperlukan untuk mengonfigurasi pengaturan daemon sistem gnome-"
+"remote-desktop"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
@@ -41,10 +41,10 @@ msgstr ""
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
 "Otentikasi diperlukan untuk mengaktifkan atau menonaktifkan daemon sistem "
-"gnome-remote-desktop."
+"gnome-remote-desktop"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
