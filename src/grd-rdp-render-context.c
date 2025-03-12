@@ -62,6 +62,8 @@ struct _GrdRdpRenderContext
 
   GrdImageView *last_acquired_image_view;
 
+  gboolean delay_view_finalization;
+
   uint32_t *chroma_state_buffer;
   uint32_t state_buffer_length;
 };
@@ -90,6 +92,12 @@ GrdEncodeSession *
 grd_rdp_render_context_get_encode_session (GrdRdpRenderContext *render_context)
 {
   return render_context->encode_session;
+}
+
+gboolean
+grd_rdp_render_context_must_delay_view_finalization (GrdRdpRenderContext *render_context)
+{
+  return render_context->delay_view_finalization;
 }
 
 gboolean

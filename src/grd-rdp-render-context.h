@@ -51,6 +51,8 @@ GrdRdpViewCreator *grd_rdp_render_context_get_view_creator (GrdRdpRenderContext 
 
 GrdEncodeSession *grd_rdp_render_context_get_encode_session (GrdRdpRenderContext *render_context);
 
+gboolean grd_rdp_render_context_must_delay_view_finalization (GrdRdpRenderContext *render_context);
+
 gboolean grd_rdp_render_context_should_avoid_stereo_frame (GrdRdpRenderContext *render_context);
 
 GrdImageView *grd_rdp_render_context_acquire_image_view (GrdRdpRenderContext *render_context);
