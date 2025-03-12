@@ -162,13 +162,16 @@ void
 grd_rdp_frame_set_damage_region (GrdRdpFrame    *rdp_frame,
                                  cairo_region_t *damage_region)
 {
+  GrdRdpRenderContext *render_context = rdp_frame->render_context;
+
   g_assert (!rdp_frame->damage_region);
 
   rdp_frame->damage_region = damage_region;
   grd_encode_context_set_damage_region (rdp_frame->encode_context,
                                         damage_region);
 
-  finalize_view (rdp_frame);
+  if (!grd_rdp_render_context_must_delay_view_finalization (render_context))
+    finalize_view (rdp_frame);
 }
 
 void
