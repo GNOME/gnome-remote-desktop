@@ -35,6 +35,8 @@ GrdVkImage *grd_image_view_nv12_get_y_layer (GrdImageViewNV12 *image_view_nv12);
 
 GrdVkImage *grd_image_view_nv12_get_uv_layer (GrdImageViewNV12 *image_view_nv12);
 
+GList *grd_image_view_nv12_get_images (GrdImageViewNV12 *image_view_nv12);
+
 VkImageLayout grd_image_view_nv12_get_image_layout (GrdImageViewNV12 *image_view_nv12);
 
 void grd_image_view_nv12_set_image_layout (GrdImageViewNV12 *image_view_nv12,

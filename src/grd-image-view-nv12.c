@@ -46,6 +46,19 @@ grd_image_view_nv12_get_uv_layer (GrdImageViewNV12 *image_view_nv12)
   return image_view_nv12->vk_uv_layer;
 }
 
+GList *
+grd_image_view_nv12_get_images (GrdImageViewNV12 *image_view_nv12)
+{
+  GList *images = NULL;
+
+  if (image_view_nv12->vk_y_layer)
+    images = g_list_append (images, image_view_nv12->vk_y_layer);
+  if (image_view_nv12->vk_uv_layer)
+    images = g_list_append (images, image_view_nv12->vk_uv_layer);
+
+  return images;
+}
+
 VkImageLayout
 grd_image_view_nv12_get_image_layout (GrdImageViewNV12 *image_view_nv12)
 {
