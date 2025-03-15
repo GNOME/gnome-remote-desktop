@@ -269,10 +269,8 @@ maybe_record_init_layouts (GrdRdpViewCreatorAVC  *view_creator_avc,
   VkResult vk_result;
 
   view_creator_avc->pending_layout_transition =
-    grd_vk_image_get_image_layout (main_view_y) != VK_IMAGE_LAYOUT_GENERAL ||
-    grd_vk_image_get_image_layout (main_view_uv) != VK_IMAGE_LAYOUT_GENERAL ||
-    grd_vk_image_get_image_layout (aux_view_y) != VK_IMAGE_LAYOUT_GENERAL ||
-    grd_vk_image_get_image_layout (aux_view_uv) != VK_IMAGE_LAYOUT_GENERAL ||
+    grd_image_view_nv12_get_image_layout (main_image_view) != VK_IMAGE_LAYOUT_GENERAL ||
+    grd_image_view_nv12_get_image_layout (aux_image_view) != VK_IMAGE_LAYOUT_GENERAL ||
     grd_vk_image_get_image_layout (src_image_new) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL ||
     (src_image_old &&
      grd_vk_image_get_image_layout (src_image_old) != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -447,15 +445,10 @@ update_image_layout_states (GrdImageViewNV12 *main_image_view,
                             GrdVkImage       *src_image_new,
                             GrdVkImage       *src_image_old)
 {
-  GrdVkImage *main_view_y = grd_image_view_nv12_get_y_layer (main_image_view);
-  GrdVkImage *main_view_uv = grd_image_view_nv12_get_uv_layer (main_image_view);
-  GrdVkImage *aux_view_y = grd_image_view_nv12_get_y_layer (aux_image_view);
-  GrdVkImage *aux_view_uv = grd_image_view_nv12_get_uv_layer (aux_image_view);
-
-  grd_vk_image_set_image_layout (main_view_y, VK_IMAGE_LAYOUT_GENERAL);
-  grd_vk_image_set_image_layout (main_view_uv, VK_IMAGE_LAYOUT_GENERAL);
-  grd_vk_image_set_image_layout (aux_view_y, VK_IMAGE_LAYOUT_GENERAL);
-  grd_vk_image_set_image_layout (aux_view_uv, VK_IMAGE_LAYOUT_GENERAL);
+  grd_image_view_nv12_set_image_layout (main_image_view,
+                                        VK_IMAGE_LAYOUT_GENERAL);
+  grd_image_view_nv12_set_image_layout (aux_image_view,
+                                        VK_IMAGE_LAYOUT_GENERAL);
 
   grd_vk_image_set_image_layout (src_image_new,
                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
