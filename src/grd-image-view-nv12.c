@@ -34,16 +34,16 @@ struct _GrdImageViewNV12
 G_DEFINE_TYPE (GrdImageViewNV12, grd_image_view_nv12,
                GRD_TYPE_IMAGE_VIEW)
 
-GrdVkImage *
+VkImageView
 grd_image_view_nv12_get_y_layer (GrdImageViewNV12 *image_view_nv12)
 {
-  return image_view_nv12->vk_y_layer;
+  return grd_vk_image_get_image_view (image_view_nv12->vk_y_layer);
 }
 
-GrdVkImage *
+VkImageView
 grd_image_view_nv12_get_uv_layer (GrdImageViewNV12 *image_view_nv12)
 {
-  return image_view_nv12->vk_uv_layer;
+  return grd_vk_image_get_image_view (image_view_nv12->vk_uv_layer);
 }
 
 GList *

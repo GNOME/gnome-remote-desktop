@@ -145,25 +145,21 @@ write_image_descriptor_sets (GrdRdpViewCreatorAVC *view_creator_avc,
                              GrdVkImage           *src_image_old)
 {
   VkDevice vk_device = grd_vk_device_get_device (view_creator_avc->device);
-  GrdVkImage *main_view_y = grd_image_view_nv12_get_y_layer (main_image_view);
-  GrdVkImage *main_view_uv = grd_image_view_nv12_get_uv_layer (main_image_view);
-  GrdVkImage *aux_view_y = grd_image_view_nv12_get_y_layer (aux_image_view);
-  GrdVkImage *aux_view_uv = grd_image_view_nv12_get_uv_layer (aux_image_view);
   VkWriteDescriptorSet write_descriptor_sets[6] = {};
   VkDescriptorImageInfo image_infos[6] = {};
 
   image_infos[0].sampler = VK_NULL_HANDLE;
-  image_infos[0].imageView = grd_vk_image_get_image_view (main_view_y);
+  image_infos[0].imageView = grd_image_view_nv12_get_y_layer (main_image_view);
   image_infos[0].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
   image_infos[1] = image_infos[0];
-  image_infos[1].imageView = grd_vk_image_get_image_view (main_view_uv);
+  image_infos[1].imageView = grd_image_view_nv12_get_uv_layer (main_image_view);
 
   image_infos[2] = image_infos[0];
-  image_infos[2].imageView = grd_vk_image_get_image_view (aux_view_y);
+  image_infos[2].imageView = grd_image_view_nv12_get_y_layer (aux_image_view);
 
   image_infos[3] = image_infos[0];
-  image_infos[3].imageView = grd_vk_image_get_image_view (aux_view_uv);
+  image_infos[3].imageView = grd_image_view_nv12_get_uv_layer (aux_image_view);
 
   image_infos[4].sampler = view_creator_avc->vk_src_new_sampler;
   image_infos[4].imageView = grd_vk_image_get_image_view (src_image_new);
