@@ -259,14 +259,12 @@ maybe_record_init_layouts (GrdRdpViewCreatorAVC  *view_creator_avc,
                            GrdVkImage            *src_image_old,
                            GError               **error)
 {
-  GrdVkImage *main_view_y = grd_image_view_nv12_get_y_layer (main_image_view);
-  GrdVkImage *main_view_uv = grd_image_view_nv12_get_uv_layer (main_image_view);
-  GrdVkImage *aux_view_y = grd_image_view_nv12_get_y_layer (aux_image_view);
-  GrdVkImage *aux_view_uv = grd_image_view_nv12_get_uv_layer (aux_image_view);
   VkCommandBuffer command_buffer =
     view_creator_avc->command_buffers.init_layouts;
   VkCommandBufferBeginInfo begin_info = {};
   VkResult vk_result;
+  g_autoptr (GList) images = NULL;
+  GList *l;
 
   view_creator_avc->pending_layout_transition =
     grd_image_view_nv12_get_image_layout (main_image_view) != VK_IMAGE_LAYOUT_GENERAL ||
@@ -288,18 +286,19 @@ maybe_record_init_layouts (GrdRdpViewCreatorAVC  *view_creator_avc,
       return FALSE;
     }
 
-  maybe_init_image_layout (view_creator_avc, command_buffer, main_view_y,
-                           VK_IMAGE_LAYOUT_GENERAL,
-                           VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
-  maybe_init_image_layout (view_creator_avc, command_buffer, main_view_uv,
-                           VK_IMAGE_LAYOUT_GENERAL,
-                           VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
-  maybe_init_image_layout (view_creator_avc, command_buffer, aux_view_y,
-                           VK_IMAGE_LAYOUT_GENERAL,
-                           VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
-  maybe_init_image_layout (view_creator_avc, command_buffer, aux_view_uv,
-                           VK_IMAGE_LAYOUT_GENERAL,
-                           VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
+  images = grd_image_view_nv12_get_images (main_image_view);
+  images = g_list_concat (images,
+                          grd_image_view_nv12_get_images (aux_image_view));
+
+  for (l = images; l; l = l->next)
+    {
+      GrdVkImage *image = l->data;
+
+      maybe_init_image_layout (view_creator_avc, command_buffer, image,
+                               VK_IMAGE_LAYOUT_GENERAL,
+                               VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
+    }
+
   maybe_init_image_layout (view_creator_avc, command_buffer, src_image_new,
                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                            VK_ACCESS_2_SHADER_STORAGE_READ_BIT);
