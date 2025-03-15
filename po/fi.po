@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-07-29 21:03+0000\n"
-"PO-Revision-Date: 2024-08-25 11:29+0300\n"
+"POT-Creation-Date: 2025-03-10 20:09+0000\n"
+"PO-Revision-Date: 2025-03-15 10:25+0200\n"
 "Last-Translator: Jiri Grönroos <jiri.gronroos+l10n@iki.fi>\n"
 "Language-Team: Finnish <lokalisointi-lista@googlegroups.com>\n"
 "Language: fi\n"
@@ -20,18 +20,34 @@ msgstr ""
 "X-Generator: Poedit 3.4.4\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
 "Salli gnome-remote-desktopin järjestelmätaustaprosessin asetusten "
-"määrittäminen."
+"määrittäminen"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
 "Gnome-remote-desktopin järjestelmätaustaprosessin asetusten määrittäminen "
-"vaatii tunnistautumisen."
+"vaatii tunnistautumisen"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+#, fuzzy
+#| msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr ""
+"Salli gnome-remote-desktopin järjestelmätaustaprosessin asetusten "
+"määrittäminen."
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon"
+msgstr ""
+"Gnome-remote-desktopin järjestelmätaustaprosessin ottaminen käyttöön tai "
+"poistaminen käytöstä vaatii tunnistautumisen"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 #, fuzzy
@@ -39,24 +55,24 @@ msgstr ""
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "Gnomen etätyöpöytä"
 
-#: src/grd-ctl.c:69
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
-msgstr ""
+msgstr "Käyttö: %s [VALINNAT...] KOMENTO [ALIKOMENTO]...\n"
 
-#: src/grd-ctl.c:414
+#: src/grd-ctl.c:305
 msgid "Username: "
 msgstr "Käyttäjätunnus: "
 
-#: src/grd-ctl.c:426 src/grd-ctl.c:569
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
 msgid "Password: "
 msgstr "Salasana: "
 
-#: src/grd-ctl.c:699
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
 msgstr "Komennot:\n"
 
-#: src/grd-ctl.c:704
+#: src/grd-ctl.c:595
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -87,7 +103,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/grd-ctl.c:728
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -109,7 +125,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/grd-ctl.c:748
+#: src/grd-ctl.c:639
 #, fuzzy
 #| msgid ""
 #| "  status [--show-credentials]                - Show current status\n"
@@ -130,7 +146,7 @@ msgstr ""
 "Valinnat:\n"
 "  --help                                     - Tulosta tämä ohjeteksti\n"
 
-#: src/grd-daemon.c:1291
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
 msgstr "Gnomen etätyöpöytä"
 
