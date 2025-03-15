@@ -21,6 +21,8 @@
 
 #include "grd-image-view-nv12.h"
 
+#include "grd-vk-image.h"
+
 struct _GrdImageViewNV12
 {
   GrdImageView parent;
@@ -42,6 +44,23 @@ GrdVkImage *
 grd_image_view_nv12_get_uv_layer (GrdImageViewNV12 *image_view_nv12)
 {
   return image_view_nv12->vk_uv_layer;
+}
+
+VkImageLayout
+grd_image_view_nv12_get_image_layout (GrdImageViewNV12 *image_view_nv12)
+{
+  g_assert (grd_vk_image_get_image_layout (image_view_nv12->vk_y_layer) ==
+            grd_vk_image_get_image_layout (image_view_nv12->vk_uv_layer));
+
+  return grd_vk_image_get_image_layout (image_view_nv12->vk_y_layer);
+}
+
+void
+grd_image_view_nv12_set_image_layout (GrdImageViewNV12 *image_view_nv12,
+                                      VkImageLayout     vk_image_layout)
+{
+  grd_vk_image_set_image_layout (image_view_nv12->vk_y_layer, vk_image_layout);
+  grd_vk_image_set_image_layout (image_view_nv12->vk_uv_layer, vk_image_layout);
 }
 
 void
