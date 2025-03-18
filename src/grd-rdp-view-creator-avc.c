@@ -916,7 +916,7 @@ create_image_descriptor_sets (GrdRdpViewCreatorAVC  *view_creator_avc,
   g_assert (descriptor_sets[2] != VK_NULL_HANDLE);
 
   view_creator_avc->vk_descriptor_set_main_view = descriptor_sets[0];
-  view_creator_avc->vk_descriptor_set_aux_view  = descriptor_sets[1];
+  view_creator_avc->vk_descriptor_set_aux_view = descriptor_sets[1];
   view_creator_avc->vk_descriptor_set_sources = descriptor_sets[2];
 
   return TRUE;
