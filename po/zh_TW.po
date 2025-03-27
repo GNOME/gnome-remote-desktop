@@ -8,73 +8,108 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-03-14 15:00+0000\n"
-"PO-Revision-Date: 2024-04-14 01:13+0800\n"
-"Last-Translator: \n"
+"POT-Creation-Date: 2025-03-26 09:48+0000\n"
+"PO-Revision-Date: 2025-03-27 16:54+0800\n"
+"Last-Translator: Cheng-Chia Tseng <zerngjia@gmail.com>\n"
 "Language-Team: Chinese (Taiwan) <chinese-l10n@googlegroups.com>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.5\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
-msgstr ""
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
+msgstr "讓您調整 GNOME 遠端桌面系統幕後程式的組態設定"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
-msgstr ""
+"settings"
+msgstr "設定 GNOME 遠端桌面的系統幕後程式組態需要通過身分核對"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr "讓您啟用和停用 GNOME 遠端桌面系統幕後程式"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon"
+msgstr "啟用或停用 GNOME 遠端桌面的系統幕後程式需要通過身分核對"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
-#, fuzzy
-#| msgid "GNOME Remote Desktop"
 msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "GNOME 遠端桌面"
+msgstr "GNOME 遠端桌面接管幕後程式"
 
-#: src/grd-ctl.c:60
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
-msgstr ""
+msgstr "用法：%s [OPTIONS…] COMMAND [SUBCOMMAND]…\n"
 
-#: src/grd-ctl.c:612
+#: src/grd-ctl.c:305
+msgid "Username: "
+msgstr "使用者名稱："
+
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
+msgid "Password: "
+msgstr "密碼："
+
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
-msgstr ""
+msgstr "命令：\n"
 
-#: src/grd-ctl.c:617
+#: src/grd-ctl.c:595
 msgid ""
-"  rdp                                        - RDP subcommands:\n"
-"    set-port                                 - Set port the server binds to\n"
-"    enable                                   - Enable the RDP backend\n"
-"    disable                                  - Disable the RDP backend\n"
-"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
-"    set-tls-key <path-to-key>                - Set path to TLS key\n"
-"    set-credentials <username> <password>    - Set username and password\n"
-"                                               credentials\n"
-"    clear-credentials                        - Clear username and password\n"
-"                                               credentials\n"
-"    enable-view-only                         - Disable remote control of "
+"  rdp                                            - RDP subcommands:\n"
+"    set-port                                     - Set port the server binds "
+"to\n"
+"    enable                                       - Enable the RDP backend\n"
+"    disable                                      - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>                  - Set path to TLS "
+"certificate\n"
+"    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-credentials [<username> [<password>]]    - Set username and "
+"password\n"
+"                                                   credentials\n"
+"    clear-credentials                            - Clear username and "
+"password\n"
+"                                                   credentials\n"
+"    enable-view-only                             - Disable remote control of "
 "input\n"
-"                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
+"                                                   devices\n"
+"    disable-view-only                            - Enable remote control of "
 "input\n"
-"                                               devices\n"
-"    enable-port-negotiation                  - If unavailable, listen to\n"
-"                                               a different port\n"
-"    disable-port-negotiation                 - If unavailable, don't listen\n"
-"                                               to a different port\n"
+"                                                   devices\n"
+"    enable-port-negotiation                      - If unavailable, listen "
+"to\n"
+"                                                   a different port\n"
+"    disable-port-negotiation                     - If unavailable, don't "
+"listen\n"
+"                                                   to a different port\n"
 "\n"
 msgstr ""
+"  rdp                                        - RDP 子命令：\n"
+"    set-port                                       - 設定伺服器通訊埠\n"
+"    enable                                          - 啟用 RDP 後端\n"
+"    disable                                         - 停用 RDP 後端\n"
+"    set-tls-cert <path-to-cert>           - 設定 TLS 憑證路徑\n"
+"    set-tls-key <path-to-key>            - 設定 TLS 密鑰路徑\n"
+"    set-credentials [<username> [<password>]]   - 設定使用者名稱和密碼憑證\n"
+"    clear-credentials                          - 清除使用者名稱和密碼憑證\n"
+"    enable-view-only                         - 停用輸入裝置的遠端控制\n"
+"    disable-view-only                        - 啟用輸入裝置的遠端控制\n"
+"    enable-port-negotiation                - 如果沒有，監聽其他通訊埠\n"
+"    disable-port-negotiation               - 如果沒有，不要監聽其他通訊埠\n"
+"\n"
 
-#: src/grd-ctl.c:641
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
-"    set-password <password>                  - Set the VNC password\n"
+"    set-password [<password>]                - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
 "    enable-view-only                         - Disable remote control of "
@@ -89,8 +124,20 @@ msgid ""
 "                                               to a different port\n"
 "\n"
 msgstr ""
+"  vnc                                          - VNC 子命令：\n"
+"    set-port                                   - 設定伺服器通訊埠\n"
+"    enable                                     - 啟用 VNC 後端\n"
+"    disable                                    - 停用 VNC 後端\n"
+"    set-password [<password>]       - 設定 VNC 密碼\n"
+"    clear-password                        - 清除 VNC 密碼\n"
+"    set-auth-method password|prompt  - 設定授權方式\n"
+"    enable-view-only                      - 停用輸入裝置的遠端控制\n"
+"    disable-view-only                     - 啟用輸入裝置的遠端控制\n"
+"    enable-port-negotiation            - 如果沒有，監聽其他通訊埠\n"
+"    disable-port-negotiation            - 如果沒有，不要監聽其他通訊埠\n"
+"\n"
 
-#: src/grd-ctl.c:661
+#: src/grd-ctl.c:639
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -100,32 +147,41 @@ msgid ""
 "  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
+"  status [--show-credentials]           - 顯示目前狀態\n"
+"\n"
+"選項：\n"
+"  --headless                                 - 使用無畫面憑證儲存\n"
+"  --system                                   - 設定系統幕後程式\n"
+"  --help                                     - 顯示本輔助訊息\n"
 
-#: src/grd-daemon.c:1222
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
 msgstr "GNOME 遠端桌面"
 
-#: src/grd-daemon-handover.c:346
+#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
 #, c-format
-msgid "This connection is insecure"
-msgstr ""
+msgid "Continue With Insecure Connection?"
+msgstr "繼續使用不安全連線？"
 
-#. Translators: Don't translate "use redirection server name:i:1".
+#. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:350
+#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
 #, c-format
 msgid ""
-"Do you want to continue with an insecure connection?\n"
-"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
-"config file."
+"This Remote Desktop connection is insecure. To secure this connection, "
+"enable RDSTLS Security in your client by saving the connection settings in "
+"your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
+"此遠端桌面連線不安全。若要確保此連線的安全性，請在客戶端中啟用 RDSTLS 安全設"
+"定，方法是將客戶端中的連線設定另儲存為 RDP 檔案，並在檔案中設定「use "
+"redirection server name:i:1」。"
 
-#: src/grd-daemon-handover.c:354
+#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
 msgid "Disconnect"
-msgstr ""
+msgstr "中斷連接"
 
-#: src/grd-daemon-handover.c:355
+#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
 #, c-format
 msgid "Continue"
 msgstr "繼續"
@@ -133,7 +189,7 @@ msgstr "繼續"
 #: src/grd-daemon-user.c:99
 #, c-format
 msgid "Desktop Sharing port changed"
-msgstr ""
+msgstr "桌面共享的通訊埠已變更"
 
 #: src/grd-daemon-user.c:101
 #, c-format
@@ -142,6 +198,8 @@ msgid ""
 "This is because the Remote Sessions service has been activated and it has a "
 "higher priority to use port <b>%i</b>."
 msgstr ""
+"桌面共享的通訊埠已從 <b>%i</b> 變更為 <b>%i</b>。\n"
+"這是因為《遠端作業階段》服務已啟動，而且有更高的優先權使用 <b>%i</b> 通訊埠。"
 
 #: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
 #, c-format
@@ -151,14 +209,14 @@ msgstr "接受"
 #: src/grd-session-vnc.c:305
 #, c-format
 msgid "Do you want to share your desktop?"
-msgstr "你確定要分享桌面嗎？"
+msgstr "您確定要共享桌面嗎？"
 
 #: src/grd-session-vnc.c:307
 #, c-format
 msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
 "desktop."
-msgstr "在「%s」這台電腦上有用戶正想要從遠端查看並控制你的電腦。"
+msgstr "在「%s」這台電腦上，有使用者正在嘗試從遠端查看或控制您的電腦。"
 
 #: src/grd-session-vnc.c:309
 #, c-format
@@ -167,33 +225,35 @@ msgstr "拒絕"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
 msgid "The port used by the RDP server"
-msgstr ""
+msgstr "RDP 伺服器使用的通訊埠"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
 msgid "The RDP client will connect to this port to use this RDP server."
-msgstr ""
+msgstr "RDP 客戶端會連線到此通訊埠，以便使用此 RDP 伺服器。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Search a different RDP port if the configured one is used"
-msgstr ""
+msgstr "如果組態設定的 RDP 通訊埠被使用，則搜尋其他通訊埠替代"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
+"當協商通訊埠設定為「true」時，RDP 伺服器將嘗試監聽從組態所設定的通訊埠開始，"
+"其後續 10 個通訊埠，並找出第一個可用埠來使用。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
-msgstr ""
+msgstr "是否啟用 RDP 後端"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
-msgstr ""
+msgstr "如果設定為「true」，RDP 後端將初始化。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
-msgstr ""
+msgstr "RDP 連線的螢幕共享模式"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
@@ -210,10 +270,16 @@ msgid ""
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
+"螢幕共享模式需指定，是 RDP 後端要映射主螢幕，或是要建立虛擬螢幕。虛擬螢幕的初"
+"始解析度取決於客戶端資訊 ([MS-RDPBCGR] 2.2.1.3.2) 或者它的螢幕資料 ([MS-"
+"RDPBCGR] 2.2.1.3.6)。當使用虛擬螢幕來控制遠端桌面時，客戶端可以使用螢幕更新虛"
+"擬頻道延伸 ([MS-RDPEDISP]) 的方式來縮放虛擬螢幕的解析度。可用的螢幕共享模式"
+"有：* 映射主畫面 - 同步主螢幕同畫面。* 延伸 - 建立新的遠端桌面的虛擬螢幕，它"
+"的解析度依照遠端客戶端的設定。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
-msgstr "憑證檔案的路徑"
+msgstr "憑證檔的路徑"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
@@ -231,7 +297,7 @@ msgstr "私鑰檔案的路徑"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
-msgstr "允許遠端連線只能夠查看螢幕中的內容"
+msgstr "只允許遠端連線檢視螢幕內容"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
@@ -243,29 +309,31 @@ msgstr ""
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid "The port used by the VNC server"
-msgstr "VNC伺服器使用的連接埠"
+msgstr "VNC 伺服器使用的通訊埠"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
 msgid "The VNC client will connect to this port to use this VNC server."
-msgstr ""
+msgstr "VNC 客戶端將連線到此通訊埠以使用此 VNC 伺服器。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 msgid "Search a different VNC port if the configured one is used"
-msgstr ""
+msgstr "如果組態設定的 VNC 通訊埠已被使用，則搜尋其他通訊埠替代"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
+"當協商通訊埠設定為「true」時，VNC 伺服器將嘗試監聽從組態所設定的通訊埠開始，"
+"其後續 10 個通訊埠，並找出第一個可用埠來使用。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
-msgstr ""
+msgstr "是否啟用 VNC 後端"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
-msgstr ""
+msgstr "如果設定為「true」，VNC 後端將被初始化。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
@@ -277,7 +345,7 @@ msgstr ""
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
-msgstr "VNC 連線的認證方式"
+msgstr "用於核對 VNC 連線身分的方法"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
@@ -287,14 +355,14 @@ msgid ""
 "access to the workstation to explicitly approve the new connection. * "
 "password - by requiring the remote client to provide a known password"
 msgstr ""
-"VNC 認證方式這部份描述了你的電腦會如何認證遠端連線。你的電腦可以用兩種不同的"
-"方式進行認證： * 跳出提示 - 每次有新的連線，都會跳出提示訊息，然後必須要有人"
-"在電腦前執行實體操作，才能允許連線。 * 輸入密碼 - 想要進行遠端連線的電腦上，"
-"必須要有一份正確的密碼。"
+"VNC 身分核對這部份，描述您的電腦會如何核對遠端連線身分。您的電腦可以兩種不同"
+"的方式進行： * 跳出提示 - 每次有新的連線，都會跳出提示訊息，然後必須要有人在"
+"電腦前執行實體操作，才能允許連線。 * 輸入密碼 - 在想進行連線的遠端客戶端上，"
+"輸入正確的密碼"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
-msgstr ""
+msgstr "VNC 連線的螢幕共享模式"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
@@ -310,3 +378,22 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr ""
+"螢幕共享模式需指定，是 VNC 後端要映射主螢幕，或是要建立虛擬螢幕。虛擬螢幕的初"
+"始解析度預設為 1920x1080 像素。當使用虛擬螢幕來對應遠端桌面時，客戶端可以使"
+"用 setDesktopSize PDU 來縮放虛擬螢幕的解析度。可用的螢幕共享模式有：* 映射主"
+"畫面 - 同步主螢幕同畫面。* 延伸 - 建立新的遠端桌面的虛擬螢幕，它的解析度預設"
+"為 1920x1080 像素，也可依照遠端客戶端的組態設定改變。"
+
+#, c-format
+#~ msgid "This connection is insecure"
+#~ msgstr "此連線不安全"
+
+#, c-format
+#~ msgid ""
+#~ "Do you want to continue with an insecure connection?\n"
+#~ "To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
+#~ "config file."
+#~ msgstr ""
+#~ "您確定要以不安全的連線方式繼續嗎？\n"
+#~ "若要確保安全，請在 RDP 的組態檔中設定 <b>“use redirection server name:"
+#~ "i:1”</b>。"
