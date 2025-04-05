@@ -47,6 +47,7 @@ typedef struct _RdpPeerContext
   GrdRdpDvcAudioPlayback *audio_playback;
   GrdRdpDvcDisplayControl *display_control;
   GrdRdpDvcGraphicsPipeline *graphics_pipeline;
+  GrdRdpDvcInput *input;
   GrdRdpDvcTelemetry *telemetry;
 } RdpPeerContext;
 

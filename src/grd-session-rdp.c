@@ -37,6 +37,7 @@
 #include "grd-rdp-dvc-display-control.h"
 #include "grd-rdp-dvc-graphics-pipeline.h"
 #include "grd-rdp-dvc-handler.h"
+#include "grd-rdp-dvc-input.h"
 #include "grd-rdp-dvc-telemetry.h"
 #include "grd-rdp-event-queue.h"
 #include "grd-rdp-layout-manager.h"
@@ -453,6 +454,7 @@ grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
       g_assert_not_reached ();
       break;
     case GRD_RDP_CHANNEL_INPUT:
+      g_clear_object (&rdp_peer_context->input);
       break;
     case GRD_RDP_CHANNEL_TELEMETRY:
       g_clear_object (&rdp_peer_context->telemetry);
@@ -1373,6 +1375,7 @@ socket_thread_func (gpointer data)
         {
           GrdRdpDvcTelemetry *telemetry;
           GrdRdpDvcGraphicsPipeline *graphics_pipeline;
+          GrdRdpDvcInput *input;
           GrdRdpDvcAudioPlayback *audio_playback;
           GrdRdpDvcDisplayControl *display_control;
           GrdRdpDvcAudioInput *audio_input;
@@ -1390,6 +1393,7 @@ socket_thread_func (gpointer data)
               g_mutex_lock (&rdp_peer_context->channel_mutex);
               telemetry = rdp_peer_context->telemetry;
               graphics_pipeline = rdp_peer_context->graphics_pipeline;
+              input = rdp_peer_context->input;
               audio_playback = rdp_peer_context->audio_playback;
               display_control = rdp_peer_context->display_control;
               audio_input = rdp_peer_context->audio_input;
@@ -1398,6 +1402,8 @@ socket_thread_func (gpointer data)
                 grd_rdp_dvc_maybe_init (GRD_RDP_DVC (telemetry));
               if (graphics_pipeline && !session_rdp->session_should_stop)
                 grd_rdp_dvc_maybe_init (GRD_RDP_DVC (graphics_pipeline));
+              if (input && !session_rdp->session_should_stop)
+                grd_rdp_dvc_maybe_init (GRD_RDP_DVC (input));
               if (audio_playback && !session_rdp->session_should_stop)
                 grd_rdp_dvc_maybe_init (GRD_RDP_DVC (audio_playback));
               if (display_control && !session_rdp->session_should_stop)
@@ -1571,6 +1577,7 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_object (&rdp_peer_context->clipboard_rdp);
   g_clear_object (&rdp_peer_context->audio_playback);
   g_clear_object (&rdp_peer_context->display_control);
+  g_clear_object (&rdp_peer_context->input);
   g_clear_object (&rdp_peer_context->graphics_pipeline);
   g_clear_object (&rdp_peer_context->telemetry);
   g_mutex_unlock (&rdp_peer_context->channel_mutex);
@@ -1654,6 +1661,10 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
   rdpSettings *rdp_settings = rdp_context->settings;
   GrdRdpDvcHandler *dvc_handler = rdp_peer_context->dvc_handler;
   HANDLE vcm = rdp_peer_context->vcm;
+
+  rdp_peer_context->input =
+    grd_rdp_dvc_input_new (session_rdp->layout_manager,
+                           session_rdp, dvc_handler, vcm);
 
   if (session_rdp->screen_share_mode == GRD_RDP_SCREEN_SHARE_MODE_EXTEND)
     {
