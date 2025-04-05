@@ -146,6 +146,8 @@ if have_rdp
     'grd-rdp-dvc-graphics-pipeline.h',
     'grd-rdp-dvc-handler.c',
     'grd-rdp-dvc-handler.h',
+    'grd-rdp-dvc-input.c',
+    'grd-rdp-dvc-input.h',
     'grd-rdp-dvc-telemetry.c',
     'grd-rdp-dvc-telemetry.h',
     'grd-rdp-event-queue.c',

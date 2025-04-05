@@ -139,6 +139,8 @@ channel_to_string (GrdRdpChannel channel)
       return "DISP";
     case GRD_RDP_CHANNEL_GRAPHICS_PIPELINE:
       return "RDPGFX";
+    case GRD_RDP_CHANNEL_INPUT:
+      return "INPUT";
     case GRD_RDP_CHANNEL_TELEMETRY:
       return "TELEMETRY";
     }

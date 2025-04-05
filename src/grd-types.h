@@ -51,6 +51,7 @@ typedef struct _GrdRdpDvcAudioPlayback GrdRdpDvcAudioPlayback;
 typedef struct _GrdRdpDvcDisplayControl GrdRdpDvcDisplayControl;
 typedef struct _GrdRdpDvcGraphicsPipeline GrdRdpDvcGraphicsPipeline;
 typedef struct _GrdRdpDvcHandler GrdRdpDvcHandler;
+typedef struct _GrdRdpDvcInput GrdRdpDvcInput;
 typedef struct _GrdRdpDvcTelemetry GrdRdpDvcTelemetry;
 typedef struct _GrdRdpEventQueue GrdRdpEventQueue;
 typedef struct _GrdRdpFrame GrdRdpFrame;

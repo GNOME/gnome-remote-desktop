@@ -452,6 +452,8 @@ grd_session_rdp_tear_down_channel (GrdSessionRdp *session_rdp,
     case GRD_RDP_CHANNEL_GRAPHICS_PIPELINE:
       g_assert_not_reached ();
       break;
+    case GRD_RDP_CHANNEL_INPUT:
+      break;
     case GRD_RDP_CHANNEL_TELEMETRY:
       g_clear_object (&rdp_peer_context->telemetry);
       break;
