@@ -98,10 +98,12 @@ typedef struct _GrdSessionPrivate
   struct ei_seat *ei_seat;
   struct ei_device *ei_abs_pointer;
   struct ei_device *ei_keyboard;
+  struct ei_device *ei_touch;
   uint32_t ei_sequence;
   GSource *ei_source;
 
   GHashTable *abs_pointer_regions;
+  GHashTable *touch_regions;
 
   struct xkb_context *xkb_context;
   struct xkb_keymap *xkb_keymap;
@@ -134,8 +136,10 @@ clear_ei (GrdSession *session)
   g_clear_pointer (&priv->xkb_keymap, xkb_keymap_unref);
   g_clear_pointer (&priv->xkb_context, xkb_context_unref);
 
+  g_clear_pointer (&priv->touch_regions, g_hash_table_unref);
   g_clear_pointer (&priv->abs_pointer_regions, g_hash_table_unref);
 
+  g_clear_pointer (&priv->ei_touch, ei_device_unref);
   g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
   g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
   g_clear_pointer (&priv->ei_seat, ei_seat_unref);
@@ -1231,6 +1235,15 @@ maybe_dispose_ei_abs_pointer (GrdSession *session)
 }
 
 static void
+maybe_dispose_ei_touch (GrdSession *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  g_hash_table_remove_all (priv->touch_regions);
+  g_clear_pointer (&priv->ei_touch, ei_device_unref);
+}
+
+static void
 process_regions (GrdSession       *session,
                  struct ei_device *ei_device,
                  GHashTable       *regions)
@@ -1292,6 +1305,7 @@ grd_ei_source_dispatch (gpointer user_data)
                                      EI_DEVICE_CAP_POINTER_ABSOLUTE,
                                      EI_DEVICE_CAP_BUTTON,
                                      EI_DEVICE_CAP_SCROLL,
+                                     EI_DEVICE_CAP_TOUCH,
                                      NULL);
           break;
         case EI_EVENT_SEAT_REMOVED:
@@ -1323,6 +1337,12 @@ grd_ei_source_dispatch (gpointer user_data)
                 priv->ei_abs_pointer = ei_device_ref (device);
                 process_regions (session, device, priv->abs_pointer_regions);
               }
+            if (ei_device_has_capability (device, EI_DEVICE_CAP_TOUCH))
+              {
+                maybe_dispose_ei_touch (session);
+                priv->ei_touch = ei_device_ref (device);
+                process_regions (session, device, priv->touch_regions);
+              }
             break;
           }
         case EI_EVENT_DEVICE_RESUMED:
@@ -1330,6 +1350,8 @@ grd_ei_source_dispatch (gpointer user_data)
             ei_device_start_emulating (priv->ei_abs_pointer, ++priv->ei_sequence);
           if (ei_event_get_device (event) == priv->ei_keyboard)
             ei_device_start_emulating (priv->ei_keyboard, ++priv->ei_sequence);
+          if (ei_event_get_device (event) == priv->ei_touch)
+            ei_device_start_emulating (priv->ei_touch, ++priv->ei_sequence);
           break;
         case EI_EVENT_DEVICE_PAUSED:
           break;
@@ -1338,6 +1360,8 @@ grd_ei_source_dispatch (gpointer user_data)
             maybe_dispose_ei_abs_pointer (session);
           if (ei_event_get_device (event) == priv->ei_keyboard)
             g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
+          if (ei_event_get_device (event) == priv->ei_touch)
+            maybe_dispose_ei_touch (session);
           break;
         default:
           handled = FALSE;
@@ -1579,12 +1603,14 @@ grd_session_finalize (GObject *object)
     g_assert (g_cancellable_is_cancelled (priv->cancellable));
   g_clear_object (&priv->cancellable);
 
+  g_clear_pointer (&priv->touch_regions, g_hash_table_unref);
   g_clear_pointer (&priv->abs_pointer_regions, g_hash_table_unref);
 
   g_assert (!priv->xkb_state);
   g_assert (!priv->xkb_keymap);
   g_assert (!priv->xkb_context);
 
+  g_assert (!priv->ei_touch);
   g_assert (!priv->ei_keyboard);
   g_assert (!priv->ei_abs_pointer);
   g_assert (!priv->ei_seat);
@@ -1643,6 +1669,10 @@ grd_session_init (GrdSession *session)
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
   priv->abs_pointer_regions =
+    g_hash_table_new_full (g_str_hash, g_str_equal,
+                           g_free,
+                           (GDestroyNotify) grd_region_free);
+  priv->touch_regions =
     g_hash_table_new_full (g_str_hash, g_str_equal,
                            g_free,
                            (GDestroyNotify) grd_region_free);
