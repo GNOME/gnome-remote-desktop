@@ -1629,6 +1629,14 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_handle_id (&session_rdp->notify_post_connected_source_id,
                      g_source_remove);
 
+  g_hash_table_foreach_remove (session_rdp->pressed_keys,
+                               notify_keycode_released,
+                               session_rdp);
+  g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
+                               notify_keysym_released,
+                               session_rdp);
+  grd_rdp_event_queue_flush (session_rdp->rdp_event_queue);
+
   g_clear_object (&session_rdp->layout_manager);
 
   g_clear_object (&session_rdp->cursor_renderer);
@@ -1641,14 +1649,6 @@ grd_session_rdp_stop (GrdSession *session)
 
   peer->Disconnect (peer);
   clear_rdp_peer (session_rdp);
-
-  g_hash_table_foreach_remove (session_rdp->pressed_keys,
-                               notify_keycode_released,
-                               session_rdp);
-  g_hash_table_foreach_remove (session_rdp->pressed_unicode_keys,
-                               notify_keysym_released,
-                               session_rdp);
-  grd_rdp_event_queue_flush (session_rdp->rdp_event_queue);
 
   g_clear_handle_id (&session_rdp->close_session_idle_id, g_source_remove);
 }
