@@ -120,6 +120,9 @@ typedef struct _GrdSessionPrivate
 
   gboolean started;
 
+  gboolean locked_modifier_valid;
+  gboolean caps_lock_state;
+  gboolean num_lock_state;
   gulong caps_lock_state_changed_id;
   gulong num_lock_state_changed_id;
 } GrdSessionPrivate;
@@ -1167,36 +1170,6 @@ on_remote_desktop_session_selection_transfer (GrdDBusMutterRemoteDesktopSession 
                                                       mime_type, serial);
 }
 
-static void
-on_caps_lock_state_changed (GrdDBusMutterRemoteDesktopSession *session_proxy,
-                            GParamSpec                        *param_spec,
-                            GrdSession                        *session)
-{
-  GrdSessionClass *klass = GRD_SESSION_GET_CLASS (session);
-  gboolean state;
-
-  state = grd_dbus_mutter_remote_desktop_session_get_caps_lock_state (session_proxy);
-  g_debug ("Caps lock state: %s", state ? "locked" : "unlocked");
-
-  if (klass->on_caps_lock_state_changed)
-    klass->on_caps_lock_state_changed (session, state);
-}
-
-static void
-on_num_lock_state_changed (GrdDBusMutterRemoteDesktopSession *session_proxy,
-                           GParamSpec                        *param_spec,
-                           GrdSession                        *session)
-{
-  GrdSessionClass *klass = GRD_SESSION_GET_CLASS (session);
-  gboolean state;
-
-  state = grd_dbus_mutter_remote_desktop_session_get_num_lock_state (session_proxy);
-  g_debug ("Num lock state: %s", state ? "locked" : "unlocked");
-
-  if (klass->on_num_lock_state_changed)
-    klass->on_num_lock_state_changed (session, state);
-}
-
 static gboolean
 grd_ei_source_prepare (gpointer user_data)
 {
@@ -1465,6 +1438,62 @@ grd_ei_source_dispatch (gpointer user_data)
           if (ei_event_get_device (event) == priv->ei_touch)
             maybe_dispose_ei_touch (session);
           break;
+        case EI_EVENT_KEYBOARD_MODIFIERS:
+          if (priv->xkb_keymap)
+            {
+              GrdSessionClass *klass = GRD_SESSION_GET_CLASS (session);
+              uint32_t latched_mods =
+                ei_event_keyboard_get_xkb_mods_latched (event);
+              uint32_t locked_mods =
+                ei_event_keyboard_get_xkb_mods_locked (event);
+              gboolean caps_lock_state;
+              gboolean num_lock_state;
+
+              caps_lock_state =
+                !!((latched_mods | locked_mods) &
+                   (1 << xkb_keymap_mod_get_index (priv->xkb_keymap,
+                                                   XKB_MOD_NAME_CAPS)));
+              num_lock_state =
+                !!((latched_mods | locked_mods) &
+                   (1 << xkb_keymap_mod_get_index (priv->xkb_keymap,
+                                                   XKB_MOD_NAME_NUM)));
+
+              if (!priv->locked_modifier_valid ||
+                  caps_lock_state != priv->caps_lock_state)
+                {
+                  g_debug ("Caps lock state: %s",
+                           caps_lock_state ? "locked" : "unlocked");
+                  priv->caps_lock_state = caps_lock_state;
+
+                  if (klass->on_caps_lock_state_changed)
+                    {
+                      klass->on_caps_lock_state_changed (session,
+                                                         caps_lock_state);
+                    }
+                }
+
+              if (!priv->locked_modifier_valid ||
+                  num_lock_state != priv->num_lock_state)
+                {
+                  g_debug ("Num lock state: %s",
+                           num_lock_state ? "locked" : "unlocked");
+                  priv->num_lock_state = num_lock_state;
+
+                  if (klass->on_num_lock_state_changed)
+                    {
+                      klass->on_num_lock_state_changed (session,
+                                                        num_lock_state);
+                    }
+                }
+
+              priv->locked_modifier_valid = TRUE;
+            }
+          else
+            {
+              g_warning ("Couldn't update caps lock / num lock state, "
+                         "no keymap");
+            }
+          break;
         default:
           handled = FALSE;
           break;
@@ -1473,6 +1502,11 @@ grd_ei_source_dispatch (gpointer user_data)
       if (handled)
         {
           g_debug ("ei: Handled event type %s",
+                   ei_event_type_to_string (ei_event_type));
+        }
+      else
+        {
+          g_debug ("ei: Didn't handle event type %s",
                    ei_event_type_to_string (ei_event_type));
         }
       ei_event_unref (event);
@@ -1582,20 +1616,8 @@ on_eis_connected (GObject      *object,
                                                    on_screen_cast_session_created,
                                                    session);
 
-  priv->caps_lock_state_changed_id =
-    g_signal_connect (priv->remote_desktop_session, "notify::caps-lock-state",
-                      G_CALLBACK (on_caps_lock_state_changed),
-                      session);
-  priv->num_lock_state_changed_id =
-    g_signal_connect (priv->remote_desktop_session, "notify::num-lock-state",
-                      G_CALLBACK (on_num_lock_state_changed),
-                      session);
-
   if (klass->remote_desktop_session_ready)
     klass->remote_desktop_session_ready (session);
-
-  on_caps_lock_state_changed (priv->remote_desktop_session, NULL, session);
-  on_num_lock_state_changed (priv->remote_desktop_session, NULL, session);
 }
 
 static void
