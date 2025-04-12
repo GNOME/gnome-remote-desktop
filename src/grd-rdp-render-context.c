@@ -415,7 +415,7 @@ try_create_vaapi_session (GrdRdpRenderContext *render_context,
   uint32_t render_surface_width = 0;
   uint32_t render_surface_height = 0;
   g_autoptr (GError) error = NULL;
-  GList *image_views;
+  g_autoptr (GList) image_views = NULL;
   GList *l;
 
   if (buffer_info->buffer_type != GRD_RDP_BUFFER_TYPE_DMA_BUF ||
@@ -463,7 +463,6 @@ try_create_vaapi_session (GrdRdpRenderContext *render_context,
 
       g_hash_table_add (render_context->image_views, image_view);
     }
-  g_list_free (image_views);
 
   render_context->view_creator = GRD_RDP_VIEW_CREATOR (view_creator_avc);
   render_context->encode_session = g_steal_pointer (&encode_session);
