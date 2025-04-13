@@ -536,7 +536,7 @@ rdp_input_mouse_event (rdpInput *rdp_input,
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
-  GrdEventPointerMotionAbs motion_abs = {};
+  GrdEventMotionAbs motion_abs = {};
   GrdStream *stream = NULL;
   GrdButtonState button_state;
   int32_t button = 0;

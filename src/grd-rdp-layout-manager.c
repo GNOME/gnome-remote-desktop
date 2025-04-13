@@ -546,11 +546,11 @@ grd_rdp_layout_manager_submit_new_monitor_config (GrdRdpLayoutManager *layout_ma
 }
 
 gboolean
-grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager       *layout_manager,
-                                           uint32_t                   x,
-                                           uint32_t                   y,
-                                           GrdStream                **stream,
-                                           GrdEventPointerMotionAbs  *motion_abs)
+grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager  *layout_manager,
+                                           uint32_t              x,
+                                           uint32_t              y,
+                                           GrdStream           **stream,
+                                           GrdEventMotionAbs    *motion_abs)
 {
   g_autoptr (GMutexLocker) locker = NULL;
   SurfaceContext *surface_context = NULL;

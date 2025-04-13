@@ -625,9 +625,9 @@ grd_session_notify_pointer_axis_discrete (GrdSession    *session,
 }
 
 void
-grd_session_notify_pointer_motion_absolute (GrdSession                     *session,
-                                            GrdStream                      *stream,
-                                            const GrdEventPointerMotionAbs *motion_abs)
+grd_session_notify_pointer_motion_absolute (GrdSession              *session,
+                                            GrdStream               *stream,
+                                            const GrdEventMotionAbs *motion_abs)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdRegion *region;

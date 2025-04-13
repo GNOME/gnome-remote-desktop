@@ -55,7 +55,7 @@ typedef struct _RdpEvent
   struct
   {
     GrdStream *stream;
-    GrdEventPointerMotionAbs motion_abs;
+    GrdEventMotionAbs motion_abs;
   } input_ptr_motion_abs;
 
   /* RDP_EVENT_TYPE_INPUT_PTR_BUTTON */
@@ -243,9 +243,9 @@ grd_rdp_event_queue_add_input_event_keyboard_keysym (GrdRdpEventQueue *rdp_event
 }
 
 void
-grd_rdp_event_queue_add_input_event_pointer_motion_abs (GrdRdpEventQueue               *rdp_event_queue,
-                                                        GrdStream                      *stream,
-                                                        const GrdEventPointerMotionAbs *motion_abs)
+grd_rdp_event_queue_add_input_event_pointer_motion_abs (GrdRdpEventQueue        *rdp_event_queue,
+                                                        GrdStream               *stream,
+                                                        const GrdEventMotionAbs *motion_abs)
 {
   RdpEvent *rdp_event;
 

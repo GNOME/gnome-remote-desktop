@@ -471,7 +471,7 @@ handle_pointer_event (int          button_mask,
       (x != session_vnc->prev_x || y != session_vnc->prev_y))
     {
       rfbScreenInfoPtr rfb_screen = session_vnc->rfb_screen;
-      GrdEventPointerMotionAbs motion_abs = {};
+      GrdEventMotionAbs motion_abs = {};
 
       motion_abs.input_rect_width = rfb_screen->width;
       motion_abs.input_rect_height = rfb_screen->height;

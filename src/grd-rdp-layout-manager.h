@@ -41,10 +41,10 @@ void grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager  *layout
 void grd_rdp_layout_manager_submit_new_monitor_config (GrdRdpLayoutManager *layout_manager,
                                                        GrdRdpMonitorConfig *monitor_config);
 
-gboolean grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager       *layout_manager,
-                                                    uint32_t                   x,
-                                                    uint32_t                   y,
-                                                    GrdStream                **stream,
-                                                    GrdEventPointerMotionAbs  *motion_abs);
+gboolean grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager  *layout_manager,
+                                                    uint32_t              x,
+                                                    uint32_t              y,
+                                                    GrdStream           **stream,
+                                                    GrdEventMotionAbs    *motion_abs);
 
 #endif /* GRD_RDP_LAYOUT_MANAGER_H */
