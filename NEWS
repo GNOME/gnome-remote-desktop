@@ -1,3 +1,13 @@
+48.1
+====
+* Reduce latency when PipeWire stream uses shared memories
+
+Contributors:
+  Pascal Nowack
+
+Translators:
+  Baxrom Raxmatov [uz], Cheng-Chia Tseng [zh_TW], Philipp Kiemle [de]
+
 48.0
 ====
 Translators:
