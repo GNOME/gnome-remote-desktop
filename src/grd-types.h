@@ -78,6 +78,7 @@ typedef struct _GrdSession GrdSession;
 typedef struct _GrdSessionRdp GrdSessionRdp;
 typedef struct _GrdSessionVnc GrdSessionVnc;
 typedef struct _GrdStream GrdStream;
+typedef struct _GrdTouchContact GrdTouchContact;
 typedef struct _GrdVkBuffer GrdVkBuffer;
 typedef struct _GrdVkDevice GrdVkDevice;
 typedef struct _GrdVkImage GrdVkImage;

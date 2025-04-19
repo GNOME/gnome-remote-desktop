@@ -85,6 +85,11 @@ typedef struct _GrdRegion
   struct ei_region *ei_region;
 } GrdRegion;
 
+struct _GrdTouchContact
+{
+  struct ei_touch *ei_touch_contact;
+};
+
 typedef struct _GrdSessionPrivate
 {
   GrdContext *context;
@@ -681,6 +686,97 @@ grd_session_notify_pointer_motion_absolute (GrdSession              *session,
 
   ei_device_pointer_motion_absolute (ei_device, x, y);
   ei_device_frame (ei_device, g_get_monotonic_time ());
+}
+
+gboolean
+grd_session_has_touch_device (GrdSession *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  return !!priv->ei_touch;
+}
+
+GrdTouchContact *
+grd_session_acquire_touch_contact (GrdSession *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  GrdTouchContact *touch_contact;
+
+  g_assert (priv->ei_touch);
+
+  touch_contact = g_new0 (GrdTouchContact, 1);
+  touch_contact->ei_touch_contact = ei_device_touch_new (priv->ei_touch);
+
+  return touch_contact;
+}
+
+void
+grd_session_release_touch_contact (GrdSession      *session,
+                                   GrdTouchContact *touch_contact)
+{
+  g_clear_pointer (&touch_contact->ei_touch_contact, ei_touch_unref);
+
+  g_free (touch_contact);
+}
+
+void
+grd_session_notify_touch_down (GrdSession              *session,
+                               const GrdTouchContact   *touch_contact,
+                               GrdStream               *stream,
+                               const GrdEventMotionAbs *motion_abs)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  struct ei_device *ei_device = NULL;
+  double x = 0;
+  double y = 0;
+
+  if (!transform_position (session, priv->touch_regions, stream, motion_abs,
+                           &ei_device, &x, &y))
+    return;
+
+  ei_touch_down (touch_contact->ei_touch_contact, x, y);
+}
+
+void
+grd_session_notify_touch_motion (GrdSession              *session,
+                                 const GrdTouchContact   *touch_contact,
+                                 GrdStream               *stream,
+                                 const GrdEventMotionAbs *motion_abs)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  struct ei_device *ei_device = NULL;
+  double x = 0;
+  double y = 0;
+
+  if (!transform_position (session, priv->touch_regions, stream, motion_abs,
+                           &ei_device, &x, &y))
+    return;
+
+  ei_touch_motion (touch_contact->ei_touch_contact, x, y);
+}
+
+void
+grd_session_notify_touch_up (GrdSession      *session,
+                             GrdTouchContact *touch_contact)
+{
+  ei_touch_up (touch_contact->ei_touch_contact);
+}
+
+void
+grd_session_notify_touch_cancel (GrdSession      *session,
+                                 GrdTouchContact *touch_contact)
+{
+  ei_touch_cancel (touch_contact->ei_touch_contact);
+}
+
+void
+grd_session_notify_touch_device_frame (GrdSession *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  g_assert (priv->ei_touch);
+
+  ei_device_frame (priv->ei_touch, g_get_monotonic_time ());
 }
 
 static GVariant *
