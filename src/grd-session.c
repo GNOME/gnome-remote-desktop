@@ -50,6 +50,8 @@ enum
 enum
 {
   STOPPED,
+  TOUCH_DEVICE_ADDED,
+  TOUCH_DEVICE_REMOVED,
 
   N_SIGNALS
 };
@@ -1335,6 +1337,7 @@ maybe_dispose_ei_touch (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
+  g_signal_emit (session, signals[TOUCH_DEVICE_REMOVED], 0);
   g_hash_table_remove_all (priv->touch_regions);
   g_clear_pointer (&priv->ei_touch, ei_device_unref);
 }
@@ -1447,7 +1450,10 @@ grd_ei_source_dispatch (gpointer user_data)
           if (ei_event_get_device (event) == priv->ei_keyboard)
             ei_device_start_emulating (priv->ei_keyboard, ++priv->ei_sequence);
           if (ei_event_get_device (event) == priv->ei_touch)
-            ei_device_start_emulating (priv->ei_touch, ++priv->ei_sequence);
+            {
+              ei_device_start_emulating (priv->ei_touch, ++priv->ei_sequence);
+              g_signal_emit (session, signals[TOUCH_DEVICE_ADDED], 0);
+            }
           break;
         case EI_EVENT_DEVICE_PAUSED:
           break;
@@ -1799,4 +1805,16 @@ grd_session_class_init (GrdSessionClass *klass)
                                    0,
                                    NULL, NULL, NULL,
                                    G_TYPE_NONE, 0);
+  signals[TOUCH_DEVICE_ADDED] = g_signal_new ("touch-device-added",
+                                              G_TYPE_FROM_CLASS (klass),
+                                              G_SIGNAL_RUN_LAST,
+                                              0,
+                                              NULL, NULL, NULL,
+                                              G_TYPE_NONE, 0);
+  signals[TOUCH_DEVICE_REMOVED] = g_signal_new ("touch-device-removed",
+                                                G_TYPE_FROM_CLASS (klass),
+                                                G_SIGNAL_RUN_LAST,
+                                                0,
+                                                NULL, NULL, NULL,
+                                                G_TYPE_NONE, 0);
 }
