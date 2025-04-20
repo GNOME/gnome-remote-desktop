@@ -84,6 +84,9 @@ struct _GrdRdpDvcInput
   GList *touch_contacts_to_dispose;
 
   TouchContext touch_contexts[MAX_TOUCH_CONTACTS];
+
+  unsigned long touch_device_added_id;
+  unsigned long touch_device_removed_id;
 };
 
 G_DEFINE_TYPE (GrdRdpDvcInput, grd_rdp_dvc_input,
@@ -210,6 +213,52 @@ input_pen (RdpeiServerContext       *rdpei_context,
   return CHANNEL_RC_OK;
 }
 
+static void
+on_touch_device_added (GrdSession     *session,
+                       GrdRdpDvcInput *input)
+{
+  g_source_set_ready_time (input->event_source, 0);
+}
+
+static void
+on_touch_device_removed (GrdSession     *session,
+                         GrdRdpDvcInput *input)
+{
+  uint16_t i;
+
+  for (i = 0; i < MAX_TOUCH_CONTACTS; ++i)
+    {
+      TouchContext *touch_context = &input->touch_contexts[i];
+      GrdTouchContact *touch_contact;
+
+      if (touch_context->contact_state == CONTACT_STATE_OUT_OF_RANGE)
+        continue;
+
+      g_debug ("[RDP.INPUT] Resetting touch contact %u", i);
+
+      touch_contact = g_steal_pointer (&touch_context->touch_contact);
+      grd_session_release_touch_contact (session, touch_contact);
+
+      touch_context->contact_state = CONTACT_STATE_OUT_OF_RANGE;
+
+      /*
+       * When the monitor layout changes, Windows App for the iPhone resets
+       * each contact state. This also applies to touch contacts, which are
+       * still pressed by the user.
+       * However, for some reason, this client still continues to send
+       * touch-motion events for the reset touch contact. The touch position
+       * in these events is always the same and does not reflect the actual
+       * reality.
+       * This continues to happen until the user taps again, in which case the
+       * client stops these spurious touch-motion events and sends a
+       * touch-down event.
+       * So, ignore these spurious touch-motion events until a valid
+       * contact-flag combination is sent for the 'Out of Range'-state.
+       */
+      touch_context->ignore_contact = TRUE;
+    }
+}
+
 GrdRdpDvcInput *
 grd_rdp_dvc_input_new (GrdRdpLayoutManager *layout_manager,
                        GrdSessionRdp       *session_rdp,
@@ -238,6 +287,15 @@ grd_rdp_dvc_input_new (GrdRdpLayoutManager *layout_manager,
   rdpei_context->onTouchReleased = input_dismiss_hovering_touch_contact;
   rdpei_context->onPenEvent = input_pen;
   rdpei_context->user_data = input;
+
+  input->touch_device_added_id =
+    g_signal_connect (input->session, "touch-device-added",
+                      G_CALLBACK (on_touch_device_added),
+                      input);
+  input->touch_device_removed_id =
+    g_signal_connect (input->session, "touch-device-removed",
+                      G_CALLBACK (on_touch_device_removed),
+                      input);
 
   return input;
 }
@@ -276,7 +334,6 @@ handle_touch_state_out_of_range (GrdRdpDvcInput        *input,
   GrdSession *session = input->session;
 
   g_assert (!touch_context->touch_contact);
-  g_assert (!touch_context->ignore_contact);
 
   if (touch_contact_data->contactFlags == (RDPINPUT_CONTACT_FLAG_DOWN |
                                            RDPINPUT_CONTACT_FLAG_INRANGE |
@@ -288,6 +345,7 @@ handle_touch_state_out_of_range (GrdRdpDvcInput        *input,
 
       touch_context->touch_contact =
         grd_session_acquire_touch_contact (session);
+      touch_context->ignore_contact = FALSE;
 
       if (grd_rdp_layout_manager_transform_position (layout_manager,
                                                      touch_contact_data->x,
@@ -319,10 +377,11 @@ handle_touch_state_out_of_range (GrdRdpDvcInput        *input,
     {
       touch_context->touch_contact =
         grd_session_acquire_touch_contact (session);
+      touch_context->ignore_contact = FALSE;
 
       touch_context->contact_state = CONTACT_STATE_HOVERING;
     }
-  else
+  else if (!touch_context->ignore_contact)
     {
       g_warning ("[RDP.INPUT] Protocol violation: Client sent invalid contact "
                  "flags 0x%08X in state 'Out of Range' for contact %u",
@@ -632,6 +691,9 @@ grd_rdp_dvc_input_dispose (GObject *object)
       input->channel_opened = FALSE;
     }
   grd_rdp_dvc_maybe_unsubscribe_creation_status (dvc);
+
+  g_clear_signal_handler (&input->touch_device_removed_id, input->session);
+  g_clear_signal_handler (&input->touch_device_added_id, input->session);
 
   if (input->event_source)
     {
