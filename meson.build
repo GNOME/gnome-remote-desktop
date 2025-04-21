@@ -6,12 +6,12 @@ project('gnome-remote-desktop', 'c',
 
 cuda_req = '>= 11.1.5.0'
 epoxy_req = '>= 1.4'
-freerdp_req = '>= 3.1.0'
+freerdp_req = '>= 3.15.0'
 fuse_req = '>= 3.9.1'
 polkit_req = '>= 122'
 vulkan_req = '>= 1.2.0'
 xkbcommon_req = '>= 1.0.0'
-libei_req = '>= 1.2.0'
+libei_req = '>= 1.3.901'
 
 gnome = import('gnome')
 i18n  = import('i18n')
