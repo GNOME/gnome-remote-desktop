@@ -100,7 +100,8 @@ typedef struct _GrdSessionPrivate
   struct ei_device *ei_keyboard;
   uint32_t ei_sequence;
   GSource *ei_source;
-  GHashTable *regions;
+
+  GHashTable *abs_pointer_regions;
 
   struct xkb_context *xkb_context;
   struct xkb_keymap *xkb_keymap;
@@ -133,7 +134,7 @@ clear_ei (GrdSession *session)
   g_clear_pointer (&priv->xkb_keymap, xkb_keymap_unref);
   g_clear_pointer (&priv->xkb_context, xkb_context_unref);
 
-  g_clear_pointer (&priv->regions, g_hash_table_unref);
+  g_clear_pointer (&priv->abs_pointer_regions, g_hash_table_unref);
 
   g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
   g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
@@ -626,13 +627,13 @@ grd_session_notify_pointer_axis_discrete (GrdSession    *session,
 
 static gboolean
 transform_position (GrdSession               *session,
+                    GHashTable               *regions,
                     GrdStream                *stream,
                     const GrdEventMotionAbs  *motion_abs,
                     struct ei_device        **ei_device,
                     double                   *x,
                     double                   *y)
 {
-  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdRegion *region;
   double scale_x;
   double scale_y;
@@ -642,7 +643,7 @@ transform_position (GrdSession               *session,
   g_assert (motion_abs->input_rect_width > 0);
   g_assert (motion_abs->input_rect_height > 0);
 
-  region = g_hash_table_lookup (priv->regions, grd_stream_get_mapping_id (stream));
+  region = g_hash_table_lookup (regions, grd_stream_get_mapping_id (stream));
   if (!region)
     return FALSE;
 
@@ -665,12 +666,13 @@ grd_session_notify_pointer_motion_absolute (GrdSession              *session,
                                             GrdStream               *stream,
                                             const GrdEventMotionAbs *motion_abs)
 {
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   struct ei_device *ei_device = NULL;
   double x = 0;
   double y = 0;
 
-  if (!transform_position (session, stream, motion_abs,
-                           &ei_device, &x, &y))
+  if (!transform_position (session, priv->abs_pointer_regions,
+                           stream, motion_abs, &ei_device, &x, &y))
     return;
 
   ei_device_pointer_motion_absolute (ei_device, x, y);
@@ -1219,36 +1221,20 @@ grd_region_free (GrdRegion *region)
   g_free (region);
 }
 
-static gboolean
-should_dispose_region (gpointer key,
-                       gpointer value,
-                       gpointer user_data)
-{
-  struct ei_device *ei_device = user_data;
-  GrdRegion *region = value;
-
-  return region->ei_device == ei_device;
-}
-
 static void
 maybe_dispose_ei_abs_pointer (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
-  if (!priv->ei_abs_pointer)
-    return;
-
-  g_hash_table_foreach_remove (priv->regions,
-                               should_dispose_region,
-                               priv->ei_abs_pointer);
+  g_hash_table_remove_all (priv->abs_pointer_regions);
   g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
 }
 
 static void
 process_regions (GrdSession       *session,
-                 struct ei_device *ei_device)
+                 struct ei_device *ei_device,
+                 GHashTable       *regions)
 {
-  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   size_t i = 0;
   struct ei_region *ei_region;
 
@@ -1272,7 +1258,7 @@ process_regions (GrdSession       *session,
       region = g_new0 (GrdRegion, 1);
       region->ei_device = ei_device_ref (ei_device);
       region->ei_region = ei_region_ref (ei_region);
-      g_hash_table_insert (priv->regions, g_strdup (mapping_id), region);
+      g_hash_table_insert (regions, g_strdup (mapping_id), region);
     }
 }
 
@@ -1335,7 +1321,7 @@ grd_ei_source_dispatch (gpointer user_data)
               {
                 maybe_dispose_ei_abs_pointer (session);
                 priv->ei_abs_pointer = ei_device_ref (device);
-                process_regions (session, device);
+                process_regions (session, device, priv->abs_pointer_regions);
               }
             break;
           }
@@ -1593,7 +1579,7 @@ grd_session_finalize (GObject *object)
     g_assert (g_cancellable_is_cancelled (priv->cancellable));
   g_clear_object (&priv->cancellable);
 
-  g_clear_pointer (&priv->regions, g_hash_table_unref);
+  g_clear_pointer (&priv->abs_pointer_regions, g_hash_table_unref);
 
   g_assert (!priv->xkb_state);
   g_assert (!priv->xkb_keymap);
@@ -1656,9 +1642,10 @@ grd_session_init (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
 
-  priv->regions = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                         g_free,
-                                         (GDestroyNotify) grd_region_free);
+  priv->abs_pointer_regions =
+    g_hash_table_new_full (g_str_hash, g_str_equal,
+                           g_free,
+                           (GDestroyNotify) grd_region_free);
 }
 
 static void
