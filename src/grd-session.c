@@ -624,36 +624,57 @@ grd_session_notify_pointer_axis_discrete (GrdSession    *session,
   ei_device_frame (priv->ei_abs_pointer, g_get_monotonic_time ());
 }
 
-void
-grd_session_notify_pointer_motion_absolute (GrdSession              *session,
-                                            GrdStream               *stream,
-                                            const GrdEventMotionAbs *motion_abs)
+static gboolean
+transform_position (GrdSession               *session,
+                    GrdStream                *stream,
+                    const GrdEventMotionAbs  *motion_abs,
+                    struct ei_device        **ei_device,
+                    double                   *x,
+                    double                   *y)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdRegion *region;
   double scale_x;
   double scale_y;
-  double x;
-  double y;
+  double scaled_x;
+  double scaled_y;
 
   g_assert (motion_abs->input_rect_width > 0);
   g_assert (motion_abs->input_rect_height > 0);
 
   region = g_hash_table_lookup (priv->regions, grd_stream_get_mapping_id (stream));
   if (!region)
-    return;
+    return FALSE;
 
   scale_x = ((double) motion_abs->input_rect_width) /
             ei_region_get_width (region->ei_region);
   scale_y = ((double) motion_abs->input_rect_height) /
             ei_region_get_height (region->ei_region);
-  x = motion_abs->x / scale_x;
-  y = motion_abs->y / scale_y;
+  scaled_x = motion_abs->x / scale_x;
+  scaled_y = motion_abs->y / scale_y;
 
-  ei_device_pointer_motion_absolute (region->ei_device,
-                                     ei_region_get_x (region->ei_region) + x,
-                                     ei_region_get_y (region->ei_region) + y);
-  ei_device_frame (region->ei_device, g_get_monotonic_time ());
+  *ei_device = region->ei_device;
+  *x = ei_region_get_x (region->ei_region) + scaled_x;
+  *y = ei_region_get_y (region->ei_region) + scaled_y;
+
+  return TRUE;
+}
+
+void
+grd_session_notify_pointer_motion_absolute (GrdSession              *session,
+                                            GrdStream               *stream,
+                                            const GrdEventMotionAbs *motion_abs)
+{
+  struct ei_device *ei_device = NULL;
+  double x = 0;
+  double y = 0;
+
+  if (!transform_position (session, stream, motion_abs,
+                           &ei_device, &x, &y))
+    return;
+
+  ei_device_pointer_motion_absolute (ei_device, x, y);
+  ei_device_frame (ei_device, g_get_monotonic_time ());
 }
 
 static GVariant *
