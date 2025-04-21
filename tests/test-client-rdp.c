@@ -17,6 +17,8 @@
  * 02111-1307, USA.
  */
 
+#include "config.h"
+
 #include <freerdp/client/cmdline.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gfx.h>
