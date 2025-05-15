@@ -143,9 +143,10 @@ For more options, run:
 grdctl --help
 ```
 
-3. Enable system remote login service.
+3. Enable system remote login service and GDM.
 
 ```sh
+systemctl enable --now gdm.service
 systemctl enable --now gnome-remote-desktop.service
 ```
 
