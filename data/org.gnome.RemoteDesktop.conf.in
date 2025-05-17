@@ -12,6 +12,8 @@
     <!-- Allow @GRD_USERNAME@ to talk to GDM -->
     <allow send_destination="org.gnome.DisplayManager"
            send_interface="org.gnome.DisplayManager.RemoteDisplayFactory"/>
+    <allow send_destination="org.gnome.DisplayManager"
+           send_interface="org.gnome.DisplayManager.RemoteDisplay"/>
   </policy>
 
   <!-- Anyone can send messages to the interfaces of the service -->

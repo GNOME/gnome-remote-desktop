@@ -84,6 +84,11 @@ struct _GrdDaemonSystem
 G_DEFINE_TYPE (GrdDaemonSystem, grd_daemon_system, GRD_TYPE_DAEMON)
 
 static void
+grd_remote_client_free (GrdRemoteClient *remote_client);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdRemoteClient, grd_remote_client_free)
+
+static void
 on_remote_display_remote_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
                                      GParamSpec              *pspec,
                                      GrdRemoteClient         *remote_client);
@@ -604,6 +609,10 @@ remote_client_new (GrdDaemonSystem *daemon_system,
   remote_client = g_new0 (GrdRemoteClient, 1);
   remote_client->id = get_next_available_id (daemon_system);
   remote_client->daemon_system = daemon_system;
+
+  if (!session)
+    return remote_client;
+
   remote_client->is_client_mstsc = grd_session_rdp_is_client_mstsc (GRD_SESSION_RDP (session));
   remote_client->session = session;
   g_object_weak_ref (G_OBJECT (session),
@@ -943,6 +952,9 @@ on_remote_display_remote_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
       return;
     }
 
+  if (remote_client == new_remote_client)
+    return;
+
   g_debug ("[DaemonSystem] GDM updated a remote display with a new remote id: "
            "%s", remote_id);
 
@@ -989,23 +1001,65 @@ on_gdm_remote_display_session_id_changed (GrdDBusGdmRemoteDisplay *remote_displa
   register_handover_iface (remote_client, session_id);
 }
 
+static GrdRemoteClient *
+remote_client_new_from_display (GrdDaemonSystem         *daemon_system,
+                                GrdDBusGdmRemoteDisplay *remote_display)
+{
+  g_autoptr (GrdRemoteClient) remote_client = NULL;
+  g_autoptr (GError) error = NULL;
+
+  remote_client = remote_client_new (daemon_system, NULL);
+
+  if (!grd_dbus_gdm_remote_display_call_set_remote_id_sync (remote_display,
+                                                            remote_client->id,
+                                                            NULL,
+                                                            &error))
+    {
+      g_warning ("[DaemonSystem] Failed to set remote_id on display: %s",
+                 error->message);
+      return NULL;
+    }
+
+  return g_steal_pointer (&remote_client);
+}
+
+static GrdRemoteClient *
+get_remote_client_from_remote_display (GrdDaemonSystem         *daemon_system,
+                                       GrdDBusGdmRemoteDisplay *remote_display)
+{
+  GrdRemoteClient *remote_client = NULL;
+  g_autoptr (GError) error = NULL;
+  const char *remote_id;
+
+  remote_id = grd_dbus_gdm_remote_display_get_remote_id (remote_display);
+  if (g_hash_table_lookup_extended (daemon_system->remote_clients,
+                                    remote_id, NULL,
+                                    (gpointer *) &remote_client))
+    return remote_client;
+
+  remote_client = remote_client_new_from_display (daemon_system,
+                                                  remote_display);
+  if (!remote_client)
+    return NULL;
+
+  g_hash_table_insert (daemon_system->remote_clients,
+                       remote_client->id,
+                       remote_client);
+
+  return remote_client;
+}
+
 static void
 register_handover_for_display (GrdDaemonSystem         *daemon_system,
                                GrdDBusGdmRemoteDisplay *remote_display)
 {
   GrdRemoteClient *remote_client;
   const char *session_id;
-  const char *remote_id;
 
-  remote_id = grd_dbus_gdm_remote_display_get_remote_id (remote_display);
-  if (!g_hash_table_lookup_extended (daemon_system->remote_clients,
-                                     remote_id, NULL,
-                                     (gpointer *) &remote_client))
-    {
-      g_debug ("[DaemonSystem] GDM added a new remote display with a remote "
-               "id %s we didn't know about", remote_id);
-      return;
-    }
+  remote_client = get_remote_client_from_remote_display (daemon_system,
+                                                         remote_display);
+  if (!remote_client)
+    return;
 
   disconnect_from_remote_display (remote_client);
   remote_client->remote_display = g_object_ref (remote_display);
@@ -1052,7 +1106,12 @@ unregister_handover_for_display (GrdDaemonSystem         *daemon_system,
 
   session_id = grd_dbus_gdm_remote_display_get_session_id (remote_display);
   if (!session_id || g_str_equal (session_id, ""))
-    return;
+    {
+      if (!remote_client->handover_src && !remote_client->handover_dst)
+        g_hash_table_remove (daemon_system->remote_clients, remote_id);
+
+      return;
+    }
 
   object_path = g_strdup_printf ("%s/session%s",
                                  REMOTE_DESKTOP_HANDOVERS_OBJECT_PATH,
