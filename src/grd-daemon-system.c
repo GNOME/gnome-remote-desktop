@@ -970,17 +970,23 @@ on_gdm_remote_display_session_id_changed (GrdDBusGdmRemoteDisplay *remote_displa
 
   session_id = grd_dbus_gdm_remote_display_get_session_id (remote_display);
 
+  g_signal_handlers_disconnect_by_func (remote_display,
+                                        G_CALLBACK (on_gdm_remote_display_session_id_changed),
+                                        remote_client);
+
+  if (!session_id || g_str_equal (session_id, ""))
+    return;
+
   g_debug ("[DaemonSystem] GDM added a new remote display with remote id: %s "
            "and session: %s",
            remote_client->id,
            session_id);
 
-  register_handover_iface (remote_client, session_id);
+  g_signal_connect (remote_display, "notify::remote-id",
+                    G_CALLBACK (on_remote_display_remote_id_changed),
+                    remote_client);
 
-  g_signal_handlers_disconnect_by_func (
-    remote_display,
-    G_CALLBACK (on_gdm_remote_display_session_id_changed),
-    remote_client);
+  register_handover_iface (remote_client, session_id);
 }
 
 static void
@@ -1004,10 +1010,6 @@ register_handover_for_display (GrdDaemonSystem         *daemon_system,
   disconnect_from_remote_display (remote_client);
   remote_client->remote_display = g_object_ref (remote_display);
 
-  g_signal_connect (remote_display, "notify::remote-id",
-                    G_CALLBACK (on_remote_display_remote_id_changed),
-                    remote_client);
-
   session_id = grd_dbus_gdm_remote_display_get_session_id (remote_display);
   if (!session_id || strcmp (session_id, "") == 0)
     {
@@ -1021,6 +1023,10 @@ register_handover_for_display (GrdDaemonSystem         *daemon_system,
            "and session: %s",
            remote_client->id,
            session_id);
+
+  g_signal_connect (remote_display, "notify::remote-id",
+                    G_CALLBACK (on_remote_display_remote_id_changed),
+                    remote_client);
 
   register_handover_iface (remote_client, session_id);
 }
@@ -1045,6 +1051,9 @@ unregister_handover_for_display (GrdDaemonSystem         *daemon_system,
     }
 
   session_id = grd_dbus_gdm_remote_display_get_session_id (remote_display);
+  if (!session_id || g_str_equal (session_id, ""))
+    return;
+
   object_path = g_strdup_printf ("%s/session%s",
                                  REMOTE_DESKTOP_HANDOVERS_OBJECT_PATH,
                                  session_id);
