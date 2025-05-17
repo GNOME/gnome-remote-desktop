@@ -924,28 +924,6 @@ on_remote_display_factory_proxy_acquired (GObject      *object,
 }
 
 static void
-on_gdm_remote_display_session_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
-                                          GParamSpec              *pspec,
-                                          GrdRemoteClient         *remote_client)
-{
-  const char *session_id;
-
-  session_id = grd_dbus_gdm_remote_display_get_session_id (remote_display);
-
-  g_debug ("[DaemonSystem] GDM added a new remote display with remote id: %s "
-           "and session: %s",
-           remote_client->id,
-           session_id);
-
-  register_handover_iface (remote_client, session_id);
-
-  g_signal_handlers_disconnect_by_func (
-    remote_display,
-    G_CALLBACK (on_gdm_remote_display_session_id_changed),
-    remote_client);
-}
-
-static void
 on_remote_display_remote_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
                                      GParamSpec              *pspec,
                                      GrdRemoteClient         *remote_client)
@@ -981,6 +959,28 @@ on_remote_display_remote_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
 
   grd_dbus_remote_desktop_rdp_handover_emit_restart_handover (
     new_remote_client->handover_dst->interface);
+}
+
+static void
+on_gdm_remote_display_session_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
+                                          GParamSpec              *pspec,
+                                          GrdRemoteClient         *remote_client)
+{
+  const char *session_id;
+
+  session_id = grd_dbus_gdm_remote_display_get_session_id (remote_display);
+
+  g_debug ("[DaemonSystem] GDM added a new remote display with remote id: %s "
+           "and session: %s",
+           remote_client->id,
+           session_id);
+
+  register_handover_iface (remote_client, session_id);
+
+  g_signal_handlers_disconnect_by_func (
+    remote_display,
+    G_CALLBACK (on_gdm_remote_display_session_id_changed),
+    remote_client);
 }
 
 static void
