@@ -352,6 +352,7 @@ grd_settings_finalize (GObject *object)
   GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
 
   g_clear_pointer (&priv->rdp.server_cert, g_free);
+  g_clear_pointer (&priv->rdp.server_fingerprint, g_free);
   g_clear_pointer (&priv->rdp.server_key, g_free);
   g_clear_pointer (&priv->rdp.server_cert_path, g_free);
   g_clear_pointer (&priv->rdp.server_key_path, g_free);
