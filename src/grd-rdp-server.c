@@ -491,12 +491,6 @@ grd_rdp_server_dispose (GObject *object)
 }
 
 static void
-grd_rdp_server_constructed (GObject *object)
-{
-  G_OBJECT_CLASS (grd_rdp_server_parent_class)->constructed (object);
-}
-
-static void
 grd_rdp_server_init (GrdRdpServer *rdp_server)
 {
   rdp_server->pending_binding_attempts = RDP_SERVER_N_BINDING_ATTEMPTS;
@@ -518,7 +512,6 @@ grd_rdp_server_class_init (GrdRdpServerClass *klass)
   object_class->set_property = grd_rdp_server_set_property;
   object_class->get_property = grd_rdp_server_get_property;
   object_class->dispose = grd_rdp_server_dispose;
-  object_class->constructed = grd_rdp_server_constructed;
 
   g_object_class_install_property (object_class,
                                    PROP_CONTEXT,
