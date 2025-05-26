@@ -33,13 +33,25 @@ main (int argc, char **argv)
 {
   g_autoptr(GApplication) app = NULL;
   gboolean terminate = FALSE;
+  gboolean headless = FALSE;
+  gboolean system = FALSE;
+  gboolean handover = FALSE;
   GOptionEntry entries[] = {
     { "terminate", 0, 0, G_OPTION_ARG_NONE, &terminate,
       "Terminate the daemon", NULL },
+    { "headless", 0, 0, G_OPTION_ARG_NONE, &headless,
+      "Control headless daemon", NULL },
+#if defined(HAVE_RDP) && defined(HAVE_LIBSYSTEMD)
+    { "system", 0, 0, G_OPTION_ARG_NONE, &system,
+      "Control system daemon", NULL },
+    { "handover", 0, 0, G_OPTION_ARG_NONE, &handover,
+      "Control handover daemon", NULL },
+#endif /* HAVE_RDP && HAVE_LIBSYSTEMD */
     { NULL }
   };
   GError *error = NULL;
   GOptionContext *context;
+  const char *app_id;
 
   context = g_option_context_new ("- control gnome-remote-desktop");
   g_option_context_add_main_entries (context, entries, NULL);
@@ -56,7 +68,16 @@ main (int argc, char **argv)
       return 1;
     }
 
-  app = g_application_new (GRD_DAEMON_USER_APPLICATION_ID, 0);
+  if (headless)
+    app_id = GRD_DAEMON_HEADLESS_APPLICATION_ID;
+  else if (system)
+    app_id = GRD_DAEMON_SYSTEM_APPLICATION_ID;
+  else if (handover)
+    app_id = GRD_DAEMON_HANDOVER_APPLICATION_ID;
+  else
+    app_id = GRD_DAEMON_USER_APPLICATION_ID;
+
+  app = g_application_new (app_id, G_APPLICATION_DEFAULT_FLAGS);
   if (!g_application_register (app, NULL, NULL))
     {
       g_warning ("Failed to register with application\n");
