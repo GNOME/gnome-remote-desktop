@@ -989,7 +989,7 @@ main (int argc, char **argv)
   };
   g_autoptr (GOptionContext) option_context = NULL;
   g_autoptr (GrdDaemon) daemon = NULL;
-  GError *error = NULL;
+  g_autoptr (GError) error = NULL;
   GrdRuntimeMode runtime_mode;
 
   g_set_application_name (_("GNOME Remote Desktop"));
@@ -999,7 +999,6 @@ main (int argc, char **argv)
   if (!g_option_context_parse (option_context, &argc, &argv, &error))
     {
       g_printerr ("Invalid option: %s\n", error->message);
-      g_error_free (error);
       return EXIT_FAILURE;
     }
 
@@ -1048,7 +1047,6 @@ main (int argc, char **argv)
   if (!daemon)
     {
       g_printerr ("Failed to initialize: %s\n", error->message);
-      g_error_free (error);
       return EXIT_FAILURE;
     }
 
