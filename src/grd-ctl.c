@@ -38,6 +38,7 @@
 #include "grd-utils.h"
 
 #define GRD_SYSTEMD_SERVICE "gnome-remote-desktop.service"
+#define GRD_SYSTEMD_HEADLESS_SERVICE "gnome-remote-desktop-headless.service"
 
 typedef enum
 {
@@ -858,14 +859,28 @@ print_service_status (GrdSettings *settings,
   GrdSystemdUnitActiveState active_state;
   g_autofree char *active_state_str = NULL;
   g_autoptr (GDBusProxy) unit_proxy = NULL;
+  const char *unit;
 
-  if (GRD_IS_SETTINGS_SYSTEM (settings))
-      bus_type = G_BUS_TYPE_SYSTEM;
-  else
+  switch (grd_settings_get_runtime_mode (settings))
+    {
+    case GRD_RUNTIME_MODE_HEADLESS:
       bus_type = G_BUS_TYPE_SESSION;
+      unit = GRD_SYSTEMD_HEADLESS_SERVICE;
+      break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      bus_type = G_BUS_TYPE_SYSTEM;
+      unit = GRD_SYSTEMD_SERVICE;
+      break;
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      bus_type = G_BUS_TYPE_SESSION;
+      unit = GRD_SYSTEMD_SERVICE;
+      break;
+    default:
+      g_assert_not_reached ();
+    }
 
   if (!grd_systemd_get_unit (bus_type,
-                             GRD_SYSTEMD_SERVICE,
+                             unit,
                              &unit_proxy,
                              NULL))
     return;
