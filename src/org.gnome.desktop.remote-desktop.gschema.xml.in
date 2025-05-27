@@ -77,6 +77,31 @@
       </description>
     </key>
   </schema>
+  <schema id='org.gnome.desktop.remote-desktop.rdp.headless' path='/org/gnome/desktop/remote-desktop/rdp/headless/'>
+    <key name='port' type='q'>
+      <default>3389</default>
+      <summary>The port used by the RDP server</summary>
+      <description>
+        The RDP client will connect to this port to use this RDP server.
+      </description>
+    </key>
+    <key name='negotiate-port' type='b'>
+      <default>true</default>
+      <summary>Search a different RDP port if the configured one is used</summary>
+      <description>
+        When negotiate-port is set to 'true' the RDP server will attempt to
+        listen to the first available of the next 10 ports starting from the
+        configured one.
+      </description>
+    </key>
+    <key name='enable' type='b'>
+      <default>false</default>
+      <summary>Whether the RDP backend is enabled or not</summary>
+      <description>
+        If set to 'true' the RDP backend will be initialized.
+      </description>
+    </key>
+  </schema>
   <schema id='org.gnome.desktop.remote-desktop.vnc' path='/org/gnome/desktop/remote-desktop/vnc/'>
     <key name='port' type='q'>
       <default>5900</default>
@@ -146,6 +171,31 @@
                     virtual monitor is set to 1920x1080 pixels. Clients can
                     override the initial resolution with subsequent monitor
                     configuration updates.
+      </description>
+    </key>
+  </schema>
+  <schema id='org.gnome.desktop.remote-desktop.vnc.headless' path='/org/gnome/desktop/remote-desktop/vnc/headless/'>
+    <key name='port' type='q'>
+      <default>5900</default>
+      <summary>The port used by the VNC server</summary>
+      <description>
+        The VNC client will connect to this port to use this VNC server.
+      </description>
+    </key>
+    <key name='negotiate-port' type='b'>
+      <default>false</default>
+      <summary>Search a different VNC port if the configured one is used</summary>
+      <description>
+        When negotiate-port is set to 'true' the VNC server will attempt to
+        listen to the first available of the next 10 ports starting from the
+        configured one.
+      </description>
+    </key>
+    <key name='enable' type='b'>
+      <default>false</default>
+      <summary>Whether the VNC backend is enabled or not</summary>
+      <description>
+        If set to 'true' the VNC backend will be initialized.
       </description>
     </key>
   </schema>

@@ -33,6 +33,7 @@
 #include <unistd.h>
 
 #include "grd-enums.h"
+#include "grd-settings-headless.h"
 #include "grd-settings-system.h"
 #include "grd-settings-user.h"
 #include "grd-utils.h"
@@ -682,8 +683,9 @@ create_settings (GrdRuntimeMode runtime_mode)
   switch (runtime_mode)
     {
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      return GRD_SETTINGS (grd_settings_user_new ());
     case GRD_RUNTIME_MODE_HEADLESS:
-      return GRD_SETTINGS (grd_settings_user_new (runtime_mode));
+      return GRD_SETTINGS (grd_settings_headless_new ());
     case GRD_RUNTIME_MODE_SYSTEM:
       return GRD_SETTINGS (grd_settings_system_new ());
     case GRD_RUNTIME_MODE_HANDOVER:
@@ -746,11 +748,10 @@ print_rdp_status (GrdSettings *settings,
   printf ("\tTLS certificate: %s\n", tls_cert);
   printf ("\tTLS fingerprint: %s\n", tls_fingerprint);
   printf ("\tTLS key: %s\n", tls_key);
+  if (!GRD_IS_SETTINGS_SYSTEM (settings) && !GRD_IS_SETTINGS_HEADLESS (settings))
+     printf ("\tView-only: %s\n", view_only ? "yes" : "no");
   if (!GRD_IS_SETTINGS_SYSTEM (settings))
-    {
-      printf ("\tView-only: %s\n", view_only ? "yes" : "no");
-      printf ("\tNegotiate port: %s\n", negotiate_port ? "yes" : "no");
-    }
+    printf ("\tNegotiate port: %s\n", negotiate_port ? "yes" : "no");
 
   grd_settings_get_rdp_credentials (settings,
                                     &username, &password,
@@ -809,11 +810,15 @@ print_vnc_status (GrdSettings *settings,
   printf ("\tStatus: %s\n", status_to_string (enabled, use_colors));
 
   printf ("\tPort: %d\n", port);
-  if (auth_method == GRD_VNC_AUTH_METHOD_PROMPT)
-    printf ("\tAuth method: prompt\n");
-  else if (auth_method == GRD_VNC_AUTH_METHOD_PASSWORD)
-    printf ("\tAuth method: password\n");
-  printf ("\tView-only: %s\n", view_only ? "yes" : "no");
+  if (!GRD_IS_SETTINGS_HEADLESS (settings))
+    {
+      if (auth_method == GRD_VNC_AUTH_METHOD_PROMPT)
+        printf ("\tAuth method: prompt\n");
+      else if (auth_method == GRD_VNC_AUTH_METHOD_PASSWORD)
+        printf ("\tAuth method: password\n");
+    }
+  if (!GRD_IS_SETTINGS_HEADLESS (settings))
+    printf ("\tView-only: %s\n", view_only ? "yes" : "no");
   printf ("\tNegotiate port: %s\n", negotiate_port ? "yes" : "no");
   if (show_credentials)
     {

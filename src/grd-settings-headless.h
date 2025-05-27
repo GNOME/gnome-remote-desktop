@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Red Hat Inc.
+ * Copyright (C) 2025 Red Hat Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -18,15 +18,15 @@
  *
  */
 
-#ifndef GRD_SETTINGS_USER_H
-#define GRD_SETTINGS_USER_H
+#ifndef GRD_SETTINGS_HEADLESS_H
+#define GRD_SETTINGS_HEADLESS_H
 
 #include "grd-settings.h"
 
-#define GRD_TYPE_SETTINGS_USER (grd_settings_user_get_type ())
-G_DECLARE_FINAL_TYPE (GrdSettingsUser, grd_settings_user,
-                      GRD, SETTINGS_USER, GrdSettings)
+#define GRD_TYPE_SETTINGS_HEADLESS (grd_settings_headless_get_type ())
+G_DECLARE_FINAL_TYPE (GrdSettingsHeadless, grd_settings_headless,
+                      GRD, SETTINGS_HEADLESS, GrdSettings)
 
-GrdSettingsUser *grd_settings_user_new (void);
+GrdSettingsHeadless *grd_settings_headless_new (void);
 
-#endif /* GRD_SETTINGS_USER_H */
+#endif /* GRD_SETTINGS_HEADLESS_H */
