@@ -8,5 +8,9 @@ polkit.addRule(function(action, subject) {
       subject.user === "@GRD_USERNAME@")
     return polkit.Result.YES;
 
+  if (action.id === "org.gnome.remotedesktop.configure-system-daemon" &&
+      subject.user === "@GRD_USERNAME@")
+    return polkit.Result.YES;
+
   return polkit.Result.NOT_HANDLED;
 });
