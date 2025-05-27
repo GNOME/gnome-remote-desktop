@@ -341,7 +341,7 @@ grd_toggle_systemd_unit (gboolean   enabled,
 
   g_strv_builder_add (builder,
                       GRD_LIBEXEC_DIR "/gnome-remote-desktop-enable-service");
-  pid = g_strdup_printf ("%d", getppid ());
+  pid = g_strdup_printf ("%d", getpid ());
   g_strv_builder_add (builder, pid);
   if (enabled)
     g_strv_builder_add (builder, "true");
