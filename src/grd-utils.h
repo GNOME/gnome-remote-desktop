@@ -23,6 +23,8 @@
 #include <gio/gio.h>
 #include <stdint.h>
 
+#include "grd-enums.h"
+
 typedef enum
 {
   GRD_SYSTEMD_UNIT_ACTIVE_STATE_UNKNOWN = 0,
@@ -86,8 +88,9 @@ gboolean grd_test_fd (int         fd,
                       GFileTest  *test_results,
                       GError    **error);
 
-gboolean grd_toggle_systemd_unit (gboolean   enabled,
-                                  GError   **error);
+gboolean grd_toggle_systemd_unit (GrdRuntimeMode   runtime_mode,
+                                  gboolean         enabled,
+                                  GError         **error);
 
 gboolean grd_systemd_get_unit (GBusType     bus_type,
                                const char  *unit,

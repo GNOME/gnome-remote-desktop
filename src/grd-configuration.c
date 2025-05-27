@@ -191,7 +191,7 @@ on_handle_enable (GrdDBusRemoteDesktopConfigurationRdpServer *configuration_rdp_
 {
   g_autoptr (GError) error = NULL;
 
-  if (!grd_toggle_systemd_unit (TRUE, &error))
+  if (!grd_toggle_systemd_unit (GRD_RUNTIME_MODE_SYSTEM, TRUE, &error))
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_FAILED,
@@ -217,7 +217,7 @@ on_handle_disable (GrdDBusRemoteDesktopConfigurationRdpServer *configuration_rdp
 {
   g_autoptr (GError) error = NULL;
 
-  if (!grd_toggle_systemd_unit (FALSE, &error))
+  if (!grd_toggle_systemd_unit (GRD_RUNTIME_MODE_SYSTEM, FALSE, &error))
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_FAILED,

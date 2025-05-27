@@ -326,28 +326,44 @@ grd_test_fd (int         fd,
 }
 
 gboolean
-grd_toggle_systemd_unit (gboolean   enabled,
-                         GError   **error)
+grd_toggle_systemd_unit (GrdRuntimeMode   runtime_mode,
+                         gboolean         enabled,
+                         GError         **error)
 {
-
   g_autoptr (GStrvBuilder) builder = NULL;
   g_autofree char *error_output = NULL;
   g_auto (GStrv) new_argv = NULL;
   g_autofree char *pid = NULL;
+  const char *type;
   int wait_status;
   gboolean success;
 
+  switch (runtime_mode)
+    {
+    case GRD_RUNTIME_MODE_HEADLESS:
+      type = "headless";
+      break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      type = "system";
+      break;
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      type = "user";
+      break;
+    default:
+      g_assert_not_reached ();
+    }
+
   builder = g_strv_builder_new ();
 
-  g_strv_builder_add (builder, "pkexec");
+  if (runtime_mode == GRD_RUNTIME_MODE_SYSTEM)
+    g_strv_builder_add (builder, "pkexec");
+
   g_strv_builder_add (builder,
                       GRD_LIBEXEC_DIR "/gnome-remote-desktop-enable-service");
   pid = g_strdup_printf ("%d", getpid ());
   g_strv_builder_add (builder, pid);
-  if (enabled)
-    g_strv_builder_add (builder, "true");
-  else
-    g_strv_builder_add (builder, "false");
+  g_strv_builder_add (builder, type);
+  g_strv_builder_add (builder, enabled ? "true" : "false");
 
   new_argv = g_strv_builder_end (builder);
 
@@ -368,9 +384,9 @@ grd_toggle_systemd_unit (gboolean   enabled,
   if (!WIFEXITED (wait_status) || WEXITSTATUS (wait_status) != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Could not %s system service:\n%s",
+                   "Could not %s %s service:\n%s",
                    enabled? "enable" : "disable",
-                   error_output);
+                   type, error_output);
       return FALSE;
     }
 

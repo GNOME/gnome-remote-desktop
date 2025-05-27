@@ -226,11 +226,10 @@ rdp_enable (GrdSettings  *settings,
             char        **argv,
             GError      **error)
 {
-  if (GRD_IS_SETTINGS_SYSTEM (settings))
-    {
-      if (!grd_toggle_systemd_unit (TRUE, error))
-        return FALSE;
-    }
+  GrdRuntimeMode runtime_mode = grd_settings_get_runtime_mode (settings);
+
+  if (!grd_toggle_systemd_unit (runtime_mode, TRUE, error))
+    return FALSE;
 
   g_object_set (G_OBJECT (settings), "rdp-enabled", TRUE, NULL);
 
@@ -243,13 +242,14 @@ rdp_disable (GrdSettings  *settings,
              char        **argv,
              GError      **error)
 {
-  if (GRD_IS_SETTINGS_SYSTEM (settings))
-    {
-      if (!grd_toggle_systemd_unit (FALSE, error))
-        return FALSE;
-    }
+  GrdRuntimeMode runtime_mode = grd_settings_get_runtime_mode (settings);
+  gboolean vnc_enabled;
 
   g_object_set (G_OBJECT (settings), "rdp-enabled", FALSE, NULL);
+
+  g_object_get (G_OBJECT (settings), "vnc-enabled", &vnc_enabled, NULL);
+  if (!vnc_enabled)
+    return grd_toggle_systemd_unit (runtime_mode, FALSE, error);
 
   return TRUE;
 }
@@ -432,6 +432,11 @@ vnc_enable (GrdSettings  *settings,
             char        **argv,
             GError      **error)
 {
+  GrdRuntimeMode runtime_mode = grd_settings_get_runtime_mode (settings);
+
+  if (!grd_toggle_systemd_unit (runtime_mode, TRUE, error))
+    return FALSE;
+
   g_object_set (G_OBJECT (settings), "vnc-enabled", TRUE, NULL);
   return TRUE;
 }
@@ -442,7 +447,15 @@ vnc_disable (GrdSettings  *settings,
              char        **argv,
              GError      **error)
 {
+  GrdRuntimeMode runtime_mode = grd_settings_get_runtime_mode (settings);
+  gboolean rdp_enabled;
+
   g_object_set (G_OBJECT (settings), "vnc-enabled", FALSE, NULL);
+
+  g_object_get (G_OBJECT (settings), "rdp-enabled", &rdp_enabled, NULL);
+  if (!rdp_enabled)
+    return grd_toggle_systemd_unit (runtime_mode, FALSE, error);
+
   return TRUE;
 }
 

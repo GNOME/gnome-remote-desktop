@@ -9,8 +9,27 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
+#include "grd-enums.h"
+
 #define GRD_SYSTEMD_SERVICE "gnome-remote-desktop.service"
+#define GRD_SYSTEMD_HEADLESS_SERVICE "gnome-remote-desktop-headless.service"
 #define GRD_POLKIT_ACTION "org.gnome.remotedesktop.configure-system-daemon"
+
+static gboolean
+get_runtime_mode (const char     *argv,
+                  GrdRuntimeMode *runtime_mode)
+{
+  if (g_str_equal (argv, "user"))
+    *runtime_mode = GRD_RUNTIME_MODE_SCREEN_SHARE;
+  else if (g_str_equal (argv, "headless"))
+    *runtime_mode = GRD_RUNTIME_MODE_HEADLESS;
+  else if (g_str_equal (argv, "system"))
+    *runtime_mode = GRD_RUNTIME_MODE_SYSTEM;
+  else
+    return FALSE;
+
+  return TRUE;
+}
 
 static gboolean
 check_polkit_permission (const char  *action_id,
@@ -39,17 +58,65 @@ check_polkit_permission (const char  *action_id,
 }
 
 static gboolean
-enable_systemd_unit (GError **error)
+validate_caller (int64_t pid)
+{
+  g_autoptr (GError) error = NULL;
+
+  if (geteuid () != 0)
+    {
+      g_printerr ("Enabling system service is not meant to be done directly by users.\n");
+      return FALSE;
+    }
+
+  if (!check_polkit_permission (GRD_POLKIT_ACTION, (pid_t) pid, &error))
+    {
+      g_printerr ("Authorization failed for " GRD_POLKIT_ACTION ": %s\n",
+                  error->message);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static void
+get_systemd_unit_info (GrdRuntimeMode   runtime_mode,
+                       GBusType        *bus_type,
+                       const char     **unit)
+{
+  switch (runtime_mode)
+    {
+    case GRD_RUNTIME_MODE_HEADLESS:
+      *bus_type = G_BUS_TYPE_SESSION;
+      *unit = GRD_SYSTEMD_HEADLESS_SERVICE;
+      break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      *bus_type = G_BUS_TYPE_SYSTEM;
+      *unit = GRD_SYSTEMD_SERVICE;
+      break;
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      *bus_type = G_BUS_TYPE_SESSION;
+      *unit = GRD_SYSTEMD_SERVICE;
+      break;
+    default:
+      g_assert_not_reached ();
+    }
+}
+
+static gboolean
+enable_systemd_unit (GrdRuntimeMode   runtime_mode,
+                     GError         **error)
 {
   g_autoptr (GDBusConnection) connection = NULL;
   g_autoptr (GVariant) reply = NULL;
+  GBusType bus_type;
   const char *unit;
 
-  connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, error);
+  get_systemd_unit_info (runtime_mode, &bus_type, &unit);
+
+  connection = g_bus_get_sync (bus_type, NULL, error);
   if (!connection)
     return FALSE;
 
-  unit = GRD_SYSTEMD_SERVICE;
   reply = g_dbus_connection_call_sync (connection,
                                        "org.freedesktop.systemd1",
                                        "/org/freedesktop/systemd1",
@@ -82,17 +149,20 @@ enable_systemd_unit (GError **error)
 }
 
 static gboolean
-disable_systemd_unit (GError **error)
+disable_systemd_unit (GrdRuntimeMode   runtime_mode,
+                      GError         **error)
 {
   g_autoptr (GDBusConnection) connection = NULL;
   g_autoptr (GVariant) reply = NULL;
+  GBusType bus_type;
   const char *unit;
 
-  connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, error);
+  get_systemd_unit_info (runtime_mode, &bus_type, &unit);
+
+  connection = g_bus_get_sync (bus_type, NULL, error);
   if (!connection)
     return FALSE;
 
-  unit = GRD_SYSTEMD_SERVICE;
   reply = g_dbus_connection_call_sync (connection,
                                        "org.freedesktop.systemd1",
                                        "/org/freedesktop/systemd1",
@@ -127,7 +197,7 @@ disable_systemd_unit (GError **error)
 static void
 print_usage (void)
 {
-  g_printerr ("Usage: %s pid <true|false>\n", g_get_prgname ());
+  g_printerr ("Usage: %s pid <user|headless|system> <true|false>\n", g_get_prgname ());
 }
 
 int
@@ -135,13 +205,14 @@ main (int   argc,
       char *argv[])
 {
   g_autoptr (GError) error = NULL;
+  GrdRuntimeMode runtime_mode;
   gboolean success;
   gboolean enable;
   int64_t pid;
 
   g_set_prgname (argv[0]);
 
-  if (argc != 3)
+  if (argc != 4)
     {
       print_usage ();
       return EXIT_FAILURE;
@@ -154,33 +225,34 @@ main (int   argc,
       return EXIT_FAILURE;
     }
 
-  enable = g_strcmp0 (argv[2], "true") == 0;
-  if (!enable && g_strcmp0 (argv[2], "false") != 0)
+  success = get_runtime_mode (argv[2], &runtime_mode);
+  if (!success)
     {
       print_usage ();
       return EXIT_FAILURE;
     }
 
-  if (geteuid () != 0)
+  enable = g_strcmp0 (argv[3], "true") == 0;
+  if (!enable && g_strcmp0 (argv[3], "false") != 0)
     {
-      g_printerr ("This program is not meant to be run directly by users.\n");
+      print_usage ();
       return EXIT_FAILURE;
     }
 
-  if (!check_polkit_permission (GRD_POLKIT_ACTION, (pid_t) pid, &error))
+  if (runtime_mode == GRD_RUNTIME_MODE_SYSTEM)
     {
-      g_printerr ("Authorization failed for " GRD_POLKIT_ACTION ": %s\n",
-                  error->message);
-      return EXIT_FAILURE;
+      success = validate_caller (pid);
+      if (!success)
+        return EXIT_FAILURE;
     }
 
   if (enable)
-    success = enable_systemd_unit (&error);
+    success = enable_systemd_unit (runtime_mode, &error);
   else
-    success = disable_systemd_unit (&error);
+    success = disable_systemd_unit (runtime_mode, &error);
   if (!success)
     {
-      g_printerr ("Failed to %s " GRD_SYSTEMD_SERVICE ": %s\n",
+      g_printerr ("Failed to %s service: %s\n",
                   enable ? "enable" : "disable", error->message);
       return EXIT_FAILURE;
     }
