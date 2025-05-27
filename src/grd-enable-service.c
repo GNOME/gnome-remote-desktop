@@ -1,6 +1,5 @@
 #include <config.h>
 
-#include <errno.h>
 #include <gio/gio.h>
 #include <limits.h>
 #include <polkit/polkit.h>
@@ -131,26 +130,6 @@ print_usage (void)
   g_printerr ("Usage: %s pid <true|false>\n", g_get_prgname ());
 }
 
-static gboolean
-get_uid_of_username (const char *username,
-                     uid_t      *uid)
-{
-  struct passwd *passwd_entry;
-
-  do
-    {
-      errno = 0;
-      passwd_entry = getpwnam (username);
-    }
-  while (!passwd_entry && errno == EINTR);
-
-  if (!passwd_entry)
-    return FALSE;
-
-  *uid = passwd_entry->pw_uid;
-  return TRUE;
-}
-
 int
 main (int   argc,
       char *argv[])
@@ -158,7 +137,6 @@ main (int   argc,
   g_autoptr (GError) error = NULL;
   gboolean success;
   gboolean enable;
-  uid_t grd_uid;
   int64_t pid;
 
   g_set_prgname (argv[0]);
@@ -183,14 +161,7 @@ main (int   argc,
       return EXIT_FAILURE;
     }
 
-  success = get_uid_of_username (GRD_USERNAME, &grd_uid);
-  if (!success)
-    {
-      g_printerr ("Could not look up UID of account " GRD_USERNAME ": %m.\n");
-      return EXIT_FAILURE;
-    }
-
-  if (geteuid () != grd_uid)
+  if (geteuid () != 0)
     {
       g_printerr ("This program is not meant to be run directly by users.\n");
       return EXIT_FAILURE;

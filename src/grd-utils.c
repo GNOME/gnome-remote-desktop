@@ -339,6 +339,7 @@ grd_toggle_systemd_unit (gboolean   enabled,
 
   builder = g_strv_builder_new ();
 
+  g_strv_builder_add (builder, "pkexec");
   g_strv_builder_add (builder,
                       GRD_LIBEXEC_DIR "/gnome-remote-desktop-enable-service");
   pid = g_strdup_printf ("%d", getpid ());
