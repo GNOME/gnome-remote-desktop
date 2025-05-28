@@ -32,6 +32,7 @@
 #include "grd-hwaccel-vulkan.h"
 #include "grd-rdp-routing-token.h"
 #include "grd-session-rdp.h"
+#include "grd-throttler.h"
 #include "grd-utils.h"
 
 #define RDP_SERVER_N_BINDING_ATTEMPTS 10
@@ -59,6 +60,8 @@ static guint signals[N_SIGNALS];
 struct _GrdRdpServer
 {
   GSocketService parent;
+
+  GrdThrottler *throttler;
 
   GList *sessions;
 
@@ -216,18 +219,17 @@ on_routing_token_peeked (GObject      *source_object,
     }
 }
 
-static gboolean
-on_incoming_as_system_headless (GSocketService    *service,
-                                GSocketConnection *connection)
+static void
+allow_connection_peek_cb (GrdThrottler      *throttler,
+                          GSocketConnection *connection,
+                          gpointer           user_data)
 {
-  GrdRdpServer *rdp_server = GRD_RDP_SERVER (service);
+  GrdRdpServer *rdp_server = GRD_RDP_SERVER (user_data);
 
   grd_routing_token_peek_async (rdp_server,
                                 connection,
                                 rdp_server->cancellable,
                                 on_routing_token_peeked);
-
-  return TRUE;
 }
 
 static gboolean
@@ -235,12 +237,22 @@ on_incoming (GSocketService    *service,
              GSocketConnection *connection)
 {
   GrdRdpServer *rdp_server = GRD_RDP_SERVER (service);
+
+  grd_throttler_handle_connection (rdp_server->throttler,
+                                   connection);
+  return TRUE;
+}
+
+static void
+accept_connection (GrdRdpServer      *rdp_server,
+                   GSocketConnection *connection)
+{
   GrdSessionRdp *session_rdp;
 
-  g_debug ("New incoming RDP connection");
+  g_debug ("Creating new RDP session");
 
   if (!(session_rdp = grd_session_rdp_new (rdp_server, connection)))
-    return TRUE;
+    return;
 
   rdp_server->sessions = g_list_append (rdp_server->sessions, session_rdp);
 
@@ -251,15 +263,35 @@ on_incoming (GSocketService    *service,
   g_signal_connect (session_rdp, "post-connected",
                     G_CALLBACK (on_session_post_connect),
                     rdp_server);
+}
 
-  return TRUE;
+static void
+allow_connection_accept_cb (GrdThrottler      *throttler,
+                            GSocketConnection *connection,
+                            gpointer           user_data)
+{
+  GrdRdpServer *rdp_server = GRD_RDP_SERVER (user_data);
+
+  accept_connection (rdp_server, connection);
 }
 
 void
 grd_rdp_server_notify_incoming (GSocketService    *service,
                                 GSocketConnection *connection)
 {
-  on_incoming (service, connection);
+  GrdRdpServer *rdp_server = GRD_RDP_SERVER (service);
+  GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (rdp_server->context);
+
+  switch (runtime_mode)
+    {
+    case GRD_RUNTIME_MODE_HANDOVER:
+      accept_connection (rdp_server, connection);
+      break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+    case GRD_RUNTIME_MODE_HEADLESS:
+      g_assert_not_reached ();
+    }
 }
 
 static gboolean
@@ -386,16 +418,13 @@ grd_rdp_server_start (GrdRdpServer  *rdp_server,
 
   switch (runtime_mode)
     {
+    case GRD_RUNTIME_MODE_SYSTEM:
+      g_assert (!rdp_server->cancellable);
+      rdp_server->cancellable = g_cancellable_new ();
+      G_GNUC_FALLTHROUGH;
     case GRD_RUNTIME_MODE_SCREEN_SHARE:
     case GRD_RUNTIME_MODE_HEADLESS:
       g_signal_connect (rdp_server, "incoming", G_CALLBACK (on_incoming), NULL);
-      break;
-    case GRD_RUNTIME_MODE_SYSTEM:
-      g_signal_connect (rdp_server, "incoming",
-                        G_CALLBACK (on_incoming_as_system_headless), NULL);
-
-      g_assert (!rdp_server->cancellable);
-      rdp_server->cancellable = g_cancellable_new ();
       break;
     case GRD_RUNTIME_MODE_HANDOVER:
       break;
@@ -427,6 +456,8 @@ grd_rdp_server_stop (GrdRdpServer *rdp_server)
 
   g_clear_handle_id (&rdp_server->cleanup_sessions_idle_id, g_source_remove);
   grd_rdp_server_cleanup_stopped_sessions (rdp_server);
+
+  g_clear_object (&rdp_server->throttler);
 
   if (rdp_server->cancellable)
     {
@@ -487,6 +518,7 @@ grd_rdp_server_dispose (GObject *object)
   g_assert (!rdp_server->binding_timeout_source_id);
   g_assert (!rdp_server->cleanup_sessions_idle_id);
   g_assert (!rdp_server->stopped_sessions);
+  g_assert (!rdp_server->throttler);
 
   g_assert (!rdp_server->hwaccel_nvidia);
   g_assert (!rdp_server->hwaccel_vulkan);
@@ -495,8 +527,32 @@ grd_rdp_server_dispose (GObject *object)
 }
 
 static void
-grd_rdp_server_init (GrdRdpServer *rdp_server)
+grd_rdp_server_constructed (GObject *object)
 {
+  GrdRdpServer *rdp_server = GRD_RDP_SERVER (object);
+  GrdRuntimeMode runtime_mode =
+    grd_context_get_runtime_mode (rdp_server->context);
+  GrdThrottlerAllowCallback allow_callback = NULL;
+
+  switch (runtime_mode)
+    {
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+    case GRD_RUNTIME_MODE_HEADLESS:
+      allow_callback = allow_connection_accept_cb;
+      break;
+    case GRD_RUNTIME_MODE_SYSTEM:
+      allow_callback = allow_connection_peek_cb;
+      break;
+    case GRD_RUNTIME_MODE_HANDOVER:
+      break;
+    }
+
+  if (allow_callback)
+    {
+      rdp_server->throttler = grd_throttler_new (allow_callback,
+                                                 rdp_server);
+    }
+
   rdp_server->pending_binding_attempts = RDP_SERVER_N_BINDING_ATTEMPTS;
 
   winpr_InitializeSSL (WINPR_SSL_INIT_DEFAULT);
@@ -506,6 +562,13 @@ grd_rdp_server_init (GrdRdpServer *rdp_server)
    * Run the primitives benchmark here to save time, when initializing a session
    */
   primitives_get ();
+
+  G_OBJECT_CLASS (grd_rdp_server_parent_class)->constructed (object);
+}
+
+static void
+grd_rdp_server_init (GrdRdpServer *rdp_server)
+{
 }
 
 static void
@@ -516,6 +579,7 @@ grd_rdp_server_class_init (GrdRdpServerClass *klass)
   object_class->set_property = grd_rdp_server_set_property;
   object_class->get_property = grd_rdp_server_get_property;
   object_class->dispose = grd_rdp_server_dispose;
+  object_class->constructed = grd_rdp_server_constructed;
 
   g_object_class_install_property (object_class,
                                    PROP_CONTEXT,

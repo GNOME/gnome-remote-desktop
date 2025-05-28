@@ -35,6 +35,7 @@
 #include "grd-rdp-server.h"
 #include "grd-session-rdp.h"
 #include "grd-settings.h"
+#include "grd-utils.h"
 
 #define MAX_HANDOVER_WAIT_TIME_MS (30 * 1000)
 
@@ -148,6 +149,7 @@ on_handle_take_client (GrdDBusRemoteDesktopRdpHandover *interface,
                                                              fd_list,
                                                              fd_variant);
 
+  grd_close_connection_and_notify (remote_client->socket_connection);
   g_clear_object (&remote_client->socket_connection);
   g_clear_handle_id (&remote_client->abort_handover_source_id, g_source_remove);
 
@@ -524,6 +526,8 @@ static void
 grd_remote_client_free (GrdRemoteClient *remote_client)
 {
   g_clear_pointer (&remote_client->id, g_free);
+  if (remote_client->socket_connection)
+    grd_close_connection_and_notify (remote_client->socket_connection);
   g_clear_object (&remote_client->socket_connection);
   unregister_handover_iface (remote_client, remote_client->handover_src);
   unregister_handover_iface (remote_client, remote_client->handover_dst);
