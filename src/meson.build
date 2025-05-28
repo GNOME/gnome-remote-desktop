@@ -74,6 +74,8 @@ daemon_sources = files([
   'grd-settings-user.h',
   'grd-stream.c',
   'grd-stream.h',
+  'grd-throttler.c',
+  'grd-throttler.h',
   'grd-types.h',
   'grd-utils.c',
   'grd-utils.h',
