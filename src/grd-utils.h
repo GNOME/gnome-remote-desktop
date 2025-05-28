@@ -99,3 +99,21 @@ gboolean grd_systemd_get_unit (GBusType     bus_type,
 gboolean grd_systemd_unit_get_active_state (GDBusProxy                 *unit_proxy,
                                             GrdSystemdUnitActiveState  *active_state,
                                             GError                    **error);
+
+static inline int64_t
+us (int64_t us)
+{
+  return us;
+}
+
+static inline int64_t
+ms2us (int64_t ms)
+{
+  return us (ms * 1000);
+}
+
+static inline int64_t
+s2us (uint64_t s)
+{
+  return ms2us (s * 1000);
+}
