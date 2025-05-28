@@ -36,6 +36,7 @@
 
 #define RDP_SERVER_N_BINDING_ATTEMPTS 10
 #define RDP_SERVER_BINDING_ATTEMPT_INTERVAL_MS 500
+#define RDP_SERVER_SOCKET_BACKLOG_COUNT 5
 
 enum
 {
@@ -319,6 +320,9 @@ bind_socket (GrdRdpServer  *rdp_server,
   int rdp_port = 0;
   uint16_t selected_rdp_port = 0;
   gboolean negotiate_port;
+
+  g_socket_listener_set_backlog (G_SOCKET_LISTENER (rdp_server),
+                                 RDP_SERVER_SOCKET_BACKLOG_COUNT);
 
   g_object_get (G_OBJECT (settings),
                 "rdp-port", &rdp_port,
