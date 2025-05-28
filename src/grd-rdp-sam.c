@@ -72,11 +72,12 @@ grd_rdp_sam_create_sam_file (const char *username,
 {
   const char *grd_path = "/gnome-remote-desktop";
   const char *template = "/rdp-sam-XXXXXX";
+  int duped_fd;
   GrdRdpSAMFile *rdp_sam_file;
   g_autofree char *file_dir = NULL;
   g_autofree char *filename = NULL;
   g_autofree char *sam_string = NULL;
-  int fd;
+  g_autofd int fd = -1;
   FILE *sam_file;
 
   file_dir = g_strdup_printf ("%s%s", g_get_user_runtime_dir (), grd_path);
@@ -98,19 +99,28 @@ grd_rdp_sam_create_sam_file (const char *username,
       return NULL;
     }
 
-  rdp_sam_file = g_new0 (GrdRdpSAMFile, 1);
-  rdp_sam_file->fd = fd;
-  rdp_sam_file->filename = g_steal_pointer (&filename);
-
-  sam_string = create_sam_string (username, password);
-
-  sam_file = fdopen (rdp_sam_file->fd, "w+");
+  sam_file = fdopen (fd, "w+");
   if (!sam_file)
     {
       g_warning ("[RDP] Failed to open SAM database: %s", g_strerror (errno));
-      grd_rdp_sam_free_sam_file (rdp_sam_file);
       return NULL;
     }
+
+  duped_fd = dup (fd);
+  if (duped_fd < 0)
+    {
+      fclose (sam_file);
+      g_warning ("[RDP] Failed to dup fd: %s", g_strerror (errno));
+      return NULL;
+    }
+
+  rdp_sam_file = g_new0 (GrdRdpSAMFile, 1);
+  rdp_sam_file->fd = duped_fd;
+  rdp_sam_file->filename = g_steal_pointer (&filename);
+
+  g_steal_fd (&fd);
+
+  sam_string = create_sam_string (username, password);
 
   fputs (sam_string, sam_file);
   fclose (sam_file);
