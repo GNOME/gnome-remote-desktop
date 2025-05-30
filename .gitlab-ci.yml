@@ -2,6 +2,9 @@ include:
   - project: 'Infrastructure/freedesktop-ci-templates'
     file: 'templates/fedora.yml'
     ref: '145b1bc7ef1702d2bd71584010d7113c6786a506'
+  - project: 'Infrastructure/freedesktop-ci-templates'
+    file: 'templates/ci-fairy.yml'
+    ref: '34f4ade99434043f88e164933f570301fd18b125'
   - component: gitlab.gnome.org/GNOME/citemplates/release-service@master
     inputs:
       job-stage: deploy
@@ -9,6 +12,7 @@ include:
       tarball-artifact-path: $TARBALL_ARTIFACT_PATH
 
 stages:
+  - review
   - prepare
   - build
   - test
@@ -20,6 +24,13 @@ variables:
 .skip-git-clone:
   variables:
     GIT_STRATEGY: none
+
+.only-merge-requests:
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^$/'
+      when: never
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+      when: on_success
 
 .gnome-remote-desktop.fedora@common:
   variables:
@@ -93,6 +104,62 @@ workflow:
       when: never
     - if: '$CI_COMMIT_BRANCH'
     - if: '$CI_COMMIT_TAG'
+
+repo-sanity:
+  extends:
+    - .fdo.ci-fairy
+  stage: review
+  variables:
+    GIT_DEPTH: "1"
+  script:
+    - >
+      if [[ -z "$CI_REGISTRY_IMAGE" ]] ;
+      then
+        .gitlab-ci/simple-junit-report.sh check-junit-report.xml \
+          repo-sanity "The container registry should be enabled in the project general settings panel at $CI_PROJECT_URL/edit" ;
+        exit 1 ;
+      fi
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - check-junit-report.xml
+    reports:
+      junit: check-junit-report.xml
+  rules:
+    - !reference [.only-merge-requests, rules]
+
+check-commit-log:
+  extends:
+    - .fdo.ci-fairy
+  stage: review
+  variables:
+    GIT_DEPTH: "100"
+  script:
+    ci-fairy check-commits --junit-xml=commit-message-junit-report.xml
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - commit-message-junit-report.xml
+    reports:
+      junit: commit-message-junit-report.xml
+  rules:
+    - !reference [.only-merge-requests, rules]
+
+check-merge-request:
+  extends:
+    - .fdo.ci-fairy
+    - .skip-git-clone
+  stage: review
+  script:
+    ci-fairy check-merge-request --require-allow-collaboration --junit-xml=check-merge-request-report.xml
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - check-merge-request-report.xml
+    reports:
+      junit: check-merge-request-report.xml
+  rules:
+    - !reference [.only-merge-requests, rules]
 
 build-fedora-container@x86_64:
   extends:
