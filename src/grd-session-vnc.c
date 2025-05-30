@@ -34,6 +34,7 @@
 #include "grd-prompt.h"
 #include "grd-settings.h"
 #include "grd-stream.h"
+#include "grd-utils.h"
 #include "grd-vnc-server.h"
 #include "grd-vnc-pipewire-stream.h"
 
@@ -827,6 +828,7 @@ grd_session_vnc_stop (GrdSession *session)
 
   grd_session_vnc_detach_source (session_vnc);
 
+  grd_close_connection_and_notify (session_vnc->connection);
   g_clear_object (&session_vnc->connection);
   g_clear_object (&session_vnc->clipboard_vnc);
   g_clear_pointer (&session_vnc->rfb_screen->frameBuffer, g_free);
