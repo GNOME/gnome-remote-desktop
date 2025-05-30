@@ -549,7 +549,8 @@ grd_rdp_server_constructed (GObject *object)
 
   if (allow_callback)
     {
-      rdp_server->throttler = grd_throttler_new (allow_callback,
+      rdp_server->throttler = grd_throttler_new (grd_throttler_limits_new (),
+                                                 allow_callback,
                                                  rdp_server);
     }
 

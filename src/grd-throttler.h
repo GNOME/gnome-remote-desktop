@@ -23,6 +23,8 @@
 #include <gio/gio.h>
 #include <glib-object.h>
 
+typedef struct _GrdThrottlerLimits GrdThrottlerLimits;
+
 #define GRD_TYPE_THROTTLER (grd_throttler_get_type())
 G_DECLARE_FINAL_TYPE (GrdThrottler, grd_throttler, GRD, THROTTLER, GObject)
 
@@ -34,8 +36,16 @@ void
 grd_throttler_handle_connection (GrdThrottler      *throttler,
                                  GSocketConnection *connection);
 
+void
+grd_throttler_limits_set_max_global_connections (GrdThrottlerLimits *limits,
+                                                 int                 limit);
+
+GrdThrottlerLimits *
+grd_throttler_limits_new (void);
+
 GrdThrottler *
-grd_throttler_new (GrdThrottlerAllowCallback allow_callback,
-                   gpointer                  user_data);
+grd_throttler_new (GrdThrottlerLimits        *limits,
+                   GrdThrottlerAllowCallback  allow_callback,
+                   gpointer                   user_data);
 
 #endif /* GRD_THROTTLER_H */
