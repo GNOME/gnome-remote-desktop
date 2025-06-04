@@ -83,6 +83,9 @@ struct _GrdDaemonSystem
 
 G_DEFINE_TYPE (GrdDaemonSystem, grd_daemon_system, GRD_TYPE_DAEMON)
 
+typedef void (*ForeachRemoteDisplayCallback) (GrdDaemonSystem         *daemon_system,
+                                              GrdDBusGdmRemoteDisplay *remote_display);
+
 static void
 grd_remote_client_free (GrdRemoteClient *remote_client);
 
@@ -989,7 +992,7 @@ on_gdm_remote_display_session_id_changed (GrdDBusGdmRemoteDisplay *remote_displa
   if (!session_id || g_str_equal (session_id, ""))
     return;
 
-  g_debug ("[DaemonSystem] GDM added a new remote display with remote id: %s "
+  g_debug ("[DaemonSystem] Found a new remote display with remote id: %s "
            "and session: %s",
            remote_client->id,
            session_id);
@@ -1073,7 +1076,7 @@ register_handover_for_display (GrdDaemonSystem         *daemon_system,
       return;
     }
 
-  g_debug ("[DaemonSystem] GDM added a new remote display with remote id: %s "
+  g_debug ("[DaemonSystem] Found a new remote display with remote id: %s "
            "and session: %s",
            remote_client->id,
            session_id);
@@ -1099,8 +1102,8 @@ unregister_handover_for_display (GrdDaemonSystem         *daemon_system,
                                      remote_id, NULL,
                                      (gpointer *) &remote_client))
     {
-      g_debug ("[DaemonSystem] GDM removed a remote display with remote id "
-               "%s we didn't know about", remote_id);
+      g_debug ("[DaemonSystem] Tried to unregister handover for a remote "
+               "display with remote id %s we didn't know about", remote_id);
       return;
     }
 
@@ -1117,8 +1120,8 @@ unregister_handover_for_display (GrdDaemonSystem         *daemon_system,
                                  REMOTE_DESKTOP_HANDOVERS_OBJECT_PATH,
                                  session_id);
 
-  g_debug ("[DaemonSystem] GDM removed a remote display with remote id: %s "
-           "and session: %s", remote_client->id, session_id);
+  g_debug ("[DaemonSystem] Unregistering handover for remote display with "
+           "remote id: %s and session: %s", remote_client->id, session_id);
 
   if (remote_client->handover_src)
     {
@@ -1146,6 +1149,26 @@ on_gdm_object_remote_display_interface_changed (GrdDaemonSystem  *daemon_system,
   remote_display = grd_dbus_gdm_object_peek_remote_display (object);
   if (remote_display)
     register_handover_for_display (daemon_system, remote_display);
+}
+
+static void
+foreach_remote_display (GrdDaemonSystem              *daemon_system,
+                        ForeachRemoteDisplayCallback  callback)
+{
+  GList *objects, *l;
+
+  objects = g_dbus_object_manager_get_objects (daemon_system->display_objects);
+  for (l = objects; l; l = l->next)
+    {
+      GrdDBusGdmObject *object = l->data;
+      GrdDBusGdmRemoteDisplay *remote_display;
+
+      remote_display = grd_dbus_gdm_object_peek_remote_display (object);
+      if (remote_display)
+        callback (daemon_system, remote_display);
+    }
+
+  g_list_free_full (objects, g_object_unref);
 }
 
 static void
@@ -1218,6 +1241,8 @@ on_gdm_object_manager_client_acquired (GObject      *source_object,
                  error->message);
       return;
     }
+
+  foreach_remote_display (daemon_system, register_handover_for_display);
 
   g_signal_connect_object (daemon_system->display_objects,
                            "object-added",
