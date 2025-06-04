@@ -664,14 +664,10 @@ on_gnome_remote_desktop_name_vanished (GDBusConnection *connection,
                                        const char      *name,
                                        gpointer         user_data)
 {
-  GrdDaemonHandover *daemon_handover = user_data;
+  g_warning ("[DaemonHandover] %s name vanished", name);
 
-  g_warning ("[DaemonHandover] %s name vanished, shutting down daemon",
-             REMOTE_DESKTOP_BUS_NAME);
-
-  g_application_release (G_APPLICATION (daemon_handover));
-
-  grd_session_manager_call_logout_sync ();
+  if (grd_is_remote_login ())
+    grd_session_manager_call_logout_sync ();
 }
 
 GrdDaemonHandover *
