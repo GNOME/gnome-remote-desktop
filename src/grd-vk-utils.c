@@ -135,6 +135,27 @@ grd_vk_clear_sampler (GrdVkDevice *device,
   *vk_sampler = VK_NULL_HANDLE;
 }
 
+gboolean
+grd_vk_get_vk_format_from_drm_format (uint32_t   drm_format,
+                                      VkFormat  *vk_format,
+                                      GError   **error)
+{
+  *vk_format = VK_FORMAT_UNDEFINED;
+
+  switch (drm_format)
+    {
+    case DRM_FORMAT_ARGB8888:
+    case DRM_FORMAT_XRGB8888:
+      *vk_format = VK_FORMAT_B8G8R8A8_UNORM;
+      return TRUE;
+    }
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+               "No VkFormat available for DRM format 0x%08X", drm_format);
+
+  return FALSE;
+}
+
 GrdVkImage *
 grd_vk_dma_buf_image_new (GrdVkDevice        *vk_device,
                           VkFormat            vk_format,
