@@ -419,6 +419,9 @@ check_device_extensions (VkPhysicalDevice vk_physical_device)
                                VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME))
     return FALSE;
   if (!check_device_extension (properties, n_properties,
+                               VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME))
+    return FALSE;
+  if (!check_device_extension (properties, n_properties,
                                VK_KHR_ZERO_INITIALIZE_WORKGROUP_MEMORY_EXTENSION_NAME))
     return FALSE;
   if (!check_device_extension (properties, n_properties,
