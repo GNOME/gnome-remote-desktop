@@ -390,7 +390,7 @@ grd_vk_device_new (VkPhysicalDevice          vk_physical_device,
   VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures zero_init_features = {};
   VkDeviceQueueCreateInfo device_queue_create_info = {};
   float queue_priorities[MAX_DEVICE_QUEUES] = {};
-  const char *extensions[6] = {};
+  const char *extensions[7] = {};
   uint32_t n_extensions = 0;
   VkResult vk_result;
   uint32_t i;
@@ -414,6 +414,7 @@ grd_vk_device_new (VkPhysicalDevice          vk_physical_device,
   extensions[n_extensions++] = VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME;
   extensions[n_extensions++] = VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME;
   extensions[n_extensions++] = VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME;
+  extensions[n_extensions++] = VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME;
   extensions[n_extensions++] = VK_KHR_ZERO_INITIALIZE_WORKGROUP_MEMORY_EXTENSION_NAME;
   extensions[n_extensions++] = VK_EXT_PHYSICAL_DEVICE_DRM_EXTENSION_NAME;
 
