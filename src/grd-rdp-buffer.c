@@ -73,27 +73,6 @@ grd_rdp_buffer_mark_for_removal (GrdRdpBuffer *rdp_buffer)
 }
 
 static gboolean
-get_vk_format_from_drm_format (uint32_t   drm_format,
-                               VkFormat  *vk_format,
-                               GError   **error)
-{
-  *vk_format = VK_FORMAT_UNDEFINED;
-
-  switch (drm_format)
-    {
-    case DRM_FORMAT_ARGB8888:
-    case DRM_FORMAT_XRGB8888:
-      *vk_format = VK_FORMAT_B8G8R8A8_UNORM;
-      return TRUE;
-    }
-
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-               "No VkFormat available for DRM format 0x%08X", drm_format);
-
-  return FALSE;
-}
-
-static gboolean
 import_dma_buf_image (GrdRdpBuffer      *rdp_buffer,
                       GrdRdpPwBuffer    *rdp_pw_buffer,
                       GrdRdpBufferInfo  *rdp_buffer_info,
@@ -107,8 +86,8 @@ import_dma_buf_image (GrdRdpBuffer      *rdp_buffer,
     grd_rdp_pw_buffer_get_dma_buf_info (rdp_pw_buffer);
   VkFormat vk_format = VK_FORMAT_UNDEFINED;
 
-  if (!get_vk_format_from_drm_format (rdp_buffer_info->drm_format, &vk_format,
-                                      error))
+  if (!grd_vk_get_vk_format_from_drm_format (rdp_buffer_info->drm_format,
+                                             &vk_format, error))
     return FALSE;
 
   rdp_buffer->dma_buf_image =
