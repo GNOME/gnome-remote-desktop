@@ -36,6 +36,8 @@ struct _GrdHwAccelVulkan
 {
   GObject parent;
 
+  GrdEglThread *egl_thread;
+
   VkInstance vk_instance;
 
   /* VK_EXT_debug_utils */
@@ -54,6 +56,136 @@ struct _GrdHwAccelVulkan
 };
 
 G_DEFINE_TYPE (GrdHwAccelVulkan, grd_hwaccel_vulkan, G_TYPE_OBJECT)
+
+static gboolean
+list_contains_drm_format_modifier (uint64_t *modifiers,
+                                   int       n_modifiers,
+                                   uint64_t  modifier)
+{
+  int i;
+
+  for (i = 0; i < n_modifiers; ++i)
+    {
+      if (modifiers[i] == modifier)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static GArray *
+get_egl_vulkan_format_modifier_intersection (GrdHwAccelVulkan       *hwaccel_vulkan,
+                                             VkPhysicalDevice        vk_physical_device,
+                                             uint32_t                drm_format,
+                                             uint32_t               *required_n_planes,
+                                             VkFormatFeatureFlags2  *required_features,
+                                             GError                **error)
+{
+  GrdEglThread *egl_thread = hwaccel_vulkan->egl_thread;
+  VkFormatProperties2 format_properties_2 = {};
+  VkDrmFormatModifierPropertiesList2EXT modifier_properties_list2 = {};
+  g_autofree VkDrmFormatModifierProperties2EXT *modifier_properties_2 = NULL;
+  VkFormat vk_format = VK_FORMAT_UNDEFINED;
+  g_autofree uint64_t *egl_modifiers = NULL;
+  int n_egl_modifiers;
+  GArray *vk_modifiers;
+  uint32_t i;
+
+  if (!grd_vk_get_vk_format_from_drm_format (drm_format, &vk_format, error))
+    return NULL;
+
+  format_properties_2.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
+  modifier_properties_list2.sType =
+    VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT;
+
+  grd_vk_append_to_chain (&format_properties_2, &modifier_properties_list2);
+
+  vkGetPhysicalDeviceFormatProperties2 (vk_physical_device, vk_format,
+                                        &format_properties_2);
+
+  if (modifier_properties_list2.drmFormatModifierCount == 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "No DRM format modifiers available for DRM format %u",
+                   drm_format);
+      return NULL;
+    }
+
+  modifier_properties_2 =
+    g_new0 (VkDrmFormatModifierProperties2EXT,
+            modifier_properties_list2.drmFormatModifierCount);
+
+  modifier_properties_list2.pDrmFormatModifierProperties = modifier_properties_2;
+  vkGetPhysicalDeviceFormatProperties2 (vk_physical_device, vk_format,
+                                        &format_properties_2);
+
+  if (!grd_egl_thread_get_modifiers_for_format (egl_thread, drm_format,
+                                                &n_egl_modifiers,
+                                                &egl_modifiers))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "No DRM format modifiers available for DRM format %u from "
+                   "EGL", drm_format);
+      return NULL;
+    }
+
+  vk_modifiers = g_array_new (FALSE, FALSE, sizeof (uint64_t));
+
+  for (i = 0; i < modifier_properties_list2.drmFormatModifierCount; i++)
+    {
+      uint64_t modifier = modifier_properties_2[i].drmFormatModifier;
+      uint32_t n_planes = modifier_properties_2[i].drmFormatModifierPlaneCount;
+      VkFormatFeatureFlags2 tiling_features =
+        modifier_properties_2[i].drmFormatModifierTilingFeatures;
+
+      if (required_n_planes &&
+          n_planes != *required_n_planes)
+        continue;
+      if (required_features &&
+          (tiling_features & *required_features) != *required_features)
+        continue;
+      if (!list_contains_drm_format_modifier (egl_modifiers, n_egl_modifiers,
+                                              modifier))
+        continue;
+
+      g_array_append_vals (vk_modifiers, &modifier, 1);
+    }
+
+  if (vk_modifiers->len == 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "No common DRM format modifiers available for DRM format %u "
+                   "from EGL and Vulkan", drm_format);
+      g_array_free (vk_modifiers, TRUE);
+      return NULL;
+    }
+
+  return vk_modifiers;
+}
+
+gboolean
+grd_hwaccel_vulkan_get_modifiers_for_format (GrdHwAccelVulkan  *hwaccel_vulkan,
+                                             uint32_t           drm_format,
+                                             int               *out_n_modifiers,
+                                             uint64_t         **out_modifiers)
+{
+  VkPhysicalDevice vk_physical_device = hwaccel_vulkan->vk_physical_device;
+  GArray *modifiers;
+  g_autoptr (GError) error = NULL;
+
+  modifiers =
+    get_egl_vulkan_format_modifier_intersection (hwaccel_vulkan,
+                                                 vk_physical_device,
+                                                 drm_format,
+                                                 NULL, NULL, &error);
+  if (!modifiers)
+    return FALSE;
+
+  *out_n_modifiers = modifiers->len;
+  *out_modifiers = (uint64_t *) g_array_free (modifiers, FALSE);
+
+  return TRUE;
+}
 
 GrdVkDevice *
 grd_hwaccel_vulkan_acquire_device (GrdHwAccelVulkan  *hwaccel_vulkan,
@@ -593,9 +725,9 @@ find_and_check_physical_device (GrdHwAccelVulkan        *hwaccel_vulkan,
 
 static gboolean
 find_vulkan_device_from_egl_thread (GrdHwAccelVulkan  *hwaccel_vulkan,
-                                    GrdEglThread      *egl_thread,
                                     GError           **error)
 {
+  GrdEglThread *egl_thread = hwaccel_vulkan->egl_thread;
   g_autofree VkPhysicalDevice *physical_devices = NULL;
   uint32_t n_physical_devices = 0;
   const char *drm_render_node;
@@ -665,11 +797,12 @@ grd_hwaccel_vulkan_new (GrdEglThread  *egl_thread,
   g_autoptr (GrdHwAccelVulkan) hwaccel_vulkan = NULL;
 
   hwaccel_vulkan = g_object_new (GRD_TYPE_HWACCEL_VULKAN, NULL);
+  hwaccel_vulkan->egl_thread = egl_thread;
 
   if (!create_vk_instance (hwaccel_vulkan, error))
     return NULL;
 
-  if (!find_vulkan_device_from_egl_thread (hwaccel_vulkan, egl_thread, error))
+  if (!find_vulkan_device_from_egl_thread (hwaccel_vulkan, error))
     return NULL;
 
   return g_steal_pointer (&hwaccel_vulkan);

@@ -43,6 +43,11 @@ struct _GrdVkSPIRVSources
 GrdHwAccelVulkan *grd_hwaccel_vulkan_new (GrdEglThread  *egl_thread,
                                           GError       **error);
 
+gboolean grd_hwaccel_vulkan_get_modifiers_for_format (GrdHwAccelVulkan  *hwaccel_vulkan,
+                                                      uint32_t           drm_format,
+                                                      int               *out_n_modifiers,
+                                                      uint64_t         **out_modifiers);
+
 GrdVkDevice *grd_hwaccel_vulkan_acquire_device (GrdHwAccelVulkan  *hwaccel_vulkan,
                                                 GError           **error);
 
