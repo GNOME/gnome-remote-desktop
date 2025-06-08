@@ -70,6 +70,7 @@ struct _GrdRdpLayoutManager
   GrdSessionRdp *session_rdp;
   GrdRdpRenderer *renderer;
   GrdRdpCursorRenderer *cursor_renderer;
+  GrdHwAccelVulkan *hwaccel_vulkan;
   GrdHwAccelNvidia *hwaccel_nvidia;
   rdpContext *rdp_context;
 
@@ -456,6 +457,7 @@ on_stream_ready (GrdStream           *stream,
   surface_context->pipewire_stream =
     grd_rdp_pipewire_stream_new (layout_manager->session_rdp,
                                  layout_manager->cursor_renderer,
+                                 layout_manager->hwaccel_vulkan,
                                  layout_manager->hwaccel_nvidia,
                                  surface_context->rdp_surface,
                                  surface_context->virtual_monitor,
@@ -597,6 +599,7 @@ on_inhibition_done (GrdRdpRenderer      *renderer,
 GrdRdpLayoutManager *
 grd_rdp_layout_manager_new (GrdSessionRdp    *session_rdp,
                             GrdRdpRenderer   *renderer,
+                            GrdHwAccelVulkan *hwaccel_vulkan,
                             GrdHwAccelNvidia *hwaccel_nvidia)
 {
   GrdRdpLayoutManager *layout_manager;
@@ -604,6 +607,7 @@ grd_rdp_layout_manager_new (GrdSessionRdp    *session_rdp,
   layout_manager = g_object_new (GRD_TYPE_RDP_LAYOUT_MANAGER, NULL);
   layout_manager->session_rdp = session_rdp;
   layout_manager->renderer = renderer;
+  layout_manager->hwaccel_vulkan = hwaccel_vulkan;
   layout_manager->hwaccel_nvidia = hwaccel_nvidia;
 
   layout_manager->inhibition_done_id =

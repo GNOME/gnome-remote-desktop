@@ -32,6 +32,7 @@ G_DECLARE_FINAL_TYPE (GrdRdpLayoutManager, grd_rdp_layout_manager,
 
 GrdRdpLayoutManager *grd_rdp_layout_manager_new (GrdSessionRdp    *session_rdp,
                                                  GrdRdpRenderer   *renderer,
+                                                 GrdHwAccelVulkan *hwaccel_vulkan,
                                                  GrdHwAccelNvidia *hwaccel_nvidia);
 
 void grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager  *layout_manager,
