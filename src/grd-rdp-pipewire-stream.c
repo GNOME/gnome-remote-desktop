@@ -30,6 +30,7 @@
 
 #include "grd-context.h"
 #include "grd-egl-thread.h"
+#include "grd-hwaccel-vulkan.h"
 #include "grd-pipewire-utils.h"
 #include "grd-rdp-buffer-pool.h"
 #include "grd-rdp-cursor-renderer.h"
@@ -94,6 +95,7 @@ struct _GrdRdpPipeWireStream
 
   GrdSessionRdp *session_rdp;
   GrdRdpCursorRenderer *cursor_renderer;
+  GrdHwAccelVulkan *hwaccel_vulkan;
   GrdRdpSurface *rdp_surface;
   GrdEglThreadSlot egl_slot;
 
@@ -254,6 +256,32 @@ add_common_format_params (struct spa_pod_builder     *pod_builder,
                                                       &max_framerate), 0);
 }
 
+static gboolean
+get_modifiers_for_format (GrdRdpPipeWireStream  *stream,
+                          uint32_t               drm_format,
+                          int                   *out_n_modifiers,
+                          uint64_t             **out_modifiers)
+{
+  GrdHwAccelVulkan *hwaccel_vulkan = stream->hwaccel_vulkan;
+  GrdSession *session = GRD_SESSION (stream->session_rdp);
+  GrdContext *context = grd_session_get_context (session);
+  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
+
+  g_assert (egl_thread);
+
+  if (hwaccel_vulkan)
+    {
+      return grd_hwaccel_vulkan_get_modifiers_for_format (hwaccel_vulkan,
+                                                          drm_format,
+                                                          out_n_modifiers,
+                                                          out_modifiers);
+    }
+
+  return grd_egl_thread_get_modifiers_for_format (egl_thread, drm_format,
+                                                  out_n_modifiers,
+                                                  out_modifiers);
+}
+
 static uint32_t
 add_format_params (GrdRdpPipeWireStream        *stream,
                    const GrdRdpVirtualMonitor  *virtual_monitor,
@@ -288,9 +316,8 @@ add_format_params (GrdRdpPipeWireStream        *stream,
       g_autofree uint64_t *modifiers = NULL;
 
       grd_get_spa_format_details (spa_format, &drm_format, NULL);
-      if (grd_egl_thread_get_modifiers_for_format (egl_thread, drm_format,
-                                                   &n_modifiers,
-                                                   &modifiers))
+      if (get_modifiers_for_format (stream, drm_format,
+                                    &n_modifiers, &modifiers))
         {
           struct spa_pod_frame modifier_frame;
           int i;
@@ -1005,6 +1032,7 @@ static const struct pw_registry_events registry_events =
 GrdRdpPipeWireStream *
 grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
                              GrdRdpCursorRenderer        *cursor_renderer,
+                             GrdHwAccelVulkan            *hwaccel_vulkan,
                              GrdHwAccelNvidia            *hwaccel_nvidia,
                              GrdRdpSurface               *rdp_surface,
                              const GrdRdpVirtualMonitor  *virtual_monitor,
@@ -1020,6 +1048,7 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
   stream = g_object_new (GRD_TYPE_RDP_PIPEWIRE_STREAM, NULL);
   stream->session_rdp = session_rdp;
   stream->cursor_renderer = cursor_renderer;
+  stream->hwaccel_vulkan = hwaccel_vulkan;
   stream->rdp_surface = rdp_surface;
   stream->src_node_id = src_node_id;
 

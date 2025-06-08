@@ -1537,6 +1537,7 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   session_rdp->layout_manager =
     grd_rdp_layout_manager_new (session_rdp,
                                 session_rdp->renderer,
+                                hwaccel_vulkan,
                                 hwaccel_nvidia);
 
   if (!init_rdp_session (session_rdp, username, password, &error))
