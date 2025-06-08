@@ -21,6 +21,7 @@
 
 #include "grd-hwaccel-vulkan.h"
 
+#include <drm_fourcc.h>
 #include <gio/gio.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
@@ -610,6 +611,43 @@ has_queue_family_with_bitmask (VkPhysicalDevice vk_physical_device,
 }
 
 static gboolean
+supports_bgrx_dma_buf_images (GrdHwAccelVulkan  *hwaccel_vulkan,
+                              VkPhysicalDevice   vk_physical_device,
+                              GError           **error)
+{
+  uint32_t drm_format;
+  uint32_t required_n_planes;
+  VkFormatFeatureFlags2 required_features;
+  GArray *modifier_array;
+  uint64_t *modifiers;
+  uint32_t i;
+
+  drm_format = DRM_FORMAT_XRGB8888;
+  required_n_planes = 1;
+  required_features = VK_FORMAT_FEATURE_2_SAMPLED_IMAGE_BIT;
+
+  modifier_array =
+    get_egl_vulkan_format_modifier_intersection (hwaccel_vulkan,
+                                                 vk_physical_device,
+                                                 drm_format,
+                                                 &required_n_planes,
+                                                 &required_features,
+                                                 error);
+  if (!modifier_array)
+    return FALSE;
+
+  modifiers = (uint64_t *) modifier_array->data;
+  for (i = 0; i < modifier_array->len; ++i)
+    {
+      g_debug ("[HWAccel.Vulkan] Found DRM format modifier %lu for DRM "
+               "format %u", modifiers[i], drm_format);
+    }
+  g_array_free (modifier_array, TRUE);
+
+  return TRUE;
+}
+
+static gboolean
 check_physical_device (GrdHwAccelVulkan *hwaccel_vulkan,
                        VkPhysicalDevice  vk_physical_device,
                        int64_t           render_major_egl,
@@ -690,6 +728,13 @@ check_physical_device (GrdHwAccelVulkan *hwaccel_vulkan,
     {
       g_debug ("[HWAccel.Vulkan] Skipping device. Missing device queue family "
                "with (VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT) bitmask");
+      return FALSE;
+    }
+
+  if (!supports_bgrx_dma_buf_images (hwaccel_vulkan, vk_physical_device,
+                                     &error))
+    {
+      g_debug ("[HWAccel.Vulkan] Skipping device: %s", error->message);
       return FALSE;
     }
 
