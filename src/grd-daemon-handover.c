@@ -92,6 +92,9 @@ on_take_client_finished (GObject      *object,
   if (!grd_dbus_remote_desktop_rdp_handover_call_take_client_finish (
          proxy, &fd_variant, &fd_list, result, &error))
     {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
       g_warning ("[DaemonHandover] An error occurred while calling "
                  "TakeClient: %s", error->message);
       return;
@@ -153,6 +156,9 @@ on_get_system_credentials_finished (GObject      *object,
          result,
          &error))
     {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
       g_warning ("[DaemonHandover] Failed to get system credentials: %s",
                  error->message);
       return;
@@ -240,6 +246,9 @@ on_start_handover_finished (GObject      *object,
   if (!grd_dbus_remote_desktop_rdp_handover_call_start_handover_finish (
          proxy, &certificate, &key, result, &error))
     {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
       g_warning ("[DaemonHandover] Failed to start handover: %s",
                  error->message);
       return;
@@ -531,6 +540,9 @@ on_remote_desktop_rdp_handover_proxy_acquired (GObject      *object,
                                                                    &error);
   if (!proxy)
     {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
       g_warning ("[DaemonHandover] Failed to create remote desktop handover "
                  "proxy: %s", error->message);
       return;
@@ -568,6 +580,9 @@ on_remote_desktop_rdp_dispatcher_handover_requested (GObject      *object,
       &error);
   if (!success)
     {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
       g_warning ("[DaemonHandover] Failed to request remote desktop "
                  "handover: %s", error->message);
       return;
@@ -603,6 +618,9 @@ on_remote_desktop_rdp_dispatcher_proxy_acquired (GObject      *object,
     grd_dbus_remote_desktop_rdp_dispatcher_proxy_new_finish (result, &error);
   if (!proxy)
     {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
       g_warning ("[DaemonHandover] Failed to create remote desktop "
                  "dispatcher proxy: %s", error->message);
       return;
@@ -708,6 +726,9 @@ static void
 grd_daemon_handover_shutdown (GApplication *app)
 {
   GrdDaemonHandover *daemon_handover = GRD_DAEMON_HANDOVER (app);
+  GrdDaemon *daemon = GRD_DAEMON (daemon_handover);
+
+  g_cancellable_cancel (grd_daemon_get_cancellable (daemon));
 
   g_clear_object (&daemon_handover->remote_desktop_handover);
   g_clear_object (&daemon_handover->remote_desktop_dispatcher);
