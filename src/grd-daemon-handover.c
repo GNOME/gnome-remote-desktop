@@ -77,7 +77,6 @@ on_take_client_finished (GObject      *object,
                          GAsyncResult *result,
                          gpointer      user_data)
 {
-  GrdDaemonHandover *daemon_handover = user_data;
   int fd;
   int fd_idx = -1;
   g_autoptr (GError) error = NULL;
@@ -85,8 +84,9 @@ on_take_client_finished (GObject      *object,
   g_autoptr (GVariant) fd_variant = NULL;
   g_autoptr (GUnixFDList) fd_list = NULL;
   GrdDBusRemoteDesktopRdpHandover *proxy;
-  GSocketConnection *socket_connection;
+  GrdDaemonHandover *daemon_handover;
   GrdRdpServer *rdp_server;
+  GSocketConnection *socket_connection;
 
   proxy = GRD_DBUS_REMOTE_DESKTOP_RDP_HANDOVER (object);
   if (!grd_dbus_remote_desktop_rdp_handover_call_take_client_finish (
@@ -122,9 +122,10 @@ on_take_client_finished (GObject      *object,
       return;
     }
 
+  daemon_handover = GRD_DAEMON_HANDOVER (user_data);
+  rdp_server = grd_daemon_get_rdp_server (GRD_DAEMON (daemon_handover));
   socket_connection = g_socket_connection_factory_create_connection (socket);
 
-  rdp_server = grd_daemon_get_rdp_server (GRD_DAEMON (daemon_handover));
   grd_rdp_server_notify_incoming (G_SOCKET_SERVICE (rdp_server),
                                   socket_connection);
 }
@@ -134,18 +135,19 @@ on_get_system_credentials_finished (GObject      *object,
                                     GAsyncResult *result,
                                     gpointer      user_data)
 {
-  GrdDaemonHandover *daemon_handover = user_data;
-  GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_handover));
-  GrdSettings *settings = grd_context_get_settings (context);
-  GCancellable *cancellable =
-    grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
+  GrdDBusRemoteDesktopRdpHandover *remote_desktop_handover;
   g_autoptr (GError) error = NULL;
   g_autofree char *username = NULL;
   g_autofree char *password = NULL;
+  GrdDaemonHandover *daemon_handover;
+  GrdContext *context;
+  GrdSettings *settings;
+  GCancellable *cancellable;
   const char* object_path;
 
+  remote_desktop_handover = GRD_DBUS_REMOTE_DESKTOP_RDP_HANDOVER (object);
   if (!grd_dbus_remote_desktop_rdp_handover_call_get_system_credentials_finish (
-         daemon_handover->remote_desktop_handover,
+         remote_desktop_handover,
          &username,
          &password,
          result,
@@ -156,6 +158,10 @@ on_get_system_credentials_finished (GObject      *object,
       return;
     }
 
+  daemon_handover = GRD_DAEMON_HANDOVER (user_data);
+  context = grd_daemon_get_context (GRD_DAEMON (daemon_handover));
+  settings = grd_context_get_settings (context);
+
   if (!grd_settings_set_rdp_credentials (settings, username, password, &error))
     {
       g_warning ("[DaemonHanodver] Failed to overwrite credentials: %s",
@@ -163,13 +169,14 @@ on_get_system_credentials_finished (GObject      *object,
       return;
     }
 
-  object_path = g_dbus_proxy_get_object_path (
-                  G_DBUS_PROXY (daemon_handover->remote_desktop_handover));
+  object_path =
+    g_dbus_proxy_get_object_path (G_DBUS_PROXY (remote_desktop_handover));
 
   g_debug ("[DaemonHandover] At: %s, calling TakeClient", object_path);
 
+  cancellable = grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
   grd_dbus_remote_desktop_rdp_handover_call_take_client (
-    daemon_handover->remote_desktop_handover,
+    remote_desktop_handover,
     NULL,
     cancellable,
     on_take_client_finished,
@@ -221,13 +228,13 @@ on_start_handover_finished (GObject      *object,
                             GAsyncResult *result,
                             gpointer      user_data)
 {
-  GrdDaemonHandover *daemon_handover = user_data;
-  GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_handover));
-  GrdSettings *settings = grd_context_get_settings (context);
   GrdDBusRemoteDesktopRdpHandover *proxy;
   g_autofree char *certificate = NULL;
   g_autofree char *key = NULL;
   g_autoptr (GError) error = NULL;
+  GrdDaemonHandover *daemon_handover;
+  GrdContext *context;
+  GrdSettings *settings;
 
   proxy = GRD_DBUS_REMOTE_DESKTOP_RDP_HANDOVER (object);
   if (!grd_dbus_remote_desktop_rdp_handover_call_start_handover_finish (
@@ -237,6 +244,10 @@ on_start_handover_finished (GObject      *object,
                  error->message);
       return;
     }
+
+  daemon_handover = GRD_DAEMON_HANDOVER (user_data);
+  context = grd_daemon_get_context (GRD_DAEMON (daemon_handover));
+  settings = grd_context_get_settings (context);
 
   g_object_set (G_OBJECT (settings),
                 "rdp-server-cert", certificate,
@@ -313,23 +324,27 @@ prompt_response_callback (GObject      *source_object,
                           GAsyncResult *async_result,
                           gpointer      user_data)
 {
-  GrdDaemonHandover *daemon_handover = GRD_DAEMON_HANDOVER (user_data);
+  GrdDaemonHandover *daemon_handover;
   g_autoptr (GError) error = NULL;
   GrdPromptResponse response;
 
-  if (!grd_prompt_query_finish (daemon_handover->prompt,
+  if (!grd_prompt_query_finish (GRD_PROMPT (source_object),
                                 async_result,
                                 &response,
                                 &error))
     {
       if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
         {
+          daemon_handover = GRD_DAEMON_HANDOVER (user_data);
+
           g_warning ("Failed to query user about session: %s", error->message);
           grd_session_stop (daemon_handover->session);
         }
 
       return;
     }
+
+  daemon_handover = GRD_DAEMON_HANDOVER (user_data);
 
   switch (response)
     {
@@ -507,7 +522,7 @@ on_remote_desktop_rdp_handover_proxy_acquired (GObject      *object,
                                                GAsyncResult *result,
                                                gpointer      user_data)
 {
-  GrdDaemonHandover *daemon_handover = user_data;
+  GrdDaemonHandover *daemon_handover;
   g_autoptr (GrdDBusRemoteDesktopRdpHandover) proxy = NULL;
   g_autoptr (GError) error = NULL;
 
@@ -521,6 +536,7 @@ on_remote_desktop_rdp_handover_proxy_acquired (GObject      *object,
       return;
     }
 
+  daemon_handover = GRD_DAEMON_HANDOVER (user_data);
   daemon_handover->remote_desktop_handover = g_steal_pointer (&proxy);
 
   g_signal_connect (daemon_handover->remote_desktop_handover, "redirect-client",
@@ -536,16 +552,17 @@ on_remote_desktop_rdp_dispatcher_handover_requested (GObject      *object,
                                                      GAsyncResult *result,
                                                      gpointer      user_data)
 {
-  GrdDaemonHandover *daemon_handover = user_data;
-  GCancellable *cancellable =
-    grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
+  GrdDBusRemoteDesktopRdpDispatcher *remote_desktop_dispatcher;
   g_autofree char *object_path = NULL;
   g_autoptr (GError) error = NULL;
+  GrdDaemonHandover *daemon_handover;
+  GCancellable *cancellable;
   gboolean success;
 
+  remote_desktop_dispatcher = GRD_DBUS_REMOTE_DESKTOP_RDP_DISPATCHER (object);
   success =
     grd_dbus_remote_desktop_rdp_dispatcher_call_request_handover_finish (
-      daemon_handover->remote_desktop_dispatcher,
+      remote_desktop_dispatcher,
       &object_path,
       result,
       &error);
@@ -558,6 +575,9 @@ on_remote_desktop_rdp_dispatcher_handover_requested (GObject      *object,
 
   g_debug ("[DaemonHandover] Using: %s, from dispatcher request",
            object_path);
+
+  daemon_handover = GRD_DAEMON_HANDOVER (user_data);
+  cancellable = grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
 
   grd_dbus_remote_desktop_rdp_handover_proxy_new_for_bus (
     G_BUS_TYPE_SYSTEM,
@@ -574,14 +594,10 @@ on_remote_desktop_rdp_dispatcher_proxy_acquired (GObject      *object,
                                                  GAsyncResult *result,
                                                  gpointer      user_data)
 {
-  GrdDaemonHandover *daemon_handover = user_data;
-  GCancellable *cancellable =
-    grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
   g_autoptr (GrdDBusRemoteDesktopRdpDispatcher) proxy = NULL;
   g_autoptr (GError) error = NULL;
-
-  if (daemon_handover->remote_desktop_dispatcher)
-    return;
+  GrdDaemonHandover *daemon_handover;
+  GCancellable *cancellable;
 
   proxy =
     grd_dbus_remote_desktop_rdp_dispatcher_proxy_new_finish (result, &error);
@@ -592,8 +608,12 @@ on_remote_desktop_rdp_dispatcher_proxy_acquired (GObject      *object,
       return;
     }
 
+  daemon_handover = GRD_DAEMON_HANDOVER (user_data);
+
+  g_assert (!daemon_handover->remote_desktop_dispatcher);
   daemon_handover->remote_desktop_dispatcher = g_steal_pointer (&proxy);
 
+  cancellable = grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
   grd_dbus_remote_desktop_rdp_dispatcher_call_request_handover (
     daemon_handover->remote_desktop_dispatcher,
     cancellable,
