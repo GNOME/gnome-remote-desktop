@@ -28,7 +28,6 @@
 #include "grd-hwaccel-vulkan.h"
 #include "grd-rdp-dvc-graphics-pipeline.h"
 #include "grd-rdp-frame.h"
-#include "grd-rdp-private.h"
 #include "grd-rdp-render-context.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
