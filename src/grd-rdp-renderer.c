@@ -187,7 +187,10 @@ maybe_initialize_hardware_acceleration (GrdRdpRenderer   *renderer,
   renderer->hwaccel_vaapi = grd_hwaccel_vaapi_new (renderer->vk_device,
                                                    &error);
   if (!renderer->hwaccel_vaapi)
-    g_message ("[RDP] Did not initialize VAAPI: %s", error->message);
+    {
+      g_message ("[RDP] Did not initialize VAAPI: %s", error->message);
+      g_clear_object (&renderer->vk_device);
+    }
 
   return TRUE;
 }
