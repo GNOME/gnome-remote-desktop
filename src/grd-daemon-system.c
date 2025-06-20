@@ -897,6 +897,46 @@ on_remote_display_factory_proxy_acquired (GObject      *object,
 }
 
 static void
+steal_handover_from_client (GrdRemoteClient *new_remote_client,
+                            GrdRemoteClient *old_remote_client)
+{
+  HandoverInterface *handover;
+
+  handover = old_remote_client->handover_dst;
+  old_remote_client->handover_dst = NULL;
+
+  g_signal_handlers_disconnect_by_func (handover->interface,
+                                        G_CALLBACK (on_authorize_handover_method),
+                                        old_remote_client);
+  g_signal_handlers_disconnect_by_func (handover->interface,
+                                        G_CALLBACK (on_handle_start_handover),
+                                        old_remote_client);
+  g_signal_handlers_disconnect_by_func (handover->interface,
+                                        G_CALLBACK (on_handle_take_client),
+                                        old_remote_client);
+  g_signal_handlers_disconnect_by_func (handover->interface,
+                                        G_CALLBACK (on_handle_get_system_credentials),
+                                        old_remote_client);
+
+  g_signal_connect (handover->interface, "g-authorize-method",
+                    G_CALLBACK (on_authorize_handover_method),
+                    new_remote_client);
+  g_signal_connect (handover->interface, "handle-start-handover",
+                    G_CALLBACK (on_handle_start_handover), 
+                    new_remote_client);
+  g_signal_connect (handover->interface, "handle-take-client",
+                    G_CALLBACK (on_handle_take_client),
+                    new_remote_client);
+  g_signal_connect (handover->interface, "handle-get-system-credentials",
+                    G_CALLBACK (on_handle_get_system_credentials),
+                    new_remote_client);
+
+  g_clear_pointer (&new_remote_client->handover_src, handover_iface_free);
+  new_remote_client->handover_src = new_remote_client->handover_dst;
+  new_remote_client->handover_dst = handover;
+}
+
+static void
 on_remote_display_remote_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
                                      GParamSpec              *pspec,
                                      GrdRemoteClient         *remote_client)
@@ -904,7 +944,6 @@ on_remote_display_remote_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
   GrdDaemonSystem *daemon_system = remote_client->daemon_system;
   GrdRemoteClient *new_remote_client;
   const char *remote_id;
-  const char *session_id;
 
   remote_id = grd_dbus_gdm_remote_display_get_remote_id (remote_display);
   if (!g_hash_table_lookup_extended (daemon_system->remote_clients,
@@ -929,13 +968,12 @@ on_remote_display_remote_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
                     G_CALLBACK (on_remote_display_remote_id_changed),
                     new_remote_client);
 
-  g_hash_table_remove (daemon_system->remote_clients, remote_client->id);
-
-  session_id = grd_dbus_gdm_remote_display_get_session_id (remote_display);
-  register_handover_iface (new_remote_client, session_id);
+  steal_handover_from_client (new_remote_client, remote_client);
 
   grd_dbus_remote_desktop_rdp_handover_emit_restart_handover (
     new_remote_client->handover_dst->interface);
+
+  g_hash_table_remove (daemon_system->remote_clients, remote_client->id);
 }
 
 static void
