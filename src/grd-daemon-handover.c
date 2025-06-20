@@ -448,16 +448,22 @@ on_rdp_server_started (GrdDaemonHandover *daemon_handover)
 {
   GrdDaemon *daemon = GRD_DAEMON (daemon_handover);
   GrdRdpServer *rdp_server = grd_daemon_get_rdp_server (daemon);
+  gboolean handover_is_waiting;
 
   g_signal_connect (daemon_handover->remote_desktop_handover,
                     "take-client-ready", G_CALLBACK (on_take_client_ready),
                     daemon_handover);
 
-  start_handover (daemon_handover);
-
   g_signal_connect (rdp_server, "incoming-new-connection",
                     G_CALLBACK (on_incoming_new_connection),
                     daemon_handover);
+
+  handover_is_waiting =
+    grd_dbus_remote_desktop_rdp_handover_get_handover_is_waiting (
+      daemon_handover->remote_desktop_handover);
+
+  if (handover_is_waiting)
+    start_handover (daemon_handover);
 }
 
 static void
@@ -507,9 +513,19 @@ on_redirect_client (GrdDBusRemoteDesktopRdpHandover *interface,
 }
 
 static void
-on_restart_handover (GrdDBusRemoteDesktopRdpHandover *proxy,
-                     GrdDaemonHandover               *daemon_handover)
+on_handover_is_waiting_changed (GrdDBusRemoteDesktopRdpHandover *proxy,
+                                GParamSpec                      *pspec,
+                                GrdDaemonHandover               *daemon_handover)
 {
+  gboolean handover_is_waiting;
+
+  handover_is_waiting = 
+    grd_dbus_remote_desktop_rdp_handover_get_handover_is_waiting (
+      daemon_handover->remote_desktop_handover);
+
+  if (!handover_is_waiting)
+    return;
+
   start_handover (daemon_handover);
 }
 
@@ -540,8 +556,8 @@ on_remote_desktop_rdp_handover_proxy_acquired (GObject      *object,
 
   g_signal_connect (daemon_handover->remote_desktop_handover, "redirect-client",
                     G_CALLBACK (on_redirect_client), daemon_handover);
-  g_signal_connect (daemon_handover->remote_desktop_handover, "restart-handover",
-                    G_CALLBACK (on_restart_handover), daemon_handover);
+  g_signal_connect (daemon_handover->remote_desktop_handover, "notify::handover-is-waiting",
+                    G_CALLBACK (on_handover_is_waiting_changed), daemon_handover);
 
   grd_daemon_maybe_enable_services (GRD_DAEMON (daemon_handover));
 }

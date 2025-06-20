@@ -194,12 +194,11 @@
     </method>
 
     <!--
-        RestartHandover:
+        HandoverIsWaiting:
 
-        Signal to inform the dst server that a new handover is ready to start.
-        This happens after the first handover.
-    -->
-    <signal name="RestartHandover" />
+        Property to inform the dst server that a new handover is ready to start.
+     -->
+    <property name="HandoverIsWaiting" type="b" access="read" />
 
   </interface>
 

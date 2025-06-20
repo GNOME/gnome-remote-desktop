@@ -63,6 +63,7 @@ typedef struct
 
   gboolean is_client_mstsc;
   gboolean use_system_credentials;
+  gboolean needs_handover;
 
   GrdDBusGdmRemoteDisplay *remote_display;
 } GrdRemoteClient;
@@ -188,6 +189,9 @@ on_handle_take_client (GrdDBusRemoteDesktopRdpHandover *interface,
   grd_close_connection_and_notify (remote_client->socket_connection);
   g_clear_object (&remote_client->socket_connection);
   g_clear_handle_id (&remote_client->abort_handover_source_id, g_source_remove);
+
+  grd_dbus_remote_desktop_rdp_handover_set_handover_is_waiting (interface,
+                                                                FALSE);
 
   return G_DBUS_METHOD_INVOCATION_HANDLED;
 }
@@ -511,6 +515,9 @@ handover_iface_new (const char      *session_id,
   g_signal_connect (handover->interface, "handle-get-system-credentials",
                     G_CALLBACK (on_handle_get_system_credentials), remote_client);
 
+  grd_dbus_remote_desktop_rdp_handover_set_handover_is_waiting (
+    handover->interface, remote_client->needs_handover);
+
   return handover;
 }
 
@@ -612,6 +619,7 @@ remote_client_new (GrdDaemonSystem *daemon_system,
   remote_client = g_new0 (GrdRemoteClient, 1);
   remote_client->id = get_next_available_id (daemon_system);
   remote_client->daemon_system = daemon_system;
+  remote_client->needs_handover = session != NULL;
 
   if (!session)
     return remote_client;
@@ -1007,8 +1015,8 @@ on_remote_display_remote_id_changed (GrdDBusGdmRemoteDisplay *remote_display,
 
   steal_handover_from_client (new_remote_client, remote_client);
 
-  grd_dbus_remote_desktop_rdp_handover_emit_restart_handover (
-    new_remote_client->handover_dst->interface);
+  grd_dbus_remote_desktop_rdp_handover_set_handover_is_waiting (
+    new_remote_client->handover_dst->interface, TRUE);
 
   g_hash_table_remove (daemon_system->remote_clients, remote_client->id);
 }
