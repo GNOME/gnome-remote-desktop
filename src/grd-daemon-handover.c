@@ -265,13 +265,20 @@ on_start_handover_finished (GObject      *object,
 }
 
 static void
-start_handover (GrdDaemonHandover *daemon_handover,
-                const char        *username,
-                const char        *password)
+start_handover (GrdDaemonHandover *daemon_handover)
 {
-  GCancellable *cancellable =
-    grd_daemon_get_cancellable (GRD_DAEMON (daemon_handover));
+  GrdDaemon *daemon = GRD_DAEMON (daemon_handover);
+  GrdContext *context = grd_daemon_get_context (daemon);
+  GrdSettings *settings = grd_context_get_settings (context);
+  GCancellable *cancellable = grd_daemon_get_cancellable (daemon);
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
   const char *object_path;
+
+  if (!grd_settings_get_rdp_credentials (settings,
+                                         &username, &password,
+                                         NULL))
+    g_assert_not_reached ();
 
   object_path = g_dbus_proxy_get_object_path (
                   G_DBUS_PROXY (daemon_handover->remote_desktop_handover));
@@ -440,22 +447,13 @@ static void
 on_rdp_server_started (GrdDaemonHandover *daemon_handover)
 {
   GrdDaemon *daemon = GRD_DAEMON (daemon_handover);
-  GrdContext *context = grd_daemon_get_context (daemon);
-  GrdSettings *settings = grd_context_get_settings (context);
   GrdRdpServer *rdp_server = grd_daemon_get_rdp_server (daemon);
-  g_autofree char *username = NULL;
-  g_autofree char *password = NULL;
-
-  if (!grd_settings_get_rdp_credentials (settings,
-                                         &username, &password,
-                                         NULL))
-    g_assert_not_reached ();
 
   g_signal_connect (daemon_handover->remote_desktop_handover,
                     "take-client-ready", G_CALLBACK (on_take_client_ready),
                     daemon_handover);
 
-  start_handover (daemon_handover, username, password);
+  start_handover (daemon_handover);
 
   g_signal_connect (rdp_server, "incoming-new-connection",
                     G_CALLBACK (on_incoming_new_connection),
@@ -512,18 +510,7 @@ static void
 on_restart_handover (GrdDBusRemoteDesktopRdpHandover *proxy,
                      GrdDaemonHandover               *daemon_handover)
 {
-  GrdDaemon *daemon = GRD_DAEMON (daemon_handover);
-  GrdContext *context = grd_daemon_get_context (daemon);
-  GrdSettings *settings = grd_context_get_settings (context);
-  g_autofree char *username = NULL;
-  g_autofree char *password = NULL;
-
-  if (!grd_settings_get_rdp_credentials (settings,
-                                         &username, &password,
-                                         NULL))
-    g_assert_not_reached ();
-
-  start_handover (daemon_handover, username, password);
+  start_handover (daemon_handover);
 }
 
 static void
