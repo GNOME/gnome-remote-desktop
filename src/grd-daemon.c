@@ -86,6 +86,8 @@ typedef struct _GrdDaemonPrivate
 #ifdef HAVE_RDP
   GrdRdpServer *rdp_server;
   unsigned int restart_rdp_server_source_id;
+  GrdDBusRemoteDesktopRdpServer *other_rdp_server_iface;
+  unsigned int other_rdp_server_watch_name_id;
 #endif
 #ifdef HAVE_VNC
   GrdVncServer *vnc_server;
@@ -275,6 +277,8 @@ stop_rdp_server (GrdDaemon *daemon)
 
   g_signal_emit (daemon, signals[RDP_SERVER_STOPPED], 0);
   grd_rdp_server_stop (priv->rdp_server);
+  g_clear_object (&priv->other_rdp_server_iface);
+  g_clear_handle_id (&priv->other_rdp_server_watch_name_id, g_bus_unwatch_name);
   g_clear_object (&priv->rdp_server);
   g_clear_handle_id (&priv->restart_rdp_server_source_id, g_source_remove);
   g_message ("RDP server stopped");
@@ -288,9 +292,104 @@ on_rdp_server_binding_failed (GrdRdpServer *rdp_server,
 }
 
 static void
+on_other_rdp_server_new_connection (GrdDBusRemoteDesktopRdpServer *interface,
+                                    GrdDaemon                     *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  g_assert (priv->rdp_server);
+
+  grd_rdp_server_stop_sessions (priv->rdp_server);
+}
+
+static void
+on_remote_desktop_rdp_server_proxy_acquired (GObject      *object,
+                                             GAsyncResult *result,
+                                             gpointer      user_data)
+{
+  GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  g_autoptr (GrdDBusRemoteDesktopRdpServer) proxy = NULL;
+  g_autoptr (GError) error = NULL;
+
+  proxy = grd_dbus_remote_desktop_rdp_server_proxy_new_for_bus_finish (result,
+                                                                       &error);
+  if (!proxy)
+    {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
+      g_warning ("Failed to create remote desktop rdp server proxy: %s",
+                 error->message);
+      return;
+    }
+
+  priv->other_rdp_server_iface = g_steal_pointer (&proxy);
+  g_signal_connect (priv->other_rdp_server_iface, "new-connection",
+                    G_CALLBACK (on_other_rdp_server_new_connection), daemon);
+}
+
+static void
+on_remote_desktop_rdp_server_name_appeared (GDBusConnection *connection,
+                                            const char      *name,
+                                            const char      *name_owner,
+                                            gpointer         user_data)
+{
+  GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  grd_dbus_remote_desktop_rdp_server_proxy_new (
+    connection,
+    G_DBUS_PROXY_FLAGS_NONE,
+    name,
+    GRD_RDP_SERVER_OBJECT_PATH,
+    priv->cancellable,
+    on_remote_desktop_rdp_server_proxy_acquired,
+    daemon);
+}
+
+static void
+on_remote_desktop_rdp_server_name_vanished (GDBusConnection *connection,
+                                            const char      *name,
+                                            gpointer         user_data)
+{
+  GrdDaemon *daemon = user_data;
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+
+  g_clear_object (&priv->other_rdp_server_iface);
+}
+
+static void
+connect_to_other_rdp_server (GrdDaemon *daemon)
+{
+  GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (priv->context);
+  const char *bus_name;
+
+  if (priv->other_rdp_server_watch_name_id != 0)
+    return;
+
+  if (runtime_mode == GRD_RUNTIME_MODE_HEADLESS)
+    bus_name = GRD_DAEMON_HANDOVER_APPLICATION_ID;
+  else if (runtime_mode == GRD_RUNTIME_MODE_HANDOVER)
+    bus_name = GRD_DAEMON_HEADLESS_APPLICATION_ID;
+  else
+    g_assert_not_reached ();
+
+  priv->other_rdp_server_watch_name_id =
+    g_bus_watch_name (G_BUS_TYPE_SESSION,
+                      bus_name,
+                      G_BUS_NAME_WATCHER_FLAGS_NONE,
+                      on_remote_desktop_rdp_server_name_appeared,
+                      on_remote_desktop_rdp_server_name_vanished,
+                      daemon, NULL);
+}
+
+static void
 start_rdp_server (GrdDaemon *daemon)
 {
   GrdDaemonPrivate *priv = grd_daemon_get_instance_private (daemon);
+  GrdRuntimeMode runtime_mode = grd_context_get_runtime_mode (priv->context);
   g_autoptr (GError) error = NULL;
 
   g_assert (!priv->rdp_server);
@@ -307,6 +406,10 @@ start_rdp_server (GrdDaemon *daemon)
     {
       g_signal_emit (daemon, signals[RDP_SERVER_STARTED], 0);
       g_message ("RDP server started");
+
+      if (runtime_mode == GRD_RUNTIME_MODE_HANDOVER ||
+          runtime_mode == GRD_RUNTIME_MODE_HEADLESS)
+        connect_to_other_rdp_server (daemon);
     }
 }
 
