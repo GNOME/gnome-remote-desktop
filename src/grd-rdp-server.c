@@ -159,15 +159,35 @@ on_session_stopped (GrdSession   *session,
 }
 
 static void
+maybe_stop_session (GrdSession *session,
+                    GrdSession *session_to_ignore)
+{
+  if (session == session_to_ignore)
+    return;
+
+  grd_session_stop (session);
+}
+
+static void
 on_session_post_connect (GrdSessionRdp *session_rdp,
                          GrdRdpServer  *rdp_server)
 {
   GrdDBusRemoteDesktopRdpServer *rdp_server_iface =
     grd_context_get_rdp_server_interface (rdp_server->context);
+  GrdRuntimeMode runtime_mode =
+    grd_context_get_runtime_mode (rdp_server->context);
 
   g_signal_emit (rdp_server, signals[INCOMING_NEW_CONNECTION], 0, session_rdp);
 
   grd_dbus_remote_desktop_rdp_server_emit_new_connection (rdp_server_iface);
+
+  if (runtime_mode == GRD_RUNTIME_MODE_HANDOVER ||
+      runtime_mode == GRD_RUNTIME_MODE_HEADLESS)
+    {
+      g_list_foreach (rdp_server->sessions,
+                      (GFunc) maybe_stop_session,
+                      GRD_SESSION (session_rdp));
+    }
 }
 
 static void
