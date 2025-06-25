@@ -44,6 +44,13 @@
       <arg name="port" type="i" />
     </signal>
 
+    <!--
+        NewConnection:
+
+        Signal to inform that the RDP server has received a new connection.
+    -->
+    <signal name="NewConnection" />
+
   </interface>
 
   <!--

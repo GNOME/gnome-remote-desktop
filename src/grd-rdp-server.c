@@ -162,7 +162,12 @@ static void
 on_session_post_connect (GrdSessionRdp *session_rdp,
                          GrdRdpServer  *rdp_server)
 {
+  GrdDBusRemoteDesktopRdpServer *rdp_server_iface =
+    grd_context_get_rdp_server_interface (rdp_server->context);
+
   g_signal_emit (rdp_server, signals[INCOMING_NEW_CONNECTION], 0, session_rdp);
+
+  grd_dbus_remote_desktop_rdp_server_emit_new_connection (rdp_server_iface);
 }
 
 static void
