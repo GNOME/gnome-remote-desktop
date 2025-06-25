@@ -299,6 +299,17 @@ grd_rdp_server_notify_incoming (GSocketService    *service,
     }
 }
 
+void
+grd_rdp_server_stop_sessions (GrdRdpServer *rdp_server)
+{
+  while (rdp_server->sessions)
+    {
+      GrdSession *session = rdp_server->sessions->data;
+
+      grd_session_stop (session);
+    }
+}
+
 static gboolean
 attempt_to_bind_port (gpointer user_data)
 {

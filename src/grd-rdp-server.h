@@ -45,3 +45,5 @@ GrdRdpServer *grd_rdp_server_new (GrdContext *context);
 
 void grd_rdp_server_notify_incoming (GSocketService    *service,
                                      GSocketConnection *connection);
+
+void grd_rdp_server_stop_sessions (GrdRdpServer *rdp_server);
