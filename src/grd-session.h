@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <gio/gio.h>
 #include <glib-object.h>
 #include <stdint.h>
 
@@ -180,3 +181,12 @@ int grd_session_selection_read (GrdSession  *session,
 void grd_session_start (GrdSession *session);
 
 void grd_session_stop (GrdSession *session);
+
+gboolean grd_session_flush_input_finish (GrdSession    *session,
+                                         GAsyncResult  *result,
+                                         GError       **error);
+
+void grd_session_flush_input_async (GrdSession          *session,
+                                    GCancellable        *cancellable,
+                                    GAsyncReadyCallback  callback,
+                                    gpointer             user_data);

@@ -92,6 +92,12 @@ struct _GrdTouchContact
   struct ei_touch *ei_touch_contact;
 };
 
+typedef struct _GrdEiPing
+{
+  GTask *task;
+  struct ei_ping *ping;
+} GrdEiPing;
+
 typedef struct _GrdSessionPrivate
 {
   GrdContext *context;
@@ -126,9 +132,14 @@ typedef struct _GrdSessionPrivate
   gboolean num_lock_state;
   gulong caps_lock_state_changed_id;
   gulong num_lock_state_changed_id;
+
+  GHashTable *pings;
 } GrdSessionPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdSession, grd_session, G_TYPE_OBJECT)
+
+static void
+finish_and_free_ping (GrdEiPing *ping);
 
 GrdContext *
 grd_session_get_context (GrdSession *session)
@@ -206,6 +217,34 @@ grd_session_stop (GrdSession *session)
   clear_session (session);
 
   g_signal_emit (session, signals[STOPPED], 0);
+}
+
+gboolean
+grd_session_flush_input_finish (GrdSession    *session,
+                                GAsyncResult  *result,
+                                GError       **error)
+{
+  return g_task_propagate_boolean (G_TASK (result), error);
+}
+
+void
+grd_session_flush_input_async (GrdSession          *session,
+                               GCancellable        *cancellable,
+                               GAsyncReadyCallback  callback,
+                               gpointer             user_data)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+  GrdEiPing *ping;
+
+  ping = g_new0 (GrdEiPing, 1);
+  ping->task = g_task_new (session,
+                           cancellable,
+                           callback,
+                           user_data);
+  ping->ping = ei_new_ping (priv->ei);
+  ei_ping (ping->ping);
+
+  g_hash_table_insert (priv->pings, ping->ping, ping);
 }
 
 static void
@@ -1519,6 +1558,17 @@ grd_ei_source_dispatch (gpointer user_data)
                          "no keymap");
             }
           break;
+        case EI_EVENT_PONG:
+          {
+            GrdEiPing *ping = NULL;
+
+            if (g_hash_table_steal_extended (priv->pings,
+                                             ei_event_pong_get_ping (event),
+                                             NULL,
+                                             (gpointer *) &ping))
+              finish_and_free_ping (ping);
+            break;
+          }
         default:
           handled = FALSE;
           break;
@@ -1814,6 +1864,34 @@ grd_session_get_property (GObject    *object,
 }
 
 static void
+grd_ei_ping_free (GrdEiPing *ping)
+{
+  g_object_unref (ping->task);
+  g_clear_pointer (&ping->ping, ei_ping_unref);
+  g_free (ping);
+}
+
+static void
+cancel_and_free_ping (gpointer user_data)
+{
+  GrdEiPing *ping = user_data;
+  GCancellable *cancellable;
+
+  cancellable = g_task_get_cancellable (ping->task);
+  if (!g_cancellable_is_cancelled (cancellable))
+    g_cancellable_cancel (cancellable);
+  grd_ei_ping_free (ping);
+}
+
+static void
+finish_and_free_ping (GrdEiPing *ping)
+{
+  if (!g_task_return_error_if_cancelled (ping->task))
+    g_task_return_boolean (ping->task, TRUE);
+  grd_ei_ping_free (ping);
+}
+
+static void
 grd_session_init (GrdSession *session)
 {
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
@@ -1826,6 +1904,9 @@ grd_session_init (GrdSession *session)
     g_hash_table_new_full (g_str_hash, g_str_equal,
                            g_free,
                            (GDestroyNotify) grd_region_free);
+
+  priv->pings = g_hash_table_new_full (NULL, NULL,
+                                       NULL, cancel_and_free_ping);
 }
 
 static void
