@@ -28,21 +28,6 @@ integration_tests_env.set('MUTTER_BIN', mutter.full_path())
 integration_tests_env.set('GSETTINGS_SCHEMA_DIR', fs.parent(generated_schema.full_path()))
 
 if have_rdp
-  test_rsa_data = custom_target('test-rsa-data',
-    output: [
-      'tls.crt',
-      'tls.key',
-    ],
-    command: [
-      find_program('openssl'),
-      'req', '-new', '-newkey', 'rsa:4096',
-      '-days', '720', '-nodes', '-x509',
-      '-subj', '/C=DE/ST=NONE/L=NONE/O=GNOME/CN=gnome.org',
-      '-out', '@OUTPUT0@',
-      '-keyout', '@OUTPUT1@',
-    ],
-  )
-
   test_client_rdp = executable(
     'test-client-rdp',
     files(['test-client-rdp.c']),
@@ -62,17 +47,13 @@ if have_rdp
     args: [
       pipewire_test_runner.full_path(),
       '--enable-rdp',
-      '--rdp-tls-cert', test_rsa_data[0].full_path(),
-      '--rdp-tls-key', test_rsa_data[1].full_path(),
+      '--rdp-tls',
       '--',
       dbus_run_session.full_path(),
       '--',
       test_file.full_path(),
     ],
     env: test_env,
-    depends: [
-      test_rsa_data,
-    ],
     is_parallel: false,
     timeout: 20,
   )

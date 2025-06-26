@@ -17,13 +17,8 @@ while [ "$#" -gt 1 ]; do
         --enable-vnc)
           enable_vnc=true
         ;;
-        --rdp-tls-cert)
-          rdp_tls_cert="$1"
-          shift
-        ;;
-        --rdp-tls-key)
-          rdp_tls_key="$1"
-          shift
+        --rdp-tls)
+          enable_rdp_tls=true
         ;;
         --)
           break
@@ -57,11 +52,17 @@ if [ "$enable_vnc" = "true" ]; then
     gsettings set org.gnome.desktop.remote-desktop.vnc enable true
 fi
 
-if [ -n "$rdp_tls_cert" ]; then
-    gsettings set org.gnome.desktop.remote-desktop.rdp tls-cert "$rdp_tls_cert"
-fi
+if [ "$enable_rdp_tls" = "true" ]; then
+    rdp_tls_cert="$TEST_BUILDDIR/tls.crt"
+    rdp_tls_key="$TEST_BUILDDIR/tls.key"
 
-if [ -n "$rdp_tls_key" ]; then
+    if [ ! -f "$rdp_tls_cert" || ! -f "$rdp_tls_key" ]; then
+        openssl req -new -newkey rsa:4096 -days 720 -nodes -x509 \
+            -subj /C=DE/ST=NONE/L=NONE/O=GNOME/CN=gnome.org \
+            -out "$rdp_tls_cert" \
+            -keyout "$rdp_tls_key"
+    fi
+    gsettings set org.gnome.desktop.remote-desktop.rdp tls-cert "$rdp_tls_cert"
     gsettings set org.gnome.desktop.remote-desktop.rdp tls-key "$rdp_tls_key"
 fi
 
