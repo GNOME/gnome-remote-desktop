@@ -46,6 +46,8 @@ $wireplumber &
 procs="$! $procs"
 sleep 1
 
+glib-compile-schemas "$GSETTINGS_SCHEMA_DIR"
+
 if [ "$enable_rdp" = "true" ]; then
     gsettings set org.gnome.desktop.remote-desktop.rdp enable true
     gsettings set org.gnome.desktop.remote-desktop.rdp screen-share-mode extend

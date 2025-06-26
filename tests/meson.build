@@ -25,9 +25,7 @@ integration_tests_env = environment()
 integration_tests_env.set('PIPEWIRE_BIN', pipewire.full_path())
 integration_tests_env.set('WIREPLUMBER_BIN', wireplumber.full_path())
 integration_tests_env.set('MUTTER_BIN', mutter.full_path())
-integration_tests_env.set('GSETTINGS_SCHEMA_DIR', fs.parent(compiled_schemas.full_path()))
-
-test_depends = [compiled_schemas]
+integration_tests_env.set('GSETTINGS_SCHEMA_DIR', fs.parent(generated_schema.full_path()))
 
 if have_rdp
   test_rsa_data = custom_target('test-rsa-data',
@@ -73,7 +71,6 @@ if have_rdp
     ],
     env: test_env,
     depends: [
-      test_depends,
       test_rsa_data,
     ],
     is_parallel: false,
@@ -102,7 +99,6 @@ if have_vnc
       test_file.full_path(),
     ],
     env: integration_tests_env,
-    depends: test_depends,
     is_parallel: false,
     timeout: 20,
   )

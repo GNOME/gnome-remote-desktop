@@ -402,7 +402,7 @@ if have_rdp
              install_dir: libexecdir)
 endif
 
-generated_enums_schema = custom_target('gsettings-enums',
+custom_target('gsettings-enums',
               input: 'grd-enums.h',
               output: 'org.gnome.desktop.remote-desktop.enums.xml',
               install: true,
@@ -422,18 +422,5 @@ generated_schema = configure_file(output: schema,
                                   copy: true)
 install_data(generated_schema,
              install_dir: schemadir)
-
-compiled_schemas = custom_target('compile-schemas',
-  input: [
-    generated_schema,
-    generated_enums_schema,
-  ],
-  output: 'gschemas.compiled',
-  command: [
-    find_program('glib-compile-schemas'),
-    '--strict',
-    meson.current_build_dir(),
-  ],
-)
 
 subdir('shaders')
