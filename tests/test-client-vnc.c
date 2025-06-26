@@ -20,6 +20,8 @@
 
 #include "config.h"
 
+#define G_LOG_DOMAIN "grd-test-client-rdp"
+
 #include <glib.h>
 #include <rfb/rfbclient.h>
 #include <stdio.h>
