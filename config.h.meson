@@ -32,3 +32,6 @@
 
 /* Path of the shader dir */
 #mesondefine GRD_SHADER_DIR
+
+/* Workaround for https://github.com/FreeRDP/FreeRDP/issues/11412 */
+#mesondefine WITHOUT_FREERDP_3x_DEPRECATED

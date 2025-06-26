@@ -34,8 +34,8 @@ variables:
 
 .gnome-remote-desktop.fedora@common:
   variables:
-    FDO_DISTRIBUTION_VERSION: 41
-    BASE_TAG: '2024-12-05.2.spirv'
+    FDO_DISTRIBUTION_VERSION: 42
+    BASE_TAG: '2025-06-26.0.distro-upgrade'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -72,6 +72,19 @@ variables:
       dnf install -y 'pkgconfig(libpipewire-0.3)' &&
       dnf install -y dbus-daemon python3-dbus python3-gobject \
                      gnome-settings-daemon mesa-dri-drivers mutter &&
+
+      ./.gitlab-ci/install-cmake-project.sh \
+          -DWITH_CHANNELS=ON \
+          -DWITH_CLIENT_CHANNELS=ON \
+          -DWITH_CUPS=OFF \
+          -DWITH_ICU=ON \
+          -DWITH_PROXY=OFF \
+          -DWITH_SERVER=ON \
+          -DWITH_SERVER_CHANNELS=ON \
+          -DWITH_SHADOW=OFF \
+          -DWITHOUT_FREERDP_3x_DEPRECATED=ON \
+          https://github.com/FreeRDP/FreeRDP \
+          3.15.0 . &&
 
       dnf clean all
 

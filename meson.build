@@ -114,6 +114,9 @@ cdata.set_quoted('GRD_DEFAULT_CONF', grd_default_conf)
 cdata.set_quoted('GRD_USERNAME', grd_username)
 cdata.set_quoted('GRD_SHADER_DIR', grd_shaderdir)
 
+# Workaround for https://github.com/FreeRDP/FreeRDP/issues/11412
+cdata.set('WITHOUT_FREERDP_3x_DEPRECATED', true)
+
 configure_file(input: 'config.h.meson',
                output: 'config.h',
                configuration: cdata)
