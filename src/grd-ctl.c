@@ -654,8 +654,10 @@ print_help (void)
     _("  status [--show-credentials]                - Show current status\n"
       "\n"
       "Options:\n"
-      "  --headless                                 - Use headless credentials storage\n"
+      "  --headless                                 - Configure headless daemon\n"
+      "                                               running on a user session\n"
       "  --system                                   - Configure system daemon\n"
+      "                                               for remote login\n"
       "  --help                                     - Print this help text\n");
 
   print_usage ();
