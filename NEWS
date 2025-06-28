@@ -1,3 +1,20 @@
+49.alpha
+========
+* Add touch support [Pascal; !314]
+* Fix failure to connect on some NVIDIA systems [Jonas; !323]
+* Plumb locked keyboard modifiers via libei [Jonas; !311]
+* Documentation improvements [W.; !317]
+* Fix crash [Pascal; !325]
+* Plug leak [Michael; !319]
+* Misc cleanups & improvements [Pascal, Jonas; !315, !313, !327]
+
+Contributors:
+  Jonas Ådahl, Michael Catanzaro, Pascal Nowack, W. Michael Petullo
+
+Translators:
+  Takayuki KUSANO [ja], Emilio Sepúlveda [ia], Antonio Marin [ro],
+  Aefgh Threenine [th]
+
 48.1
 ====
 * Reduce latency when PipeWire stream uses shared memories
