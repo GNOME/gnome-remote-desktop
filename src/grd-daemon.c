@@ -1010,7 +1010,7 @@ main (int argc, char **argv)
 
   if (count_trues (3, headless, system, handover) > 1)
     {
-      g_printerr ("Invalid option: More than one runtime mode specified");
+      g_printerr ("Invalid option: More than one runtime mode specified\n");
       return EXIT_FAILURE;
     }
 
