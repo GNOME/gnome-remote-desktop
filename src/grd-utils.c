@@ -478,3 +478,10 @@ grd_systemd_unit_get_active_state (GDBusProxy                 *unit_proxy,
 
   return TRUE;
 }
+
+void
+grd_close_connection_and_notify (GSocketConnection *connection)
+{
+  g_io_stream_close (G_IO_STREAM (connection), NULL, NULL);
+  g_object_notify (G_OBJECT (connection), "closed");
+}

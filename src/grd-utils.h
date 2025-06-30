@@ -100,6 +100,8 @@ gboolean grd_systemd_unit_get_active_state (GDBusProxy                 *unit_pro
                                             GrdSystemdUnitActiveState  *active_state,
                                             GError                    **error);
 
+void grd_close_connection_and_notify (GSocketConnection *connection);
+
 static inline int64_t
 us (int64_t us)
 {
