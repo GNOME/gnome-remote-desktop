@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_MONITOR_CONFIG_H
-#define GRD_RDP_MONITOR_CONFIG_H
+#pragma once
 
 #include <freerdp/channels/disp.h>
 #include <freerdp/freerdp.h>
@@ -85,5 +84,3 @@ GrdRdpMonitorConfig *grd_rdp_monitor_config_new_from_disp_monitor_layout (const 
 void grd_rdp_monitor_config_free (GrdRdpMonitorConfig *monitor_config);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdRdpMonitorConfig, grd_rdp_monitor_config_free)
-
-#endif /* GRD_RDP_MONITOR_CONFIG_H */

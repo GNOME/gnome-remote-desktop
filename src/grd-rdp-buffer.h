@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_BUFFER_H
-#define GRD_RDP_BUFFER_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -43,5 +42,3 @@ GrdVkImage *grd_rdp_buffer_get_dma_buf_image (GrdRdpBuffer *rdp_buffer);
 gboolean grd_rdp_buffer_is_marked_for_removal (GrdRdpBuffer *rdp_buffer);
 
 void grd_rdp_buffer_mark_for_removal (GrdRdpBuffer *rdp_buffer);
-
-#endif /* GRD_RDP_BUFFER_H */

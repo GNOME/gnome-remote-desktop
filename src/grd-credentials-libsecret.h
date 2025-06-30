@@ -19,8 +19,7 @@
  *
  */
 
-#ifndef GRD_CREDENTIALS_LIBSECRET_H
-#define GRD_CREDENTIALS_LIBSECRET_H
+#pragma once
 
 #include "grd-credentials.h"
 
@@ -29,5 +28,3 @@ G_DECLARE_FINAL_TYPE (GrdCredentialsLibsecret, grd_credentials_libsecret,
                       GRD, CREDENTIALS_LIBSECRET, GrdCredentials)
 
 GrdCredentialsLibsecret * grd_credentials_libsecret_new (void);
-
-#endif /* GRD_CREDENTIALS_LIBSECRET_H */

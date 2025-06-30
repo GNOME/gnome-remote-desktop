@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_ENUMS_H
-#define GRD_ENUMS_H
+#pragma once
 
 typedef enum
 {
@@ -46,5 +45,3 @@ typedef enum
   GRD_RUNTIME_MODE_SYSTEM,
   GRD_RUNTIME_MODE_HANDOVER,
 } GrdRuntimeMode;
-
-#endif /* GRD_ENUMS_H */

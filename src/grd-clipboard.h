@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_CLIPBOARD_H
-#define GRD_CLIPBOARD_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -67,5 +66,3 @@ void grd_clipboard_submit_client_content_for_mime_type (GrdClipboard  *clipboard
 void grd_clipboard_request_client_content_for_mime_type (GrdClipboard *clipboard,
                                                          GrdMimeType   mime_type,
                                                          unsigned int  serial);
-
-#endif /* GRD_CLIPBOARD_H */

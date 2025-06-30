@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_VK_DEVICE_H
-#define GRD_VK_DEVICE_H
+#pragma once
 
 #include <glib-object.h>
 #include <vulkan/vulkan.h>
@@ -79,5 +78,3 @@ GrdVkQueue *grd_vk_device_acquire_queue (GrdVkDevice *device);
 
 void grd_vk_device_release_queue (GrdVkDevice *device,
                                   GrdVkQueue  *queue);
-
-#endif /* GRD_VK_DEVICE_H */

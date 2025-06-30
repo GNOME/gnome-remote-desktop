@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_LOCAL_BUFFER_WRAPPER_RDP_H
-#define GRD_LOCAL_BUFFER_WRAPPER_RDP_H
+#pragma once
 
 #include "grd-local-buffer.h"
 #include "grd-types.h"
@@ -31,5 +30,3 @@ GrdLocalBufferWrapperRdp *grd_local_buffer_wrapper_rdp_new (void);
 
 void grd_local_buffer_wrapper_rdp_attach_rdp_buffer (GrdLocalBufferWrapperRdp *buffer_wrapper,
                                                      GrdRdpBuffer             *rdp_buffer);
-
-#endif /* GRD_LOCAL_BUFFER_WRAPPER_RDP_H */

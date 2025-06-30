@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_CLIPBOARD_VNC_H
-#define GRD_CLIPBOARD_VNC_H
+#pragma once
 
 #include "grd-clipboard.h"
 
@@ -35,5 +34,3 @@ void grd_clipboard_vnc_maybe_enable_clipboard (GrdClipboardVnc *clipboard_vnc);
 void grd_clipboard_vnc_set_clipboard_text (GrdClipboardVnc *clipboard_vnc,
                                            char            *text,
                                            int              text_length);
-
-#endif /* GRD_CLIPBOARD_VNC_H */

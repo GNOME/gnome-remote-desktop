@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_RENDER_CONTEXT_H
-#define GRD_RDP_RENDER_CONTEXT_H
+#pragma once
 
 #include <cairo/cairo.h>
 #include <glib-object.h>
@@ -67,5 +66,3 @@ void grd_rdp_render_context_update_frame_state (GrdRdpRenderContext *render_cont
 void grd_rdp_render_context_fetch_progressive_render_state (GrdRdpRenderContext  *render_context,
                                                             GrdImageView        **image_view,
                                                             cairo_region_t      **damage_region);
-
-#endif /* GRD_RDP_RENDER_CONTEXT_H */

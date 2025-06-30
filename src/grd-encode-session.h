@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_ENCODE_SESSION_H
-#define GRD_ENCODE_SESSION_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -76,5 +75,3 @@ void grd_encode_session_lock_bitstream (GrdEncodeSession                      *e
 gboolean grd_encode_session_unlock_bitstream (GrdEncodeSession  *encode_session,
                                               GrdBitstream      *bitstream,
                                               GError           **error);
-
-#endif /* GRD_ENCODE_SESSION_H */

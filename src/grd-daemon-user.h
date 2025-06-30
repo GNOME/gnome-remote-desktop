@@ -20,8 +20,7 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_DAEMON_USER_H
-#define GRD_DAEMON_USER_H
+#pragma once
 
 #include "grd-daemon.h"
 
@@ -33,4 +32,3 @@ G_DECLARE_FINAL_TYPE (GrdDaemonUser,
 
 GrdDaemonUser *grd_daemon_user_new (GrdRuntimeMode   runtime_mode,
                                     GError         **error);
-#endif /* GRD_DAEMON_USER_H */

@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_FRAME_STATS_H
-#define GRD_RDP_FRAME_STATS_H
+#pragma once
 
 #include <glib.h>
 #include <stdint.h>
@@ -38,5 +37,3 @@ uint32_t grd_rdp_frame_stats_get_enc_rate (GrdRdpFrameStats *frame_stats);
 uint32_t grd_rdp_frame_stats_get_ack_rate (GrdRdpFrameStats *frame_stats);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdRdpFrameStats, grd_rdp_frame_stats_free)
-
-#endif /* GRD_RDP_FRAME_STATS_H */

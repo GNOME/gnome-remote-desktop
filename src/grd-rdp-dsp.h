@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_DSP_H
-#define GRD_RDP_DSP_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -76,5 +75,3 @@ gboolean grd_rdp_dsp_decode (GrdRdpDsp       *rdp_dsp,
                              uint32_t         input_size,
                              int16_t        **output_data,
                              uint32_t        *output_size);
-
-#endif /* GRD_RDP_DSP_H */

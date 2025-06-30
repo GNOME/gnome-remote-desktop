@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_VK_MEMORY_H
-#define GRD_VK_MEMORY_H
+#pragma once
 
 #include <glib-object.h>
 #include <vulkan/vulkan.h>
@@ -49,5 +48,3 @@ VkMemoryPropertyFlagBits grd_vk_memory_get_memory_flags (GrdVkMemory *memory);
 
 void *grd_vk_memory_get_mapped_pointer (GrdVkMemory  *memory,
                                         GError      **error);
-
-#endif /* GRD_VK_MEMORY_H */

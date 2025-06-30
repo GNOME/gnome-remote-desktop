@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_VIEW_CREATOR_GEN_GL_H
-#define GRD_RDP_VIEW_CREATOR_GEN_GL_H
+#pragma once
 
 #include <stdint.h>
 
@@ -31,5 +30,3 @@ G_DECLARE_FINAL_TYPE (GrdRdpViewCreatorGenGL, grd_rdp_view_creator_gen_gl,
 GrdRdpViewCreatorGenGL *grd_rdp_view_creator_gen_gl_new (GrdEglThread *egl_thread,
                                                          uint32_t      surface_width,
                                                          uint32_t      surface_height);
-
-#endif /* GRD_RDP_VIEW_CREATOR_GEN_GL_H */

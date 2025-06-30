@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_CURSOR_RENDERER_H
-#define GRD_RDP_CURSOR_RENDERER_H
+#pragma once
 
 #include <freerdp/freerdp.h>
 #include <glib-object.h>
@@ -54,5 +53,3 @@ void grd_rdp_cursor_renderer_notify_session_ready (GrdRdpCursorRenderer *cursor_
 
 void grd_rdp_cursor_renderer_submit_cursor_update (GrdRdpCursorRenderer *cursor_renderer,
                                                    GrdRdpCursorUpdate   *cursor_update);
-
-#endif /* GRD_RDP_CURSOR_RENDERER_H */

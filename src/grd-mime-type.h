@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_MIME_TYPE_H
-#define GRD_MIME_TYPE_H
+#pragma once
 
 #include <stdint.h>
 
@@ -51,5 +50,3 @@ typedef struct _GrdMimeTypeTable
 const char *grd_mime_type_to_string (GrdMimeType mime_type);
 
 GrdMimeType grd_mime_type_from_string (const char *mime_type_string);
-
-#endif /* GRD_MIME_TYPE_H */

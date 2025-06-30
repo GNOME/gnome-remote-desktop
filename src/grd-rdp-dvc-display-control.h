@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_DVC_DISPLAY_CONTROL_H
-#define GRD_RDP_DVC_DISPLAY_CONTROL_H
+#pragma once
 
 #include "grd-rdp-dvc.h"
 
@@ -31,5 +30,3 @@ GrdRdpDvcDisplayControl *grd_rdp_dvc_display_control_new (GrdRdpLayoutManager *l
                                                           GrdRdpDvcHandler    *dvc_handler,
                                                           HANDLE               vcm,
                                                           uint32_t             max_monitor_count);
-
-#endif /* GRD_RDP_DVC_DISPLAY_CONTROL_H */

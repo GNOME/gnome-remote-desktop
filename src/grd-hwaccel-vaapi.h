@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_HWACCEL_VAAPI_H
-#define GRD_HWACCEL_VAAPI_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -37,5 +36,3 @@ GrdEncodeSession *grd_hwaccel_vaapi_create_encode_session (GrdHwAccelVaapi  *hwa
                                                            uint32_t          source_height,
                                                            uint32_t          refresh_rate,
                                                            GError          **error);
-
-#endif /* GRD_HWACCEL_VAAPI_H */

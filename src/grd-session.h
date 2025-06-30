@@ -21,8 +21,7 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_SESSION_H
-#define GRD_SESSION_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -177,5 +176,3 @@ int grd_session_selection_read (GrdSession  *session,
 void grd_session_start (GrdSession *session);
 
 void grd_session_stop (GrdSession *session);
-
-#endif /* GRD_SESSION_H */

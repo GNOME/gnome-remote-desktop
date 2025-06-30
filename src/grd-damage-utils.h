@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_DAMAGE_UTILS_H
-#define GRD_DAMAGE_UTILS_H
+#pragma once
 
 #include <cairo/cairo.h>
 #include <stdbool.h>
@@ -38,5 +37,3 @@ bool grd_is_tile_dirty (cairo_rectangle_int_t *tile,
                         uint8_t               *prev_data,
                         uint32_t               stride,
                         uint32_t               bytes_per_pixel);
-
-#endif /* GRD_DAMAGE_UTILS_H */

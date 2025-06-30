@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_FRAME_INFO_H
-#define GRD_RDP_FRAME_INFO_H
+#pragma once
 
 typedef struct _GrdRdpFrameInfo
 {
@@ -28,5 +27,3 @@ typedef struct _GrdRdpFrameInfo
   int64_t enc_time_us;
   int64_t ack_time_us;
 } GrdRdpFrameInfo;
-
-#endif /* GRD_RDP_FRAME_INFO_H */

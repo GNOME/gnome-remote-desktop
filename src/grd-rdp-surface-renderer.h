@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_SURFACE_RENDERER_H
-#define GRD_RDP_SURFACE_RENDERER_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -69,5 +68,3 @@ void grd_rdp_surface_renderer_invalidate_surface_unlocked (GrdRdpSurfaceRenderer
 void grd_rdp_surface_renderer_trigger_render_source (GrdRdpSurfaceRenderer *surface_renderer);
 
 void grd_rdp_surface_renderer_reset (GrdRdpSurfaceRenderer *surface_renderer);
-
-#endif /* GRD_RDP_SURFACE_RENDERER_H */

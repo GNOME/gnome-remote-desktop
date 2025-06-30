@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_LEGACY_BUFFER_H
-#define GRD_RDP_LEGACY_BUFFER_H
+#pragma once
 
 #include <ffnvcodec/dynlink_cuda.h>
 #include <gio/gio.h>
@@ -55,5 +54,3 @@ void grd_rdp_legacy_buffer_unmap_cuda_resource (GrdRdpLegacyBuffer *buffer);
 void grd_rdp_legacy_buffer_queue_resource_unmap (GrdRdpLegacyBuffer *buffer);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdRdpLegacyBuffer, grd_rdp_legacy_buffer_free)
-
-#endif /* GRD_RDP_LEGACY_BUFFER_H */

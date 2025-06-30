@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_DAMAGE_DETECTOR_CUDA_H
-#define GRD_RDP_DAMAGE_DETECTOR_CUDA_H
+#pragma once
 
 #include <ffnvcodec/dynlink_loader.h>
 
@@ -30,5 +29,3 @@ G_DECLARE_FINAL_TYPE (GrdRdpDamageDetectorCuda, grd_rdp_damage_detector_cuda,
 
 GrdRdpDamageDetectorCuda *grd_rdp_damage_detector_cuda_new (GrdHwAccelNvidia *hwaccel_nvidia,
                                                             CUstream          cuda_stream);
-
-#endif /* GRD_RDP_DAMAGE_DETECTOR_CUDA_H */

@@ -20,8 +20,7 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_VNC_SERVER_H
-#define GRD_VNC_SERVER_H
+#pragma once
 
 #include <gio/gio.h>
 #include <glib-object.h>
@@ -41,5 +40,3 @@ gboolean grd_vnc_server_start (GrdVncServer *vnc_server, GError **error);
 void grd_vnc_server_stop (GrdVncServer *vnc_server);
 
 GrdVncServer *grd_vnc_server_new (GrdContext *context);
-
-#endif /* GRD_VNC_SERVER_H */

@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_DVC_INPUT_H
-#define GRD_RDP_DVC_INPUT_H
+#pragma once
 
 #include "grd-rdp-dvc.h"
 
@@ -30,5 +29,3 @@ GrdRdpDvcInput *grd_rdp_dvc_input_new (GrdRdpLayoutManager *layout_manager,
                                        GrdSessionRdp       *session_rdp,
                                        GrdRdpDvcHandler    *dvc_handler,
                                        HANDLE               vcm);
-
-#endif /* GRD_RDP_DVC_INPUT_H */

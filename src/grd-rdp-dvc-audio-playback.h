@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_DVC_AUDIO_PLAYBACK_H
-#define GRD_RDP_DVC_AUDIO_PLAYBACK_H
+#pragma once
 
 #include "grd-rdp-dvc.h"
 
@@ -36,5 +35,3 @@ void grd_rdp_dvc_audio_playback_maybe_submit_samples (GrdRdpDvcAudioPlayback *au
                                                       GrdRdpAudioVolumeData  *volume_data,
                                                       int16_t                *data,
                                                       uint32_t                size);
-
-#endif /* GRD_RDP_DVC_AUDIO_PLAYBACK_H */

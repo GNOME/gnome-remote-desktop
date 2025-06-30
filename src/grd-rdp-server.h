@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_SERVER_H
-#define GRD_RDP_SERVER_H
+#pragma once
 
 #include <gio/gio.h>
 #include <glib-object.h>
@@ -42,5 +41,3 @@ GrdRdpServer *grd_rdp_server_new (GrdContext *context);
 
 void grd_rdp_server_notify_incoming (GSocketService    *service,
                                      GSocketConnection *connection);
-
-#endif /* GRD_RDP_SERVER_H */

@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_IMAGE_VIEW_RGB_H
-#define GRD_IMAGE_VIEW_RGB_H
+#pragma once
 
 #include "grd-image-view.h"
 #include "grd-types.h"
@@ -38,5 +37,3 @@ void grd_image_view_rgb_attach_local_buffer (GrdImageViewRGB                *ima
                                              GrdLocalBuffer                 *local_buffer,
                                              GrdImageViewRGBReleaseCallback  callback,
                                              gpointer                        user_data);
-
-#endif /* GRD_IMAGE_VIEW_RGB_H */

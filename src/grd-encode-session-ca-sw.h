@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_ENCODE_SESSION_CA_SW_H
-#define GRD_ENCODE_SESSION_CA_SW_H
+#pragma once
 
 #include "grd-encode-session.h"
 #include "grd-types.h"
@@ -31,5 +30,3 @@ GrdEncodeSessionCaSw *grd_encode_session_ca_sw_new (GrdRdpSwEncoderCa  *encoder_
                                                     uint32_t            source_width,
                                                     uint32_t            source_height,
                                                     GError            **error);
-
-#endif /* GRD_ENCODE_SESSION_CA_SW_H */

@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_DVC_H
-#define GRD_RDP_DVC_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -51,5 +50,3 @@ void grd_rdp_dvc_subscribe_creation_status (GrdRdpDvc                       *dvc
                                             gpointer                         callback_user_data);
 
 void grd_rdp_dvc_maybe_unsubscribe_creation_status (GrdRdpDvc *dvc);
-
-#endif /* GRD_RDP_DVC_H */

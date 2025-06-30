@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_EVENT_QUEUE_H
-#define GRD_RDP_EVENT_QUEUE_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -64,5 +63,3 @@ void grd_rdp_event_queue_update_num_lock_state (GrdRdpEventQueue *rdp_event_queu
 void grd_rdp_event_queue_add_synchronization_event (GrdRdpEventQueue *rdp_event_queue,
                                                     gboolean          caps_lock_state,
                                                     gboolean          num_lock_state);
-
-#endif /* GRD_RDP_EVENT_QUEUE_H */

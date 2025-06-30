@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_DVC_AUDIO_INPUT_H
-#define GRD_RDP_DVC_AUDIO_INPUT_H
+#pragma once
 
 #include "grd-rdp-dvc.h"
 
@@ -30,5 +29,3 @@ GrdRdpDvcAudioInput *grd_rdp_dvc_audio_input_new (GrdSessionRdp    *session_rdp,
                                                   GrdRdpDvcHandler *dvc_handler,
                                                   HANDLE            vcm,
                                                   rdpContext       *rdp_context);
-
-#endif /* GRD_RDP_DVC_AUDIO_INPUT_H */

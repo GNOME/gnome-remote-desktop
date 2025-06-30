@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_SURFACE_H
-#define GRD_RDP_SURFACE_H
+#pragma once
 
 #include <ffnvcodec/dynlink_cuda.h>
 #include <gio/gio.h>
@@ -87,5 +86,3 @@ void grd_rdp_surface_attach_surface_renderer (GrdRdpSurface         *rdp_surface
                                               GrdRdpSurfaceRenderer *surface_renderer);
 
 void grd_rdp_surface_reset (GrdRdpSurface *rdp_surface);
-
-#endif /* GRD_RDP_SURFACE_H */

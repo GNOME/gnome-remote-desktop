@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_LAYOUT_MANAGER_H
-#define GRD_RDP_LAYOUT_MANAGER_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -46,5 +45,3 @@ gboolean grd_rdp_layout_manager_transform_position (GrdRdpLayoutManager  *layout
                                                     uint32_t              y,
                                                     GrdStream           **stream,
                                                     GrdEventMotionAbs    *motion_abs);
-
-#endif /* GRD_RDP_LAYOUT_MANAGER_H */

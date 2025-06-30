@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_ENCODE_SESSION_VAAPI_H
-#define GRD_ENCODE_SESSION_VAAPI_H
+#pragma once
 
 #include <va/va.h>
 
@@ -35,5 +34,3 @@ GrdEncodeSessionVaapi *grd_encode_session_vaapi_new (GrdVkDevice  *vk_device,
                                                      uint32_t      source_height,
                                                      uint32_t      refresh_rate,
                                                      GError      **error);
-
-#endif /* GRD_ENCODE_SESSION_VAAPI_H */

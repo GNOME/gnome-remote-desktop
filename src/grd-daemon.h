@@ -20,8 +20,7 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_DAEMON_H
-#define GRD_DAEMON_H
+#pragma once
 
 #include <gio/gio.h>
 
@@ -52,5 +51,3 @@ void grd_daemon_maybe_enable_services (GrdDaemon *daemon);
 void grd_daemon_disable_services (GrdDaemon *daemon);
 
 void grd_daemon_acquire_mutter_dbus_proxies (GrdDaemon *daemon);
-
-#endif /* GRD_DAEMON_H */

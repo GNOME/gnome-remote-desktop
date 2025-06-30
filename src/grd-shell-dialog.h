@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_SHELL_DIALOG_H
-#define GRD_SHELL_DIALOG_H
+#pragma once
 
 #include <gio/gio.h>
 #include <glib-object.h>
@@ -35,5 +34,3 @@ void grd_shell_dialog_open (GrdShellDialog *shell_dialog,
                             const char     *description,
                             const char     *cancel_label,
                             const char     *accept_label);
-
-#endif /* GRD_SHELL_DIALOG_H */

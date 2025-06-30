@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_TPM_H
-#define GRD_TPM_H
+#pragma once
 
 #include <glib-object.h>
 #include <tss2_esys.h>
@@ -65,5 +64,3 @@ char * grd_tpm_restore_secret (GrdTpm              *tpm,
 
 gboolean grd_tpm_check_capabilities (GrdTpm  *tpm,
                                      GError **error);
-
-#endif /* GRD_TPM_H */

@@ -20,8 +20,7 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_SESSION_VNC_H
-#define GRD_SESSION_VNC_H
+#pragma once
 
 #include <gio/gio.h>
 #include <glib-object.h>
@@ -64,5 +63,3 @@ int grd_session_vnc_get_stride_for_width (GrdSessionVnc *session_vnc,
                                           int            width);
 
 gboolean grd_session_vnc_is_client_gone (GrdSessionVnc *session_vnc);
-
-#endif /* GRD_SESSION_VNC_H */

@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_SETTINGS_USER_H
-#define GRD_SETTINGS_USER_H
+#pragma once
 
 #include "grd-settings.h"
 
@@ -28,5 +27,3 @@ G_DECLARE_FINAL_TYPE (GrdSettingsUser, grd_settings_user,
                       GRD, SETTINGS_USER, GrdSettings)
 
 GrdSettingsUser *grd_settings_user_new (void);
-
-#endif /* GRD_SETTINGS_USER_H */

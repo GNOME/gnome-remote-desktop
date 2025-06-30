@@ -20,8 +20,7 @@
  *     Alynx Zhou <alynx.zhou@gmail.com>
  */
 
-#ifndef GRD_CREDENTIALS_FILE_H
-#define GRD_CREDENTIALS_FILE_H
+#pragma once
 
 #include "grd-credentials.h"
 
@@ -30,5 +29,3 @@ G_DECLARE_FINAL_TYPE (GrdCredentialsFile, grd_credentials_file, GRD,
                       CREDENTIALS_FILE, GrdCredentials)
 
 GrdCredentialsFile * grd_credentials_file_new (GError **error);
-
-#endif /* GRD_CREDENTIALS_FILE_H */

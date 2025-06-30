@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_NAL_WRITER_H
-#define GRD_NAL_WRITER_H
+#pragma once
 
 #include <glib-object.h>
 #include <va/va.h>
@@ -45,5 +44,3 @@ uint8_t *grd_nal_writer_get_slice_header_bitstream (GrdNalWriter                
                                                     const VAEncSequenceParameterBufferH264 *sequence_param,
                                                     const VAEncPictureParameterBufferH264  *picture_param,
                                                     uint32_t                               *bitstream_length);
-
-#endif /* GRD_NAL_WRITER_H */

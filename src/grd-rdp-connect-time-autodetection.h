@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_CONNECT_TIME_AUTODETECTION_H
-#define GRD_RDP_CONNECT_TIME_AUTODETECTION_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -45,5 +44,3 @@ void grd_rdp_connect_time_autodetection_notify_rtt_measure_response (GrdRdpConne
                                                                      uint16_t                        sequence_number,
                                                                      int64_t                         base_round_trip_time_us,
                                                                      int64_t                         avg_round_trip_time_us);
-
-#endif /* GRD_RDP_CONNECT_TIME_AUTODETECTION_H */

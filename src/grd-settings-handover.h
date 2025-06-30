@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_SETTINGS_HANDOVER_H
-#define GRD_SETTINGS_HANDOVER_H
+#pragma once
 
 #include "grd-settings.h"
 
@@ -28,5 +27,3 @@ G_DECLARE_FINAL_TYPE (GrdSettingsHandover, grd_settings_handover,
                       GRD, SETTINGS_HANDOVER, GrdSettings)
 
 GrdSettingsHandover *grd_settings_handover_new (void);
-
-#endif /* GRD_SETTINGS_HANDOVER_H */

@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_GFX_FRAME_LOG_H
-#define GRD_RDP_GFX_FRAME_LOG_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -54,5 +53,3 @@ uint32_t grd_rdp_gfx_frame_log_get_unacked_frames_count (GrdRdpGfxFrameLog *fram
 uint32_t grd_rdp_gfx_frame_log_get_unacked_dual_frames_count (GrdRdpGfxFrameLog *frame_log);
 
 void grd_rdp_gfx_frame_log_clear (GrdRdpGfxFrameLog *frame_log);
-
-#endif /* GRD_RDP_GFX_FRAME_LOG_H */

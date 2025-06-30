@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_ENCODE_CONTEXT_H
-#define GRD_ENCODE_CONTEXT_H
+#pragma once
 
 #include <cairo/cairo.h>
 
@@ -32,5 +31,3 @@ cairo_region_t *grd_encode_context_get_damage_region (GrdEncodeContext *encode_c
 
 void grd_encode_context_set_damage_region (GrdEncodeContext *encode_context,
                                            cairo_region_t   *damage_region);
-
-#endif /* GRD_ENCODE_CONTEXT_H */

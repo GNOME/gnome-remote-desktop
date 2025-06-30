@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_DAMAGE_DETECTOR_SW_H
-#define GRD_DAMAGE_DETECTOR_SW_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -39,5 +38,3 @@ uint32_t grd_damage_detector_sw_get_damage_buffer_length (GrdDamageDetectorSw *d
 void grd_damage_detector_sw_compute_damage (GrdDamageDetectorSw *damage_detector,
                                             GrdLocalBuffer      *local_buffer_new,
                                             GrdLocalBuffer      *local_buffer_old);
-
-#endif /* GRD_DAMAGE_DETECTOR_SW_H */

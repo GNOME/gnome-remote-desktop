@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_CLIPBOARD_RDP_H
-#define GRD_CLIPBOARD_RDP_H
+#pragma once
 
 #include <freerdp/server/cliprdr.h>
 
@@ -53,5 +52,3 @@ void grd_clipboard_rdp_request_remote_file_range_async (GrdClipboardRdp *clipboa
                                                         uint32_t         requested_size,
                                                         gboolean         has_clip_data_id,
                                                         uint32_t         clip_data_id);
-
-#endif /* GRD_CLIPBOARD_RDP_H */

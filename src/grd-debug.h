@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_DEBUG_H
-#define GRD_DEBUG_H
+#pragma once
 
 typedef enum _GrdDebugFlags
 {
@@ -33,5 +32,3 @@ typedef enum _GrdDebugFlags
 } GrdDebugFlags;
 
 GrdDebugFlags grd_get_debug_flags (void);
-
-#endif /* GRD_DEBUG_H */

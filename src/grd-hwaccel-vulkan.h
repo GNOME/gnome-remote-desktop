@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_HWACCEL_VULKAN_H
-#define GRD_HWACCEL_VULKAN_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -45,5 +44,3 @@ GrdHwAccelVulkan *grd_hwaccel_vulkan_new (GrdEglThread  *egl_thread,
 
 GrdVkDevice *grd_hwaccel_vulkan_acquire_device (GrdHwAccelVulkan  *hwaccel_vulkan,
                                                 GError           **error);
-
-#endif /* GRD_HWACCEL_VULKAN_H */

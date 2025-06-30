@@ -20,8 +20,7 @@
  *     Joan Torres <joan.torres@suse.com>
  */
 
-#ifndef GRD_DAEMON_SYSTEM_H
-#define GRD_DAEMON_SYSTEM_H
+#pragma once
 
 #include "grd-daemon.h"
 
@@ -30,5 +29,3 @@ G_DECLARE_FINAL_TYPE (GrdDaemonSystem, grd_daemon_system,
                       GRD, DAEMON_SYSTEM, GrdDaemon)
 
 GrdDaemonSystem *grd_daemon_system_new (GError **error);
-
-#endif /* GRD_DAEMON_SYSTEM_H */

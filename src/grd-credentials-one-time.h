@@ -20,8 +20,7 @@
  *     Joan Torres <joan.torres@suse.com>
  */
 
-#ifndef GRD_CREDENTIALS_ONE_TIME_H
-#define GRD_CREDENTIALS_ONE_TIME_H
+#pragma once
 
 #include "grd-credentials.h"
 
@@ -30,5 +29,3 @@ G_DECLARE_FINAL_TYPE (GrdCredentialsOneTime, grd_credentials_one_time,
                       GRD, CREDENTIALS_ONE_TIME, GrdCredentials)
 
 GrdCredentialsOneTime *grd_credentials_one_time_new (void);
-
-#endif /* GRD_CREDENTIALS_ONE_TIME_H */

@@ -20,8 +20,7 @@
  *     Joan Torres <joan.torres@suse.com>
  */
 
-#ifndef GRD_RDP_ROUTING_TOKEN_H
-#define GRD_RDP_ROUTING_TOKEN_H
+#pragma once
 
 #include <gio/gio.h>
 
@@ -38,5 +37,3 @@ char *grd_routing_token_peek_finish (GAsyncResult       *result,
                                      GCancellable      **server_cancellable,
                                      gboolean           *requested_rdstls,
                                      GError            **error);
-
-#endif /* GRD_RDP_ROUTING_TOKEN_H */

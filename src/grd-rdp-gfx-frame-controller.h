@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_GFX_FRAME_CONTROLLER_H
-#define GRD_RDP_GFX_FRAME_CONTROLLER_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -53,5 +52,3 @@ void grd_rdp_gfx_frame_controller_clear_all_unacked_frames (GrdRdpGfxFrameContro
 
 void grd_rdp_gfx_frame_controller_notify_new_round_trip_time (GrdRdpGfxFrameController *frame_controller,
                                                               int64_t                   round_trip_time_us);
-
-#endif /* GRD_RDP_GFX_FRAME_CONTROLLER_H */

@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_GFX_FRAMERATE_LOG_H
-#define GRD_RDP_GFX_FRAMERATE_LOG_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -34,5 +33,3 @@ void grd_rdp_gfx_framerate_log_notify_frame_stats (GrdRdpGfxFramerateLog *framer
                                                    GrdRdpFrameStats      *frame_stats);
 
 gboolean grd_rdp_gfx_framerate_log_should_avoid_dual_frame (GrdRdpGfxFramerateLog *framerate_log);
-
-#endif /* GRD_RDP_GFX_FRAMERATE_LOG_H */

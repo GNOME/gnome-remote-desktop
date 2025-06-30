@@ -20,8 +20,7 @@
  *     Joan Torres <joan.torres@suse.com>
  */
 
-#ifndef GRD_DAEMON_HANDOVER_H
-#define GRD_DAEMON_HANDOVER_H
+#pragma once
 
 #include "grd-daemon.h"
 
@@ -30,5 +29,3 @@ G_DECLARE_FINAL_TYPE (GrdDaemonHandover, grd_daemon_handover,
                       GRD, DAEMON_HANDOVER, GrdDaemon)
 
 GrdDaemonHandover *grd_daemon_handover_new (GError **error);
-
-#endif /* GRD_DAEMON_HANDOVER */

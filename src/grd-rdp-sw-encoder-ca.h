@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_SW_ENCODER_CA_H
-#define GRD_RDP_SW_ENCODER_CA_H
+#pragma once
 
 #include <cairo/cairo.h>
 #include <freerdp/freerdp.h>
@@ -38,5 +37,3 @@ void grd_rdp_sw_encoder_ca_encode_progressive_frame (GrdRdpSwEncoderCa *encoder_
                                                      cairo_region_t    *damage_region,
                                                      wStream           *encode_stream,
                                                      gboolean           write_header);
-
-#endif /* GRD_RDP_SW_ENCODER_CA_H */

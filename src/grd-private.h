@@ -20,8 +20,7 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_PRIVATE_H
-#define GRD_PRIVATE_H
+#pragma once
 
 #define GRD_DAEMON_USER_APPLICATION_ID "org.gnome.RemoteDesktop.User"
 #define GRD_DAEMON_HEADLESS_APPLICATION_ID "org.gnome.RemoteDesktop.Headless"
@@ -43,5 +42,3 @@
 #define GDM_BUS_NAME "org.gnome.DisplayManager"
 #define GDM_REMOTE_DISPLAY_FACTORY_OBJECT_PATH "/org/gnome/DisplayManager/RemoteDisplayFactory"
 #define GDM_OBJECT_MANAGER_OBJECT_PATH "/org/gnome/DisplayManager/Displays"
-
-#endif /* GRD_PRIVATE_H */

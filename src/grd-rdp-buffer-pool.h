@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_BUFFER_POOL_H
-#define GRD_RDP_BUFFER_POOL_H
+#pragma once
 
 #include <ffnvcodec/dynlink_cuda.h>
 #include <glib-object.h>
@@ -43,5 +42,3 @@ GrdRdpLegacyBuffer *grd_rdp_buffer_pool_acquire (GrdRdpBufferPool *buffer_pool);
 
 void grd_rdp_buffer_pool_release_buffer (GrdRdpBufferPool   *buffer_pool,
                                          GrdRdpLegacyBuffer *buffer);
-
-#endif /* GRD_RDP_BUFFER_POOL_H */

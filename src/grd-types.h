@@ -20,8 +20,7 @@
  *     Jonas Ådahl <jadahl@gmail.com>
  */
 
-#ifndef GRD_TYPES_H
-#define GRD_TYPES_H
+#pragma once
 
 typedef struct _GrdAVCFrameInfo GrdAVCFrameInfo;
 typedef struct _GrdBitstream GrdBitstream;
@@ -93,5 +92,3 @@ typedef enum _GrdPixelFormat
 {
   GRD_PIXEL_FORMAT_RGBA8888,
 } GrdPixelFormat;
-
-#endif /* GRD_TYPES_H */

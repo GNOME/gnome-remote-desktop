@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_FRAME_H
-#define GRD_RDP_FRAME_H
+#pragma once
 
 #include <cairo/cairo.h>
 #include <glib.h>
@@ -86,5 +85,3 @@ void grd_rdp_frame_notify_picked_up (GrdRdpFrame *rdp_frame);
 void grd_rdp_frame_notify_frame_submission (GrdRdpFrame *rdp_frame);
 
 GrdImageView *grd_rdp_frame_pop_image_view (GrdRdpFrame *rdp_frame);
-
-#endif /* GRD_RDP_FRAME_H */

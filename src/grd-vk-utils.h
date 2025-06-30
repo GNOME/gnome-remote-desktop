@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_VK_UTILS_H
-#define GRD_VK_UTILS_H
+#pragma once
 
 #include <gio/gio.h>
 #include <vulkan/vulkan.h>
@@ -56,5 +55,3 @@ GrdVkImage *grd_vk_dma_buf_image_new (GrdVkDevice        *vk_device,
                                       VkDeviceSize        row_pitch,
                                       uint64_t            drm_format_modifier,
                                       GError            **error);
-
-#endif /* GRD_VK_UTILS_H */

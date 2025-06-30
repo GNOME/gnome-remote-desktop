@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_VK_QUEUE_H
-#define GRD_VK_QUEUE_H
+#pragma once
 
 #include <glib-object.h>
 #include <vulkan/vulkan.h>
@@ -42,5 +41,3 @@ gboolean grd_vk_queue_submit (GrdVkQueue           *queue,
                               uint32_t              n_submit_infos_2,
                               VkFence               vk_fence,
                               GError              **error);
-
-#endif /* GRD_VK_QUEUE_H */

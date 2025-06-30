@@ -18,8 +18,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_VNC_MONITOR_CONFIG_H
-#define GRD_VNC_MONITOR_CONFIG_H
+#pragma once
 
 #define GRD_VNC_CLAMP_DESKTOP_SIZE(value) MAX (MIN (value, 8192), 200)
 #define GRD_VNC_DEFAULT_WIDTH             1920
@@ -44,5 +43,3 @@ typedef struct _GrdVncMonitorConfig
   /* Count of items in connectors or virtual_monitors */
   uint32_t monitor_count;
 } GrdVncMonitorConfig;
-
-#endif /* GRD_VNC_MONITOR_CONFIG_H */

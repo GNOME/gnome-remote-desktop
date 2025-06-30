@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_CREDENTIALS_H
-#define GRD_CREDENTIALS_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -63,5 +62,3 @@ GVariant * grd_credentials_lookup (GrdCredentials      *credentials,
 gboolean grd_credentials_clear (GrdCredentials      *credentials,
                                 GrdCredentialsType   type,
                                 GError             **error);
-
-#endif /* GRD_CREDENTIALS_H */

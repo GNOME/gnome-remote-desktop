@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_HWACCEL_NVIDIA_H
-#define GRD_HWACCEL_NVIDIA_H
+#pragma once
 
 #include <ffnvcodec/dynlink_cuda.h>
 #include <glib-object.h>
@@ -101,5 +100,3 @@ gboolean grd_hwaccel_nvidia_avc420_retrieve_bitstream (GrdHwAccelNvidia  *hwacce
                                                        uint32_t           encode_session_id,
                                                        uint8_t          **bitstream,
                                                        uint32_t          *bitstream_size);
-
-#endif /* GRD_HWACCEL_NVIDIA_H */

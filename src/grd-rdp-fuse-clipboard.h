@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_FUSE_CLIPBOARD_H
-#define GRD_RDP_FUSE_CLIPBOARD_H
+#pragma once
 
 #include <glib-object.h>
 #include <winpr/shell.h>
@@ -59,5 +58,3 @@ void grd_rdp_fuse_clipboard_submit_file_contents_response (GrdRdpFuseClipboard *
                                                            gboolean             response_ok,
                                                            const uint8_t       *data,
                                                            uint32_t             size);
-
-#endif /* GRD_RDP_FUSE_CLIPBOARD_H */

@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_PW_BUFFER_H
-#define GRD_RDP_PW_BUFFER_H
+#pragma once
 
 #include <gio/gio.h>
 #include <pipewire/stream.h>
@@ -55,5 +54,3 @@ void grd_rdp_pw_buffer_acquire_lock (GrdRdpPwBuffer *rdp_pw_buffer);
 void grd_rdp_pw_buffer_maybe_release_lock (GrdRdpPwBuffer *rdp_pw_buffer);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdRdpPwBuffer, grd_rdp_pw_buffer_free)
-
-#endif /* GRD_RDP_PW_BUFFER_H */

@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_PIPEWIRE_UTILS_H
-#define GRD_PIPEWIRE_UTILS_H
+#pragma once
 
 #include <gio/gio.h>
 #include <pipewire/pipewire.h>
@@ -52,5 +51,3 @@ gboolean grd_spa_pixel_format_to_grd_pixel_format (uint32_t        spa_format,
 void grd_get_spa_format_details (enum spa_video_format  spa_format,
                                  uint32_t              *drm_format,
                                  int                   *bpp);
-
-#endif /* GRD_PIPEWIRE_UTILS_H */

@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_PIPEWIRE_STREAM_H
-#define GRD_RDP_PIPEWIRE_STREAM_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -41,5 +40,3 @@ GrdRdpPipeWireStream *grd_rdp_pipewire_stream_new (GrdSessionRdp               *
 
 void grd_rdp_pipewire_stream_resize (GrdRdpPipeWireStream *stream,
                                      GrdRdpVirtualMonitor *virtual_monitor);
-
-#endif /* GRD_RDP_PIPEWIRE_STREAM_H */

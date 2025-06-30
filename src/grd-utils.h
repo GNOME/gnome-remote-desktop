@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_UTILS_H
-#define GRD_UTILS_H
+#pragma once
 
 #include <gio/gio.h>
 #include <stdint.h>
@@ -100,5 +99,3 @@ gboolean grd_systemd_get_unit (GBusType     bus_type,
 gboolean grd_systemd_unit_get_active_state (GDBusProxy                 *unit_proxy,
                                             GrdSystemdUnitActiveState  *active_state,
                                             GError                    **error);
-
-#endif /* GRD_UTILS_H */

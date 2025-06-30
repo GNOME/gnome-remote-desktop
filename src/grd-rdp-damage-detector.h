@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_DAMAGE_DETECTOR_H
-#define GRD_RDP_DAMAGE_DETECTOR_H
+#pragma once
 
 #include <cairo/cairo.h>
 #include <glib-object.h>
@@ -56,5 +55,3 @@ gboolean grd_rdp_damage_detector_submit_new_framebuffer (GrdRdpDamageDetector *d
 gboolean grd_rdp_damage_detector_is_region_damaged (GrdRdpDamageDetector *detector);
 
 cairo_region_t *grd_rdp_damage_detector_get_damage_region (GrdRdpDamageDetector *detector);
-
-#endif /* GRD_RDP_DAMAGE_DETECTOR_H */

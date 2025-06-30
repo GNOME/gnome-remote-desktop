@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_SESSION_METRICS_H
-#define GRD_RDP_SESSION_METRICS_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -51,5 +50,3 @@ void grd_rdp_session_metrics_notify_layout_change (GrdRdpSessionMetrics *session
 
 void grd_rdp_session_metrics_prepare_surface_metrics (GrdRdpSessionMetrics *session_metrics,
                                                       GList                *surfaces);
-
-#endif /* GRD_RDP_SESSION_METRICS_H */

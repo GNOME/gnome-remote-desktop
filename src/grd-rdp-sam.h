@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_SAM_H
-#define GRD_RDP_SAM_H
+#pragma once
 
 #include "grd-types.h"
 
@@ -32,5 +31,3 @@ GrdRdpSAMFile *grd_rdp_sam_create_sam_file (const char *username,
                                             const char *password);
 
 void grd_rdp_sam_free_sam_file (GrdRdpSAMFile *rdp_sam_file);
-
-#endif /* GRD_RDP_SAM_H */

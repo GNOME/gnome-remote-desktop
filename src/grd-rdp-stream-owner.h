@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_STREAM_OWNER_H
-#define GRD_RDP_STREAM_OWNER_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -41,5 +40,3 @@ struct _GrdRdpStreamOwnerClass
 void grd_rdp_stream_owner_notify_stream_created (GrdRdpStreamOwner *stream_owner,
                                                  uint32_t           stream_id,
                                                  GrdStream         *stream);
-
-#endif /* GRD_RDP_STREAM_OWNER_H */

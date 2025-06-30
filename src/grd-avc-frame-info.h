@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_AVC_FRAME_INFO_H
-#define GRD_AVC_FRAME_INFO_H
+#pragma once
 
 #include <glib.h>
 #include <stdint.h>
@@ -40,5 +39,3 @@ gboolean grd_avc_frame_info_get_frame_type (GrdAVCFrameInfo *avc_frame_info);
 uint8_t grd_avc_frame_info_get_qp (GrdAVCFrameInfo *avc_frame_info);
 
 uint8_t grd_avc_frame_info_get_quality_value (GrdAVCFrameInfo *avc_frame_info);
-
-#endif /* GRD_AVC_FRAME_INFO_H */

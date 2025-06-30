@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_AUDIO_OUTPUT_STREAM_H
-#define GRD_RDP_AUDIO_OUTPUT_STREAM_H
+#pragma once
 
 #include <glib-object.h>
 #include <spa/param/audio/raw.h>
@@ -52,5 +51,3 @@ void grd_rdp_audio_output_stream_set_active (GrdRdpAudioOutputStream *audio_outp
 
 void grd_rdp_audio_output_stream_get_volume_data (GrdRdpAudioOutputStream *audio_output_stream,
                                                   GrdRdpAudioVolumeData   *volume_data);
-
-#endif /* GRD_RDP_AUDIO_OUTPUT_STREAM_H */

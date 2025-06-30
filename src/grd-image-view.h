@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_IMAGE_VIEW_H
-#define GRD_IMAGE_VIEW_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -34,5 +33,3 @@ struct _GrdImageViewClass
 };
 
 void grd_image_view_notify_image_view_release (GrdImageView *image_view);
-
-#endif /* GRD_IMAGE_VIEW_H */

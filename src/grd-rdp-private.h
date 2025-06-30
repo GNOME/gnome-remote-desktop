@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_PRIVATE_H
-#define GRD_RDP_PRIVATE_H
+#pragma once
 
 #include <freerdp/freerdp.h>
 
@@ -50,5 +49,3 @@ typedef struct _RdpPeerContext
   GrdRdpDvcInput *input;
   GrdRdpDvcTelemetry *telemetry;
 } RdpPeerContext;
-
-#endif /* GRD_RDP_PRIVATE_H */

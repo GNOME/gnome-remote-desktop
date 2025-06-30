@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_DAMAGE_DETECTOR_MEMCMP_H
-#define GRD_RDP_DAMAGE_DETECTOR_MEMCMP_H
+#pragma once
 
 #include "grd-rdp-damage-detector.h"
 
@@ -27,5 +26,3 @@ G_DECLARE_FINAL_TYPE (GrdRdpDamageDetectorMemcmp, grd_rdp_damage_detector_memcmp
                       GRD, RDP_DAMAGE_DETECTOR_MEMCMP, GrdRdpDamageDetector)
 
 GrdRdpDamageDetectorMemcmp *grd_rdp_damage_detector_memcmp_new (void);
-
-#endif /* GRD_RDP_DAMAGE_DETECTOR_MEMCMP_H */

@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_EGL_THREAD_H
-#define GRD_EGL_THREAD_H
+#pragma once
 
 #include <glib.h>
 #include <stdint.h>
@@ -113,5 +112,3 @@ gboolean grd_egl_thread_get_modifiers_for_format (GrdEglThread  *egl_thread,
                                                   uint64_t     **out_modifiers);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdEglThread, grd_egl_thread_free)
-
-#endif /* GRD_EGL_THREAD_H */

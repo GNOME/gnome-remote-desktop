@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_SETTINGS_SYSTEM_H
-#define GRD_SETTINGS_SYSTEM_H
+#pragma once
 
 #include "grd-settings.h"
 
@@ -30,5 +29,3 @@ G_DECLARE_FINAL_TYPE (GrdSettingsSystem, grd_settings_system,
 GrdSettingsSystem *grd_settings_system_new (void);
 
 void grd_settings_system_use_local_state (GrdSettingsSystem *settings_system);
-
-#endif /* GRD_SETTINGS_SYSTEM_H */

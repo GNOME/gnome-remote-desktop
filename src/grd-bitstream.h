@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_BITSTREAM_H
-#define GRD_BITSTREAM_H
+#pragma once
 
 #include <stdint.h>
 
@@ -37,5 +36,3 @@ GrdAVCFrameInfo *grd_bitstream_get_avc_frame_info (GrdBitstream *bitstream);
 
 void grd_bitstream_set_avc_frame_info (GrdBitstream    *bitstream,
                                        GrdAVCFrameInfo *avc_frame_info);
-
-#endif /* GRD_BITSTREAM_H */

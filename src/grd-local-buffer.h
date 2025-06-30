@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_LOCAL_BUFFER_H
-#define GRD_LOCAL_BUFFER_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -38,5 +37,3 @@ struct _GrdLocalBufferClass
 uint8_t *grd_local_buffer_get_buffer (GrdLocalBuffer *local_buffer);
 
 uint32_t grd_local_buffer_get_buffer_stride (GrdLocalBuffer *local_buffer);
-
-#endif /* GRD_LOCAL_BUFFER_H */

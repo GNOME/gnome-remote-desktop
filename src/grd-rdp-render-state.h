@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_RENDER_STATE_H
-#define GRD_RDP_RENDER_STATE_H
+#pragma once
 
 #include <glib.h>
 #include <stdint.h>
@@ -38,5 +37,3 @@ uint32_t *grd_rdp_render_state_get_chroma_state_buffer (GrdRdpRenderState *rende
 uint32_t grd_rdp_render_state_get_state_buffer_length (GrdRdpRenderState *render_state);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdRdpRenderState, grd_rdp_render_state_free)
-
-#endif /* GRD_RDP_RENDER_STATE_H */

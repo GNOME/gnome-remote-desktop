@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_SETTINGS_HEADLESS_H
-#define GRD_SETTINGS_HEADLESS_H
+#pragma once
 
 #include "grd-settings.h"
 
@@ -28,5 +27,3 @@ G_DECLARE_FINAL_TYPE (GrdSettingsHeadless, grd_settings_headless,
                       GRD, SETTINGS_HEADLESS, GrdSettings)
 
 GrdSettingsHeadless *grd_settings_headless_new (void);
-
-#endif /* GRD_SETTINGS_HEADLESS_H */

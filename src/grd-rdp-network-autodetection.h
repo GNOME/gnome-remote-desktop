@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_NETWORK_AUTODETECTION_H
-#define GRD_RDP_NETWORK_AUTODETECTION_H
+#pragma once
 
 #include <freerdp/freerdp.h>
 #include <glib-object.h>
@@ -73,5 +72,3 @@ void grd_rdp_network_autodetection_bw_measure_stop (GrdRdpNetworkAutodetection *
 void grd_rdp_network_autodetection_queue_bw_measure_stop (GrdRdpNetworkAutodetection *network_autodetection);
 
 HANDLE grd_rdp_network_autodetection_get_bw_measure_stop_event_handle (GrdRdpNetworkAutodetection *network_autodetection);
-
-#endif /* GRD_RDP_NETWORK_AUTODETECTION_H */

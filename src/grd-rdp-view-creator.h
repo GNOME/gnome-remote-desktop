@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_VIEW_CREATOR_H
-#define GRD_RDP_VIEW_CREATOR_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -48,5 +47,3 @@ gboolean grd_rdp_view_creator_create_view (GrdRdpViewCreator                   *
                                            GrdRdpFrame                         *rdp_frame,
                                            GrdRdpViewCreatorOnViewCreatedFunc   on_view_created,
                                            GError                             **error);
-
-#endif /* GRD_RDP_VIEW_CREATOR_H */

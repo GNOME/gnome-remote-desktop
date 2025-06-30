@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_IMAGE_VIEW_NV12_H
-#define GRD_IMAGE_VIEW_NV12_H
+#pragma once
 
 #include "grd-image-view.h"
 #include "grd-types.h"
@@ -33,5 +32,3 @@ GrdImageViewNV12 *grd_image_view_nv12_new (GrdVkImage *vk_y_layer,
 GrdVkImage *grd_image_view_nv12_get_y_layer (GrdImageViewNV12 *image_view_nv12);
 
 GrdVkImage *grd_image_view_nv12_get_uv_layer (GrdImageViewNV12 *image_view_nv12);
-
-#endif /* GRD_IMAGE_VIEW_NV12_H */

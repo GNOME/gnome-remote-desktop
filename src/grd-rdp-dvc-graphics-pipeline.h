@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_DVC_GRAPHICS_PIPELINE_H
-#define GRD_RDP_DVC_GRAPHICS_PIPELINE_H
+#pragma once
 
 #include <freerdp/freerdp.h>
 
@@ -70,5 +69,3 @@ gboolean grd_rdp_dvc_graphics_pipeline_refresh_gfx (GrdRdpDvcGraphicsPipeline *g
                                                     GrdRdpSurface             *rdp_surface,
                                                     GrdRdpRenderContext       *render_context,
                                                     GrdRdpLegacyBuffer        *buffer);
-
-#endif /* GRD_RDP_DVC_GRAPHICS_PIPELINE_H */

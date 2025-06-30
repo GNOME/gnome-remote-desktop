@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_RDP_VIEW_CREATOR_AVC_H
-#define GRD_RDP_VIEW_CREATOR_AVC_H
+#pragma once
 
 #include <stdint.h>
 
@@ -34,5 +33,3 @@ GrdRdpViewCreatorAVC *grd_rdp_view_creator_avc_new (GrdVkDevice  *device,
                                                     uint32_t      source_width,
                                                     uint32_t      source_height,
                                                     GError      **error);
-
-#endif /* GRD_RDP_VIEW_CREATOR_AVC_H */

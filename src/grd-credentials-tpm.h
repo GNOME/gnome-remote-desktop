@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_CREDENTIALS_TPM_H
-#define GRD_CREDENTIALS_TPM_H
+#pragma once
 
 #include "grd-credentials.h"
 
@@ -28,5 +27,3 @@ G_DECLARE_FINAL_TYPE (GrdCredentialsTpm, grd_credentials_tpm,
                       GRD, CREDENTIALS_TPM, GrdCredentials)
 
 GrdCredentialsTpm * grd_credentials_tpm_new (GError **error);
-
-#endif /* GRD_CREDENTIALS_TPM_H */

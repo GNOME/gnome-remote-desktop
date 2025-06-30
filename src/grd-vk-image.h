@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_VK_IMAGE_H
-#define GRD_VK_IMAGE_H
+#pragma once
 
 #include <glib-object.h>
 #include <vulkan/vulkan.h>
@@ -54,5 +53,3 @@ VkImageLayout grd_vk_image_get_image_layout (GrdVkImage *image);
 
 void grd_vk_image_set_image_layout (GrdVkImage    *image,
                                     VkImageLayout  vk_image_layout);
-
-#endif /* GRD_VK_IMAGE_H */

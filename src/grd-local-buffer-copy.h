@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_LOCAL_BUFFER_COPY_H
-#define GRD_LOCAL_BUFFER_COPY_H
+#pragma once
 
 #include "grd-local-buffer.h"
 
@@ -28,5 +27,3 @@ G_DECLARE_FINAL_TYPE (GrdLocalBufferCopy, grd_local_buffer_copy,
 
 GrdLocalBufferCopy *grd_local_buffer_copy_new (uint32_t buffer_width,
                                                uint32_t buffer_height);
-
-#endif /* GRD_LOCAL_BUFFER_COPY_H */

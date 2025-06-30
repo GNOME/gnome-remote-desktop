@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_PROMPT_H
-#define GRD_PROMPT_H
+#pragma once
 
 typedef enum _GrdPromptResponse
 {
@@ -52,5 +51,3 @@ gboolean grd_prompt_query_finish (GrdPrompt          *prompt,
 void grd_prompt_definition_free (GrdPromptDefinition *prompt_definition);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdPromptDefinition, grd_prompt_definition_free)
-
-#endif /* GRD_PROMPT_H */

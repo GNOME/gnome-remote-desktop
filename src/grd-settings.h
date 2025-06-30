@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_SETTINGS_H
-#define GRD_SETTINGS_H
+#pragma once
 
 #include <glib-object.h>
 
@@ -68,5 +67,3 @@ gboolean grd_settings_set_vnc_password (GrdSettings  *settings,
 
 gboolean grd_settings_clear_vnc_password (GrdSettings  *settings,
                                           GError      **error);
-
-#endif /* GRD_SETTINGS_H */

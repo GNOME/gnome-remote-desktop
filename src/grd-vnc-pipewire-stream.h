@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_VNC_PIPEWIRE_STREAM_H
-#define GRD_VNC_PIPEWIRE_STREAM_H
+#pragma once
 
 #include <glib-object.h>
 #include <stdint.h>
@@ -39,5 +38,3 @@ GrdVncPipeWireStream *grd_vnc_pipewire_stream_new (GrdSessionVnc               *
 
 void grd_vnc_pipewire_stream_resize (GrdVncPipeWireStream *stream,
                                      GrdVncVirtualMonitor *virtual_monitor);
-
-#endif /* GRD_VNC_PIPEWIRE_STREAM_H */

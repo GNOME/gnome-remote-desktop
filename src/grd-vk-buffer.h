@@ -17,8 +17,7 @@
  * 02111-1307, USA.
  */
 
-#ifndef GRD_VK_BUFFER_H
-#define GRD_VK_BUFFER_H
+#pragma once
 
 #include <glib-object.h>
 #include <vulkan/vulkan.h>
@@ -44,5 +43,3 @@ GrdVkBuffer *grd_vk_buffer_new (GrdVkDevice                  *device,
 VkBuffer grd_vk_buffer_get_buffer (GrdVkBuffer *buffer);
 
 GrdVkMemory *grd_vk_buffer_get_memory (GrdVkBuffer *buffer);
-
-#endif /* GRD_VK_BUFFER_H */

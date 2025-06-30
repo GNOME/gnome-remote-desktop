@@ -18,8 +18,7 @@
  *
  */
 
-#ifndef GRD_VNC_CURSOR_H
-#define GRD_VNC_CURSOR_H
+#pragma once
 
 #include <rfb/rfb.h>
 
@@ -33,5 +32,3 @@ rfbCursorPtr grd_vnc_create_cursor (int             width,
 
 rfbCursorPtr grd_vnc_create_empty_cursor (int width,
                                           int height);
-
-#endif /* GRD_VNC_CURSOR_H */
