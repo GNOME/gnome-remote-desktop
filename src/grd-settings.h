@@ -37,6 +37,11 @@ struct _GrdSettingsClass
 
 GrdRuntimeMode grd_settings_get_runtime_mode (GrdSettings *settings);
 
+void grd_settings_override_max_parallel_connections (GrdSettings *settings,
+                                                     int          max_parallel_connections);
+
+int grd_settings_get_max_parallel_connections (GrdSettings *settings);
+
 void grd_settings_override_rdp_port (GrdSettings *settings,
                                      int          port);
 

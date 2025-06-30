@@ -255,10 +255,21 @@ grd_vnc_server_dispose (GObject *object)
 static void
 grd_vnc_server_constructed (GObject *object)
 {
+  GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
+  GrdThrottlerLimits *limits;
+
   if (grd_get_debug_flags () & GRD_DEBUG_VNC)
     rfbLogEnable (1);
   else
     rfbLogEnable (0);
+
+  limits = grd_throttler_limits_new (vnc_server->context);
+  /* TODO: Add the rfbScreen instance to GrdVncServer to support multiple
+   * sessions. */
+  grd_throttler_limits_set_max_global_connections (limits, 1);
+  vnc_server->throttler = grd_throttler_new (limits,
+                                             allow_connection_cb,
+                                             vnc_server);
 
   G_OBJECT_CLASS (grd_vnc_server_parent_class)->constructed (object);
 }
@@ -266,15 +277,6 @@ grd_vnc_server_constructed (GObject *object)
 static void
 grd_vnc_server_init (GrdVncServer *vnc_server)
 {
-  GrdThrottlerLimits *limits;
-
-  limits = grd_throttler_limits_new ();
-  /* TODO: Add the rfbScreen instance to GrdVncServer to support multiple
-   * sessions. */
-  grd_throttler_limits_set_max_global_connections (limits, 1);
-  vnc_server->throttler = grd_throttler_new (limits,
-                                             allow_connection_cb,
-                                             vnc_server);
 }
 
 static void

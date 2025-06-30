@@ -23,6 +23,8 @@
 #include <gio/gio.h>
 #include <glib-object.h>
 
+#include "grd-types.h"
+
 typedef struct _GrdThrottlerLimits GrdThrottlerLimits;
 
 #define GRD_TYPE_THROTTLER (grd_throttler_get_type())
@@ -41,7 +43,7 @@ grd_throttler_limits_set_max_global_connections (GrdThrottlerLimits *limits,
                                                  int                 limit);
 
 GrdThrottlerLimits *
-grd_throttler_limits_new (void);
+grd_throttler_limits_new (GrdContext *context);
 
 GrdThrottler *
 grd_throttler_new (GrdThrottlerLimits        *limits,

@@ -49,6 +49,8 @@
 
 #define RDP_SERVER_RESTART_DELAY_MS 3000
 
+#define DEFAULT_MAX_PARALLEL_CONNECTIONS 10
+
 enum
 {
   PROP_0,
@@ -91,6 +93,9 @@ typedef struct _GrdDaemonPrivate
 } GrdDaemonPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdDaemon, grd_daemon, G_TYPE_APPLICATION)
+
+#define QUOTE1(a) #a
+#define QUOTE(a) QUOTE1(a)
 
 #ifdef HAVE_RDP
 static void maybe_start_rdp_server (GrdDaemon *daemon);
@@ -969,6 +974,7 @@ main (int argc, char **argv)
   gboolean handover = FALSE;
   int rdp_port = -1;
   int vnc_port = -1;
+  int max_parallel_connections = DEFAULT_MAX_PARALLEL_CONNECTIONS;
 
   GOptionEntry entries[] = {
     { "version", 0, 0, G_OPTION_ARG_NONE, &print_version,
@@ -985,6 +991,10 @@ main (int argc, char **argv)
       "RDP port", NULL },
     { "vnc-port", 0, 0, G_OPTION_ARG_INT, &vnc_port,
       "VNC port", NULL },
+    { "max-parallel-connections", 0, 0,
+      G_OPTION_ARG_INT, &max_parallel_connections,
+      "Max number of parallel connections (0 for unlimited, "
+      "default: " QUOTE(DEFAULT_MAX_PARALLEL_CONNECTIONS) ")", NULL },
     { NULL }
   };
   g_autoptr (GOptionContext) option_context = NULL;
@@ -1011,6 +1021,17 @@ main (int argc, char **argv)
   if (count_trues (3, headless, system, handover) > 1)
     {
       g_printerr ("Invalid option: More than one runtime mode specified\n");
+      return EXIT_FAILURE;
+    }
+
+  if (max_parallel_connections == 0)
+    {
+      max_parallel_connections = INT_MAX;
+    }
+  else if (max_parallel_connections < 0)
+    {
+      g_printerr ("Invalid number of max parallel connections: %d\n",
+                  max_parallel_connections);
       return EXIT_FAILURE;
     }
 
@@ -1059,6 +1080,9 @@ main (int argc, char **argv)
     grd_settings_override_rdp_port (settings, rdp_port);
   if (vnc_port != -1)
     grd_settings_override_vnc_port (settings, vnc_port);
+
+  grd_settings_override_max_parallel_connections (settings,
+                                                  max_parallel_connections);
 
   return g_application_run (G_APPLICATION (daemon), argc, argv);
 }

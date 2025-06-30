@@ -85,6 +85,8 @@ typedef struct _GrdSettingsPrivate
     GrdVncScreenShareMode screen_share_mode;
     GrdVncAuthMethod auth_method;
   } vnc;
+
+  int max_parallel_connections;
 } GrdSettingsPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GrdSettings, grd_settings, G_TYPE_OBJECT)
@@ -99,6 +101,23 @@ grd_settings_get_runtime_mode (GrdSettings *settings)
   GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
 
   return priv->runtime_mode;
+}
+
+void
+grd_settings_override_max_parallel_connections (GrdSettings *settings,
+                                                int          max_parallel_connections)
+{
+  GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
+
+  priv->max_parallel_connections = max_parallel_connections;
+}
+
+int
+grd_settings_get_max_parallel_connections (GrdSettings *settings)
+{
+  GrdSettingsPrivate *priv = grd_settings_get_instance_private (settings);
+
+  return priv->max_parallel_connections;
 }
 
 void

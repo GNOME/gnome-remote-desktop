@@ -21,9 +21,10 @@
 
 #include "grd-throttler.h"
 
+#include "grd-context.h"
+#include "grd-settings.h"
 #include "grd-utils.h"
 
-#define DEFAULT_MAX_GLOBAL_CONNECTIONS 10
 #define DEFAULT_MAX_CONNECTIONS_PER_PEER 5
 #define DEFAULT_MAX_PENDING_CONNECTIONS 5
 #define DEFAULT_MAX_ATTEMPTS_PER_SECOND 10
@@ -440,12 +441,14 @@ grd_throttler_limits_set_max_global_connections (GrdThrottlerLimits *limits,
 }
 
 GrdThrottlerLimits *
-grd_throttler_limits_new (void)
+grd_throttler_limits_new (GrdContext *context)
 {
+  GrdSettings *settings = grd_context_get_settings (context);
   GrdThrottlerLimits *limits;
 
   limits = g_new0 (GrdThrottlerLimits, 1);
-  limits->max_global_connections = DEFAULT_MAX_GLOBAL_CONNECTIONS;
+  limits->max_global_connections =
+    grd_settings_get_max_parallel_connections (settings);
   limits->max_connections_per_peer = DEFAULT_MAX_CONNECTIONS_PER_PEER;
   limits->max_pending_connections = DEFAULT_MAX_PENDING_CONNECTIONS;
   limits->max_attempts_per_second = DEFAULT_MAX_ATTEMPTS_PER_SECOND;
