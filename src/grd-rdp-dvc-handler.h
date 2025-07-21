@@ -29,8 +29,7 @@ G_DECLARE_FINAL_TYPE (GrdRdpDvcHandler, grd_rdp_dvc_handler,
 typedef void (* GrdRdpDVCCreationStatusCallback) (gpointer user_data,
                                                   int32_t  creation_status);
 
-GrdRdpDvcHandler *grd_rdp_dvc_handler_new (HANDLE      vcm,
-                                           rdpContext *rdp_context);
+GrdRdpDvcHandler *grd_rdp_dvc_handler_new (HANDLE vcm);
 
 uint32_t grd_rdp_dvc_handler_subscribe_dvc_creation_status (GrdRdpDvcHandler                *dvc_handler,
                                                             uint32_t                         channel_id,

@@ -1170,8 +1170,7 @@ rdp_peer_context_new (freerdp_peer   *peer,
     }
 
   rdp_peer_context->dvc_handler =
-    grd_rdp_dvc_handler_new (rdp_peer_context->vcm,
-                             &rdp_peer_context->rdp_context);
+    grd_rdp_dvc_handler_new (rdp_peer_context->vcm);
 
   return TRUE;
 }

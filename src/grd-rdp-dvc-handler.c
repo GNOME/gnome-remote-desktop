@@ -21,8 +21,6 @@
 
 #include "grd-rdp-dvc-handler.h"
 
-#include "grd-rdp-private.h"
-
 typedef struct _DVCSubscription
 {
   gboolean notified;
@@ -161,8 +159,7 @@ dvc_creation_status (void     *user_data,
                      uint32_t  channel_id,
                      int32_t   creation_status)
 {
-  RdpPeerContext *rdp_peer_context = user_data;
-  GrdRdpDvcHandler *dvc_handler = rdp_peer_context->dvc_handler;
+  GrdRdpDvcHandler *dvc_handler = user_data;
   DVCNotification *dvc_notification;
   gboolean pending_notification = FALSE;
 
@@ -207,15 +204,14 @@ dvc_creation_status (void     *user_data,
 }
 
 GrdRdpDvcHandler *
-grd_rdp_dvc_handler_new (HANDLE      vcm,
-                         rdpContext *rdp_context)
+grd_rdp_dvc_handler_new (HANDLE vcm)
 {
   GrdRdpDvcHandler *dvc_handler;
 
   dvc_handler = g_object_new (GRD_TYPE_RDP_DVC_HANDLER, NULL);
 
   WTSVirtualChannelManagerSetDVCCreationCallback (vcm, dvc_creation_status,
-                                                  rdp_context);
+                                                  dvc_handler);
 
   return dvc_handler;
 }
