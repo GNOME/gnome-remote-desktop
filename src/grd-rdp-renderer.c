@@ -987,7 +987,6 @@ release_bitstreams (gpointer data,
   GrdRdpRenderer *renderer = user_data;
   GrdRdpFrame *rdp_frame = data;
   GList *bitstreams = grd_rdp_frame_get_bitstreams (rdp_frame);
-  g_autoptr (GError) error = NULL;
   GList *l;
 
   for (l = bitstreams; l; l = l->next)
@@ -997,6 +996,7 @@ release_bitstreams (gpointer data,
       GrdEncodeSession *encode_session =
         grd_rdp_render_context_get_encode_session (render_context);
       GrdBitstream *bitstream = l->data;
+      g_autoptr (GError) error = NULL;
 
       if (!grd_encode_session_unlock_bitstream (encode_session, bitstream,
                                                 &error))
