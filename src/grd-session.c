@@ -103,6 +103,7 @@ typedef struct _GrdSessionPrivate
 
   struct ei *ei;
   struct ei_seat *ei_seat;
+  struct ei_device *ei_pointer;
   struct ei_device *ei_abs_pointer;
   struct ei_device *ei_keyboard;
   struct ei_device *ei_touch;
@@ -152,6 +153,7 @@ clear_ei (GrdSession *session)
   g_clear_pointer (&priv->ei_touch, ei_device_unref);
   g_clear_pointer (&priv->ei_keyboard, ei_device_unref);
   g_clear_pointer (&priv->ei_abs_pointer, ei_device_unref);
+  g_clear_pointer (&priv->ei_pointer, ei_device_unref);
   g_clear_pointer (&priv->ei_seat, ei_seat_unref);
   g_clear_pointer (&priv->ei_source, g_source_destroy);
   g_clear_pointer (&priv->ei, ei_unref);
@@ -637,6 +639,20 @@ grd_session_notify_pointer_axis_discrete (GrdSession    *session,
                              axis == GRD_POINTER_AXIS_HORIZONTAL ? steps * 120 : 0,
                              axis == GRD_POINTER_AXIS_VERTICAL ? steps * 120 : 0);
   ei_device_frame (priv->ei_abs_pointer, g_get_monotonic_time ());
+}
+
+void
+grd_session_notify_pointer_motion (GrdSession *session,
+                                   double      dx,
+                                   double      dy)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  if (!priv->ei_pointer)
+    return;
+
+  ei_device_pointer_motion (priv->ei_pointer, dx, dy);
+  ei_device_frame (priv->ei_pointer, g_get_monotonic_time ());
 }
 
 static gboolean
@@ -1403,6 +1419,11 @@ grd_ei_source_dispatch (gpointer user_data)
                     return G_SOURCE_REMOVE;
                   }
               }
+            if (ei_device_has_capability (device, EI_DEVICE_CAP_POINTER))
+              {
+                g_clear_pointer (&priv->ei_pointer, ei_device_unref);
+                priv->ei_pointer = ei_device_ref (device);
+              }
             if (ei_device_has_capability (device, EI_DEVICE_CAP_POINTER_ABSOLUTE))
               {
                 maybe_dispose_ei_abs_pointer (session);
@@ -1418,6 +1439,8 @@ grd_ei_source_dispatch (gpointer user_data)
             break;
           }
         case EI_EVENT_DEVICE_RESUMED:
+          if (ei_event_get_device (event) == priv->ei_pointer)
+            ei_device_start_emulating (priv->ei_pointer, ++priv->ei_sequence);
           if (ei_event_get_device (event) == priv->ei_abs_pointer)
             ei_device_start_emulating (priv->ei_abs_pointer, ++priv->ei_sequence);
           if (ei_event_get_device (event) == priv->ei_keyboard)
@@ -1431,6 +1454,8 @@ grd_ei_source_dispatch (gpointer user_data)
         case EI_EVENT_DEVICE_PAUSED:
           break;
         case EI_EVENT_DEVICE_REMOVED:
+          if (ei_event_get_device (event) == priv->ei_pointer)
+            g_clear_pointer (&priv->ei_pointer, ei_device_unref);
           if (ei_event_get_device (event) == priv->ei_abs_pointer)
             maybe_dispose_ei_abs_pointer (session);
           if (ei_event_get_device (event) == priv->ei_keyboard)
@@ -1737,6 +1762,7 @@ grd_session_finalize (GObject *object)
   g_assert (!priv->ei_touch);
   g_assert (!priv->ei_keyboard);
   g_assert (!priv->ei_abs_pointer);
+  g_assert (!priv->ei_pointer);
   g_assert (!priv->ei_seat);
   g_assert (!priv->ei_source);
   g_assert (!priv->ei);
