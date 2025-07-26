@@ -1031,6 +1031,8 @@ rdp_peer_post_connect (freerdp_peer *peer)
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) peer->context;
   GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
   rdpSettings *rdp_settings = peer->context->settings;
+  uint32_t rdp_version =
+    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_RdpVersion);
   uint32_t keyboard_type =
     freerdp_settings_get_uint32 (rdp_settings, FreeRDP_KeyboardType);
   uint32_t os_major_type =
@@ -1050,6 +1052,7 @@ rdp_peer_post_connect (freerdp_peer *peer)
   g_debug ("New RDP client: [OS major type, OS minor type]: [%s, %s]",
            freerdp_peer_os_major_type_string (peer),
            freerdp_peer_os_minor_type_string (peer));
+  g_debug ("[RDP] Maximum common RDP version 0x%08X", rdp_version);
   g_debug ("[RDP] Client uses keyboard type %u", keyboard_type);
 
   g_debug ("[RDP] Virtual Channels: compression flags: %u, "
