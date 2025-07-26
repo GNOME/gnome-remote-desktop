@@ -642,6 +642,43 @@ rdp_input_extended_mouse_event (rdpInput *rdp_input,
   return TRUE;
 }
 
+static BOOL
+rdp_input_rel_mouse_event (rdpInput *rdp_input,
+                           uint16_t  flags,
+                           int16_t   dx,
+                           int16_t   dy)
+{
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_input->context;
+  GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
+  GrdRdpEventQueue *rdp_event_queue = session_rdp->rdp_event_queue;
+  GrdButtonState button_state;
+  int32_t button = 0;
+
+  grd_rdp_event_queue_add_input_event_pointer_motion (rdp_event_queue, dx, dy);
+
+  button_state = flags & PTR_FLAGS_DOWN ? GRD_BUTTON_STATE_PRESSED
+                                        : GRD_BUTTON_STATE_RELEASED;
+
+  if (flags & PTR_FLAGS_BUTTON1)
+    button = BTN_LEFT;
+  else if (flags & PTR_FLAGS_BUTTON2)
+    button = BTN_RIGHT;
+  else if (flags & PTR_FLAGS_BUTTON3)
+    button = BTN_MIDDLE;
+  else if (flags & PTR_XFLAGS_BUTTON1)
+    button = BTN_SIDE;
+  else if (flags & PTR_XFLAGS_BUTTON2)
+    button = BTN_EXTRA;
+
+  if (button)
+    {
+      grd_rdp_event_queue_add_input_event_pointer_button (rdp_event_queue,
+                                                          button, button_state);
+    }
+
+  return TRUE;
+}
+
 static gboolean
 is_pause_key_sequence (GrdSessionRdp *session_rdp,
                        uint16_t       vkcode,
@@ -1277,7 +1314,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
 
   freerdp_settings_set_bool (rdp_settings, FreeRDP_HasExtendedMouseEvent, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_HasHorizontalWheel, TRUE);
-  freerdp_settings_set_bool (rdp_settings, FreeRDP_HasRelativeMouseEvent, FALSE);
+  freerdp_settings_set_bool (rdp_settings, FreeRDP_HasRelativeMouseEvent, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_HasQoeEvent, FALSE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_UnicodeInput, TRUE);
 
@@ -1295,6 +1332,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdp_input->SynchronizeEvent = rdp_input_synchronize_event;
   rdp_input->MouseEvent = rdp_input_mouse_event;
   rdp_input->ExtendedMouseEvent = rdp_input_extended_mouse_event;
+  rdp_input->RelMouseEvent = rdp_input_rel_mouse_event;
   rdp_input->KeyboardEvent = rdp_input_keyboard_event;
   rdp_input->UnicodeKeyboardEvent = rdp_input_unicode_keyboard_event;
 
