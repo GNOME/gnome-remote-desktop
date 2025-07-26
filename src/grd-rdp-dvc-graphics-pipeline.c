@@ -1637,7 +1637,13 @@ search_and_list_unknown_cap_sets_versions_and_flags (RDPGFX_CAPSET *cap_sets,
       if (!cap_found)
         {
           g_debug ("[RDP.RDPGFX] Received unknown capability set with "
-                   "version 0x%08X", cap_sets[i].version);
+                   "version 0x%08X, length: %u Bytes",
+                   cap_sets[i].version, cap_sets[i].length);
+          if (cap_sets[i].length >= 4)
+            {
+              g_debug ("[RDP.RDPGFX] Possible flags of unknown capability set: "
+                       "0x%08X", cap_sets[i].flags);
+            }
         }
     }
 }
