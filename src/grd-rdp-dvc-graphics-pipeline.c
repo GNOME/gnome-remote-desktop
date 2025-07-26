@@ -350,6 +350,9 @@ grd_rdp_dvc_graphics_pipeline_delete_surface (GrdRdpDvcGraphicsPipeline *graphic
   g_debug ("[RDP.RDPGFX] Deleting surface with id %u", surface_id);
 
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
+  g_assert (g_hash_table_contains (graphics_pipeline->surface_table,
+                                   GUINT_TO_POINTER (surface_id)));
+
   if (!g_hash_table_lookup_extended (graphics_pipeline->serial_surface_table,
                                      GUINT_TO_POINTER (surface_serial),
                                      NULL, (gpointer *) &surface_context))
@@ -1953,7 +1956,8 @@ static void
 reset_graphics_pipeline (GrdRdpDvcGraphicsPipeline *graphics_pipeline)
 {
   g_mutex_lock (&graphics_pipeline->gfx_mutex);
-  g_hash_table_steal_all (graphics_pipeline->surface_table);
+  g_hash_table_foreach (graphics_pipeline->surface_table,
+                        clear_all_unacked_frames_in_gfx_surface, NULL);
 
   reduce_tracked_frame_infos (graphics_pipeline, 0);
   g_hash_table_foreach_remove (graphics_pipeline->frame_serial_table,
