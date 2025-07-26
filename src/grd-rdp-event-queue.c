@@ -28,6 +28,7 @@ typedef enum _RdpEventType
   RDP_EVENT_TYPE_NONE,
   RDP_EVENT_TYPE_INPUT_KBD_KEYCODE,
   RDP_EVENT_TYPE_INPUT_KBD_KEYSYM,
+  RDP_EVENT_TYPE_INPUT_PTR_MOTION,
   RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS,
   RDP_EVENT_TYPE_INPUT_PTR_BUTTON,
   RDP_EVENT_TYPE_INPUT_PTR_AXIS,
@@ -50,6 +51,13 @@ typedef struct _RdpEvent
     uint32_t keysym;
     GrdKeyState state;
   } input_kbd_keysym;
+
+  /* RDP_EVENT_TYPE_INPUT_PTR_MOTION */
+  struct
+  {
+    double dx;
+    double dy;
+  } input_ptr_motion;
 
   /* RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS */
   struct
@@ -171,6 +179,11 @@ process_rdp_events (GrdRdpEventQueue *rdp_event_queue)
                                               rdp_event->input_kbd_keysym.keysym,
                                               rdp_event->input_kbd_keysym.state);
           break;
+        case RDP_EVENT_TYPE_INPUT_PTR_MOTION:
+          grd_session_notify_pointer_motion (session,
+                                             rdp_event->input_ptr_motion.dx,
+                                             rdp_event->input_ptr_motion.dy);
+          break;
         case RDP_EVENT_TYPE_INPUT_PTR_MOTION_ABS:
           grd_session_notify_pointer_motion_absolute (
             session, rdp_event->input_ptr_motion_abs.stream,
@@ -238,6 +251,21 @@ grd_rdp_event_queue_add_input_event_keyboard_keysym (GrdRdpEventQueue *rdp_event
   rdp_event->type = RDP_EVENT_TYPE_INPUT_KBD_KEYSYM;
   rdp_event->input_kbd_keysym.keysym = keysym;
   rdp_event->input_kbd_keysym.state = state;
+
+  queue_rdp_event (rdp_event_queue, rdp_event);
+}
+
+void
+grd_rdp_event_queue_add_input_event_pointer_motion (GrdRdpEventQueue *rdp_event_queue,
+                                                    double            dx,
+                                                    double            dy)
+{
+  RdpEvent *rdp_event;
+
+  rdp_event = g_new0 (RdpEvent, 1);
+  rdp_event->type = RDP_EVENT_TYPE_INPUT_PTR_MOTION;
+  rdp_event->input_ptr_motion.dx = dx;
+  rdp_event->input_ptr_motion.dy = dy;
 
   queue_rdp_event (rdp_event_queue, rdp_event);
 }
