@@ -244,6 +244,8 @@ grd_rdp_renderer_notify_new_desktop_layout (GrdRdpRenderer *renderer,
 void
 grd_rdp_renderer_notify_graphics_pipeline_ready (GrdRdpRenderer *renderer)
 {
+  g_debug ("[RDP] Renderer: Received Graphics Pipeline ready notification");
+
   renderer->pending_gfx_graphics_reset = TRUE;
   renderer->pending_gfx_init = FALSE;
 
@@ -254,6 +256,8 @@ void
 grd_rdp_renderer_notify_graphics_pipeline_reset (GrdRdpRenderer *renderer)
 {
   gboolean gfx_initable = FALSE;
+
+  g_debug ("[RDP] Renderer: Received Graphics Pipeline reset notification");
 
   g_mutex_lock (&renderer->inhibition_mutex);
   renderer->pending_gfx_init = TRUE;
