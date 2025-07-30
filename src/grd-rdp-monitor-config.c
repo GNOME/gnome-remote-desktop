@@ -70,8 +70,7 @@ write_sanitized_monitor_data (GrdRdpVirtualMonitor  *monitor,
                               uint32_t               scale,
                               GError               **error)
 {
-  if (width % 2 ||
-      width < 200 || height < 200 ||
+  if (width < 200 || height < 200 ||
       width > 8192 || height > 8192)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
