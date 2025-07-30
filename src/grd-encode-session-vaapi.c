@@ -1693,7 +1693,7 @@ grd_encode_session_vaapi_new (GrdVkDevice  *vk_device,
   encode_session_vaapi->va_display = va_display;
   encode_session_vaapi->supports_quality_level = supports_quality_level;
 
-  encode_session_vaapi->surface_width = grd_get_aligned_size (source_width, 16);
+  encode_session_vaapi->surface_width = grd_get_aligned_size (source_width, 32);
   encode_session_vaapi->surface_height = grd_get_aligned_size (source_height, 16);
   encode_session_vaapi->refresh_rate = refresh_rate;
 
