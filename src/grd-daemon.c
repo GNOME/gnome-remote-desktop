@@ -37,6 +37,7 @@
 #include "grd-dbus-remote-desktop.h"
 #include "grd-private.h"
 #include "grd-rdp-server.h"
+#include "grd-settings-headless.h"
 #include "grd-settings-system.h"
 #include "grd-settings-user.h"
 #include "grd-vnc-server.h"
@@ -743,6 +744,7 @@ grd_daemon_startup (GApplication *app)
 
 #ifdef HAVE_RDP
   if (GRD_IS_SETTINGS_USER (settings) ||
+      GRD_IS_SETTINGS_HEADLESS (settings) ||
       GRD_IS_SETTINGS_SYSTEM (settings))
     {
       g_signal_connect (settings, "notify::rdp-enabled",
@@ -751,7 +753,8 @@ grd_daemon_startup (GApplication *app)
     }
 #endif
 #ifdef HAVE_VNC
-  if (GRD_IS_SETTINGS_USER (settings))
+  if (GRD_IS_SETTINGS_USER (settings) ||
+      GRD_IS_SETTINGS_HEADLESS (settings))
     {
       g_signal_connect (settings, "notify::vnc-enabled",
                         G_CALLBACK (on_vnc_enabled_changed),
