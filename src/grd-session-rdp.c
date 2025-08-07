@@ -1780,7 +1780,8 @@ grd_session_rdp_remote_desktop_session_started (GrdSession *session)
                                                    GRD_RDP_PHASE_SESSION_STARTED);
   grd_rdp_layout_manager_notify_session_started (session_rdp->layout_manager,
                                                  session_rdp->cursor_renderer,
-                                                 rdp_context);
+                                                 rdp_context,
+                                                 session_rdp->screen_share_mode);
 }
 
 static void
