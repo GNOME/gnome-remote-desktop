@@ -42,7 +42,7 @@ def start_rdp_server():
   global rdp_server
   builddir=os.getenv("TEST_BUILDDIR")
   rdp_server_path = os.path.join(builddir, 'src', 'gnome-remote-desktop-daemon')
-  rdp_server = subprocess.Popen([rdp_server_path, '--rdp-port', '3395'],
+  rdp_server = subprocess.Popen([rdp_server_path, '--headless', '--rdp-port', '3395'],
                                 stderr=subprocess.STDOUT)
   time.sleep(5)
 
