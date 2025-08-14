@@ -9,46 +9,40 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-09-08 16:47+0000\n"
-"PO-Revision-Date: 2024-09-13 21:00+0200\n"
-"Last-Translator: Jose Riha <jose1711@gmail.com>\n"
+"POT-Creation-Date: 2025-06-23 13:15+0000\n"
+"PO-Revision-Date: 2025-08-14 12:02+0200\n"
+"Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 1 : (n>=2 && n<=4) ? 2 : 0;\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.6\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
-msgstr ""
-"Povoliť konfiguráciu nastavení systémového démona gnome-remote-desktop."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
+msgstr "Umožniť konfiguráciu nastavení systémového démona gnome-remote-desktop"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
 "Pre konfiguráciu nastavenia systémového démona gnome-remote-desktop sa "
-"vyžaduje overenie."
+"vyžaduje overenie totožnosti"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
-#| msgid "Allow to configure gnome-remote-desktop's system daemon settings."
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
-msgstr ""
-"Umožniť povolenie a zakázanie systémového démona gnome-remote-desktop."
+msgstr "Umožniť povolenie a zakázanie systémového démona gnome-remote-desktop"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
-#| msgid ""
-#| "Authentication is required to configure gnome-remote-desktop's system "
-#| "daemon settings."
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
 "Pre povolenie alebo zakázanie systémového démona gnome-remote-desktop sa "
-"vyžaduje overenie."
+"vyžaduje overenie totožnosti"
 
 #: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
 msgid "GNOME Remote Desktop Handover Daemon"
@@ -184,14 +178,14 @@ msgstr ""
 msgid "GNOME Remote Desktop"
 msgstr "Vzdialená plocha prostredia GNOME"
 
-#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
+#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "Pokračovať pri nezabezpečenom pripojení?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
+#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -203,12 +197,12 @@ msgstr ""
 "uložením nastavenia pripojenia do súboru RDP a následne v ňom nastavte „use "
 "redirection server name:i:1“."
 
-#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
+#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
 #, c-format
 msgid "Disconnect"
 msgstr "Odpojiť"
 
-#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
+#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
 #, c-format
 msgid "Continue"
 msgstr "Pokračovať"
