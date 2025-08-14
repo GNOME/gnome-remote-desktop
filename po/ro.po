@@ -2,113 +2,146 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Florentina Mușat <florentina.musat.28@gmail.com>, 2021.
+# Antonio Marin <gnmer.6qxyg@slmail.me>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-08-02 12:54+0000\n"
-"PO-Revision-Date: 2024-08-07 13:17+0300\n"
-"Last-Translator: Florentina Mușat <florentina [dot] musat [dot] 28 [at] "
-"gmail [dot] com>\n"
+"POT-Creation-Date: 2025-08-14 10:27+0000\n"
+"PO-Revision-Date: 2025-08-14 15:29+0200\n"
+"Last-Translator: Antonio Marin <gnmer.6qxyg@slmail.me>\n"
 "Language-Team: Romanian <gnomero-list@lists.sourceforge.net>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
-"20)) ? 1 : 2);;\n"
-"X-Generator: Poedit 3.4.4\n"
+"20)) ? 1 : 2);\n"
+"X-Generator: Gtranslator 48.0\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
-"Permite configurarea setărilor daemon-ului de sistem ale gnome-remote-"
-"desktop."
+"Permite schimbarea preferințelor pentru serviciul de sistem gnome-remote-"
+"desktop"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
-"Autentificarea este necesară pentru a configura setările daemon-ului de "
-"sistem ale gnome-remote-desktop."
+"Autentificarea este necesară pentru a schimba preferințele pentru serviciul "
+"de sistem gnome-remote-desktop"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr ""
+"Permite activarea sau dezactivarea serviciului de sistem gnome-remote-desktop"
+
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon"
+msgstr ""
+"Autentificarea este necesară pentru activarea sau dezactivarea serviciului "
+"de sistem gnome-remote-desktop"
+
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
 msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "Daemon-ul de transfer al desktopului de la distanță GNOME"
+msgstr "Serviciul de transfer GNOME Remote Desktop"
 
-#: src/grd-ctl.c:59
+#: src/grd-ctl.c:70
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Utilizare: %s [OPȚIUNI...] COMANDĂ [SUBCOMANDĂ]...\n"
 
-#: src/grd-ctl.c:576
+#: src/grd-ctl.c:305
+msgid "Username: "
+msgstr "Nume de utilizator: "
+
+#: src/grd-ctl.c:317 src/grd-ctl.c:460
+msgid "Password: "
+msgstr "Parola: "
+
+#: src/grd-ctl.c:590
 msgid "Commands:\n"
 msgstr "Comenzi:\n"
 
-#: src/grd-ctl.c:581
+#: src/grd-ctl.c:595
 msgid ""
-"  rdp                                        - RDP subcommands:\n"
-"    set-port                                 - Set port the server binds to\n"
-"    enable                                   - Enable the RDP backend\n"
-"    disable                                  - Disable the RDP backend\n"
-"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
-"    set-tls-key <path-to-key>                - Set path to TLS key\n"
-"    set-credentials <username> <password>    - Set username and password\n"
-"                                               credentials\n"
-"    clear-credentials                        - Clear username and password\n"
-"                                               credentials\n"
-"    enable-view-only                         - Disable remote control of "
+"  rdp                                            - RDP subcommands:\n"
+"    set-port                                     - Set port the server binds "
+"to\n"
+"    enable                                       - Enable the RDP backend\n"
+"    disable                                      - Disable the RDP backend\n"
+"    set-tls-cert <path-to-cert>                  - Set path to TLS "
+"certificate\n"
+"    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-credentials [<username> [<password>]]    - Set username and "
+"password\n"
+"                                                   credentials\n"
+"    clear-credentials                            - Clear username and "
+"password\n"
+"                                                   credentials\n"
+"    enable-view-only                             - Disable remote control of "
 "input\n"
-"                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
+"                                                   devices\n"
+"    disable-view-only                            - Enable remote control of "
 "input\n"
-"                                               devices\n"
-"    enable-port-negotiation                  - If unavailable, listen to\n"
-"                                               a different port\n"
-"    disable-port-negotiation                 - If unavailable, don't listen\n"
-"                                               to a different port\n"
+"                                                   devices\n"
+"    enable-port-negotiation                      - If unavailable, listen "
+"to\n"
+"                                                   a different port\n"
+"    disable-port-negotiation                     - If unavailable, don't "
+"listen\n"
+"                                                   to a different port\n"
 "\n"
 msgstr ""
-"  rdp                                        - Subcomenzi RDP:\n"
-"    set-port                                 - Stabilește portul la care se "
-"leagă serverul\n"
-"    enable                                   - Activează backend-ul RDP\n"
-"    disable                                  - Dezactivează backend-ul RDP\n"
-"    set-tls-cert <path-to-cert>              - Stabilește calea către "
-"certificatul TLS\n"
-"    set-tls-key <path-to-key>                - Stabilește calea către cheia "
+"  rdp                                            - Subcomenzi RDP:\n"
+"    set-port                                     - Stabilește portul la care "
+"se\n"
+"                                                   leagă serverul\n"
+"    enable                                       - Activează backend-ul RDP\n"
+"    disable                                      - Dezactivează backend-ul "
+"RDP\n"
+"    set-tls-cert <path-to-cert>                  - Stabilește calea către\n"
+"                                                   certificatul TLS\n"
+"    set-tls-key <path-to-key>                    - Stabilește calea cheii "
 "TLS\n"
-"    set-credentials <username> <password>    - Stabilește autorizările "
-"pentru numele de utilizator\n"
-"                                               și parola\n"
-"    clear-credentials                        - Eliberează autorizările "
-"pentru numele de utilizator\n"
-"                                               și parola\n"
-"    enable-view-only                         - Dezactivează controlul de la "
-"distanță al dispozitivelor\n"
-"                                               de intrare\n"
-"    disable-view-only                        - Activează controlul de la "
-"distanță al dispozitivelor\n"
-"                                               de intrare\n"
-"    enable-port-negotiation                  - Dacă nu este disponibil, "
-"ascultă\n"
-"                                               un port diferit\n"
-"    disable-port-negotiation                 - Dacă nu este disponibil, nu "
-"asculta\n"
-"                                               un port diferit\n"
-"\n"
+"    set-credentials [<username> [<password>]]    - Stabilește numele de\n"
+"                                                   utilizator și parola\n"
+"    clear-credentials                            - Șterge numele de "
+"utilizator\n"
+"                                                   și parola\n"
+"    enable-view-only                             - Dezactivează controlul de "
+"la\n"
+"                                                   distanță al "
+"dispozitivelor\n"
+"                                                   periferice\n"
+"    disable-view-only                            - Activează controlul de "
+"la\n"
+"                                                   distanță al "
+"dispozitivelor\n"
+"                                                   periferice\n"
+"    enable-port-negotiation                      - Dacă un port nu e "
+"disponibil,\n"
+"                                                   ascultă la un port "
+"diferit\n"
+"    disable-port-negotiation                     - Dacă un port nu e "
+"disponibil,\n"
+"                                                   nu ascultă la un port "
+"diferit\n"
 "\n"
 
-#: src/grd-ctl.c:605
+#: src/grd-ctl.c:619
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
-"    set-password <password>                  - Set the VNC password\n"
+"    set-password [<password>]                - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
 "    enable-view-only                         - Disable remote control of "
@@ -128,25 +161,26 @@ msgstr ""
 "leagă serverul\n"
 "    enable                                   - Activează backend-ul VNC\n"
 "    disable                                  - Dezactivează backend-ul VNC\n"
-"    set-password <password>                  - Stabilește parola VNC\n"
-"    clear-password                           - Eliberează parola VNC\n"
+"    set-password [<password>]                - Stabilește parola VNC\n"
+"    clear-password                           - Șterge parola VNC\n"
 "    set-auth-method password|prompt          - Stabilește metoda de "
 "autorizare\n"
-"    enable-view-only                         - Dezactivează controlul de la "
-"distanță al dispozitivelor\n"
-"                                               de intrare\n"
-"    disable-view-only                        - Activează controlul de la "
-"distanță al dispozitivelor\n"
-"                                               de intrare\n"
-"    enable-port-negotiation                  - Dacă nu este disponibil, "
-"ascultă\n"
-"                                               un port diferit\n"
-"    disable-port-negotiation                 - Dacă nu este disponibil, nu "
-"asculta\n"
-"                                               un port diferit\n"
+"    enable-view-only                         - Dezactivează controlul de la\n"
+"                                               distanță al dispozitivelor\n"
+"                                               periferice\n"
+"    disable-view-only                        - Activează controlul de la\n"
+"                                               distanță al dispozitivelor\n"
+"                                               periferice\n"
+"    enable-port-negotiation                  - Dacă un port nu e "
+"disponibil,\n"
+"                                               ascultă la un port diferit\n"
+"    disable-port-negotiation                 - Dacă un port nu e "
+"disponibil,\n"
+"                                               nu ascultă la un port "
+"diferit\n"
 "\n"
 
-#: src/grd-ctl.c:625
+#: src/grd-ctl.c:639
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -156,44 +190,47 @@ msgid ""
 "  --system                                   - Configure system daemon\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
-"  status [--show-credentials]                - Arată starea curentă\n"
+"  status [--show-credentials]                - Arată starea actuală\n"
 "\n"
 "Opțiuni:\n"
-"  --headless                                 - Utilizează stocarea "
-"acreditărilor headless\n"
-"  --system                                   - Configurează daemon-ul de "
+"  --headless                                 - Utilizează o stocare, a "
+"datelor\n"
+"                                               de autentificare, fără "
+"monitor\n"
+"  --system                                   - Configurează serviciul de "
 "sistem\n"
 "  --help                                     - Tipărește acest text de "
 "ajutor\n"
 
-#: src/grd-daemon.c:1263
+#: src/grd-daemon.c:992
 msgid "GNOME Remote Desktop"
-msgstr "Desktop la distanță GNOME"
+msgstr "Computer la distanță GNOME"
 
-#: src/grd-daemon-handover.c:346
+#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
 #, c-format
-msgid "This connection is insecure"
-msgstr "Această conexiune nu este sigură"
+msgid "Continue With Insecure Connection?"
+msgstr "Se continuă cu o conexiune nesigură?"
 
-#. Translators: Don't translate "use redirection server name:i:1".
+#. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:350
+#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
 #, c-format
 msgid ""
-"Do you want to continue with an insecure connection?\n"
-"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
-"config file."
+"This Remote Desktop connection is insecure. To secure this connection, "
+"enable RDSTLS Security in your client by saving the connection settings in "
+"your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
-"Doriți să continuați cu o conexiune nesigură?\n"
-"Pentru a o face sigură, stabiliți <b>“use redirection server name:i:1”</b> "
-"în fișierul de configurare RDP."
+"Această conexiune la un computer aflat la distanță nu este sigură. Pentru a "
+"o face sigură, trebuie activată securitatea RDSTLS în propria aplicație "
+"salvând parametrii de conectare în propria aplicație, într-un fișier RDP, și "
+"stabilind în acesta „use redirection server name:i:1”."
 
-#: src/grd-daemon-handover.c:354
+#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
 #, c-format
 msgid "Disconnect"
 msgstr "Deconectează"
 
-#: src/grd-daemon-handover.c:355
+#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
 #, c-format
 msgid "Continue"
 msgstr "Continuă"
@@ -201,7 +238,7 @@ msgstr "Continuă"
 #: src/grd-daemon-user.c:99
 #, c-format
 msgid "Desktop Sharing port changed"
-msgstr "Portul de partajare desktop a fost modificat"
+msgstr "Portul pentru împărtășirea computerului a fost schimbat"
 
 #: src/grd-daemon-user.c:101
 #, c-format
@@ -210,7 +247,8 @@ msgid ""
 "This is because the Remote Sessions service has been activated and it has a "
 "higher priority to use port <b>%i</b>."
 msgstr ""
-"Portul de partajare desktop a fost modificat de la <b>%i</b> la <b>%i</b>.\n"
+"Portul pentru împărtășirea computerului a fost schimbat de la <b>%i</b> la "
+"<b>%i</b>.\n"
 "Acest lucru se datorează faptului că serviciul sesiuni de la distanță a fost "
 "activat și are o prioritate mai mare să utilizeze portul <b>%i</b>."
 
@@ -222,7 +260,7 @@ msgstr "Acceptă"
 #: src/grd-session-vnc.c:305
 #, c-format
 msgid "Do you want to share your desktop?"
-msgstr "Doriți să vă partajați desktop-ul?"
+msgstr "Se împărtășește propriul computerul?"
 
 #: src/grd-session-vnc.c:307
 #, c-format
@@ -230,8 +268,8 @@ msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
 "desktop."
 msgstr ""
-"Un utilizator de pe calculatorul „%s” încearcă să vizualizeze sau să "
-"controleze de la distanță desktop-ul."
+"Un utilizator de la computerul „%s” încearcă să vadă sau să controleze de la "
+"distanță computerul tău."
 
 #: src/grd-session-vnc.c:309
 #, c-format
@@ -245,20 +283,21 @@ msgstr "Portul utilizat de serverul RDP"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr ""
-"Clientul RDP se va conecta la acest port pentru a utiliza acest server RDP."
+"Aplicația client RDP se va conecta la acest port pentru a utiliza acest "
+"server RDP."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 msgid "Search a different RDP port if the configured one is used"
-msgstr "Caută un port RDP diferit dacă portul configurat este utilizat"
+msgstr "Caută un port RDP diferit dacă portul stabilit este utilizat"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
-"Când negotiate-port este stabilit la „adevărat”, serverul RDP va încerca să "
-"asculte primul port disponibil dintre următoarele 10 porturi, începând de la "
-"cel configurat."
+"Când negotiate-port este stabilit la „true” (adevărat), serverul RDP va "
+"încerca să asculte primul port disponibil dintre următoarele 10 porturi, "
+"începând de la cel stabilit."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 msgid "Whether the RDP backend is enabled or not"
@@ -266,11 +305,12 @@ msgstr "Dacă este activat sau nu backend-ul RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 msgid "If set to 'true' the RDP backend will be initialized."
-msgstr "Dacă este stabilit la „true”, backend-ul RDP va fi inițializat."
+msgstr ""
+"Dacă este stabilit la „true” (adevărat), backend-ul RDP va fi inițializat."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
-msgstr "Modul partajare ecran al conexiunilor RDP"
+msgstr "Modul „distribuire ecran” al conexiunilor RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
@@ -287,19 +327,20 @@ msgid ""
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
-"Modul partajare ecran specifică, dacă backend-ul RDP oglindește ecranul "
-"primar, sau dacă este creat un monitor virtual. Pentru rezoluția inițială a "
-"monitorului virtual, backend-ul RDP utilizează ori datele de bază ale "
+"Modul „distribuire ecran”, specifică dacă serverul RDP transmite ecranul "
+"principal, sau dacă se creează un monitor virtual. Pentru rezoluția inițială "
+"a monitorului virtual, serverul RDP utilizează ori datele de bază ale "
 "clientului ([MS-RDPBCGR] 2.2.1.3.2) ori datele de monitor ale clientului "
 "([MS-RDPBCGR] 2.2.1.3.6), în funcție de ce este disponibil. Când se "
-"utilizează o sesiune desktop la distanță cu un monitor virtual, clienții pot "
-"redimensiona rezoluția monitorului virtual în timpul unei sesiuni cu "
-"Extensia de canal virtual de actualizare a afișajului ([MS-RDPEDISP]). "
-"Modurile de partajare ecran permise includ: * mirror-primary - Înregistrează "
-"monitorul primar al sesiunii de utilizator curente. * extend - Creează un "
-"monitor virtual nou și îl utilizează pentru sesiunea desktop de la distanță. "
-"Rezoluția acestui monitor virtual este derivată de la configurarea "
-"monitorului, trimisă de clientul desktop de la distanță."
+"utilizează o sesiune computer la distanță cu un monitor virtual, aplicațiile "
+"client pot redimensiona rezoluția monitorului virtual în timpul unei sesiuni "
+"cu Extensia „Display Update Virtual Channel” ([MS-RDPEDISP]). Modurile "
+"permise pentru împărtășirea ecranului includ: * mirror-primary - "
+"Înregistrează monitorul principal al sesiunii de lucru a utilizatorului "
+"actual. * extend - Creează un monitor virtual nou și îl utilizează pentru "
+"sesiunea de lucru de la distanță. Rezoluția acestui monitor virtual este "
+"stabilită din aplicația client aflată la distanță cu ajutorul căreia se "
+"realizează conectarea la serverul RDP."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
@@ -312,7 +353,7 @@ msgid ""
 "and the certificate file need to be provided to the RDP server."
 msgstr ""
 "Pentru a putea utiliza RDP cu Securitate TLS, atât fișierul cheii private "
-"cât și fișierul certificat trebuie să fie furnizate serverului RDP."
+"cât și fișierul certificat trebuie să-i fie furnizate serverului RDP."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
@@ -321,16 +362,16 @@ msgstr "Calea către fișierul cheii private"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
 msgid "Only allow remote connections to view the screen content"
-msgstr ""
-"Permite doar conexiunilor de la distanță să vizualizeze conținutul ecranului"
+msgstr "Permite doar conexiunilor de la distanță să vadă conținutul ecranului"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"Când doar vizualizare este adevărat, conexiunile RDP de la distanță nu pot "
-"manipula dispozitivele de intrare (de ex: maus și tastatură)."
+"Când „view-only” (doar vizualizare) este „true” (adevărat), conexiunile RDP "
+"de la distanță nu pot manipula dispozitivele periferice introduse (de ex: "
+"maus și tastatură)."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid "The port used by the VNC server"
@@ -339,40 +380,42 @@ msgstr "Portul utilizat de serverul VNC"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr ""
-"Clientul VNC se va conecta la acest port pentru a utiliza serverul VNC."
+"Aplicația client VNC se va conecta la acest port pentru a utiliza serverul "
+"VNC."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 msgid "Search a different VNC port if the configured one is used"
-msgstr "Caută un port VNC diferit dacă portul configurat este utilizat"
+msgstr "Caută un port VNC diferit dacă portul stabilit este utilizat"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
-"Când negotiate-port este stabilit la „adevărat”, serverul VNC va încerca să "
-"asculte primul port disponibil dintre următoarele 10 porturi, începând de la "
-"cel configurat."
+"Când „negotiate-port” este stabilit la „true” (adevărat), serverul VNC va "
+"încerca să asculte primul port disponibil dintre următoarele 10 porturi, "
+"începând de la cel stabilit."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the VNC backend is enabled or not"
-msgstr "Dacă este activat sau nu backend-ul VNC"
+msgstr "Dacă este activat sau nu serverul VNC"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the VNC backend will be initialized."
-msgstr "Dacă este stabilit la „true”, backend-ul va fi inițializat."
+msgstr "Dacă este stabilit la „true” (adevărat), backend-ul va fi inițializat."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"Când doar vizualizare este adevărat, conexiunile VNC de la distanță nu pot "
-"manipula dispozitivele de intrare (de ex: maus și tastatură)."
+"Când „view-only” (doar vizualizare) este „true” (adevărat), conexiunile VNC "
+"de la distanță nu pot manipula dispozitivele periferice introduse (de ex: "
+"maus și tastatură)."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
 msgid "Method used to authenticate VNC connections"
-msgstr "Metodă utilizată pentru autentificarea conexiunilor VNC"
+msgstr "Metoda utilizată pentru autentificarea conexiunilor VNC"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
 msgid ""
@@ -383,15 +426,15 @@ msgid ""
 "password - by requiring the remote client to provide a known password"
 msgstr ""
 "Metoda de autentificare VNC descrie cum se autentifică o conexiune de la "
-"distanță. În mod curent se poate efectua în două moduri diferite: * prompt - "
-"prin solicitarea utilizatorului pentru fiecare conexiune nouă, necesitând o "
-"persoană cu acces fizic la stația de lucru pentru a aproba explicit "
-"conexiunea nouă. * password - solicitând clientului de la distanță să "
-"furnizeze o parolă cunoscută"
+"distanță. În prezent se poate efectua în două moduri diferite: * prompt - "
+"care solicită utilizatorul pentru fiecare conexiune nouă, fiind nevoie "
+"astfel de o persoană cu acces fizic la calculator pentru a aproba explicit "
+"conexiunea nouă. * password - care solicită aplicației client de la distanță "
+"să furnizeze o parolă cunoscută"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
 msgid "Screenshare mode of VNC connections"
-msgstr "Modul partajare ecran al conexiunilor VNC"
+msgstr "Modul „distribuire ecran” al conexiunilor VNC"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
 msgid ""
@@ -407,15 +450,15 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr ""
-"Modul partajare ecran specifică, dacă backend-ul VNC oglindește ecranul "
-"primar, sau dacă este creat un monitor virtual. Pentru rezoluția inițială a "
-"monitorului virtual, backend-ul VNC utilizează o dimensiune implicită de "
-"1920x1080 pixeli. Când se utilizează o sesiune desktop de la distanță cu un "
-"monitor virtual, clienții pot redimensiona rezoluția monitorului virtual în "
-"timpul unei sesiuni cu setDesktopSize PDU. Modurile de partajare ecran "
-"permise includ: * mirror-primary - Înregistrează monitorul primar al "
-"sesiunii de utilizator curente. * extend - Creează un monitor virtual nou și "
-"îl utilizează pentru sesiunea desktop de la distanță. Rezoluția de monitor "
-"inițială a acestui monitor virtual este stabilită la 1920x1080 pixeli. "
-"Clienții pot suprascrie rezoluția inițială cu actualizări ulterioare ale "
-"configurației monitorului."
+"Modul „distribuire ecran” specifică, dacă serverul VNC transmite ecranul "
+"principal, sau dacă este creat un monitor virtual. Pentru rezoluția inițială "
+"a monitorului virtual, serverul VNC utilizează o mărime prestabilită de "
+"1920x1080 pixeli. Când se folosește o sesiune de lucru de la distanță cu un "
+"monitor virtual, aplicațiile client pot redimensiona rezoluția monitorului "
+"virtual în timpul unei sesiuni cu setDesktopSize PDU. Modurile permise "
+"pentru împărtășirea ecranului includ: * mirror-primary - Înregistrează "
+"monitorul principal al sesiunii de lucru a utilizatorului actual. * extend - "
+"Creează un monitor virtual nou și îl utilizează pentru sesiunea de lucru de "
+"la distanță. Rezoluția inițială a acestui monitor virtual este stabilită la "
+"1920x1080 pixeli. Aplicațiile client pot înlocui rezoluția inițială cu "
+"actualizări ulterioare ale rezoluției monitorului."
