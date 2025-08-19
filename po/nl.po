@@ -4,15 +4,15 @@
 #
 # Marcia van den Hout <mvdh1176@gmail.com>, 2021.
 # Hannie Dumoleyn <hannie@ubuntu-nl.org>, 2021.
-# Nathan Follens <nfollens@gnome.org>, 2021-2022, 2024.
+# Nathan Follens <nfollens@gnome.org>, 2021-2022, 2024-2025.
 # Philip Goto <philip.goto@gmail.com>, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop.master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-10-05 10:10+0000\n"
-"PO-Revision-Date: 2024-10-28 00:14+0100\n"
+"POT-Creation-Date: 2025-08-14 13:34+0000\n"
+"PO-Revision-Date: 2025-08-20 01:13+0200\n"
 "Last-Translator: Nathan Follens <nfollens@gnome.org>\n"
 "Language-Team: GNOME-NL https://matrix.to/#/#nl:gnome.org\n"
 "Language: nl\n"
@@ -20,21 +20,21 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.6\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
 "Laat toe de systeemdaemoninstellingen van gnome-remote-desktop te "
-"configureren."
+"configureren"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
+"settings"
 msgstr ""
 "Aanmelding is vereist om de systeemdaemoninstellingen van gnome-remote-"
-"desktop te configureren."
+"desktop te configureren"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
@@ -44,12 +44,12 @@ msgstr ""
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
-"system daemon."
+"system daemon"
 msgstr ""
 "Aanmelding is vereist om de systeemdaemon van gnome-remote-desktop in- of "
-"uit te schakelen."
+"uit te schakelen"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "GNOME-extern-bureaublad-handoverdaemon"
 
