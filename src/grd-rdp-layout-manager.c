@@ -403,9 +403,8 @@ on_pipewire_stream_video_resized (GrdRdpPipeWireStream *pipewire_stream,
       (virtual_monitor->width != width || virtual_monitor->height != height))
     {
       g_warning ("[RDP] Layout manager: Unexpected video size change of PipeWire "
-                 "stream (Expected: %ux%u, Got: %ux%u). Terminating session",
+                 "stream (Expected: %ux%u, Got: %ux%u). Ignoring resize event...",
                  virtual_monitor->width, virtual_monitor->height, width, height);
-      transition_to_state (layout_manager, UPDATE_STATE_FATAL_ERROR);
       return;
     }
 
