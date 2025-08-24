@@ -19,7 +19,6 @@
 
 #include "config.h"
 
-#include "grd-rdp-routing-token.h"
 #include "grd-rdp-server.h"
 
 #include <freerdp/channels/channels.h>
@@ -31,6 +30,7 @@
 #include "grd-context.h"
 #include "grd-hwaccel-nvidia.h"
 #include "grd-hwaccel-vulkan.h"
+#include "grd-rdp-routing-token.h"
 #include "grd-session-rdp.h"
 #include "grd-utils.h"
 
