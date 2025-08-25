@@ -54,6 +54,7 @@ struct _GrdVkDevice
   float timestamp_period;
   VkDeviceSize non_coherent_atom_size;
   int64_t drm_render_node;
+  VkDriverId driver_id;
 
   GrdVkDeviceFuncs device_funcs;
   GrdVkShaderModules shader_modules;
@@ -89,6 +90,12 @@ int64_t
 grd_vk_device_get_drm_render_node (GrdVkDevice *device)
 {
   return device->drm_render_node;
+}
+
+VkDriverId
+grd_vk_device_get_driver_id (GrdVkDevice *device)
+{
+  return device->driver_id;
 }
 
 GrdVkDeviceFuncs *
@@ -358,6 +365,7 @@ fetch_device_properties (GrdVkDevice *device)
   VkPhysicalDeviceProperties properties = {};
   VkPhysicalDeviceProperties2 properties_2 = {};
   VkPhysicalDeviceDrmPropertiesEXT drm_properties = {};
+  VkPhysicalDeviceVulkan12Properties vk12_properties = {};
 
   vkGetPhysicalDeviceProperties (vk_physical_device, &properties);
   device->timestamp_period = properties.limits.timestampPeriod;
@@ -367,11 +375,15 @@ fetch_device_properties (GrdVkDevice *device)
 
   properties_2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
   drm_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRM_PROPERTIES_EXT;
+  vk12_properties.sType =
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
 
   grd_vk_append_to_chain (&properties_2, &drm_properties);
+  grd_vk_append_to_chain (&properties_2, &vk12_properties);
 
   vkGetPhysicalDeviceProperties2 (vk_physical_device, &properties_2);
   device->drm_render_node = drm_properties.renderMinor;
+  device->driver_id = vk12_properties.driverID;
 }
 
 GrdVkDevice *

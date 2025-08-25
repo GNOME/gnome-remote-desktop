@@ -58,6 +58,8 @@ float grd_vk_device_get_timestamp_period (GrdVkDevice *device);
 
 int64_t grd_vk_device_get_drm_render_node (GrdVkDevice *device);
 
+VkDriverId grd_vk_device_get_driver_id (GrdVkDevice *device);
+
 GrdVkDeviceFuncs *grd_vk_device_get_device_funcs (GrdVkDevice *device);
 
 const GrdVkShaderModules *grd_vk_device_get_shader_modules (GrdVkDevice *device);
