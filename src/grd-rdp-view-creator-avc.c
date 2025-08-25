@@ -372,8 +372,10 @@ record_create_view (GrdRdpViewCreatorAVC  *view_creator_avc,
                            pipeline->vk_pipeline_layout,
                            0, 4, descriptor_sets, 0, NULL);
 
-  n_groups_x = view_create_info->target_width / 16;
-  n_groups_y = view_create_info->target_height / 16;
+  n_groups_x = view_create_info->target_width / 2 / 16 +
+               (view_create_info->target_width / 2 % 16 ? 1 : 0);
+  n_groups_y = view_create_info->target_height / 2 / 16 +
+               (view_create_info->target_height / 2 % 16 ? 1 : 0);
   vkCmdDispatch (command_buffer, n_groups_x, n_groups_y, 1);
 
   device_funcs->vkCmdWriteTimestamp2KHR (command_buffer,
