@@ -19,6 +19,10 @@
 
 /*
  * Generate the PTX instructions with:
+ * clang --cuda-gpu-arch=sm_30 -S src/grd-cuda-avc-utils.cu -o data/grd-cuda-avc-utils_30.ptx --no-cuda-version-check -O3 --cuda-device-only -Wall -Wextra
+ *
+ * or
+ *
  * nvcc -arch=compute_30 -ptx grd-cuda-avc-utils.cu -o grd-cuda-avc-utils_30.ptx
  *
  * Note: This requires CUDA < 11, since the generation of Kepler capable
@@ -29,24 +33,6 @@
 
 extern "C"
 {
-  __device__ uint16_t
-  nv12_get_interlaced_y_1x1 (uint16_t y_1x1,
-                             uint16_t aligned_height)
-  {
-    if (y_1x1 < aligned_height >> 1)
-      return y_1x1 << 1;
-    return (y_1x1 << 1) - aligned_height + 1;
-  }
-
-  __device__ uint16_t
-  nv12_get_interlaced_y_2x2 (uint16_t y_2x2,
-                             uint16_t aligned_height)
-  {
-    if (y_2x2 < aligned_height >> 2)
-      return y_2x2 << 1;
-    return (y_2x2 << 1) - (aligned_height >> 1) + 1;
-  }
-
   __device__ uint8_t
   rgb_to_y (uint8_t r,
             uint8_t g,
@@ -106,44 +92,17 @@ extern "C"
     s1 = 1;
     s2 = src_width;
     s3 = src_width + 1;
-    /*
-     * Technically, the correct positions for the Y data in the resulting NV12
-     * image would be the following:
-     *
-     * d0 = 0;
-     * d1 = 1;
-     * d2 = aligned_stride;
-     * d3 = aligned_stride + 1;
-     *
-     * However, since MBAFF is used as frame field mode, NVENC requires the input
-     * frame to be interlaced.
-     * If the frame is not interlaced, then even lines end up in the position
-     * y / 2, instead of y and odd lines end up in the position y / 2 +
-     * aligned_height / 2, instead of y.
-     * So, calculate the interlaced y position via a dedicated function, which
-     * ensures that the lines in the input frame end up in the resulting frame to
-     * be at the correct position.
-     * Doing this now in the kernel here, instead of after the BGRX -> YUV420
-     * conversion, saves a huge amount of time, since each thread only has a
-     * super tiny overhead to perform this action, while a normal
-     * device-to-device copy operation can take at least several milliseconds.
-     */
 
     x_1x1 = x_2x2 << 1;
     y_1x1 = y_2x2 << 1;
     src_u32 = src_data + y_1x1 * src_width + x_1x1;
 
-    dst_y0 = dst_data +
-             nv12_get_interlaced_y_1x1 (y_1x1, aligned_height) * aligned_stride +
-             x_1x1;
+    dst_y0 = dst_data + y_1x1 * aligned_stride + x_1x1;
     dst_y1 = dst_y0 + 1;
-    dst_y2 = dst_data +
-             nv12_get_interlaced_y_1x1 (y_1x1 + 1, aligned_height) * aligned_stride +
-             x_1x1;
+    dst_y2 = dst_data + (y_1x1 + 1) * aligned_stride + x_1x1;
     dst_y3 = dst_y2 + 1;
     dst_u = dst_data + aligned_height * aligned_stride +
-            nv12_get_interlaced_y_2x2 (y_2x2, aligned_height) * aligned_stride +
-            x_1x1;
+            y_2x2 * aligned_stride + x_1x1;
     dst_v = dst_u + 1;
 
     /* d_0 */
