@@ -1,3 +1,19 @@
+49.rc
+=====
+
+* Allow systemd service management of all units via grdctl [Joan; !320]
+* Misc bug fixes & cleanups [Jonas, Pascal; !329, !331, !324, !333, !326, !336]
+* Add support for relative pointer movements via RDP [Pascal; !332]
+* Add support for extending desktop with virtual monitor via RDP [Pascal; !334]
+
+Contributors:
+  Jonas Ådahl, Joan Torres López, Pascal Nowack
+
+Translators:
+  Fabio Tomat [fur], Dušan Kazik [sk], Antonio Marin [ro], Martin [sl],
+  Daniel Rusek [cs], Danial Behzadi [fa], Nathan Follens [nl], Balázs Úr [hu],
+  Piotr Drąg [pl], Yaron Shahrabani [he]
+
 49.alpha
 ========
 * Add touch support [Pascal; !314]
