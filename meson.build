@@ -1,5 +1,5 @@
 project('gnome-remote-desktop', 'c',
-        version: '49.alpha',
+        version: '49.rc',
         meson_version: '>= 1.4.0',
         default_options: ['warning_level=1',
                           'buildtype=debugoptimized'])
