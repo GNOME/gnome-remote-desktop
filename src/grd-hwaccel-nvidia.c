@@ -406,7 +406,7 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
   encode_config.profileGUID = NV_ENC_H264_PROFILE_PROGRESSIVE_HIGH_GUID;
   encode_config.gopLength = NVENC_INFINITE_GOPLENGTH;
   encode_config.frameIntervalP = 1;
-  encode_config.frameFieldMode = NV_ENC_PARAMS_FRAME_FIELD_MODE_MBAFF;
+  encode_config.frameFieldMode = NV_ENC_PARAMS_FRAME_FIELD_MODE_FRAME;
   encode_config.mvPrecision = NV_ENC_MV_PRECISION_QUARTER_PEL;
   encode_config.rcParams.version = NV_ENC_RC_PARAMS_VER;
   encode_config.rcParams.rateControlMode = NV_ENC_PARAMS_RC_VBR;
