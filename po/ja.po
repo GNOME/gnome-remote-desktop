@@ -3,66 +3,67 @@
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Vyasdev <vyasdev217@gmail.com>, 2023.
 # Kusano Takayuki <gnome-l10n@tkusano.jp>, 2025.
+# Makoto Sakaguchi <ycco34vx@gmail.com>, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2025-04-27 16:50+0000\n"
-"PO-Revision-Date: 2025-05-10 17:33+0900\n"
-"Last-Translator: Kusano Takayuki <gnome-l10n@tkusano.jp>\n"
+"POT-Creation-Date: 2025-08-29 12:08+0000\n"
+"PO-Revision-Date: 2025-08-30 10:53+0900\n"
+"Last-Translator: Makoto Sakaguchi <ycco34vx@gmail.com>\n"
 "Language-Team: Japanese <gnome-translation@gnome.gr.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.7\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings"
-msgstr "gnome-remote-desktopのシステムデーモン設定を構成する許可"
+msgstr "gnome-remote-desktop システムデーモン設定の変更を許可"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
 "settings"
-msgstr "gnome-remote-desktopのシステムデーモン設定を構成するためには認証が必要"
+msgstr "gnome-remote-desktop システムデーモン設定を変更するには認証が必要"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
-msgstr "gnome-remote-desktopのシステムデーモンを有効化または無効化する許可"
+msgstr "gnome-remote-desktop システムデーモンの有効化と無効化を許可"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
 "system daemon"
 msgstr ""
-"gnome-remote-desktopのシステムデーモンを有効化または無効化するためには認証が"
-"必要"
+"gnome-remote-desktop システムデーモンの有効化または無効化には認証が必要"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
 msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "GNOMEリモートデスクトップ ハンドオーバーデーモン"
+msgstr "GNOME リモートデスクトップ ハンドオーバーデーモン"
 
-#: src/grd-ctl.c:70
+#: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "使用例: %s [オプション...] コマンド [サブコマンド]...\n"
 
-#: src/grd-ctl.c:305
+#: src/grd-ctl.c:307
 msgid "Username: "
 msgstr "ユーザー名:"
 
-#: src/grd-ctl.c:317 src/grd-ctl.c:460
+#: src/grd-ctl.c:319 src/grd-ctl.c:475
 msgid "Password: "
 msgstr "パスワード: "
 
-#: src/grd-ctl.c:590
+#: src/grd-ctl.c:605
 msgid "Commands:\n"
 msgstr "コマンド:\n"
 
-#: src/grd-ctl.c:595
+#: src/grd-ctl.c:610
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -92,28 +93,30 @@ msgid ""
 "                                                   to a different port\n"
 "\n"
 msgstr ""
-"  rdp                                         - RDPサブコマンド:\n"
-"    set-port                                  - サーバーがbindするポート番号"
-"を設定\n"
-"    enable                                    - RDPバックエンドを有効化\n"
-"    disable                                   - RDPバックエンドを無効化\n"
-"    set-tls-cert <path-to-cert>               - TLS証明書のパスを設定\n"
-"    set-tls-key <path-to-key>                 - TLS鍵のパスを設定\n"
-"    set-credentials [<username> [<password>]] - ユーザー名とパスワードを設"
-"定\n"
-"    clear-credentials                         - ユーザー名とパスワードをクリ"
-"ア\n"
-"    enable-view-only                         - 入力デバイスの遠隔操作を無効"
-"化\n"
-"    disable-view-only                        - 入力デバイスの遠隔操作を有効"
-"化\n"
-"    enable-port-negotiation                  - 使用できない場合、別のポートを"
-"listen\n"
-"    disable-port-negotiation                 - 使用できない場合、listenしな"
-"い\n"
+"rdp                                            - RDPサブコマンド:\n"
+"    set-port                                     - サーバーがバインドするポー"
+"トを設定\n"
+"    enable                                       - RDPバックエンドを有効化\n"
+"    disable                                      - RDPバックエンドを無効化\n"
+"    set-tls-cert <path-to-cert>                  - TLS証明書のパスを設定\n"
+"    set-tls-key <path-to-key>                    - TLS秘密鍵のパスを設定\n"
+"    set-credentials [<username> [<password>]]    - ユーザー名とパスワードの\n"
+"                                                   認証情報を設定\n"
+"    clear-credentials                            - ユーザー名とパスワードの\n"
+"                                                   認証情報を削除\n"
+"    enable-view-only                             - 入力デバイスのリモート制御"
+"を無効化\n"
+"    disable-view-only                            - 入力デバイスのリモート制御"
+"を有効化\n"
+"    enable-port-negotiation                      - ポート使用不可時に別ポート"
+"で\n"
+"                                                   リッスン\n"
+"    disable-port-negotiation                     - ポート使用不可時に別ポート"
+"で\n"
+"                                                   リッスンしない\n"
 "\n"
 
-#: src/grd-ctl.c:619
+#: src/grd-ctl.c:634
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -134,70 +137,72 @@ msgid ""
 "                                               to a different port\n"
 "\n"
 msgstr ""
-"  vnc                                        - VNCサブコマンド:\n"
-"    set-port                                 - サーバーがbindするポート番号を"
-"設定\n"
-"    enable                                   - VNCバックエンドを有効化\n"
-"    disable                                  - VNCバックエンドを無効化\n"
-"    set-password [<password>]                - VNCパスワードを設定\n"
-"    clear-password                           - VNCパスワードをクリア\n"
-"    set-auth-method password|prompt          - 認証方法を設定\n"
-"    enable-view-only                         - 入力デバイスの遠隔操作を無効"
-"化\n"
-"    disable-view-only                        - 入力デバイスの遠隔操作を有効"
-"化\n"
-"    enable-port-negotiation                  - 使用できない場合、別のポートを"
-"listen\n"
-"    disable-port-negotiation                 - 使用できない場合、listenしな"
-"い\n"
+"vnc                                        - VNCサブコマンド:\n"
+"    set-port                                 - バインドポートを設定\n"
+"    enable                                   - VNCを有効化\n"
+"    disable                                  - VNCを無効化\n"
+"    set-password [<password>]                - パスワード設定\n"
+"    clear-password                           - パスワード削除\n"
+"    set-auth-method password|prompt          - 認証方式設定\n"
+"    enable-view-only                         - 入力デバイスのリモート制御を無"
+"効化\n"
+"    disable-view-only                        - 入力デバイスのリモート制御を有"
+"効化\n"
+"    enable-port-negotiation                  - ポート使用不可時に別ポートで\n"
+"                                               リッスン\n"
+"    disable-port-negotiation                 - ポート使用不可時に別ポートで\n"
+"                                               リッスンしない\n"
 "\n"
 
-#: src/grd-ctl.c:639
+#: src/grd-ctl.c:654
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
-"  --headless                                 - Use headless credentials "
-"storage\n"
+"  --headless                                 - Configure headless daemon\n"
+"                                               running on a user session\n"
 "  --system                                   - Configure system daemon\n"
+"                                               for remote login\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - 現在のステータスを表示\n"
 "\n"
 "オプション:\n"
-"  --headless                                 - ヘッドレス資格情報ストレージを"
-"使用\n"
-"  --system                                   - システムデーモンを設定\n"
+"  --headless                                 - ユーザーセッション上で動作す"
+"る\n"
+"                                               ヘッドレスデーモンを設定\n"
+"  --system                                   - リモートログイン用\n"
+"                                               システムデーモンを設定\n"
 "  --help                                     - このヘルプを表示\n"
 
-#: src/grd-daemon.c:992
+#: src/grd-daemon.c:995
 msgid "GNOME Remote Desktop"
-msgstr "GNOMEリモートデスクトップ"
+msgstr "GNOME リモートデスクトップ"
 
-#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
+#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
 #, c-format
 msgid "Continue With Insecure Connection?"
-msgstr "危険な接続を続けますか？"
+msgstr "危険な接続を続けますか?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
+#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
 "enable RDSTLS Security in your client by saving the connection settings in "
 "your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
-"このリモートデスクトップ接続は安全ではありません。この接続を安全にするため"
-"に、クライアントの接続設定をRDPファイルとして保存し、RDSTLSセキュリティを有効"
-"にし、\"use redirection server name:i:1\"を設定してください。"
+"このリモートデスクトップ接続は安全ではありません。接続を保護するには、クライ"
+"アントで接続設定を RDP ファイルとして保存し、ファイル内に “use redirection "
+"server name:i:1” を追加して RDSTLS セキュリティを有効にしてください。"
 
-#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
+#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
 #, c-format
 msgid "Disconnect"
 msgstr "切断"
 
-#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
+#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
 #, c-format
 msgid "Continue"
 msgstr "続行"
@@ -214,9 +219,9 @@ msgid ""
 "This is because the Remote Sessions service has been activated and it has a "
 "higher priority to use port <b>%i</b>."
 msgstr ""
-"デスクトップ共有ポートが<b>%i</b>から<b>%i</b>に変更されました。\n"
-"リモートセッションサービスが有効化され、ポート<b>%i</b>を使用する優先度が高く"
-"なったためです。"
+"デスクトップ共有ポートが <b>%i</b> から <b>%i</b> に変更されました。\n"
+"リモートセッションサービスが有効化され、ポート <b>%i</b> を使用する優先度が高"
+"くなったためです。"
 
 #: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
 #, c-format
@@ -226,7 +231,7 @@ msgstr "承認"
 #: src/grd-session-vnc.c:305
 #, c-format
 msgid "Do you want to share your desktop?"
-msgstr "画面全体を共有しますか？"
+msgstr "画面全体を共有しますか?"
 
 #: src/grd-session-vnc.c:307
 #, c-format
@@ -241,37 +246,43 @@ msgid "Refuse"
 msgstr "拒否"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid "The port used by the RDP server"
-msgstr "RDPサーバーが使用するポート"
+msgstr "RDP サーバーが使用するポート"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr ""
-"このRDPサーバーを使用するためにRDPクライアントはこのポートに接続します。"
+"この RDP サーバーを使用するために RDP クライアントはこのポートに接続します。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 msgid "Search a different RDP port if the configured one is used"
-msgstr "設定したポートが使用されている場合、別のRDPポートを検索"
+msgstr "設定したポートが使用されている場合、別の RDP ポートを検索"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
-"negotiate-portが'true'に設定されている場合、RDPサーバーは設定したポートから最"
-"初の10ポートの中で使用可能なポートをリッスンしようとします。"
+"negotiate-port を 'true' に設定すると、RDP サーバーは指定されたポート番号から"
+"順番に 10個のポートを調べ、最初に利用可能なポートでリッスンします。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the RDP backend is enabled or not"
-msgstr "RDPバックエンドが有効かどうか"
+msgstr "RDP バックエンドが有効かどうか"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the RDP backend will be initialized."
-msgstr "'true'に設定されている場合はRDPバックエンドが初期化されます。"
+msgstr "'true' に設定されている場合、RDP バックエンドが初期化されます。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
-msgstr "RDP接続の画面共有モード"
+msgstr "RDP 接続の画面共有モード"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
@@ -288,16 +299,18 @@ msgid ""
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
-"画面共有モードは、RDPバックエンドがプライマリ画面をミラーリングするか、仮想モ"
-"ニターを作成するかを指定します。仮想モニターの初期解像度は、RDPバックエンドが"
-"Client Core Data ([MS-RDPBCGR] 2.2.1.3.2)またはClient Monitor Data ([MS-"
-"RDPBCGR] 2.2.1.3.6)を使用します。リモートデスクトップセッションを仮想モニタで"
-"使用する場合、クライアントはDisplay Update Virtual Channel Extension([MS-"
-"RDPEDISP])を使用して、セッション中に仮想モニタの解像度を変更できます。許可さ"
-"れている画面共有モードは次のとおりです。* mirror-primary - 現在のユーザーセッ"
-"ションのプライマリモニタを記録します。 * extend - 新しい仮想モニタを作成し、"
-"リモートデスクトップセッションで使用します。この仮想モニタの解像度は、リモー"
-"トデスクトップクライアントによって送信されたモニタ構成に基づいています。"
+"画面共有モードは、RDP バックエンドがプライマリ画面をミラーリングするか、仮想"
+"モニターを作成するかを指定します。仮想モニターの初期解像度は、利用可能なデー"
+"タに応じて、クライアントコアデータ ([MS-RDPBCGR] 2.2.1.3.2) またはクライアン"
+"トモニターデータ ([MS-RDPBCGR] 2.2.1.3.6) から取得されます。仮想モニターでの"
+"リモートデスクトップセッションでは、クライアントが Display Update Virtual "
+"Channel Extension ([MS-RDPEDISP]) によってセッション中に解像度を動的に変更で"
+"きます。利用可能なモード:\n"
+"\n"
+"* mirror-primary - 現在のユーザーセッションのプライマリモニターをミラーリン"
+"グ。\n"
+"* extend - 新しい仮想モニターを作成してリモートデスクトップセッションに使用。"
+"解像度はリモートクライアントのモニター設定に基づいて決定。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
@@ -309,68 +322,74 @@ msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
 msgstr ""
-"RDP接続をTLSセキュリティーで使うためにはプライベート鍵のファイルと資格ファイ"
-"ルをRDPサーバーに提供する必要があります。"
+"RDP 接続で TLS セキュリティを使用するには、秘密鍵ファイルと証明書ファイルの両"
+"方を RDP サーバーに設定する必要があります。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "プライベート鍵のパス"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:131
 msgid "Only allow remote connections to view the screen content"
-msgstr "リモート接続にだけ画面内容の表示を許可"
+msgstr "リモート接続では画面内容の表示のみを許可"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"view-onlyがtrueの時場合、リモートRDP接続は入力デバイス（例: マウスやキーボー"
-"ド）を操作できません。"
+"view-only を true に設定すると、リモート RDP 接続では入力デバイス（マウス、"
+"キーボードなど）を操作できなくなります。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:180
 msgid "The port used by the VNC server"
-msgstr "VNCサーバーが使用するポート"
+msgstr "VNC サーバーが使用するポート"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:181
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr ""
-"このVNCサーバーを使用するためにVNCクライアントはこのポートに接続します。"
+"この VNC サーバーを使用するために VNC クライアントはこのポートに接続します。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:187
 msgid "Search a different VNC port if the configured one is used"
-msgstr "設定したポートが使用されている場合、別のVNCポートを検索"
+msgstr "設定したポートが使用されている場合、別の VNC ポートを検索"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:116
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
-"negotiate-portが'true'に設定されている場合、VNCサーバーは設定したポートから最"
-"初の10ポートの中で使用可能なポートをlistenしようとします。"
+"negotiate-port を 'true' に設定すると、VNC サーバーは指定されたポート番号から"
+"順番に 10個のポートを調べ、最初に利用可能なポートでリッスンします。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:196
 msgid "Whether the VNC backend is enabled or not"
-msgstr "VNCバックエンドが有効かどうか"
+msgstr "VNC バックエンドが有効かどうか"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:197
 msgid "If set to 'true' the VNC backend will be initialized."
-msgstr "'true'に設定されている場合はVNCバックエンドが初期化されます。"
+msgstr "'true' に設定すると、VNC バックエンドが初期化されます。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:132
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"view-onlyがtrueの時場合、リモートVNC接続は入力デバイス（例: マウスやキーボー"
-"ド）を操作できません。"
+"view-only が true の場合、リモート VNC 接続は入力デバイス（例: マウスやキー"
+"ボード）を操作できません。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:139
 msgid "Method used to authenticate VNC connections"
-msgstr "VNC接続の認証方法"
+msgstr "VNC 接続の認証方式"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:140
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -378,17 +397,20 @@ msgid ""
 "access to the workstation to explicitly approve the new connection. * "
 "password - by requiring the remote client to provide a known password"
 msgstr ""
-"VNC認証方法は、リモート接続がどう認証されるのかを設定します。現在、2つの異な"
-"る方法で認証できます。* prompt - 新しい接続のたびにユーザーにプロンプトを表示"
-"し、ワークステーションへの物理的なアクセスが可能な人が新しい接続を明示的に承"
-"認する必要があります。* password - リモートクライアントに既知のパスワードを提"
-"供するよう要求します"
+"VNC 認証方式は、リモート接続をどのように認証するかを定義します。現在、2つの異"
+"なる方式で実行できます:\n"
+"\n"
+"* prompt - 新しい接続ごとにユーザーに確認を求め、ワークステーションに物理的に"
+"アクセス可能な人が新しい接続を明示的に承認する方式（接続ごとに物理端末での承"
+"認を要求）\n"
+"* password - リモートクライアントが既知のパスワードを提供することで認証する方"
+"式（クライアントにパスワード入力を要求）"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
 msgid "Screenshare mode of VNC connections"
-msgstr "VNC接続の画面共有モード"
+msgstr "VNC 接続の画面共有モード"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:153
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -402,12 +424,15 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr ""
-"画面共有モードは、VNCバックエンドがプライマリ画面をミラーリングするか、仮想モ"
-"ニターを作成するかを指定します。仮想モニターの初期解像度は、VNCバックエンドが"
-"1920x1080ピクセルのデフォルトサイズを使用します。リモートデスクトップセッショ"
-"ンを仮想モニタで使用する場合、クライアントはsetDesktopSize PDUを使用してセッ"
-"ション中に仮想モニタの解像度を変更できます。許可されている画面共有モードは次"
-"のとおりです。* mirror-primary - 現在のユーザーセッションのプライマリモニタを"
-"記録します。 * extend - 新しい仮想モニタを作成し、リモートデスクトップセッ"
-"ションで使用します。この仮想モニタの初期モニタ解像度は1920x1080ピクセルに設定"
-"されます。クライアントは後続のモニタ構成の更新で初期解像度を上書きできます。"
+"画面共有モードは、VNC バックエンドがプライマリ画面をミラーリングするか、仮想"
+"モニターを作成するかを指定します。仮想モニターの初期解像度は、VNC バックエン"
+"ドが 1920x1080 ピクセルをデフォルトとして使用します。仮想モニターでリモートデ"
+"スクトップセッションを使用する場合、クライアントは setDesktopSize PDU によっ"
+"てセッション中に仮想モニターの解像度を変更できます。利用可能な画面共有モード"
+"は以下の通りです:\n"
+"\n"
+"* mirror-primary - 現在のユーザーセッションのプライマリモニターをミラーリン"
+"グ。\n"
+"* extend - 新しい仮想モニターを作成してリモートデスクトップセッションに使用。"
+"初期解像度は 1920x1080 ピクセルに設定され、クライアントは後続のモニター設定更"
+"新で解像度を変更可能。"
