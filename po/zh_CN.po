@@ -2,15 +2,15 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Boyuan Yang <073plan@gmail.com>, 2021.
-# lumingzh <lumingzh@qq.com>, 2022-2024.
+# lumingzh <lumingzh@qq.com>, 2022-2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2024-10-04 18:48+0000\n"
-"PO-Revision-Date: 2024-10-05 08:02+0800\n"
+"POT-Creation-Date: 2025-08-30 11:10+0000\n"
+"PO-Revision-Date: 2025-09-04 10:42+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Gtranslator 46.1\n"
+"X-Generator: Gtranslator 48.0\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings"
@@ -40,28 +40,28 @@ msgid ""
 "system daemon"
 msgstr "需要身份验证才能启用或禁用 GNOME 远程桌面的系统守护进程"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "GNOME 远程桌面移交守护进程"
 
-#: src/grd-ctl.c:70
+#: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "使用：%s [选项…] 命令 [子命令]…\n"
 
-#: src/grd-ctl.c:305
+#: src/grd-ctl.c:307
 msgid "Username: "
 msgstr "用户名："
 
-#: src/grd-ctl.c:317 src/grd-ctl.c:460
+#: src/grd-ctl.c:319 src/grd-ctl.c:475
 msgid "Password: "
 msgstr "密码："
 
-#: src/grd-ctl.c:590
+#: src/grd-ctl.c:605
 msgid "Commands:\n"
 msgstr "命令：\n"
 
-#: src/grd-ctl.c:595
+#: src/grd-ctl.c:610
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -111,7 +111,7 @@ msgstr ""
 "                                               另外的端口\n"
 "\n"
 
-#: src/grd-ctl.c:619
+#: src/grd-ctl.c:634
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -149,35 +149,38 @@ msgstr ""
 "                                               不同的端口\n"
 "\n"
 
-#: src/grd-ctl.c:639
+#: src/grd-ctl.c:654
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
-"  --headless                                 - Use headless credentials "
-"storage\n"
+"  --headless                                 - Configure headless daemon\n"
+"                                               running on a user session\n"
 "  --system                                   - Configure system daemon\n"
+"                                               for remote login\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - 显示当前状态\n"
 "\n"
 "选项：\n"
-"  --headless                                 - 使用无头证书存储\n"
-"  --system                                   - 配置系统守护进程\n"
-"  --help                                     - 显示该帮助文本\n"
+"  --headless                                 - 配置运行在用户会话\n"
+"                                               上的无头守护进程\n"
+"  --system                                   - 配置远程登录的\n"
+"                                               系统守护进程\n"
+"  --help                                     - 显示此帮助文本\n"
 
-#: src/grd-daemon.c:992
+#: src/grd-daemon.c:995
 msgid "GNOME Remote Desktop"
 msgstr "GNOME 远程桌面"
 
-#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
+#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "使用不安全连接继续吗？"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
+#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -187,12 +190,12 @@ msgstr ""
 "该远程桌面连接不安全。要使连接安全，请通过将您客户端里的连接设置保存为 RDP 文"
 "件并在其中设定“use redirection server name:i:1”来启用 RDSTLS 安全。"
 
-#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
+#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
 #, c-format
 msgid "Disconnect"
 msgstr "断开连接"
 
-#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
+#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
 #, c-format
 msgid "Continue"
 msgstr "继续"
@@ -235,18 +238,22 @@ msgid "Refuse"
 msgstr "拒绝"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid "The port used by the RDP server"
 msgstr "RDP 服务器使用的端口"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr "RDP 客户端将使用此端口连接到该 RDP 服务器。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 msgid "Search a different RDP port if the configured one is used"
 msgstr "如果配置的端口被占用，则搜索不同的 RDP 端口"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -255,10 +262,12 @@ msgstr ""
 "来 10 个端口中的第一个可用端口。"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the RDP backend is enabled or not"
 msgstr "RDP 后端是否已启用"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "如果设置为“true”则 RDP 后端将初始化。"
 
@@ -307,7 +316,7 @@ msgid "Path to the private key file"
 msgstr "私钥文件的路径"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:131
 msgid "Only allow remote connections to view the screen content"
 msgstr "只允许远程连接查看屏幕内容"
 
@@ -317,19 +326,23 @@ msgid ""
 "devices (e.g. mouse and keyboard)."
 msgstr "若 view-only 为真，远程 RDP 连接不能操纵输入设备（如，鼠标和键盘）。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:180
 msgid "The port used by the VNC server"
 msgstr "VNC 服务器使用的端口"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:181
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr "VNC 客户端将连接到该端口以使用此 VNC 服务器。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:187
 msgid "Search a different VNC port if the configured one is used"
 msgstr "如果配置的端口被占用，则搜索不同的 VNC 端口"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:116
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -337,25 +350,27 @@ msgstr ""
 "当 negotiate-port 设置为 'true' 时，VNC 服务器将尝试从配置的端口开始侦听接下"
 "来 10 个端口中的第一个可用端口。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:196
 msgid "Whether the VNC backend is enabled or not"
 msgstr "VNC 后端是否已启用"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:197
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "如果设置为“true”则 VNC 后端将初始化。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:132
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr "若 view-only 为真，远程 VNC 连接不能操纵输入设备（如，鼠标和键盘）。"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:139
 msgid "Method used to authenticate VNC connections"
 msgstr "用于认证 VNC 连接的方法"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:140
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -367,11 +382,11 @@ msgstr ""
 "- 每次建立新连接时提示用户，需要可以物理接触工作站设备的人明确接受每个新连"
 "接。* password - 要求远程客户端提供一个已知的密码"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
 msgid "Screenshare mode of VNC connections"
 msgstr "VNC 连接的屏幕共享模式"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:153
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
