@@ -119,18 +119,30 @@ grd_rdp_buffer_new (GrdRdpPwBuffer    *rdp_pw_buffer,
 
   rdp_buffer = g_object_new (GRD_TYPE_RDP_BUFFER, NULL);
   rdp_buffer->rdp_pw_buffer = rdp_pw_buffer;
-  rdp_buffer->rdp_buffer_info =
-    g_memdup2 (rdp_buffer_info, sizeof (GrdRdpBufferInfo));
 
   buffer_type = grd_rdp_pw_buffer_get_buffer_type (rdp_pw_buffer);
   if (buffer_type == GRD_RDP_BUFFER_TYPE_DMA_BUF &&
       vk_device &&
       rdp_buffer_info->drm_format_modifier != DRM_FORMAT_MOD_INVALID)
     {
+      g_autoptr (GError) local_error = NULL;
+
       if (!import_dma_buf_image (rdp_buffer, rdp_pw_buffer, rdp_buffer_info,
-                                 rdp_surface, vk_device, error))
-        return NULL;
+                                 rdp_surface, vk_device, &local_error))
+        {
+          if (rdp_buffer_info->has_vk_image)
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return NULL;
+            }
+
+          g_debug ("[RDP] Could not import dma-buf image: %s",
+                   local_error->message);
+        }
     }
+
+  rdp_buffer->rdp_buffer_info =
+    g_memdup2 (rdp_buffer_info, sizeof (GrdRdpBufferInfo));
 
   return g_steal_pointer (&rdp_buffer);
 }
