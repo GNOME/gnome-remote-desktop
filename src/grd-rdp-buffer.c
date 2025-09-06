@@ -102,6 +102,8 @@ import_dma_buf_image (GrdRdpBuffer      *rdp_buffer,
   if (!rdp_buffer->dma_buf_image)
     return FALSE;
 
+  rdp_buffer_info->has_vk_image = TRUE;
+
   return TRUE;
 }
 

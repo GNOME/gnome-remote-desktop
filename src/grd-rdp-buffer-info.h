@@ -35,6 +35,7 @@ struct _GrdRdpBufferInfo
 
   uint32_t drm_format;
   uint64_t drm_format_modifier;
+  gboolean has_vk_image;
 };
 
 #endif /* GRD_RDP_BUFFER_INFO_H */
