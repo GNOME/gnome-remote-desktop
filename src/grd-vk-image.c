@@ -139,7 +139,7 @@ is_image_format_supported_by_device (GrdVkImage                  *image,
       image_format_properties->maxExtent.depth < image_create_info->extent.depth ||
       image_format_properties->maxMipLevels < image_create_info->mipLevels ||
       image_format_properties->maxArrayLayers < image_create_info->arrayLayers ||
-      image_format_properties->sampleCounts < image_create_info->samples)
+      !(image_format_properties->sampleCounts & image_create_info->samples))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Required image format properties not supported by device");
