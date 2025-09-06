@@ -1,5 +1,5 @@
 # Korean translation for gnome-remote-desktop.
-# Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
+# Copyright (C) 2021-2025 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Seong-ho Cho <shcho@gnome.org>, 2021-2022, 2024-2025.
 #
@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2025-02-20 21:34+0000\n"
-"PO-Revision-Date: 2025-03-01 04:02+0900\n"
+"POT-Creation-Date: 2025-09-05 17:01+0000\n"
+"PO-Revision-Date: 2025-09-06 15:12+0900\n"
 "Last-Translator: Seong-ho Cho <shcho@gnome.org>\n"
 "Language-Team: Korean <gnome-kr@googlegroups.com>\n"
 "Language: ko\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.7\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings"
@@ -39,28 +39,28 @@ msgid ""
 "system daemon"
 msgstr "gnome-remote-desktop의 시스템 데몬 설정을 구성하려면 인증이 필요합니다"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "그놈 원격 데스크톱 핸드오버 데몬"
 
-#: src/grd-ctl.c:70
+#: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "사용법: %s [옵션...] <명령> [하위명령]...\n"
 
-#: src/grd-ctl.c:305
+#: src/grd-ctl.c:307
 msgid "Username: "
 msgstr "사용자이름: "
 
-#: src/grd-ctl.c:317 src/grd-ctl.c:460
+#: src/grd-ctl.c:319 src/grd-ctl.c:475
 msgid "Password: "
 msgstr "암    호: "
 
-#: src/grd-ctl.c:590
+#: src/grd-ctl.c:605
 msgid "Commands:\n"
 msgstr "명령:\n"
 
-#: src/grd-ctl.c:595
+#: src/grd-ctl.c:610
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -107,7 +107,7 @@ msgstr ""
 "                                               포트 번호로 연결 수락 안함\n"
 "\n"
 
-#: src/grd-ctl.c:619
+#: src/grd-ctl.c:634
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -143,36 +143,38 @@ msgstr ""
 "                                               포트 번호로 연결 수락 안함\n"
 "\n"
 
-#: src/grd-ctl.c:639
+#: src/grd-ctl.c:654
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
-"  --headless                                 - Use headless credentials "
-"storage\n"
+"  --headless                                 - Configure headless daemon\n"
+"                                               running on a user session\n"
 "  --system                                   - Configure system daemon\n"
+"                                               for remote login\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - 현재 상태를 표시합니다\n"
 "\n"
 "옵션:\n"
-"  --headless                                 - 헤드리스 인증 저장소를 활용합"
-"니다.\n"
-"  --system                                   - 시스템 데몬을 설정합니다\n"
-"  --help                                     - 도움말 문구를 출력합니다\n"
+"  --headless                                 - 사용자 세션에서 실행하는\n"
+"                                               헤드리스 데몬을 구성합니다\n"
+"  --system                                   - 원격 로그인 용도의 시스템\n"
+"                                               데몬을 구성합니다\n"
+"  --help                                     - 이 도움말 문구를 출력합니다\n"
 
-#: src/grd-daemon.c:992
+#: src/grd-daemon.c:995
 msgid "GNOME Remote Desktop"
 msgstr "그놈 원격 데스크톱"
 
-#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
+#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "비보안 연결을 계속하시겠습니까?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
+#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -183,12 +185,12 @@ msgstr ""
 "클라이언트 단에서 활성화한 연결 설정을 RDP 파일로 저장하고 해당 파일에서 "
 "“use redirection server name:i:1”을 설정하십시오."
 
-#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
+#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
 #, c-format
 msgid "Disconnect"
 msgstr "연결 끊기"
 
-#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
+#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
 #, c-format
 msgid "Continue"
 msgstr "계속"
@@ -232,18 +234,22 @@ msgid "Refuse"
 msgstr "거절"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid "The port used by the RDP server"
 msgstr "RDP 서버에서 사용하는 포트 번호"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr "RDP 클라이언트에서 이 포트 번호를 사용하여 RDP 서버에 연결합니다."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 msgid "Search a different RDP port if the configured one is used"
 msgstr "다른 RDP 포트 번호를 설정하여 사용하는 지 여부 검색"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -252,10 +258,12 @@ msgstr ""
 "음 10개 포트 번호에서 차례대로 연결 수락을 시도합니다."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the RDP backend is enabled or not"
 msgstr "RDP 백엔드 사용 여부"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "'true'로 설정하면 RDP 백엔드를 초기화합니다."
 
@@ -306,7 +314,7 @@ msgid "Path to the private key file"
 msgstr "개인키 경로"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:131
 msgid "Only allow remote connections to view the screen content"
 msgstr "화면 내용 보기 연결만 허용"
 
@@ -318,19 +326,23 @@ msgstr ""
 "view-only 값이 true면, 원격 RDP 연결로 입력 장치(예: 마우스, 키보드)를 제어"
 "할 수 없습니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:180
 msgid "The port used by the VNC server"
 msgstr "VNC 서버에서 사용하는 포트 번호"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:181
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr "VNC 클라이언트에서 이 포트 번호를 사용하여 VNC 서버에 연결합니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:187
 msgid "Search a different VNC port if the configured one is used"
 msgstr "다른 VNC 포트 번호를 설정하여 사용하는지 여부 검색"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:116
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -338,15 +350,17 @@ msgstr ""
 "negotiate-port를 '참'으로 설정했다면 VNC 서버는 설정 포트번호부터 시작하여 다"
 "음 10개 포트 번호에서 차례대로 연결 수락을 시도합니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:196
 msgid "Whether the VNC backend is enabled or not"
 msgstr "VNC 백엔드 사용 여부"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:197
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "'true'로 설정하면 VNC 백엔드를 초기화합니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:132
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -354,11 +368,11 @@ msgstr ""
 "view-only 값이 true면, 원격 VNC 연결로 입력 장치(예: 마우스, 키보드)를 제어"
 "할 수 없습니다."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:139
 msgid "Method used to authenticate VNC connections"
 msgstr "VNC 연결 인증 방식"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:140
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -371,11 +385,11 @@ msgstr ""
 "있게 워크스테이션을 물리적으로 다룰 사람이 필요합니다. * 암호 - 이미 알고 있"
 "는 암호를 원격 클라이언트에서 입력합니다"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
 msgid "Screenshare mode of VNC connections"
 msgstr "VNC 연결 화면 공유 모드"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:153
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -410,5 +424,5 @@ msgstr ""
 #~ "config file."
 #~ msgstr ""
 #~ "안전하지 않은 연결을 계속하시겠습니까?\n"
-#~ "안전한 연결을 진행하려면 RDP 설정 파일에 <b>“use redirection server name:"
-#~ "i:1”</b> 설정을 추가하십시오."
+#~ "안전한 연결을 진행하려면 RDP 설정 파일에 <b>“use redirection server "
+#~ "name:i:1”</b> 설정을 추가하십시오."
