@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2025-02-20 21:34+0000\n"
-"PO-Revision-Date: 2025-03-08 14:27+0100\n"
+"POT-Creation-Date: 2025-08-30 11:10+0000\n"
+"PO-Revision-Date: 2025-09-02 15:44+0200\n"
 "Last-Translator: Ask Hjorth Larsen <asklarsen@gmail.com>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
 "Language: da\n"
@@ -20,13 +20,16 @@ msgstr ""
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings"
-msgstr "Tillad ændring af indstillingerne for gnome-remote-desktops systemdæmon"
+msgstr ""
+"Tillad ændring af indstillingerne for gnome-remote-desktops systemdæmon"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
 "settings"
-msgstr "Ændring af indstillingerne for gnome-remote-desktops systemdæmon kræver godkendelse"
+msgstr ""
+"Ændring af indstillingerne for gnome-remote-desktops systemdæmon kræver "
+"godkendelse"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
@@ -36,31 +39,33 @@ msgstr "Tillad aktivering og deaktivering af gnome-remote-desktops systemdæmon"
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
 "system daemon"
-msgstr "Aktivering og deaktivering af gnome-remote-desktops systemdæmon kræver godkendelse"
+msgstr ""
+"Aktivering og deaktivering af gnome-remote-desktops systemdæmon kræver "
+"godkendelse"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "GNOME Fjernskrivebords “handover”-dæemon"
 
-#: src/grd-ctl.c:70
+#: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Brug: %s [TILVALG...] KOMMANDO [UNDERKOMMANDO]...\n"
 
-#: src/grd-ctl.c:305
+#: src/grd-ctl.c:307
 msgid "Username: "
 msgstr "Brugernavn: "
 
-#: src/grd-ctl.c:317 src/grd-ctl.c:460
+#: src/grd-ctl.c:319 src/grd-ctl.c:475
 msgid "Password: "
 msgstr "Adgangskode: "
 
-#: src/grd-ctl.c:590
+#: src/grd-ctl.c:605
 msgid "Commands:\n"
 msgstr "Kommandoer:\n"
 
 # (Oversættelsen bruger med vilje lidt mindre indrykning end på engelsk)
-#: src/grd-ctl.c:595
+#: src/grd-ctl.c:610
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -115,7 +120,7 @@ msgstr ""
 "ikke\n"
 "                                               på en anden port\n"
 
-#: src/grd-ctl.c:619
+#: src/grd-ctl.c:634
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -159,36 +164,38 @@ msgstr ""
 "                                               på en anden port\n"
 "\n"
 
-#: src/grd-ctl.c:639
+#: src/grd-ctl.c:654
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
-"  --headless                                 - Use headless credentials "
-"storage\n"
+"  --headless                                 - Configure headless daemon\n"
+"                                               running on a user session\n"
 "  --system                                   - Configure system daemon\n"
+"                                               for remote login\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Vis nuværende status\n"
 "\n"
 "Tilvalg:\n"
-"  --headless                                 - Brug “headless” lagring af\n"
-"                                               legitimationsinformation\n"
-"  --system                                   - Konfigurér systemdæmonen\n"
+"  --headless                                 - Konfigurér “headless” dæmon, som\n"
+"                                               kører i en brugersession\n"
+"  --system                                   - Konfigurér systemdæmonen til\n"
+"                                               fjernlogin\n"
 "  --help                                     - Udskriv denne hjælpetekst\n"
 
-#: src/grd-daemon.c:992
+#: src/grd-daemon.c:995
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Fjernskrivebord"
 
-#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
+#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "Fortsæt med usikker forbindelse?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
+#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -200,12 +207,12 @@ msgstr ""
 "forbindelsesindstillingerne i din klient som en RDP-fil og angive “use "
 "redirection server name:i:1” i den."
 
-#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
+#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
 #, c-format
 msgid "Disconnect"
 msgstr "Afbryd"
 
-#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
+#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
 #, c-format
 msgid "Continue"
 msgstr "Fortsæt"
@@ -250,19 +257,23 @@ msgid "Refuse"
 msgstr "Afslå"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid "The port used by the RDP server"
 msgstr "Porten som bruges af RDP-serveren"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr ""
 "RDP-klienten vil forbinde til denne port for at bruge denne RDP-server."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 msgid "Search a different RDP port if the configured one is used"
 msgstr "Søg efter en anden RDP-port, hvis den konfigurerede port er i brug"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -271,10 +282,12 @@ msgstr ""
 "den første tilgængelige af de næste ti porte efter den konfigurerede port."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Om RDP-motoren er slået til"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Hvis “true” initialiseres RDP-motoren."
 
@@ -327,7 +340,7 @@ msgid "Path to the private key file"
 msgstr "Sti til den private nøglefil"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:131
 msgid "Only allow remote connections to view the screen content"
 msgstr "Tillad kun fjernforbindelser at vise skærmindholdet"
 
@@ -339,20 +352,24 @@ msgstr ""
 "Hvis view-only er sand, kan RDP-fjernforbindelser ikke manipulere "
 "inputenheder såsom mus og tastatur."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:180
 msgid "The port used by the VNC server"
 msgstr "Porten som bruges af VNC-serveren"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:181
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr ""
 "VNC-klienten vil forbinde til denne port for at bruge denne VNC-server."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:187
 msgid "Search a different VNC port if the configured one is used"
 msgstr "Søg efter en anden VNC-port, hvis den konfigurerede port er i brug"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:116
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -360,15 +377,17 @@ msgstr ""
 "Når negotiate-port er sat til “sand”, vil VNC-serveren forsøge at lytte på "
 "den første tilgængelige af de næste ti porte efter den konfigurerede port."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:196
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Om VNC-motoren er slået til"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:197
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Hvis “true” initialiseres VNC-motoren."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:132
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -376,11 +395,11 @@ msgstr ""
 "Hvis view-only er sand, kan VNC-fjernforbindelser ikke manipulere "
 "inputenheder såsom mus og tastatur."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:139
 msgid "Method used to authenticate VNC connections"
 msgstr "Metode til at godkende VNC-forbindelser"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:140
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -394,11 +413,11 @@ msgstr ""
 "maskinen eksplicit godkender forbindelsen. * password — ved at kræve, at "
 "fjernklienten afgiver en bestemt adgangskode."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
 msgid "Screenshare mode of VNC connections"
 msgstr "Skærmdelingstilstand for VNC-forbindelser"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:153
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
