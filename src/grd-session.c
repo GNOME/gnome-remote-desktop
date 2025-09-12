@@ -105,6 +105,8 @@ typedef struct _GrdSessionPrivate
   GrdDBusMutterRemoteDesktopSession *remote_desktop_session;
   GrdDBusMutterScreenCastSession *screen_cast_session;
 
+  gboolean is_ready;
+
   GrdClipboard *clipboard;
 
   struct ei *ei;
@@ -1691,6 +1693,8 @@ on_eis_connected (GObject      *object,
                                                    on_screen_cast_session_created,
                                                    session);
 
+  priv->is_ready = TRUE;
+
   if (klass->remote_desktop_session_ready)
     klass->remote_desktop_session_ready (session);
 }
@@ -1790,6 +1794,14 @@ grd_session_start (GrdSession *session)
                                                       priv->cancellable,
                                                       on_remote_desktop_session_created,
                                                       session);
+}
+
+gboolean
+grd_session_is_ready (GrdSession *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  return priv->is_ready;
 }
 
 static void

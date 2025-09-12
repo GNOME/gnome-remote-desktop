@@ -182,6 +182,8 @@ void grd_session_start (GrdSession *session);
 
 void grd_session_stop (GrdSession *session);
 
+gboolean grd_session_is_ready (GrdSession *session);
+
 gboolean grd_session_flush_input_finish (GrdSession    *session,
                                          GAsyncResult  *result,
                                          GError       **error);
