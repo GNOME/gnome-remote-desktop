@@ -67,3 +67,5 @@ void grd_rdp_event_queue_update_num_lock_state (GrdRdpEventQueue *rdp_event_queu
 void grd_rdp_event_queue_add_synchronization_event (GrdRdpEventQueue *rdp_event_queue,
                                                     gboolean          caps_lock_state,
                                                     gboolean          num_lock_state);
+
+void grd_rdp_event_queue_flush_synchronization (GrdRdpEventQueue *rdp_event_queue);

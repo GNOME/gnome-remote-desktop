@@ -167,12 +167,28 @@ static void
 handle_synchronization_event (GrdRdpEventQueue *rdp_event_queue,
                               RdpEvent         *rdp_event)
 {
+  GrdSession *session = GRD_SESSION (rdp_event_queue->session_rdp);
+
   g_cancellable_cancel (rdp_event_queue->pending_sync_cancellable);
   g_clear_object (&rdp_event_queue->pending_sync_cancellable);
 
   rdp_event_queue->expected_caps_lock_state = rdp_event->input_sync.caps_lock_state;
   rdp_event_queue->expected_num_lock_state = rdp_event->input_sync.num_lock_state;
   rdp_event_queue->pending_sync_cancellable = g_cancellable_new ();
+
+  if (!grd_session_is_ready (session))
+    return;
+
+  grd_rdp_event_queue_flush_synchronization (rdp_event_queue);
+}
+
+void
+grd_rdp_event_queue_flush_synchronization (GrdRdpEventQueue *rdp_event_queue)
+{
+  g_assert (grd_session_is_ready (GRD_SESSION (rdp_event_queue->session_rdp)));
+
+  if (!rdp_event_queue->pending_sync_cancellable)
+    return;
 
   grd_session_flush_input_async (GRD_SESSION (rdp_event_queue->session_rdp),
                                  rdp_event_queue->pending_sync_cancellable,

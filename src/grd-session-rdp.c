@@ -1784,6 +1784,7 @@ grd_session_rdp_remote_desktop_session_started (GrdSession *session)
                                                  session_rdp->cursor_renderer,
                                                  rdp_context,
                                                  session_rdp->screen_share_mode);
+  grd_rdp_event_queue_flush_synchronization (session_rdp->rdp_event_queue);
 }
 
 static void
