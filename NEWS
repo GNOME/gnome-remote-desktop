@@ -1,3 +1,21 @@
+49.0
+====
+
+* Handle Vulkan dma-buf format compatibility issues [Pascal; !339]
+* Fix crash [Jonas; !341]
+
+Contributors:
+  Jonas Ådahl, Pascal Nowack
+
+Translators:
+  Makoto Sakaguchi [ja], luming zh [zh_CN], Ekaterine Papava [ka],
+  Anders Jonsson [sv], Artur S0 [ru], Daniel Mustieles [es],
+  Jordi Mas i Hernandez [ca], Asier Saratsua Garmendia [eu], Seong-ho Cho [ko],
+  Yuri Chornoivan [uk], Aurimas Aurimas Černius [lt],
+  Juliano de Souza Camargo [pt_BR], Francisco Diéguez Souto [gl],
+  Ask Hjorth Larsen [da], Nathan Follens [nl], Kristjan SCHMIDT [eo],
+  Emin Tufan Çetin [tr]
+
 49.rc
 =====
 
