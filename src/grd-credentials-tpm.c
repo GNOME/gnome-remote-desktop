@@ -204,7 +204,7 @@ grd_credentials_tpm_clear (GrdCredentials      *credentials,
         }
       else
         {
-          g_propagate_error (error, local_error);
+          g_propagate_error (error, g_steal_pointer (&local_error));
           return FALSE;
         }
     }
