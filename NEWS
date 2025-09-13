@@ -1,3 +1,15 @@
+48.2
+====
+
+* Handle Vulkan dma-buf format compatibility issues [Jonas, Pascal; !323, !324,
+  !339]
+
+Contributors:
+  Jonas Ådahl, Pascal Nowack
+
+Translators:
+  Antonio Marin [ro], Nathan Follens [nl]
+
 48.1
 ====
 * Reduce latency when PipeWire stream uses shared memories
