@@ -21,8 +21,8 @@
 
 #include <gio/gio.h>
 #include <pipewire/pipewire.h>
-#include <stdint.h>
 #include <spa/param/video/format-utils.h>
+#include <stdint.h>
 
 #include "grd-types.h"
 
