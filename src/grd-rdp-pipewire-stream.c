@@ -1179,11 +1179,11 @@ grd_rdp_pipewire_stream_class_init (GrdRdpPipeWireStreamClass *klass)
   object_class->finalize = grd_rdp_pipewire_stream_finalize;
 
   signals[ERROR] = g_signal_new ("error",
-                                  G_TYPE_FROM_CLASS (klass),
-                                  G_SIGNAL_RUN_LAST,
-                                  0,
-                                  NULL, NULL, NULL,
-                                  G_TYPE_NONE, 0);
+                                 G_TYPE_FROM_CLASS (klass),
+                                 G_SIGNAL_RUN_LAST,
+                                 0,
+                                 NULL, NULL, NULL,
+                                 G_TYPE_NONE, 0);
   signals[CLOSED] = g_signal_new ("closed",
                                   G_TYPE_FROM_CLASS (klass),
                                   G_SIGNAL_RUN_LAST,
