@@ -1744,7 +1744,7 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
 }
 
 static void
-grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
+on_remote_desktop_session_ready (GrdSession *session)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
 
@@ -1761,7 +1761,7 @@ grd_session_rdp_remote_desktop_session_ready (GrdSession *session)
 }
 
 static void
-grd_session_rdp_remote_desktop_session_started (GrdSession *session)
+on_remote_desktop_session_started (GrdSession *session)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
   rdpContext *rdp_context = session_rdp->peer->context;
@@ -1876,6 +1876,11 @@ grd_session_rdp_init (GrdSessionRdp *session_rdp)
 
   session_rdp->session_metrics = grd_rdp_session_metrics_new ();
   session_rdp->rdp_event_queue = grd_rdp_event_queue_new (session_rdp);
+
+  g_signal_connect (session_rdp, "ready",
+                    G_CALLBACK (on_remote_desktop_session_ready), NULL);
+  g_signal_connect (session_rdp, "started",
+                    G_CALLBACK (on_remote_desktop_session_started), NULL);
 }
 
 static void
@@ -1887,10 +1892,6 @@ grd_session_rdp_class_init (GrdSessionRdpClass *klass)
   object_class->dispose = grd_session_rdp_dispose;
   object_class->finalize = grd_session_rdp_finalize;
 
-  session_class->remote_desktop_session_ready =
-    grd_session_rdp_remote_desktop_session_ready;
-  session_class->remote_desktop_session_started =
-    grd_session_rdp_remote_desktop_session_started;
   session_class->stop = grd_session_rdp_stop;
   session_class->on_stream_created = grd_session_rdp_on_stream_created;
   session_class->on_caps_lock_state_changed =

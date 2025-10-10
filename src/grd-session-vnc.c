@@ -855,7 +855,7 @@ close_session_idle (gpointer user_data)
 }
 
 static void
-grd_session_vnc_remote_desktop_session_started (GrdSession *session)
+on_remote_desktop_session_started (GrdSession *session)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
 
@@ -938,6 +938,9 @@ static void
 grd_session_vnc_init (GrdSessionVnc *session_vnc)
 {
   session_vnc->pressed_keys = g_hash_table_new (NULL, NULL);
+
+  g_signal_connect (session_vnc, "started",
+                    G_CALLBACK (on_remote_desktop_session_started), NULL);
 }
 
 static void
@@ -949,7 +952,5 @@ grd_session_vnc_class_init (GrdSessionVncClass *klass)
   object_class->dispose = grd_session_vnc_dispose;
 
   session_class->stop = grd_session_vnc_stop;
-  session_class->remote_desktop_session_started =
-    grd_session_vnc_remote_desktop_session_started;
   session_class->on_stream_created = grd_session_vnc_on_stream_created;
 }
