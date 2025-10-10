@@ -240,6 +240,8 @@ grd_session_flush_input_async (GrdSession          *session,
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdEiPing *ping;
 
+  g_assert (priv->is_ready);
+
   ping = g_new0 (GrdEiPing, 1);
   ping->task = g_task_new (session,
                            cancellable,
@@ -1419,6 +1421,12 @@ grd_ei_source_dispatch (gpointer user_data)
       switch (ei_event_type)
         {
         case EI_EVENT_CONNECT:
+          if (!priv->is_ready)
+            {
+              priv->is_ready = TRUE;
+              g_signal_emit (session, signals[READY], 0);
+            }
+          break;
         case EI_EVENT_DISCONNECT:
           break;
         case EI_EVENT_SEAT_ADDED:
@@ -1688,9 +1696,6 @@ on_eis_connected (GObject      *object,
                                                    priv->cancellable,
                                                    on_screen_cast_session_created,
                                                    session);
-
-  priv->is_ready = TRUE;
-  g_signal_emit (session, signals[READY], 0);
 }
 
 static void
