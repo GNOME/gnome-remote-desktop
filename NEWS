@@ -1,3 +1,11 @@
+48.3
+====
+
+* Fix image corruption on some NVIDIA GPUs [Stephan; !344]
+
+Contributors:
+  Stephan Seitz
+
 48.2
 ====
 
