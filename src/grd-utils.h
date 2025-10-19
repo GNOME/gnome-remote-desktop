@@ -55,6 +55,8 @@ void grd_sync_point_init (GrdSyncPoint *sync_point);
 
 void grd_sync_point_clear (GrdSyncPoint *sync_point);
 
+void grd_sync_point_reset (GrdSyncPoint *sync_point);
+
 void grd_sync_point_complete (GrdSyncPoint *sync_point,
                               gboolean      success);
 
