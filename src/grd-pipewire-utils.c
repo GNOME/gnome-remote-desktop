@@ -80,8 +80,8 @@ static GSourceFuncs pipewire_source_funcs =
 };
 
 GrdPipeWireSource *
-grd_attached_pipewire_source_new (const char  *message_tag,
-                                  GError     **error)
+grd_pipewire_source_new (const char  *message_tag,
+                         GError     **error)
 {
   g_autoptr (GrdPipeWireSource) pipewire_source = NULL;
 
@@ -105,9 +105,23 @@ grd_attached_pipewire_source_new (const char  *message_tag,
                         G_IO_IN | G_IO_ERR);
 
   pw_loop_enter (pipewire_source->pipewire_loop);
-  g_source_attach (&pipewire_source->base, NULL);
 
   return g_steal_pointer (&pipewire_source);
+}
+
+GrdPipeWireSource *
+grd_attached_pipewire_source_new (const char  *message_tag,
+                                  GError     **error)
+{
+  GrdPipeWireSource *pipewire_source;
+
+  pipewire_source = grd_pipewire_source_new (message_tag, error);
+  if (!pipewire_source)
+    return NULL;
+
+  g_source_attach (&pipewire_source->base, NULL);
+
+  return pipewire_source;
 }
 
 static void

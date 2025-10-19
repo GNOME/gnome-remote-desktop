@@ -38,6 +38,9 @@ typedef struct _GrdPipeWireSource
   struct pw_loop *pipewire_loop;
 } GrdPipeWireSource;
 
+GrdPipeWireSource *grd_pipewire_source_new (const char  *message_tag,
+                                            GError     **error);
+
 GrdPipeWireSource *grd_attached_pipewire_source_new (const char  *message_tag,
                                                      GError     **error);
 
