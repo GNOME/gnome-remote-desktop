@@ -26,6 +26,7 @@
 #include <pipewire/pipewire.h>
 #include <spa/param/props.h>
 #include <spa/param/format-utils.h>
+#include <spa/param/tag-utils.h>
 #include <spa/param/video/format-utils.h>
 
 #include "grd-context.h"
@@ -46,7 +47,7 @@
 #include "grd-vk-device.h"
 
 #define DEFAULT_BUFFER_POOL_SIZE 5
-#define MAX_FORMAT_PARAMS 2
+#define MAX_PW_PARAMS 3
 
 enum
 {
@@ -370,13 +371,43 @@ add_format_params (GrdRdpPipeWireStream        *stream,
   return n_params;
 }
 
+static uint32_t
+add_tag_params (GrdRdpPipeWireStream        *stream,
+                const GrdRdpVirtualMonitor  *virtual_monitor,
+                struct spa_pod_builder      *pod_builder,
+                const struct spa_pod       **params,
+                uint32_t                     n_available_params)
+{
+  struct spa_pod_frame tag_frame;
+  struct spa_dict_item items[1];
+  char scale_string[G_ASCII_DTOSTR_BUF_SIZE];
+  uint32_t n_params = 0;
+  double scale;
+
+  g_assert (n_available_params >= 1);
+
+  spa_tag_build_start (pod_builder, &tag_frame,
+                       SPA_PARAM_Tag, SPA_DIRECTION_INPUT);
+
+  scale = virtual_monitor->scale ? virtual_monitor->scale / 100.0 : 1.0;
+  g_ascii_dtostr (scale_string, G_ASCII_DTOSTR_BUF_SIZE, scale);
+  items[0] = SPA_DICT_ITEM_INIT ("org.gnome.preferred-scale", scale_string);
+
+  spa_tag_build_add_dict (pod_builder,
+                          &SPA_DICT_INIT (items, G_N_ELEMENTS (items)));
+
+  params[n_params++] = spa_tag_build_end (pod_builder, &tag_frame);
+
+  return n_params;
+}
+
 void
 grd_rdp_pipewire_stream_resize (GrdRdpPipeWireStream *stream,
                                 GrdRdpVirtualMonitor *virtual_monitor)
 {
   uint8_t params_buffer[1024];
   struct spa_pod_builder pod_builder;
-  const struct spa_pod *params[MAX_FORMAT_PARAMS] = {};
+  const struct spa_pod *params[MAX_PW_PARAMS] = {};
   uint32_t n_params = 0;
 
   stream->pending_resize = TRUE;
@@ -384,7 +415,12 @@ grd_rdp_pipewire_stream_resize (GrdRdpPipeWireStream *stream,
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
   n_params += add_format_params (stream, virtual_monitor, &pod_builder,
-                                 params, MAX_FORMAT_PARAMS);
+                                 &params[n_params], MAX_PW_PARAMS - n_params);
+  if (virtual_monitor)
+    {
+      n_params += add_tag_params (stream, virtual_monitor, &pod_builder,
+                                  &params[n_params], MAX_PW_PARAMS - n_params);
+    }
 
   g_assert (n_params > 0);
   pw_stream_update_params (stream->pipewire_stream, params, n_params);
@@ -974,7 +1010,7 @@ connect_to_stream (GrdRdpPipeWireStream        *stream,
   struct pw_stream *pipewire_stream;
   uint8_t params_buffer[1024];
   struct spa_pod_builder pod_builder;
-  const struct spa_pod *params[MAX_FORMAT_PARAMS] = {};
+  const struct spa_pod *params[MAX_PW_PARAMS] = {};
   uint32_t n_params = 0;
   int ret;
 
@@ -985,7 +1021,12 @@ connect_to_stream (GrdRdpPipeWireStream        *stream,
   pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
 
   n_params += add_format_params (stream, virtual_monitor, &pod_builder,
-                                 params, MAX_FORMAT_PARAMS);
+                                 &params[n_params], MAX_PW_PARAMS - n_params);
+  if (virtual_monitor)
+    {
+      n_params += add_tag_params (stream, virtual_monitor, &pod_builder,
+                                  &params[n_params], MAX_PW_PARAMS - n_params);
+    }
 
   stream->pipewire_stream = pipewire_stream;
 
