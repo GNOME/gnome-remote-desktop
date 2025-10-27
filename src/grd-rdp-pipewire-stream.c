@@ -28,6 +28,7 @@
 #include <spa/param/format-utils.h>
 #include <spa/param/tag-utils.h>
 #include <spa/param/video/format-utils.h>
+#include <spa/pod/dynamic.h>
 
 #include "grd-context.h"
 #include "grd-egl-thread.h"
@@ -47,7 +48,7 @@
 #include "grd-vk-device.h"
 
 #define DEFAULT_BUFFER_POOL_SIZE 5
-#define MAX_PW_PARAMS 3
+#define PARAMS_BUFFER_SIZE 1024
 
 enum
 {
@@ -205,6 +206,13 @@ grd_rdp_frame_invoke_callback (GrdRdpFrame *frame,
 }
 
 static void
+append_pod_offset (GArray                 *pod_offsets,
+                   struct spa_pod_builder *pod_builder)
+{
+  g_array_append_val (pod_offsets, pod_builder->state.offset);
+}
+
+static void
 add_common_format_params (struct spa_pod_builder     *pod_builder,
                           enum spa_video_format       spa_format,
                           const GrdRdpVirtualMonitor *virtual_monitor,
@@ -296,12 +304,11 @@ get_modifiers_for_format (GrdRdpPipeWireStream  *stream,
                                                   out_modifiers);
 }
 
-static uint32_t
+static void
 add_format_params (GrdRdpPipeWireStream        *stream,
                    const GrdRdpVirtualMonitor  *virtual_monitor,
                    struct spa_pod_builder      *pod_builder,
-                   const struct spa_pod       **params,
-                   uint32_t                     n_available_params)
+                   GArray                      *pod_offsets)
 {
   GrdSession *session = GRD_SESSION (stream->session_rdp);
   GrdContext *context = grd_session_get_context (session);
@@ -316,9 +323,8 @@ add_format_params (GrdRdpPipeWireStream        *stream,
   struct spa_pod_frame format_frame;
   enum spa_video_format spa_format = SPA_VIDEO_FORMAT_BGRx;
   gboolean need_fallback_format = FALSE;
-  uint32_t n_params = 0;
 
-  g_assert (n_available_params >= 2);
+  append_pod_offset (pod_offsets, pod_builder);
 
   spa_pod_builder_push_object (pod_builder, &format_frame,
                                SPA_TYPE_OBJECT_Format,
@@ -361,35 +367,51 @@ add_format_params (GrdRdpPipeWireStream        *stream,
         }
     }
 
-  params[n_params++] = spa_pod_builder_pop (pod_builder, &format_frame);
+  spa_pod_builder_pop (pod_builder, &format_frame);
 
   if (need_fallback_format)
     {
+      append_pod_offset (pod_offsets, pod_builder);
       spa_pod_builder_push_object (pod_builder, &format_frame,
                                    SPA_TYPE_OBJECT_Format,
                                    SPA_PARAM_EnumFormat);
       add_common_format_params (pod_builder, spa_format, virtual_monitor,
                                 refresh_rate);
-      params[n_params++] = spa_pod_builder_pop (pod_builder, &format_frame);
+      spa_pod_builder_pop (pod_builder, &format_frame);
     }
-
-  return n_params;
 }
 
-static uint32_t
+static GPtrArray *
+finish_params (struct spa_pod_builder *pod_builder,
+               GArray                 *pod_offsets)
+{
+  GPtrArray *params = NULL;
+  size_t i;
+
+  params = g_ptr_array_new ();
+
+  for (i = 0; i < pod_offsets->len; i++)
+    {
+      uint32_t pod_offset = g_array_index (pod_offsets, uint32_t, i);
+
+      g_ptr_array_add (params, spa_pod_builder_deref (pod_builder, pod_offset));
+    }
+
+  return params;
+}
+
+static void
 add_tag_params (GrdRdpPipeWireStream        *stream,
                 const GrdRdpVirtualMonitor  *virtual_monitor,
                 struct spa_pod_builder      *pod_builder,
-                const struct spa_pod       **params,
-                uint32_t                     n_available_params)
+                GArray                      *pod_offsets)
 {
   struct spa_pod_frame tag_frame;
   struct spa_dict_item items[1];
   char scale_string[G_ASCII_DTOSTR_BUF_SIZE];
-  uint32_t n_params = 0;
   double scale;
 
-  g_assert (n_available_params >= 1);
+  append_pod_offset (pod_offsets, pod_builder);
 
   spa_tag_build_start (pod_builder, &tag_frame,
                        SPA_PARAM_Tag, SPA_DIRECTION_INPUT);
@@ -401,34 +423,33 @@ add_tag_params (GrdRdpPipeWireStream        *stream,
   spa_tag_build_add_dict (pod_builder,
                           &SPA_DICT_INIT (items, G_N_ELEMENTS (items)));
 
-  params[n_params++] = spa_tag_build_end (pod_builder, &tag_frame);
-
-  return n_params;
+  spa_tag_build_end (pod_builder, &tag_frame);
 }
 
 void
 grd_rdp_pipewire_stream_resize (GrdRdpPipeWireStream *stream,
                                 GrdRdpVirtualMonitor *virtual_monitor)
 {
-  uint8_t params_buffer[1024];
-  struct spa_pod_builder pod_builder;
-  const struct spa_pod *params[MAX_PW_PARAMS] = {};
-  uint32_t n_params = 0;
+  g_autoptr (GArray) pod_offsets = NULL;
+  struct spa_pod_dynamic_builder pod_builder;
+  g_autoptr (GPtrArray) params = NULL;
 
   stream->pending_resize = TRUE;
 
-  pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
+  pod_offsets = g_array_new (FALSE, FALSE, sizeof (uint32_t));
+  spa_pod_dynamic_builder_init (&pod_builder, NULL, 0, PARAMS_BUFFER_SIZE);
 
-  n_params += add_format_params (stream, virtual_monitor, &pod_builder,
-                                 &params[n_params], MAX_PW_PARAMS - n_params);
+  add_format_params (stream, virtual_monitor, &pod_builder.b, pod_offsets);
   if (virtual_monitor)
-    {
-      n_params += add_tag_params (stream, virtual_monitor, &pod_builder,
-                                  &params[n_params], MAX_PW_PARAMS - n_params);
-    }
+    add_tag_params (stream, virtual_monitor, &pod_builder.b, pod_offsets);
 
-  g_assert (n_params > 0);
-  pw_stream_update_params (stream->pipewire_stream, params, n_params);
+  params = finish_params (&pod_builder.b, pod_offsets);
+
+  pw_stream_update_params (stream->pipewire_stream,
+                           (const struct spa_pod **) params->pdata,
+                           params->len);
+
+  spa_pod_dynamic_builder_clean (&pod_builder);
 }
 
 static void
@@ -499,10 +520,10 @@ on_stream_param_changed (void                 *user_data,
   uint32_t width;
   uint32_t height;
   uint32_t stride;
-  uint8_t params_buffer[1024];
-  struct spa_pod_builder pod_builder;
+  g_autoptr (GArray) pod_offsets = NULL;
+  struct spa_pod_dynamic_builder pod_builder;
   enum spa_data_type allowed_buffer_types;
-  const struct spa_pod *params[3];
+  g_autoptr (GPtrArray) params = NULL;
 
   if (!format || id != SPA_PARAM_Format)
     return;
@@ -534,37 +555,43 @@ on_stream_param_changed (void                 *user_data,
   g_signal_emit (stream, signals[VIDEO_RESIZED], 0, width, height);
   stream->pending_resize = FALSE;
 
-  pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
+  pod_offsets = g_array_new (FALSE, FALSE, sizeof (uint32_t));
+  spa_pod_dynamic_builder_init (&pod_builder, NULL, 0, PARAMS_BUFFER_SIZE);
 
   allowed_buffer_types = 1 << SPA_DATA_MemFd;
   if (egl_thread && !hwaccel_nvidia)
     allowed_buffer_types |= 1 << SPA_DATA_DmaBuf;
 
-  params[0] = spa_pod_builder_add_object (
-    &pod_builder,
+  append_pod_offset (pod_offsets, &pod_builder.b);
+  spa_pod_builder_add_object (
+    &pod_builder.b,
     SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers,
     SPA_PARAM_BUFFERS_buffers, SPA_POD_CHOICE_RANGE_Int (8, 2, 8),
-    SPA_PARAM_BUFFERS_dataType, SPA_POD_Int (allowed_buffer_types),
-    0);
+    SPA_PARAM_BUFFERS_dataType, SPA_POD_Int (allowed_buffer_types));
 
-  params[1] = spa_pod_builder_add_object (
-    &pod_builder,
+  append_pod_offset (pod_offsets, &pod_builder.b);
+  spa_pod_builder_add_object (
+    &pod_builder.b,
     SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
     SPA_PARAM_META_type, SPA_POD_Id (SPA_META_Header),
-    SPA_PARAM_META_size, SPA_POD_Int (sizeof (struct spa_meta_header)),
-    0);
+    SPA_PARAM_META_size, SPA_POD_Int (sizeof (struct spa_meta_header)));
 
-  params[2] = spa_pod_builder_add_object (
-    &pod_builder,
+  append_pod_offset (pod_offsets, &pod_builder.b);
+  spa_pod_builder_add_object (
+    &pod_builder.b,
     SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
     SPA_PARAM_META_type, SPA_POD_Id (SPA_META_Cursor),
     SPA_PARAM_META_size, SPA_POD_CHOICE_RANGE_Int (CURSOR_META_SIZE (384, 384),
                                                    CURSOR_META_SIZE (1, 1),
-                                                   CURSOR_META_SIZE (384, 384)),
-    0);
+                                                   CURSOR_META_SIZE (384, 384)));
+
+  params = finish_params (&pod_builder.b, pod_offsets);
 
   pw_stream_update_params (stream->pipewire_stream,
-                           params, G_N_ELEMENTS (params));
+                           (const struct spa_pod **) params->pdata,
+                           params->len);
+
+  spa_pod_dynamic_builder_clean (&pod_builder);
 }
 
 static void
@@ -1013,25 +1040,23 @@ connect_to_stream (GrdRdpPipeWireStream        *stream,
                    GError                     **error)
 {
   struct pw_stream *pipewire_stream;
-  uint8_t params_buffer[1024];
-  struct spa_pod_builder pod_builder;
-  const struct spa_pod *params[MAX_PW_PARAMS] = {};
-  uint32_t n_params = 0;
+  g_autoptr (GArray) pod_offsets = NULL;
+  struct spa_pod_dynamic_builder pod_builder;
+  g_autoptr (GPtrArray) params = NULL;
   int ret;
 
   pipewire_stream = pw_stream_new (stream->pipewire_core,
                                    "grd-rdp-pipewire-stream",
                                    NULL);
 
-  pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
+  pod_offsets = g_array_new (FALSE, FALSE, sizeof (uint32_t));
+  spa_pod_dynamic_builder_init (&pod_builder, NULL, 0, PARAMS_BUFFER_SIZE);
 
-  n_params += add_format_params (stream, virtual_monitor, &pod_builder,
-                                 &params[n_params], MAX_PW_PARAMS - n_params);
+  add_format_params (stream, virtual_monitor, &pod_builder.b, pod_offsets);
   if (virtual_monitor)
-    {
-      n_params += add_tag_params (stream, virtual_monitor, &pod_builder,
-                                  &params[n_params], MAX_PW_PARAMS - n_params);
-    }
+    add_tag_params (stream, virtual_monitor, &pod_builder.b, pod_offsets);
+
+  params = finish_params (&pod_builder.b, pod_offsets);
 
   stream->pipewire_stream = pipewire_stream;
 
@@ -1040,13 +1065,16 @@ connect_to_stream (GrdRdpPipeWireStream        *stream,
                           &stream_events,
                           stream);
 
-  g_assert (n_params > 0);
   ret = pw_stream_connect (stream->pipewire_stream,
                            PW_DIRECTION_INPUT,
                            stream->src_node_id,
                            (PW_STREAM_FLAG_RT_PROCESS |
                             PW_STREAM_FLAG_AUTOCONNECT),
-                           params, n_params);
+                           (const struct spa_pod **) params->pdata,
+                           params->len);
+
+  spa_pod_dynamic_builder_clean (&pod_builder);
+
   if (ret < 0)
     {
       g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (-ret),
