@@ -82,6 +82,18 @@ grd_rdp_server_get_context (GrdRdpServer *rdp_server)
   return rdp_server->context;
 }
 
+GrdHwAccelNvidia *
+grd_rdp_server_get_hwaccel_nvidia (GrdRdpServer *rdp_server)
+{
+  return rdp_server->hwaccel_nvidia;
+}
+
+GrdHwAccelVulkan *
+grd_rdp_server_get_hwaccel_vulkan (GrdRdpServer *rdp_server)
+{
+  return rdp_server->hwaccel_vulkan;
+}
+
 GrdRdpServer *
 grd_rdp_server_new (GrdContext *context)
 {
