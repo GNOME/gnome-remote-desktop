@@ -78,3 +78,5 @@ gboolean grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
                                                   const char    *username,
                                                   const char    *password,
                                                   const char    *certificate);
+
+GrdRdpServer *grd_session_rdp_get_server (GrdSessionRdp *session_rdp);

@@ -80,6 +80,7 @@ struct _GrdSessionRdp
 {
   GrdSession parent;
 
+  GrdRdpServer *server;
   GSocketConnection *connection;
   freerdp_peer *peer;
   GrdRdpSAMFile *sam_file;
@@ -128,6 +129,12 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (rdpRedirection, redirection_free)
 
 static gboolean
 close_session_idle (gpointer user_data);
+
+GrdRdpServer *
+grd_session_rdp_get_server (GrdSessionRdp *session_rdp)
+{
+  return session_rdp->server;
+}
 
 static gboolean
 is_rdp_peer_flag_set (GrdSessionRdp *session_rdp,
@@ -1522,6 +1529,7 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
                               "context", context,
                               NULL);
 
+  session_rdp->server = rdp_server;
   session_rdp->connection = g_object_ref (connection);
   session_rdp->hwaccel_vulkan = hwaccel_vulkan;
   session_rdp->hwaccel_nvidia = hwaccel_nvidia;
