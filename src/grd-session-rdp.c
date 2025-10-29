@@ -136,6 +136,30 @@ grd_session_rdp_get_server (GrdSessionRdp *session_rdp)
   return session_rdp->server;
 }
 
+GrdRdpRenderer *
+grd_session_rdp_get_renderer (GrdSessionRdp *session_rdp)
+{
+  return session_rdp->renderer;
+}
+
+GrdRdpCursorRenderer *
+grd_session_rdp_get_cursor_renderer (GrdSessionRdp *session_rdp)
+{
+  return session_rdp->cursor_renderer;
+}
+
+rdpContext *
+grd_session_rdp_get_rdp_context (GrdSessionRdp *session_rdp)
+{
+  return session_rdp->peer->context;
+}
+
+GrdRdpScreenShareMode
+grd_session_rdp_get_screen_share_mode (GrdSessionRdp *session_rdp)
+{
+  return session_rdp->screen_share_mode;
+}
+
 static gboolean
 is_rdp_peer_flag_set (GrdSessionRdp *session_rdp,
                       RdpPeerFlag    flag)

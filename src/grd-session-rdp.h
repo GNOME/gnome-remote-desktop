@@ -19,9 +19,11 @@
 
 #pragma once
 
+#include <freerdp/peer.h>
 #include <gio/gio.h>
 #include <glib-object.h>
 
+#include "grd-enums.h"
 #include "grd-session.h"
 #include "grd-types.h"
 
@@ -80,3 +82,11 @@ gboolean grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
                                                   const char    *certificate);
 
 GrdRdpServer *grd_session_rdp_get_server (GrdSessionRdp *session_rdp);
+
+GrdRdpRenderer *grd_session_rdp_get_renderer (GrdSessionRdp *session_rdp);
+
+GrdRdpCursorRenderer *grd_session_rdp_get_cursor_renderer (GrdSessionRdp *session_rdp);
+
+rdpContext *grd_session_rdp_get_rdp_context (GrdSessionRdp *session_rdp);
+
+GrdRdpScreenShareMode grd_session_rdp_get_screen_share_mode (GrdSessionRdp *session_rdp);
