@@ -1568,11 +1568,7 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
                     session_rdp);
 
   session_rdp->renderer = grd_rdp_renderer_new (session_rdp, hwaccel_nvidia);
-  session_rdp->layout_manager =
-    grd_rdp_layout_manager_new (session_rdp,
-                                session_rdp->renderer,
-                                hwaccel_vulkan,
-                                hwaccel_nvidia);
+  session_rdp->layout_manager = grd_rdp_layout_manager_new (session_rdp);
 
   if (!init_rdp_session (session_rdp, username, password, &error))
     {
@@ -1812,10 +1808,7 @@ on_remote_desktop_session_started (GrdSession *session)
 
   grd_rdp_session_metrics_notify_phase_completion (session_rdp->session_metrics,
                                                    GRD_RDP_PHASE_SESSION_STARTED);
-  grd_rdp_layout_manager_notify_session_started (session_rdp->layout_manager,
-                                                 session_rdp->cursor_renderer,
-                                                 rdp_context,
-                                                 session_rdp->screen_share_mode);
+  grd_rdp_layout_manager_notify_session_started (session_rdp->layout_manager);
   grd_rdp_event_queue_flush_synchronization (session_rdp->rdp_event_queue);
 }
 

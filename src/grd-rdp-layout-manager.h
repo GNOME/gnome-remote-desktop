@@ -30,15 +30,9 @@
 G_DECLARE_FINAL_TYPE (GrdRdpLayoutManager, grd_rdp_layout_manager,
                       GRD, RDP_LAYOUT_MANAGER, GrdRdpStreamOwner)
 
-GrdRdpLayoutManager *grd_rdp_layout_manager_new (GrdSessionRdp    *session_rdp,
-                                                 GrdRdpRenderer   *renderer,
-                                                 GrdHwAccelVulkan *hwaccel_vulkan,
-                                                 GrdHwAccelNvidia *hwaccel_nvidia);
+GrdRdpLayoutManager *grd_rdp_layout_manager_new (GrdSessionRdp *session_rdp);
 
-void grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager   *layout_manager,
-                                                    GrdRdpCursorRenderer  *cursor_renderer,
-                                                    rdpContext            *rdp_context,
-                                                    GrdRdpScreenShareMode  screen_share_mode);
+void grd_rdp_layout_manager_notify_session_started (GrdRdpLayoutManager *layout_manager);
 
 void grd_rdp_layout_manager_submit_new_monitor_config (GrdRdpLayoutManager *layout_manager,
                                                        GrdRdpMonitorConfig *monitor_config);
