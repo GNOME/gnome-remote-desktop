@@ -200,9 +200,7 @@ on_routing_token_peeked (GObject      *source_object,
     }
   else
     {
-      if (!(session_rdp = grd_session_rdp_new (rdp_server, connection,
-                                               rdp_server->hwaccel_vulkan,
-                                               rdp_server->hwaccel_nvidia)))
+      if (!(session_rdp = grd_session_rdp_new (rdp_server, connection)))
         return;
 
       rdp_server->sessions = g_list_append (rdp_server->sessions, session_rdp);
@@ -240,9 +238,7 @@ on_incoming (GSocketService    *service,
 
   g_debug ("New incoming RDP connection");
 
-  if (!(session_rdp = grd_session_rdp_new (rdp_server, connection,
-                                           rdp_server->hwaccel_vulkan,
-                                           rdp_server->hwaccel_nvidia)))
+  if (!(session_rdp = grd_session_rdp_new (rdp_server, connection)))
     return TRUE;
 
   rdp_server->sessions = g_list_append (rdp_server->sessions, session_rdp);

@@ -106,9 +106,6 @@ struct _GrdSessionRdp
 
   GrdRdpEventQueue *rdp_event_queue;
 
-  GrdHwAccelVulkan *hwaccel_vulkan;
-  GrdHwAccelNvidia *hwaccel_nvidia;
-
   GrdRdpLayoutManager *layout_manager;
 
   GHashTable *stream_table;
@@ -1524,9 +1521,7 @@ on_view_only_changed (GrdSettings   *settings,
 
 GrdSessionRdp *
 grd_session_rdp_new (GrdRdpServer      *rdp_server,
-                     GSocketConnection *connection,
-                     GrdHwAccelVulkan  *hwaccel_vulkan,
-                     GrdHwAccelNvidia  *hwaccel_nvidia)
+                     GSocketConnection *connection)
 {
   g_autoptr (GrdSessionRdp) session_rdp = NULL;
   GrdContext *context;
@@ -1555,8 +1550,6 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
 
   session_rdp->server = rdp_server;
   session_rdp->connection = g_object_ref (connection);
-  session_rdp->hwaccel_vulkan = hwaccel_vulkan;
-  session_rdp->hwaccel_nvidia = hwaccel_nvidia;
 
   g_object_get (G_OBJECT (settings),
                 "rdp-screen-share-mode", &session_rdp->screen_share_mode,
@@ -1698,6 +1691,8 @@ initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
 {
   rdpContext *rdp_context = session_rdp->peer->context;
   RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
+  GrdHwAccelNvidia *hwaccel_nvidia =
+    grd_rdp_server_get_hwaccel_nvidia (session_rdp->server);
   GrdRdpDvcGraphicsPipeline *graphics_pipeline;
   GrdRdpDvcTelemetry *telemetry;
 
@@ -1720,7 +1715,7 @@ initialize_graphics_pipeline (GrdSessionRdp *session_rdp)
                                        rdp_peer_context->encode_stream,
                                        rdp_peer_context->rfx_context);
   grd_rdp_dvc_graphics_pipeline_set_hwaccel_nvidia (graphics_pipeline,
-                                                    session_rdp->hwaccel_nvidia);
+                                                    hwaccel_nvidia);
   rdp_peer_context->graphics_pipeline = graphics_pipeline;
 }
 
