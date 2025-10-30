@@ -1567,7 +1567,7 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
                     G_CALLBACK (on_view_only_changed),
                     session_rdp);
 
-  session_rdp->renderer = grd_rdp_renderer_new (session_rdp, hwaccel_nvidia);
+  session_rdp->renderer = grd_rdp_renderer_new (session_rdp);
   session_rdp->layout_manager = grd_rdp_layout_manager_new (session_rdp);
 
   if (!init_rdp_session (session_rdp, username, password, &error))
@@ -1792,14 +1792,8 @@ static void
 on_remote_desktop_session_started (GrdSession *session)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (session);
-  rdpContext *rdp_context = session_rdp->peer->context;
-  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
-  GrdRdpDvcGraphicsPipeline *graphics_pipeline =
-    rdp_peer_context->graphics_pipeline;
 
-  if (!grd_rdp_renderer_start (session_rdp->renderer,
-                               session_rdp->hwaccel_vulkan,
-                               graphics_pipeline, rdp_context))
+  if (!grd_rdp_renderer_start (session_rdp->renderer))
     {
       grd_session_rdp_notify_error (session_rdp,
                                     GRD_SESSION_RDP_ERROR_CLOSE_STACK_ON_DRIVER_FAILURE);
