@@ -25,9 +25,6 @@
 #include "grd-types.h"
 
 GrdRdpLegacyBuffer *grd_rdp_legacy_buffer_new (GrdRdpBufferPool *buffer_pool,
-                                               GrdEglThread     *egl_thread,
-                                               GrdHwAccelNvidia *hwaccel_nvidia,
-                                               CUstream          cuda_stream,
                                                uint32_t          height,
                                                uint32_t          stride,
                                                gboolean          preallocate_on_gpu);

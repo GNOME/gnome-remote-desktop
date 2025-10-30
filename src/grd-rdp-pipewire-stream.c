@@ -1066,9 +1066,7 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
   stream->rdp_surface = rdp_surface;
   stream->src_node_id = src_node_id;
 
-  stream->buffer_pool = grd_rdp_buffer_pool_new (egl_thread,
-                                                 hwaccel_nvidia,
-                                                 rdp_surface->cuda_stream,
+  stream->buffer_pool = grd_rdp_buffer_pool_new (rdp_surface,
                                                  DEFAULT_BUFFER_POOL_SIZE);
 
   if (egl_thread && !hwaccel_nvidia)

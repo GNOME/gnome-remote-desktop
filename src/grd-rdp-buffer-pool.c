@@ -21,8 +21,13 @@
 
 #include "grd-rdp-buffer-pool.h"
 
+#include "grd-context.h"
 #include "grd-egl-thread.h"
 #include "grd-rdp-legacy-buffer.h"
+#include "grd-rdp-renderer.h"
+#include "grd-rdp-server.h"
+#include "grd-rdp-surface.h"
+#include "grd-session-rdp.h"
 #include "grd-utils.h"
 
 typedef struct _BufferInfo
@@ -34,10 +39,7 @@ struct _GrdRdpBufferPool
 {
   GObject parent;
 
-  GrdEglThread *egl_thread;
-  GrdHwAccelNvidia *hwaccel_nvidia;
-
-  CUstream cuda_stream;
+  GrdRdpSurface *rdp_surface;
 
   uint32_t buffer_height;
   uint32_t buffer_stride;
@@ -54,6 +56,12 @@ struct _GrdRdpBufferPool
 
 G_DEFINE_TYPE (GrdRdpBufferPool, grd_rdp_buffer_pool, G_TYPE_OBJECT)
 
+GrdRdpSurface *
+grd_rdp_buffer_pool_get_surface (GrdRdpBufferPool *buffer_pool)
+{
+  return buffer_pool->rdp_surface;
+}
+
 static gboolean
 add_buffer_to_pool (GrdRdpBufferPool *buffer_pool,
                     gboolean          preallocate_on_gpu)
@@ -62,9 +70,6 @@ add_buffer_to_pool (GrdRdpBufferPool *buffer_pool,
   BufferInfo *buffer_info;
 
   buffer = grd_rdp_legacy_buffer_new (buffer_pool,
-                                      buffer_pool->egl_thread,
-                                      buffer_pool->hwaccel_nvidia,
-                                      buffer_pool->cuda_stream,
                                       buffer_pool->buffer_height,
                                       buffer_pool->buffer_stride,
                                       preallocate_on_gpu);
@@ -268,17 +273,13 @@ static GSourceFuncs buffer_pool_source_funcs =
 };
 
 GrdRdpBufferPool *
-grd_rdp_buffer_pool_new (GrdEglThread     *egl_thread,
-                         GrdHwAccelNvidia *hwaccel_nvidia,
-                         CUstream          cuda_stream,
-                         uint32_t          minimum_size)
+grd_rdp_buffer_pool_new (GrdRdpSurface *rdp_surface,
+                         uint32_t       minimum_size)
 {
   g_autoptr (GrdRdpBufferPool) buffer_pool = NULL;
 
   buffer_pool = g_object_new (GRD_TYPE_RDP_BUFFER_POOL, NULL);
-  buffer_pool->egl_thread = egl_thread;
-  buffer_pool->hwaccel_nvidia = hwaccel_nvidia;
-  buffer_pool->cuda_stream = cuda_stream;
+  buffer_pool->rdp_surface = rdp_surface;
   buffer_pool->minimum_pool_size = minimum_size;
 
   buffer_pool->resize_pool_source = g_source_new (&buffer_pool_source_funcs,
@@ -311,10 +312,15 @@ on_sync_complete (gboolean success,
 static void
 sync_egl_thread (GrdRdpBufferPool *buffer_pool)
 {
+  GrdRdpRenderer *renderer = buffer_pool->rdp_surface->renderer;
+  GrdSessionRdp *session_rdp = grd_rdp_renderer_get_session (renderer);
+  GrdRdpServer *rdp_server = grd_session_rdp_get_server (session_rdp);
+  GrdContext *context = grd_rdp_server_get_context (rdp_server);
+  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
   GrdSyncPoint sync_point = {};
 
   grd_sync_point_init (&sync_point);
-  grd_egl_thread_sync (buffer_pool->egl_thread, on_sync_complete,
+  grd_egl_thread_sync (egl_thread, on_sync_complete,
                        &sync_point, NULL);
 
   grd_sync_point_wait_for_completion (&sync_point);
@@ -346,6 +352,11 @@ static void
 grd_rdp_buffer_pool_finalize (GObject *object)
 {
   GrdRdpBufferPool *buffer_pool = GRD_RDP_BUFFER_POOL (object);
+  GrdRdpRenderer *renderer = buffer_pool->rdp_surface->renderer;
+  GrdSessionRdp *session_rdp = grd_rdp_renderer_get_session (renderer);
+  GrdRdpServer *rdp_server = grd_session_rdp_get_server (session_rdp);
+  GrdContext *context = grd_rdp_server_get_context (rdp_server);
+  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
 
   g_mutex_clear (&buffer_pool->pool_mutex);
 
@@ -356,7 +367,7 @@ grd_rdp_buffer_pool_finalize (GObject *object)
    * after free by the EGL thread, when the RDP server is shut down and with it
    * the GrdHwAccelNvidia instance
    */
-  if (buffer_pool->egl_thread)
+  if (egl_thread)
     sync_egl_thread (buffer_pool);
 
   G_OBJECT_CLASS (grd_rdp_buffer_pool_parent_class)->finalize (object);
