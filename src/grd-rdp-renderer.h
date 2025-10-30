@@ -21,7 +21,9 @@
 
 #include <glib-object.h>
 #include <stdint.h>
+#include <vulkan/vulkan.h>
 
+#include "grd-rdp-renderer.h"
 #include "grd-types.h"
 
 #define GRD_TYPE_RDP_RENDERER (grd_rdp_renderer_get_type ())
@@ -40,6 +42,8 @@ GrdRdpRenderer *grd_rdp_renderer_new (GrdSessionRdp *session_rdp);
 GMainContext *grd_rdp_renderer_get_graphics_context (GrdRdpRenderer *renderer);
 
 GrdSessionRdp *grd_rdp_renderer_get_session (GrdRdpRenderer *renderer);
+
+GrdVkDevice *grd_rdp_renderer_get_vk_device (GrdRdpRenderer *renderer);
 
 void grd_rdp_renderer_update_output_suppression_state (GrdRdpRenderer *renderer,
                                                        gboolean        suppress_output);

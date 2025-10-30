@@ -107,6 +107,12 @@ grd_rdp_renderer_get_session (GrdRdpRenderer *renderer)
   return renderer->session_rdp;
 }
 
+GrdVkDevice *
+grd_rdp_renderer_get_vk_device (GrdRdpRenderer *renderer)
+{
+  return renderer->vk_device;
+}
+
 static void
 trigger_render_sources (GrdRdpRenderer *renderer)
 {
@@ -320,8 +326,6 @@ grd_rdp_renderer_try_acquire_surface (GrdRdpRenderer *renderer,
     return NULL;
 
   surface_renderer = grd_rdp_surface_renderer_new (rdp_surface, renderer,
-                                                   renderer->session_rdp,
-                                                   renderer->vk_device,
                                                    refresh_rate);
   grd_rdp_surface_attach_surface_renderer (rdp_surface, surface_renderer);
 

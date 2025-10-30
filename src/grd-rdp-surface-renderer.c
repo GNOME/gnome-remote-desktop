@@ -70,8 +70,6 @@ struct _GrdRdpSurfaceRenderer
 
   GrdRdpSurface *rdp_surface;
   GrdRdpRenderer *renderer;
-  GrdSessionRdp *session_rdp;
-  GrdVkDevice *vk_device;
 
   uint32_t refresh_rate;
 
@@ -253,6 +251,8 @@ grd_rdp_surface_renderer_register_pw_buffer (GrdRdpSurfaceRenderer  *surface_ren
 {
   GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
   g_autofree GrdRdpBufferInfo *rdp_buffer_info = NULL;
+  GrdVkDevice *vk_device =
+    grd_rdp_renderer_get_vk_device (surface_renderer->renderer);
   GrdRdpBuffer *rdp_buffer;
 
   if (!is_buffer_combination_valid (surface_renderer, rdp_pw_buffer, error))
@@ -262,7 +262,7 @@ grd_rdp_surface_renderer_register_pw_buffer (GrdRdpSurfaceRenderer  *surface_ren
                                          drm_format_modifier);
 
   rdp_buffer = grd_rdp_buffer_new (rdp_pw_buffer, rdp_buffer_info, rdp_surface,
-                                   surface_renderer->vk_device, error);
+                                   vk_device, error);
   if (!rdp_buffer)
     return FALSE;
 
@@ -573,8 +573,10 @@ on_frame_submission (GrdRdpFrame *rdp_frame,
   GrdRdpFrameContext *frame_context = user_data;
   GrdRdpSurfaceRenderer *surface_renderer = frame_context->surface_renderer;
   GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+  GrdSessionRdp *session_rdp =
+    grd_rdp_renderer_get_session (surface_renderer->renderer);
   GrdRdpSessionMetrics *session_metrics =
-    grd_session_rdp_get_session_metrics (surface_renderer->session_rdp);
+    grd_session_rdp_get_session_metrics (session_rdp);
 
   grd_rdp_session_metrics_notify_frame_transmission (session_metrics,
                                                      rdp_surface);
@@ -682,9 +684,12 @@ handle_pending_buffer (GrdRdpSurfaceRenderer *surface_renderer,
 static void
 handle_graphics_subsystem_failure (GrdRdpSurfaceRenderer *surface_renderer)
 {
+  GrdSessionRdp *session_rdp =
+    grd_rdp_renderer_get_session (surface_renderer->renderer);
+
   surface_renderer->graphics_subsystem_failed = TRUE;
 
-  grd_session_rdp_notify_error (surface_renderer->session_rdp,
+  grd_session_rdp_notify_error (session_rdp,
                                 GRD_SESSION_RDP_ERROR_GRAPHICS_SUBSYSTEM_FAILED);
 }
 
@@ -693,8 +698,10 @@ maybe_encode_pending_frame (GrdRdpSurfaceRenderer *surface_renderer,
                             GrdRdpRenderContext   *render_context)
 {
   GrdRdpSurface *rdp_surface = surface_renderer->rdp_surface;
+  GrdSessionRdp *session_rdp =
+    grd_rdp_renderer_get_session (surface_renderer->renderer);
   GrdRdpSessionMetrics *session_metrics =
-    grd_session_rdp_get_session_metrics (surface_renderer->session_rdp);
+    grd_session_rdp_get_session_metrics (session_rdp);
   GrdRdpLegacyBuffer *buffer;
 
   buffer = g_steal_pointer (&rdp_surface->pending_framebuffer);
@@ -882,8 +889,6 @@ static GSourceFuncs source_funcs =
 GrdRdpSurfaceRenderer *
 grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
                               GrdRdpRenderer *renderer,
-                              GrdSessionRdp  *session_rdp,
-                              GrdVkDevice    *vk_device,
                               uint32_t        refresh_rate)
 {
   GMainContext *graphics_context =
@@ -897,8 +902,6 @@ grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
   surface_renderer = g_object_new (GRD_TYPE_RDP_SURFACE_RENDERER, NULL);
   surface_renderer->rdp_surface = rdp_surface;
   surface_renderer->renderer = renderer;
-  surface_renderer->session_rdp = session_rdp;
-  surface_renderer->vk_device = vk_device;
   surface_renderer->refresh_rate = refresh_rate;
 
   object_unref_source = g_source_new (&source_funcs, sizeof (GSource));
