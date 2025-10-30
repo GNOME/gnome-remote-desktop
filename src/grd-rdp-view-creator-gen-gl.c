@@ -23,13 +23,18 @@
 
 #include <drm_fourcc.h>
 
+#include "grd-context.h"
 #include "grd-damage-detector-sw.h"
 #include "grd-egl-thread.h"
 #include "grd-image-view-rgb.h"
 #include "grd-local-buffer-copy.h"
 #include "grd-rdp-buffer.h"
 #include "grd-rdp-pw-buffer.h"
+#include "grd-rdp-render-context.h"
 #include "grd-rdp-render-state.h"
+#include "grd-rdp-renderer.h"
+#include "grd-rdp-server.h"
+#include "grd-session-rdp.h"
 #include "grd-utils.h"
 
 /*
@@ -59,7 +64,7 @@ struct _GrdRdpViewCreatorGenGL
 {
   GrdRdpViewCreator parent;
 
-  GrdEglThread *egl_thread;
+  GrdRdpRenderContext *render_context;
   uint32_t surface_width;
   uint32_t surface_height;
 
@@ -184,6 +189,12 @@ grd_rdp_view_creator_gen_gl_create_view (GrdRdpViewCreator  *view_creator,
 {
   GrdRdpViewCreatorGenGL *view_creator_gen_gl =
     GRD_RDP_VIEW_CREATOR_GEN_GL (view_creator);
+  GrdRdpRenderer *renderer =
+    grd_rdp_render_context_get_renderer (view_creator_gen_gl->render_context);
+  GrdSessionRdp *session_rdp = grd_rdp_renderer_get_session (renderer);
+  GrdRdpServer *rdp_server = grd_session_rdp_get_server (session_rdp);
+  GrdContext *context = grd_rdp_server_get_context (rdp_server);
+  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
   GrdRdpPwBuffer *rdp_pw_buffer =
     grd_rdp_buffer_get_rdp_pw_buffer (src_buffer_new);
   const GrdRdpPwBufferDmaBufInfo *dma_buf_info =
@@ -206,7 +217,7 @@ grd_rdp_view_creator_gen_gl_create_view (GrdRdpViewCreator  *view_creator,
   row_width = grd_local_buffer_get_buffer_stride (local_buffer_new) /
               get_bpp_from_drm_format (rdp_buffer_info->drm_format);
 
-  grd_egl_thread_download (view_creator_gen_gl->egl_thread,
+  grd_egl_thread_download (egl_thread,
                            NULL,
                            grd_local_buffer_get_buffer (local_buffer_new),
                            row_width,
@@ -281,15 +292,15 @@ grd_rdp_view_creator_gen_gl_finish_view (GrdRdpViewCreator  *view_creator,
 }
 
 GrdRdpViewCreatorGenGL *
-grd_rdp_view_creator_gen_gl_new (GrdEglThread *egl_thread,
-                                 uint32_t      surface_width,
-                                 uint32_t      surface_height)
+grd_rdp_view_creator_gen_gl_new (GrdRdpRenderContext *render_context,
+                                 uint32_t             surface_width,
+                                 uint32_t             surface_height)
 {
   GrdRdpViewCreatorGenGL *view_creator_gen_gl;
   uint32_t i;
 
   view_creator_gen_gl = g_object_new (GRD_TYPE_RDP_VIEW_CREATOR_GEN_GL, NULL);
-  view_creator_gen_gl->egl_thread = egl_thread;
+  view_creator_gen_gl->render_context = render_context;
   view_creator_gen_gl->surface_width = surface_width;
   view_creator_gen_gl->surface_height = surface_height;
 

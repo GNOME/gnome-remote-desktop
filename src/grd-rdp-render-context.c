@@ -74,6 +74,12 @@ struct _GrdRdpRenderContext
 
 G_DEFINE_TYPE (GrdRdpRenderContext, grd_rdp_render_context, G_TYPE_OBJECT)
 
+GrdRdpRenderer *
+grd_rdp_render_context_get_renderer (GrdRdpRenderContext *render_context)
+{
+  return render_context->renderer;
+}
+
 GrdRdpCodec
 grd_rdp_render_context_get_codec (GrdRdpRenderContext *render_context)
 {
@@ -504,11 +510,6 @@ create_egl_based_rfx_progressive_encode_session (GrdRdpRenderContext  *render_co
                                                  GrdRdpSurface        *rdp_surface,
                                                  GError              **error)
 {
-  GrdSessionRdp *session_rdp =
-    grd_rdp_renderer_get_session (render_context->renderer);
-  GrdRdpServer *rdp_server = grd_session_rdp_get_server (session_rdp);
-  GrdContext *context = grd_rdp_server_get_context (rdp_server);
-  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
   GrdRdpSwEncoderCa *encoder_ca =
     grd_rdp_renderer_get_encoder_ca (render_context->renderer);
   uint32_t surface_width = grd_rdp_surface_get_width (rdp_surface);
@@ -527,7 +528,7 @@ create_egl_based_rfx_progressive_encode_session (GrdRdpRenderContext  *render_co
     return FALSE;
 
   view_creator_gen_gl =
-    grd_rdp_view_creator_gen_gl_new (egl_thread, surface_width, surface_height);
+    grd_rdp_view_creator_gen_gl_new (render_context, surface_width, surface_height);
 
   encode_session = GRD_ENCODE_SESSION (encode_session_ca);
   image_views = grd_encode_session_get_image_views (encode_session);

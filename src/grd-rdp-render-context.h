@@ -38,6 +38,8 @@ typedef enum
 GrdRdpRenderContext *grd_rdp_render_context_new (GrdRdpRenderer *renderer,
                                                  GrdRdpSurface  *rdp_surface);
 
+GrdRdpRenderer *grd_rdp_render_context_get_renderer (GrdRdpRenderContext *render_context);
+
 GrdRdpCodec grd_rdp_render_context_get_codec (GrdRdpRenderContext *render_context);
 
 GrdRdpGfxSurface *grd_rdp_render_context_get_gfx_surface (GrdRdpRenderContext *render_context);

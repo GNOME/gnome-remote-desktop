@@ -27,6 +27,6 @@
 G_DECLARE_FINAL_TYPE (GrdRdpViewCreatorGenGL, grd_rdp_view_creator_gen_gl,
                       GRD, RDP_VIEW_CREATOR_GEN_GL, GrdRdpViewCreator)
 
-GrdRdpViewCreatorGenGL *grd_rdp_view_creator_gen_gl_new (GrdEglThread *egl_thread,
-                                                         uint32_t      surface_width,
-                                                         uint32_t      surface_height);
+GrdRdpViewCreatorGenGL *grd_rdp_view_creator_gen_gl_new (GrdRdpRenderContext *render_context,
+                                                         uint32_t             surface_width,
+                                                         uint32_t             surface_height);
