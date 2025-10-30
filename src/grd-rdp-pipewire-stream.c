@@ -95,8 +95,6 @@ struct _GrdRdpPipeWireStream
   GObject parent;
 
   GrdSessionRdp *session_rdp;
-  GrdRdpCursorRenderer *cursor_renderer;
-  GrdHwAccelVulkan *hwaccel_vulkan;
   GrdRdpSurface *rdp_surface;
   GrdEglThreadSlot egl_slot;
 
@@ -263,7 +261,9 @@ get_modifiers_for_format (GrdRdpPipeWireStream  *stream,
                           int                   *out_n_modifiers,
                           uint64_t             **out_modifiers)
 {
-  GrdHwAccelVulkan *hwaccel_vulkan = stream->hwaccel_vulkan;
+  GrdRdpServer *rdp_server = grd_session_rdp_get_server (stream->session_rdp);
+  GrdHwAccelVulkan *hwaccel_vulkan =
+    grd_rdp_server_get_hwaccel_vulkan (rdp_server);
   GrdSession *session = GRD_SESSION (stream->session_rdp);
   GrdContext *context = grd_session_get_context (session);
   GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
@@ -640,7 +640,10 @@ process_mouse_cursor_data (GrdRdpPipeWireStream *stream,
 
   if (cursor_update)
     {
-      grd_rdp_cursor_renderer_submit_cursor_update (stream->cursor_renderer,
+      GrdRdpCursorRenderer *cursor_renderer =
+        grd_session_rdp_get_cursor_renderer (stream->session_rdp);
+
+      grd_rdp_cursor_renderer_submit_cursor_update (cursor_renderer,
                                                     cursor_update);
     }
 }
@@ -1044,9 +1047,6 @@ static const struct pw_registry_events registry_events =
 
 GrdRdpPipeWireStream *
 grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
-                             GrdRdpCursorRenderer        *cursor_renderer,
-                             GrdHwAccelVulkan            *hwaccel_vulkan,
-                             GrdHwAccelNvidia            *hwaccel_nvidia,
                              GrdRdpSurface               *rdp_surface,
                              const GrdRdpVirtualMonitor  *virtual_monitor,
                              uint32_t                     src_node_id,
@@ -1055,13 +1055,14 @@ grd_rdp_pipewire_stream_new (GrdSessionRdp               *session_rdp,
   GrdSession *session = GRD_SESSION (session_rdp);
   GrdContext *context = grd_session_get_context (session);
   GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
+  GrdRdpServer *rdp_server = grd_session_rdp_get_server (session_rdp);
+  GrdHwAccelNvidia *hwaccel_nvidia =
+    grd_rdp_server_get_hwaccel_nvidia (rdp_server);
   g_autoptr (GrdRdpPipeWireStream) stream = NULL;
   GrdPipeWireSource *pipewire_source;
 
   stream = g_object_new (GRD_TYPE_RDP_PIPEWIRE_STREAM, NULL);
   stream->session_rdp = session_rdp;
-  stream->cursor_renderer = cursor_renderer;
-  stream->hwaccel_vulkan = hwaccel_vulkan;
   stream->rdp_surface = rdp_surface;
   stream->src_node_id = src_node_id;
 

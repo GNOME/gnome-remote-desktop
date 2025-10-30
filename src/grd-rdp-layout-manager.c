@@ -438,14 +438,6 @@ static void
 on_stream_ready (GrdStream           *stream,
                  GrdRdpLayoutManager *layout_manager)
 {
-  GrdRdpServer *rdp_server =
-    grd_session_rdp_get_server (layout_manager->session_rdp);
-  GrdRdpCursorRenderer *cursor_renderer =
-    grd_session_rdp_get_cursor_renderer (layout_manager->session_rdp);
-  GrdHwAccelVulkan *hwaccel_vulkan =
-    grd_rdp_server_get_hwaccel_vulkan (rdp_server);
-  GrdHwAccelNvidia *hwaccel_nvidia =
-    grd_rdp_server_get_hwaccel_nvidia (rdp_server);
   uint32_t stream_id = grd_stream_get_stream_id (stream);
   uint32_t pipewire_node_id = grd_stream_get_pipewire_node_id (stream);
   SurfaceContext *surface_context = NULL;
@@ -469,9 +461,6 @@ on_stream_ready (GrdStream           *stream,
            pipewire_node_id);
   surface_context->pipewire_stream =
     grd_rdp_pipewire_stream_new (layout_manager->session_rdp,
-                                 cursor_renderer,
-                                 hwaccel_vulkan,
-                                 hwaccel_nvidia,
                                  surface_context->rdp_surface,
                                  surface_context->virtual_monitor,
                                  pipewire_node_id,
