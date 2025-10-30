@@ -113,6 +113,18 @@ grd_rdp_renderer_get_vk_device (GrdRdpRenderer *renderer)
   return renderer->vk_device;
 }
 
+GrdHwAccelVaapi *
+grd_rdp_renderer_get_hwaccel_vaapi (GrdRdpRenderer *renderer)
+{
+  return renderer->hwaccel_vaapi;
+}
+
+GrdRdpSwEncoderCa *
+grd_rdp_renderer_get_encoder_ca (GrdRdpRenderer *renderer)
+{
+  return renderer->encoder_ca;
+}
+
 static void
 trigger_render_sources (GrdRdpRenderer *renderer)
 {
@@ -236,11 +248,7 @@ grd_rdp_renderer_start (GrdRdpRenderer *renderer)
 static GrdRdpDvcGraphicsPipeline *
 graphics_pipeline_from_renderer (GrdRdpRenderer *renderer)
 {
-  rdpContext *rdp_context =
-    grd_session_rdp_get_rdp_context (renderer->session_rdp);
-  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
-
-  return rdp_peer_context->graphics_pipeline;
+  return grd_session_rdp_get_graphics_pipeline (renderer->session_rdp);
 }
 
 void
@@ -516,11 +524,6 @@ grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer            *renderer
                                              GrdRdpSurface             *rdp_surface,
                                              GrdRdpAcquireContextFlags  flags)
 {
-  GrdRdpDvcGraphicsPipeline *graphics_pipeline =
-    graphics_pipeline_from_renderer (renderer);
-  GrdRdpServer *rdp_server = grd_session_rdp_get_server (renderer->session_rdp);
-  GrdContext *context = grd_rdp_server_get_context (rdp_server);
-  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
   GrdRdpRenderContext *render_context = NULL;
   g_autoptr (GMutexLocker) locker = NULL;
 
@@ -546,12 +549,7 @@ grd_rdp_renderer_try_acquire_render_context (GrdRdpRenderer            *renderer
   if (flags & GRD_RDP_ACQUIRE_CONTEXT_FLAG_RETAIN_OR_NULL)
     return NULL;
 
-  render_context = grd_rdp_render_context_new (graphics_pipeline,
-                                               rdp_surface,
-                                               egl_thread,
-                                               renderer->vk_device,
-                                               renderer->hwaccel_vaapi,
-                                               renderer->encoder_ca);
+  render_context = grd_rdp_render_context_new (renderer, rdp_surface);
   if (!render_context)
     {
       handle_graphics_subsystem_failure (renderer);

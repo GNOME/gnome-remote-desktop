@@ -151,6 +151,15 @@ grd_session_rdp_get_rdp_context (GrdSessionRdp *session_rdp)
   return session_rdp->peer->context;
 }
 
+GrdRdpDvcGraphicsPipeline *
+grd_session_rdp_get_graphics_pipeline (GrdSessionRdp *session_rdp)
+{
+  rdpContext *rdp_context = grd_session_rdp_get_rdp_context (session_rdp);
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
+
+  return rdp_peer_context->graphics_pipeline;
+}
+
 GrdRdpScreenShareMode
 grd_session_rdp_get_screen_share_mode (GrdSessionRdp *session_rdp)
 {
