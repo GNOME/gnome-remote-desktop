@@ -101,6 +101,12 @@ grd_rdp_renderer_get_graphics_context (GrdRdpRenderer *renderer)
   return renderer->graphics_context;
 }
 
+GrdSessionRdp *
+grd_rdp_renderer_get_session (GrdRdpRenderer *renderer)
+{
+  return renderer->session_rdp;
+}
+
 static void
 trigger_render_sources (GrdRdpRenderer *renderer)
 {
@@ -306,13 +312,10 @@ GrdRdpSurface *
 grd_rdp_renderer_try_acquire_surface (GrdRdpRenderer *renderer,
                                       uint32_t        refresh_rate)
 {
-  GrdRdpServer *rdp_server = grd_session_rdp_get_server (renderer->session_rdp);
-  GrdHwAccelNvidia *hwaccel_nvidia =
-    grd_rdp_server_get_hwaccel_nvidia (rdp_server);
   GrdRdpSurface *rdp_surface;
   GrdRdpSurfaceRenderer *surface_renderer;
 
-  rdp_surface = grd_rdp_surface_new (hwaccel_nvidia);
+  rdp_surface = grd_rdp_surface_new (renderer);
   if (!rdp_surface)
     return NULL;
 

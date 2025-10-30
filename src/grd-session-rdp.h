@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include <freerdp/peer.h>
 #include <gio/gio.h>
 #include <glib-object.h>
 
@@ -53,6 +52,8 @@ typedef enum _GrdRdpChannel
   GRD_RDP_CHANNEL_INPUT,
   GRD_RDP_CHANNEL_TELEMETRY,
 } GrdRdpChannel;
+
+typedef struct rdp_context rdpContext;
 
 GrdSessionRdp *grd_session_rdp_new (GrdRdpServer      *rdp_server,
                                     GSocketConnection *connection,

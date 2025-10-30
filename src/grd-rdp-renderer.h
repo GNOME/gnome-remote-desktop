@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include <freerdp/freerdp.h>
 #include <glib-object.h>
+#include <stdint.h>
 
 #include "grd-types.h"
 
@@ -38,6 +38,8 @@ typedef enum
 GrdRdpRenderer *grd_rdp_renderer_new (GrdSessionRdp *session_rdp);
 
 GMainContext *grd_rdp_renderer_get_graphics_context (GrdRdpRenderer *renderer);
+
+GrdSessionRdp *grd_rdp_renderer_get_session (GrdRdpRenderer *renderer);
 
 void grd_rdp_renderer_update_output_suppression_state (GrdRdpRenderer *renderer,
                                                        gboolean        suppress_output);

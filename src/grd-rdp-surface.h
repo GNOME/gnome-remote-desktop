@@ -42,6 +42,8 @@ typedef struct
 
 struct _GrdRdpSurface
 {
+  GrdRdpRenderer *renderer;
+
   uint16_t width;
   uint16_t height;
 
@@ -52,7 +54,6 @@ struct _GrdRdpSurface
   GrdRdpLegacyBuffer *pending_framebuffer;
   GrdRdpDamageDetector *detector;
 
-  GrdHwAccelNvidia *hwaccel_nvidia;
   CUstream cuda_stream;
 
   struct
@@ -63,7 +64,7 @@ struct _GrdRdpSurface
   gboolean needs_no_local_data;
 };
 
-GrdRdpSurface *grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia);
+GrdRdpSurface *grd_rdp_surface_new (GrdRdpRenderer *renderer);
 
 void grd_rdp_surface_free (GrdRdpSurface *rdp_surface);
 

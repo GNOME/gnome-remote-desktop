@@ -24,31 +24,49 @@
 #include "grd-hwaccel-nvidia.h"
 #include "grd-rdp-damage-detector-cuda.h"
 #include "grd-rdp-damage-detector-memcmp.h"
+#include "grd-rdp-renderer.h"
+#include "grd-rdp-server.h"
+#include "grd-session-rdp.h"
+
+static GrdHwAccelNvidia *
+hwaccel_nvidia_from_surface (GrdRdpSurface *rdp_surface)
+{
+  GrdSessionRdp *session_rdp =
+    grd_rdp_renderer_get_session (rdp_surface->renderer);
+  GrdRdpServer *rdp_server =
+    grd_session_rdp_get_server (session_rdp);
+
+  return grd_rdp_server_get_hwaccel_nvidia (rdp_server);
+}
 
 static void
 destroy_hwaccel_util_objects (GrdRdpSurface *rdp_surface)
 {
+  GrdHwAccelNvidia *hwaccel_nvidia = hwaccel_nvidia_from_surface (rdp_surface);
+
   if (rdp_surface->cuda_stream)
     {
-      grd_hwaccel_nvidia_destroy_cuda_stream (rdp_surface->hwaccel_nvidia,
+      grd_hwaccel_nvidia_destroy_cuda_stream (hwaccel_nvidia,
                                               rdp_surface->cuda_stream);
       rdp_surface->cuda_stream = NULL;
     }
   if (rdp_surface->avc.main_view)
     {
-      grd_hwaccel_nvidia_clear_mem_ptr (rdp_surface->hwaccel_nvidia,
+      grd_hwaccel_nvidia_clear_mem_ptr (hwaccel_nvidia,
                                         &rdp_surface->avc.main_view);
     }
 }
 
 GrdRdpSurface *
-grd_rdp_surface_new (GrdHwAccelNvidia *hwaccel_nvidia)
+grd_rdp_surface_new (GrdRdpRenderer *renderer)
 {
   g_autofree GrdRdpSurface *rdp_surface = NULL;
+  GrdHwAccelNvidia *hwaccel_nvidia;
 
   rdp_surface = g_malloc0 (sizeof (GrdRdpSurface));
-  rdp_surface->hwaccel_nvidia = hwaccel_nvidia;
+  rdp_surface->renderer = renderer;
 
+  hwaccel_nvidia = hwaccel_nvidia_from_surface (rdp_surface);
   if (hwaccel_nvidia &&
       !grd_hwaccel_nvidia_create_cuda_stream (hwaccel_nvidia,
                                               &rdp_surface->cuda_stream))
@@ -151,7 +169,10 @@ grd_rdp_surface_reset (GrdRdpSurface *rdp_surface)
 
   if (rdp_surface->avc.main_view)
     {
-      grd_hwaccel_nvidia_clear_mem_ptr (rdp_surface->hwaccel_nvidia,
+      GrdHwAccelNvidia *hwaccel_nvidia =
+        hwaccel_nvidia_from_surface (rdp_surface);
+
+      grd_hwaccel_nvidia_clear_mem_ptr (hwaccel_nvidia,
                                         &rdp_surface->avc.main_view);
     }
 }
