@@ -1893,6 +1893,8 @@ cancel_and_free_ping (gpointer user_data)
   cancellable = g_task_get_cancellable (ping->task);
   if (!g_cancellable_is_cancelled (cancellable))
     g_cancellable_cancel (cancellable);
+
+  g_task_return_error_if_cancelled (ping->task);
   grd_ei_ping_free (ping);
 }
 
