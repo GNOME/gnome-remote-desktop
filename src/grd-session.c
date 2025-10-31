@@ -1813,6 +1813,9 @@ grd_session_finalize (GObject *object)
     g_assert (g_cancellable_is_cancelled (priv->cancellable));
   g_clear_object (&priv->cancellable);
 
+  g_assert (!priv->ei_source);
+
+  g_clear_pointer (&priv->pings, g_hash_table_unref);
   g_clear_pointer (&priv->touch_regions, g_hash_table_unref);
   g_clear_pointer (&priv->abs_pointer_regions, g_hash_table_unref);
 
@@ -1825,7 +1828,6 @@ grd_session_finalize (GObject *object)
   g_assert (!priv->ei_abs_pointer);
   g_assert (!priv->ei_pointer);
   g_assert (!priv->ei_seat);
-  g_assert (!priv->ei_source);
   g_assert (!priv->ei);
 
   g_assert (!priv->remote_desktop_session);
