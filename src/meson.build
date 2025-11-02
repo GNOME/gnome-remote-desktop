@@ -103,6 +103,8 @@ if have_rdp
     'grd-encode-session-ca-sw.h',
     'grd-encode-session-vaapi.c',
     'grd-encode-session-vaapi.h',
+    'grd-frame-clock.c',
+    'grd-frame-clock.h',
     'grd-hwaccel-nvidia.c',
     'grd-hwaccel-nvidia.h',
     'grd-hwaccel-vaapi.c',
