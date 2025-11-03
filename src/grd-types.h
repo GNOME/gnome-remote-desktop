@@ -74,6 +74,7 @@ typedef struct _GrdRdpSurface GrdRdpSurface;
 typedef struct _GrdRdpSurfaceRenderer GrdRdpSurfaceRenderer;
 typedef struct _GrdRdpSwEncoderCa GrdRdpSwEncoderCa;
 typedef struct _GrdRdpViewCreator GrdRdpViewCreator;
+typedef struct _GrdSampleBuffer GrdSampleBuffer;
 typedef struct _GrdSession GrdSession;
 typedef struct _GrdSessionRdp GrdSessionRdp;
 typedef struct _GrdSessionVnc GrdSessionVnc;

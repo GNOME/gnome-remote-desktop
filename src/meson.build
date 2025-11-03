@@ -214,6 +214,8 @@ if have_rdp
     'grd-rdp-view-creator-gen-gl.h',
     'grd-rdp-view-creator-gen-sw.c',
     'grd-rdp-view-creator-gen-sw.h',
+    'grd-sample-buffer.c',
+    'grd-sample-buffer.h',
     'grd-session-rdp.c',
     'grd-session-rdp.h',
     'grd-shell-dialog.c',
