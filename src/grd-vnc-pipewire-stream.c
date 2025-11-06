@@ -26,6 +26,7 @@
 #include <pipewire/pipewire.h>
 #include <spa/param/props.h>
 #include <spa/param/format-utils.h>
+#include <spa/pod/dynamic.h>
 #include <sys/mman.h>
 
 #include "grd-context.h"
@@ -35,6 +36,7 @@
 #include "grd-vnc-cursor.h"
 
 #define MAX_FORMAT_PARAMS 2
+#define PARAMS_BUFFER_SIZE 1024
 
 enum
 {
@@ -230,12 +232,11 @@ add_common_format_params (struct spa_pod_builder     *pod_builder,
                                                       &max_framerate), 0);
 }
 
-static uint32_t
-add_format_params (GrdVncPipeWireStream        *stream,
-                   const GrdVncVirtualMonitor  *virtual_monitor,
-                   struct spa_pod_builder      *pod_builder,
-                   const struct spa_pod       **params,
-                   uint32_t                     n_available_params)
+static void
+add_format_params (GrdVncPipeWireStream       *stream,
+                   const GrdVncVirtualMonitor *virtual_monitor,
+                   struct spa_pod_builder     *pod_builder,
+                   GArray                     *pod_offsets)
 {
   GrdSession *session = GRD_SESSION (stream->session);
   GrdContext *context = grd_session_get_context (session);
@@ -243,10 +244,8 @@ add_format_params (GrdVncPipeWireStream        *stream,
   struct spa_pod_frame format_frame;
   enum spa_video_format spa_format = SPA_VIDEO_FORMAT_BGRx;
   gboolean need_fallback_format = FALSE;
-  uint32_t n_params = 0;
 
-  g_assert (n_available_params >= 2);
-
+  grd_append_pod_offset (pod_offsets, pod_builder);
   spa_pod_builder_push_object (pod_builder, &format_frame,
                                SPA_TYPE_OBJECT_Format,
                                SPA_PARAM_EnumFormat);
@@ -288,36 +287,40 @@ add_format_params (GrdVncPipeWireStream        *stream,
         }
     }
 
-  params[n_params++] = spa_pod_builder_pop (pod_builder, &format_frame);
+  spa_pod_builder_pop (pod_builder, &format_frame);
 
   if (need_fallback_format)
     {
+      grd_append_pod_offset (pod_offsets, pod_builder);
       spa_pod_builder_push_object (pod_builder, &format_frame,
                                    SPA_TYPE_OBJECT_Format,
                                    SPA_PARAM_EnumFormat);
-      add_common_format_params (pod_builder, spa_format, virtual_monitor);
-      params[n_params++] = spa_pod_builder_pop (pod_builder, &format_frame);
+      add_common_format_params (pod_builder, spa_format,
+                                virtual_monitor);
+      spa_pod_builder_pop (pod_builder, &format_frame);
     }
-
-  return n_params;
 }
 
 void
 grd_vnc_pipewire_stream_resize (GrdVncPipeWireStream *stream,
                                 GrdVncVirtualMonitor *virtual_monitor)
 {
-  uint8_t params_buffer[1024];
-  struct spa_pod_builder pod_builder;
-  const struct spa_pod *params[MAX_FORMAT_PARAMS] = {};
-  uint32_t n_params = 0;
+  g_autoptr (GArray) pod_offsets = NULL;
+  struct spa_pod_dynamic_builder pod_builder;
+  g_autoptr (GPtrArray) params = NULL;
 
-  pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
+  pod_offsets = g_array_new (FALSE, FALSE, sizeof (uint32_t));
+  spa_pod_dynamic_builder_init (&pod_builder, NULL, 0, PARAMS_BUFFER_SIZE);
 
-  n_params += add_format_params (stream, virtual_monitor, &pod_builder,
-                                 params, MAX_FORMAT_PARAMS);
+  add_format_params (stream, virtual_monitor,
+                     &pod_builder.b, pod_offsets);
 
-  g_assert (n_params > 0);
-  pw_stream_update_params (stream->pipewire_stream, params, n_params);
+  params = grd_finish_pipewire_params (&pod_builder.b, pod_offsets);
+  pw_stream_update_params (stream->pipewire_stream,
+                           (const struct spa_pod **) params->pdata,
+                           params->len);
+
+  spa_pod_dynamic_builder_clean (&pod_builder);
 }
 
 static void
@@ -351,12 +354,12 @@ on_stream_param_changed (void                 *user_data,
   GrdVncPipeWireStream *stream = GRD_VNC_PIPEWIRE_STREAM (user_data);
   GrdSession *session = GRD_SESSION (stream->session);
   GrdContext *context = grd_session_get_context (session);
-  uint8_t params_buffer[1024];
-  struct spa_pod_builder pod_builder;
   int width;
   int height;
   enum spa_data_type allowed_buffer_types;
-  const struct spa_pod *params[3];
+  g_autoptr (GArray) pod_offsets = NULL;
+  struct spa_pod_dynamic_builder pod_builder;
+  g_autoptr (GPtrArray) params = NULL;
 
   if (grd_session_vnc_is_client_gone (stream->session))
     return;
@@ -366,7 +369,8 @@ on_stream_param_changed (void                 *user_data,
 
   spa_format_video_raw_parse (format, &stream->spa_format);
 
-  pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
+  pod_offsets = g_array_new (FALSE, FALSE, sizeof (uint32_t));
+  spa_pod_dynamic_builder_init (&pod_builder, NULL, 0, PARAMS_BUFFER_SIZE);
 
   width = stream->spa_format.size.width;
   height = stream->spa_format.size.height;
@@ -380,22 +384,25 @@ on_stream_param_changed (void                 *user_data,
   if (grd_context_get_egl_thread (context))
     allowed_buffer_types |= 1 << SPA_DATA_DmaBuf;
 
-  params[0] = spa_pod_builder_add_object (
-    &pod_builder,
+  grd_append_pod_offset (pod_offsets, &pod_builder.b);
+  spa_pod_builder_add_object (
+    &pod_builder.b,
     SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers,
     SPA_PARAM_BUFFERS_buffers, SPA_POD_CHOICE_RANGE_Int (8, 1, 8),
     SPA_PARAM_BUFFERS_dataType, SPA_POD_Int (allowed_buffer_types),
     0);
 
-  params[1] = spa_pod_builder_add_object (
-    &pod_builder,
+  grd_append_pod_offset (pod_offsets, &pod_builder.b);
+  spa_pod_builder_add_object (
+    &pod_builder.b,
     SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
     SPA_PARAM_META_type, SPA_POD_Id (SPA_META_Header),
     SPA_PARAM_META_size, SPA_POD_Int (sizeof (struct spa_meta_header)),
     0);
 
-  params[2] = spa_pod_builder_add_object(
-    &pod_builder,
+  grd_append_pod_offset (pod_offsets, &pod_builder.b);
+  spa_pod_builder_add_object(
+    &pod_builder.b,
     SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
     SPA_PARAM_META_type, SPA_POD_Id (SPA_META_Cursor),
     SPA_PARAM_META_size, SPA_POD_CHOICE_RANGE_Int (CURSOR_META_SIZE (384, 384),
@@ -403,8 +410,12 @@ on_stream_param_changed (void                 *user_data,
                                                    CURSOR_META_SIZE (384, 384)),
     0);
 
+  params = grd_finish_pipewire_params (&pod_builder.b, pod_offsets);
   pw_stream_update_params (stream->pipewire_stream,
-                           params, G_N_ELEMENTS (params));
+                           (const struct spa_pod **) params->pdata,
+                           params->len);
+
+  spa_pod_dynamic_builder_clean (&pod_builder);
 }
 
 static void
@@ -898,20 +909,21 @@ connect_to_stream (GrdVncPipeWireStream        *stream,
                    GError                     **error)
 {
   struct pw_stream *pipewire_stream;
-  uint8_t params_buffer[1024];
-  struct spa_pod_builder pod_builder;
-  const struct spa_pod *params[MAX_FORMAT_PARAMS] = {};
-  uint32_t n_params = 0;
+  g_autoptr (GArray) pod_offsets = NULL;
+  struct spa_pod_dynamic_builder pod_builder;
+  g_autoptr (GPtrArray) params = NULL;
   int ret;
 
   pipewire_stream = pw_stream_new (stream->pipewire_core,
                                    "grd-vnc-pipewire-stream",
                                    NULL);
 
-  pod_builder = SPA_POD_BUILDER_INIT (params_buffer, sizeof (params_buffer));
+  pod_offsets = g_array_new (FALSE, FALSE, sizeof (uint32_t));
+  spa_pod_dynamic_builder_init (&pod_builder, NULL, 0, PARAMS_BUFFER_SIZE);
 
-  n_params += add_format_params (stream, virtual_monitor, &pod_builder,
-                                 params, MAX_FORMAT_PARAMS);
+  add_format_params (stream, virtual_monitor, &pod_builder.b, pod_offsets);
+
+  params = grd_finish_pipewire_params (&pod_builder.b, pod_offsets);
 
   stream->pipewire_stream = pipewire_stream;
 
@@ -920,13 +932,16 @@ connect_to_stream (GrdVncPipeWireStream        *stream,
                           &stream_events,
                           stream);
 
-  g_assert (n_params > 0);
   ret = pw_stream_connect (stream->pipewire_stream,
                            PW_DIRECTION_INPUT,
                            stream->src_node_id,
                            (PW_STREAM_FLAG_RT_PROCESS |
                             PW_STREAM_FLAG_AUTOCONNECT),
-                           params, n_params);
+                           (const struct spa_pod **) params->pdata,
+                           params->len);
+
+  spa_pod_dynamic_builder_clean (&pod_builder);
+
   if (ret < 0)
     {
       g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (-ret),
