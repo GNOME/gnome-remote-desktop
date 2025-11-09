@@ -91,6 +91,8 @@ if have_rdp
     'grd-clipboard-rdp.h',
     'grd-damage-detector-sw.c',
     'grd-damage-detector-sw.h',
+    'grd-decode-session.c',
+    'grd-decode-session.h',
     'grd-encode-context.c',
     'grd-encode-context.h',
     'grd-encode-session.c',
