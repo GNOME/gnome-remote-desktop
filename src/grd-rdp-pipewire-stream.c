@@ -206,13 +206,6 @@ grd_rdp_frame_invoke_callback (GrdRdpFrame *frame,
 }
 
 static void
-append_pod_offset (GArray                 *pod_offsets,
-                   struct spa_pod_builder *pod_builder)
-{
-  g_array_append_val (pod_offsets, pod_builder->state.offset);
-}
-
-static void
 add_common_format_params (struct spa_pod_builder     *pod_builder,
                           enum spa_video_format       spa_format,
                           const GrdRdpVirtualMonitor *virtual_monitor,
@@ -324,8 +317,7 @@ add_format_params (GrdRdpPipeWireStream        *stream,
   enum spa_video_format spa_format = SPA_VIDEO_FORMAT_BGRx;
   gboolean need_fallback_format = FALSE;
 
-  append_pod_offset (pod_offsets, pod_builder);
-
+  grd_append_pod_offset (pod_offsets, pod_builder);
   spa_pod_builder_push_object (pod_builder, &format_frame,
                                SPA_TYPE_OBJECT_Format,
                                SPA_PARAM_EnumFormat);
@@ -371,7 +363,7 @@ add_format_params (GrdRdpPipeWireStream        *stream,
 
   if (need_fallback_format)
     {
-      append_pod_offset (pod_offsets, pod_builder);
+      grd_append_pod_offset (pod_offsets, pod_builder);
       spa_pod_builder_push_object (pod_builder, &format_frame,
                                    SPA_TYPE_OBJECT_Format,
                                    SPA_PARAM_EnumFormat);
@@ -379,25 +371,6 @@ add_format_params (GrdRdpPipeWireStream        *stream,
                                 refresh_rate);
       spa_pod_builder_pop (pod_builder, &format_frame);
     }
-}
-
-static GPtrArray *
-finish_params (struct spa_pod_builder *pod_builder,
-               GArray                 *pod_offsets)
-{
-  GPtrArray *params = NULL;
-  size_t i;
-
-  params = g_ptr_array_new ();
-
-  for (i = 0; i < pod_offsets->len; i++)
-    {
-      uint32_t pod_offset = g_array_index (pod_offsets, uint32_t, i);
-
-      g_ptr_array_add (params, spa_pod_builder_deref (pod_builder, pod_offset));
-    }
-
-  return params;
 }
 
 static void
@@ -411,7 +384,7 @@ add_tag_params (GrdRdpPipeWireStream        *stream,
   char scale_string[G_ASCII_DTOSTR_BUF_SIZE];
   double scale;
 
-  append_pod_offset (pod_offsets, pod_builder);
+  grd_append_pod_offset (pod_offsets, pod_builder);
 
   spa_tag_build_start (pod_builder, &tag_frame,
                        SPA_PARAM_Tag, SPA_DIRECTION_INPUT);
@@ -443,7 +416,7 @@ grd_rdp_pipewire_stream_resize (GrdRdpPipeWireStream *stream,
   if (virtual_monitor)
     add_tag_params (stream, virtual_monitor, &pod_builder.b, pod_offsets);
 
-  params = finish_params (&pod_builder.b, pod_offsets);
+  params = grd_finish_pipewire_params (&pod_builder.b, pod_offsets);
 
   pw_stream_update_params (stream->pipewire_stream,
                            (const struct spa_pod **) params->pdata,
@@ -562,21 +535,21 @@ on_stream_param_changed (void                 *user_data,
   if (egl_thread && !hwaccel_nvidia)
     allowed_buffer_types |= 1 << SPA_DATA_DmaBuf;
 
-  append_pod_offset (pod_offsets, &pod_builder.b);
+  grd_append_pod_offset (pod_offsets, &pod_builder.b);
   spa_pod_builder_add_object (
     &pod_builder.b,
     SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers,
     SPA_PARAM_BUFFERS_buffers, SPA_POD_CHOICE_RANGE_Int (8, 2, 8),
     SPA_PARAM_BUFFERS_dataType, SPA_POD_Int (allowed_buffer_types));
 
-  append_pod_offset (pod_offsets, &pod_builder.b);
+  grd_append_pod_offset (pod_offsets, &pod_builder.b);
   spa_pod_builder_add_object (
     &pod_builder.b,
     SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
     SPA_PARAM_META_type, SPA_POD_Id (SPA_META_Header),
     SPA_PARAM_META_size, SPA_POD_Int (sizeof (struct spa_meta_header)));
 
-  append_pod_offset (pod_offsets, &pod_builder.b);
+  grd_append_pod_offset (pod_offsets, &pod_builder.b);
   spa_pod_builder_add_object (
     &pod_builder.b,
     SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
@@ -585,8 +558,7 @@ on_stream_param_changed (void                 *user_data,
                                                    CURSOR_META_SIZE (1, 1),
                                                    CURSOR_META_SIZE (384, 384)));
 
-  params = finish_params (&pod_builder.b, pod_offsets);
-
+  params = grd_finish_pipewire_params (&pod_builder.b, pod_offsets);
   pw_stream_update_params (stream->pipewire_stream,
                            (const struct spa_pod **) params->pdata,
                            params->len);
@@ -1056,7 +1028,7 @@ connect_to_stream (GrdRdpPipeWireStream        *stream,
   if (virtual_monitor)
     add_tag_params (stream, virtual_monitor, &pod_builder.b, pod_offsets);
 
-  params = finish_params (&pod_builder.b, pod_offsets);
+  params = grd_finish_pipewire_params (&pod_builder.b, pod_offsets);
 
   stream->pipewire_stream = pipewire_stream;
 

@@ -205,3 +205,29 @@ grd_get_spa_format_details (enum spa_video_format  spa_format,
 
   g_assert_not_reached ();
 }
+
+void
+grd_append_pod_offset (GArray                 *pod_offsets,
+                       struct spa_pod_builder *pod_builder)
+{
+  g_array_append_val (pod_offsets, pod_builder->state.offset);
+}
+
+GPtrArray *
+grd_finish_pipewire_params (struct spa_pod_builder *pod_builder,
+                            GArray                 *pod_offsets)
+{
+  GPtrArray *params = NULL;
+  size_t i;
+
+  params = g_ptr_array_new ();
+
+  for (i = 0; i < pod_offsets->len; i++)
+    {
+      uint32_t pod_offset = g_array_index (pod_offsets, uint32_t, i);
+
+      g_ptr_array_add (params, spa_pod_builder_deref (pod_builder, pod_offset));
+    }
+
+  return params;
+}
