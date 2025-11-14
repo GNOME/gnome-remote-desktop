@@ -741,6 +741,12 @@ serialize_remote_display_properties (GrdRemoteClient *remote_client)
   g_variant_builder_add (&builder, "{sv}", "remote-id",
                          g_variant_new_object_path (remote_client->id));
 
+  if (remote_client->hostname)
+    {
+      g_variant_builder_add (&builder, "{sv}", "hostname",
+                             g_variant_new_string (remote_client->hostname));
+    }
+
   return g_variant_builder_end (&builder);
 }
 
