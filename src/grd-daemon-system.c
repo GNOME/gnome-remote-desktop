@@ -52,6 +52,7 @@ typedef struct
   GrdDaemonSystem *daemon_system;
 
   char *id;
+  char *hostname;
 
   GrdSession *session;
   GSocketConnection *socket_connection;
@@ -571,6 +572,7 @@ grd_remote_client_free (GrdRemoteClient *remote_client)
   disconnect_from_remote_display (remote_client);
 
   g_clear_pointer (&remote_client->id, g_free);
+  g_clear_pointer (&remote_client->hostname, g_free);
   if (remote_client->socket_connection)
     grd_close_connection_and_notify (remote_client->socket_connection);
   g_clear_object (&remote_client->socket_connection);
@@ -610,6 +612,26 @@ session_disposed (GrdRemoteClient *remote_client)
   remote_client->session = NULL;
 }
 
+static char *
+try_get_hostname (GrdSessionRdp *session_rdp)
+{
+  g_autoptr (GSocketAddress) socket_address = NULL;
+  GSocketConnection *connection;
+  GInetAddress *inet_address;
+
+  connection = grd_session_rdp_get_socket_connection (session_rdp);
+  if (!connection)
+    return NULL;
+
+  socket_address = g_socket_connection_get_remote_address (connection, NULL);
+  if (!socket_address || !G_IS_INET_SOCKET_ADDRESS (socket_address))
+    return NULL;
+
+  inet_address = g_inet_socket_address_get_address (G_INET_SOCKET_ADDRESS (socket_address));
+
+  return g_inet_address_to_string (inet_address);
+}
+
 static GrdRemoteClient *
 remote_client_new (GrdDaemonSystem *daemon_system,
                    GrdSession      *session)
@@ -624,6 +646,7 @@ remote_client_new (GrdDaemonSystem *daemon_system,
   if (!session)
     return remote_client;
 
+  remote_client->hostname = try_get_hostname (GRD_SESSION_RDP (session));
   remote_client->is_client_mstsc = grd_session_rdp_is_client_mstsc (GRD_SESSION_RDP (session));
   remote_client->session = session;
   g_object_weak_ref (G_OBJECT (session),
