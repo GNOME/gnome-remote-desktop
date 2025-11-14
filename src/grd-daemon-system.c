@@ -732,6 +732,18 @@ on_incoming_redirected_connection (GrdRdpServer      *rdp_server,
     remote_client->use_system_credentials);
 }
 
+static GVariant *
+serialize_remote_display_properties (GrdRemoteClient *remote_client)
+{
+  GVariantBuilder builder;
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&builder, "{sv}", "remote-id",
+                         g_variant_new_object_path (remote_client->id));
+
+  return g_variant_builder_end (&builder);
+}
+
 static void
 on_incoming_new_connection (GrdRdpServer    *rdp_server,
                             GrdSession      *session,
@@ -740,6 +752,7 @@ on_incoming_new_connection (GrdRdpServer    *rdp_server,
   GCancellable *cancellable =
     grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
   GrdRemoteClient *remote_client;
+  GVariant *properties_variant;
 
   g_debug ("[DaemonSystem] Incoming connection without routing token");
 
@@ -752,9 +765,10 @@ on_incoming_new_connection (GrdRdpServer    *rdp_server,
   g_debug ("[DaemonSystem] Creating remote display with remote id: %s",
            remote_client->id);
 
+  properties_variant = serialize_remote_display_properties (remote_client);
   grd_dbus_gdm_remote_display_factory_call_create_remote_display (
     daemon_system->remote_display_factory_proxy,
-    remote_client->id,
+    properties_variant,
     cancellable,
     on_create_remote_display_finished,
     remote_client);

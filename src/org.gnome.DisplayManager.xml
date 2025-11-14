@@ -9,7 +9,7 @@
   </interface>
   <interface name="org.gnome.DisplayManager.RemoteDisplayFactory">
     <method name="CreateRemoteDisplay">
-      <arg name="remote_id" direction="in" type="o"/>
+      <arg name="properties" direction="in" type="a{sv}"/>
     </method>
   </interface>
 </node>
