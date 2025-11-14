@@ -171,6 +171,12 @@ grd_session_rdp_get_screen_share_mode (GrdSessionRdp *session_rdp)
   return session_rdp->screen_share_mode;
 }
 
+GSocketConnection *
+grd_session_rdp_get_socket_connection (GrdSessionRdp *session_rdp)
+{
+  return session_rdp->connection;
+}
+
 static gboolean
 is_rdp_peer_flag_set (GrdSessionRdp *session_rdp,
                       RdpPeerFlag    flag)

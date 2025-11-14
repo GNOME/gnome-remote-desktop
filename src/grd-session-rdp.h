@@ -93,3 +93,5 @@ rdpContext *grd_session_rdp_get_rdp_context (GrdSessionRdp *session_rdp);
 GrdRdpDvcGraphicsPipeline *grd_session_rdp_get_graphics_pipeline (GrdSessionRdp *session_rdp);
 
 GrdRdpScreenShareMode grd_session_rdp_get_screen_share_mode (GrdSessionRdp *session_rdp);
+
+GSocketConnection *grd_session_rdp_get_socket_connection (GrdSessionRdp *session_rdp);
