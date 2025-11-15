@@ -618,8 +618,8 @@ rdpsnd_activated (RdpsndServerContext *rdpsnd_context)
 
   if (rdpsnd_context->clientVersion < 8)
     {
-      g_message ("[RDP.AUDIO_PLAYBACK] Client protocol version (%u) too old. "
-                 "Terminating protocol", rdpsnd_context->clientVersion);
+      g_message ("[RDP.AUDIO_PLAYBACK] Client protocol version (%u) is too "
+                 "old. Terminating protocol", rdpsnd_context->clientVersion);
       grd_rdp_dvc_queue_channel_tear_down (GRD_RDP_DVC (audio_playback));
       return;
     }
