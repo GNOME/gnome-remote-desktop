@@ -44,6 +44,17 @@
  */
 #define TRANSITION_TIME_US (200 * 1000)
 
+typedef enum
+{
+  OBJECT_TYPE_BUFFER,
+} ObjectType;
+
+typedef struct
+{
+  ObjectType object_type;
+  gpointer object;
+} UnrefContext;
+
 typedef struct
 {
   GrdRdpSurfaceRenderer *surface_renderer;
@@ -63,7 +74,7 @@ struct _GrdRdpSurfaceRenderer
 
   uint32_t refresh_rate;
 
-  GSource *buffer_unref_source;
+  GSource *object_unref_source;
   GAsyncQueue *unref_queue;
 
   GSource *render_source;
@@ -90,6 +101,19 @@ struct _GrdRdpSurfaceRenderer
 };
 
 G_DEFINE_TYPE (GrdRdpSurfaceRenderer, grd_rdp_surface_renderer, G_TYPE_OBJECT)
+
+static UnrefContext *
+unref_context_new (ObjectType object_type,
+                   gpointer   object)
+{
+  UnrefContext *unref_context;
+
+  unref_context = g_new0 (UnrefContext, 1);
+  unref_context->object_type = object_type;
+  unref_context->object = object;
+
+  return unref_context;
+}
 
 uint32_t
 grd_rdp_surface_renderer_get_refresh_rate (GrdRdpSurfaceRenderer *surface_renderer)
@@ -440,19 +464,33 @@ rdp_buffer_unref (GrdRdpSurfaceRenderer *surface_renderer,
     }
 }
 
+static void
+unref_buffer (GrdRdpSurfaceRenderer *surface_renderer,
+              GrdRdpBuffer          *rdp_buffer)
+{
+  g_mutex_lock (&surface_renderer->render_mutex);
+  g_assert (surface_renderer->pending_buffer != rdp_buffer);
+
+  rdp_buffer_unref (surface_renderer, rdp_buffer);
+  g_mutex_unlock (&surface_renderer->render_mutex);
+}
+
 static gboolean
-unref_buffers (gpointer user_data)
+unref_objects (gpointer user_data)
 {
   GrdRdpSurfaceRenderer *surface_renderer = user_data;
-  GrdRdpBuffer *rdp_buffer;
+  UnrefContext *unref_context;
 
-  while ((rdp_buffer = g_async_queue_try_pop (surface_renderer->unref_queue)))
+  while ((unref_context = g_async_queue_try_pop (surface_renderer->unref_queue)))
     {
-      g_mutex_lock (&surface_renderer->render_mutex);
-      g_assert (surface_renderer->pending_buffer != rdp_buffer);
+      switch (unref_context->object_type)
+        {
+        case OBJECT_TYPE_BUFFER:
+          unref_buffer (surface_renderer, unref_context->object);
+          break;
+        }
 
-      rdp_buffer_unref (surface_renderer, rdp_buffer);
-      g_mutex_unlock (&surface_renderer->render_mutex);
+      g_free (unref_context);
     }
 
   return G_SOURCE_CONTINUE;
@@ -491,6 +529,16 @@ on_frame_picked_up (GrdRdpFrame *rdp_frame,
 }
 
 static void
+queue_buffer_unref (GrdRdpSurfaceRenderer *surface_renderer,
+                    GrdRdpBuffer          *rdp_buffer)
+{
+  UnrefContext *unref_context;
+
+  unref_context = unref_context_new (OBJECT_TYPE_BUFFER, rdp_buffer);
+  g_async_queue_push (surface_renderer->unref_queue, unref_context);
+}
+
+static void
 on_view_finalization (GrdRdpFrame *rdp_frame,
                       gpointer     user_data)
 {
@@ -499,11 +547,11 @@ on_view_finalization (GrdRdpFrame *rdp_frame,
   GrdRdpBuffer *current_buffer = frame_context->current_buffer;
   GrdRdpBuffer *last_buffer = frame_context->last_buffer;
 
-  g_async_queue_push (surface_renderer->unref_queue, current_buffer);
+  queue_buffer_unref (surface_renderer, current_buffer);
   if (last_buffer)
-    g_async_queue_push (surface_renderer->unref_queue, last_buffer);
+    queue_buffer_unref (surface_renderer, last_buffer);
 
-  g_source_set_ready_time (surface_renderer->buffer_unref_source, 0);
+  g_source_set_ready_time (surface_renderer->object_unref_source, 0);
 }
 
 static void
@@ -813,7 +861,7 @@ grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
   GMainContext *graphics_context =
     grd_rdp_renderer_get_graphics_context (renderer);
   GrdRdpSurfaceRenderer *surface_renderer;
-  GSource *buffer_unref_source;
+  GSource *object_unref_source;
   GSource *render_source;
   GSource *frame_upgrade_source;
   GSource *trigger_frame_upgrade_source;
@@ -825,12 +873,12 @@ grd_rdp_surface_renderer_new (GrdRdpSurface  *rdp_surface,
   surface_renderer->vk_device = vk_device;
   surface_renderer->refresh_rate = refresh_rate;
 
-  buffer_unref_source = g_source_new (&source_funcs, sizeof (GSource));
-  g_source_set_callback (buffer_unref_source, unref_buffers,
+  object_unref_source = g_source_new (&source_funcs, sizeof (GSource));
+  g_source_set_callback (object_unref_source, unref_objects,
                          surface_renderer, NULL);
-  g_source_set_ready_time (buffer_unref_source, -1);
-  g_source_attach (buffer_unref_source, graphics_context);
-  surface_renderer->buffer_unref_source = buffer_unref_source;
+  g_source_set_ready_time (object_unref_source, -1);
+  g_source_attach (object_unref_source, graphics_context);
+  surface_renderer->object_unref_source = object_unref_source;
 
   render_source = g_source_new (&source_funcs, sizeof (GSource));
   g_source_set_callback (render_source, maybe_render_frame,
@@ -887,10 +935,10 @@ grd_rdp_surface_renderer_dispose (GObject *object)
       g_source_destroy (surface_renderer->render_source);
       g_clear_pointer (&surface_renderer->render_source, g_source_unref);
     }
-  if (surface_renderer->buffer_unref_source)
+  if (surface_renderer->object_unref_source)
     {
-      g_source_destroy (surface_renderer->buffer_unref_source);
-      g_clear_pointer (&surface_renderer->buffer_unref_source, g_source_unref);
+      g_source_destroy (surface_renderer->object_unref_source);
+      g_clear_pointer (&surface_renderer->object_unref_source, g_source_unref);
     }
 
   g_clear_pointer (&surface_renderer->assigned_frame_slots, g_hash_table_unref);
