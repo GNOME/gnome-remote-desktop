@@ -47,6 +47,7 @@
 typedef enum
 {
   OBJECT_TYPE_BUFFER,
+  OBJECT_TYPE_RENDER_CONTEXT,
 } ObjectType;
 
 typedef struct
@@ -475,6 +476,14 @@ unref_buffer (GrdRdpSurfaceRenderer *surface_renderer,
   g_mutex_unlock (&surface_renderer->render_mutex);
 }
 
+static void
+unref_render_context (GrdRdpSurfaceRenderer *surface_renderer,
+                      GrdRdpRenderContext   *render_context)
+{
+  grd_rdp_renderer_release_render_context (surface_renderer->renderer,
+                                           render_context);
+}
+
 static gboolean
 unref_objects (gpointer user_data)
 {
@@ -487,6 +496,9 @@ unref_objects (gpointer user_data)
         {
         case OBJECT_TYPE_BUFFER:
           unref_buffer (surface_renderer, unref_context->object);
+          break;
+        case OBJECT_TYPE_RENDER_CONTEXT:
+          unref_render_context (surface_renderer, unref_context->object);
           break;
         }
 
@@ -577,6 +589,21 @@ reset_frame_upgrade_schedule (GrdRdpSurfaceRenderer *surface_renderer)
 }
 
 static void
+queue_render_context_unref (GrdRdpSurfaceRenderer *surface_renderer,
+                            GrdRdpFrame           *rdp_frame)
+{
+  GrdRdpRenderContext *render_context =
+    grd_rdp_frame_get_render_context (rdp_frame);
+  UnrefContext *unref_context;
+
+  unref_context = unref_context_new (OBJECT_TYPE_RENDER_CONTEXT,
+                                     render_context);
+  g_async_queue_push (surface_renderer->unref_queue, unref_context);
+
+  g_source_set_ready_time (surface_renderer->object_unref_source, 0);
+}
+
+static void
 on_frame_finalization (GrdRdpFrame *rdp_frame,
                        gpointer     user_data)
 {
@@ -585,8 +612,9 @@ on_frame_finalization (GrdRdpFrame *rdp_frame,
 
   g_hash_table_remove (surface_renderer->assigned_frame_slots, rdp_frame);
   grd_rdp_surface_renderer_trigger_render_source (surface_renderer);
-
   reset_frame_upgrade_schedule (surface_renderer);
+
+  queue_render_context_unref (surface_renderer, rdp_frame);
 }
 
 static gboolean

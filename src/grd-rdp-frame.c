@@ -368,17 +368,15 @@ grd_rdp_frame_free (GrdRdpFrame *rdp_frame)
   if (rdp_frame->pending_view_finalization)
     finalize_view (rdp_frame);
 
-  rdp_frame->frame_finalized (rdp_frame, rdp_frame->callback_user_data);
-
   g_clear_pointer (&rdp_frame->encode_context, grd_encode_context_free);
   g_clear_pointer (&rdp_frame->damage_region, cairo_region_destroy);
-  g_clear_pointer (&rdp_frame->callback_user_data,
-                   rdp_frame->user_data_destroy);
 
   g_clear_pointer (&rdp_frame->unused_image_views, g_queue_free);
   release_image_views (rdp_frame);
-  grd_rdp_renderer_release_render_context (rdp_frame->renderer,
-                                           rdp_frame->render_context);
+
+  rdp_frame->frame_finalized (rdp_frame, rdp_frame->callback_user_data);
+  g_clear_pointer (&rdp_frame->callback_user_data,
+                   rdp_frame->user_data_destroy);
 
   g_free (rdp_frame);
 }
