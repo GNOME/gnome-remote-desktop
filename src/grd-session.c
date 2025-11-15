@@ -1035,6 +1035,18 @@ grd_session_selection_read (GrdSession  *session,
 }
 
 static void
+maybe_emit_started_signal (GrdSession *session)
+{
+  GrdSessionPrivate *priv = grd_session_get_instance_private (session);
+
+  if (!priv->is_ready ||
+      !priv->started)
+    return;
+
+  g_signal_emit (session, signals[STARTED], 0);
+}
+
+static void
 on_session_start_finished (GObject      *object,
                            GAsyncResult *result,
                            gpointer      user_data)
@@ -1061,7 +1073,7 @@ on_session_start_finished (GObject      *object,
   priv = grd_session_get_instance_private (session);
 
   priv->started = TRUE;
-  g_signal_emit (session, signals[STARTED], 0);
+  maybe_emit_started_signal (session);
 }
 
 static void
@@ -1425,6 +1437,7 @@ grd_ei_source_dispatch (gpointer user_data)
             {
               priv->is_ready = TRUE;
               g_signal_emit (session, signals[READY], 0);
+              maybe_emit_started_signal (session);
             }
           break;
         case EI_EVENT_DISCONNECT:
