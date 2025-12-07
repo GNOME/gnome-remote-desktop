@@ -180,7 +180,7 @@ check_device_capabilities (GrdHwAccelVaapi  *hwaccel_vaapi,
   if (max_num_entrypoints < 1)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Invalid max num entrypoints: %i", max_profiles);
+                   "Invalid max num entrypoints: %i", max_num_entrypoints);
       return FALSE;
     }
   entrypoints = g_new0 (VAEntrypoint, max_num_entrypoints);
