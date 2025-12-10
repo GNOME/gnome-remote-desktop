@@ -1,3 +1,6 @@
+> [!note]
+> Main branch switch to `main`.
+
 # GNOME Remote Desktop
 
 GNOME Remote Desktop is the remote desktop server of the GNOME project. It
