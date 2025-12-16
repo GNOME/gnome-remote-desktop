@@ -78,7 +78,6 @@ bindir = join_paths(prefix, get_option('bindir'))
 datadir = join_paths(prefix, get_option('datadir'))
 mandir = join_paths(prefix, get_option('mandir'))
 schemadir = join_paths(datadir, 'glib-2.0', 'schemas')
-desktopdir = join_paths(datadir, 'applications')
 dbus_sys_dir = (get_option('dbus_sys_dir') != '') ? get_option('dbus_sys_dir') : join_paths(datadir, 'dbus-1', 'system.d')
 
 dbus_dep = dependency('dbus-1', required: false)
@@ -190,7 +189,6 @@ output = [
   '    libexecdir................... ' + libexecdir,
   '    bindir....................... ' + bindir,
   '    datadir...................... ' + datadir,
-  '    desktopdir................... ' + desktopdir,
   '    systemd user unit dir........ ' + userunitdir,
   '    systemd system unit dir...... ' + systemunitdir,
   '    GSettings schema dir......... ' + schemadir,

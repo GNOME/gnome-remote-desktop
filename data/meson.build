@@ -36,13 +36,6 @@ if have_rdp
                    'GRD_USERNAME': grd_username,
                  },
                  install_dir: dbus_sys_dir)
-
-  configure_file(input: 'org.gnome.RemoteDesktop.Handover.desktop.in',
-                 output: 'org.gnome.RemoteDesktop.Handover.desktop',
-                 configuration: {
-                   'libexecdir': libexecdir,
-                 },
-                 install_dir: desktopdir)
 endif
 
 if get_option('systemd')
