@@ -44,6 +44,8 @@ typedef enum
   DEVICE_STATE_PENDING_ACTIVATION_RESPONSE,
   DEVICE_STATE_PENDING_STREAM_LIST_RESPONSE,
   DEVICE_STATE_PENDING_MEDIA_TYPE_LIST_RESPONSE,
+  DEVICE_STATE_PENDING_PROPERTY_LIST_RESPONSE,
+  DEVICE_STATE_PENDING_PROPERTY_VALUE_RESPONSE,
   DEVICE_STATE_PENDING_STREAM_PREPARATION,
   DEVICE_STATE_INITIALIZATION_DONE,
   DEVICE_STATE_IN_SHUTDOWN,
@@ -99,6 +101,7 @@ struct _GrdRdpDvcCameraDevice
   GMutex state_mutex;
   DeviceState state;
   GQueue *pending_media_type_lists;
+  GQueue *pending_property_values;
 
   GHashTable *stream_contexts;
 
@@ -374,6 +377,10 @@ device_state_to_string (DeviceState state)
       return "PENDING_STREAM_LIST_RESPONSE";
     case DEVICE_STATE_PENDING_MEDIA_TYPE_LIST_RESPONSE:
       return "PENDING_MEDIA_TYPE_LIST_RESPONSE";
+    case DEVICE_STATE_PENDING_PROPERTY_LIST_RESPONSE:
+      return "PENDING_PROPERTY_LIST_RESPONSE";
+    case DEVICE_STATE_PENDING_PROPERTY_VALUE_RESPONSE:
+      return "PENDING_PROPERTY_VALUE_RESPONSE";
     case DEVICE_STATE_PENDING_STREAM_PREPARATION:
       return "PENDING_STREAM_PREPARATION";
     case DEVICE_STATE_INITIALIZATION_DONE:
@@ -466,6 +473,8 @@ device_success_response (CameraDeviceServerContext  *device_context,
     case DEVICE_STATE_PENDING_ACTIVATION:
     case DEVICE_STATE_PENDING_STREAM_LIST_RESPONSE:
     case DEVICE_STATE_PENDING_MEDIA_TYPE_LIST_RESPONSE:
+    case DEVICE_STATE_PENDING_PROPERTY_LIST_RESPONSE:
+    case DEVICE_STATE_PENDING_PROPERTY_VALUE_RESPONSE:
     case DEVICE_STATE_PENDING_STREAM_PREPARATION:
       g_warning ("[RDP.CAM_DEVICE] Protocol violation: Received stray success "
                  "response in state %s for device \"%s\". Removing device...",
@@ -620,6 +629,16 @@ device_error_response (CameraDeviceServerContext *device_context,
                  "\"%s\": %s. Removing device...",
                  device->device_name, device_error_to_string (error_response));
       break;
+    case DEVICE_STATE_PENDING_PROPERTY_LIST_RESPONSE:
+      g_warning ("[RDP.CAM_DEVICE] Failed to fetch property list from device "
+                 "\"%s\": %s. Removing device...",
+                 device->device_name, device_error_to_string (error_response));
+      break;
+    case DEVICE_STATE_PENDING_PROPERTY_VALUE_RESPONSE:
+      g_warning ("[RDP.CAM_DEVICE] Failed to fetch property value from device "
+                 "\"%s\": %s. Removing device...",
+                 device->device_name, device_error_to_string (error_response));
+      break;
     case DEVICE_STATE_INITIALIZATION_DONE:
       fetch_runtime_error_response (device, error_response, &error);
       g_warning ("[RDP.CAM_DEVICE] %s", error->message);
@@ -699,6 +718,16 @@ device_stream_list_response (CameraDeviceServerContext      *device_context,
 }
 
 static void
+request_property_list (GrdRdpDvcCameraDevice *device)
+{
+  CameraDeviceServerContext *device_context = device->device_context;
+  CAM_PROPERTY_LIST_REQUEST property_list_request = {};
+
+  device->state = DEVICE_STATE_PENDING_PROPERTY_LIST_RESPONSE;
+  device_context->PropertyListRequest (device_context, &property_list_request);
+}
+
+static void
 start_preparing_streams (GrdRdpDvcCameraDevice *device)
 {
   device->state = DEVICE_STATE_PENDING_STREAM_PREPARATION;
@@ -771,6 +800,8 @@ device_media_type_list_response (CameraDeviceServerContext          *device_cont
 
   if (g_queue_get_length (device->pending_media_type_lists) > 0)
     request_next_media_type_list (device);
+  else if (device_context->protocolVersion >= 2)
+    request_property_list (device);
   else
     start_preparing_streams (device);
 
@@ -931,10 +962,70 @@ device_sample_error_response (CameraDeviceServerContext       *device_context,
   return CHANNEL_RC_OK;
 }
 
+static void
+request_next_property_value (GrdRdpDvcCameraDevice *device)
+{
+  CameraDeviceServerContext *device_context = device->device_context;
+  CAM_PROPERTY_VALUE_REQUEST *property_value_request;
+
+  g_assert (g_queue_get_length (device->pending_property_values) > 0);
+
+  property_value_request = g_queue_peek_head (device->pending_property_values);
+
+  device->state = DEVICE_STATE_PENDING_PROPERTY_VALUE_RESPONSE;
+  device_context->PropertyValueRequest (device_context, property_value_request);
+}
+
 static uint32_t
 device_property_list_response (CameraDeviceServerContext        *device_context,
                                const CAM_PROPERTY_LIST_RESPONSE *property_list_response)
 {
+  GrdRdpDvcCameraDevice *device = device_context->userdata;
+  g_autoptr (GMutexLocker) locker = NULL;
+  size_t i;
+
+  locker = g_mutex_locker_new (&device->state_mutex);
+  if (device->state == DEVICE_STATE_FATAL_ERROR ||
+      device->state == DEVICE_STATE_IN_SHUTDOWN)
+    return CHANNEL_RC_OK;
+
+  if (device->state != DEVICE_STATE_PENDING_PROPERTY_LIST_RESPONSE)
+    {
+      g_warning ("[RDP.CAM_DEVICE] Protocol violation: Received stray "
+                 "property list response in state %s for device \"%s\". "
+                 "Removing device...",
+                 device_state_to_string (device->state), device->device_name);
+      transition_into_fatal_error_state (device);
+      return CHANNEL_RC_OK;
+    }
+
+  for (i = 0; i < property_list_response->N_Properties; ++i)
+    {
+      CAM_PROPERTY_DESCRIPTION *property =
+        &property_list_response->Properties[i];
+      CAM_PROPERTY_VALUE_REQUEST *property_value_request;
+
+      g_debug ("[RDP.CAM_DEVICE] Device \"%s\": Property %zu: "
+               "PropertySet: 0x%02X, PropertyId: 0x%02X, Capabilities: 0x%02X, "
+               "MinValue: %i, MaxValue: %i, Step: %i, DefaultValue: %i",
+               device->device_name, i,
+               property->PropertySet, property->PropertyId,
+               property->Capabilities, property->MinValue, property->MaxValue,
+               property->Step, property->DefaultValue);
+
+      property_value_request = g_new0 (CAM_PROPERTY_VALUE_REQUEST, 1);
+      property_value_request->PropertySet = property->PropertySet;
+      property_value_request->PropertyId = property->PropertyId;
+
+      g_queue_push_tail (device->pending_property_values,
+                         property_value_request);
+    }
+
+  if (g_queue_get_length (device->pending_property_values) > 0)
+    request_next_property_value (device);
+  else
+    start_preparing_streams (device);
+
   return CHANNEL_RC_OK;
 }
 
@@ -942,6 +1033,39 @@ static uint32_t
 device_property_value_response (CameraDeviceServerContext         *device_context,
                                 const CAM_PROPERTY_VALUE_RESPONSE *property_value_response)
 {
+  GrdRdpDvcCameraDevice *device = device_context->userdata;
+  const CAM_PROPERTY_VALUE *property_value =
+    &property_value_response->PropertyValue;
+  g_autoptr (GMutexLocker) locker = NULL;
+  g_autofree CAM_PROPERTY_VALUE_REQUEST *property_value_request = NULL;
+
+  locker = g_mutex_locker_new (&device->state_mutex);
+  if (device->state == DEVICE_STATE_FATAL_ERROR ||
+      device->state == DEVICE_STATE_IN_SHUTDOWN)
+    return CHANNEL_RC_OK;
+
+  if (device->state != DEVICE_STATE_PENDING_PROPERTY_VALUE_RESPONSE)
+    {
+      g_warning ("[RDP.CAM_DEVICE] Protocol violation: Received stray "
+                 "property value response in state %s for device \"%s\". "
+                 "Removing device...",
+                 device_state_to_string (device->state), device->device_name);
+      transition_into_fatal_error_state (device);
+      return CHANNEL_RC_OK;
+    }
+
+  property_value_request = g_queue_pop_head (device->pending_property_values);
+  g_debug ("[RDP.CAM_DEVICE] Device \"%s\": PropertySet: 0x%02X, "
+           "PropertyId: 0x%02X, Mode: 0x%02X, Value: %i",
+           device->device_name, property_value_request->PropertySet,
+           property_value_request->PropertyId,
+           property_value->Mode, property_value->Value);
+
+  if (g_queue_get_length (device->pending_property_values) > 0)
+    request_next_property_value (device);
+  else
+    start_preparing_streams (device);
+
   return CHANNEL_RC_OK;
 }
 
@@ -1109,6 +1233,12 @@ grd_rdp_dvc_camera_device_dispose (GObject *object)
   g_clear_pointer (&device->running_streams, g_hash_table_unref);
   g_clear_pointer (&device->pending_stream_starts, g_hash_table_unref);
   g_clear_pointer (&device->queued_stream_starts, g_hash_table_unref);
+
+  if (device->pending_property_values)
+    {
+      g_queue_free_full (device->pending_property_values, g_free);
+      device->pending_property_values = NULL;
+    }
   g_clear_pointer (&device->pending_media_type_lists, g_queue_free);
 
   g_clear_pointer (&device->device_name, g_free);
@@ -1324,6 +1454,8 @@ initialize_device (gpointer user_data)
     case DEVICE_STATE_PENDING_ACTIVATION_RESPONSE:
     case DEVICE_STATE_PENDING_STREAM_LIST_RESPONSE:
     case DEVICE_STATE_PENDING_MEDIA_TYPE_LIST_RESPONSE:
+    case DEVICE_STATE_PENDING_PROPERTY_LIST_RESPONSE:
+    case DEVICE_STATE_PENDING_PROPERTY_VALUE_RESPONSE:
     case DEVICE_STATE_INITIALIZATION_DONE:
     case DEVICE_STATE_IN_SHUTDOWN:
       break;
@@ -1606,6 +1738,7 @@ grd_rdp_dvc_camera_device_init (GrdRdpDvcCameraDevice *device)
   device->pending_samples = g_hash_table_new (NULL, NULL);
 
   device->pending_media_type_lists = g_queue_new ();
+  device->pending_property_values = g_queue_new ();
 
   g_mutex_init (&device->state_mutex);
   g_mutex_init (&device->event_mutex);
