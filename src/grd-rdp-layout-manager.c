@@ -92,7 +92,6 @@ struct _GrdRdpLayoutManager
 
   unsigned long inhibition_done_id;
 
-  unsigned int layout_destruction_id;
   unsigned int layout_recreation_id;
 };
 
@@ -271,41 +270,21 @@ maybe_invoke_layout_recreation (gpointer user_data)
   return G_SOURCE_REMOVE;
 }
 
-static gboolean
-destroy_layout (gpointer user_data)
-{
-  GrdRdpLayoutManager *layout_manager = user_data;
-
-  g_debug ("[RDP] Layout manager: Monitor stream closed. "
-           "Setting timeout for recreation");
-
-  g_hash_table_remove_all (layout_manager->surface_table);
-
-  g_assert (!layout_manager->layout_recreation_id);
-  layout_manager->layout_recreation_id =
-    g_timeout_add (LAYOUT_RECREATION_TIMEOUT_MS, maybe_invoke_layout_recreation,
-                   layout_manager);
-
-  layout_manager->layout_destruction_id = 0;
-
-  return G_SOURCE_REMOVE;
-}
-
 static void
 on_pipewire_stream_closed (GrdRdpPipeWireStream *pipewire_stream,
                            GrdRdpLayoutManager  *layout_manager)
 {
-  if (layout_manager->state == UPDATE_STATE_FATAL_ERROR)
+  if (layout_manager->state == UPDATE_STATE_FATAL_ERROR ||
+      is_virtual_stream (layout_manager, pipewire_stream) ||
+      layout_manager->layout_recreation_id)
     return;
 
-  if (is_virtual_stream (layout_manager, pipewire_stream))
-    return;
+  g_debug ("[RDP] Layout manager: Monitor stream closed. "
+           "Setting timeout for recreation");
 
-  if (layout_manager->layout_destruction_id)
-    return;
-
-  layout_manager->layout_destruction_id = g_idle_add (destroy_layout,
-                                                      layout_manager);
+  layout_manager->layout_recreation_id =
+    g_timeout_add (LAYOUT_RECREATION_TIMEOUT_MS, maybe_invoke_layout_recreation,
+                   layout_manager);
 }
 
 static SurfaceContext *
@@ -661,7 +640,6 @@ grd_rdp_layout_manager_dispose (GObject *object)
   g_clear_signal_handler (&layout_manager->inhibition_done_id,
                           layout_manager->renderer);
 
-  g_clear_handle_id (&layout_manager->layout_destruction_id, g_source_remove);
   g_clear_handle_id (&layout_manager->layout_recreation_id, g_source_remove);
 
   if (layout_manager->preparation_source)
@@ -718,10 +696,24 @@ maybe_pick_up_queued_monitor_config (GrdRdpLayoutManager *layout_manager)
   layout_manager->current_monitor_config =
     g_steal_pointer (&layout_manager->pending_monitor_config);
 
-  g_assert (!layout_manager->layout_destruction_id);
   g_clear_handle_id (&layout_manager->layout_recreation_id, g_source_remove);
 
   return TRUE;
+}
+
+static void
+dispose_physical_monitor_streams (GrdRdpLayoutManager *layout_manager)
+{
+  GrdRdpMonitorConfig *monitor_config = layout_manager->current_monitor_config;
+
+  /*
+   * Monitor configs containing physical monitors cannot be mixed in sessions
+   * with monitor configs containing virtual monitors and vice versa.
+   */
+  if (monitor_config->is_virtual)
+    return;
+
+  g_hash_table_remove_all (layout_manager->surface_table);
 }
 
 static void
@@ -732,6 +724,8 @@ dispose_unneeded_surfaces (GrdRdpLayoutManager *layout_manager)
   uint32_t n_surfaces_to_dispose;
   SurfaceContext *surface_context = NULL;
   GHashTableIter iter;
+
+  dispose_physical_monitor_streams (layout_manager);
 
   if (g_hash_table_size (layout_manager->surface_table) <= n_target_surfaces)
     return;
