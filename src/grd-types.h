@@ -83,9 +83,9 @@ typedef struct _GrdVkBuffer GrdVkBuffer;
 typedef struct _GrdVkDevice GrdVkDevice;
 typedef struct _GrdVkImage GrdVkImage;
 typedef struct _GrdVkMemory GrdVkMemory;
+typedef struct _GrdVkQueue GrdVkQueue;
 typedef struct _GrdVkSPIRVSources GrdVkSPIRVSources;
 typedef struct _GrdVkSPIRVSource GrdVkSPIRVSource;
-typedef struct _GrdVkQueue GrdVkQueue;
 typedef struct _GrdVncServer GrdVncServer;
 
 typedef enum _GrdPixelFormat
