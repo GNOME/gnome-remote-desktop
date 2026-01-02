@@ -37,11 +37,13 @@
 #include "grd-rdp-damage-detector.h"
 #include "grd-rdp-legacy-buffer.h"
 #include "grd-rdp-pw-buffer.h"
+#include "grd-rdp-renderer.h"
 #include "grd-rdp-server.h"
 #include "grd-rdp-session-metrics.h"
 #include "grd-rdp-surface.h"
 #include "grd-rdp-surface-renderer.h"
 #include "grd-utils.h"
+#include "grd-vk-device.h"
 
 #define DEFAULT_BUFFER_POOL_SIZE 5
 #define MAX_FORMAT_PARAMS 2
@@ -264,6 +266,10 @@ get_modifiers_for_format (GrdRdpPipeWireStream  *stream,
   GrdRdpServer *rdp_server = grd_session_rdp_get_server (stream->session_rdp);
   GrdHwAccelVulkan *hwaccel_vulkan =
     grd_rdp_server_get_hwaccel_vulkan (rdp_server);
+  GrdRdpRenderer *renderer = grd_session_rdp_get_renderer (stream->session_rdp);
+  GrdVkDevice *vk_device = grd_rdp_renderer_get_vk_device (renderer);
+  GrdVkPhysicalDevice *vk_physical_device =
+    grd_vk_device_get_physical_device (vk_device);
   GrdSession *session = GRD_SESSION (stream->session_rdp);
   GrdContext *context = grd_session_get_context (session);
   GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
@@ -273,6 +279,7 @@ get_modifiers_for_format (GrdRdpPipeWireStream  *stream,
   if (hwaccel_vulkan)
     {
       return grd_hwaccel_vulkan_get_modifiers_for_format (hwaccel_vulkan,
+                                                          vk_physical_device,
                                                           drm_format,
                                                           out_n_modifiers,
                                                           out_modifiers);

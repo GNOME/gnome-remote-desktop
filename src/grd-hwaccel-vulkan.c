@@ -49,8 +49,6 @@ struct _GrdHwAccelVulkan
 
   VkDebugUtilsMessengerEXT vk_debug_messenger;
 
-  GrdVkPhysicalDevice *physical_device;
-
   GrdVkSPIRVSources spirv_sources;
 };
 
@@ -163,12 +161,12 @@ get_egl_vulkan_format_modifier_intersection (GrdHwAccelVulkan       *hwaccel_vul
 }
 
 gboolean
-grd_hwaccel_vulkan_get_modifiers_for_format (GrdHwAccelVulkan  *hwaccel_vulkan,
-                                             uint32_t           drm_format,
-                                             int               *out_n_modifiers,
-                                             uint64_t         **out_modifiers)
+grd_hwaccel_vulkan_get_modifiers_for_format (GrdHwAccelVulkan     *hwaccel_vulkan,
+                                             GrdVkPhysicalDevice  *physical_device,
+                                             uint32_t              drm_format,
+                                             int                  *out_n_modifiers,
+                                             uint64_t            **out_modifiers)
 {
-  GrdVkPhysicalDevice *physical_device = hwaccel_vulkan->physical_device;
   VkPhysicalDevice vk_physical_device =
     grd_vk_physical_device_get_physical_device (physical_device);
   GArray *modifiers;
@@ -356,10 +354,11 @@ supports_bgrx_dma_buf_images (GrdHwAccelVulkan  *hwaccel_vulkan,
 }
 
 static gboolean
-check_physical_device (GrdHwAccelVulkan *hwaccel_vulkan,
-                       VkPhysicalDevice  vk_physical_device,
-                       int64_t           render_major_egl,
-                       int64_t           render_minor_egl)
+check_physical_device (GrdHwAccelVulkan    *hwaccel_vulkan,
+                       VkPhysicalDevice     vk_physical_device,
+                       int64_t              render_major_egl,
+                       int64_t              render_minor_egl,
+                       GrdVkDeviceFeatures *device_features)
 {
   VkPhysicalDeviceProperties properties = {};
   VkPhysicalDeviceProperties2 properties_2 = {};
@@ -367,8 +366,9 @@ check_physical_device (GrdHwAccelVulkan *hwaccel_vulkan,
   VkPhysicalDeviceFeatures2 features_2 = {};
   VkPhysicalDeviceVulkan12Features vulkan12_features = {};
   VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures zero_init_features = {};
-  GrdVkDeviceFeatures device_features = 0;
   g_autoptr (GError) error = NULL;
+
+  *device_features = 0;
 
   vkGetPhysicalDeviceProperties (vk_physical_device, &properties);
   if (properties.apiVersion < VULKAN_API_VERSION)
@@ -427,9 +427,9 @@ check_physical_device (GrdHwAccelVulkan *hwaccel_vulkan,
     }
 
   if (vulkan12_features.descriptorBindingSampledImageUpdateAfterBind != VK_FALSE)
-    device_features |= GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_SAMPLED_IMAGE;
+    *device_features |= GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_SAMPLED_IMAGE;
   if (vulkan12_features.descriptorBindingStorageImageUpdateAfterBind != VK_FALSE)
-    device_features |= GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_STORAGE_IMAGE;
+    *device_features |= GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_STORAGE_IMAGE;
 
   if (!has_queue_family_with_bitmask (vk_physical_device,
                                       VK_QUEUE_COMPUTE_BIT |
@@ -447,40 +447,40 @@ check_physical_device (GrdHwAccelVulkan *hwaccel_vulkan,
       return FALSE;
     }
 
-  hwaccel_vulkan->physical_device =
-    grd_vk_physical_device_new (vk_physical_device, device_features);
-
   return TRUE;
 }
 
-static gboolean
-find_and_check_physical_device (GrdHwAccelVulkan        *hwaccel_vulkan,
-                                const VkPhysicalDevice  *physical_devices,
-                                uint32_t                 n_physical_devices,
-                                int64_t                  render_major,
-                                int64_t                  render_minor,
-                                GError                 **error)
+static GrdVkPhysicalDevice *
+find_and_create_physical_device (GrdHwAccelVulkan        *hwaccel_vulkan,
+                                 const VkPhysicalDevice  *physical_devices,
+                                 uint32_t                 n_physical_devices,
+                                 int64_t                  render_major,
+                                 int64_t                  render_minor,
+                                 GError                 **error)
 {
   uint32_t i;
 
   for (i = 0; i < n_physical_devices; ++i)
     {
+      VkPhysicalDevice vk_physical_device = physical_devices[i];
+      GrdVkDeviceFeatures device_features = 0;
+
       g_debug ("[HWAccel.Vulkan] Checking physical device %u/%u",
                i + 1, n_physical_devices);
-      if (check_physical_device (hwaccel_vulkan, physical_devices[i],
-                                 render_major, render_minor))
-        return TRUE;
+      if (check_physical_device (hwaccel_vulkan, vk_physical_device,
+                                 render_major, render_minor, &device_features))
+        return grd_vk_physical_device_new (vk_physical_device, device_features);
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                "Could not find proper device");
 
-  return FALSE;
+  return NULL;
 }
 
-static gboolean
-find_vulkan_device_from_egl_thread (GrdHwAccelVulkan  *hwaccel_vulkan,
-                                    GError           **error)
+GrdVkPhysicalDevice *
+grd_hwaccel_vulkan_acquire_physical_device (GrdHwAccelVulkan  *hwaccel_vulkan,
+                                            GError           **error)
 {
   GrdEglThread *egl_thread = hwaccel_vulkan->egl_thread;
   g_autofree VkPhysicalDevice *physical_devices = NULL;
@@ -498,13 +498,13 @@ find_vulkan_device_from_egl_thread (GrdHwAccelVulkan  *hwaccel_vulkan,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Failed to enumerate physical devices: %i", vk_result);
-      return FALSE;
+      return NULL;
     }
   if (n_physical_devices == 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "No physical devices found: %i", vk_result);
-      return FALSE;
+      return NULL;
     }
 
   physical_devices = g_new0 (VkPhysicalDevice, n_physical_devices);
@@ -515,7 +515,7 @@ find_vulkan_device_from_egl_thread (GrdHwAccelVulkan  *hwaccel_vulkan,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Failed to enumerate physical devices: %i", vk_result);
-      return FALSE;
+      return NULL;
     }
 
   drm_render_node = grd_egl_thread_get_drm_render_node (egl_thread);
@@ -526,30 +526,28 @@ find_vulkan_device_from_egl_thread (GrdHwAccelVulkan  *hwaccel_vulkan,
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (-ret),
                    "Failed to check status of DRM render node: %s",
                    strerror (-ret));
-      return FALSE;
+      return NULL;
     }
   if (!S_ISCHR (stat_buf.st_mode))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Invalid file mode for DRM render node");
-      return FALSE;
+      return NULL;
     }
 
-  if (!find_and_check_physical_device (hwaccel_vulkan,
-                                       physical_devices, n_physical_devices,
-                                       major (stat_buf.st_rdev),
-                                       minor (stat_buf.st_rdev),
-                                       error))
-    return FALSE;
-
-  return TRUE;
+  return find_and_create_physical_device (hwaccel_vulkan,
+                                          physical_devices, n_physical_devices,
+                                          major (stat_buf.st_rdev),
+                                          minor (stat_buf.st_rdev),
+                                          error);
 }
 
 GrdVkDevice *
-grd_hwaccel_vulkan_acquire_device (GrdHwAccelVulkan  *hwaccel_vulkan,
-                                   GError           **error)
+grd_hwaccel_vulkan_acquire_device (GrdHwAccelVulkan     *hwaccel_vulkan,
+                                   GrdVkPhysicalDevice  *physical_device,
+                                   GError              **error)
 {
-  return grd_vk_device_new (hwaccel_vulkan->physical_device,
+  return grd_vk_device_new (physical_device,
                             &hwaccel_vulkan->spirv_sources,
                             error);
 }
@@ -843,9 +841,6 @@ grd_hwaccel_vulkan_new (GrdEglThread  *egl_thread,
   if (!create_vk_instance (hwaccel_vulkan, error))
     return NULL;
 
-  if (!find_vulkan_device_from_egl_thread (hwaccel_vulkan, error))
-    return NULL;
-
   return g_steal_pointer (&hwaccel_vulkan);
 }
 
@@ -870,8 +865,6 @@ grd_hwaccel_vulkan_dispose (GObject *object)
   GrdHwAccelVulkan *hwaccel_vulkan = GRD_HWACCEL_VULKAN (object);
 
   free_spirv_sources (hwaccel_vulkan);
-
-  g_clear_object (&hwaccel_vulkan->physical_device);
 
   if (hwaccel_vulkan->vk_debug_messenger != VK_NULL_HANDLE)
     {

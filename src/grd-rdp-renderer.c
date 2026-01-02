@@ -54,6 +54,7 @@ struct _GrdRdpRenderer
   gboolean in_shutdown;
 
   GrdSessionRdp *session_rdp;
+  GrdVkPhysicalDevice *vk_physical_device;
   GrdVkDevice *vk_device;
   GrdHwAccelVaapi *hwaccel_vaapi;
   GrdRdpSwEncoderCa *encoder_ca;
@@ -196,9 +197,21 @@ static gboolean
 maybe_initialize_hardware_acceleration (GrdRdpRenderer   *renderer,
                                         GrdHwAccelVulkan *hwaccel_vulkan)
 {
+  GrdVkPhysicalDevice *vk_physical_device;
   g_autoptr (GError) error = NULL;
 
+  vk_physical_device =
+    grd_hwaccel_vulkan_acquire_physical_device (hwaccel_vulkan, &error);
+  if (!vk_physical_device)
+    {
+      g_message ("[HWAccel.Vulkan] Could not acquire Vulkan physical "
+                 "device: %s", error->message);
+      return TRUE;
+    }
+  renderer->vk_physical_device = vk_physical_device;
+
   renderer->vk_device = grd_hwaccel_vulkan_acquire_device (hwaccel_vulkan,
+                                                           vk_physical_device,
                                                            &error);
   if (!renderer->vk_device)
     {
@@ -729,6 +742,7 @@ grd_rdp_renderer_dispose (GObject *object)
   g_clear_object (&renderer->encoder_ca);
   g_clear_object (&renderer->hwaccel_vaapi);
   g_clear_object (&renderer->vk_device);
+  g_clear_object (&renderer->vk_physical_device);
 
   G_OBJECT_CLASS (grd_rdp_renderer_parent_class)->dispose (object);
 }
