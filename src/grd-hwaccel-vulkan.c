@@ -29,6 +29,8 @@
 
 #include "grd-debug.h"
 #include "grd-egl-thread.h"
+#include "grd-vk-device.h"
+#include "grd-vk-physical-device.h"
 #include "grd-vk-utils.h"
 
 #define VULKAN_API_VERSION VK_API_VERSION_1_2
@@ -47,11 +49,7 @@ struct _GrdHwAccelVulkan
 
   VkDebugUtilsMessengerEXT vk_debug_messenger;
 
-  VkPhysicalDevice vk_physical_device;
-
-  /* Physical device features */
-  gboolean supports_sampled_image_update_after_bind;
-  gboolean supports_storage_image_update_after_bind;
+  GrdVkPhysicalDevice *physical_device;
 
   GrdVkSPIRVSources spirv_sources;
 };
@@ -170,7 +168,9 @@ grd_hwaccel_vulkan_get_modifiers_for_format (GrdHwAccelVulkan  *hwaccel_vulkan,
                                              int               *out_n_modifiers,
                                              uint64_t         **out_modifiers)
 {
-  VkPhysicalDevice vk_physical_device = hwaccel_vulkan->vk_physical_device;
+  GrdVkPhysicalDevice *physical_device = hwaccel_vulkan->physical_device;
+  VkPhysicalDevice vk_physical_device =
+    grd_vk_physical_device_get_physical_device (physical_device);
   GArray *modifiers;
   g_autoptr (GError) error = NULL;
 
@@ -192,15 +192,9 @@ GrdVkDevice *
 grd_hwaccel_vulkan_acquire_device (GrdHwAccelVulkan  *hwaccel_vulkan,
                                    GError           **error)
 {
-  GrdVkDeviceFeatures device_features = 0;
-
-  if (hwaccel_vulkan->supports_sampled_image_update_after_bind)
-    device_features |= GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_SAMPLED_IMAGE;
-  if (hwaccel_vulkan->supports_storage_image_update_after_bind)
-    device_features |= GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_STORAGE_IMAGE;
-
-  return grd_vk_device_new (hwaccel_vulkan->vk_physical_device, device_features,
-                            &hwaccel_vulkan->spirv_sources, error);
+  return grd_vk_device_new (hwaccel_vulkan->physical_device,
+                            &hwaccel_vulkan->spirv_sources,
+                            error);
 }
 
 static gboolean
@@ -659,6 +653,7 @@ check_physical_device (GrdHwAccelVulkan *hwaccel_vulkan,
   VkPhysicalDeviceFeatures2 features_2 = {};
   VkPhysicalDeviceVulkan12Features vulkan12_features = {};
   VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures zero_init_features = {};
+  GrdVkDeviceFeatures device_features = 0;
   g_autoptr (GError) error = NULL;
 
   vkGetPhysicalDeviceProperties (vk_physical_device, &properties);
@@ -717,10 +712,10 @@ check_physical_device (GrdHwAccelVulkan *hwaccel_vulkan,
       return FALSE;
     }
 
-  hwaccel_vulkan->supports_sampled_image_update_after_bind =
-    !!vulkan12_features.descriptorBindingSampledImageUpdateAfterBind;
-  hwaccel_vulkan->supports_storage_image_update_after_bind =
-    !!vulkan12_features.descriptorBindingStorageImageUpdateAfterBind;
+  if (vulkan12_features.descriptorBindingSampledImageUpdateAfterBind != VK_FALSE)
+    device_features |= GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_SAMPLED_IMAGE;
+  if (vulkan12_features.descriptorBindingStorageImageUpdateAfterBind != VK_FALSE)
+    device_features |= GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_STORAGE_IMAGE;
 
   if (!has_queue_family_with_bitmask (vk_physical_device,
                                       VK_QUEUE_COMPUTE_BIT |
@@ -738,7 +733,8 @@ check_physical_device (GrdHwAccelVulkan *hwaccel_vulkan,
       return FALSE;
     }
 
-  hwaccel_vulkan->vk_physical_device = vk_physical_device;
+  hwaccel_vulkan->physical_device =
+    grd_vk_physical_device_new (vk_physical_device, device_features);
 
   return TRUE;
 }
@@ -874,6 +870,8 @@ grd_hwaccel_vulkan_dispose (GObject *object)
   GrdHwAccelVulkan *hwaccel_vulkan = GRD_HWACCEL_VULKAN (object);
 
   free_spirv_sources (hwaccel_vulkan);
+
+  g_clear_object (&hwaccel_vulkan->physical_device);
 
   if (hwaccel_vulkan->vk_debug_messenger != VK_NULL_HANDLE)
     {

@@ -28,12 +28,6 @@
 G_DECLARE_FINAL_TYPE (GrdVkDevice, grd_vk_device,
                       GRD, VK_DEVICE, GObject)
 
-typedef enum
-{
-  GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_SAMPLED_IMAGE = 1 << 0,
-  GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_STORAGE_IMAGE = 1 << 1,
-} GrdVkDeviceFeatures;
-
 typedef struct
 {
   /* VK_KHR_external_memory_fd */
@@ -50,14 +44,11 @@ typedef struct
   VkShaderModule create_avc_dual_view;
 } GrdVkShaderModules;
 
-GrdVkDevice *grd_vk_device_new (VkPhysicalDevice          vk_physical_device,
-                                GrdVkDeviceFeatures       device_features,
+GrdVkDevice *grd_vk_device_new (GrdVkPhysicalDevice      *physical_device,
                                 const GrdVkSPIRVSources  *spirv_sources,
                                 GError                  **error);
 
-VkPhysicalDevice grd_vk_device_get_physical_device (GrdVkDevice *device);
-
-GrdVkDeviceFeatures grd_vk_device_get_device_features (GrdVkDevice *device);
+GrdVkPhysicalDevice *grd_vk_device_get_physical_device (GrdVkDevice *device);
 
 VkDevice grd_vk_device_get_device (GrdVkDevice *device);
 

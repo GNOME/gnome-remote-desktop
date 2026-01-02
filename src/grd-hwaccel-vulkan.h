@@ -20,8 +20,8 @@
 #pragma once
 
 #include <glib-object.h>
+#include <stdint.h>
 
-#include "grd-vk-device.h"
 #include "grd-types.h"
 
 #define GRD_TYPE_HWACCEL_VULKAN (grd_hwaccel_vulkan_get_type ())

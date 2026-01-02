@@ -25,6 +25,7 @@
 #include <glib/gstdio.h>
 
 #include "grd-vk-device.h"
+#include "grd-vk-physical-device.h"
 #include "grd-vk-utils.h"
 
 struct _GrdVkMemory
@@ -143,8 +144,10 @@ get_memory_type_index (GrdVkMemory               *memory,
                        uint32_t                  *memory_type_idx,
                        GError                   **error)
 {
-  VkPhysicalDevice vk_physical_device =
+  GrdVkPhysicalDevice *physical_device =
     grd_vk_device_get_physical_device (memory->device);
+  VkPhysicalDevice vk_physical_device =
+    grd_vk_physical_device_get_physical_device (physical_device);
   VkPhysicalDeviceMemoryProperties phys_dev_mem_props = {};
   uint32_t i = 0;
 

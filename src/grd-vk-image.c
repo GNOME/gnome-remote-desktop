@@ -26,6 +26,7 @@
 
 #include "grd-vk-device.h"
 #include "grd-vk-memory.h"
+#include "grd-vk-physical-device.h"
 #include "grd-vk-utils.h"
 
 struct _GrdVkImage
@@ -73,8 +74,10 @@ is_image_format_supported_by_device (GrdVkImage                  *image,
                                      const GrdVkImageDescriptor  *image_descriptor,
                                      GError                     **error)
 {
-  VkPhysicalDevice vk_physical_device =
+  GrdVkPhysicalDevice *physical_device =
     grd_vk_device_get_physical_device (image->device);
+  VkPhysicalDevice vk_physical_device =
+    grd_vk_physical_device_get_physical_device (physical_device);
   VkImageCreateInfo *image_create_info = image_descriptor->image_create_info;
   VkPhysicalDeviceImageFormatInfo2 image_format_info_2 = {};
   VkPhysicalDeviceExternalImageFormatInfo external_image_format_info = {};

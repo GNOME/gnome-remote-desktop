@@ -224,6 +224,8 @@ if have_rdp
     'grd-vk-image.h',
     'grd-vk-memory.c',
     'grd-vk-memory.h',
+    'grd-vk-physical-device.c',
+    'grd-vk-physical-device.h',
     'grd-vk-queue.c',
     'grd-vk-queue.h',
     'grd-vk-utils.c',

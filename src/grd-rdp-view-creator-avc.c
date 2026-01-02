@@ -30,6 +30,7 @@
 #include "grd-vk-device.h"
 #include "grd-vk-image.h"
 #include "grd-vk-memory.h"
+#include "grd-vk-physical-device.h"
 #include "grd-vk-queue.h"
 #include "grd-vk-utils.h"
 
@@ -1472,8 +1473,10 @@ grd_rdp_view_creator_avc_new (GrdVkDevice  *device,
                               GError      **error)
 {
   g_autoptr (GrdRdpViewCreatorAVC) view_creator_avc = NULL;
+  GrdVkPhysicalDevice *physical_device =
+    grd_vk_device_get_physical_device (device);
   GrdVkDeviceFeatures device_features =
-    grd_vk_device_get_device_features (device);
+    grd_vk_physical_device_get_device_features (physical_device);
 
   view_creator_avc = g_object_new (GRD_TYPE_RDP_VIEW_CREATOR_AVC, NULL);
   view_creator_avc->device = device;

@@ -24,6 +24,7 @@
 #include <gio/gio.h>
 
 #include "grd-hwaccel-vulkan.h"
+#include "grd-vk-physical-device.h"
 #include "grd-vk-queue.h"
 #include "grd-vk-utils.h"
 
@@ -39,8 +40,7 @@ struct _GrdVkDevice
 {
   GObject parent;
 
-  VkPhysicalDevice vk_physical_device;
-  GrdVkDeviceFeatures device_features;
+  GrdVkPhysicalDevice *physical_device;
 
   VkDevice vk_device;
   VkPipelineCache vk_pipeline_cache;
@@ -61,16 +61,10 @@ struct _GrdVkDevice
 
 G_DEFINE_TYPE (GrdVkDevice, grd_vk_device, G_TYPE_OBJECT)
 
-VkPhysicalDevice
+GrdVkPhysicalDevice *
 grd_vk_device_get_physical_device (GrdVkDevice *device)
 {
-  return device->vk_physical_device;
-}
-
-GrdVkDeviceFeatures
-grd_vk_device_get_device_features (GrdVkDevice *device)
-{
-  return device->device_features;
+  return device->physical_device;
 }
 
 VkDevice
@@ -187,7 +181,8 @@ get_queue_family_properties (VkPhysicalDevice           vk_physical_device,
 static void
 find_queue_family_with_most_queues (GrdVkDevice *device)
 {
-  VkPhysicalDevice vk_physical_device = device->vk_physical_device;
+  VkPhysicalDevice vk_physical_device =
+    grd_vk_physical_device_get_physical_device (device->physical_device);
   g_autofree VkQueueFamilyProperties2 *properties_2 = NULL;
   uint32_t n_properties_2 = 0;
   VkQueueFlags bitmask;
@@ -358,11 +353,13 @@ prepare_queue_pool (GrdVkDevice *device)
 static void
 fetch_device_properties (GrdVkDevice *device)
 {
+  VkPhysicalDevice vk_physical_device =
+    grd_vk_physical_device_get_physical_device (device->physical_device);
   VkPhysicalDeviceProperties properties = {};
   VkPhysicalDeviceProperties2 properties_2 = {};
   VkPhysicalDeviceDrmPropertiesEXT drm_properties = {};
 
-  vkGetPhysicalDeviceProperties (device->vk_physical_device, &properties);
+  vkGetPhysicalDeviceProperties (vk_physical_device, &properties);
   device->timestamp_period = properties.limits.timestampPeriod;
   device->non_coherent_atom_size = properties.limits.nonCoherentAtomSize;
 
@@ -373,16 +370,19 @@ fetch_device_properties (GrdVkDevice *device)
 
   grd_vk_append_to_chain (&properties_2, &drm_properties);
 
-  vkGetPhysicalDeviceProperties2 (device->vk_physical_device, &properties_2);
+  vkGetPhysicalDeviceProperties2 (vk_physical_device, &properties_2);
   device->drm_render_node = drm_properties.renderMinor;
 }
 
 GrdVkDevice *
-grd_vk_device_new (VkPhysicalDevice          vk_physical_device,
-                   GrdVkDeviceFeatures       device_features,
+grd_vk_device_new (GrdVkPhysicalDevice      *physical_device,
                    const GrdVkSPIRVSources  *spirv_sources,
                    GError                  **error)
 {
+  VkPhysicalDevice vk_physical_device =
+    grd_vk_physical_device_get_physical_device (physical_device);
+  GrdVkDeviceFeatures device_features =
+    grd_vk_physical_device_get_device_features (physical_device);
   g_autoptr (GrdVkDevice) device = NULL;
   VkDeviceCreateInfo device_create_info = {};
   VkPhysicalDeviceVulkan12Features vulkan12_features = {};
@@ -396,8 +396,7 @@ grd_vk_device_new (VkPhysicalDevice          vk_physical_device,
   uint32_t i;
 
   device = g_object_new (GRD_TYPE_VK_DEVICE, NULL);
-  device->vk_physical_device = vk_physical_device;
-  device->device_features = device_features;
+  device->physical_device = g_object_ref (physical_device);
 
   find_queue_family_with_most_queues (device);
   device->max_queues = MIN (device->max_queues, MAX_DEVICE_QUEUES);
@@ -464,8 +463,7 @@ grd_vk_device_new (VkPhysicalDevice          vk_physical_device,
   prepare_queue_pool (device);
   fetch_device_properties (device);
 
-  g_debug ("[HWAccel.Vulkan] Using device features: 0x%08X",
-           device->device_features);
+  g_debug ("[HWAccel.Vulkan] Using device features: 0x%08X", device_features);
 
   return g_steal_pointer (&device);
 }
@@ -527,6 +525,8 @@ grd_vk_device_finalize (GObject *object)
 
   g_assert (g_hash_table_size (device->queue_table) == 0);
   g_clear_pointer (&device->queue_table, g_hash_table_unref);
+
+  g_clear_object (&device->physical_device);
 
   G_OBJECT_CLASS (grd_vk_device_parent_class)->finalize (object);
 }
