@@ -188,75 +188,6 @@ grd_hwaccel_vulkan_get_modifiers_for_format (GrdHwAccelVulkan  *hwaccel_vulkan,
   return TRUE;
 }
 
-GrdVkDevice *
-grd_hwaccel_vulkan_acquire_device (GrdHwAccelVulkan  *hwaccel_vulkan,
-                                   GError           **error)
-{
-  return grd_vk_device_new (hwaccel_vulkan->physical_device,
-                            &hwaccel_vulkan->spirv_sources,
-                            error);
-}
-
-static gboolean
-has_vk_layer (VkLayerProperties *properties,
-              uint32_t           n_properties,
-              const char        *extension)
-{
-  uint32_t i;
-
-  for (i = 0; i < n_properties; ++i)
-    {
-      if (strcmp (properties[i].layerName, extension) == 0)
-        return TRUE;
-    }
-
-  return FALSE;
-}
-
-static gboolean
-check_instance_layers (GrdHwAccelVulkan  *hwaccel_vulkan,
-                       gboolean          *has_validation_layer,
-                       GError           **error)
-{
-  g_autofree VkLayerProperties *properties = NULL;
-  uint32_t n_properties = 0;
-  VkResult vk_result;
-
-  *has_validation_layer = FALSE;
-
-  vk_result = vkEnumerateInstanceLayerProperties (&n_properties, NULL);
-  if (vk_result != VK_SUCCESS)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to enumerate instance layer properties: %i",
-                   vk_result);
-      return FALSE;
-    }
-  if (n_properties == 0)
-    return TRUE;
-
-  properties = g_new0 (VkLayerProperties, n_properties);
-  vk_result = vkEnumerateInstanceLayerProperties (&n_properties, properties);
-  if (vk_result == VK_INCOMPLETE)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Instance layer properties changed during count fetch");
-      return FALSE;
-    }
-  if (vk_result != VK_SUCCESS)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to enumerate instance layer properties: %i",
-                   vk_result);
-      return FALSE;
-    }
-
-  *has_validation_layer = has_vk_layer (properties, n_properties,
-                                        "VK_LAYER_KHRONOS_validation");
-
-  return TRUE;
-}
-
 static gboolean
 has_vk_extension (VkExtensionProperties *properties,
                   uint32_t               n_properties,
@@ -271,223 +202,6 @@ has_vk_extension (VkExtensionProperties *properties,
     }
 
   return FALSE;
-}
-
-static gboolean
-check_instance_extensions (GrdHwAccelVulkan  *hwaccel_vulkan,
-                           gboolean          *supports_debug_utils,
-                           GError           **error)
-{
-  g_autofree VkExtensionProperties *properties = NULL;
-  uint32_t n_properties = 0;
-  VkResult vk_result;
-
-  *supports_debug_utils = FALSE;
-
-  vk_result = vkEnumerateInstanceExtensionProperties (NULL,
-                                                      &n_properties,
-                                                      NULL);
-  if (vk_result != VK_SUCCESS)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to enumerate instance extension properties: %i",
-                   vk_result);
-      return FALSE;
-    }
-  if (n_properties == 0)
-    return TRUE;
-
-  properties = g_new0 (VkExtensionProperties, n_properties);
-  vk_result = vkEnumerateInstanceExtensionProperties (NULL,
-                                                      &n_properties,
-                                                      properties);
-  if (vk_result == VK_INCOMPLETE)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Instance extension properties changed during count fetch");
-      return FALSE;
-    }
-  if (vk_result != VK_SUCCESS)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to enumerate instance extension properties: %i",
-                   vk_result);
-      return FALSE;
-    }
-
-  *supports_debug_utils = has_vk_extension (properties, n_properties,
-                                            VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-
-  return TRUE;
-}
-
-static gboolean
-load_instance_debug_funcs (GrdHwAccelVulkan  *hwaccel_vulkan,
-                           GError           **error)
-{
-  VkInstance vk_instance = hwaccel_vulkan->vk_instance;
-
-  hwaccel_vulkan->vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)
-    vkGetInstanceProcAddr (vk_instance, "vkCreateDebugUtilsMessengerEXT");
-  if (!hwaccel_vulkan->vkCreateDebugUtilsMessengerEXT)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to get instance function address for function "
-                   "\"vkCreateDebugUtilsMessengerEXT\"");
-      return FALSE;
-    }
-
-  hwaccel_vulkan->vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)
-    vkGetInstanceProcAddr (vk_instance, "vkDestroyDebugUtilsMessengerEXT");
-  if (!hwaccel_vulkan->vkDestroyDebugUtilsMessengerEXT)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to get instance function address for function "
-                   "\"vkDestroyDebugUtilsMessengerEXT\"");
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
-static const char *
-message_severity_to_string (VkDebugUtilsMessageSeverityFlagBitsEXT message_severity)
-{
-  switch (message_severity)
-    {
-    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-      return "Verbose";
-    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-      return "Info";
-    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-      return "Warning";
-    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-      return "Error";
-    default:
-      g_assert_not_reached ();
-      return NULL;
-    }
-}
-
-static VkBool32
-debug_messenger (VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity,
-                 VkDebugUtilsMessageTypeFlagsEXT             message_type_flags,
-                 const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-                 void*                                       user_data)
-{
-  g_debug ("[HWAccel.Vulkan] Debug[%s]: Types: 0x%08X: Id: [%i: %s]: %s",
-           message_severity_to_string (message_severity), message_type_flags,
-           callback_data->messageIdNumber, callback_data->pMessageIdName,
-           callback_data->pMessage);
-
-  return VK_FALSE;
-}
-
-static gboolean
-create_debug_messenger (GrdHwAccelVulkan  *hwaccel_vulkan,
-                        GError           **error)
-{
-  VkInstance vk_instance = hwaccel_vulkan->vk_instance;
-  VkDebugUtilsMessengerCreateInfoEXT create_info = {};
-  VkDebugUtilsMessengerEXT vk_debug_messenger = VK_NULL_HANDLE;
-  VkResult vk_result;
-
-  g_assert (vk_instance != VK_NULL_HANDLE);
-  g_assert (hwaccel_vulkan->vkCreateDebugUtilsMessengerEXT);
-
-  create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-  create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-                                VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-                                VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                                VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-  create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-  create_info.pfnUserCallback = debug_messenger;
-  create_info.pUserData = NULL;
-
-  vk_result =
-    hwaccel_vulkan->vkCreateDebugUtilsMessengerEXT (vk_instance,
-                                                    &create_info, NULL,
-                                                    &vk_debug_messenger);
-  if (vk_result != VK_SUCCESS)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to create debug messenger: %i", vk_result);
-      return FALSE;
-    }
-  g_assert (vk_debug_messenger != VK_NULL_HANDLE);
-
-  hwaccel_vulkan->vk_debug_messenger = vk_debug_messenger;
-
-  return TRUE;
-}
-
-static gboolean
-create_vk_instance (GrdHwAccelVulkan  *hwaccel_vulkan,
-                    GError           **error)
-{
-  VkInstanceCreateInfo instance_create_info = {};
-  VkApplicationInfo app_info = {};
-  gboolean has_validation_layer = FALSE;
-  gboolean supports_debug_utils = FALSE;
-  gboolean vulkan_debug = FALSE;
-  const char *layers[1] = {};
-  uint32_t n_layers = 0;
-  const char *extensions[1] = {};
-  uint32_t n_extensions = 0;
-  VkResult vk_result;
-
-  if (grd_get_debug_flags () & GRD_DEBUG_VK_VALIDATION)
-    vulkan_debug = TRUE;
-
-  if (!check_instance_layers (hwaccel_vulkan, &has_validation_layer, error))
-    return FALSE;
-  if (!check_instance_extensions (hwaccel_vulkan, &supports_debug_utils, error))
-    return FALSE;
-
-  app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  app_info.apiVersion = VULKAN_API_VERSION;
-
-  if (vulkan_debug)
-    {
-      if (has_validation_layer)
-        layers[n_layers++] = "VK_LAYER_KHRONOS_validation";
-      else
-        g_warning ("[HWAccel.Vulkan] VK_LAYER_KHRONOS_validation is unavailable");
-
-      if (supports_debug_utils)
-        extensions[n_extensions++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
-      else
-        g_warning ("[HWAccel.Vulkan] VK_EXT_debug_utils is unavailable");
-    }
-
-  instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  instance_create_info.pApplicationInfo = &app_info;
-  instance_create_info.enabledLayerCount = n_layers;
-  instance_create_info.ppEnabledLayerNames = layers;
-  instance_create_info.enabledExtensionCount = n_extensions;
-  instance_create_info.ppEnabledExtensionNames = extensions;
-
-  vk_result = vkCreateInstance (&instance_create_info, NULL,
-                                &hwaccel_vulkan->vk_instance);
-  if (vk_result != VK_SUCCESS)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to create instance: %i", vk_result);
-      return FALSE;
-    }
-  g_assert (hwaccel_vulkan->vk_instance != VK_NULL_HANDLE);
-
-  if (!vulkan_debug || !supports_debug_utils)
-    return TRUE;
-
-  if (!load_instance_debug_funcs (hwaccel_vulkan, error))
-    return FALSE;
-  if (!create_debug_messenger (hwaccel_vulkan, error))
-    return FALSE;
-
-  return TRUE;
 }
 
 static gboolean
@@ -826,6 +540,292 @@ find_vulkan_device_from_egl_thread (GrdHwAccelVulkan  *hwaccel_vulkan,
                                        major (stat_buf.st_rdev),
                                        minor (stat_buf.st_rdev),
                                        error))
+    return FALSE;
+
+  return TRUE;
+}
+
+GrdVkDevice *
+grd_hwaccel_vulkan_acquire_device (GrdHwAccelVulkan  *hwaccel_vulkan,
+                                   GError           **error)
+{
+  return grd_vk_device_new (hwaccel_vulkan->physical_device,
+                            &hwaccel_vulkan->spirv_sources,
+                            error);
+}
+
+static gboolean
+has_vk_layer (VkLayerProperties *properties,
+              uint32_t           n_properties,
+              const char        *extension)
+{
+  uint32_t i;
+
+  for (i = 0; i < n_properties; ++i)
+    {
+      if (strcmp (properties[i].layerName, extension) == 0)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static gboolean
+check_instance_layers (GrdHwAccelVulkan  *hwaccel_vulkan,
+                       gboolean          *has_validation_layer,
+                       GError           **error)
+{
+  g_autofree VkLayerProperties *properties = NULL;
+  uint32_t n_properties = 0;
+  VkResult vk_result;
+
+  *has_validation_layer = FALSE;
+
+  vk_result = vkEnumerateInstanceLayerProperties (&n_properties, NULL);
+  if (vk_result != VK_SUCCESS)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to enumerate instance layer properties: %i",
+                   vk_result);
+      return FALSE;
+    }
+  if (n_properties == 0)
+    return TRUE;
+
+  properties = g_new0 (VkLayerProperties, n_properties);
+  vk_result = vkEnumerateInstanceLayerProperties (&n_properties, properties);
+  if (vk_result == VK_INCOMPLETE)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Instance layer properties changed during count fetch");
+      return FALSE;
+    }
+  if (vk_result != VK_SUCCESS)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to enumerate instance layer properties: %i",
+                   vk_result);
+      return FALSE;
+    }
+
+  *has_validation_layer = has_vk_layer (properties, n_properties,
+                                        "VK_LAYER_KHRONOS_validation");
+
+  return TRUE;
+}
+
+static gboolean
+check_instance_extensions (GrdHwAccelVulkan  *hwaccel_vulkan,
+                           gboolean          *supports_debug_utils,
+                           GError           **error)
+{
+  g_autofree VkExtensionProperties *properties = NULL;
+  uint32_t n_properties = 0;
+  VkResult vk_result;
+
+  *supports_debug_utils = FALSE;
+
+  vk_result = vkEnumerateInstanceExtensionProperties (NULL,
+                                                      &n_properties,
+                                                      NULL);
+  if (vk_result != VK_SUCCESS)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to enumerate instance extension properties: %i",
+                   vk_result);
+      return FALSE;
+    }
+  if (n_properties == 0)
+    return TRUE;
+
+  properties = g_new0 (VkExtensionProperties, n_properties);
+  vk_result = vkEnumerateInstanceExtensionProperties (NULL,
+                                                      &n_properties,
+                                                      properties);
+  if (vk_result == VK_INCOMPLETE)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Instance extension properties changed during count fetch");
+      return FALSE;
+    }
+  if (vk_result != VK_SUCCESS)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to enumerate instance extension properties: %i",
+                   vk_result);
+      return FALSE;
+    }
+
+  *supports_debug_utils = has_vk_extension (properties, n_properties,
+                                            VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+  return TRUE;
+}
+
+static gboolean
+load_instance_debug_funcs (GrdHwAccelVulkan  *hwaccel_vulkan,
+                           GError           **error)
+{
+  VkInstance vk_instance = hwaccel_vulkan->vk_instance;
+
+  hwaccel_vulkan->vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)
+    vkGetInstanceProcAddr (vk_instance, "vkCreateDebugUtilsMessengerEXT");
+  if (!hwaccel_vulkan->vkCreateDebugUtilsMessengerEXT)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to get instance function address for function "
+                   "\"vkCreateDebugUtilsMessengerEXT\"");
+      return FALSE;
+    }
+
+  hwaccel_vulkan->vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)
+    vkGetInstanceProcAddr (vk_instance, "vkDestroyDebugUtilsMessengerEXT");
+  if (!hwaccel_vulkan->vkDestroyDebugUtilsMessengerEXT)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to get instance function address for function "
+                   "\"vkDestroyDebugUtilsMessengerEXT\"");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static const char *
+message_severity_to_string (VkDebugUtilsMessageSeverityFlagBitsEXT message_severity)
+{
+  switch (message_severity)
+    {
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+      return "Verbose";
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+      return "Info";
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+      return "Warning";
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+      return "Error";
+    default:
+      g_assert_not_reached ();
+      return NULL;
+    }
+}
+
+static VkBool32
+debug_messenger (VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity,
+                 VkDebugUtilsMessageTypeFlagsEXT             message_type_flags,
+                 const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+                 void*                                       user_data)
+{
+  g_debug ("[HWAccel.Vulkan] Debug[%s]: Types: 0x%08X: Id: [%i: %s]: %s",
+           message_severity_to_string (message_severity), message_type_flags,
+           callback_data->messageIdNumber, callback_data->pMessageIdName,
+           callback_data->pMessage);
+
+  return VK_FALSE;
+}
+
+static gboolean
+create_debug_messenger (GrdHwAccelVulkan  *hwaccel_vulkan,
+                        GError           **error)
+{
+  VkInstance vk_instance = hwaccel_vulkan->vk_instance;
+  VkDebugUtilsMessengerCreateInfoEXT create_info = {};
+  VkDebugUtilsMessengerEXT vk_debug_messenger = VK_NULL_HANDLE;
+  VkResult vk_result;
+
+  g_assert (vk_instance != VK_NULL_HANDLE);
+  g_assert (hwaccel_vulkan->vkCreateDebugUtilsMessengerEXT);
+
+  create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+  create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                                VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+                                VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+  create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+  create_info.pfnUserCallback = debug_messenger;
+  create_info.pUserData = NULL;
+
+  vk_result =
+    hwaccel_vulkan->vkCreateDebugUtilsMessengerEXT (vk_instance,
+                                                    &create_info, NULL,
+                                                    &vk_debug_messenger);
+  if (vk_result != VK_SUCCESS)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create debug messenger: %i", vk_result);
+      return FALSE;
+    }
+  g_assert (vk_debug_messenger != VK_NULL_HANDLE);
+
+  hwaccel_vulkan->vk_debug_messenger = vk_debug_messenger;
+
+  return TRUE;
+}
+
+static gboolean
+create_vk_instance (GrdHwAccelVulkan  *hwaccel_vulkan,
+                    GError           **error)
+{
+  VkInstanceCreateInfo instance_create_info = {};
+  VkApplicationInfo app_info = {};
+  gboolean has_validation_layer = FALSE;
+  gboolean supports_debug_utils = FALSE;
+  gboolean vulkan_debug = FALSE;
+  const char *layers[1] = {};
+  uint32_t n_layers = 0;
+  const char *extensions[1] = {};
+  uint32_t n_extensions = 0;
+  VkResult vk_result;
+
+  if (grd_get_debug_flags () & GRD_DEBUG_VK_VALIDATION)
+    vulkan_debug = TRUE;
+
+  if (!check_instance_layers (hwaccel_vulkan, &has_validation_layer, error))
+    return FALSE;
+  if (!check_instance_extensions (hwaccel_vulkan, &supports_debug_utils, error))
+    return FALSE;
+
+  app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  app_info.apiVersion = VULKAN_API_VERSION;
+
+  if (vulkan_debug)
+    {
+      if (has_validation_layer)
+        layers[n_layers++] = "VK_LAYER_KHRONOS_validation";
+      else
+        g_warning ("[HWAccel.Vulkan] VK_LAYER_KHRONOS_validation is unavailable");
+
+      if (supports_debug_utils)
+        extensions[n_extensions++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+      else
+        g_warning ("[HWAccel.Vulkan] VK_EXT_debug_utils is unavailable");
+    }
+
+  instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  instance_create_info.pApplicationInfo = &app_info;
+  instance_create_info.enabledLayerCount = n_layers;
+  instance_create_info.ppEnabledLayerNames = layers;
+  instance_create_info.enabledExtensionCount = n_extensions;
+  instance_create_info.ppEnabledExtensionNames = extensions;
+
+  vk_result = vkCreateInstance (&instance_create_info, NULL,
+                                &hwaccel_vulkan->vk_instance);
+  if (vk_result != VK_SUCCESS)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create instance: %i", vk_result);
+      return FALSE;
+    }
+  g_assert (hwaccel_vulkan->vk_instance != VK_NULL_HANDLE);
+
+  if (!vulkan_debug || !supports_debug_utils)
+    return TRUE;
+
+  if (!load_instance_debug_funcs (hwaccel_vulkan, error))
+    return FALSE;
+  if (!create_debug_messenger (hwaccel_vulkan, error))
     return FALSE;
 
   return TRUE;
