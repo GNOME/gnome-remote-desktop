@@ -441,7 +441,8 @@ on_handle_import_certificate (GrdDBusRemoteDesktopConfigurationRdpServer *config
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  rdp_certificate = freerdp_certificate_new_from_file (certificate_filename);
+  if (certificate_filename)
+    rdp_certificate = freerdp_certificate_new_from_file (certificate_filename);
 
   if (!rdp_certificate)
     {
@@ -461,7 +462,8 @@ on_handle_import_certificate (GrdDBusRemoteDesktopConfigurationRdpServer *config
       return G_DBUS_METHOD_INVOCATION_HANDLED;
     }
 
-  rdp_private_key = freerdp_key_new_from_file (key_filename);
+  if (key_filename)
+    rdp_private_key = freerdp_key_new_from_file (key_filename);
 
   if (!rdp_private_key)
     {
