@@ -1234,8 +1234,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdpAutoDetect *rdp_autodetect;
   RdpPeerContext *rdp_peer_context;
   rdpSettings *rdp_settings;
-  rdpCertificate *rdp_certificate;
-  rdpPrivateKey *rdp_private_key;
+  rdpCertificate *rdp_certificate = NULL;
+  rdpPrivateKey *rdp_private_key = NULL;
 
   use_client_configs = session_rdp->screen_share_mode ==
                        GRD_RDP_SCREEN_SHARE_MODE_EXTEND;
@@ -1287,7 +1287,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
                 "rdp-server-key", &server_key,
                 NULL);
 
-  rdp_certificate = freerdp_certificate_new_from_pem (server_cert);
+  if (server_cert)
+    rdp_certificate = freerdp_certificate_new_from_pem (server_cert);
   if (!rdp_certificate)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -1299,7 +1300,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
                                          rdp_certificate, 1))
     g_assert_not_reached ();
 
-  rdp_private_key = freerdp_key_new_from_pem (server_key);
+  if (server_key)
+    rdp_private_key = freerdp_key_new_from_pem (server_key);
   if (!rdp_private_key)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
