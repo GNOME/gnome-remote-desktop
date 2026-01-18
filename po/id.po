@@ -5,18 +5,18 @@
 # Kukuh Syafaat <kukuhsyafaat@gnome.org, 2021-2022, 2024.
 msgid ""
 msgstr ""
-"Project-Id-Version: gnome-remote-desktop master\n"
+"Project-Id-Version: gnome-remote-desktop gnome-49\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2025-03-10 20:09+0000\n"
-"PO-Revision-Date: 2025-03-12 04:24+0700\n"
+"POT-Creation-Date: 2025-10-10 14:50+0000\n"
+"PO-Revision-Date: 2026-01-18 19:35+0700\n"
 "Last-Translator: Andika Triwidada <andika@gmail.com>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.8\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
@@ -46,28 +46,28 @@ msgstr ""
 "Otentikasi diperlukan untuk mengaktifkan atau menonaktifkan daemon sistem "
 "gnome-remote-desktop"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
+#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
 msgid "GNOME Remote Desktop Handover Daemon"
 msgstr "Daemon Handover GNOME Destop Jarak Jauh"
 
-#: src/grd-ctl.c:70
+#: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Penggunaan: %s [OPSI...] PERINTAH [SUBPERINTAH]...\n"
 
-#: src/grd-ctl.c:305
+#: src/grd-ctl.c:307
 msgid "Username: "
 msgstr "Nama pengguna: "
 
-#: src/grd-ctl.c:317 src/grd-ctl.c:460
+#: src/grd-ctl.c:319 src/grd-ctl.c:475
 msgid "Password: "
 msgstr "Kata sandi: "
 
-#: src/grd-ctl.c:590
+#: src/grd-ctl.c:605
 msgid "Commands:\n"
 msgstr "Perintah:\n"
 
-#: src/grd-ctl.c:595
+#: src/grd-ctl.c:610
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -125,7 +125,7 @@ msgstr ""
 "                                                   port yang berbeda\n"
 "\n"
 
-#: src/grd-ctl.c:619
+#: src/grd-ctl.c:634
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -167,36 +167,40 @@ msgstr ""
 "                                               port yang berbeda\n"
 "\n"
 
-#: src/grd-ctl.c:639
+#: src/grd-ctl.c:654
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
-"  --headless                                 - Use headless credentials "
-"storage\n"
+"  --headless                                 - Configure headless daemon\n"
+"                                               running on a user session\n"
 "  --system                                   - Configure system daemon\n"
+"                                               for remote login\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Tampilkan status saat ini\n"
 "\n"
 "Opsi:\n"
-"  --headless                                 - Gunakan penyimpanan "
-"kredensial headless\n"
+"  --headless                                 - Konfigurasikan daemon "
+"headless\n"
+"                                               yang berjalan pada sesi "
+"pengguna\n"
 "  --system                                   - Konfigurasikan daemon sistem\n"
+"                                               untuk log masuk jarak jauh\n"
 "  --help                                     - Cetak teks bantuan ini\n"
 
-#: src/grd-daemon.c:992
+#: src/grd-daemon.c:995
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Destop Jarak Jauh"
 
-#: src/grd-daemon-handover.c:297 src/grd-daemon-handover.c:358
+#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "Lanjutkan Dengan Koneksi Tidak Aman?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:300 src/grd-daemon-handover.c:362
+#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -205,15 +209,15 @@ msgid ""
 msgstr ""
 "Koneksi Remote Desktop ini tidak aman. Untuk mengamankan koneksi ini, "
 "aktifkan Keamanan RDSTLS di klien Anda dengan menyimpan pengaturan koneksi "
-"di klien Anda sebagai berkas RDP dan atur \"gunakan nama server pengalihan:"
-"i:1\" di dalamnya."
+"di klien Anda sebagai berkas RDP dan atur \"gunakan nama server "
+"pengalihan:i:1\" di dalamnya."
 
-#: src/grd-daemon-handover.c:305 src/grd-daemon-handover.c:367
+#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
 #, c-format
 msgid "Disconnect"
 msgstr "Putuskan"
 
-#: src/grd-daemon-handover.c:306 src/grd-daemon-handover.c:368
+#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
 #, c-format
 msgid "Continue"
 msgstr "Lanjutkan"
@@ -259,19 +263,23 @@ msgid "Refuse"
 msgstr "Tolak"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
 msgid "The port used by the RDP server"
 msgstr "Port yang digunakan oleh peladen RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr ""
 "Klien RDP akan terhubung ke port ini untuk menggunakan peladen RDP ini."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 msgid "Search a different RDP port if the configured one is used"
 msgstr "Cari port RDP lain jika port yang dikonfigurasi digunakan"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -281,10 +289,12 @@ msgstr ""
 "port yang dikonfigurasi."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Apakah backend RDP diaktifkan atau tidak"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Jika diatur ke 'true' backend RDP akan diinisialisasi."
 
@@ -337,7 +347,7 @@ msgid "Path to the private key file"
 msgstr "Path ke berkas kunci privat"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:131
 msgid "Only allow remote connections to view the screen content"
 msgstr "Hanya perbolehkan sambungan jarak jauh melihat isi layar"
 
@@ -349,20 +359,24 @@ msgstr ""
 "Jika view-only berisi true, koneksi RDP jarak jauh tidak dapat memanipulasi "
 "perangkat masukan (mis. tetikus dan papan ketik)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:180
 msgid "The port used by the VNC server"
 msgstr "Port yang digunakan oleh peladen VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:181
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr ""
 "Klien VNC akan terhubung ke port ini untuk menggunakan peladen VNC ini."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:187
 msgid "Search a different VNC port if the configured one is used"
 msgstr "Cari port VNC lain jika port yang dikonfigurasi digunakan"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:116
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -371,15 +385,17 @@ msgstr ""
 "mendengarkan port pertama yang tersedia dari 10 port berikutnya mulai dari "
 "port yang dikonfigurasi."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:196
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Apakah backend VNC diaktifkan atau tidak"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:197
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Jika diatur ke 'true' backend VNC akan diinisialisasi."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:132
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -387,11 +403,11 @@ msgstr ""
 "Jika view-only berisi true, koneksi VNC jarak jauh tidak dapat memanipulasi "
 "perangkat masukan (mis. tetikus dan papan ketik)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:139
 msgid "Method used to authenticate VNC connections"
 msgstr "Metode yang digunakan untuk mengautentikasi koneksi VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:140
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -406,11 +422,11 @@ msgstr ""
 "menyetujui koneksi baru. * kata sandi - dengan mengharuskan klien jarak jauh "
 "untuk memberikan kata sandi yang diketahui"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
 msgid "Screenshare mode of VNC connections"
 msgstr "Mode berbagi layar koneksi VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:153
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
