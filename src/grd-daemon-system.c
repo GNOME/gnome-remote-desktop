@@ -1005,8 +1005,7 @@ register_handover_for_display (GrdDaemonSystem         *daemon_system,
   session_id = grd_dbus_gdm_remote_display_get_session_id (remote_display);
   if (!session_id || strcmp (session_id, "") == 0)
     {
-      g_signal_connect (G_OBJECT (remote_display),
-                        "notify::session-id",
+      g_signal_connect (remote_display, "notify::session-id",
                         G_CALLBACK (on_gdm_remote_display_session_id_changed),
                         remote_client);
       return;
