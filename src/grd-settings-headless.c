@@ -71,6 +71,9 @@ grd_settings_headless_constructed (GObject *object)
   g_settings_bind (settings->rdp_settings, "auth-methods",
                    settings, "rdp-auth-methods",
                    G_SETTINGS_BIND_DEFAULT);
+  g_settings_bind (settings->rdp_settings, "kerberos-keytab",
+                   settings, "rdp-kerberos-keytab",
+                   G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->common_rdp_settings, "tls-cert",
                    settings, "rdp-server-cert-path",
                    G_SETTINGS_BIND_DEFAULT);

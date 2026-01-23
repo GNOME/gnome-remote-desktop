@@ -16,6 +16,7 @@ deps = [
   pipewire_dep,
   libei_dep,
   libnotify_dep,
+  krb5_dep,
   epoxy_dep,
   drm_dep,
   xkbcommon_dep,

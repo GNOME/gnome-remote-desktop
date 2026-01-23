@@ -202,6 +202,9 @@ export_rdp_server_interface (GrdDaemon *daemon)
   g_object_bind_property (settings, "rdp-auth-methods",
                           rdp_server_interface, "auth-methods",
                           G_BINDING_SYNC_CREATE);
+  g_object_bind_property (settings, "rdp-kerberos-keytab",
+                          rdp_server_interface, "kerberos-keytab",
+                          G_BINDING_SYNC_CREATE);
   g_object_bind_property (settings, "rdp-view-only",
                           rdp_server_interface, "view-only",
                           G_BINDING_SYNC_CREATE);
@@ -252,6 +255,10 @@ start_rdp_server_when_ready (GrdDaemon *daemon,
                            daemon, G_CONNECT_SWAPPED);
   g_signal_connect_object (G_OBJECT (settings),
                            "notify::rdp-auth-methods",
+                           G_CALLBACK (maybe_start_rdp_server),
+                           daemon, G_CONNECT_SWAPPED);
+  g_signal_connect_object (G_OBJECT (settings),
+                           "notify::rdp-kerberos-keytab",
                            G_CALLBACK (maybe_start_rdp_server),
                            daemon, G_CONNECT_SWAPPED);
 }
@@ -310,6 +317,7 @@ maybe_start_rdp_server (GrdDaemon *daemon)
   GrdSettings *settings = grd_context_get_settings (priv->context);
   g_autoptr (GError) error = NULL;
   GrdRdpAuthMethods auth_methods = 0;
+  g_autofree char *kerberos_keytab = NULL;
   g_autofree char *certificate = NULL;
   g_autofree char *key = NULL;
   gboolean rdp_enabled = FALSE;
@@ -323,6 +331,7 @@ maybe_start_rdp_server (GrdDaemon *daemon)
   g_object_get (G_OBJECT (settings),
                 "rdp-enabled", &rdp_enabled,
                 "rdp-auth-methods", &auth_methods,
+                "rdp-kerberos-keytab", &kerberos_keytab,
                 "rdp-server-cert", &certificate,
                 "rdp-server-key", &key,
                 NULL);
@@ -335,6 +344,10 @@ maybe_start_rdp_server (GrdDaemon *daemon)
       g_warning ("No RDP auth methods configured, not enabling server.");
       return;
     }
+
+  if (auth_methods & GRD_RDP_AUTH_METHOD_KERBEROS &&
+      !kerberos_keytab)
+    return;
 
   if ((certificate && key) ||
       grd_context_get_runtime_mode (priv->context) == GRD_RUNTIME_MODE_HANDOVER)

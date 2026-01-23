@@ -49,4 +49,5 @@ typedef enum
 typedef enum
 {
   GRD_RDP_AUTH_METHOD_CREDENTIALS = 1 << 0,
+  GRD_RDP_AUTH_METHOD_KERBEROS = 1 << 1,
 } GrdRdpAuthMethods;

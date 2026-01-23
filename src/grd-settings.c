@@ -59,6 +59,7 @@ enum
   PROP_RDP_SERVER_KEY_PATH,
   PROP_VNC_AUTH_METHOD,
   PROP_RDP_AUTH_METHODS,
+  PROP_RDP_KERBEROS_KEYTAB,
 };
 
 typedef struct _GrdSettingsPrivate
@@ -78,6 +79,7 @@ typedef struct _GrdSettingsPrivate
     char *server_key;
     char *server_cert_path;
     char *server_key_path;
+    char *kerberos_keytab;
   } rdp;
   struct {
     int port;
@@ -450,6 +452,9 @@ grd_settings_get_property (GObject    *object,
     case PROP_RDP_AUTH_METHODS:
       g_value_set_flags (value, priv->rdp.auth_methods);
       break;
+    case PROP_RDP_KERBEROS_KEYTAB:
+      g_value_set_string (value, priv->rdp.kerberos_keytab);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -589,6 +594,10 @@ grd_settings_set_property (GObject      *object,
       break;
     case PROP_RDP_AUTH_METHODS:
       priv->rdp.auth_methods = g_value_get_flags (value);
+      break;
+    case PROP_RDP_KERBEROS_KEYTAB:
+      g_clear_pointer (&priv->rdp.kerberos_keytab, g_free);
+      priv->rdp.kerberos_keytab = g_value_dup_string (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -781,4 +790,13 @@ grd_settings_class_init (GrdSettingsClass *klass)
                                                        G_PARAM_READWRITE |
                                                        G_PARAM_CONSTRUCT |
                                                        G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_RDP_KERBEROS_KEYTAB,
+                                   g_param_spec_string ("rdp-kerberos-keytab",
+                                                        "rdp kerberos keypath",
+                                                        "rdp kerberos keypath",
+                                                        NULL,
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_CONSTRUCT |
+                                                        G_PARAM_STATIC_STRINGS));
 }

@@ -26,7 +26,10 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
 #include <gio/gio.h>
+#include <glib-unix.h>
+#include <krb5.h>
 #include <linux/input-event-codes.h>
+#include <pwd.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include "grd-clipboard-rdp.h"
@@ -933,6 +936,175 @@ rdp_autodetect_on_connect_time_autodetect_begin (rdpAutoDetect *rdp_autodetect)
   return FREERDP_AUTODETECT_STATE_REQUEST;
 }
 
+static GrdRdpAuthMethods
+get_effective_auth_method (rdpContext *rdp_context)
+{
+  GrdRdpAuthMethods auth_method = -1;
+  SECURITY_STATUS status;
+  SecPkgContext_PackageInfo package_info = {};
+
+  status = freerdp_nla_QueryContextAttributes (rdp_context,
+                                               SECPKG_ATTR_PACKAGE_INFO,
+                                               &package_info);
+  if (status != SEC_E_OK)
+    {
+      g_warning ("Failed to query NLA context package info: %s",
+                 GetSecurityStatusString (status));
+      return FALSE;
+    }
+
+  if (g_strcmp0 (package_info.PackageInfo->Name, KERBEROS_SSP_NAME) == 0)
+    auth_method = GRD_RDP_AUTH_METHOD_KERBEROS;
+  else if (g_strcmp0 (package_info.PackageInfo->Name, NTLM_SSP_NAME) == 0)
+    auth_method = GRD_RDP_AUTH_METHOD_CREDENTIALS;
+  else
+    g_warning ("Unknown NLA context package '%s'", package_info.PackageInfo->Name);
+
+  freerdp_nla_FreeContextBuffer (rdp_context, package_info.PackageInfo);
+  return auth_method;
+}
+
+static gboolean
+is_auth_identity_current_user (const SecPkgContext_AuthIdentity *auth_identity)
+{
+  krb5_error_code kret;
+  g_autofree char *principal_string = NULL;
+  krb5_context krb5_context = NULL;
+  krb5_principal principal = NULL;
+  char local_name[256 + 1];
+  g_autofree struct passwd *pwd = NULL;
+  g_autoptr (GError) error = NULL;
+  uid_t current_uid;
+
+  kret = krb5_init_context (&krb5_context);
+  if (kret)
+    {
+      g_critical ("Failed to initialize krb5 context");
+      return FALSE;
+    }
+
+  principal_string = g_strdup_printf ("%s@%s",
+                                      auth_identity->User,
+                                      auth_identity->Domain);
+
+  kret = krb5_parse_name (krb5_context, principal_string, &principal);
+  if (kret)
+    {
+      g_critical ("Failed to parse principal string %s", principal_string);
+      goto err;
+    }
+
+  kret = krb5_aname_to_localname (krb5_context, principal,
+                                  sizeof (local_name), local_name);
+  if (kret)
+    {
+      g_critical ("Failed to map principal '%s' name to local name",
+                  principal_string);
+      return FALSE;
+      goto err;
+    }
+
+  pwd = g_unix_get_passwd_entry (local_name, &error);
+  if (error)
+    {
+      g_critical ("Failed to get passwd field for %s: %s",
+                  local_name, error->message);
+      goto err;
+    }
+
+  if (!pwd)
+    {
+      g_warning ("Tried to authenticate with invalid user %s", local_name);
+      goto err;
+    }
+
+  krb5_free_principal (krb5_context, principal);
+  krb5_free_context (krb5_context);
+
+  current_uid = getuid ();
+  if (pwd->pw_uid == current_uid)
+    {
+      g_debug ("[RDP] Kerberos principal %s match current user %s (%u), "
+               "accepting.",
+               principal_string,
+               local_name,
+               current_uid);
+      return TRUE;
+    }
+  else
+    {
+      return FALSE;
+    }
+
+err:
+  if (principal)
+    krb5_free_principal (krb5_context, principal);
+  if (krb5_context)
+    krb5_free_context (krb5_context);
+  return FALSE;
+}
+
+static BOOL
+rdp_peer_logon (freerdp_peer                  *peer,
+                const SEC_WINNT_AUTH_IDENTITY *identity,
+                BOOL                           automatic)
+{
+  rdpContext *rdp_context = peer->context;
+  RdpPeerContext *rdp_peer_context = (RdpPeerContext *) rdp_context;
+  GrdSessionRdp *session_rdp = rdp_peer_context->session_rdp;
+  GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
+  GrdRdpAuthMethods auth_method;
+  SECURITY_STATUS status;
+  SecPkgContext_AuthIdentity auth_identity = {};
+
+  auth_method = get_effective_auth_method (rdp_context);
+
+  if (auth_method == -1)
+    return FALSE;
+
+  switch (auth_method)
+    {
+    case GRD_RDP_AUTH_METHOD_CREDENTIALS:
+      g_debug ("[RDP] Authenticated using NTLM, "
+               "not applying any additional policy.");
+      return TRUE;
+    case GRD_RDP_AUTH_METHOD_KERBEROS:
+      break;
+    }
+
+  status = freerdp_nla_QueryContextAttributes (rdp_context,
+                                               SECPKG_ATTR_AUTH_IDENTITY,
+                                               &auth_identity);
+
+  if (status != SEC_E_OK)
+    {
+      g_warning ("Failed to authenticate Kerberos principal: %s",
+                 GetSecurityStatusString (status));
+      return FALSE;
+    }
+
+  switch (grd_context_get_runtime_mode (context))
+    {
+    case GRD_RUNTIME_MODE_HEADLESS:
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+      if (is_auth_identity_current_user (&auth_identity))
+        {
+          return TRUE;
+        }
+      else
+        {
+          g_debug ("[RDP] Kerberos principal doesn't match current user, "
+                   "disconnecting");
+          return FALSE;
+        }
+    case GRD_RUNTIME_MODE_SYSTEM:
+    case GRD_RUNTIME_MODE_HANDOVER:
+      g_assert_not_reached ();
+    }
+
+  g_assert_not_reached ();
+}
+
 static uint32_t
 get_max_monitor_count (GrdSessionRdp *session_rdp)
 {
@@ -1234,6 +1406,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
   GrdSettings *settings = grd_context_get_settings (context);
   GSocket *socket = g_socket_connection_get_socket (session_rdp->connection);
+  GrdRdpAuthMethods auth_methods = 0;
   g_autofree char *server_cert = NULL;
   g_autofree char *server_key = NULL;
   gboolean use_client_configs;
@@ -1261,6 +1434,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   peer->ContextSize = sizeof (RdpPeerContext);
   peer->ContextFree = (psPeerContextFree) rdp_peer_context_free;
   peer->ContextNew = (psPeerContextNew) rdp_peer_context_new;
+
   if (!freerdp_peer_context_new (peer))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -1273,21 +1447,47 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdp_peer_context = (RdpPeerContext *) peer->context;
   rdp_peer_context->session_rdp = session_rdp;
 
-  session_rdp->sam_file = grd_rdp_sam_create_sam_file (username, password);
-  if (!session_rdp->sam_file)
+  rdp_settings = peer->context->settings;
+  g_object_get (G_OBJECT (settings),
+                "rdp-auth-methods", &auth_methods,
+                NULL);
+  g_assert (auth_methods);
+
+  if (auth_methods & GRD_RDP_AUTH_METHOD_CREDENTIALS)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to create SAM database");
-      return FALSE;
+      session_rdp->sam_file = grd_rdp_sam_create_sam_file (username, password);
+      if (!session_rdp->sam_file)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Failed to create SAM database");
+          return FALSE;
+        }
+      if (!freerdp_settings_set_string (rdp_settings, FreeRDP_NtlmSamFile,
+                                        session_rdp->sam_file->filename))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Failed to set path of SAM database");
+          return FALSE;
+        }
     }
 
-  rdp_settings = peer->context->settings;
-  if (!freerdp_settings_set_string (rdp_settings, FreeRDP_NtlmSamFile,
-                                    session_rdp->sam_file->filename))
+  if (auth_methods & GRD_RDP_AUTH_METHOD_KERBEROS)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Failed to set path of SAM database");
-      return FALSE;
+      g_autofree char *kerberos_keytab = NULL;
+
+      g_object_get (G_OBJECT (settings),
+                    "rdp-kerberos-keytab", &kerberos_keytab,
+                    NULL);
+
+      g_debug ("[RDP] Enabling Kerberos authentication using %s", kerberos_keytab);
+
+      if (!freerdp_settings_set_string (rdp_settings, FreeRDP_KerberosKeytab,
+                                        kerberos_keytab))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Failed to set Kerberos keytab");
+          return FALSE;
+        }
     }
 
   g_object_get (G_OBJECT (settings),
@@ -1373,6 +1573,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_RemoteConsoleAudio, TRUE);
 
+  peer->Logon =  rdp_peer_logon;
   peer->Capabilities = rdp_peer_capabilities;
   peer->PostConnect = rdp_peer_post_connect;
   peer->Activate = rdp_peer_activate;

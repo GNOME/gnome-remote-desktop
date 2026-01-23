@@ -85,6 +85,15 @@
         must be selected.
       </description>
     </key>
+    <key name='kerberos-keytab' type='s'>
+      <default>''</default>
+      <summary>A path to a Kerberos keytab file</summary>
+      <description>
+        When 'kerberos' is enabled as an authentication method, the TERMSRV
+        Kerberos service principal in this keytab file will be used for
+        authentication.
+      </description>
+    </key>
   </schema>
   <schema id='org.gnome.desktop.remote-desktop.rdp.headless' path='/org/gnome/desktop/remote-desktop/rdp/headless/'>
     <key name='port' type='q'>
@@ -117,6 +126,15 @@
         Allowed authentication methods. Multiple may be selected to allow
         different authentication mechanisms. At least one authentication method
         must be selected.
+      </description>
+    </key>
+    <key name='kerberos-keytab' type='s'>
+      <default>''</default>
+      <summary>A path to a Kerberos keytab file</summary>
+      <description>
+        When 'kerberos' is enabled as an authentication method, the TERMSRV
+        Kerberos service principal in this keytab file will be used for
+        authentication.
       </description>
     </key>
   </schema>

@@ -33,6 +33,7 @@
     <property name="TlsFingerprint" type="s" access="read" />
     <property name="TlsKey" type="s" access="read" />
     <property name="AuthMethods" type="u" access="read" />
+    <property name="KerberosKeytab" type="s" access="read" />
     <property name="ViewOnly" type="b" access="read" />
 
     <!--
@@ -62,6 +63,7 @@
     <property name="TlsFingerprint" type="s" access="read" />
     <property name="TlsKey" type="s" access="read" />
     <property name="AuthMethods" type="u" access="read" />
+    <property name="KerberosKeytab" type="s" access="read" />
 
     <method name="Enable" />
 

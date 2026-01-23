@@ -6,7 +6,7 @@ project('gnome-remote-desktop', 'c',
 
 cuda_req = '>= 11.1.5.0'
 epoxy_req = '>= 1.4'
-freerdp_req = '>= 3.15.0'
+freerdp_req = '>= 3.22.0'
 fuse_req = '>= 3.9.1'
 polkit_req = '>= 122'
 vulkan_req = '>= 1.2.0'
@@ -29,6 +29,7 @@ libei_dep = dependency('libei-1.0', version: libei_req)
 libnotify_dep = dependency('libnotify')
 libsecret_dep = dependency('libsecret-1')
 libsystemd_dep = dependency('libsystemd', required: false)
+krb5_dep = dependency('krb5')
 pipewire_dep = dependency('libpipewire-0.3', version: '>= 1.2.0')
 systemd_dep = dependency('systemd', required: get_option('systemd'))
 tss2_esys_dep = dependency('tss2-esys')
