@@ -645,6 +645,9 @@ grd_configuration_startup (GApplication *application)
   g_object_bind_property (configuration->settings, "rdp-server-key-path",
                           configuration->configuration_rdp_server, "tls-key",
                           G_BINDING_SYNC_CREATE);
+  g_object_bind_property (configuration->settings, "rdp-auth-methods",
+                          configuration->configuration_rdp_server, "auth-methods",
+                          G_BINDING_SYNC_CREATE);
   g_signal_connect_object (configuration->configuration_rdp_server, "handle-enable",
                            G_CALLBACK (on_handle_enable),
                            configuration, 0);

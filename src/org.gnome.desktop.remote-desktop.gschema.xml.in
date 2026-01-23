@@ -76,6 +76,15 @@
         devices (e.g. mouse and keyboard).
       </description>
     </key>
+    <key name='auth-methods' flags='org.gnome.desktop.remote-desktop.GrdRdpAuthMethods'>
+      <default>['credentials']</default>
+      <summary>Allowed authentication methods</summary>
+      <description>
+        Allowed authentication methods. Multiple may be selected to allow
+        different authentication mechanisms. At least one authentication method
+        must be selected.
+      </description>
+    </key>
   </schema>
   <schema id='org.gnome.desktop.remote-desktop.rdp.headless' path='/org/gnome/desktop/remote-desktop/rdp/headless/'>
     <key name='port' type='q'>
@@ -99,6 +108,15 @@
       <summary>Whether the RDP backend is enabled or not</summary>
       <description>
         If set to 'true' the RDP backend will be initialized.
+      </description>
+    </key>
+    <key name='auth-methods' flags='org.gnome.desktop.remote-desktop.GrdRdpAuthMethods'>
+      <default>['credentials']</default>
+      <summary>Allowed authentication methods</summary>
+      <description>
+        Allowed authentication methods. Multiple may be selected to allow
+        different authentication mechanisms. At least one authentication method
+        must be selected.
       </description>
     </key>
   </schema>

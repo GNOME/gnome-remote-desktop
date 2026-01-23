@@ -45,3 +45,8 @@ typedef enum
   GRD_RUNTIME_MODE_SYSTEM,
   GRD_RUNTIME_MODE_HANDOVER,
 } GrdRuntimeMode;
+
+typedef enum
+{
+  GRD_RDP_AUTH_METHOD_CREDENTIALS = 1 << 0,
+} GrdRdpAuthMethods;

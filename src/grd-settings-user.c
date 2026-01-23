@@ -73,6 +73,9 @@ grd_settings_user_constructed (GObject *object)
   g_settings_bind (settings->rdp_settings, "screen-share-mode",
                    settings, "rdp-screen-share-mode",
                    G_SETTINGS_BIND_DEFAULT);
+  g_settings_bind (settings->rdp_settings, "auth-methods",
+                   settings, "rdp-auth-methods",
+                   G_SETTINGS_BIND_DEFAULT);
   g_settings_bind (settings->vnc_settings, "enable",
                    settings, "vnc-enabled",
                    G_SETTINGS_BIND_DEFAULT);

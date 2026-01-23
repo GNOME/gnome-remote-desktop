@@ -58,6 +58,7 @@ enum
   PROP_RDP_SERVER_CERT_PATH,
   PROP_RDP_SERVER_KEY_PATH,
   PROP_VNC_AUTH_METHOD,
+  PROP_RDP_AUTH_METHODS,
 };
 
 typedef struct _GrdSettingsPrivate
@@ -71,6 +72,7 @@ typedef struct _GrdSettingsPrivate
     gboolean is_enabled;
     gboolean view_only;
     GrdRdpScreenShareMode screen_share_mode;
+    GrdRdpAuthMethods auth_methods;
     char *server_cert;
     char *server_fingerprint;
     char *server_key;
@@ -445,6 +447,9 @@ grd_settings_get_property (GObject    *object,
       else
         g_value_set_enum (value, priv->vnc.auth_method);
       break;
+    case PROP_RDP_AUTH_METHODS:
+      g_value_set_flags (value, priv->rdp.auth_methods);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -581,6 +586,9 @@ grd_settings_set_property (GObject      *object,
       break;
     case PROP_VNC_AUTH_METHOD:
       priv->vnc.auth_method = g_value_get_enum (value);
+      break;
+    case PROP_RDP_AUTH_METHODS:
+      priv->rdp.auth_methods = g_value_get_flags (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -763,4 +771,14 @@ grd_settings_class_init (GrdSettingsClass *klass)
                                                       G_PARAM_READWRITE |
                                                       G_PARAM_CONSTRUCT |
                                                       G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (object_class,
+                                   PROP_RDP_AUTH_METHODS,
+                                   g_param_spec_flags ("rdp-auth-methods",
+                                                       "rdp auth methods",
+                                                       "rdp auth methods",
+                                                       GRD_TYPE_RDP_AUTH_METHODS,
+                                                       GRD_RDP_AUTH_METHOD_CREDENTIALS,
+                                                       G_PARAM_READWRITE |
+                                                       G_PARAM_CONSTRUCT |
+                                                       G_PARAM_STATIC_STRINGS));
 }
