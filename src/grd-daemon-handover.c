@@ -488,45 +488,72 @@ on_incoming_new_connection (GrdRdpServer      *rdp_server,
 }
 
 static void
-on_rdp_server_started (GrdDaemonHandover *daemon_handover)
+setup_handover (GrdDaemonHandover *daemon_handover)
 {
-  GrdDaemon *daemon = GRD_DAEMON (daemon_handover);
-  GrdRdpServer *rdp_server = grd_daemon_get_rdp_server (daemon);
+  GrdRdpServer *rdp_server;
   gboolean handover_is_waiting;
 
-  g_signal_connect (daemon_handover->remote_desktop_handover,
-                    "take-client-ready", G_CALLBACK (on_take_client_ready),
-                    daemon_handover);
+  if (!daemon_handover->remote_desktop_handover)
+    return;
+
+  rdp_server = grd_daemon_get_rdp_server (GRD_DAEMON (daemon_handover));
+  if (!rdp_server)
+    return;
+
+  g_signal_connect (daemon_handover->remote_desktop_handover, "take-client-ready",
+                    G_CALLBACK (on_take_client_ready), daemon_handover);
+  g_signal_connect (daemon_handover->remote_desktop_handover, "redirect-client",
+                    G_CALLBACK (on_redirect_client), daemon_handover);
+  g_signal_connect (daemon_handover->remote_desktop_handover, "notify::handover-is-waiting",
+                    G_CALLBACK (on_handover_is_waiting_changed), daemon_handover);
 
   g_signal_connect (rdp_server, "incoming-new-connection",
-                    G_CALLBACK (on_incoming_new_connection),
-                    daemon_handover);
+                    G_CALLBACK (on_incoming_new_connection), daemon_handover);
 
-  handover_is_waiting =
-    grd_dbus_remote_desktop_rdp_handover_get_handover_is_waiting (
-      daemon_handover->remote_desktop_handover);
+  handover_is_waiting = grd_dbus_remote_desktop_rdp_handover_get_handover_is_waiting (
+                          daemon_handover->remote_desktop_handover);
 
   if (handover_is_waiting)
     start_handover (daemon_handover);
 }
 
 static void
-on_rdp_server_stopped (GrdDaemonHandover *daemon_handover)
+teardown_handover (GrdDaemonHandover *daemon_handover)
 {
   GrdRdpServer *rdp_server =
     grd_daemon_get_rdp_server (GRD_DAEMON (daemon_handover));
 
   if (daemon_handover->remote_desktop_handover)
     {
-      g_signal_handlers_disconnect_by_func (
-        daemon_handover->remote_desktop_handover,
-        G_CALLBACK (on_take_client_ready),
-        daemon_handover);
+      g_signal_handlers_disconnect_by_func (daemon_handover->remote_desktop_handover,
+                                            G_CALLBACK (on_take_client_ready),
+                                            daemon_handover);
+      g_signal_handlers_disconnect_by_func (daemon_handover->remote_desktop_handover,
+                                            G_CALLBACK (on_redirect_client),
+                                            daemon_handover);
+      g_signal_handlers_disconnect_by_func (daemon_handover->remote_desktop_handover,
+                                            G_CALLBACK (on_handover_is_waiting_changed),
+                                            daemon_handover);
     }
 
-  g_signal_handlers_disconnect_by_func (rdp_server,
-                                        G_CALLBACK (on_incoming_new_connection),
-                                        daemon_handover);
+  if (rdp_server)
+    {
+      g_signal_handlers_disconnect_by_func (rdp_server,
+                                            G_CALLBACK (on_incoming_new_connection),
+                                            daemon_handover);
+    }
+}
+
+static void
+on_rdp_server_started (GrdDaemonHandover *daemon_handover)
+{
+  setup_handover (daemon_handover);
+}
+
+static void
+on_rdp_server_stopped (GrdDaemonHandover *daemon_handover)
+{
+  teardown_handover (daemon_handover);
 }
 
 static void
@@ -554,10 +581,7 @@ on_remote_desktop_rdp_handover_proxy_acquired (GObject      *object,
   daemon_handover = GRD_DAEMON_HANDOVER (user_data);
   daemon_handover->remote_desktop_handover = g_steal_pointer (&proxy);
 
-  g_signal_connect (daemon_handover->remote_desktop_handover, "redirect-client",
-                    G_CALLBACK (on_redirect_client), daemon_handover);
-  g_signal_connect (daemon_handover->remote_desktop_handover, "notify::handover-is-waiting",
-                    G_CALLBACK (on_handover_is_waiting_changed), daemon_handover);
+  setup_handover (daemon_handover);
 
   grd_daemon_maybe_enable_services (GRD_DAEMON (daemon_handover));
 }
@@ -673,13 +697,8 @@ on_gnome_remote_desktop_name_vanished (GDBusConnection *connection,
 
   g_warning ("[DaemonHandover] %s name vanished", name);
 
-  if (daemon_handover->remote_desktop_handover)
-    {
-      g_signal_handlers_disconnect_by_func (
-        daemon_handover->remote_desktop_handover,
-        G_CALLBACK (on_redirect_client),
-        daemon_handover);
-    }
+  teardown_handover (daemon_handover);
+
   g_clear_object (&daemon_handover->remote_desktop_handover);
   g_clear_object (&daemon_handover->remote_desktop_dispatcher);
 
