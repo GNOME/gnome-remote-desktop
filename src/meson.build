@@ -314,6 +314,7 @@ gen_daemon_sources += gnome.gdbus_codegen('grd-dbus-mutter-remote-desktop',
                                           namespace: 'GrdDBusMutter')
 dbus_gen_remote_desktop = gnome.gdbus_codegen('grd-dbus-remote-desktop',
                                               'org.gnome.RemoteDesktop.xml',
+                                              object_manager: true,
                                               interface_prefix: 'org.gnome.RemoteDesktop.',
                                               namespace: 'GrdDBusRemoteDesktop')
 gen_daemon_sources += dbus_gen_remote_desktop
