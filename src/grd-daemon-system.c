@@ -306,9 +306,9 @@ get_handover_object_path_for_call (GrdDaemonSystem        *daemon_system,
   if (!object)
     {
       g_set_error (error,
-                   G_DBUS_ERROR,
-                   G_DBUS_ERROR_UNKNOWN_OBJECT,
-                   "No connection waiting for handover");
+                   GRD_DBUS_ERROR,
+                   GRD_DBUS_ERROR_NO_HANDOVER,
+                   "No handover interface for session");
       return NULL;
     }
 
