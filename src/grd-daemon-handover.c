@@ -416,6 +416,50 @@ inform_about_insecure_connection (GrdDaemonHandover *daemon_handover)
 }
 
 static void
+on_redirect_client (GrdDBusRemoteDesktopRdpHandover *interface,
+                    const char                      *routing_token,
+                    const char                      *username,
+                    const char                      *password,
+                    GrdDaemonHandover               *daemon_handover)
+{
+  const char *object_path =
+    g_dbus_proxy_get_object_path (G_DBUS_PROXY (interface));
+  GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_handover));
+  GrdSettings *settings = grd_context_get_settings (context);
+  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (daemon_handover->session);
+  g_autofree char *certificate = NULL;
+
+  g_debug ("[DaemonHandover] At: %s, received RedirectClient signal",
+           object_path);
+
+  g_object_get (G_OBJECT (settings),
+                "rdp-server-cert", &certificate,
+                NULL);
+
+  if (!grd_session_rdp_send_server_redirection (session_rdp, routing_token,
+                                                username, password,
+                                                certificate))
+    grd_session_stop (daemon_handover->session);
+}
+
+static void
+on_handover_is_waiting_changed (GrdDBusRemoteDesktopRdpHandover *proxy,
+                                GParamSpec                      *pspec,
+                                GrdDaemonHandover               *daemon_handover)
+{
+  gboolean handover_is_waiting;
+
+  handover_is_waiting = 
+    grd_dbus_remote_desktop_rdp_handover_get_handover_is_waiting (
+      daemon_handover->remote_desktop_handover);
+
+  if (!handover_is_waiting)
+    return;
+
+  start_handover (daemon_handover);
+}
+
+static void
 on_incoming_new_connection (GrdRdpServer      *rdp_server,
                             GrdSession        *session,
                             GrdDaemonHandover *daemon_handover)
@@ -483,50 +527,6 @@ on_rdp_server_stopped (GrdDaemonHandover *daemon_handover)
   g_signal_handlers_disconnect_by_func (rdp_server,
                                         G_CALLBACK (on_incoming_new_connection),
                                         daemon_handover);
-}
-
-static void
-on_redirect_client (GrdDBusRemoteDesktopRdpHandover *interface,
-                    const char                      *routing_token,
-                    const char                      *username,
-                    const char                      *password,
-                    GrdDaemonHandover               *daemon_handover)
-{
-  const char *object_path =
-    g_dbus_proxy_get_object_path (G_DBUS_PROXY (interface));
-  GrdContext *context = grd_daemon_get_context (GRD_DAEMON (daemon_handover));
-  GrdSettings *settings = grd_context_get_settings (context);
-  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (daemon_handover->session);
-  g_autofree char *certificate = NULL;
-
-  g_debug ("[DaemonHandover] At: %s, received RedirectClient signal",
-           object_path);
-
-  g_object_get (G_OBJECT (settings),
-                "rdp-server-cert", &certificate,
-                NULL);
-
-  if (!grd_session_rdp_send_server_redirection (session_rdp, routing_token,
-                                                username, password,
-                                                certificate))
-    grd_session_stop (daemon_handover->session);
-}
-
-static void
-on_handover_is_waiting_changed (GrdDBusRemoteDesktopRdpHandover *proxy,
-                                GParamSpec                      *pspec,
-                                GrdDaemonHandover               *daemon_handover)
-{
-  gboolean handover_is_waiting;
-
-  handover_is_waiting = 
-    grd_dbus_remote_desktop_rdp_handover_get_handover_is_waiting (
-      daemon_handover->remote_desktop_handover);
-
-  if (!handover_is_waiting)
-    return;
-
-  start_handover (daemon_handover);
 }
 
 static void
