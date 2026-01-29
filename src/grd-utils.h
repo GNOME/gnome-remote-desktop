@@ -114,6 +114,12 @@ ms2us (int64_t ms)
   return us (ms * 1000);
 }
 
+static inline uint64_t
+s2ns (uint64_t s)
+{
+  return s * G_USEC_PER_SEC * UINT64_C (1000);
+}
+
 static inline int64_t
 s2us (uint64_t s)
 {
