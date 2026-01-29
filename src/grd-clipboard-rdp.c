@@ -1754,7 +1754,7 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
   char *filename = NULL;
   char *escaped_name;
   char *file_uri;
-  GArray *dst_data;
+  g_autoptr (GArray) dst_data = NULL;
   uint32_t i;
 
   clip_data_dir_name = has_clip_data_id ?
@@ -1764,23 +1764,19 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
   *dst_size = 0;
   dst_data = g_array_new (TRUE, TRUE, sizeof (char));
 
-  cliprdr_parse_file_list (src_data, src_size, &files, &n_files);
+  if (cliprdr_parse_file_list (src_data, src_size, &files, &n_files))
+    return NULL;
+
   for (i = 0; i < n_files; ++i)
     {
       file = &files[i];
 
       if (!filedescriptorw_filename_is_valid (file->cFileName))
-        {
-          g_array_free (dst_data, TRUE);
-          return NULL;
-        }
+        return NULL;
 
       filename = ConvertWCharToUtf8Alloc (file->cFileName, NULL);
       if (!filename)
-        {
-          g_array_free (dst_data, TRUE);
-          return NULL;
-        }
+        return NULL;
       if (strchr (filename, '\\') || strchr (filename, '/'))
         {
           g_free (filename);
@@ -1802,7 +1798,7 @@ get_uri_list_from_packet_file_list (GrdClipboardRdp *clipboard_rdp,
 
   *dst_size = dst_data->len;
 
-  return (uint8_t *) g_array_free (dst_data, FALSE);
+  return (uint8_t *) g_array_free (g_steal_pointer (&dst_data), FALSE);
 }
 
 static uint8_t *
@@ -1908,7 +1904,12 @@ convert_client_content_for_server (GrdClipboardRdp *clipboard_rdp,
       uint32_t dst_size_nautilus;
       uint32_t i;
 
-      cliprdr_parse_file_list (src_data, src_size, &files, &n_files);
+      if (cliprdr_parse_file_list (src_data, src_size, &files, &n_files))
+        {
+          g_free (dst_data);
+          return NULL;
+        }
+
       if (has_clip_data_id)
         {
           result = grd_rdp_fuse_clipboard_set_cdi_selection (rdp_fuse_clipboard,

@@ -35,7 +35,7 @@ variables:
 .gnome-remote-desktop.fedora@common:
   variables:
     FDO_DISTRIBUTION_VERSION: 42
-    BASE_TAG: '2025-06-26.0.distro-upgrade'
+    BASE_TAG: '2026-01-29.0.freerdp-3.22'
     FDO_UPSTREAM_REPO: GNOME/gnome-remote-desktop
     FDO_DISTRIBUTION_EXEC: |
       dnf -y update && dnf -y upgrade &&
@@ -84,7 +84,7 @@ variables:
           -DWITH_SHADOW=OFF \
           -DWITHOUT_FREERDP_3x_DEPRECATED=ON \
           https://github.com/FreeRDP/FreeRDP \
-          3.15.0 . &&
+          3.22.0 . &&
 
       dnf clean all
 
