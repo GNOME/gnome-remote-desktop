@@ -1462,13 +1462,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
                        "Failed to create SAM database");
           return FALSE;
         }
-      if (!freerdp_settings_set_string (rdp_settings, FreeRDP_NtlmSamFile,
-                                        session_rdp->sam_file->filename))
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "Failed to set path of SAM database");
-          return FALSE;
-        }
+      freerdp_settings_set_string (rdp_settings, FreeRDP_NtlmSamFile,
+                                   session_rdp->sam_file->filename);
     }
 
   if (auth_methods & GRD_RDP_AUTH_METHOD_KERBEROS)
@@ -1481,13 +1476,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
 
       g_debug ("[RDP] Enabling Kerberos authentication using %s", kerberos_keytab);
 
-      if (!freerdp_settings_set_string (rdp_settings, FreeRDP_KerberosKeytab,
-                                        kerberos_keytab))
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "Failed to set Kerberos keytab");
-          return FALSE;
-        }
+      freerdp_settings_set_string (rdp_settings, FreeRDP_KerberosKeytab,
+                                   kerberos_keytab);
     }
 
   g_object_get (G_OBJECT (settings),
@@ -1503,10 +1493,9 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
                    "Failed to create certificate from file");
       return FALSE;
     }
-  if (!freerdp_settings_set_pointer_len (rdp_settings,
-                                         FreeRDP_RdpServerCertificate,
-                                         rdp_certificate, 1))
-    g_assert_not_reached ();
+  freerdp_settings_set_pointer_len (rdp_settings,
+                                    FreeRDP_RdpServerCertificate,
+                                    rdp_certificate, 1);
 
   if (server_key)
     rdp_private_key = freerdp_key_new_from_pem (server_key);
@@ -1516,10 +1505,9 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
                    "Failed to create private key from file");
       return FALSE;
     }
-  if (!freerdp_settings_set_pointer_len (rdp_settings,
-                                         FreeRDP_RdpServerRsaKey,
-                                         rdp_private_key, 1))
-    g_assert_not_reached ();
+  freerdp_settings_set_pointer_len (rdp_settings,
+                                    FreeRDP_RdpServerRsaKey,
+                                    rdp_private_key, 1);
 
   freerdp_settings_set_bool (rdp_settings, FreeRDP_RdpSecurity, FALSE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_TlsSecurity, FALSE);
