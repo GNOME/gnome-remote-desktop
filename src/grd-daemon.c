@@ -326,7 +326,10 @@ maybe_start_rdp_server (GrdDaemon *daemon)
     return;
 
   if (!GRD_DAEMON_GET_CLASS (daemon)->is_daemon_ready (daemon))
-    return;
+    {
+      g_debug ("Daemon not ready, not starting RDP server");
+      return;
+    }
 
   g_object_get (G_OBJECT (settings),
                 "rdp-enabled", &rdp_enabled,
@@ -337,7 +340,10 @@ maybe_start_rdp_server (GrdDaemon *daemon)
                 NULL);
 
   if (!rdp_enabled)
-    return;
+    {
+      g_debug ("RDP not enabled, not starting RDP server");
+      return;
+    }
 
   if (!auth_methods)
     {
@@ -347,7 +353,10 @@ maybe_start_rdp_server (GrdDaemon *daemon)
 
   if (auth_methods & GRD_RDP_AUTH_METHOD_KERBEROS &&
       !kerberos_keytab)
-    return;
+    {
+      g_debug ("Kerberos keytab not set, not starting RDP server");
+      return;
+    }
 
   if ((certificate && key) ||
       grd_context_get_runtime_mode (priv->context) == GRD_RUNTIME_MODE_HANDOVER)
