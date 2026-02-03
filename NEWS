@@ -1,3 +1,19 @@
+50.beta
+=======
+* Add camera redirection support [Pascal; !360]
+* Add connection throttling (CVE-2025-5024) [Jonas; !321]
+* Add Kerberos authentication support to single user runtime modes [Jonas; !369]
+* Add HiDPI support [Pascal; !349]
+* Support remote login to headless GDM autologin sessions [Joan; !318]
+* Make RDP session handover more reliable [Joan; !371]
+* Disable VA-API when using an AMD GPU [Pascal; !362]
+* Code preparation for Vulkan Video Encode support [Pascal; !364]
+* Misc bug fixes & cleanups [Jonas, Joan, Pascal; !351, !359, !361, !365, !366,
+  !370, !372, !374]
+
+Contributors:
+  Jonas Ådahl, Joan Torres Lopez, Pascal Nowack
+
 49.2
 ====
 * Misc bug fixes [Pascal; !352]
