@@ -936,6 +936,24 @@ rdp_autodetect_on_connect_time_autodetect_begin (rdpAutoDetect *rdp_autodetect)
   return FREERDP_AUTODETECT_STATE_REQUEST;
 }
 
+static gboolean
+is_using_remote_login (GrdSessionRdp *session_rdp)
+{
+  GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
+
+  switch (grd_context_get_runtime_mode (context))
+    {
+    case GRD_RUNTIME_MODE_SCREEN_SHARE:
+    case GRD_RUNTIME_MODE_HEADLESS:
+      return FALSE;
+    case GRD_RUNTIME_MODE_SYSTEM:
+    case GRD_RUNTIME_MODE_HANDOVER:
+      return TRUE;
+    }
+
+  g_assert_not_reached ();
+}
+
 static GrdRdpAuthMethods
 get_effective_auth_method (rdpContext *rdp_context)
 {
@@ -1056,6 +1074,9 @@ rdp_peer_logon (freerdp_peer                  *peer,
   GrdRdpAuthMethods auth_method;
   SECURITY_STATUS status;
   SecPkgContext_AuthIdentity auth_identity = {};
+
+  if (is_using_remote_login (session_rdp))
+    return TRUE;
 
   auth_method = get_effective_auth_method (rdp_context);
 
@@ -1466,7 +1487,8 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
                                    session_rdp->sam_file->filename);
     }
 
-  if (auth_methods & GRD_RDP_AUTH_METHOD_KERBEROS)
+  if (auth_methods & GRD_RDP_AUTH_METHOD_KERBEROS &&
+      !is_using_remote_login (session_rdp))
     {
       g_autofree char *kerberos_keytab = NULL;
 
