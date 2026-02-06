@@ -37,11 +37,20 @@ Enable the RDP backend.
 *rdp* *disable*::
 Disable the RDP backend.
 
+*rdp* *set-auth-methods* 'AUTH-METHOD...'::
+Set a comma separated list of authentication methods. Available methods are
+'credentials' and 'kerberos'. The 'kerberos' method is only supported by the
+headless and screen share runtime modes. At least one auth method must be set.
+
 *rdp* *set-tls-cert* 'TLS-CERT'::
 Set path to TLS certificate.
 
 *rdp* *set-tls-key* 'TLS-KEY'::
 Set path to TLS key.
+
+*rdp* *set-kerberos-keytab* 'KERBEROS-KEY-TAB'::
+Set the path to a Kerberos keytab. When configured with the 'kerberos' auth
+method, this keytab will be used for authenticating remote users.
 
 *rdp* *set-credentials* 'USERNAME' 'PASSWORD'::
 Set username and password credentials.
