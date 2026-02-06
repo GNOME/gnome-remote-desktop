@@ -264,21 +264,26 @@ get_modifiers_for_format (GrdRdpPipeWireStream  *stream,
                           int                   *out_n_modifiers,
                           uint64_t             **out_modifiers)
 {
-  GrdRdpServer *rdp_server = grd_session_rdp_get_server (stream->session_rdp);
-  GrdHwAccelVulkan *hwaccel_vulkan =
-    grd_rdp_server_get_hwaccel_vulkan (rdp_server);
-  GrdRdpRenderer *renderer = grd_session_rdp_get_renderer (stream->session_rdp);
-  GrdVkDevice *vk_device = grd_rdp_renderer_get_vk_device (renderer);
-  GrdVkPhysicalDevice *vk_physical_device =
-    grd_vk_device_get_physical_device (vk_device);
-  GrdSession *session = GRD_SESSION (stream->session_rdp);
+  GrdSessionRdp *session_rdp = stream->session_rdp;
+  GrdRdpRenderer *renderer = grd_session_rdp_get_renderer (session_rdp);
+  GrdSession *session = GRD_SESSION (session_rdp);
   GrdContext *context = grd_session_get_context (session);
   GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
+  GrdVkDevice *vk_device;
 
   g_assert (egl_thread);
 
-  if (hwaccel_vulkan)
+  vk_device = grd_rdp_renderer_get_vk_device (renderer);
+  if (vk_device)
     {
+      GrdRdpServer *rdp_server = grd_session_rdp_get_server (session_rdp);
+      GrdHwAccelVulkan *hwaccel_vulkan =
+        grd_rdp_server_get_hwaccel_vulkan (rdp_server);
+      GrdVkPhysicalDevice *vk_physical_device =
+        grd_vk_device_get_physical_device (vk_device);
+
+      g_assert (hwaccel_vulkan);
+
       return grd_hwaccel_vulkan_get_modifiers_for_format (hwaccel_vulkan,
                                                           vk_physical_device,
                                                           drm_format,
