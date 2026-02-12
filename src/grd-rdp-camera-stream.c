@@ -407,13 +407,6 @@ on_frame_clock_trigger (gpointer user_data)
 }
 
 static void
-append_pod_offset (GArray                 *pod_offsets,
-                   struct spa_pod_builder *pod_builder)
-{
-  g_array_append_val (pod_offsets, pod_builder->state.offset);
-}
-
-static void
 push_format_object (GArray                 *pod_offsets,
                     struct spa_pod_builder *pod_builder,
                     enum spa_video_format   format,
@@ -425,7 +418,7 @@ push_format_object (GArray                 *pod_offsets,
   struct spa_pod_frame pod_frame;
   va_list args;
 
-  append_pod_offset (pod_offsets, pod_builder);
+  grd_append_pod_offset (pod_offsets, pod_builder);
 
   spa_pod_builder_push_object (pod_builder,
                                &pod_frame,
@@ -534,25 +527,6 @@ build_format_params (GrdRdpCameraStream     *camera_stream,
       push_format_objects (camera_stream, sw_decode_session,
                            SPA_VIDEO_FORMAT_BGRA, pod_builder, pod_offsets);
     }
-}
-
-static GPtrArray *
-finish_format_params (struct spa_pod_builder *pod_builder,
-                      GArray                 *pod_offsets)
-{
-  GPtrArray *params = NULL;
-  size_t i;
-
-  params = g_ptr_array_new ();
-
-  for (i = 0; i < pod_offsets->len; ++i)
-    {
-      uint32_t pod_offset = g_array_index (pod_offsets, uint32_t, i);
-
-      g_ptr_array_add (params, spa_pod_builder_deref (pod_builder, pod_offset));
-    }
-
-  return params;
 }
 
 static void
@@ -700,7 +674,7 @@ pod_builder_add_object (struct spa_pod_builder *pod_builder,
   struct spa_pod_frame pod_frame;
   va_list args;
 
-  append_pod_offset (pod_offsets, pod_builder);
+  grd_append_pod_offset (pod_offsets, pod_builder);
 
   spa_pod_builder_push_object (pod_builder, &pod_frame, type, id);
 
@@ -767,7 +741,7 @@ on_stream_param_changed (void                 *user_data,
     SPA_PARAM_META_type, SPA_POD_Id (SPA_META_Header),
     SPA_PARAM_META_size, SPA_POD_Int (sizeof (struct spa_meta_header)));
 
-  params = finish_format_params (&pod_builder.b, pod_offsets);
+  params = grd_finish_pipewire_params (&pod_builder.b, pod_offsets);
 
   pw_stream_update_params (camera_stream->pipewire_stream,
                            (const struct spa_pod **) params->pdata,
@@ -966,7 +940,7 @@ set_up_video_source (GrdRdpCameraStream  *camera_stream,
   spa_pod_dynamic_builder_init (&pod_builder, NULL, 0, PARAMS_BUFFER_SIZE);
 
   build_format_params (camera_stream, &pod_builder.b, pod_offsets);
-  params = finish_format_params (&pod_builder.b, pod_offsets);
+  params = grd_finish_pipewire_params (&pod_builder.b, pod_offsets);
 
   result = pw_stream_connect (camera_stream->pipewire_stream,
                               PW_DIRECTION_OUTPUT, PW_ID_ANY,
