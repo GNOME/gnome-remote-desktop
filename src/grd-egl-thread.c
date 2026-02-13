@@ -946,8 +946,7 @@ download_in_impl (gpointer data,
                        task->dst_data ? &fbo : NULL))
     goto out;
 
-  if (task->dst_data)
-    read_pixels (task->dst_data, task->width, task->height);
+  read_pixels (task->dst_data, task->width, task->height);
 
   success = TRUE;
 
@@ -1125,6 +1124,8 @@ grd_egl_thread_download (GrdEglThread                  *egl_thread,
                          GDestroyNotify                 destroy)
 {
   GrdEglTaskDownload *task;
+
+  g_assert (dst_data);
 
   task = g_new0 (GrdEglTaskDownload, 1);
 
