@@ -22,12 +22,15 @@
 #include "grd-hwaccel-vulkan.h"
 
 #include <drm_fourcc.h>
+#include <fcntl.h>
 #include <gio/gio.h>
+#include <glib/gstdio.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <sys/types.h>
 
 #include "grd-debug.h"
+#include "grd-drm-utils.h"
 #include "grd-egl-thread.h"
 #include "grd-vk-device.h"
 #include "grd-vk-physical-device.h"
@@ -187,6 +190,31 @@ grd_hwaccel_vulkan_get_modifiers_for_format (GrdHwAccelVulkan     *hwaccel_vulka
 }
 
 static gboolean
+supports_explicit_sync (const char  *drm_render_node,
+                        GError     **error)
+{
+  g_autofd int drm_render_node_fd = -1;
+
+  drm_render_node_fd = open (drm_render_node, O_RDWR | O_CLOEXEC);
+  if (drm_render_node_fd < 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to open render node file descriptor: %s",
+                   g_strerror (errno));
+      return FALSE;
+    }
+
+  if (!grd_drm_render_node_supports_explicit_sync (drm_render_node_fd))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Timeline sync objects are not supported by DRM render node");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
 has_vk_extension (VkExtensionProperties *properties,
                   uint32_t               n_properties,
                   const char            *extension)
@@ -265,6 +293,9 @@ check_device_extensions (VkPhysicalDevice vk_physical_device)
     return FALSE;
   if (!check_device_extension (properties, n_properties,
                                VK_EXT_PHYSICAL_DEVICE_DRM_EXTENSION_NAME))
+    return FALSE;
+  if (!check_device_extension (properties, n_properties,
+                               VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME))
     return FALSE;
 
   return TRUE;
@@ -349,6 +380,48 @@ supports_bgrx_dma_buf_images (GrdHwAccelVulkan  *hwaccel_vulkan,
                "format %u", modifiers[i], drm_format);
     }
   g_array_free (modifier_array, TRUE);
+
+  return TRUE;
+}
+
+static gboolean
+supports_sync_files (VkPhysicalDevice   vk_physical_device,
+                     GError           **error)
+{
+  VkPhysicalDeviceExternalSemaphoreInfo external_semaphore_info = {};
+  VkExternalSemaphoreProperties external_semaphore_properties = {};
+  VkExternalSemaphoreHandleTypeFlags handle_types_import;
+  VkExternalSemaphoreHandleTypeFlags handle_types_compatible;
+  VkExternalSemaphoreFeatureFlags semaphore_features;
+
+  external_semaphore_info.sType =
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO;
+  external_semaphore_info.handleType =
+    VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT;
+
+  vkGetPhysicalDeviceExternalSemaphoreProperties (vk_physical_device,
+                                                  &external_semaphore_info,
+                                                  &external_semaphore_properties);
+
+  handle_types_import =
+    external_semaphore_properties.exportFromImportedHandleTypes;
+  handle_types_compatible = external_semaphore_properties.compatibleHandleTypes;
+
+  if (!(handle_types_import & VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT) ||
+      !(handle_types_compatible & VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Missing support for Sync Files");
+      return FALSE;
+    }
+
+  semaphore_features = external_semaphore_properties.externalSemaphoreFeatures;
+  if (!(semaphore_features & VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Missing support for importing Sync File FDs");
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -441,7 +514,8 @@ check_physical_device (GrdHwAccelVulkan    *hwaccel_vulkan,
     }
 
   if (!supports_bgrx_dma_buf_images (hwaccel_vulkan, vk_physical_device,
-                                     &error))
+                                     &error) ||
+      !supports_sync_files (vk_physical_device, &error))
     {
       g_debug ("[HWAccel.Vulkan] Skipping device: %s", error->message);
       return FALSE;
@@ -534,6 +608,8 @@ grd_hwaccel_vulkan_acquire_physical_device (GrdHwAccelVulkan  *hwaccel_vulkan,
                    "Invalid file mode for DRM render node");
       return NULL;
     }
+  if (!supports_explicit_sync (drm_render_node, error))
+    return NULL;
 
   return find_and_create_physical_device (hwaccel_vulkan,
                                           physical_devices, n_physical_devices,
