@@ -289,6 +289,17 @@ load_device_funcs (GrdVkDevice  *device,
       return FALSE;
     }
 
+  /* VK_KHR_external_semaphore_fd */
+  device_funcs->vkImportSemaphoreFdKHR = (PFN_vkImportSemaphoreFdKHR)
+    vkGetDeviceProcAddr (vk_device, "vkImportSemaphoreFdKHR");
+  if (!device_funcs->vkImportSemaphoreFdKHR)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to get device function address for function "
+                   "\"vkImportSemaphoreFdKHR\"");
+      return FALSE;
+    }
+
   return TRUE;
 }
 

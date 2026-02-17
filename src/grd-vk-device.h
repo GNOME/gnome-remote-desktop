@@ -37,6 +37,9 @@ typedef struct
   PFN_vkCmdPipelineBarrier2KHR vkCmdPipelineBarrier2KHR;
   PFN_vkCmdWriteTimestamp2KHR vkCmdWriteTimestamp2KHR;
   PFN_vkQueueSubmit2KHR vkQueueSubmit2KHR;
+
+  /* VK_KHR_external_semaphore_fd */
+  PFN_vkImportSemaphoreFdKHR vkImportSemaphoreFdKHR;
 } GrdVkDeviceFuncs;
 
 typedef struct
