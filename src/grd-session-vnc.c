@@ -56,6 +56,7 @@ struct _GrdSessionVnc
   int pending_framebuffer_width;
   int pending_framebuffer_height;
 
+  GMutex close_session_mutex;
   guint close_session_idle_id;
 
   GrdVncAuthMethod auth_method;
@@ -227,11 +228,22 @@ grd_vnc_monitor_config_free (GrdVncMonitorConfig *monitor_config)
 static void
 maybe_queue_close_session_idle (GrdSessionVnc *session_vnc)
 {
+  g_mutex_lock (&session_vnc->close_session_mutex);
   if (session_vnc->close_session_idle_id)
-    return;
+    {
+      g_mutex_unlock (&session_vnc->close_session_mutex);
+      return;
+    }
 
   session_vnc->close_session_idle_id =
     g_idle_add (close_session_idle, session_vnc);
+  g_mutex_unlock (&session_vnc->close_session_mutex);
+}
+
+void
+grd_session_vnc_notify_error (GrdSessionVnc *session_vnc)
+{
+  maybe_queue_close_session_idle (session_vnc);
 }
 
 gboolean
@@ -813,6 +825,16 @@ grd_session_vnc_dispose (GObject *object)
 }
 
 static void
+grd_session_vnc_finalize (GObject *object)
+{
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (object);
+
+  g_mutex_clear (&session_vnc->close_session_mutex);
+
+  G_OBJECT_CLASS (grd_session_vnc_parent_class)->finalize (object);
+}
+
+static void
 grd_session_vnc_stop (GrdSession *session)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
@@ -941,6 +963,8 @@ grd_session_vnc_init (GrdSessionVnc *session_vnc)
 {
   session_vnc->pressed_keys = g_hash_table_new (NULL, NULL);
 
+  g_mutex_init (&session_vnc->close_session_mutex);
+
   g_signal_connect (session_vnc, "started",
                     G_CALLBACK (on_remote_desktop_session_started), NULL);
 }
@@ -952,6 +976,7 @@ grd_session_vnc_class_init (GrdSessionVncClass *klass)
   GrdSessionClass *session_class = GRD_SESSION_CLASS (klass);
 
   object_class->dispose = grd_session_vnc_dispose;
+  object_class->finalize = grd_session_vnc_finalize;
 
   session_class->stop = grd_session_vnc_stop;
   session_class->on_stream_created = grd_session_vnc_on_stream_created;
