@@ -231,3 +231,30 @@ grd_finish_pipewire_params (struct spa_pod_builder *pod_builder,
 
   return params;
 }
+
+gboolean
+grd_spa_buffer_find_syncobj_fds (struct spa_buffer *spa_buffer,
+                                 int               *acquire_syncobj_fd,
+                                 int               *release_syncobj_fd)
+{
+  size_t i;
+
+  for (i = 0; i < spa_buffer->n_datas; i++)
+    {
+      if (spa_buffer->datas[i].type != SPA_DATA_SyncObj)
+        continue;
+
+      if (i == spa_buffer->n_datas - 1 ||
+          spa_buffer->datas[i + 1].type != SPA_DATA_SyncObj)
+        {
+          g_warning ("Missing release syncobj fd");
+          return FALSE;
+        }
+
+      *acquire_syncobj_fd = spa_buffer->datas[i].fd;
+      *release_syncobj_fd = spa_buffer->datas[i + 1].fd;
+      return TRUE;
+    }
+
+  return FALSE;
+}

@@ -60,3 +60,7 @@ void grd_append_pod_offset (GArray                 *pod_offsets,
 
 GPtrArray *grd_finish_pipewire_params (struct spa_pod_builder *pod_builder,
                                        GArray                 *pod_offsets);
+
+gboolean grd_spa_buffer_find_syncobj_fds (struct spa_buffer *spa_buffer,
+                                          int               *acquire_syncobj_fd,
+                                          int               *release_syncobj_fd);
