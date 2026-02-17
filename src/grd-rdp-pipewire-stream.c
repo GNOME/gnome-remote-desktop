@@ -694,6 +694,19 @@ process_mouse_cursor_data (GrdRdpPipeWireStream *stream,
 }
 
 static void
+queue_buffer (GrdRdpPipeWireStream *stream,
+              struct pw_buffer     *buffer)
+{
+  GrdRdpPwBuffer *rdp_pw_buffer = NULL;
+
+  if (!g_hash_table_lookup_extended (stream->pipewire_buffers, buffer,
+                                     NULL, (gpointer *) &rdp_pw_buffer))
+    g_assert_not_reached ();
+
+  grd_rdp_pw_buffer_queue_pw_buffer (rdp_pw_buffer);
+}
+
+static void
 on_frame_ready (GrdRdpPipeWireStream *stream,
                 GrdRdpFrame          *frame,
                 gboolean              success,
@@ -724,7 +737,7 @@ on_frame_ready (GrdRdpPipeWireStream *stream,
   grd_rdp_surface_renderer_submit_legacy_buffer (surface_renderer,
                                                  g_steal_pointer (&frame->buffer));
 out:
-  pw_stream_queue_buffer (stream->pipewire_stream, buffer);
+  queue_buffer (stream, buffer);
   maybe_release_pipewire_buffer_lock (stream, buffer);
 
   g_clear_pointer (&frame, grd_rdp_frame_unref);
@@ -952,7 +965,7 @@ on_stream_process (void *user_data)
       if (spa_meta_header &&
           spa_meta_header->flags & SPA_META_HEADER_FLAG_CORRUPTED)
         {
-          pw_stream_queue_buffer (stream->pipewire_stream, next_buffer);
+          queue_buffer (stream, next_buffer);
           continue;
         }
 
@@ -962,7 +975,7 @@ on_stream_process (void *user_data)
             last_pointer_buffer = NULL;
 
           if (last_pointer_buffer)
-            pw_stream_queue_buffer (stream->pipewire_stream, last_pointer_buffer);
+            queue_buffer (stream, last_pointer_buffer);
           last_pointer_buffer = next_buffer;
         }
       if (grd_pipewire_buffer_has_frame_data (next_buffer))
@@ -971,13 +984,13 @@ on_stream_process (void *user_data)
             last_frame_buffer = NULL;
 
           if (last_frame_buffer)
-            pw_stream_queue_buffer (stream->pipewire_stream, last_frame_buffer);
+            queue_buffer (stream, last_frame_buffer);
           last_frame_buffer = next_buffer;
         }
 
       if (next_buffer != last_pointer_buffer &&
           next_buffer != last_frame_buffer)
-        pw_stream_queue_buffer (stream->pipewire_stream, next_buffer);
+        queue_buffer (stream, next_buffer);
     }
   if (!last_pointer_buffer && !last_frame_buffer)
     return;
@@ -986,7 +999,7 @@ on_stream_process (void *user_data)
     {
       process_mouse_cursor_data (stream, last_pointer_buffer->buffer);
       if (last_pointer_buffer != last_frame_buffer)
-        pw_stream_queue_buffer (stream->pipewire_stream, last_pointer_buffer);
+        queue_buffer (stream, last_pointer_buffer);
     }
   if (!last_frame_buffer)
     return;
