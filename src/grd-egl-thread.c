@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <gio/gio.h>
 #include <glib/gstdio.h>
+#include <xf86drm.h>
 
 #ifndef EGL_DRM_RENDER_NODE_FILE_EXT
 #define EGL_DRM_RENDER_NODE_FILE_EXT 0x3377
@@ -42,6 +43,8 @@ struct _GrdEglThread
   GHashTable *slot_table;
 
   GHashTable *modifiers;
+
+  gboolean supports_explicit_sync;
 
   int drm_render_node_fd;
 
@@ -387,6 +390,20 @@ lookup_drm_render_node (GrdEglThread  *egl_thread,
                    g_strerror (errno));
       return FALSE;
     }
+
+  if (epoxy_has_egl_extension (egl_display, "EGL_ANDROID_native_fence_sync"))
+    {
+      uint64_t syncobj_cap = 0;
+      uint64_t syncobj_timeline_cap = 0;
+
+      drmGetCap (egl_thread->impl.drm_render_node_fd,
+                 DRM_CAP_SYNCOBJ, &syncobj_cap);
+      drmGetCap (egl_thread->impl.drm_render_node_fd,
+                 DRM_CAP_SYNCOBJ_TIMELINE, &syncobj_timeline_cap);
+      egl_thread->supports_explicit_sync = syncobj_cap && syncobj_timeline_cap;
+    }
+  g_debug ("[EGL] Explicit synchronization is %ssupported",
+           egl_thread->supports_explicit_sync ? "" : "not ");
 
   return TRUE;
 }
@@ -1351,6 +1368,12 @@ grd_egl_thread_get_modifiers_for_format (GrdEglThread  *egl_thread,
   *out_modifiers = g_memdup2 (modifiers->data,
                               sizeof (uint64_t) * modifiers->len);
   return TRUE;
+}
+
+gboolean
+grd_egl_thread_supports_explicit_sync (GrdEglThread *egl_thread)
+{
+  return egl_thread->supports_explicit_sync;
 }
 
 int

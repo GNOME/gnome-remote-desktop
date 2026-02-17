@@ -111,6 +111,8 @@ gboolean grd_egl_thread_get_modifiers_for_format (GrdEglThread  *egl_thread,
                                                   int           *out_n_modifiers,
                                                   uint64_t     **out_modifiers);
 
+gboolean grd_egl_thread_supports_explicit_sync (GrdEglThread *egl_thread);
+
 int grd_egl_thread_get_render_node_fd (GrdEglThread *egl_thread);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdEglThread, grd_egl_thread_free)
