@@ -496,6 +496,7 @@ on_stream_param_changed (void                 *user_data,
   g_autoptr (GArray) pod_offsets = NULL;
   struct spa_pod_dynamic_builder pod_builder;
   enum spa_data_type allowed_buffer_types;
+  struct spa_pod_frame buffers_frame;
   g_autoptr (GPtrArray) params = NULL;
 
   if (!format || id != SPA_PARAM_Format)
@@ -536,11 +537,21 @@ on_stream_param_changed (void                 *user_data,
     allowed_buffer_types |= 1 << SPA_DATA_DmaBuf;
 
   grd_append_pod_offset (pod_offsets, &pod_builder.b);
-  spa_pod_builder_add_object (
+  spa_pod_builder_push_object (&pod_builder.b, &buffers_frame,
+                               SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers);
+  spa_pod_builder_add (
     &pod_builder.b,
-    SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers,
     SPA_PARAM_BUFFERS_buffers, SPA_POD_CHOICE_RANGE_Int (8, 2, 8),
-    SPA_PARAM_BUFFERS_dataType, SPA_POD_Int (allowed_buffer_types));
+    SPA_PARAM_BUFFERS_dataType, SPA_POD_Int (allowed_buffer_types),
+    0);
+  if (egl_thread && grd_egl_thread_supports_explicit_sync (egl_thread))
+    {
+      spa_pod_builder_prop (&pod_builder.b,
+                            SPA_PARAM_BUFFERS_metaType,
+                            SPA_POD_PROP_FLAG_MANDATORY);
+      spa_pod_builder_int (&pod_builder.b, 1 << SPA_META_SyncTimeline);
+    }
+  spa_pod_builder_pop (&pod_builder.b, &buffers_frame);
 
   grd_append_pod_offset (pod_offsets, &pod_builder.b);
   spa_pod_builder_add_object (
@@ -557,6 +568,16 @@ on_stream_param_changed (void                 *user_data,
     SPA_PARAM_META_size, SPA_POD_CHOICE_RANGE_Int (CURSOR_META_SIZE (384, 384),
                                                    CURSOR_META_SIZE (1, 1),
                                                    CURSOR_META_SIZE (384, 384)));
+
+  if (egl_thread && grd_egl_thread_supports_explicit_sync (egl_thread))
+    {
+      grd_append_pod_offset (pod_offsets, &pod_builder.b);
+      spa_pod_builder_add_object
+        (&pod_builder.b,
+         SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
+         SPA_PARAM_META_type, SPA_POD_Id (SPA_META_SyncTimeline),
+         SPA_PARAM_META_size, SPA_POD_Int (sizeof (struct spa_meta_sync_timeline)));
+    }
 
   params = grd_finish_pipewire_params (&pod_builder.b, pod_offsets);
   pw_stream_update_params (stream->pipewire_stream,
@@ -581,15 +602,24 @@ on_stream_add_buffer (void             *user_data,
                       struct pw_buffer *buffer)
 {
   GrdRdpPipeWireStream *stream = user_data;
+  GrdSession *session = GRD_SESSION (stream->session_rdp);
+  GrdContext *context = grd_session_get_context (session);
+  GrdEglThread *egl_thread = grd_context_get_egl_thread (context);
   GrdRdpSurfaceRenderer *surface_renderer;
   GrdRdpPwBuffer *rdp_pw_buffer;
   g_autoptr (GError) error = NULL;
   uint32_t drm_format;
+  int device_fd = -1;
 
   if (stream->ignore_new_buffers)
     return;
 
-  rdp_pw_buffer = grd_rdp_pw_buffer_new (stream->pipewire_stream, buffer,
+  if (egl_thread)
+    device_fd = grd_egl_thread_get_render_node_fd (egl_thread);
+
+  rdp_pw_buffer = grd_rdp_pw_buffer_new (stream->pipewire_stream,
+                                         buffer,
+                                         device_fd,
                                          &error);
   if (!rdp_pw_buffer)
     {
@@ -940,6 +970,19 @@ submit_framebuffer (GrdRdpPipeWireStream *stream,
 }
 
 static void
+update_timeline_points (GrdRdpPipeWireStream *stream,
+                        struct pw_buffer     *pw_buffer)
+{
+  GrdRdpPwBuffer *rdp_pw_buffer = NULL;
+
+  if (!g_hash_table_lookup_extended (stream->pipewire_buffers, pw_buffer,
+                                     NULL, (gpointer *) &rdp_pw_buffer))
+    g_assert_not_reached ();
+
+  grd_rdp_pw_buffer_update_timeline_points (rdp_pw_buffer);
+}
+
+static void
 on_stream_process (void *user_data)
 {
   GrdRdpPipeWireStream *stream = GRD_RDP_PIPEWIRE_STREAM (user_data);
@@ -958,6 +1001,8 @@ on_stream_process (void *user_data)
   while ((next_buffer = pw_stream_dequeue_buffer (stream->pipewire_stream)))
     {
       struct spa_meta_header *spa_meta_header;
+
+      update_timeline_points (stream, next_buffer);
 
       spa_meta_header = spa_buffer_find_meta_data (next_buffer->buffer,
                                                    SPA_META_Header,

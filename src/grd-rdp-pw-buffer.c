@@ -21,7 +21,11 @@
 
 #include "grd-rdp-pw-buffer.h"
 
+#include <glib/gstdio.h>
 #include <sys/mman.h>
+
+#include "grd-drm-utils.h"
+#include "grd-pipewire-utils.h"
 
 typedef struct
 {
@@ -43,6 +47,13 @@ struct _GrdRdpPwBuffer
   gboolean is_locked;
 
   GrdRdpMemFd mem_fd;
+
+  int device_fd;
+  int acquire_syncobj_fd;
+  uint64_t acquire_point;
+  int release_syncobj_fd;
+  uint64_t release_point;
+  gboolean needs_release;
 };
 
 GrdRdpBufferType
@@ -75,6 +86,22 @@ grd_rdp_pw_buffer_get_mapped_data (GrdRdpPwBuffer *rdp_pw_buffer,
 void
 grd_rdp_pw_buffer_queue_pw_buffer (GrdRdpPwBuffer *rdp_pw_buffer)
 {
+  if (rdp_pw_buffer->release_syncobj_fd != -1 &&
+      rdp_pw_buffer->needs_release)
+    {
+      int release_syncobj_fd = rdp_pw_buffer->release_syncobj_fd;
+      uint64_t release_timeline_point = rdp_pw_buffer->release_point;
+      g_autoptr (GError) error = NULL;
+
+      if (!grd_signal_drm_timeline_point (rdp_pw_buffer->device_fd,
+                                          release_syncobj_fd,
+                                          release_timeline_point,
+                                          &error))
+        g_warning ("Failed to signal release point: %s", error->message);
+
+      rdp_pw_buffer->needs_release = FALSE;
+    }
+
   pw_stream_queue_buffer (rdp_pw_buffer->pw_stream, rdp_pw_buffer->pw_buffer);
 }
 
@@ -116,7 +143,14 @@ is_supported_dma_buf_buffer (struct pw_buffer  *pw_buffer,
                              GError           **error)
 {
   struct spa_buffer *spa_buffer = pw_buffer->buffer;
-  uint32_t n_planes = spa_buffer->n_datas;
+  size_t i;
+  int n_planes = 0;
+
+  for (i = 0; i < spa_buffer->n_datas; i++)
+    {
+      if (spa_buffer->datas[i].type == SPA_DATA_DmaBuf)
+        n_planes++;
+    }
 
   if (n_planes != 1)
     {
@@ -133,8 +167,6 @@ dma_buf_info_new (struct pw_buffer *pw_buffer)
 {
   struct spa_buffer *spa_buffer = pw_buffer->buffer;
   GrdRdpPwBufferDmaBufInfo *dma_buf_info;
-
-  g_assert (spa_buffer->n_datas == 1);
 
   dma_buf_info = g_new0 (GrdRdpPwBufferDmaBufInfo, 1);
   dma_buf_info->fd = spa_buffer->datas[0].fd;
@@ -171,6 +203,7 @@ try_mmap_buffer (GrdRdpPwBuffer  *rdp_pw_buffer,
 GrdRdpPwBuffer *
 grd_rdp_pw_buffer_new (struct pw_stream  *pw_stream,
                        struct pw_buffer  *pw_buffer,
+                       int                device_fd,
                        GError           **error)
 {
   g_autoptr (GrdRdpPwBuffer) rdp_pw_buffer = NULL;
@@ -178,6 +211,9 @@ grd_rdp_pw_buffer_new (struct pw_stream  *pw_stream,
   rdp_pw_buffer = g_new0 (GrdRdpPwBuffer, 1);
   rdp_pw_buffer->pw_stream = pw_stream;
   rdp_pw_buffer->pw_buffer = pw_buffer;
+  rdp_pw_buffer->device_fd = device_fd;
+  rdp_pw_buffer->acquire_syncobj_fd = -1;
+  rdp_pw_buffer->release_syncobj_fd = -1;
 
   g_mutex_init (&rdp_pw_buffer->buffer_mutex);
 
@@ -201,7 +237,29 @@ grd_rdp_pw_buffer_new (struct pw_stream  *pw_stream,
     return NULL;
 
   if (get_pw_buffer_type (pw_buffer) == SPA_DATA_DmaBuf)
-    rdp_pw_buffer->dma_buf_info = dma_buf_info_new (pw_buffer);
+    {
+      struct spa_buffer *spa_buffer = rdp_pw_buffer->pw_buffer->buffer;
+      int acquire_syncobj_fd, release_syncobj_fd;
+
+      rdp_pw_buffer->dma_buf_info = dma_buf_info_new (pw_buffer);
+
+      if (grd_spa_buffer_find_syncobj_fds (spa_buffer,
+                                           &acquire_syncobj_fd,
+                                           &release_syncobj_fd))
+        {
+          rdp_pw_buffer->acquire_syncobj_fd = dup (acquire_syncobj_fd);
+          rdp_pw_buffer->release_syncobj_fd = dup (release_syncobj_fd);
+
+          if (rdp_pw_buffer->acquire_syncobj_fd == -1 ||
+              rdp_pw_buffer->release_syncobj_fd == -1)
+            {
+              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           "Failed to duplicate syncobj file descriptors: %s",
+                           g_strerror (errno));
+              return NULL;
+            }
+        }
+    }
 
   if (get_pw_buffer_type (pw_buffer) == SPA_DATA_MemFd &&
       !try_mmap_buffer (rdp_pw_buffer, error))
@@ -228,6 +286,35 @@ grd_rdp_pw_buffer_free (GrdRdpPwBuffer *rdp_pw_buffer)
   maybe_unmap_buffer (rdp_pw_buffer);
   g_clear_pointer (&rdp_pw_buffer->dma_buf_info, g_free);
 
+  g_clear_fd (&rdp_pw_buffer->acquire_syncobj_fd, NULL);
+  g_clear_fd (&rdp_pw_buffer->release_syncobj_fd, NULL);
+
   g_mutex_clear (&rdp_pw_buffer->buffer_mutex);
   g_free (rdp_pw_buffer);
+}
+
+void
+grd_rdp_pw_buffer_update_timeline_points (GrdRdpPwBuffer *rdp_pw_buffer)
+{
+  struct spa_buffer *spa_buffer = rdp_pw_buffer->pw_buffer->buffer;
+  struct spa_meta_sync_timeline *sync_timeline;
+
+  sync_timeline =
+    spa_buffer_find_meta_data (spa_buffer, SPA_META_SyncTimeline,
+                               sizeof (struct spa_meta_sync_timeline));
+  if (!sync_timeline)
+    return;
+
+  rdp_pw_buffer->acquire_point = sync_timeline->acquire_point;
+  rdp_pw_buffer->release_point = sync_timeline->release_point;
+  rdp_pw_buffer->needs_release = TRUE;
+}
+
+void
+grd_rdp_pw_buffer_get_acquire_timeline_data (GrdRdpPwBuffer *rdp_pw_buffer,
+                                             int            *syncobj_fd,
+                                             uint64_t       *timeline_point)
+{
+  *syncobj_fd = rdp_pw_buffer->acquire_syncobj_fd;
+  *timeline_point = rdp_pw_buffer->acquire_point;
 }

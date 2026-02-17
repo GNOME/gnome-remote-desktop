@@ -201,6 +201,8 @@ grd_rdp_view_creator_gen_gl_create_view (GrdRdpViewCreator  *view_creator,
     grd_rdp_pw_buffer_get_dma_buf_info (rdp_pw_buffer);
   const GrdRdpBufferInfo *rdp_buffer_info =
     grd_rdp_buffer_get_rdp_buffer_info (src_buffer_new);
+  int acquire_syncobj_fd;
+  uint64_t acquire_point;
   ViewContext *view_context;
   GrdLocalBuffer *local_buffer_new;
   int row_width;
@@ -217,6 +219,10 @@ grd_rdp_view_creator_gen_gl_create_view (GrdRdpViewCreator  *view_creator,
   row_width = grd_local_buffer_get_buffer_stride (local_buffer_new) /
               get_bpp_from_drm_format (rdp_buffer_info->drm_format);
 
+  grd_rdp_pw_buffer_get_acquire_timeline_data (rdp_pw_buffer,
+                                               &acquire_syncobj_fd,
+                                               &acquire_point);
+
   grd_egl_thread_download (egl_thread,
                            NULL,
                            grd_local_buffer_get_buffer (local_buffer_new),
@@ -229,8 +235,8 @@ grd_rdp_view_creator_gen_gl_create_view (GrdRdpViewCreator  *view_creator,
                            (uint32_t *) &dma_buf_info->stride,
                            &dma_buf_info->offset,
                            &rdp_buffer_info->drm_format_modifier,
-                           -1,
-                           0,
+                           acquire_syncobj_fd,
+                           acquire_point,
                            on_dma_buf_downloaded,
                            &view_context->sync_point,
                            NULL);

@@ -34,9 +34,16 @@ typedef struct
 
 GrdRdpPwBuffer *grd_rdp_pw_buffer_new (struct pw_stream  *pw_stream,
                                        struct pw_buffer  *pw_buffer,
+                                       int                device_fd,
                                        GError           **error);
 
 void grd_rdp_pw_buffer_free (GrdRdpPwBuffer *rdp_pw_buffer);
+
+void grd_rdp_pw_buffer_update_timeline_points (GrdRdpPwBuffer *rdp_pw_buffer);
+
+void grd_rdp_pw_buffer_get_acquire_timeline_data (GrdRdpPwBuffer *rdp_pw_buffer,
+                                                  int            *syncobj_fd,
+                                                  uint64_t       *timeline_point);
 
 GrdRdpBufferType grd_rdp_pw_buffer_get_buffer_type (GrdRdpPwBuffer *rdp_pw_buffer);
 
