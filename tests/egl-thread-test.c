@@ -319,6 +319,7 @@ run_dma_buf_tests (struct gbm_device *gbm_device,
                            dma_buf->strides,
                            dma_buf->offsets,
                            dma_buf->modifiers,
+                           -1, 0,
                            on_dma_buf_downloaded,
                            dma_buf,
                            (GDestroyNotify) dma_buf_free);

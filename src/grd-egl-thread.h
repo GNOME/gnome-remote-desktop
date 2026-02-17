@@ -57,6 +57,8 @@ void grd_egl_thread_download (GrdEglThread         *egl_thread,
                               const uint32_t       *strides,
                               const uint32_t       *offsets,
                               const uint64_t       *modifiers,
+                              int                   syncobj_fd,
+                              uint64_t              timeline_point,
                               GrdEglThreadCallback  callback,
                               gpointer              user_data,
                               GDestroyNotify        destroy);

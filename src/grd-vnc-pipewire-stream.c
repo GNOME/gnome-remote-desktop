@@ -761,6 +761,8 @@ process_frame_data (GrdVncPipeWireStream *stream,
                                strides,
                                offsets,
                                modifiers,
+                               -1,
+                               0,
                                on_dma_buf_downloaded,
                                grd_vnc_frame_ref (g_steal_pointer (&frame)),
                                (GDestroyNotify) grd_vnc_frame_unref);

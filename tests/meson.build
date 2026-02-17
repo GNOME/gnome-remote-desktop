@@ -92,6 +92,8 @@ egl_thread_test = executable(
   'egl-thread-test',
   sources: [
     'egl-thread-test.c',
+    '../src/grd-drm-utils.c',
+    '../src/grd-drm-utils.h',
     '../src/grd-egl-thread.c',
     '../src/grd-egl-thread.h',
   ],

@@ -229,6 +229,8 @@ grd_rdp_view_creator_gen_gl_create_view (GrdRdpViewCreator  *view_creator,
                            (uint32_t *) &dma_buf_info->stride,
                            &dma_buf_info->offset,
                            &rdp_buffer_info->drm_format_modifier,
+                           -1,
+                           0,
                            on_dma_buf_downloaded,
                            &view_context->sync_point,
                            NULL);

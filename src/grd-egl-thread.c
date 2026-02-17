@@ -29,6 +29,8 @@
 #include <glib/gstdio.h>
 #include <xf86drm.h>
 
+#include "grd-drm-utils.h"
+
 #ifndef EGL_DRM_RENDER_NODE_FILE_EXT
 #define EGL_DRM_RENDER_NODE_FILE_EXT 0x3377
 #endif
@@ -152,6 +154,9 @@ typedef struct _GrdEglTaskDownload
   uint32_t *strides;
   uint32_t *offsets;
   uint64_t *modifiers;
+
+  int syncobj_fd;
+  uint64_t timeline_point;
 } GrdEglTaskDownload;
 
 static void
@@ -580,6 +585,7 @@ grd_egl_task_download_free (GrdEglTask *task_base)
   g_free (task->strides);
   g_free (task->offsets);
   g_free (task->modifiers);
+  g_clear_fd (&task->syncobj_fd, NULL);
 
   grd_egl_task_free (task_base);
 }
@@ -963,6 +969,67 @@ read_pixels (uint8_t      *dst_data,
                 dst_data);
 }
 
+static EGLSync
+create_egl_sync_from_syncfile_fd_in_impl (GrdEglThread  *egl_thread,
+                                          int            syncfile_fd,
+                                          GError       **error)
+{
+  const EGLAttrib attributes[] = {
+    EGL_SYNC_NATIVE_FENCE_FD_ANDROID, syncfile_fd,
+    EGL_NONE
+  };
+  EGLSync egl_sync;
+
+  egl_sync = eglCreateSync (egl_thread->impl.egl_display,
+                            EGL_SYNC_NATIVE_FENCE_ANDROID,
+                            attributes);
+  if (egl_sync == EGL_NO_SYNC)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to create EGLSync from syncfile fd: %d",
+                   eglGetError ());
+      close(syncfile_fd);
+      return EGL_NO_SYNC;
+    }
+
+  return egl_sync;
+}
+
+static EGLSync
+create_egl_sync_from_syncobj_timeline_point_in_impl (GrdEglThread  *egl_thread,
+                                                     int            syncobj_fd,
+                                                     uint64_t       timeline_point,
+                                                     GError       **error)
+{
+  int device_fd = egl_thread->impl.drm_render_node_fd;
+  g_autofd int syncfile_fd = -1;
+  uint32_t syncobj_handle = 0;
+
+  if (!grd_create_drm_syncobj_handle (device_fd, syncobj_fd, &syncobj_handle,
+                                      error))
+    return EGL_NO_SYNC;
+
+  if (!grd_wait_for_drm_timeline_point (device_fd, syncobj_handle,
+                                        timeline_point,
+                                        error))
+    {
+      drmSyncobjDestroy (device_fd, syncobj_handle);
+      return EGL_NO_SYNC;
+    }
+
+  syncfile_fd = grd_export_drm_timeline_syncfile (device_fd, syncobj_handle,
+                                                  timeline_point,
+                                                  error);
+  drmSyncobjDestroy (device_fd, syncobj_handle);
+
+  if (syncfile_fd < 0)
+    return EGL_NO_SYNC;
+
+  return create_egl_sync_from_syncfile_fd_in_impl (egl_thread,
+                                                   g_steal_fd (&syncfile_fd),
+                                                   error);
+}
+
 static void
 download_in_impl (gpointer data,
                   gpointer user_data)
@@ -990,6 +1057,27 @@ download_in_impl (gpointer data,
   if (!bind_egl_image (egl_thread, egl_image, task->dst_row_width, &tex,
                        task->dst_data ? &fbo : NULL))
     goto out;
+
+  if (task->syncobj_fd >= 0)
+    {
+      g_autoptr (GError) error = NULL;
+      EGLSync sync;
+
+      sync =
+        create_egl_sync_from_syncobj_timeline_point_in_impl (egl_thread,
+                                                             task->syncobj_fd,
+                                                             task->timeline_point,
+                                                             &error);
+      if (sync == EGL_NO_SYNC)
+        {
+          g_warning ("Failed to create EGLSync for acquire timeline point: %s",
+                     error->message);
+          goto out;
+        }
+
+      eglWaitSync (egl_thread->impl.egl_display, sync, 0);
+      eglDestroySync (egl_thread->impl.egl_display, sync);
+    }
 
   read_pixels (task->dst_data, task->width, task->height);
 
@@ -1164,6 +1252,8 @@ grd_egl_thread_download (GrdEglThread         *egl_thread,
                          const uint32_t       *strides,
                          const uint32_t       *offsets,
                          const uint64_t       *modifiers,
+                         int                   syncobj_fd,
+                         uint64_t              timeline_point,
                          GrdEglThreadCallback  callback,
                          gpointer              user_data,
                          GDestroyNotify        destroy)
@@ -1185,6 +1275,8 @@ grd_egl_thread_download (GrdEglThread         *egl_thread,
   task->strides = g_memdup2 (strides, n_planes * sizeof (uint32_t));
   task->offsets = g_memdup2 (offsets, n_planes * sizeof (uint32_t));
   task->modifiers = g_memdup2 (modifiers, n_planes * sizeof (uint64_t));
+  task->syncobj_fd = syncobj_fd >= 0 ? dup (syncobj_fd) : -1;
+  task->timeline_point = timeline_point;
 
   task->base.func = download_in_impl;
   task->base.destroy = (GDestroyNotify) grd_egl_task_download_free;
