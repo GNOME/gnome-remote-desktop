@@ -24,7 +24,9 @@
 
 #include <epoxy/egl.h>
 #include <epoxy/gl.h>
+#include <fcntl.h>
 #include <gio/gio.h>
+#include <glib/gstdio.h>
 
 #ifndef EGL_DRM_RENDER_NODE_FILE_EXT
 #define EGL_DRM_RENDER_NODE_FILE_EXT 0x3377
@@ -41,6 +43,8 @@ struct _GrdEglThread
 
   GHashTable *modifiers;
 
+  int drm_render_node_fd;
+
   struct
   {
     gboolean initialized;
@@ -53,6 +57,7 @@ struct _GrdEglThread
     EGLContext egl_context;
 
     const char *drm_render_node;
+    int drm_render_node_fd;
 
     GSource *egl_thread_source;
   } impl;
@@ -364,6 +369,25 @@ lookup_drm_render_node (GrdEglThread  *egl_thread,
       return FALSE;
     }
 
+  egl_thread->impl.drm_render_node_fd = open (egl_thread->impl.drm_render_node,
+                                              O_RDWR | O_CLOEXEC);
+  if (egl_thread->impl.drm_render_node_fd < 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to open render node file descriptor: %s",
+                   g_strerror (errno));
+      return FALSE;
+    }
+
+  egl_thread->drm_render_node_fd = dup (egl_thread->impl.drm_render_node_fd);
+  if (egl_thread->drm_render_node_fd == -1)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to dup render node file descriptor: %s",
+                   g_strerror (errno));
+      return FALSE;
+    }
+
   return TRUE;
 }
 
@@ -629,6 +653,7 @@ grd_egl_thread_func (gpointer user_data)
 
   if (!grd_egl_init_in_impl (egl_thread, &error))
     {
+      g_clear_fd (&egl_thread->impl.drm_render_node_fd, NULL);
       g_propagate_error (&egl_thread->impl.error, error);
       g_mutex_lock (&egl_thread->mutex);
       egl_thread->impl.initialized = TRUE;
@@ -673,6 +698,7 @@ grd_egl_thread_func (gpointer user_data)
     }
   g_async_queue_unref (egl_thread->task_queue);
 
+  g_clear_fd (&egl_thread->impl.drm_render_node_fd, NULL);
   eglMakeCurrent (egl_thread->impl.egl_display,
                   EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
   eglDestroyContext (egl_thread->impl.egl_display,
@@ -747,6 +773,8 @@ grd_egl_thread_free (GrdEglThread *egl_thread)
 
   g_assert (g_hash_table_size (egl_thread->slot_table) == 0);
   g_clear_pointer (&egl_thread->slot_table, g_hash_table_unref);
+
+  g_clear_fd (&egl_thread->drm_render_node_fd, NULL);
 
   g_free (egl_thread);
 }
@@ -1323,4 +1351,10 @@ grd_egl_thread_get_modifiers_for_format (GrdEglThread  *egl_thread,
   *out_modifiers = g_memdup2 (modifiers->data,
                               sizeof (uint64_t) * modifiers->len);
   return TRUE;
+}
+
+int
+grd_egl_thread_get_render_node_fd (GrdEglThread *egl_thread)
+{
+  return egl_thread->drm_render_node_fd;
 }
