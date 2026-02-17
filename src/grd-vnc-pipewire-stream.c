@@ -58,7 +58,7 @@ typedef struct
 {
   GMutex buffer_mutex;
   gboolean is_locked;
-} BufferContext;
+} GrdVncPwBuffer;
 
 struct _GrdVncFrame
 {
@@ -120,55 +120,55 @@ static void grd_vnc_frame_unref (GrdVncFrame *frame);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (GrdVncFrame, grd_vnc_frame_unref)
 
-static BufferContext *
-buffer_context_new (void)
+static GrdVncPwBuffer *
+grd_vnc_pw_buffer_new (void)
 {
-  BufferContext *buffer_context;
+  GrdVncPwBuffer *vnc_pw_buffer;
 
-  buffer_context = g_new0 (BufferContext, 1);
-  g_mutex_init (&buffer_context->buffer_mutex);
+  vnc_pw_buffer = g_new0 (GrdVncPwBuffer, 1);
+  g_mutex_init (&vnc_pw_buffer->buffer_mutex);
 
-  return buffer_context;
+  return vnc_pw_buffer;
 }
 
 static void
-buffer_context_free (BufferContext *buffer_context)
+grd_vnc_pw_buffer_free (GrdVncPwBuffer *vnc_pw_buffer)
 {
-  g_mutex_clear (&buffer_context->buffer_mutex);
+  g_mutex_clear (&vnc_pw_buffer->buffer_mutex);
 
-  g_free (buffer_context);
+  g_free (vnc_pw_buffer);
 }
 
 static void
 acquire_pipewire_buffer_lock (GrdVncPipeWireStream *stream,
                               struct pw_buffer     *buffer)
 {
-  BufferContext *buffer_context = NULL;
+  GrdVncPwBuffer *vnc_pw_buffer = NULL;
 
   if (!g_hash_table_lookup_extended (stream->pipewire_buffers, buffer,
-                                     NULL, (gpointer *) &buffer_context))
+                                     NULL, (gpointer *) &vnc_pw_buffer))
     g_assert_not_reached ();
 
-  g_mutex_lock (&buffer_context->buffer_mutex);
-  g_assert (!buffer_context->is_locked);
-  buffer_context->is_locked = TRUE;
+  g_mutex_lock (&vnc_pw_buffer->buffer_mutex);
+  g_assert (!vnc_pw_buffer->is_locked);
+  vnc_pw_buffer->is_locked = TRUE;
 }
 
 static void
 maybe_release_pipewire_buffer_lock (GrdVncPipeWireStream *stream,
                                     struct pw_buffer     *buffer)
 {
-  BufferContext *buffer_context = NULL;
+  GrdVncPwBuffer *vnc_pw_buffer = NULL;
 
   if (!g_hash_table_lookup_extended (stream->pipewire_buffers, buffer,
-                                     NULL, (gpointer *) &buffer_context))
+                                     NULL, (gpointer *) &vnc_pw_buffer))
     g_assert_not_reached ();
 
-  if (!buffer_context->is_locked)
+  if (!vnc_pw_buffer->is_locked)
     return;
 
-  buffer_context->is_locked = FALSE;
-  g_mutex_unlock (&buffer_context->buffer_mutex);
+  vnc_pw_buffer->is_locked = FALSE;
+  g_mutex_unlock (&vnc_pw_buffer->buffer_mutex);
 }
 
 static void
@@ -424,7 +424,9 @@ on_stream_add_buffer (void             *user_data,
 {
   GrdVncPipeWireStream *stream = user_data;
 
-  g_hash_table_insert (stream->pipewire_buffers, buffer, buffer_context_new ());
+  g_hash_table_insert (stream->pipewire_buffers,
+                       buffer,
+                       grd_vnc_pw_buffer_new ());
 }
 
 static void
@@ -432,18 +434,18 @@ on_stream_remove_buffer (void             *user_data,
                          struct pw_buffer *buffer)
 {
   GrdVncPipeWireStream *stream = user_data;
-  BufferContext *buffer_context = NULL;
+  GrdVncPwBuffer *vnc_pw_buffer = NULL;
   g_autoptr (GMutexLocker) locker = NULL;
 
   if (!g_hash_table_lookup_extended (stream->pipewire_buffers, buffer,
-                                     NULL, (gpointer *) &buffer_context))
+                                     NULL, (gpointer *) &vnc_pw_buffer))
     g_assert_not_reached ();
 
   locker = g_mutex_locker_new (&stream->dequeue_mutex);
 
   /* Ensure buffer is not locked any more */
-  g_mutex_lock (&buffer_context->buffer_mutex);
-  g_mutex_unlock (&buffer_context->buffer_mutex);
+  g_mutex_lock (&vnc_pw_buffer->buffer_mutex);
+  g_mutex_unlock (&vnc_pw_buffer->buffer_mutex);
 
   g_hash_table_remove (stream->pipewire_buffers, buffer);
 }
@@ -1107,7 +1109,7 @@ grd_vnc_pipewire_stream_init (GrdVncPipeWireStream *stream)
 {
   stream->pipewire_buffers =
     g_hash_table_new_full (NULL, NULL,
-                           NULL, (GDestroyNotify) buffer_context_free);
+                           NULL, (GDestroyNotify) grd_vnc_pw_buffer_free);
 
   g_mutex_init (&stream->dequeue_mutex);
   g_mutex_init (&stream->frame_mutex);
