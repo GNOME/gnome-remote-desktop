@@ -24,6 +24,7 @@
 #include "grd-debug.h"
 #include "grd-image-view-nv12.h"
 #include "grd-rdp-buffer.h"
+#include "grd-rdp-pw-buffer.h"
 #include "grd-rdp-render-state.h"
 #include "grd-utils.h"
 #include "grd-vk-buffer.h"
@@ -32,6 +33,7 @@
 #include "grd-vk-memory.h"
 #include "grd-vk-physical-device.h"
 #include "grd-vk-queue.h"
+#include "grd-vk-sync-file.h"
 #include "grd-vk-utils.h"
 
 #define N_SPECIALIZATION_CONSTANTS 6
@@ -108,6 +110,7 @@ struct _GrdRdpViewCreatorAVC
   VkCommandPool vk_command_pool;
   CommandBuffers command_buffers;
   VkFence vk_fence;
+  GrdVkSyncFile *sync_file;
 
   Pipeline *dual_view_pipeline;
   Pipeline *dual_view_dmg_pipeline;
@@ -135,6 +138,25 @@ pipeline_free (Pipeline *pipeline)
     vkDestroyPipelineLayout (vk_device, pipeline->vk_pipeline_layout, NULL);
 
   g_free (pipeline);
+}
+
+static gboolean
+import_syncobj_timeline_point (GrdVkSyncFile  *sync_file,
+                               GrdRdpBuffer   *rdp_buffer,
+                               GError        **error)
+{
+  GrdRdpPwBuffer *rdp_pw_buffer = grd_rdp_buffer_get_rdp_pw_buffer (rdp_buffer);
+  int acquire_syncobj_fd;
+  uint64_t acquire_point;
+
+  grd_rdp_pw_buffer_get_acquire_timeline_data (rdp_pw_buffer,
+                                               &acquire_syncobj_fd,
+                                               &acquire_point);
+
+  return grd_vk_sync_file_import_syncobj_timeline_point (sync_file,
+                                                         acquire_syncobj_fd,
+                                                         acquire_point,
+                                                         error);
 }
 
 static void
@@ -463,10 +485,12 @@ grd_rdp_view_creator_avc_create_view (GrdRdpViewCreator  *view_creator,
 {
   GrdRdpViewCreatorAVC *view_creator_avc =
     GRD_RDP_VIEW_CREATOR_AVC (view_creator);
+  GrdVkSyncFile *sync_file = view_creator_avc->sync_file;
   VkDevice vk_device = grd_vk_device_get_device (view_creator_avc->device);
   CommandBuffers *command_buffers = &view_creator_avc->command_buffers;
   GrdVkImage *src_image_new = NULL;
   GrdVkImage *src_image_old = NULL;
+  VkSemaphoreSubmitInfo semaphore_submit_info = {};
   VkCommandBufferSubmitInfo buffer_submit_infos[4] = {};
   VkCommandBuffer create_dual_view = VK_NULL_HANDLE;
   uint32_t n_buffer_submit_infos = 0;
@@ -484,6 +508,9 @@ grd_rdp_view_creator_avc_create_view (GrdRdpViewCreator  *view_creator,
   src_image_new = grd_rdp_buffer_get_dma_buf_image (src_buffer_new);
   if (src_buffer_old)
     src_image_old = grd_rdp_buffer_get_dma_buf_image (src_buffer_old);
+
+  if (!import_syncobj_timeline_point (sync_file, src_buffer_new, error))
+    return FALSE;
 
   write_image_descriptor_sets (view_creator_avc,
                                main_image_view, aux_image_view,
@@ -533,7 +560,14 @@ grd_rdp_view_creator_avc_create_view (GrdRdpViewCreator  *view_creator,
     command_buffers->synchronize_state_buffers;
   ++n_buffer_submit_infos;
 
+  semaphore_submit_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+  semaphore_submit_info.semaphore = grd_vk_sync_file_get_semaphore (sync_file);
+  semaphore_submit_info.stageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+  semaphore_submit_info.deviceIndex = 0;
+
   submit_info_2.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
+  submit_info_2.waitSemaphoreInfoCount = 1;
+  submit_info_2.pWaitSemaphoreInfos = &semaphore_submit_info;
   submit_info_2.commandBufferInfoCount = n_buffer_submit_infos;
   submit_info_2.pCommandBufferInfos = buffer_submit_infos;
 
@@ -1500,6 +1534,10 @@ grd_rdp_view_creator_avc_new (GrdVkDevice  *device,
   if (!create_fence (view_creator_avc, error))
     return NULL;
 
+  view_creator_avc->sync_file = grd_vk_sync_file_new (device, error);
+  if (!view_creator_avc->sync_file)
+    return NULL;
+
   write_state_descriptor_set (view_creator_avc);
   if (!record_state_handling_command_buffers (view_creator_avc, error))
     return NULL;
@@ -1519,6 +1557,8 @@ grd_rdp_view_creator_avc_dispose (GObject *object)
 {
   GrdRdpViewCreatorAVC *view_creator_avc = GRD_RDP_VIEW_CREATOR_AVC (object);
   GrdVkDevice *device = view_creator_avc->device;
+
+  g_clear_pointer (&view_creator_avc->sync_file, grd_vk_sync_file_free);
 
   grd_vk_clear_fence (device, &view_creator_avc->vk_fence);
   grd_vk_clear_command_pool (device, &view_creator_avc->vk_command_pool);
