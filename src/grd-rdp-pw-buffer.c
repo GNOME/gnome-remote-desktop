@@ -83,6 +83,13 @@ grd_rdp_pw_buffer_get_mapped_data (GrdRdpPwBuffer *rdp_pw_buffer,
   return mem_fd->data;
 }
 
+gboolean
+grd_rdp_pw_buffer_has_syncobjs (GrdRdpPwBuffer *rdp_pw_buffer)
+{
+  return rdp_pw_buffer->acquire_syncobj_fd != -1 &&
+         rdp_pw_buffer->release_syncobj_fd != -1;
+}
+
 void
 grd_rdp_pw_buffer_queue_pw_buffer (GrdRdpPwBuffer *rdp_pw_buffer)
 {

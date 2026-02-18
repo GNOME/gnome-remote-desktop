@@ -52,6 +52,8 @@ const GrdRdpPwBufferDmaBufInfo *grd_rdp_pw_buffer_get_dma_buf_info (GrdRdpPwBuff
 uint8_t *grd_rdp_pw_buffer_get_mapped_data (GrdRdpPwBuffer *rdp_pw_buffer,
                                             int32_t        *stride);
 
+gboolean grd_rdp_pw_buffer_has_syncobjs (GrdRdpPwBuffer *rdp_pw_buffer);
+
 void grd_rdp_pw_buffer_queue_pw_buffer (GrdRdpPwBuffer *rdp_pw_buffer);
 
 void grd_rdp_pw_buffer_ensure_unlocked (GrdRdpPwBuffer *rdp_pw_buffer);
