@@ -247,6 +247,8 @@ if have_rdp
     'grd-vk-physical-device.h',
     'grd-vk-queue.c',
     'grd-vk-queue.h',
+    'grd-vk-sync-file.c',
+    'grd-vk-sync-file.h',
     'grd-vk-utils.c',
     'grd-vk-utils.h',
   ])
