@@ -57,6 +57,8 @@ VkDevice grd_vk_device_get_device (GrdVkDevice *device);
 
 VkPipelineCache grd_vk_device_get_pipeline_cache (GrdVkDevice *device);
 
+int grd_vk_device_get_drm_render_node_fd (GrdVkDevice *device);
+
 float grd_vk_device_get_timestamp_period (GrdVkDevice *device);
 
 int64_t grd_vk_device_get_drm_render_node (GrdVkDevice *device);

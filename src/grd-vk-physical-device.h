@@ -32,9 +32,12 @@ typedef enum
   GRD_VK_DEVICE_FEATURE_UPDATE_AFTER_BIND_STORAGE_IMAGE = 1 << 1,
 } GrdVkDeviceFeatures;
 
-GrdVkPhysicalDevice *grd_vk_physical_device_new (VkPhysicalDevice    vk_physical_device,
-                                                 GrdVkDeviceFeatures device_features);
+GrdVkPhysicalDevice *grd_vk_physical_device_new (VkPhysicalDevice     vk_physical_device,
+                                                 const char          *drm_render_node,
+                                                 GrdVkDeviceFeatures  device_features);
 
 VkPhysicalDevice grd_vk_physical_device_get_physical_device (GrdVkPhysicalDevice *physical_device);
+
+const char *grd_vk_physical_device_get_drm_render_node (GrdVkPhysicalDevice *physical_device);
 
 GrdVkDeviceFeatures grd_vk_physical_device_get_device_features (GrdVkPhysicalDevice *physical_device);

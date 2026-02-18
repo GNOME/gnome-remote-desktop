@@ -528,6 +528,7 @@ static GrdVkPhysicalDevice *
 find_and_create_physical_device (GrdHwAccelVulkan        *hwaccel_vulkan,
                                  const VkPhysicalDevice  *physical_devices,
                                  uint32_t                 n_physical_devices,
+                                 const char              *drm_render_node,
                                  int64_t                  render_major,
                                  int64_t                  render_minor,
                                  GError                 **error)
@@ -543,7 +544,11 @@ find_and_create_physical_device (GrdHwAccelVulkan        *hwaccel_vulkan,
                i + 1, n_physical_devices);
       if (check_physical_device (hwaccel_vulkan, vk_physical_device,
                                  render_major, render_minor, &device_features))
-        return grd_vk_physical_device_new (vk_physical_device, device_features);
+        {
+          return grd_vk_physical_device_new (vk_physical_device,
+                                             drm_render_node,
+                                             device_features);
+        }
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -613,6 +618,7 @@ grd_hwaccel_vulkan_acquire_physical_device (GrdHwAccelVulkan  *hwaccel_vulkan,
 
   return find_and_create_physical_device (hwaccel_vulkan,
                                           physical_devices, n_physical_devices,
+                                          drm_render_node,
                                           major (stat_buf.st_rdev),
                                           minor (stat_buf.st_rdev),
                                           error);

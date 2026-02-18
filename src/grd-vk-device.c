@@ -21,7 +21,9 @@
 
 #include "grd-vk-device.h"
 
+#include <fcntl.h>
 #include <gio/gio.h>
+#include <glib/gstdio.h>
 
 #include "grd-hwaccel-vulkan.h"
 #include "grd-vk-physical-device.h"
@@ -44,6 +46,8 @@ struct _GrdVkDevice
 
   VkDevice vk_device;
   VkPipelineCache vk_pipeline_cache;
+
+  int drm_render_node_fd;
 
   uint32_t queue_family_idx;
   uint32_t max_queues;
@@ -78,6 +82,12 @@ VkPipelineCache
 grd_vk_device_get_pipeline_cache (GrdVkDevice *device)
 {
   return device->vk_pipeline_cache;
+}
+
+int
+grd_vk_device_get_drm_render_node_fd (GrdVkDevice *device)
+{
+  return device->drm_render_node_fd;
 }
 
 float
@@ -215,6 +225,25 @@ find_queue_family_with_most_queues (GrdVkDevice *device)
         }
     }
   g_assert (device->max_queues > 0);
+}
+
+static gboolean
+open_drm_render_node (GrdVkDevice  *device,
+                      GError      **error)
+{
+  const char *drm_render_node =
+    grd_vk_physical_device_get_drm_render_node (device->physical_device);
+
+  device->drm_render_node_fd = open (drm_render_node, O_RDWR | O_CLOEXEC);
+  if (device->drm_render_node_fd < 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to open render node file descriptor: %s",
+                   g_strerror (errno));
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 static gboolean
@@ -477,6 +506,9 @@ grd_vk_device_new (GrdVkPhysicalDevice      *physical_device,
     }
   g_assert (device->vk_device != VK_NULL_HANDLE);
 
+  if (!open_drm_render_node (device, error))
+    return NULL;
+
   if (!create_pipeline_cache (device, error))
     return NULL;
   if (!load_device_funcs (device, error))
@@ -524,6 +556,8 @@ grd_vk_device_dispose (GObject *object)
 
   if (device->vk_device != VK_NULL_HANDLE)
     destroy_shader_modules (device);
+
+  g_clear_fd (&device->drm_render_node_fd, NULL);
 
   if (device->vk_pipeline_cache != VK_NULL_HANDLE)
     {

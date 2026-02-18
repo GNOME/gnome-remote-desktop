@@ -26,6 +26,7 @@ struct _GrdVkPhysicalDevice
   GObject parent;
 
   VkPhysicalDevice vk_physical_device;
+  const char *drm_render_node;
 
   /* Physical device features */
   GrdVkDeviceFeatures device_features;
@@ -39,6 +40,12 @@ grd_vk_physical_device_get_physical_device (GrdVkPhysicalDevice *physical_device
   return physical_device->vk_physical_device;
 }
 
+const char *
+grd_vk_physical_device_get_drm_render_node (GrdVkPhysicalDevice *physical_device)
+{
+  return physical_device->drm_render_node;
+}
+
 GrdVkDeviceFeatures
 grd_vk_physical_device_get_device_features (GrdVkPhysicalDevice *physical_device)
 {
@@ -46,13 +53,15 @@ grd_vk_physical_device_get_device_features (GrdVkPhysicalDevice *physical_device
 }
 
 GrdVkPhysicalDevice *
-grd_vk_physical_device_new (VkPhysicalDevice    vk_physical_device,
-                            GrdVkDeviceFeatures device_features)
+grd_vk_physical_device_new (VkPhysicalDevice     vk_physical_device,
+                            const char          *drm_render_node,
+                            GrdVkDeviceFeatures  device_features)
 {
   GrdVkPhysicalDevice *physical_device;
 
   physical_device = g_object_new (GRD_TYPE_VK_PHYSICAL_DEVICE, NULL);
   physical_device->vk_physical_device = vk_physical_device;
+  physical_device->drm_render_node = drm_render_node;
   physical_device->device_features = device_features;
 
   return physical_device;
