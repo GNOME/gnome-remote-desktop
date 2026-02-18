@@ -6,81 +6,111 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
-"issues/\n"
-"POT-Creation-Date: 2024-03-14 15:00+0000\n"
-"PO-Revision-Date: 2024-03-16 23:17+0500\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues/\n"
+"POT-Creation-Date: 2026-02-09 21:01+0000\n"
+"PO-Revision-Date: 2026-02-18 21:41+0500\n"
 "Last-Translator: Baurzhan Muftakhidinov <baurthefirst@gmail.com>\n"
 "Language-Team: Kazakh <kk_KZ@googlegroups.com>\n"
 "Language: kk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.8\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
-msgid "Allow to configure gnome-remote-desktop's system daemon settings."
-msgstr ""
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
+msgstr "gnome-remote-desktop жүйелік қызметінің баптауларын өзгертуге рұқсат беру"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
-msgid ""
-"Authentication is required to configure gnome-remote-desktop's system daemon "
-"settings."
-msgstr ""
+msgid "Authentication is required to configure gnome-remote-desktop's system daemon settings"
+msgstr "gnome-remote-desktop жүйелік қызметінің баптауларын өзгерту үшін аутентификация қажет"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
-#| msgid "GNOME Remote Desktop"
-msgid "GNOME Remote Desktop Handover Daemon"
-msgstr ""
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr "gnome-remote-desktop жүйелік қызметін іске қосуға және сөндіруге рұқсат беру"
 
-#: src/grd-ctl.c:60
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid "Authentication is required to enable or disable gnome-remote-desktop's system daemon"
+msgstr "gnome-remote-desktop жүйелік қызметін іске қосу немесе сөндіру үшін аутентификация қажет"
+
+#: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
-msgstr ""
+msgstr "Қолданылуы: %s [ОПЦИЯЛАР...] КОМАНДА [ІШКІ КОМАНДА]...\n"
 
-#: src/grd-ctl.c:612
+#: src/grd-ctl.c:382
+msgid "Username: "
+msgstr "Пайдаланушы аты: "
+
+#: src/grd-ctl.c:394 src/grd-ctl.c:552
+msgid "Password: "
+msgstr "Пароль: "
+
+#: src/grd-ctl.c:682
 msgid "Commands:\n"
 msgstr "Командалар:\n"
 
-#: src/grd-ctl.c:617
+#: src/grd-ctl.c:687
 msgid ""
-"  rdp                                        - RDP subcommands:\n"
-"    set-port                                 - Set port the server binds to\n"
-"    enable                                   - Enable the RDP backend\n"
-"    disable                                  - Disable the RDP backend\n"
-"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
-"    set-tls-key <path-to-key>                - Set path to TLS key\n"
-"    set-credentials <username> <password>    - Set username and password\n"
-"                                               credentials\n"
-"    clear-credentials                        - Clear username and password\n"
-"                                               credentials\n"
-"    enable-view-only                         - Disable remote control of "
-"input\n"
-"                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
-"input\n"
-"                                               devices\n"
-"    enable-port-negotiation                  - If unavailable, listen to\n"
-"                                               a different port\n"
-"    disable-port-negotiation                 - If unavailable, don't listen\n"
-"                                               to a different port\n"
+"  rdp                                            - RDP subcommands:\n"
+"    set-port                                     - Set port the server binds to\n"
+"    enable                                       - Enable the RDP backend\n"
+"    disable                                      - Disable the RDP backend\n"
+"    set-auth-methods <list-of-methods>           - Set a comma separated list of\n"
+"                                                   allowed authentication methods\n"
+"                                                   (credentials, kerberos)\n"
+"    set-tls-cert <path-to-cert>                  - Set path to TLS certificate\n"
+"    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-kerberos-keytab <path-to-keytab>         - Set path to a Kerberos keytab\n"
+"    set-credentials [<username> [<password>]]    - Set username and password\n"
+"                                                   credentials\n"
+"    clear-credentials                            - Clear username and password\n"
+"                                                   credentials\n"
+"    enable-view-only                             - Disable remote control of input\n"
+"                                                   devices\n"
+"    disable-view-only                            - Enable remote control of input\n"
+"                                                   devices\n"
+"    enable-port-negotiation                      - If unavailable, listen to\n"
+"                                                   a different port\n"
+"    disable-port-negotiation                     - If unavailable, don't listen\n"
+"                                                   to a different port\n"
 "\n"
 msgstr ""
+"  rdp                                            - RDP ішкі командалары:\n"
+"    set-port                                     - Сервер байланысатын портты орнату\n"
+"    enable                                       - RDP бэкендін іске қосу\n"
+"    disable                                      - RDP бэкендін сөндіру\n"
+"    set-auth-methods <list-of-methods>           - Рұқсат етілген аутентификация әдістерінің\n"
+"                                                   үтірмен бөлінген тізімін орнату\n"
+"                                                   (credentials, kerberos)\n"
+"    set-tls-cert <path-to-cert>                  - TLS сертификатына жолды орнату\n"
+"    set-tls-key <path-to-key>                    - TLS кілтіне жолды орнату\n"
+"    set-kerberos-keytab <path-to-keytab>         - Kerberos keytab файлына жолды орнату\n"
+"    set-credentials [<username> [<password>]]    - Пайдаланушы аты мен пароль тіркелгі\n"
+"                                                   мәліметтерін орнату\n"
+"    clear-credentials                            - Пайдаланушы аты мен пароль тіркелгі\n"
+"                                                   мәліметтерін тазарту\n"
+"    enable-view-only                             - Енгізу құрылғыларын қашықтан басқаруды\n"
+"                                                   сөндіру\n"
+"    disable-view-only                            - Енгізу құрылғыларын қашықтан басқаруды\n"
+"                                                   іске қосу\n"
+"    enable-port-negotiation                      - Қолжетімсіз болса, басқа портты тыңдау\n"
+"    disable-port-negotiation                     - Қолжетімсіз болса, басқа портты\n"
+"                                                   тыңдамау\n"
+"\n"
 
-#: src/grd-ctl.c:641
+#: src/grd-ctl.c:715
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
-"    set-password <password>                  - Set the VNC password\n"
+"    set-password [<password>]                - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
-"    enable-view-only                         - Disable remote control of "
-"input\n"
+"    enable-view-only                         - Disable remote control of input\n"
 "                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
-"input\n"
+"    disable-view-only                        - Enable remote control of input\n"
 "                                               devices\n"
 "    enable-port-negotiation                  - If unavailable, listen to\n"
 "                                               a different port\n"
@@ -88,43 +118,70 @@ msgid ""
 "                                               to a different port\n"
 "\n"
 msgstr ""
+"  vnc                                        - VNC ішкі командалары:\n"
+"    set-port                                 - Сервер байланысатын портты орнату\n"
+"    enable                                   - VNC бэкендін іске қосу\n"
+"    disable                                  - VNC бэкендін сөндіру\n"
+"    set-password [<password>]                - VNC паролін орнату\n"
+"    clear-password                           - VNC паролін тазалау\n"
+"    set-auth-method password|prompt          - Авторизация әдісін орнату\n"
+"    enable-view-only                         - Енгізу құрылғыларын қашықтан\n"
+"                                               басқаруды сөндіру\n"
+"    disable-view-only                        - Енгізу құрылғыларын қашықтан\n"
+"                                               басқаруды іске қосу\n"
+"    enable-port-negotiation                  - Қолжетімсіз болса, басқа портты\n"
+"                                               тыңдау\n"
+"    disable-port-negotiation                 - Қолжетімсіз болса, басқа портты\n"
+"                                               тыңдамау\n"
+"\n"
 
-#: src/grd-ctl.c:661
+#: src/grd-ctl.c:735
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
-"  --headless                                 - Use headless credentials "
-"storage\n"
+"  --headless                                 - Configure headless daemon\n"
+"                                               running on a user session\n"
 "  --system                                   - Configure system daemon\n"
+"                                               for remote login\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
+"  status [--show-credentials]                - Ағымдағы күйді көрсету\n"
+"\n"
+"Опциялар:\n"
+"  --headless                                 - Пайдаланушы сеансында орындалатын\n"
+"                                               дисплейсіз демонды баптау\n"
+"  --system                                   - Қашықтан кіруге арналған жүйелік\n"
+"                                               демонды баптау\n"
+"  --help                                     - Осы көмек мәтінін шығару\n"
 
-#: src/grd-daemon.c:1222
+#: src/grd-daemon.c:1165
 msgid "GNOME Remote Desktop"
 msgstr "GNOME қашықтағы үстелі"
 
-#: src/grd-daemon-handover.c:346
+#: src/grd-daemon-handover.c:331 src/grd-daemon-handover.c:396
 #, c-format
-msgid "This connection is insecure"
-msgstr ""
+msgid "Continue With Insecure Connection?"
+msgstr "Қауіпсіз емес байланысты жалғастыру керек пе?"
 
-#. Translators: Don't translate "use redirection server name:i:1".
+#. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:350
+#: src/grd-daemon-handover.c:334 src/grd-daemon-handover.c:400
 #, c-format
 msgid ""
-"Do you want to continue with an insecure connection?\n"
-"To make it secure set <b>“use redirection server name:i:1”</b> in the RDP "
-"config file."
+"This Remote Desktop connection is insecure. To secure this connection, enable RDSTLS Security in your client by saving the "
+"connection settings in your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
+"Бұл қашықтағы жұмыс үстелі байланысы қауіпсіз емес. Бұл байланысты қауіпсіз ету үшін, клиентіңізде байланыс баптауларын RDP "
+"файлы ретінде сақтау арқылы RDSTLS қауіпсіздігін іске қосыңыз және оның ішінде «use redirection server name:i:1» мәнін "
+"орнатыңыз."
 
-#: src/grd-daemon-handover.c:354
+#: src/grd-daemon-handover.c:339 src/grd-daemon-handover.c:405
 #, c-format
 msgid "Disconnect"
 msgstr "Байланысты үзу"
 
-#: src/grd-daemon-handover.c:355
+#: src/grd-daemon-handover.c:340 src/grd-daemon-handover.c:406
 #, c-format
 msgid "Continue"
 msgstr "Жалғастыру"
@@ -138,178 +195,196 @@ msgstr "Жұмыс үстелімен бөлісу порты ауысты"
 #, c-format
 msgid ""
 "The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
-"This is because the Remote Sessions service has been activated and it has a "
-"higher priority to use port <b>%i</b>."
+"This is because the Remote Sessions service has been activated and it has a higher priority to use port <b>%i</b>."
 msgstr ""
+"Жұмыс үстелін ортақ пайдалану порты <b>%i</b> мәнінен <b>%i</b> мәніне өзгерді.\n"
+"Бұл Қашықтағы сеанстар қызметінің белсендірілуіне және оның <b>%i</b> портын пайдалануға басымдылығы жоғары болуына байланысты."
 
-#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:311
 #, c-format
 msgid "Accept"
 msgstr "Қабылдау"
 
-#: src/grd-session-vnc.c:305
+#: src/grd-session-vnc.c:306
 #, c-format
 msgid "Do you want to share your desktop?"
 msgstr "Жұмыс үстелін ортақ пайдаланғыңыз келе ме?"
 
-#: src/grd-session-vnc.c:307
+#: src/grd-session-vnc.c:308
 #, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
-msgstr ""
-"\"%s\" компьютеріндегі пайдаланушы жұмыс үстеліңізді қашықтан көруге немесе "
-"басқаруға талап жасап отыр."
+msgid "A user on the computer '%s' is trying to remotely view or control your desktop."
+msgstr "\"%s\" компьютеріндегі пайдаланушы жұмыс үстеліңізді қашықтан көруге немесе басқаруға талап жасап отыр."
 
-#: src/grd-session-vnc.c:309
+#: src/grd-session-vnc.c:310
 #, c-format
 msgid "Refuse"
 msgstr "Бас тарту"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7 src/org.gnome.desktop.remote-desktop.gschema.xml.in:101
 msgid "The port used by the RDP server"
-msgstr ""
+msgstr "RDP сервері пайдаланатын порт"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8 src/org.gnome.desktop.remote-desktop.gschema.xml.in:102
 msgid "The RDP client will connect to this port to use this RDP server."
-msgstr ""
+msgstr "RDP клиенті осы RDP серверін пайдалану үшін осы портқа қосылады."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14 src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
 msgid "Search a different RDP port if the configured one is used"
-msgstr ""
+msgstr "Егер бапталған порт пайдаланылып тұрса, басқа RDP портын іздеу"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15 src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
 msgid ""
-"When negotiate-port is set to 'true' the RDP server will attempt to listen "
-"to the first available of the next 10 ports starting from the configured one."
+"When negotiate-port is set to 'true' the RDP server will attempt to listen to the first available of the next 10 ports "
+"starting from the configured one."
 msgstr ""
+"negotiate-port мәні 'true' болып орнатылғанда, RDP сервері бапталған порттан бастап келесі 10 порттың ішіндегі бірінші "
+"қолжетімді портты тыңдауға тырысады."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23 src/org.gnome.desktop.remote-desktop.gschema.xml.in:117
 msgid "Whether the RDP backend is enabled or not"
-msgstr ""
+msgstr "RDP бэкенді іске қосылған ба, жоқ па"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24 src/org.gnome.desktop.remote-desktop.gschema.xml.in:118
 msgid "If set to 'true' the RDP backend will be initialized."
-msgstr ""
+msgstr "Егер 'true' болып орнатылса, RDP бэкэнді инициализацияланады."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
-msgstr ""
+msgstr "RDP байланыстарының экранды ортақ пайдалану режимі"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
-"The screenshare mode specifies, whether the RDP backend mirrors the primary "
-"screen, or whether a virtual monitor is created. For the initial resolution "
-"of the virtual monitor, the RDP backend uses either the client core data "
-"([MS-RDPBCGR] 2.2.1.3.2) or the client monitor data ([MS-RDPBCGR] "
-"2.2.1.3.6), depending on what is available. When using a remote desktop "
-"session with a virtual monitor, clients can resize the resolution of the "
-"virtual monitor during a session with the Display Update Virtual Channel "
-"Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-"
-"primary - Record the primary monitor of the current user session. * extend - "
-"Create a new virtual monitor and use it for the remote desktop session. The "
-"resolution of this virtual monitor is derived from the monitor "
-"configuration, submitted by the remote desktop client."
+"The screenshare mode specifies, whether the RDP backend mirrors the primary screen, or whether a virtual monitor is created. "
+"For the initial resolution of the virtual monitor, the RDP backend uses either the client core data ([MS-RDPBCGR] 2.2.1.3.2) "
+"or the client monitor data ([MS-RDPBCGR] 2.2.1.3.6), depending on what is available. When using a remote desktop session with "
+"a virtual monitor, clients can resize the resolution of the virtual monitor during a session with the Display Update Virtual "
+"Channel Extension ([MS-RDPEDISP]). Allowed screenshare modes include: * mirror-primary - Record the primary monitor of the "
+"current user session. * extend - Create a new virtual monitor and use it for the remote desktop session. The resolution of "
+"this virtual monitor is derived from the monitor configuration, submitted by the remote desktop client."
 msgstr ""
+"Экранды ортақ пайдалану режимі RDP бэкенді негізгі экранды қосарлай ма, немесе виртуалды монитор жасай ма, соны анықтайды. "
+"Виртуалды монитордың бастапқы ажыратымдылығы үшін RDP бэкэнді қолжетімділікке байланысты не клиенттің негізгі деректерін ([MS-"
+"RDPBCGR] 2.2.1.3.2), не клиенттің монитор деректерін ([MS-RDPBCGR] 2.2.1.3.6) пайдаланады. Виртуалды мониторы бар қашықтағы "
+"жұмыс үстелі сеансын пайдалану кезінде, клиенттер Display Update Virtual Channel Extension ([MS-RDPEDISP]) көмегімен сеанс "
+"кезінде виртуалды монитордың ажыратымдылығын өзгерте алады. Рұқсат етілген экранды ортақ пайдалану режимдеріне мыналар жатады: "
+"* mirror-primary - Ағымдағы пайдаланушы сеансының негізгі мониторын жазу. * extend - Жаңа виртуалды монитор жасау және оны "
+"қашықтағы жұмыс үстелі сеансы үшін пайдалану. Бұл виртуалды монитордың ажыратымдылығы қашықтағы жұмыс үстелі клиенті ұсынған "
+"монитор баптауларынан алынады."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Сертификат файлына дейінгі жол"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58 src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
-"In order to be able to use RDP with TLS Security, both the private key file "
-"and the certificate file need to be provided to the RDP server."
+"In order to be able to use RDP with TLS Security, both the private key file and the certificate file need to be provided to "
+"the RDP server."
 msgstr ""
-"TLS Security көмегімен RDP пайдалану мүмкіндігі үшін жеке кілт файлын да, "
-"сертификат файлын да RDP серверіне ұсыну қажет."
+"TLS Security көмегімен RDP пайдалану мүмкіндігі үшін жеке кілт файлын да, сертификат файлын да RDP серверіне ұсыну қажет."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Жеке кілт файлына дейінгі жол"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73 src/org.gnome.desktop.remote-desktop.gschema.xml.in:167
 msgid "Only allow remote connections to view the screen content"
 msgstr "Қашықтағы байланыстарға экран мазмұнын тек көруге рұқсат ету"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
-msgid ""
-"When view-only is true, remote RDP connections cannot manipulate input "
-"devices (e.g. mouse and keyboard)."
-msgstr ""
-"Тек карау режимінде, қашықтағы RDP байланыстары енгізу құрылғыларын басқара "
-"алмайды (мысалы, тышқан мен пернетақта)."
+msgid "When view-only is true, remote RDP connections cannot manipulate input devices (e.g. mouse and keyboard)."
+msgstr "Тек карау режимінде, қашықтағы RDP байланыстары енгізу құрылғыларын басқара алмайды (мысалы, тышқан мен пернетақта)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:81 src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+msgid "Allowed authentication methods"
+msgstr "Рұқсат етілген аутентификация әдістері"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82 src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+msgid ""
+"Allowed authentication methods. Multiple may be selected to allow different authentication mechanisms. At least one "
+"authentication method must be selected."
+msgstr ""
+"Рұқсат етілген аутентификация әдістері. Әртүрлі аутентификация механизмдерін қолдану үшін бірнешеуін таңдауға болады. Кем "
+"дегенде бір аутентификация әдісі таңдалуы тиіс."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90 src/org.gnome.desktop.remote-desktop.gschema.xml.in:133
+msgid "A path to a Kerberos keytab file"
+msgstr "Kerberos keytab файлына жол"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91 src/org.gnome.desktop.remote-desktop.gschema.xml.in:134
+msgid ""
+"When 'kerberos' is enabled as an authentication method, the TERMSRV Kerberos service principal in this keytab file will be "
+"used for authentication."
+msgstr ""
+"'kerberos' аутентификация әдісі ретінде іске қосылған кезде, аутентификация үшін осы keytab файлындағы TERMSRV Kerberos сервис "
+"принципалы қолданылады."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:144 src/org.gnome.desktop.remote-desktop.gschema.xml.in:216
 msgid "The port used by the VNC server"
-msgstr ""
+msgstr "VNC сервері пайдаланатын порт"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:145 src/org.gnome.desktop.remote-desktop.gschema.xml.in:217
 msgid "The VNC client will connect to this port to use this VNC server."
-msgstr ""
+msgstr "VNC клиенті осы VNC серверін пайдалану үшін осы портқа қосылады."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:151 src/org.gnome.desktop.remote-desktop.gschema.xml.in:223
 msgid "Search a different VNC port if the configured one is used"
-msgstr ""
+msgstr "Егер бапталған порт пайдаланылып тұрса, басқа VNC портын іздеу"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152 src/org.gnome.desktop.remote-desktop.gschema.xml.in:224
 msgid ""
-"When negotiate-port is set to 'true' the VNC server will attempt to listen "
-"to the first available of the next 10 ports starting from the configured one."
+"When negotiate-port is set to 'true' the VNC server will attempt to listen to the first available of the next 10 ports "
+"starting from the configured one."
 msgstr ""
+"'negotiate-port' мәні 'true' етіп орнатылғанда, VNC сервері бапталған порттан бастап келесі 10 порттың ішіндегі бірінші "
+"қолжетімдісін тыңдауға тырысады."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:160 src/org.gnome.desktop.remote-desktop.gschema.xml.in:232
 msgid "Whether the VNC backend is enabled or not"
-msgstr ""
+msgstr "VNC бэкенді іске қосылған ба, жоқ па"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:161 src/org.gnome.desktop.remote-desktop.gschema.xml.in:233
 msgid "If set to 'true' the VNC backend will be initialized."
-msgstr ""
+msgstr "Егер 'true' мәніне орнатылса, VNC бэкенді инициализацияланады."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
-msgid ""
-"When view-only is true, remote VNC connections cannot manipulate input "
-"devices (e.g. mouse and keyboard)."
-msgstr ""
-"Тек карау режимінде, қашықтағы VNC байланыстары енгізу құрылғыларын басқара "
-"алмайды (мысалы, тышқан мен пернетақта)."
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:168
+msgid "When view-only is true, remote VNC connections cannot manipulate input devices (e.g. mouse and keyboard)."
+msgstr "Тек карау режимінде, қашықтағы VNC байланыстары енгізу құрылғыларын басқара алмайды (мысалы, тышқан мен пернетақта)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:175
 msgid "Method used to authenticate VNC connections"
 msgstr "VNC байланыстарын аутентификациялау үшін қолданылатын әдіс"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:176
 msgid ""
-"The VNC authentication method describes how a remote connection is "
-"authenticated. It can currently be done in two different ways: * prompt - by "
-"prompting the user for each new connection, requiring a person with physical "
-"access to the workstation to explicitly approve the new connection. * "
-"password - by requiring the remote client to provide a known password"
+"The VNC authentication method describes how a remote connection is authenticated. It can currently be done in two different "
+"ways: * prompt - by prompting the user for each new connection, requiring a person with physical access to the workstation to "
+"explicitly approve the new connection. * password - by requiring the remote client to provide a known password"
 msgstr ""
-"VNC аутентификация әдісі қашықтағы байланысты аутентификациялау әдісін "
-"сипаттайды. Қазіргі уақытта оны екі түрлі жолмен жасауға болады: * сұрау - "
-"пайдаланушыны әрбір жаңа байланысқа шақыру арқылы, жұмыс станциясына "
-"физикалық рұқсаты бар адамнан жаңа байланысты тікелей рұқсат етуді талап ету "
-"арқылы. * пароль - қашықтағы клиенттен белгілі парольді ұсынуды талап ету "
-"арқылы"
+"VNC аутентификация әдісі қашықтағы байланысты аутентификациялау әдісін сипаттайды. Қазіргі уақытта оны екі түрлі жолмен "
+"жасауға болады: * сұрау - пайдаланушыны әрбір жаңа байланысқа шақыру арқылы, жұмыс станциясына физикалық рұқсаты бар адамнан "
+"жаңа байланысты тікелей рұқсат етуді талап ету арқылы. * пароль - қашықтағы клиенттен белгілі парольді ұсынуды талап ету арқылы"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid "Screenshare mode of VNC connections"
-msgstr ""
+msgstr "VNC байланыстарының экранды бөлісу режимі"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:189
 msgid ""
-"The screenshare mode specifies, whether the VNC backend mirrors the primary "
-"screen, or whether a virtual monitor is created. For the initial resolution "
-"of the virtual monitor, the VNC backend uses a default size of 1920x1080 "
-"pixels. When using a remote desktop session with a virtual monitor, clients "
-"can resize the resolution of the virtual monitor during a session with the "
-"setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - "
-"Record the primary monitor of the current user session. * extend - Create a "
-"new virtual monitor and use it for the remote desktop session. The initial "
-"monitor resolution of this virtual monitor is set to 1920x1080 pixels. "
-"Clients can override the initial resolution with subsequent monitor "
+"The screenshare mode specifies, whether the VNC backend mirrors the primary screen, or whether a virtual monitor is created. "
+"For the initial resolution of the virtual monitor, the VNC backend uses a default size of 1920x1080 pixels. When using a "
+"remote desktop session with a virtual monitor, clients can resize the resolution of the virtual monitor during a session with "
+"the setDesktopSize PDU. Allowed screenshare modes include: * mirror-primary - Record the primary monitor of the current user "
+"session. * extend - Create a new virtual monitor and use it for the remote desktop session. The initial monitor resolution of "
+"this virtual monitor is set to 1920x1080 pixels. Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr ""
+"Экранды бөлісу режимі VNC бэкенді негізгі экранды қосарлай ма, немесе виртуалды мониторды жасай ма, соны анықтайды. Виртуалды "
+"монитордың бастапқы ажыратымдылығы үшін VNC бэкенді әдепкі 1920x1080 пиксель өлшемін қолданады. Виртуалды монитормен қашықтағы "
+"жұмыс үстелі сессиясын пайдалану кезінде, клиенттер setDesktopSize PDU арқылы сессия барысында виртуалды монитордың "
+"ажыратымдылығын өзгерте алады. Рұқсат етілген экранды бөлісу режимдеріне мыналар кіреді: * mirror-primary - Ағымдағы "
+"пайдаланушы сессиясының негізгі мониторын жазу. * extend - Жаңа виртуалды монитор жасау және оны қашықтағы жұмыс үстелі "
+"сессиясы үшін пайдалану. Бұл виртуалды монитордың бастапқы монитор ажыратымдылығы 1920x1080 пиксель етіп орнатылады. Клиенттер "
+"бастапқы ажыратымдылықты кейінгі монитор конфигурациясының жаңартуларымен қайта анықтай алады."
+
+#~ msgid "GNOME Remote Desktop Handover Daemon"
+#~ msgstr "GNOME қашықтағы жұмыс үстелін өткізу демоны"
