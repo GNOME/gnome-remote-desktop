@@ -461,6 +461,8 @@ try_create_vaapi_session (GrdRdpRenderContext *render_context,
 
   if (!buffer_info->has_vk_image)
     return;
+  if (!buffer_info->has_syncobjs)
+    return;
   if (buffer_info->drm_format_modifier == DRM_FORMAT_MOD_INVALID)
     return;
 

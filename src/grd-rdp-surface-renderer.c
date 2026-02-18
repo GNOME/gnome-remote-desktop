@@ -171,6 +171,7 @@ is_buffer_combination_valid (GrdRdpSurfaceRenderer  *surface_renderer,
 {
   GrdRdpBufferInfo *rdp_buffer_info = surface_renderer->rdp_buffer_info;
   GrdRdpBufferType buffer_type;
+  gboolean has_syncobjs;
 
   if (g_hash_table_size (surface_renderer->registered_buffers) == 0)
     return TRUE;
@@ -182,6 +183,14 @@ is_buffer_combination_valid (GrdRdpSurfaceRenderer  *surface_renderer,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Invalid buffer combination: Mixed buffer types");
+      return FALSE;
+    }
+
+  has_syncobjs = grd_rdp_pw_buffer_has_syncobjs (rdp_pw_buffer);
+  if (has_syncobjs != rdp_buffer_info->has_syncobjs)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Invalid buffer combination: Mixed sync types");
       return FALSE;
     }
 
@@ -232,12 +241,14 @@ rdp_buffer_info_new (GrdRdpPwBuffer *rdp_pw_buffer,
 {
   GrdRdpBufferType buffer_type =
     grd_rdp_pw_buffer_get_buffer_type (rdp_pw_buffer);
+  gboolean has_syncobjs = grd_rdp_pw_buffer_has_syncobjs (rdp_pw_buffer);
   GrdRdpBufferInfo *rdp_buffer_info;
 
   rdp_buffer_info = g_new0 (GrdRdpBufferInfo, 1);
   rdp_buffer_info->buffer_type = buffer_type;
   rdp_buffer_info->drm_format = drm_format;
   rdp_buffer_info->drm_format_modifier = drm_format_modifier;
+  rdp_buffer_info->has_syncobjs = has_syncobjs;
 
   return rdp_buffer_info;
 }
