@@ -1,15 +1,15 @@
 # Georgian translation for gnome-rdp.
 # Copyright (C) 2023 gnome-rdp authors
 # This file is distributed under the same license as the gnome-rdp package.
-# Ekaterine Papava <papava.e@gtu.ge>, 2023-2025.
+# Ekaterine Papava <papava.e@gtu.ge>, 2023-2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2025-09-04 02:45+0000\n"
-"PO-Revision-Date: 2025-09-04 14:23+0200\n"
+"POT-Creation-Date: 2026-02-09 21:01+0000\n"
+"PO-Revision-Date: 2026-02-19 04:10+0100\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
 "Language: ka\n"
@@ -17,7 +17,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.7\n"
+"X-DamnedLies-Scope: partial\n"
+"X-Generator: Poedit 3.8\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings"
@@ -44,37 +45,40 @@ msgstr ""
 "'gnome-remove-desktop'-ის სისტემური დემონის გასათიშად ან ჩასართავად "
 "აუცილებელია ავთენტიკაცია"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
-msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "GNOME Remote Desktop Handover Daemon"
-
 #: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "გამოყენება: %s [პარამეტრები...] ბრძანება [ქვებრძანება]...\n"
 
-#: src/grd-ctl.c:307
+#: src/grd-ctl.c:382
 msgid "Username: "
 msgstr "მომხმარებელი: "
 
-#: src/grd-ctl.c:319 src/grd-ctl.c:475
+#: src/grd-ctl.c:394 src/grd-ctl.c:552
 msgid "Password: "
 msgstr "პაროლი: "
 
-#: src/grd-ctl.c:605
+#: src/grd-ctl.c:682
 msgid "Commands:\n"
 msgstr "ბრძანებები:\n"
 
-#: src/grd-ctl.c:610
+#: src/grd-ctl.c:687
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
 "to\n"
 "    enable                                       - Enable the RDP backend\n"
 "    disable                                      - Disable the RDP backend\n"
+"    set-auth-methods <list-of-methods>           - Set a comma separated "
+"list of\n"
+"                                                   allowed authentication "
+"methods\n"
+"                                                   (credentials, kerberos)\n"
 "    set-tls-cert <path-to-cert>                  - Set path to TLS "
 "certificate\n"
 "    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-kerberos-keytab <path-to-keytab>         - Set path to a Kerberos "
+"keytab\n"
 "    set-credentials [<username> [<password>]]    - Set username and "
 "password\n"
 "                                                   credentials\n"
@@ -99,7 +103,12 @@ msgstr ""
 "    set-port                                 - პორტი, რომელსაც სერვერი "
 "მოუსმენს\n"
 "    enable                                   - RDP უკანაბოლოს ჩართვა\n"
-"    disable                                  - RDP უკანაბოლოს გამორთვაd\n"
+"    disable                                  - RDP უკანაბოლოს გამორთვა\n"
+"    set-auth-methods <მეთოდების-სია>     დააყენეთ დაშვებული\n"
+"                                                        ავთენტიკაციის "
+"მეთოდების მძიმით გამყოფილი სია\n"
+"                                                        (credentials, "
+"Kerberos)\n"
 "    set-tls-cert <path-to-cert>              - TLS სერტიფიკატის ბილიკი\n"
 "    set-tls-key <path-to-key>                - TLS გასაღების ბილიკი\n"
 "    set-credentials <username> <password>    - ავტორიზაციის დეტალების "
@@ -120,7 +129,7 @@ msgstr ""
 "                                               სხვა პორტს არ მოუსმინო\n"
 "\n"
 
-#: src/grd-ctl.c:634
+#: src/grd-ctl.c:715
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -162,7 +171,7 @@ msgstr ""
 "\n"
 "\n"
 
-#: src/grd-ctl.c:654
+#: src/grd-ctl.c:735
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -187,18 +196,18 @@ msgstr ""
 "შესასვლელად\n"
 "  --help                                     - ამ ტექსტის ჩვენება\n"
 
-#: src/grd-daemon.c:995
+#: src/grd-daemon.c:1165
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Remote Desktop"
 
-#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
+#: src/grd-daemon-handover.c:331 src/grd-daemon-handover.c:396
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "გავაგრძელო დაუცველი კავშირით?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
+#: src/grd-daemon-handover.c:334 src/grd-daemon-handover.c:400
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -209,12 +218,12 @@ msgstr ""
 "RDSTLS უსაფრთხოება თქვენს კლიენტში თქვენი დაკავშირების პარამეტრის RDP ფაილად "
 "შენახვით და მასში \"use redicrection server name:i:1\" დააყენეთ."
 
-#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
+#: src/grd-daemon-handover.c:339 src/grd-daemon-handover.c:405
 #, c-format
 msgid "Disconnect"
 msgstr "გათიშვა"
 
-#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
+#: src/grd-daemon-handover.c:340 src/grd-daemon-handover.c:406
 #, c-format
 msgid "Continue"
 msgstr "გაგრძელება"
@@ -235,17 +244,17 @@ msgstr ""
 "ეს იმიტომ მოხდა, რომ Remote Sessions სერვისი გააქტიურდა და მას უფრო მაღალი "
 "პრიორიტეტი აქვს, პორტი <b>%i</b> გამოიყენოს."
 
-#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:311
 #, c-format
 msgid "Accept"
 msgstr "დასტური"
 
-#: src/grd-session-vnc.c:305
+#: src/grd-session-vnc.c:306
 #, c-format
 msgid "Do you want to share your desktop?"
 msgstr "გნებავთ თქვენი სამუშაო მაგიდის გაზიარება?"
 
-#: src/grd-session-vnc.c:307
+#: src/grd-session-vnc.c:308
 #, c-format
 msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
@@ -254,28 +263,28 @@ msgstr ""
 "მომხმარებელი კომპიუტერიდან '%s' ცდილობს შორიდან ნახოს ან მართოს თქვენი "
 "სამუშაო მაგიდა."
 
-#: src/grd-session-vnc.c:309
+#: src/grd-session-vnc.c:310
 #, c-format
 msgid "Refuse"
 msgstr "უარყოფა"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:101
 msgid "The port used by the RDP server"
 msgstr "RDP სერვერის პორტი"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:102
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr "RDP კლიენტი ამ RDP სერვერის გამოსაყენებლად ამ პორტს დაუკავშირდება."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
 msgid "Search a different RDP port if the configured one is used"
 msgstr "აირჩიეთ სხვა RDP პორტი თუ მორგებული უკვე გამოიყენება"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -284,12 +293,12 @@ msgstr ""
 "შემდეგ 10 პორტს მოუსმინოს."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:117
 msgid "Whether the RDP backend is enabled or not"
 msgstr "ჩართულია RDP უკანა ბოლო თუ არა"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:118
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "თუ ჩართულია, გამოყენებული იქნება RDP უკანაბოლო."
 
@@ -341,7 +350,7 @@ msgid "Path to the private key file"
 msgstr "ბილიკი პირადი გასაღების ფაილამდე"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:131
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:167
 msgid "Only allow remote connections to view the screen content"
 msgstr "დაშორებული შეერთებებისთვის ეკრანის მხოლოდ ნახვის უფლების მიცემა"
 
@@ -353,23 +362,28 @@ msgstr ""
 "როცა ჩართულია მხოლოდ თვალიერების რეჟიმი, RDP შეერთებების შეყვანის ლოკალური "
 "მოწყობილობების კონტროლი არ შეუძლიათ (თაგუნა, კლავიატურა)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:180
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:133
+msgid "A path to a Kerberos keytab file"
+msgstr "ბილიკი Kerberos-ის keytab ფაილამდე"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:144
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:216
 msgid "The port used by the VNC server"
 msgstr "VNC სერვერის მიერ გამოყენებული პორტი"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:181
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:145
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:217
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr "VNC კლიენტი ამ VNC სერვერის გამოსაყენებლად ამ პორტს დაუკავშირდება."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:187
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:151
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:223
 msgid "Search a different VNC port if the configured one is used"
 msgstr "აირჩიეთ სხვა VNC პორტი თუ მორგებული უკვე გამოიყენება"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:116
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:224
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -377,17 +391,17 @@ msgstr ""
 "როცა პორტის-არჩევა დაყენებულია 'ჭეშმარიტზე', VNC სერვერი ცდის, მორგებულის "
 "შემდეგ 10 პორტის მოსმენას."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:196
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:160
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:232
 msgid "Whether the VNC backend is enabled or not"
 msgstr "ჩართულია VNC-ის უკანაბოლო თუ არა"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:197
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:161
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:233
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "თუ ჩართულია, გამოყენებული იქნება VNC უკანაბოლო."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:132
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:168
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -395,11 +409,11 @@ msgstr ""
 "როცა ჩართულია მხოლოდ თვალიერების რეჟიმი, VNC შეერთებების შეყვანის ლოკალური "
 "მოწყობილობების კონტროლი არ შეუძლიათ (თაგუნა, კლავიატურა)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:139
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:175
 msgid "Method used to authenticate VNC connections"
 msgstr "VNC შეერთებების ავთენტიკაციის მეთოდი"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:140
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:176
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -413,11 +427,11 @@ msgstr ""
 "ფიზიკური წვდომის მქონე პირისგან ახალი კავშირის ცალსახად დამტკიცების "
 "მოთხოვნას. * პაროლი - დისტანციური კლიენტისგან ცნობილი პაროლის მოთხოვნით"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid "Screenshare mode of VNC connections"
 msgstr "VNC შეერთების ეკრანის გაზიარების რეჟიმი"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:153
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:189
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -442,6 +456,9 @@ msgstr ""
 "დისტანციური დესკტოპის სესიისთვის. ამ ვირტუალური მონიტორის საწყისი მონიტორის "
 "რეზოლუცია დაყენებულია 1920x1080 პიქსელზე. კლიენტებს შეუძლიათ გადალახონ "
 "თავდაპირველი რეზოლუცია შემდგომი მონიტორის კონფიგურაციის განახლებებით."
+
+#~ msgid "GNOME Remote Desktop Handover Daemon"
+#~ msgstr "GNOME Remote Desktop Handover Daemon"
 
 #, c-format
 #~ msgid "This connection is insecure"
