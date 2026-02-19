@@ -24,7 +24,6 @@
 #include <drm_fourcc.h>
 
 #include "grd-context.h"
-#include "grd-debug.h"
 #include "grd-encode-session.h"
 #include "grd-encode-session-ca-sw.h"
 #include "grd-hwaccel-vaapi.h"
@@ -580,8 +579,7 @@ create_hw_accelerated_encode_session (GrdRdpRenderContext  *render_context,
   grd_rdp_dvc_graphics_pipeline_get_capabilities (graphics_pipeline,
                                                   &have_avc444, &have_avc420);
   if ((have_avc444 || have_avc420) && hwaccel_vaapi &&
-      !is_gpu_driver_amd (render_context) &&
-      grd_get_debug_flags () & GRD_DEBUG_VKVA)
+      !is_gpu_driver_amd (render_context))
     try_create_vaapi_session (render_context, rdp_surface, have_avc444);
 
   if (render_context->encode_session)
