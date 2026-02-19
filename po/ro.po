@@ -2,15 +2,15 @@
 # Copyright (C) 2021 gnome-remote-desktop's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome-remote-desktop package.
 # Florentina Mușat <florentina.musat.28@gmail.com>, 2021.
-# Antonio Marin <gnmer.6qxyg@slmail.me>, 2025.
+# Antonio Marin <gnmer.6qxyg@slmail.me>, 2025-2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2025-08-14 10:03+0000\n"
-"PO-Revision-Date: 2025-08-14 15:13+0200\n"
+"POT-Creation-Date: 2026-02-09 21:01+0000\n"
+"PO-Revision-Date: 2026-02-19 11:36+0100\n"
 "Last-Translator: Antonio Marin <gnmer.6qxyg@slmail.me>\n"
 "Language-Team: Romanian <gnomero-list@lists.sourceforge.net>\n"
 "Language: ro\n"
@@ -48,37 +48,40 @@ msgstr ""
 "Autentificarea este necesară pentru activarea sau dezactivarea serviciului "
 "de sistem gnome-remote-desktop"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
-msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "Serviciul de transfer GNOME Remote Desktop"
-
 #: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Utilizare: %s [OPȚIUNI...] COMANDĂ [SUBCOMANDĂ]...\n"
 
-#: src/grd-ctl.c:307
+#: src/grd-ctl.c:382
 msgid "Username: "
 msgstr "Nume de utilizator: "
 
-#: src/grd-ctl.c:319 src/grd-ctl.c:475
+#: src/grd-ctl.c:394 src/grd-ctl.c:552
 msgid "Password: "
 msgstr "Parola: "
 
-#: src/grd-ctl.c:605
+#: src/grd-ctl.c:682
 msgid "Commands:\n"
 msgstr "Comenzi:\n"
 
-#: src/grd-ctl.c:610
+#: src/grd-ctl.c:687
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
 "to\n"
 "    enable                                       - Enable the RDP backend\n"
 "    disable                                      - Disable the RDP backend\n"
+"    set-auth-methods <list-of-methods>           - Set a comma separated "
+"list of\n"
+"                                                   allowed authentication "
+"methods\n"
+"                                                   (credentials, kerberos)\n"
 "    set-tls-cert <path-to-cert>                  - Set path to TLS "
 "certificate\n"
 "    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-kerberos-keytab <path-to-keytab>         - Set path to a Kerberos "
+"keytab\n"
 "    set-credentials [<username> [<password>]]    - Set username and "
 "password\n"
 "                                                   credentials\n"
@@ -106,10 +109,18 @@ msgstr ""
 "    enable                                       - Activează backend-ul RDP\n"
 "    disable                                      - Dezactivează backend-ul "
 "RDP\n"
+"    set-auth-methods <list-of-methods>           - Stabilește o listă cu "
+"metodele\n"
+"                                                   de autentificare "
+"permise,\n"
+"                                                   separate cu virgulă\n"
+"                                                   (credentials, kerberos)\n"
 "    set-tls-cert <path-to-cert>                  - Stabilește calea către\n"
 "                                                   certificatul TLS\n"
 "    set-tls-key <path-to-key>                    - Stabilește calea cheii "
 "TLS\n"
+"    set-kerberos-keytab <path-to-keytab>         - Stabilește calea către\n"
+"                                                   fișierul keytab Kerberos\n"
 "    set-credentials [<username> [<password>]]    - Stabilește numele de\n"
 "                                                   utilizator și parola\n"
 "    clear-credentials                            - Șterge numele de "
@@ -135,7 +146,7 @@ msgstr ""
 "diferit\n"
 "\n"
 
-#: src/grd-ctl.c:634
+#: src/grd-ctl.c:715
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -180,7 +191,7 @@ msgstr ""
 "diferit\n"
 "\n"
 
-#: src/grd-ctl.c:654
+#: src/grd-ctl.c:735
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -204,18 +215,18 @@ msgstr ""
 "  --help                                     - Tipărește acest text de "
 "ajutor\n"
 
-#: src/grd-daemon.c:992
+#: src/grd-daemon.c:1165
 msgid "GNOME Remote Desktop"
 msgstr "Computer la distanță GNOME"
 
-#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
+#: src/grd-daemon-handover.c:331 src/grd-daemon-handover.c:396
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "Se continuă cu o conexiune nesigură?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
+#: src/grd-daemon-handover.c:334 src/grd-daemon-handover.c:400
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -227,12 +238,12 @@ msgstr ""
 "salvând parametrii de conectare în propria aplicație, într-un fișier RDP, și "
 "stabilind în acesta „use redirection server name:i:1”."
 
-#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
+#: src/grd-daemon-handover.c:339 src/grd-daemon-handover.c:405
 #, c-format
 msgid "Disconnect"
 msgstr "Deconectează"
 
-#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
+#: src/grd-daemon-handover.c:340 src/grd-daemon-handover.c:406
 #, c-format
 msgid "Continue"
 msgstr "Continuă"
@@ -254,17 +265,17 @@ msgstr ""
 "Acest lucru se datorează faptului că serviciul sesiuni de la distanță a fost "
 "activat și are o prioritate mai mare să utilizeze portul <b>%i</b>."
 
-#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:311
 #, c-format
 msgid "Accept"
 msgstr "Acceptă"
 
-#: src/grd-session-vnc.c:305
+#: src/grd-session-vnc.c:306
 #, c-format
 msgid "Do you want to share your desktop?"
 msgstr "Se împărtășește propriul computerul?"
 
-#: src/grd-session-vnc.c:307
+#: src/grd-session-vnc.c:308
 #, c-format
 msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
@@ -273,30 +284,30 @@ msgstr ""
 "Un utilizator de la computerul „%s” încearcă să vadă sau să controleze de la "
 "distanță computerul tău."
 
-#: src/grd-session-vnc.c:309
+#: src/grd-session-vnc.c:310
 #, c-format
 msgid "Refuse"
 msgstr "Refuză"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:101
 msgid "The port used by the RDP server"
 msgstr "Portul utilizat de serverul RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:102
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr ""
 "Aplicația client RDP se va conecta la acest port pentru a utiliza acest "
 "server RDP."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
 msgid "Search a different RDP port if the configured one is used"
 msgstr "Caută un port RDP diferit dacă portul stabilit este utilizat"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -306,12 +317,12 @@ msgstr ""
 "începând de la cel stabilit."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:117
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Dacă este activat sau nu backend-ul RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:118
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr ""
 "Dacă este stabilit la „true” (adevărat), backend-ul RDP va fi inițializat."
@@ -368,7 +379,7 @@ msgid "Path to the private key file"
 msgstr "Calea către fișierul cheii private"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:131
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:167
 msgid "Only allow remote connections to view the screen content"
 msgstr "Permite doar conexiunilor de la distanță să vadă conținutul ecranului"
 
@@ -381,25 +392,55 @@ msgstr ""
 "de la distanță nu pot manipula dispozitivele periferice introduse (de ex: "
 "maus și tastatură)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:180
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:81
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+msgid "Allowed authentication methods"
+msgstr "Metode de autentificare permise"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+msgid ""
+"Allowed authentication methods. Multiple may be selected to allow different "
+"authentication mechanisms. At least one authentication method must be "
+"selected."
+msgstr ""
+"Metodele de autentificare permise. Pot fi alese mai multe pentru a permite "
+"mecanisme diferite de autentificare. Trebuie aleasă cel puțin o metodă de "
+"autentificare."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:133
+msgid "A path to a Kerberos keytab file"
+msgstr "Calea către fișierul keytab Kerberos"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:134
+msgid ""
+"When 'kerberos' is enabled as an authentication method, the TERMSRV Kerberos "
+"service principal in this keytab file will be used for authentication."
+msgstr ""
+"Când „kerberos” este inclus ca metodă de autentificare, serviciul principal "
+"TERMSRV Kerberos din acest fișier keytab este utilizat pentru autentificare."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:144
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:216
 msgid "The port used by the VNC server"
 msgstr "Portul utilizat de serverul VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:181
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:145
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:217
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr ""
 "Aplicația client VNC se va conecta la acest port pentru a utiliza serverul "
 "VNC."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:187
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:151
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:223
 msgid "Search a different VNC port if the configured one is used"
 msgstr "Caută un port VNC diferit dacă portul stabilit este utilizat"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:116
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:224
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -408,17 +449,17 @@ msgstr ""
 "încerca să asculte primul port disponibil dintre următoarele 10 porturi, "
 "începând de la cel stabilit."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:196
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:160
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:232
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Dacă este activat sau nu serverul VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:197
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:161
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:233
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Dacă este stabilit la „true” (adevărat), backend-ul va fi inițializat."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:132
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:168
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -427,11 +468,11 @@ msgstr ""
 "de la distanță nu pot manipula dispozitivele periferice introduse (de ex: "
 "maus și tastatură)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:139
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:175
 msgid "Method used to authenticate VNC connections"
 msgstr "Metoda utilizată pentru autentificarea conexiunilor VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:140
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:176
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -446,11 +487,11 @@ msgstr ""
 "conexiunea nouă. * password - care solicită aplicației client de la distanță "
 "să furnizeze o parolă cunoscută"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid "Screenshare mode of VNC connections"
 msgstr "Modul „distribuire ecran” al conexiunilor VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:153
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:189
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
