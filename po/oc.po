@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2025-10-02 10:41+0000\n"
-"PO-Revision-Date: 2025-10-10 19:02+0200\n"
+"POT-Creation-Date: 2026-02-09 21:01+0000\n"
+"PO-Revision-Date: 2026-02-20 12:01+0100\n"
 "Last-Translator: Quentin PAGÈS\n"
 "Language-Team: Occitan <totenoc@gmail.com>\n"
 "Language: oc\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.7\n"
+"X-Generator: Poedit 3.8\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings"
@@ -45,37 +45,40 @@ msgstr ""
 "L'autentificacion es necessària per activar o desactivar lo demòni sistèma "
 "de gnome-remote-desktop"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
-msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "Demòni de remesa de burèu distant de GNOME"
-
 #: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Sintaxi : %s [OPCION...] COMANDA [JOSCOMANDA]...\n"
 
-#: src/grd-ctl.c:307
+#: src/grd-ctl.c:382
 msgid "Username: "
 msgstr "Nom d'utilizaire : "
 
-#: src/grd-ctl.c:319 src/grd-ctl.c:475
+#: src/grd-ctl.c:394 src/grd-ctl.c:552
 msgid "Password: "
 msgstr "Senhal : "
 
-#: src/grd-ctl.c:605
+#: src/grd-ctl.c:682
 msgid "Commands:\n"
 msgstr "Comandas :\n"
 
-#: src/grd-ctl.c:610
+#: src/grd-ctl.c:687
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
 "to\n"
 "    enable                                       - Enable the RDP backend\n"
 "    disable                                      - Disable the RDP backend\n"
+"    set-auth-methods <list-of-methods>           - Set a comma separated "
+"list of\n"
+"                                                   allowed authentication "
+"methods\n"
+"                                                   (credentials, kerberos)\n"
 "    set-tls-cert <path-to-cert>                  - Set path to TLS "
 "certificate\n"
 "    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-kerberos-keytab <path-to-keytab>         - Set path to a Kerberos "
+"keytab\n"
 "    set-credentials [<username> [<password>]]    - Set username and "
 "password\n"
 "                                                   credentials\n"
@@ -96,32 +99,44 @@ msgid ""
 "                                                   to a different port\n"
 "\n"
 msgstr ""
-"  rdp                                        - Jos comandas :\n"
-"    set-port                                     - Definir lo pòrt del "
-"servidor a contactar\n"
-"    enable                                   - Activar lo backend RDP\n"
-"    disable                                  - Desactivar lo backend RDP\n"
-"    set-tls-cert <path-to-cert>              - Definir emplaçament "
+"rdp                                            - Soscomandas RDP :\n"
+"    set-port                                     - Definir lo pòrt al qual "
+"lo servidor se liga\n"
+"    enable                                       - Activar lo dorsièr RDP\n"
+"    disable                                      - Desactivar lo dorsièr "
+"RDP\n"
+"    set-auth-methods <lista-de-metòdes>          - Definir una lista de "
+"metòdes\n"
+"                                                   d'autentificacion "
+"autorizats, separats per de virgulas\n"
+"                                                   (credentials, kerberos)\n"
+"    set-tls-cert <camin-cap-al-certificat>       - Definir lo camin cap al "
 "certificat TLS\n"
-"    set-tls-key <path-to-key>                - Definir emplaçament clau TLS\n"
-"    set-credentials [<username>] [<password>]    - Definir nom utilizaire e "
-"senhal\n"
-"    clear-credentials                        - Escafar nom utilizaire e "
-"senhal\n"
-"\n"
-"    enable-view-only                         - Desactivar las entras del "
-"periferic del contròla a distància\n"
-"    disable-view-only                        - Activar las entras del "
-"periferic del contraròtla a distància\n"
-"    enable-port-negotiation                      - Se indisponible, escotar\n"
-"                                                   un pòrt diferent\n"
-"    disable-port-negotiation                     - Se indisponible, escotar "
-"pas\n"
-"                                                   un pòrt diferent\n"
-"\n"
+"    set-tls-key <camin-cap-a-la-clau>            - Definir lo camin cap a la "
+"clau TLS\n"
+"    set-kerberos-keytab <camin-cap-al-keytab>    - Definir lo camin cap a un "
+"fichièr keytab Kerberos\n"
+"    set-credentials [<nom-utilizaire> [<senhal>]] - Definir lo nom "
+"d'utilizaire e lo senhal\n"
+"                                                   d'identificacion\n"
+"    clear-credentials                            - Escafar lo nom "
+"d'utilizaire e lo senhal\n"
+"                                                   d'identificacion\n"
+"    enable-view-only                             - Desactivar lo contraròtle "
+"a distància dels\n"
+"                                                   periferics de dintrada\n"
+"    disable-view-only                            - Activar lo contraròtle a "
+"distància dels\n"
+"                                                   periferics de dintrada\n"
+"    enable-port-negotiation                      - S'es pas disponible, "
+"escotar sus\n"
+"                                                   un autre pòrt\n"
+"    disable-port-negotiation                     - S'es pas disponible, "
+"escotar pas\n"
+"                                                   sus un autre pòrt\n"
 "\n"
 
-#: src/grd-ctl.c:634
+#: src/grd-ctl.c:715
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -164,7 +179,7 @@ msgstr ""
 "\n"
 "\n"
 
-#: src/grd-ctl.c:654
+#: src/grd-ctl.c:735
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -188,18 +203,18 @@ msgstr ""
 "  --help                                     - Afichar aqueste tèxte "
 "d’ajuda\n"
 
-#: src/grd-daemon.c:995
+#: src/grd-daemon.c:1165
 msgid "GNOME Remote Desktop"
 msgstr "Burèu distant de GNOME"
 
-#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
+#: src/grd-daemon-handover.c:331 src/grd-daemon-handover.c:396
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "Contunhar amb una connexion pas segura ?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
+#: src/grd-daemon-handover.c:334 src/grd-daemon-handover.c:400
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -211,12 +226,12 @@ msgstr ""
 "los paramètres de connexion dins vòstre client coma un fichièr RDP e "
 "definissètz « utilizar lo nom del servidor de redireccion:i:1 »."
 
-#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
+#: src/grd-daemon-handover.c:339 src/grd-daemon-handover.c:405
 #, c-format
 msgid "Disconnect"
 msgstr "Se desconnectar"
 
-#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
+#: src/grd-daemon-handover.c:340 src/grd-daemon-handover.c:406
 #, c-format
 msgid "Continue"
 msgstr "Contunhar"
@@ -237,17 +252,17 @@ msgstr ""
 "Aquò ven de l’activacion del servici de sessions a distància qu’a una "
 "prioritat mai nauta per utilizar lo pòrt <b>%i</b>."
 
-#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:311
 #, c-format
 msgid "Accept"
 msgstr "Acceptar"
 
-#: src/grd-session-vnc.c:305
+#: src/grd-session-vnc.c:306
 #, c-format
 msgid "Do you want to share your desktop?"
 msgstr "Volètz partejar vòstre burèu ?"
 
-#: src/grd-session-vnc.c:307
+#: src/grd-session-vnc.c:308
 #, c-format
 msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
@@ -256,29 +271,29 @@ msgstr ""
 "Un utilizaire sus l’ordenador « %s » ensajar de veire o contrarotlar vòstre "
 "burèu a distància."
 
-#: src/grd-session-vnc.c:309
+#: src/grd-session-vnc.c:310
 #, c-format
 msgid "Refuse"
 msgstr "Refusar"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:101
 msgid "The port used by the RDP server"
 msgstr "Lo pòrt qu’utiliza lo servida RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:102
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr ""
 "Lo client RDP se connectarà a aqueste pòrt per utilizar aqueste servidor RDP."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
 msgid "Search a different RDP port if the configured one is used"
 msgstr "Cercatz un pòrt RDP diferent se lo qu’es configurat es utilizat"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -288,12 +303,12 @@ msgstr ""
 "configurat."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:117
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Indica se lo backend RDP es activat o non"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:118
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Se definit a « true » lo backend RDP serà inicializat."
 
@@ -348,7 +363,7 @@ msgid "Path to the private key file"
 msgstr "Camin cap al fichièr de clau privada"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:131
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:167
 msgid "Only allow remote connections to view the screen content"
 msgstr ""
 "Sonque autorizar las connexions distantas per veire lo contengut de l’ecran"
@@ -361,24 +376,55 @@ msgstr ""
 "Se view-only es definit a «true», las connexion distantas RDP pòdon pas "
 "manipular las entradas dels aparelhs (ex la mirga e lo clavièr)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:180
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:81
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+msgid "Allowed authentication methods"
+msgstr "Metòdes d'autentificacion autorizats"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+msgid ""
+"Allowed authentication methods. Multiple may be selected to allow different "
+"authentication mechanisms. At least one authentication method must be "
+"selected."
+msgstr ""
+"Metòdes d'autentificacion autorizats. Se'n pòt seleccionar mantun per "
+"autorizar diferents mecanismes d'autentificacion. Cal seleccionar almens un "
+"metòde d'autentificacion."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:133
+msgid "A path to a Kerberos keytab file"
+msgstr "Un camin cap al fichièr keytab Kerberos"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:134
+msgid ""
+"When 'kerberos' is enabled as an authentication method, the TERMSRV Kerberos "
+"service principal in this keytab file will be used for authentication."
+msgstr ""
+"Quand « kerberos » es activat coma metòde d'autentificacion, lo principal de "
+"servici Kerberos TERMSRV dins aqueste fichièr keytab serà utilizat per "
+"l'autentificacion."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:144
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:216
 msgid "The port used by the VNC server"
 msgstr "Lo pòrt qu’utiliza lo servidor VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:181
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:145
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:217
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr ""
 "Lo client VNC se connectarà a aqueste pòrt per utilizar aqueste servidor VNC."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:187
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:151
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:223
 msgid "Search a different VNC port if the configured one is used"
 msgstr "Cercatz un pòrt VNC diferent se lo qu’es configurat es utilizat"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:116
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:224
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -387,17 +433,17 @@ msgstr ""
 "d'escotar lo primièr pòrt disponible dels 10 seguents a partir d'aquel "
 "configurat."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:196
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:160
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:232
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Indica se lo backend VNC es activat o non"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:197
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:161
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:233
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Se definit a « true » lo backend VNC serà inicializat."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:132
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:168
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -405,11 +451,11 @@ msgstr ""
 "Se view-only es definit a «true», las connexion distantas VNC pòdon pas "
 "manipular las entradas dels aparelhs (ex la mirga e lo clavièr)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:139
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:175
 msgid "Method used to authenticate VNC connections"
 msgstr "Metòde utilizat per autentificar las connexions VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:140
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:176
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -424,11 +470,11 @@ msgstr ""
 "connexion. *senhal - en demandant al client alonhat de provesir un senhal "
 "conegut"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid "Screenshare mode of VNC connections"
 msgstr "Mòde de partiment d’ecran per las connexion VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:153
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:189
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -454,3 +500,6 @@ msgstr ""
 "monitor d'aqueste monitor virtual es definida a 1920x1080 pixèls. Los "
 "clients pòdon substituir la resolucion iniciala amb de mesas a jorn de "
 "configuracion del monitor seguentas."
+
+#~ msgid "GNOME Remote Desktop Handover Daemon"
+#~ msgstr "Demòni de remesa de burèu distant de GNOME"
