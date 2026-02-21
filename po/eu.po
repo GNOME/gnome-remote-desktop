@@ -6,8 +6,8 @@
 msgid ""
 msgstr "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues/\n"
-"POT-Creation-Date: 2025-09-05 17:01+0000\n"
-"PO-Revision-Date: 2025-09-06 19:16+0000\n"
+"POT-Creation-Date: 2026-02-09 21:01+0000\n"
+"PO-Revision-Date: 2026-02-21 19:16+0000\n"
 "Last-Translator: Asier Saratsua Garmendia <asiersarasua@ni.eus>\n"
 "Language-Team: Basque <librezale@librezale.eus>\n"
 "Language: eu\n"
@@ -35,37 +35,40 @@ msgid ""
 "system daemon"
 msgstr "Autentifikatu egin behar da gnome-remote-desktop aplikazioaren sistemaren daemon-a gaitzeko edo desgaitzeko"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
-msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "GNOME Urruneko Mahaigainaren lagapeneko daemon-a"
-
 #: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Erabilera: %s [AUKERAK...] KOMANDOA [AZPIKOMANDOA]...\n"
 
-#: src/grd-ctl.c:307
+#: src/grd-ctl.c:382
 msgid "Username: "
 msgstr "Erabiltzaile-izena: "
 
-#: src/grd-ctl.c:319 src/grd-ctl.c:475
+#: src/grd-ctl.c:394 src/grd-ctl.c:552
 msgid "Password: "
 msgstr "Pasahitza: "
 
-#: src/grd-ctl.c:605
+#: src/grd-ctl.c:682
 msgid "Commands:\n"
 msgstr "Komandoak:\n"
 
-#: src/grd-ctl.c:610
+#: src/grd-ctl.c:687
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
 "to\n"
 "    enable                                       - Enable the RDP backend\n"
 "    disable                                      - Disable the RDP backend\n"
+"    set-auth-methods <list-of-methods>           - Set a comma separated "
+"list of\n"
+"                                                   allowed authentication "
+"methods\n"
+"                                                   (credentials, kerberos)\n"
 "    set-tls-cert <path-to-cert>                  - Set path to TLS "
 "certificate\n"
 "    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-kerberos-keytab <path-to-keytab>         - Set path to a Kerberos "
+"keytab\n"
 "    set-credentials [<username> [<password>]]    - Set username and "
 "password\n"
 "                                                   credentials\n"
@@ -89,8 +92,11 @@ msgstr "  rdp                                        - RDP azpikomandoak:\n"
 "    set-port                                - Ezarri zerbitzaria zein atakari lotuko zaion\n"
 "    enable                                   - Gaitu RDP motorra\n"
 "    disable                                  - Desgaitu RDP motorra\n"
+"    set-auth-methods <metodoen-zerrenda>           - Ezarri komaz bereizitako zerrenda bat\n"
+"                                                   onartutako autentifikazio-metodoak adierazteko\n"
 "    set-tls-cert <ziurtagiriaren-bide-izena>              - Ezarri TLS ziurtagiriaren bide-izena\n"
 "    set-tls-key <gakoaren-bide-izena>                - Ezarria TLS gakoaren bide-izena\n"
+"    set-kerberos-keytab <gako-taularen-bide-izena>         - Ezarri Kerberos gako-taula baten bide-izena\n"
 "    set-credentials [<erabiltzaile-izena> [<pasahitza>]]    - Ezarri erabiltzaile-izenaren eta pasahitzaren\n"
 "                                               kredentzialak\n"
 "    clear-credentials                        - Garbitu erabiltzaile-izenaren eta pasahitzaren\n"
@@ -105,7 +111,7 @@ msgstr "  rdp                                        - RDP azpikomandoak:\n"
 "                                               beste ataka batean\n"
 "\n"
 
-#: src/grd-ctl.c:634
+#: src/grd-ctl.c:715
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -142,7 +148,7 @@ msgstr "  vnc                                        - VNC azpikomandoak:\n"
 "                                               beste ataka batean\n"
 "\n"
 
-#: src/grd-ctl.c:654
+#: src/grd-ctl.c:735
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -159,18 +165,18 @@ msgstr "  status [--show-credentials]         - Erakutsi uneko egoera\n"
 "  --system                           - Konfiguratu sistemaren daemon-a\n"
 "  --help                                 - Inprimatu laguntza-testu hau\n"
 
-#: src/grd-daemon.c:995
+#: src/grd-daemon.c:1165
 msgid "GNOME Remote Desktop"
 msgstr "GNOMEren Urruneko Mahaigaina"
 
-#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
+#: src/grd-daemon-handover.c:331 src/grd-daemon-handover.c:396
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "Jarraitu segurua ez den konexioarekin?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
+#: src/grd-daemon-handover.c:334 src/grd-daemon-handover.c:400
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -178,12 +184,12 @@ msgid ""
 "your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr "Urruneko mahaigain honen konexioa ez da segurua. Konexioa seguru bihurtzeko, gaitu RDSLTS segurtasuna zure bezeroan konexio-ezarpenak RDP fitxategi gisa gordez eta bertan “use redirection server name:i:1” ezarriz."
 
-#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
+#: src/grd-daemon-handover.c:339 src/grd-daemon-handover.c:405
 #, c-format
 msgid "Disconnect"
 msgstr "Deskonektatu"
 
-#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
+#: src/grd-daemon-handover.c:340 src/grd-daemon-handover.c:406
 #, c-format
 msgid "Continue"
 msgstr "Jarraitu"
@@ -202,57 +208,57 @@ msgid ""
 msgstr "Mahaigaina partekatzeko ataka aldatu da, lehen <b>%i</b> zen eta orain <b>%i</b> da.\n"
 "Hori da Urruneko Saioak zerbitzua aktibatu delako eta horrek <b>%i</b> ataka erabiltzeko lehentasun handiagoa duelako."
 
-#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:311
 #, c-format
 msgid "Accept"
 msgstr "Onartu"
 
-#: src/grd-session-vnc.c:305
+#: src/grd-session-vnc.c:306
 #, c-format
 msgid "Do you want to share your desktop?"
 msgstr "Zure mahaigaina partekatu nahi al duzu?"
 
-#: src/grd-session-vnc.c:307
+#: src/grd-session-vnc.c:308
 #, c-format
 msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
 "desktop."
 msgstr "'%s' ordenagailuko erabiltzaile bat zure mahaigaina urrunetik ikusteko edo kontrolatzeko saiakera egiten ari da."
 
-#: src/grd-session-vnc.c:309
+#: src/grd-session-vnc.c:310
 #, c-format
 msgid "Refuse"
 msgstr "Ukatu"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:101
 msgid "The port used by the RDP server"
 msgstr "RDP zerbitzariak erabilitako ataka"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:102
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr "RDP bezeroa ataka honekin konektatuko da RDP zerbitzari hau erabiltzeko."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
 msgid "Search a different RDP port if the configured one is used"
 msgstr "Bilatu beste RDP ataka bat konfiguratutakoa beste inor erabiltzen ari bada"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr "'negotiate-port' aukeran 'true' ezarrita badago, RDP zerbitzariak hurrengo 10 ataken artean erabilgarri dagoen lehena entzutzen saiatuko da, konfiguratutakotik hasita."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:117
 msgid "Whether the RDP backend is enabled or not"
 msgstr "RDP motorra gaituta dagoen ala ez"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:118
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Ezarri 'true' (egia), RDP motorra hasieratzeko."
 
@@ -292,7 +298,7 @@ msgid "Path to the private key file"
 msgstr "Gako pribatuaren fitxategiaren bide-izena"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:131
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:167
 msgid "Only allow remote connections to view the screen content"
 msgstr "Onartu urruneko konexioek pantailaren edukia soilik ikus dezaten soilik"
 
@@ -302,49 +308,74 @@ msgid ""
 "devices (e.g. mouse and keyboard)."
 msgstr "Soilik ikusteko aukera egia denean, urruneko RDP konexioek ezin dituzte manipulatu sarrera-gailuak (adibidez, sagua edo teklatu)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:180
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:81
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+msgid "Allowed authentication methods"
+msgstr "Onartutako autentifikazio-metodoak"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+msgid ""
+"Allowed authentication methods. Multiple may be selected to allow different "
+"authentication mechanisms. At least one authentication method must be "
+"selected."
+msgstr "Onartutako autentifikazio-metodoak. Bat baino gehiago hautatu daiteke autentifikazio-mekanismo desberdinak onartu ahal izateko. Gutxienez bat hautatu behar da."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:133
+msgid "A path to a Kerberos keytab file"
+msgstr "Kerberos gako-taula baten fitxategiaren bide-izena"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:134
+msgid ""
+"When 'kerberos' is enabled as an authentication method, the TERMSRV Kerberos "
+"service principal in this keytab file will be used for authentication."
+msgstr "Autentifikazio-metodo gisa 'kerberos' gaitzen denean, gako-taula duen fitxategi honetako TERMSRV Kerberos zerbitzu nagusia erabiliko da autentifikaziorako."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:144
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:216
 msgid "The port used by the VNC server"
 msgstr "VNC zerbitzariak erabilitako ataka"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:181
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:145
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:217
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr "VNC bezeroa ataka honekin konektatuko da VNC zerbitzari hau erabiltzeko."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:187
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:151
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:223
 msgid "Search a different VNC port if the configured one is used"
 msgstr "Bilatu beste VNC ataka bat konfiguratutakoa beste inor erabiltzen ari bada"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:116
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:224
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr "'negotiate-port' aukeran 'true' ezarrita badago, VNC zerbitzariak hurrengo 10 ataken artean erabilgarri dagoen lehena entzutzen saiatuko da, konfiguratutakotik hasita."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:196
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:160
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:232
 msgid "Whether the VNC backend is enabled or not"
 msgstr "VNC motorra gaituta dagoen ala ez"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:197
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:161
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:233
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Ezarri 'true' (egia), VNC motorra hasieratzeko."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:132
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:168
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr "Soilik ikusteko aukera egia denean, urruneko VNC konexioek ezin dituzte manipulatu sarrera-gailuak (adibidez, sagua edo teklatu)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:139
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:175
 msgid "Method used to authenticate VNC connections"
 msgstr "VNC konexioak autentifikatzeko erabili den metodoa"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:140
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:176
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -353,11 +384,11 @@ msgid ""
 "password - by requiring the remote client to provide a known password"
 msgstr "VNC autentifikazio-metodoak urruneko konexio bat nola autentifikatzen den deskribatzen du. Bi modutara egin daiteke: * prompt - konexio berri bakoitzerako, erabiltzaileak baimena eskatzea eta ordenagailura sarbide fisikoa duen pertsona bateak esplizituki konexio berria onartzea. * password - urruneko bezeroak pasahitz ezagun bat ematea"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid "Screenshare mode of VNC connections"
 msgstr "Pantaila partekatuko modua VNC konexioetan"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:153
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:189
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -371,6 +402,9 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr "Pantaila partekatuko moduak zehazten du VNC motorrak pantaila nagusia ispilatuko duen ala monitore birtual bat sortuko den. Monitore birtualaren hasierako bereizmenerako, VNC motorrak 1920x1080 pixeletako tamaina lehenetsia erabiltzen ditu. Urruneko mahaigaineko saio bat monitore birtual batekin erabiltzean, bezeroek monitore birtualaren bereizmena aldatu dezakete setDesktopSize PDUrekin. Onartutako pantaila partekatuko moduak honakoak dira: * mirror-primary - Grabatu uneko erabiltzaile-saioaren monitore nagusia. * extend - Sortu monitore birtual berria urruneko mahaigaineko saiorako. Monitore birtual horren hasierako bereizmena 1920x1080 pixeletakoa da. Bezeroek hasierako bereizmena indargabetu dezakete geroago, monitore-konfigurazioa eguneratuz."
+
+#~ msgid "GNOME Remote Desktop Handover Daemon"
+#~ msgstr "GNOME Urruneko Mahaigainaren lagapeneko daemon-a"
 
 #, c-format
 #~ msgid "This connection is insecure"
