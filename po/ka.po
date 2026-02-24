@@ -9,14 +9,14 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
 "POT-Creation-Date: 2026-02-09 21:01+0000\n"
-"PO-Revision-Date: 2026-02-19 04:10+0100\n"
+"PO-Revision-Date: 2026-02-24 06:21+0100\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
 "Language: ka\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-DamnedLies-Scope: partial\n"
 "X-Generator: Poedit 3.8\n"
 
@@ -362,10 +362,35 @@ msgstr ""
 "როცა ჩართულია მხოლოდ თვალიერების რეჟიმი, RDP შეერთებების შეყვანის ლოკალური "
 "მოწყობილობების კონტროლი არ შეუძლიათ (თაგუნა, კლავიატურა)."
 
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:81
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+msgid "Allowed authentication methods"
+msgstr "ავთენტიკაციის დაშვებული მეთოდები"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+msgid ""
+"Allowed authentication methods. Multiple may be selected to allow different "
+"authentication mechanisms. At least one authentication method must be "
+"selected."
+msgstr ""
+"ავთენტიკაციის დაშვებული მეთოდები. სხვადასხვა ავთენტიკაციის მექანიზმების "
+"დასაშვებად, შეგიძლიათ, ერთზე მეტი აირჩიოთ. საჭიროა, სულ ცოტა, ერთის არჩევა."
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:133
 msgid "A path to a Kerberos keytab file"
 msgstr "ბილიკი Kerberos-ის keytab ფაილამდე"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:134
+msgid ""
+"When 'kerberos' is enabled as an authentication method, the TERMSRV Kerberos "
+"service principal in this keytab file will be used for authentication."
+msgstr ""
+"როცა ავთენტიკაციის მეთოდად ჩართულია 'kerberos', ავთენტიკაციისთვის "
+"გამოყენებული იქნება keytab ფაილში არსებული TERMSRV Kerberos-ის სერვისი "
+"პრინციპალი."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:144
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:216
