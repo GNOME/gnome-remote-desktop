@@ -23,6 +23,8 @@
 #include <glib.h>
 #include <stdint.h>
 
+gboolean grd_drm_render_node_supports_explicit_sync (int device_fd);
+
 gboolean grd_create_drm_syncobj_handle (int        device_fd,
                                         int        syncobj_fd,
                                         uint32_t  *out_handle,

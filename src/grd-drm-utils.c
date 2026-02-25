@@ -26,6 +26,18 @@
 #include <glib/gstdio.h>
 #include <xf86drm.h>
 
+gboolean
+grd_drm_render_node_supports_explicit_sync (int device_fd)
+{
+  uint64_t syncobj_cap = 0;
+  uint64_t syncobj_timeline_cap = 0;
+
+  drmGetCap (device_fd, DRM_CAP_SYNCOBJ, &syncobj_cap);
+  drmGetCap (device_fd, DRM_CAP_SYNCOBJ_TIMELINE, &syncobj_timeline_cap);
+
+  return syncobj_cap && syncobj_timeline_cap;
+}
+
 int
 grd_export_drm_timeline_syncfile (int        device_fd,
                                   uint32_t   syncobj_handle,
