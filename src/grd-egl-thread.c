@@ -398,14 +398,10 @@ lookup_drm_render_node (GrdEglThread  *egl_thread,
 
   if (epoxy_has_egl_extension (egl_display, "EGL_ANDROID_native_fence_sync"))
     {
-      uint64_t syncobj_cap = 0;
-      uint64_t syncobj_timeline_cap = 0;
+      int drm_render_node_fd = egl_thread->impl.drm_render_node_fd;
 
-      drmGetCap (egl_thread->impl.drm_render_node_fd,
-                 DRM_CAP_SYNCOBJ, &syncobj_cap);
-      drmGetCap (egl_thread->impl.drm_render_node_fd,
-                 DRM_CAP_SYNCOBJ_TIMELINE, &syncobj_timeline_cap);
-      egl_thread->supports_explicit_sync = syncobj_cap && syncobj_timeline_cap;
+      egl_thread->supports_explicit_sync =
+        grd_drm_render_node_supports_explicit_sync (drm_render_node_fd);
     }
   g_debug ("[EGL] Explicit synchronization is %ssupported",
            egl_thread->supports_explicit_sync ? "" : "not ");
