@@ -1,3 +1,26 @@
+50.rc
+=====
+* Add documentation for configuring Kerberos authentication [Jonas; !376]
+* Fix crash [Pascal; !375]
+* Misc bug fixes & cleanups [Jonas; !379]
+* Send host name to GDM when creating remote display [Joan; !355]
+* Add explicit DMA buffer synchronization [Jonas; !383]
+* Enable zero-copy Vulkan & VA-API rendering by default [Pascal; !384]
+
+Contributors:
+  Jonas Ådahl, Joan Torres Lopez, Pascal Nowack
+
+Translators:
+  Jordi Mas [ca], Alexander Alexandrov Shopov [bg], Jiri Grönroos [fi],
+  Yuri Chornoivan [uk], Daniel Rusek [cs], Baurzhan Muftakhidinov [kk],
+  Martin [sl], Ekaterine Papava [ka], Antonio Marin [ro],
+  Efstathios Iosifidis [el], luming zh [zh_CN], Quentin PAGÈS [oc],
+  Asier Saratsua Garmendia [eu], Lucien Ouoba [fr], Fran Diéguez [gl],
+  Victor Dargallo [ca], Balázs Úr [hu], Aurimas Aurimas Černius [lt],
+  Mathieu Heurtevin [fr], Daniel Mustieles [es], Kristjan ESPERANTO [eo],
+  Anders Jonsson [sv], Seong-ho Cho [ko], Yaron Shahrabani [he],
+  Ítalo Gregório [pt_BR]
+
 50.beta
 =======
 * Add camera redirection support [Pascal; !360]
