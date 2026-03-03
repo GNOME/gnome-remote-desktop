@@ -1092,17 +1092,32 @@ on_gdm_remote_display_session_id_changed (GrdDBusGdmRemoteDisplay *remote_displa
   register_handover_iface (remote_client, session_id);
 }
 
-static GrdRemoteClient *
-remote_client_new_from_display (GrdDaemonSystem         *daemon_system,
-                                GrdDBusGdmRemoteDisplay *remote_display)
+static char *
+get_remote_id_from_remote_display (GrdDaemonSystem         *daemon_system,
+                                   GrdDBusGdmRemoteDisplay *remote_display)
 {
-  g_autoptr (GrdRemoteClient) remote_client = NULL;
+  const char *display_remote_id;
+  g_autofree char *new_remote_id = NULL;
   g_autoptr (GError) error = NULL;
 
-  remote_client = remote_client_new (daemon_system, NULL);
+  display_remote_id = grd_dbus_gdm_remote_display_get_remote_id (remote_display);
+  if (display_remote_id && !g_str_equal (display_remote_id, "/"))
+    {
+      if (g_hash_table_contains (daemon_system->remote_clients, display_remote_id))
+        {
+          g_warning ("[DaemonSystem] A remote client with remote_id %s already "
+                     "exists", display_remote_id);
+          return NULL;
+        }
 
+      return g_strdup (display_remote_id);
+    }
+
+  /* If the remote display doesn't have a valid remote_id,
+   * generate a new one and set it */
+  new_remote_id = get_next_available_id (daemon_system);
   if (!grd_dbus_gdm_remote_display_call_set_remote_id_sync (remote_display,
-                                                            remote_client->id,
+                                                            new_remote_id,
                                                             NULL,
                                                             &error))
     {
@@ -1110,6 +1125,25 @@ remote_client_new_from_display (GrdDaemonSystem         *daemon_system,
                  error->message);
       return NULL;
     }
+
+  return g_steal_pointer (&new_remote_id);
+}
+
+static GrdRemoteClient *
+remote_client_new_from_display (GrdDaemonSystem         *daemon_system,
+                                GrdDBusGdmRemoteDisplay *remote_display)
+{
+  g_autoptr (GrdRemoteClient) remote_client = NULL;
+  char *remote_id;
+
+  remote_client = g_new0 (GrdRemoteClient, 1);
+  remote_client->daemon_system = daemon_system;
+
+  remote_id = get_remote_id_from_remote_display (daemon_system, remote_display);
+  if (!remote_id)
+    return NULL;
+
+  remote_client->id = remote_id;
 
   return g_steal_pointer (&remote_client);
 }
