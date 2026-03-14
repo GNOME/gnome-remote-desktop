@@ -267,6 +267,8 @@ test_entrypoint (GrdHwAccelVaapi  *hwaccel_vaapi,
       return FALSE;
     }
 
+  g_debug ("[HWAccel.VAAPI] Using VAEntrypoint %i for profile "
+           "VAProfileH264High", entrypoint);
   hwaccel_vaapi->va_entrypoint = entrypoint;
 
   g_assert (attributes[4].type == VAConfigAttribEncQualityRange);
@@ -276,11 +278,33 @@ test_entrypoint (GrdHwAccelVaapi  *hwaccel_vaapi,
   return TRUE;
 }
 
+static VAEntrypoint va_entrypoints[] =
+{
+  VAEntrypointEncSlice,
+  VAEntrypointEncSliceLP,
+};
+
 static gboolean
 check_device_capabilities (GrdHwAccelVaapi  *hwaccel_vaapi,
                            GError          **error)
 {
-  return test_entrypoint (hwaccel_vaapi, VAEntrypointEncSlice, error);
+  GError *local_error = NULL;
+  size_t i;
+
+  g_assert (G_N_ELEMENTS (va_entrypoints) > 0);
+
+  for (i = 0; i < G_N_ELEMENTS (va_entrypoints); ++i)
+    {
+      g_clear_error (&local_error);
+
+      if (test_entrypoint (hwaccel_vaapi, va_entrypoints[i], &local_error))
+        return TRUE;
+    }
+
+  g_assert (local_error);
+  g_propagate_error (error, local_error);
+
+  return FALSE;
 }
 
 GrdHwAccelVaapi *
