@@ -1565,6 +1565,7 @@ get_surface_constraints (GrdEncodeSessionVaapi  *encode_session_vaapi,
 
 static gboolean
 create_avc420_encode_session (GrdEncodeSessionVaapi  *encode_session_vaapi,
+                              VAEntrypoint            va_entrypoint,
                               GError                **error)
 {
   uint32_t surface_width = encode_session_vaapi->surface_width;
@@ -1599,7 +1600,7 @@ create_avc420_encode_session (GrdEncodeSessionVaapi  *encode_session_vaapi,
                                VA_ENC_PACKED_HEADER_RAW_DATA;
 
   va_status = vaCreateConfig (encode_session_vaapi->va_display,
-                              VAProfileH264High, VAEntrypointEncSlice,
+                              VAProfileH264High, va_entrypoint,
                               config_attributes,
                               G_N_ELEMENTS (config_attributes),
                               &encode_session_vaapi->va_config);
@@ -1677,13 +1678,14 @@ create_avc420_encode_session (GrdEncodeSessionVaapi  *encode_session_vaapi,
 }
 
 GrdEncodeSessionVaapi *
-grd_encode_session_vaapi_new (GrdVkDevice  *vk_device,
-                              VADisplay     va_display,
-                              gboolean      supports_quality_level,
-                              uint32_t      source_width,
-                              uint32_t      source_height,
-                              uint32_t      refresh_rate,
-                              GError      **error)
+grd_encode_session_vaapi_new (GrdVkDevice   *vk_device,
+                              VADisplay      va_display,
+                              VAEntrypoint   va_entrypoint,
+                              gboolean       supports_quality_level,
+                              uint32_t       source_width,
+                              uint32_t       source_height,
+                              uint32_t       refresh_rate,
+                              GError       **error)
 {
   g_autoptr (GrdEncodeSessionVaapi) encode_session_vaapi = NULL;
   uint8_t level_idc;
@@ -1697,7 +1699,8 @@ grd_encode_session_vaapi_new (GrdVkDevice  *vk_device,
   encode_session_vaapi->surface_height = grd_get_aligned_size (source_height, 16);
   encode_session_vaapi->refresh_rate = refresh_rate;
 
-  if (!create_avc420_encode_session (encode_session_vaapi, error))
+  if (!create_avc420_encode_session (encode_session_vaapi, va_entrypoint,
+                                     error))
     return NULL;
 
   level_idc = encode_session_vaapi->level_idc;

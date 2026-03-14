@@ -27,10 +27,11 @@
 G_DECLARE_FINAL_TYPE (GrdEncodeSessionVaapi, grd_encode_session_vaapi,
                       GRD, ENCODE_SESSION_VAAPI, GrdEncodeSession)
 
-GrdEncodeSessionVaapi *grd_encode_session_vaapi_new (GrdVkDevice  *vk_device,
-                                                     VADisplay     va_display,
-                                                     gboolean      supports_quality_level,
-                                                     uint32_t      source_width,
-                                                     uint32_t      source_height,
-                                                     uint32_t      refresh_rate,
-                                                     GError      **error);
+GrdEncodeSessionVaapi *grd_encode_session_vaapi_new (GrdVkDevice   *vk_device,
+                                                     VADisplay      va_display,
+                                                     VAEntrypoint   va_entrypoint,
+                                                     gboolean       supports_quality_level,
+                                                     uint32_t       source_width,
+                                                     uint32_t       source_height,
+                                                     uint32_t       refresh_rate,
+                                                     GError       **error);

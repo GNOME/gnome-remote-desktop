@@ -54,6 +54,7 @@ grd_hwaccel_vaapi_create_encode_session (GrdHwAccelVaapi  *hwaccel_vaapi,
 {
   return (GrdEncodeSession *) grd_encode_session_vaapi_new (hwaccel_vaapi->vk_device,
                                                             hwaccel_vaapi->va_display,
+                                                            VAEntrypointEncSlice,
                                                             hwaccel_vaapi->supports_quality_level,
                                                             source_width, source_height,
                                                             refresh_rate, error);
