@@ -40,6 +40,7 @@ struct _GrdHwAccelVaapi
   int drm_fd;
   VADisplay va_display;
 
+  VAEntrypoint va_entrypoint;
   gboolean supports_quality_level;
 };
 
@@ -54,7 +55,7 @@ grd_hwaccel_vaapi_create_encode_session (GrdHwAccelVaapi  *hwaccel_vaapi,
 {
   return (GrdEncodeSession *) grd_encode_session_vaapi_new (hwaccel_vaapi->vk_device,
                                                             hwaccel_vaapi->va_display,
-                                                            VAEntrypointEncSlice,
+                                                            hwaccel_vaapi->va_entrypoint,
                                                             hwaccel_vaapi->supports_quality_level,
                                                             source_width, source_height,
                                                             refresh_rate, error);
@@ -117,13 +118,14 @@ has_device_avc_profile (VAProfile *profiles,
 
 static gboolean
 has_device_avc_enc_entrypoint (VAEntrypoint *entrypoints,
-                               int           n_entrypoints)
+                               int           n_entrypoints,
+                               VAEntrypoint  entrypoint)
 {
   int i;
 
   for (i = 0; i < n_entrypoints; ++i)
     {
-      if (entrypoints[i] == VAEntrypointEncSlice)
+      if (entrypoints[i] == entrypoint)
         return TRUE;
     }
 
@@ -131,8 +133,9 @@ has_device_avc_enc_entrypoint (VAEntrypoint *entrypoints,
 }
 
 static gboolean
-check_device_capabilities (GrdHwAccelVaapi  *hwaccel_vaapi,
-                           GError          **error)
+test_entrypoint (GrdHwAccelVaapi  *hwaccel_vaapi,
+                 VAEntrypoint      entrypoint,
+                 GError          **error)
 {
   g_autofree VAProfile *profiles = NULL;
   g_autofree VAEntrypoint *entrypoints = NULL;
@@ -197,7 +200,7 @@ check_device_capabilities (GrdHwAccelVaapi  *hwaccel_vaapi,
       return FALSE;
     }
 
-  if (!has_device_avc_enc_entrypoint (entrypoints, n_entrypoints))
+  if (!has_device_avc_enc_entrypoint (entrypoints, n_entrypoints, entrypoint))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Unsuitable device, missing required AVC encoding "
@@ -206,7 +209,7 @@ check_device_capabilities (GrdHwAccelVaapi  *hwaccel_vaapi,
     }
 
   va_status = vaGetConfigAttributes (hwaccel_vaapi->va_display,
-                                     VAProfileH264High, VAEntrypointEncSlice,
+                                     VAProfileH264High, entrypoint,
                                      attributes, G_N_ELEMENTS (attributes));
   if (va_status != VA_STATUS_SUCCESS)
     {
@@ -264,11 +267,20 @@ check_device_capabilities (GrdHwAccelVaapi  *hwaccel_vaapi,
       return FALSE;
     }
 
+  hwaccel_vaapi->va_entrypoint = entrypoint;
+
   g_assert (attributes[4].type == VAConfigAttribEncQualityRange);
   hwaccel_vaapi->supports_quality_level = attributes[4].value !=
                                           VA_ATTRIB_NOT_SUPPORTED;
 
   return TRUE;
+}
+
+static gboolean
+check_device_capabilities (GrdHwAccelVaapi  *hwaccel_vaapi,
+                           GError          **error)
+{
+  return test_entrypoint (hwaccel_vaapi, VAEntrypointEncSlice, error);
 }
 
 GrdHwAccelVaapi *
