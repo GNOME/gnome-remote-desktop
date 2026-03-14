@@ -80,6 +80,8 @@ struct _GrdDaemonSystem
   GrdDBusRemoteDesktopRdpDispatcher *dispatcher_skeleton;
   GDBusObjectManagerServer *handover_manager_server;
 
+  unsigned int gdm_watch_name_id;
+
   GHashTable *remote_clients;
 };
 
@@ -1386,6 +1388,52 @@ on_gdm_object_manager_client_acquired (GObject      *source_object,
   grd_daemon_maybe_enable_services (GRD_DAEMON (daemon_system));
 }
 
+static void
+on_gdm_name_appeared (GDBusConnection *connection,
+                      const char      *name,
+                      const char      *name_owner,
+                      gpointer         user_data)
+{
+  GrdDaemonSystem *daemon_system = GRD_DAEMON_SYSTEM (user_data);
+  GrdDaemon *daemon = GRD_DAEMON (user_data);
+  GCancellable *cancellable = grd_daemon_get_cancellable (daemon);
+
+  grd_dbus_gdm_remote_display_factory_proxy_new_for_bus (
+    G_BUS_TYPE_SYSTEM,
+    G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
+    GDM_BUS_NAME,
+    GDM_REMOTE_DISPLAY_FACTORY_OBJECT_PATH,
+    cancellable,
+    on_remote_display_factory_proxy_acquired,
+    daemon_system);
+
+  grd_dbus_gdm_object_manager_client_new_for_bus (
+    G_BUS_TYPE_SYSTEM,
+    G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_DO_NOT_AUTO_START,
+    GDM_BUS_NAME,
+    GDM_OBJECT_MANAGER_OBJECT_PATH,
+    cancellable,
+    on_gdm_object_manager_client_acquired,
+    daemon_system);
+}
+
+static void
+destroy_gdm_proxies (GrdDaemonSystem *daemon_system)
+{
+  g_clear_object (&daemon_system->display_objects);
+  g_clear_object (&daemon_system->remote_display_factory_proxy);
+}
+
+static void
+on_gdm_name_vanished (GDBusConnection *connection,
+                      const char      *name,
+                      gpointer         user_data)
+{
+  GrdDaemonSystem *daemon_system = GRD_DAEMON_SYSTEM (user_data);
+
+  destroy_gdm_proxies (daemon_system);
+}
+
 GrdDaemonSystem *
 grd_daemon_system_new (GError **error)
 {
@@ -1414,8 +1462,6 @@ static void
 grd_daemon_system_startup (GApplication *app)
 {
   GrdDaemonSystem *daemon_system = GRD_DAEMON_SYSTEM (app);
-  GCancellable *cancellable =
-    grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
   g_autoptr (GError) error = NULL;
 
   daemon_system->dispatcher_skeleton =
@@ -1437,23 +1483,13 @@ grd_daemon_system_startup (GApplication *app)
                     on_system_grd_name_lost,
                     daemon_system, NULL);
 
-  grd_dbus_gdm_remote_display_factory_proxy_new_for_bus (
-    G_BUS_TYPE_SYSTEM,
-    G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
-    GDM_BUS_NAME,
-    GDM_REMOTE_DISPLAY_FACTORY_OBJECT_PATH,
-    cancellable,
-    on_remote_display_factory_proxy_acquired,
-    daemon_system);
-
-  grd_dbus_gdm_object_manager_client_new_for_bus (
-    G_BUS_TYPE_SYSTEM,
-    G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_DO_NOT_AUTO_START,
-    GDM_BUS_NAME,
-    GDM_OBJECT_MANAGER_OBJECT_PATH,
-    cancellable,
-    on_gdm_object_manager_client_acquired,
-    daemon_system);
+  daemon_system->gdm_watch_name_id =
+    g_bus_watch_name (G_BUS_TYPE_SYSTEM,
+                      GDM_BUS_NAME,
+                      G_BUS_NAME_WATCHER_FLAGS_NONE,
+                      on_gdm_name_appeared,
+                      on_gdm_name_vanished,
+                      daemon_system, NULL);
 
   g_signal_connect (daemon_system, "rdp-server-started",
                     G_CALLBACK (on_rdp_server_started), NULL);
@@ -1471,8 +1507,8 @@ grd_daemon_system_shutdown (GApplication *app)
 
   g_clear_pointer (&daemon_system->remote_clients, g_hash_table_unref);
 
-  g_clear_object (&daemon_system->display_objects);
-  g_clear_object (&daemon_system->remote_display_factory_proxy);
+  g_clear_handle_id (&daemon_system->gdm_watch_name_id, g_bus_unwatch_name);
+  destroy_gdm_proxies (daemon_system);
 
   g_dbus_interface_skeleton_unexport (
     G_DBUS_INTERFACE_SKELETON (daemon_system->dispatcher_skeleton));
