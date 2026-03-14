@@ -1,3 +1,16 @@
+50.0
+====
+* Improve GDM remote display interoperability [Joan; !386]
+* Improve hardware acceleration compatibility [Pascal; !388]
+* Wait for GDM before initializing system daemon startup [Pascal; !387]
+
+Contributors:
+  Joan Torres Lopez, Pascal Nowack
+
+Translators:
+  Emin Tufan Çetin [tr], Abduqadir Abliz [ug], Hugo Carvalho [pt],
+  Ask Hjorth Larsen [da], Daniel [pl], Bruce Cowan [en_GB]
+
 50.rc
 =====
 * Add documentation for configuring Kerberos authentication [Jonas; !376]
