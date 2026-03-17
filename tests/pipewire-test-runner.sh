@@ -55,7 +55,7 @@ if [ "$enable_rdp_tls" = "true" ]; then
     rdp_tls_cert="$TEST_BUILDDIR/tls.crt"
     rdp_tls_key="$TEST_BUILDDIR/tls.key"
 
-    if [ ! -f "$rdp_tls_cert" || ! -f "$rdp_tls_key" ]; then
+    if [ ! -f "$rdp_tls_cert" ] || [ ! -f "$rdp_tls_key" ]; then
         openssl req -new -newkey rsa:4096 -days 720 -nodes -x509 \
             -subj /C=DE/ST=NONE/L=NONE/O=GNOME/CN=gnome.org \
             -out "$rdp_tls_cert" \
