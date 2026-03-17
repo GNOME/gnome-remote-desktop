@@ -194,6 +194,9 @@ rdp_update_end_paint (rdpContext *rdp_context)
   int32_t x, y;
   uint32_t width, height;
 
+  if (rdp_context->gdi->primary->hdc->hwnd->invalid->null)
+    return TRUE;
+
   x = rdp_context->gdi->primary->hdc->hwnd->invalid->x;
   y = rdp_context->gdi->primary->hdc->hwnd->invalid->y;
   width = rdp_context->gdi->primary->hdc->hwnd->invalid->w;
