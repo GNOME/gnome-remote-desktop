@@ -496,6 +496,7 @@ on_stream_param_changed (void                 *user_data,
   g_autoptr (GArray) pod_offsets = NULL;
   struct spa_pod_dynamic_builder pod_builder;
   enum spa_data_type allowed_buffer_types;
+  gboolean use_explicit_sync = FALSE;
   struct spa_pod_frame buffers_frame;
   g_autoptr (GPtrArray) params = NULL;
 
@@ -536,6 +537,10 @@ on_stream_param_changed (void                 *user_data,
   if (egl_thread && !hwaccel_nvidia)
     allowed_buffer_types |= 1 << SPA_DATA_DmaBuf;
 
+  if (allowed_buffer_types & 1 << SPA_DATA_DmaBuf &&
+      grd_egl_thread_supports_explicit_sync (egl_thread))
+    use_explicit_sync = TRUE;
+
   grd_append_pod_offset (pod_offsets, &pod_builder.b);
   spa_pod_builder_push_object (&pod_builder.b, &buffers_frame,
                                SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers);
@@ -544,7 +549,7 @@ on_stream_param_changed (void                 *user_data,
     SPA_PARAM_BUFFERS_buffers, SPA_POD_CHOICE_RANGE_Int (8, 2, 8),
     SPA_PARAM_BUFFERS_dataType, SPA_POD_Int (allowed_buffer_types),
     0);
-  if (egl_thread && grd_egl_thread_supports_explicit_sync (egl_thread))
+  if (use_explicit_sync)
     {
       spa_pod_builder_prop (&pod_builder.b,
                             SPA_PARAM_BUFFERS_metaType,
@@ -569,7 +574,7 @@ on_stream_param_changed (void                 *user_data,
                                                    CURSOR_META_SIZE (1, 1),
                                                    CURSOR_META_SIZE (384, 384)));
 
-  if (egl_thread && grd_egl_thread_supports_explicit_sync (egl_thread))
+  if (use_explicit_sync)
     {
       grd_append_pod_offset (pod_offsets, &pod_builder.b);
       spa_pod_builder_add_object
