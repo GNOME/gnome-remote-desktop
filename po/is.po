@@ -1,14 +1,14 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 #
-# Sveinn í Felli <sv1@fellsnet.is>, 2021, 2022.
+# SPDX-FileCopyrightText: 2021, 2022, 2026 Sveinn í Felli <sv1@fellsnet.is>
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issu"
-"es\n"
-"POT-Creation-Date: 2022-09-05 10:19+0000\n"
-"PO-Revision-Date: 2022-10-25 16:04+0000\n"
+"es/\n"
+"POT-Creation-Date: 2026-02-26 11:26+0000\n"
+"PO-Revision-Date: 2026-03-21 16:01+0000\n"
 "Last-Translator: Sveinn í Felli <sv1@fellsnet.is>\n"
 "Language-Team: Icelandic\n"
 "Language: is\n"
@@ -16,69 +16,90 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Lokalize 21.12.3\n"
+"X-Generator: Lokalize 23.08.5\n"
 
-#: src/grd-daemon.c:503
-msgid "GNOME Remote Desktop"
-msgstr "Fjartengt GNOME skjáborð"
-
-#: src/grd-prompt.c:124
-#, c-format
-msgid "Do you want to share your desktop?"
-msgstr "Viltu deila skjáborðinu þínu með öðrum notendum?"
-
-#: src/grd-prompt.c:125
-#, c-format
-msgid ""
-"A user on the computer '%s' is trying to remotely view or control your "
-"desktop."
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
+msgid "Allow to configure gnome-remote-desktop's system daemon settings"
 msgstr ""
-"Notandi á fjartengdu tölvunni '%s' er að reyna að skoða eða stýra "
-"skjáborðinu þínu."
 
-#: src/grd-prompt.c:131
-msgid "Refuse"
-msgstr "Hafna"
+#: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to configure gnome-remote-desktop's system daemon "
+"settings"
+msgstr ""
 
-#: src/grd-prompt.c:136
-msgid "Accept"
-msgstr "Samþykkja"
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
+msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
+msgstr ""
 
-#: src/grd-ctl.c:53
+#: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
+msgid ""
+"Authentication is required to enable or disable gnome-remote-desktop's "
+"system daemon"
+msgstr ""
+
+#: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Notkun: %s [VALKOSTIR...] SKIPUN [UNDIRSKIPUN]...\n"
 
-#: src/grd-ctl.c:461
+#: src/grd-ctl.c:382
+msgid "Username: "
+msgstr "Notandanafn:"
+
+#: src/grd-ctl.c:394 src/grd-ctl.c:552
+msgid "Password: "
+msgstr "Lykilorð:"
+
+#: src/grd-ctl.c:682
 msgid "Commands:\n"
 msgstr "Skipanir:\n"
 
-#: src/grd-ctl.c:466
+#: src/grd-ctl.c:687
 msgid ""
-"  rdp                                        - RDP subcommands:\n"
-"    enable                                   - Enable the RDP backend\n"
-"    disable                                  - Disable the RDP backend\n"
-"    set-tls-cert <path-to-cert>              - Set path to TLS certificate\n"
-"    set-tls-key <path-to-key>                - Set path to TLS key\n"
-"    set-credentials <username> <password>    - Set username and password\n"
-"                                               credentials\n"
-"    clear-credentials                        - Clear username and password\n"
-"                                               credentials\n"
-"    enable-view-only                         - Disable remote control of "
+"  rdp                                            - RDP subcommands:\n"
+"    set-port                                     - Set port the server binds "
+"to\n"
+"    enable                                       - Enable the RDP backend\n"
+"    disable                                      - Disable the RDP backend\n"
+"    set-auth-methods <list-of-methods>           - Set a comma separated "
+"list of\n"
+"                                                   allowed authentication "
+"methods\n"
+"                                                   (credentials, kerberos)\n"
+"    set-tls-cert <path-to-cert>                  - Set path to TLS "
+"certificate\n"
+"    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-kerberos-keytab <path-to-keytab>         - Set path to a Kerberos "
+"keytab\n"
+"    set-credentials [<username> [<password>]]    - Set username and "
+"password\n"
+"                                                   credentials\n"
+"    clear-credentials                            - Clear username and "
+"password\n"
+"                                                   credentials\n"
+"    enable-view-only                             - Disable remote control of "
 "input\n"
-"                                               devices\n"
-"    disable-view-only                        - Enable remote control of "
+"                                                   devices\n"
+"    disable-view-only                            - Enable remote control of "
 "input\n"
-"                                               devices\n"
+"                                                   devices\n"
+"    enable-port-negotiation                      - If unavailable, listen "
+"to\n"
+"                                                   a different port\n"
+"    disable-port-negotiation                     - If unavailable, don't "
+"listen\n"
+"                                                   to a different port\n"
 "\n"
 msgstr ""
 
-#: src/grd-ctl.c:485
+#: src/grd-ctl.c:715
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
+"    set-port                                 - Set port the server binds to\n"
 "    enable                                   - Enable the VNC backend\n"
 "    disable                                  - Disable the VNC backend\n"
-"    set-password <password>                  - Set the VNC password\n"
+"    set-password [<password>]                - Set the VNC password\n"
 "    clear-password                           - Clear the VNC password\n"
 "    set-auth-method password|prompt          - Set the authorization method\n"
 "    enable-view-only                         - Disable remote control of "
@@ -87,39 +108,143 @@ msgid ""
 "    disable-view-only                        - Enable remote control of "
 "input\n"
 "                                               devices\n"
+"    enable-port-negotiation                  - If unavailable, listen to\n"
+"                                               a different port\n"
+"    disable-port-negotiation                 - If unavailable, don't listen\n"
+"                                               to a different port\n"
 "\n"
 msgstr ""
 
-#: src/grd-ctl.c:500
+#: src/grd-ctl.c:735
+#| msgid ""
+#| "  status [--show-credentials]                - Show current status\n"
+#| "\n"
+#| "Options:\n"
+#| "  --headless                                 - Use headless credentials "
+#| "storage\n"
+#| "  --help                                     - Print this help text\n"
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
-"  --headless                                 - Use headless credentials "
-"storage\n"
+"  --headless                                 - Configure headless daemon\n"
+"                                               running on a user session\n"
+"  --system                                   - Configure system daemon\n"
+"                                               for remote login\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Sýna fyrirliggjandi stöðu\n"
 "\n"
 "Valkostir:\n"
-"  --headless                                 - Nota hauslausa"
-" auðkenningageymslu\n"
+"  --headless                                 - Nota hauslausa vöktun\n"
+"                                               keyrandi á notandasetu\n"
+"  --system                                   - Grunnstilla kerfisvöktun\n"
+"                                               fyrir fjartengda innskráningu\n"
 "  --help                                     - Birta þennan hjálpartexta\n"
 
+#: src/grd-daemon.c:1165
+msgid "GNOME Remote Desktop"
+msgstr "Fjartengt GNOME skjáborð"
+
+#: src/grd-daemon-handover.c:331 src/grd-daemon-handover.c:396
+#, c-format
+msgid "Continue With Insecure Connection?"
+msgstr "Halda áfram með óörugga tengingu?"
+
+#. Translators: Don't translate “use redirection server name:i:1”.
+#. * It's a menu option, and it's the same for all languages.
+#: src/grd-daemon-handover.c:334 src/grd-daemon-handover.c:400
+#, c-format
+msgid ""
+"This Remote Desktop connection is insecure. To secure this connection, "
+"enable RDSTLS Security in your client by saving the connection settings in "
+"your client as an RDP file and set “use redirection server name:i:1” in it."
+msgstr ""
+
+#: src/grd-daemon-handover.c:339 src/grd-daemon-handover.c:405
+#, c-format
+msgid "Disconnect"
+msgstr "Aftengjast"
+
+#: src/grd-daemon-handover.c:340 src/grd-daemon-handover.c:406
+#, c-format
+msgid "Continue"
+msgstr "Halda áfram"
+
+#: src/grd-daemon-user.c:99
+#, c-format
+msgid "Desktop Sharing port changed"
+msgstr "Gátt fyrir skjáborðsmiðlun breyttist"
+
+#: src/grd-daemon-user.c:101
+#, c-format
+msgid ""
+"The Desktop Sharing port has changed from <b>%i</b> to <b>%i</b>.\n"
+"This is because the Remote Sessions service has been activated and it has a "
+"higher priority to use port <b>%i</b>."
+msgstr ""
+
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:323
+#, c-format
+msgid "Accept"
+msgstr "Samþykkja"
+
+#: src/grd-session-vnc.c:318
+#, c-format
+msgid "Do you want to share your desktop?"
+msgstr "Viltu deila skjáborðinu þínu með öðrum notendum?"
+
+#: src/grd-session-vnc.c:320
+#, c-format
+msgid ""
+"A user on the computer '%s' is trying to remotely view or control your "
+"desktop."
+msgstr ""
+"Notandi á fjartengdu tölvunni '%s' er að reyna að skoða eða stýra "
+"skjáborðinu þínu."
+
+#: src/grd-session-vnc.c:322
+#, c-format
+msgid "Refuse"
+msgstr "Hafna"
+
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:101
+msgid "The port used by the RDP server"
+msgstr "Gáttin sem RDP-þjónninn notar"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:102
+msgid "The RDP client will connect to this port to use this RDP server."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
+msgid "Search a different RDP port if the configured one is used"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
+msgid ""
+"When negotiate-port is set to 'true' the RDP server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:117
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Hvort RDP-bakendinn sé virkur eða ekki"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#| msgid "If set to to 'true' the RDP backend will be initialized."
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:118
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Ef þetta er stillt á 'satt' verður RDP-bakendinn virkjaður."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
 msgstr "Skjádeilingarhamur RDP-tenginga"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
 "The screenshare mode specifies, whether the RDP backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -135,12 +260,12 @@ msgid ""
 "configuration, submitted by the remote desktop client."
 msgstr ""
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:41
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
 msgstr "Slóð að skilríkjaskránni"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:42
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:50
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
 msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
@@ -148,16 +273,16 @@ msgstr ""
 "Til að geta notað RDP með TLS-öryggi, verður að gefa upp slóð á einkalykils- "
 "og skilríkjaskránna til RDP-þjónsins."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:49
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
 msgstr "Slóð að einkalykilskránni"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:167
 msgid "Only allow remote connections to view the screen content"
 msgstr "Einungis leyfa fjartengingum að skoða efni á skjánum"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -165,16 +290,65 @@ msgstr ""
 "Þegar einungis-skoða er virkt, geta fjartengdir RDP-notendur ekki stjórnað "
 "inntakstækjum (t.d. mús og lyklaborði)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:67
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:81
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+msgid "Allowed authentication methods"
+msgstr "Leyfilegar auðkenningaraðferðir"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+msgid ""
+"Allowed authentication methods. Multiple may be selected to allow different "
+"authentication mechanisms. At least one authentication method must be "
+"selected."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:133
+#| msgid "Path to the private key file"
+msgid "A path to a Kerberos keytab file"
+msgstr "Slóð að Kerberos einkalykilskránni"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:134
+msgid ""
+"When 'kerberos' is enabled as an authentication method, the TERMSRV Kerberos "
+"service principal in this keytab file will be used for authentication."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:144
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:216
+msgid "The port used by the VNC server"
+msgstr "Gáttin sem VNC-þjónninn notar"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:145
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:217
+msgid "The VNC client will connect to this port to use this VNC server."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:151
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:223
+msgid "Search a different VNC port if the configured one is used"
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:224
+msgid ""
+"When negotiate-port is set to 'true' the VNC server will attempt to listen "
+"to the first available of the next 10 ports starting from the configured one."
+msgstr ""
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:160
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:232
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Hvort VNC-bakendinn sé virkur eða ekki"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:68
-#| msgid "If set to to 'true' the VNC backend will be initialized."
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:161
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:233
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Ef þetta er stillt á 'satt' verður VNC-bakendinn virkjaður."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:75
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:168
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -182,11 +356,11 @@ msgstr ""
 "Þegar einungis-skoða er virkt, geta fjartengdir VNC-notendur ekki stjórnað "
 "inntakstækjum (t.d. mús og lyklaborði)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:175
 msgid "Method used to authenticate VNC connections"
 msgstr "Aðferð notuð við auðkenningu VNC-tenginga"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:176
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -201,12 +375,11 @@ msgstr ""
 "tenginguna. * password - þar sem fjartengdi notandinn þarf að gefa upp þekkt "
 "lykilorð"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:95
-#| msgid "Screenshare mode of RDP connections"
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid "Screenshare mode of VNC connections"
 msgstr "Skjádeilingarhamur VNC-tenginga"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:96
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:189
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -220,3 +393,4 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr ""
+
