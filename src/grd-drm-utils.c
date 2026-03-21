@@ -145,9 +145,9 @@ grd_signal_drm_timeline_point (int        device_fd,
 
   if (drmSyncobjTimelineSignal (device_fd, &syncobj_handle, &timeline_point, 1) < 0)
     {
-      drmSyncobjDestroy (device_fd, syncobj_handle);
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
                    "drmSyncobjTimelineSignal failed: %s", g_strerror (errno));
+      drmSyncobjDestroy (device_fd, syncobj_handle);
       return FALSE;
     }
 
