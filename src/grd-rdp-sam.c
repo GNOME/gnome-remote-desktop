@@ -45,25 +45,20 @@ static char *
 create_sam_string (const char *username,
                    const char *password)
 {
-  uint32_t username_length;
-  uint32_t password_length;
+  GString *sam_string;
+  uint8_t nt_hash[16] = {};
   uint32_t i;
-  char *sam_string;
-  uint8_t nt_hash[16];
 
-  username_length = strlen (username);
-  password_length = strlen (password);
+  NTOWFv1A ((LPSTR) password, strlen (password), nt_hash);
 
-  sam_string = g_malloc0 ((username_length + 3 + 32 + 3 + 1 + 1) * sizeof (char));
-
-  NTOWFv1A ((LPSTR) password, password_length, nt_hash);
-
-  sprintf (sam_string, "%s:::", username);
+  sam_string = g_string_new (username);
+  g_string_append_printf (sam_string, ":::");
   for (i = 0; i < 16; ++i)
-    sprintf (sam_string + strlen (sam_string), "%02" PRIx8 "", nt_hash[i]);
-  sprintf (sam_string + strlen (sam_string), ":::\n");
+    g_string_append_printf (sam_string, "%02" PRIx8 "", nt_hash[i]);
 
-  return sam_string;
+  g_string_append_printf (sam_string, ":::\n");
+
+  return g_string_free_and_steal (sam_string);
 }
 
 GrdRdpSAMFile *
