@@ -1024,7 +1024,6 @@ is_auth_identity_current_user (const SecPkgContext_AuthIdentity *auth_identity)
     {
       g_critical ("Failed to map principal '%s' name to local name",
                   principal_string);
-      return FALSE;
       goto err;
     }
 
