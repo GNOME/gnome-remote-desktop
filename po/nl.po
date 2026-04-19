@@ -4,15 +4,15 @@
 #
 # Marcia van den Hout <mvdh1176@gmail.com>, 2021.
 # Hannie Dumoleyn <hannie@ubuntu-nl.org>, 2021.
-# Nathan Follens <nfollens@gnome.org>, 2021-2022, 2024-2025.
+# Nathan Follens <nfollens@gnome.org>, 2021-2022, 2024-2026.
 # Philip Goto <philip.goto@gmail.com>, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop.master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2025-09-08 23:33+0000\n"
-"PO-Revision-Date: 2025-09-09 18:58+0200\n"
+"POT-Creation-Date: 2026-02-26 11:26+0000\n"
+"PO-Revision-Date: 2026-04-20 00:38+0200\n"
 "Last-Translator: Nathan Follens <nfollens@gnome.org>\n"
 "Language-Team: GNOME-NL https://matrix.to/#/#nl:gnome.org\n"
 "Language: nl\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Poedit 3.9\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings"
@@ -49,37 +49,40 @@ msgstr ""
 "Aanmelding is vereist om de systeemdaemon van gnome-remote-desktop in- of "
 "uit te schakelen"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:3
-msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "GNOME-extern-bureaublad-handoverdaemon"
-
 #: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Gebruik: %s [OPTIES...] OPDRACHT [SUBOPDRACHT]...\n"
 
-#: src/grd-ctl.c:307
+#: src/grd-ctl.c:382
 msgid "Username: "
 msgstr "Gebruikersnaam: "
 
-#: src/grd-ctl.c:319 src/grd-ctl.c:475
+#: src/grd-ctl.c:394 src/grd-ctl.c:552
 msgid "Password: "
 msgstr "Wachtwoord: "
 
-#: src/grd-ctl.c:605
+#: src/grd-ctl.c:682
 msgid "Commands:\n"
 msgstr "Opdrachten:\n"
 
-#: src/grd-ctl.c:610
+#: src/grd-ctl.c:687
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
 "to\n"
 "    enable                                       - Enable the RDP backend\n"
 "    disable                                      - Disable the RDP backend\n"
+"    set-auth-methods <list-of-methods>           - Set a comma separated "
+"list of\n"
+"                                                   allowed authentication "
+"methods\n"
+"                                                   (credentials, kerberos)\n"
 "    set-tls-cert <path-to-cert>                  - Set path to TLS "
 "certificate\n"
 "    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-kerberos-keytab <path-to-keytab>         - Set path to a Kerberos "
+"keytab\n"
 "    set-credentials [<username> [<password>]]    - Set username and "
 "password\n"
 "                                                   credentials\n"
@@ -103,12 +106,22 @@ msgstr ""
 "  rdp                                        - RDP-subopdrachten:\n"
 "    set-port                                 - Stel de poort in waarmee de "
 "server verbinding maakt\n"
-"    enable                                   - De RDP-backend inschakelen\n"
-"    disable                                  - De RDP-backend uitschakelen\n"
+"    enable                                   - De RDP-back-end inschakelen\n"
+"    disable                                  - De RDP-back-end uitschakelen\n"
+"\r\n"
+"    set-auth-methods <lijst-van-methodes>           - Een lijst met "
+"toegestane aanmeldingsmethodes,\r\n"
+"                                                   gescheiden door komma’s, "
+"instellen\r\n"
+"                                                   (credentials, kerberos)"
+"\r\n"
 "    set-tls-cert <pad-naar-cert>              - Pad naar TLS-certificaat "
 "instellen\n"
 "    set-tls-key <pad-naar-sleutel>                - Pad naar TLS-sleutel "
 "instellen\n"
+"\r\n"
+"    set-kerberos-keytab <pad-naar-keytab>         - Pad instellen naar een "
+"Kerberos-keytab\r\n"
 "    set-credentials [<gebruikersnaam>] [<wachtwoord>}    - Gebruikersnaam en "
 "wachtwoord instellen\n"
 "                                               credentials\n"
@@ -129,7 +142,7 @@ msgstr ""
 "                                               een andere poort\n"
 "\n"
 
-#: src/grd-ctl.c:634
+#: src/grd-ctl.c:715
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -174,7 +187,7 @@ msgstr ""
 "                                               een andere poort\n"
 "\n"
 
-#: src/grd-ctl.c:654
+#: src/grd-ctl.c:735
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -196,18 +209,18 @@ msgstr ""
 "                                               voor aanmelding op afstand\n"
 "  --help                                     - Deze hulptekst tonen\n"
 
-#: src/grd-daemon.c:995
+#: src/grd-daemon.c:1165
 msgid "GNOME Remote Desktop"
 msgstr "GNOME Extern bureaublad"
 
-#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
+#: src/grd-daemon-handover.c:331 src/grd-daemon-handover.c:396
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "Verdergaan met onveilige verbinding?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
+#: src/grd-daemon-handover.c:334 src/grd-daemon-handover.c:400
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -219,12 +232,12 @@ msgstr ""
 "bestand, en stelt u ‘use redirection server name:i:1’ erin in. Op die manier "
 "schakelt u de RDSTLS-beveiliging in uw cliënt in."
 
-#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
+#: src/grd-daemon-handover.c:339 src/grd-daemon-handover.c:405
 #, c-format
 msgid "Disconnect"
 msgstr "Verbinding verbreken"
 
-#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
+#: src/grd-daemon-handover.c:340 src/grd-daemon-handover.c:406
 #, c-format
 msgid "Continue"
 msgstr "Doorgaan"
@@ -246,17 +259,17 @@ msgstr ""
 "Dit komt omdat de externesessiesdienst geactiveerd is en deze een hogere "
 "prioriteit heeft om poort <b>%i</b> te gebruiken."
 
-#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:323
 #, c-format
 msgid "Accept"
 msgstr "Accepteren"
 
-#: src/grd-session-vnc.c:305
+#: src/grd-session-vnc.c:318
 #, c-format
 msgid "Do you want to share your desktop?"
 msgstr "Wilt u uw bureaublad delen?"
 
-#: src/grd-session-vnc.c:307
+#: src/grd-session-vnc.c:320
 #, c-format
 msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
@@ -265,31 +278,31 @@ msgstr ""
 "Een gebruiker op computer ‘%s’ probeert uw bureaublad op afstand te bekijken "
 "of te bedienen."
 
-#: src/grd-session-vnc.c:309
+#: src/grd-session-vnc.c:322
 #, c-format
 msgid "Refuse"
 msgstr "Weigeren"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:101
 msgid "The port used by the RDP server"
 msgstr "De poort gebruikt door de RDP-server"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:102
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr ""
 "De RDP-cliënt zal verbinding maken met deze poort om deze RDP-server te "
 "gebruiken."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
 msgid "Search a different RDP port if the configured one is used"
 msgstr ""
 "Zoek naar een andere RDP-poort als de ingestelde poort reeds in gebruik is"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -299,12 +312,12 @@ msgstr ""
 "beginnend bij de geconfigureerde poort."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:117
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Of de RDP-backend is ingeschakeld of niet"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:118
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Indien ingesteld op ‘waar’ zal de RDP-backend geïnitialiseerd worden."
 
@@ -361,7 +374,7 @@ msgid "Path to the private key file"
 msgstr "Pad naar het privésleutelbestand"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:131
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:167
 msgid "Only allow remote connections to view the screen content"
 msgstr "Externe verbindingen alleen toestaan om de scherminhoud te bekijken"
 
@@ -373,26 +386,57 @@ msgstr ""
 "Als alleen-lezen waar is, kunnen externe RDP-verbindingen geen "
 "invoerapparaten manipuleren (zoals muis en toetsenbord)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:180
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:81
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+msgid "Allowed authentication methods"
+msgstr "Toegestane methodes voor aanmeldingscontrole"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+msgid ""
+"Allowed authentication methods. Multiple may be selected to allow different "
+"authentication mechanisms. At least one authentication method must be "
+"selected."
+msgstr ""
+"Toegestane methodes voor aanmeldingscontrole. U kunt er meerdere selecteren "
+"om verschillende aanmeldingsmethodes toe te staan. Er dienst minstens één "
+"aanmeldingsmethode geselecteerd te worden."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:133
+msgid "A path to a Kerberos keytab file"
+msgstr "Een pad naar een Kerberos-keytab-bestand"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:134
+msgid ""
+"When 'kerberos' is enabled as an authentication method, the TERMSRV Kerberos "
+"service principal in this keytab file will be used for authentication."
+msgstr ""
+"Als ‘kerberos’ ingeschakeld is als aanmeldingsmethode, zal de TERMSRV-"
+"Kerberos-dienst-principal in dit keytab-bestand gebruikt worden voor "
+"aanmeldingscontrole."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:144
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:216
 msgid "The port used by the VNC server"
 msgstr "De poort gebruikt door de VNC-server"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:181
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:145
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:217
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr ""
 "De VNC-cliënt zal verbinding maken met deze poort om deze VNC-server te "
 "gebruiken."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:187
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:151
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:223
 msgid "Search a different VNC port if the configured one is used"
 msgstr ""
 "Zoek naar een andere VNC-poort als de ingestelde poort reeds in gebruik is"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:116
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:224
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -401,17 +445,17 @@ msgstr ""
 "luisteren naar de eerste beschikbare poort van de eerstvolgende 10 poorten, "
 "beginnend bij de geconfigureerde poort."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:196
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:160
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:232
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Of de VNC-backend is ingeschakeld of niet"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:197
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:161
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:233
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Indien ingesteld op ‘waar’ zal de VNC-backend geïnitialiseerd worden."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:132
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:168
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -419,11 +463,11 @@ msgstr ""
 "Als alleen-lezen waar is, kunnen externe VNC-verbindingen geen "
 "invoerapparaten manipuleren (zoals muis en toetsenbord)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:139
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:175
 msgid "Method used to authenticate VNC connections"
 msgstr "Methode die wordt gebruikt om VNC-verbindingen te verifiëren"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:140
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:176
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -439,11 +483,11 @@ msgstr ""
 "(wachtwoord) - door de externe cliënt te vragen een bekend wachtwoord op te "
 "geven"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid "Screenshare mode of VNC connections"
 msgstr "Schermdeelmodus van VNC-verbindingen"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:153
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:189
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -469,6 +513,9 @@ msgstr ""
 "externe bureaubladsessie. De beginresolutie van dit virtueel beeldscherm "
 "wordt ingesteld op 1920x1080 pixels. Cliënten kunnen de beginresolutie "
 "overschrijven door middel van beeldschermconfiguratieupdates."
+
+#~ msgid "GNOME Remote Desktop Handover Daemon"
+#~ msgstr "GNOME-extern-bureaublad-handoverdaemon"
 
 #, c-format
 #~ msgid "This connection is insecure"
