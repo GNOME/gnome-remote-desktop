@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2025-06-23 13:15+0000\n"
-"PO-Revision-Date: 2025-08-14 12:02+0200\n"
+"POT-Creation-Date: 2026-02-26 11:26+0000\n"
+"PO-Revision-Date: 2026-04-24 15:05+0200\n"
 "Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
 "Language: sk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 1 : (n>=2 && n<=4) ? 2 : 0;\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Poedit 3.9\n"
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings"
@@ -44,37 +44,40 @@ msgstr ""
 "Pre povolenie alebo zakázanie systémového démona gnome-remote-desktop sa "
 "vyžaduje overenie totožnosti"
 
-#: data/org.gnome.RemoteDesktop.Handover.desktop.in:4
-msgid "GNOME Remote Desktop Handover Daemon"
-msgstr "Démon predania vzdialenej plochy prostredia GNOME"
-
-#: src/grd-ctl.c:70
+#: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Použitie: %s [VOĽBY...] PRÍKAZ [PODPRÍKAZ]...\n"
 
-#: src/grd-ctl.c:305
+#: src/grd-ctl.c:382
 msgid "Username: "
 msgstr "Meno používateľa: "
 
-#: src/grd-ctl.c:317 src/grd-ctl.c:460
+#: src/grd-ctl.c:394 src/grd-ctl.c:552
 msgid "Password: "
 msgstr "Heslo: "
 
-#: src/grd-ctl.c:590
+#: src/grd-ctl.c:682
 msgid "Commands:\n"
 msgstr "Príkazy:\n"
 
-#: src/grd-ctl.c:595
+#: src/grd-ctl.c:687
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
 "to\n"
 "    enable                                       - Enable the RDP backend\n"
 "    disable                                      - Disable the RDP backend\n"
+"    set-auth-methods <list-of-methods>           - Set a comma separated "
+"list of\n"
+"                                                   allowed authentication "
+"methods\n"
+"                                                   (credentials, kerberos)\n"
 "    set-tls-cert <path-to-cert>                  - Set path to TLS "
 "certificate\n"
 "    set-tls-key <path-to-key>                    - Set path to TLS key\n"
+"    set-kerberos-keytab <path-to-keytab>         - Set path to a Kerberos "
+"keytab\n"
 "    set-credentials [<username> [<password>]]    - Set username and "
 "password\n"
 "                                                   credentials\n"
@@ -95,29 +98,43 @@ msgid ""
 "                                                   to a different port\n"
 "\n"
 msgstr ""
-"  rdp                                        - Podpríkazy RDP:\n"
-"    set-port                                 - Nastaví port, na ktorom bude "
-"server načúvať\n"
-"    enable                                   - Zapne podporu pre RDP\n"
-"    disable                                  - Vypne podporu pre RDP\n"
-"    set-tls-cert <cesta-ku-kľúču>            - Nastaví cestu k certifikátu "
-"TLS\n"
-"    set-tls-key <cesta-ku-kľúču>             - Nastaví cestu k TLS kľúču\n"
-"    set-credentials [<meno> [<heslo>]]       - Nastaví meno používateľa a "
-"heslo\n"
-"    clear-credentials                        - Odstráni meno používateľa a "
-"heslo\n"
-"    enable-view-only                         - Zakáže vzdialené ovládanie "
-"vstupných zariadení\n"
-"    disable-view-only                        - Povolí vzdialené ovládanie "
-"vstupných zariadení\n"
-"    enable-port-negotiation                  - Ak je port nedostupný, "
-"načúvať na inom porte\n"
-"    disable-port-negotiation                 - Ak je port nedostupný, "
-"nenačúvať na inom porte\n"
+"  rdp                                            - Podpríkazy RDP:\n"
+"    set-port                                     - Nastaví port, na ktorom "
+"bude server načúvať\n"
+"    enable                                       - Zapne podporu pre RDP\n"
+"    disable                                      - Vypne podporu pre RDP\n"
+"    set-auth-methods <zoznam-metod>           - Nastaví čiarkou oddelený "
+"zoznam\n"
+"                                                   povolených metód "
+"overovania totožnosti\n"
+"                                                   (credentials, kerberos)\n"
+"    set-tls-cert <cesta-k-certifikatu>           - Nastaví cestu k "
+"certifikátu TLS\n"
+"    set-tls-key <cesta-k-klucu>                  - Nastaví cestu k TLS "
+"kľúču\n"
+"    set-kerberos-keytab <cesta-k-keytab>         - Nastaví cestu k súboru "
+"keytab protokolu Kerberos\n"
+"    set-credentials [<pouzivatel> [<heslo>]]     - Nastaví meno používateľa "
+"a heslo\n"
+"                                                   (poverenia)\n"
+"    clear-credentials                            - Odstráni meno používateľa "
+"a heslo\n"
+"                                                   (poverenia)\n"
+"    enable-view-only                             - Zakáže vzdialené "
+"ovládanie vstupných\n"
+"                                                   zariadení\n"
+"    disable-view-only                            - Povolí vzdialené "
+"ovládanie vstupných\n"
+"                                                   zariadení\n"
+"    enable-port-negotiation                      - Ak je port nedostupný, "
+"bude načúvať na\n"
+"                                                   inom porte\n"
+"    disable-port-negotiation                     - Ak je port nedostupný, "
+"nebude načúvať na\n"
+"                                                   inom porte\n"
 "\n"
 
-#: src/grd-ctl.c:619
+#: src/grd-ctl.c:715
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -156,36 +173,41 @@ msgstr ""
 "nenačúvať na inom porte\n"
 "\n"
 
-#: src/grd-ctl.c:639
+#: src/grd-ctl.c:735
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
 "Options:\n"
-"  --headless                                 - Use headless credentials "
-"storage\n"
+"  --headless                                 - Configure headless daemon\n"
+"                                               running on a user session\n"
 "  --system                                   - Configure system daemon\n"
+"                                               for remote login\n"
 "  --help                                     - Print this help text\n"
 msgstr ""
 "  status [--show-credentials]                - Zobrazí aktuálny stav\n"
 "\n"
 "Voľby:\n"
-"  --headless                                 - Použi úložisko s povereniami "
-"pre režim headless\n"
-"  --system                                   - Nastaví systémového démona\n"
+"  --headless                                 - Nakonfiguruje démona pre "
+"režim headless\n"
+"                                               bežiaceho v používateľskej "
+"relácii\n"
+"  --system                                   - Nakonfiguruje systémového "
+"démona\n"
+"                                               pre vzdialené prihlásenie\n"
 "  --help                                     - Vypíše tento text pomocníka\n"
 
-#: src/grd-daemon.c:992
+#: src/grd-daemon.c:1165
 msgid "GNOME Remote Desktop"
 msgstr "Vzdialená plocha prostredia GNOME"
 
-#: src/grd-daemon-handover.c:317 src/grd-daemon-handover.c:382
+#: src/grd-daemon-handover.c:331 src/grd-daemon-handover.c:396
 #, c-format
 msgid "Continue With Insecure Connection?"
 msgstr "Pokračovať pri nezabezpečenom pripojení?"
 
 #. Translators: Don't translate “use redirection server name:i:1”.
 #. * It's a menu option, and it's the same for all languages.
-#: src/grd-daemon-handover.c:320 src/grd-daemon-handover.c:386
+#: src/grd-daemon-handover.c:334 src/grd-daemon-handover.c:400
 #, c-format
 msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
@@ -197,12 +219,12 @@ msgstr ""
 "uložením nastavenia pripojenia do súboru RDP a následne v ňom nastavte „use "
 "redirection server name:i:1“."
 
-#: src/grd-daemon-handover.c:325 src/grd-daemon-handover.c:391
+#: src/grd-daemon-handover.c:339 src/grd-daemon-handover.c:405
 #, c-format
 msgid "Disconnect"
 msgstr "Odpojiť"
 
-#: src/grd-daemon-handover.c:326 src/grd-daemon-handover.c:392
+#: src/grd-daemon-handover.c:340 src/grd-daemon-handover.c:406
 #, c-format
 msgid "Continue"
 msgstr "Pokračovať"
@@ -223,17 +245,17 @@ msgstr ""
 "Dôvodom je, že bola aktivovaná služba Vzdialené relácie a má vyššiu prioritu "
 "pre použitie portu <b>%i</b>."
 
-#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:310
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:323
 #, c-format
 msgid "Accept"
 msgstr "Prijať"
 
-#: src/grd-session-vnc.c:305
+#: src/grd-session-vnc.c:318
 #, c-format
 msgid "Do you want to share your desktop?"
 msgstr "Chcete sprístupniť vašu pracovnú plochu?"
 
-#: src/grd-session-vnc.c:307
+#: src/grd-session-vnc.c:320
 #, c-format
 msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
@@ -242,25 +264,29 @@ msgstr ""
 "Používateľ počítača „%s“ sa pokúša vzdialene zobraziť alebo ovládať vašu "
 "pracovnú plochu."
 
-#: src/grd-session-vnc.c:309
+#: src/grd-session-vnc.c:322
 #, c-format
 msgid "Refuse"
 msgstr "Odmietnuť"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:7
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:101
 msgid "The port used by the RDP server"
 msgstr "Port používaný RDP serverom"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:102
 msgid "The RDP client will connect to this port to use this RDP server."
 msgstr ""
 "Klient RDP sa pripojí k tomuto portu, aby mohol používať tento RDP server."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
 msgid "Search a different RDP port if the configured one is used"
 msgstr "Vyhľadať iný port RDP, ak sa nastavený port už používa"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -269,10 +295,12 @@ msgstr ""
 "prvom dostupnom z nasledujúcich 10 portov začínajúc od nastaveného."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:117
 msgid "Whether the RDP backend is enabled or not"
 msgstr "Či má alebo nemá byť zapnutá podpora pre RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:118
 msgid "If set to 'true' the RDP backend will be initialized."
 msgstr "Ak je nastavené na 'true', inicializuje sa podpora pre RDP."
 
@@ -325,7 +353,7 @@ msgid "Path to the private key file"
 msgstr "Cesta k súboru so súkromným kľúčom"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:106
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:167
 msgid "Only allow remote connections to view the screen content"
 msgstr "Umožniť vzdialeným pripojeniam iba zobrazovať obsah obrazovky"
 
@@ -337,20 +365,55 @@ msgstr ""
 "Keď je režim „iba zobraziť“ nastavený na TRUE, vzdialené pripojenia RDP "
 "nebudú môcť pohybovať vstupnými zariadeniami (napr. myšou a klávesnicou)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:83
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:81
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
+msgid "Allowed authentication methods"
+msgstr "Povolené metódy overovania totožnosti"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
+msgid ""
+"Allowed authentication methods. Multiple may be selected to allow different "
+"authentication mechanisms. At least one authentication method must be "
+"selected."
+msgstr ""
+"Povolené metódy overovania totožnosti. Môžete vybrať viacero metód, ktoré "
+"umožnia rôzne mechanizmy overovania. Musí byť vybraná aspoň jedna metóda "
+"overovania."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:133
+msgid "A path to a Kerberos keytab file"
+msgstr "Cesta k súboru keytab protokolu Kerberos"
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:134
+msgid ""
+"When 'kerberos' is enabled as an authentication method, the TERMSRV Kerberos "
+"service principal in this keytab file will be used for authentication."
+msgstr ""
+"Ak je ako metóda overovania totožnosti povolený protokol „kerberos“, na "
+"overenie sa použije identifikátor služby TERMSRV Kerberos z tohto súboru "
+"keytab."
+
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:144
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:216
 msgid "The port used by the VNC server"
 msgstr "Port používaný serverom VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:84
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:145
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:217
 msgid "The VNC client will connect to this port to use this VNC server."
 msgstr ""
 "VNC klient sa pripojí k tomuto portu, aby mohol používať tento VNC server."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:151
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:223
 msgid "Search a different VNC port if the configured one is used"
 msgstr "Vyhľadať iný VNC port, ak sa nastavený port už používa"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:91
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:224
 msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
@@ -358,15 +421,17 @@ msgstr ""
 "Ak je negotiate-port nastavený na 'true', VNC server sa pokúsi načúvať na "
 "prvom dostupnom porte z nasledujúcich 10 portov začínajúc od nastaveného."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:99
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:160
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:232
 msgid "Whether the VNC backend is enabled or not"
 msgstr "Či má alebo nemá byť povolená podpora VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:100
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:161
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:233
 msgid "If set to 'true' the VNC backend will be initialized."
 msgstr "Ak je nastavené na 'true', inicializuje sa podpora pre VNC."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:107
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:168
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
@@ -374,11 +439,11 @@ msgstr ""
 "Keď je režim „iba zobraziť“ nastavený na TRUE, vzdialené pripojenia VNC "
 "nebudú môcť pohybovať vstupnými zariadeniami (napr. myšou a klávesnicou)."
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:114
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:175
 msgid "Method used to authenticate VNC connections"
 msgstr "Metóda použitá na overenie totožnosti pripojení VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:115
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:176
 msgid ""
 "The VNC authentication method describes how a remote connection is "
 "authenticated. It can currently be done in two different ways: * prompt - by "
@@ -393,11 +458,11 @@ msgstr ""
 "stanici, aby bolo možné explicitne schváliť nové pripojenie. * password "
 "(„heslo“) - od vzdialeného klienta bude potrebné poskytnutie známeho hesla"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:127
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid "Screenshare mode of VNC connections"
 msgstr "Režim zdieľania obrazovky pre pripojenie VNC"
 
-#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:128
+#: src/org.gnome.desktop.remote-desktop.gschema.xml.in:189
 msgid ""
 "The screenshare mode specifies, whether the VNC backend mirrors the primary "
 "screen, or whether a virtual monitor is created. For the initial resolution "
@@ -421,6 +486,9 @@ msgstr ""
 "použije ho pre reláciu vzdialenej plochy. Počiatočné rozlíšenie tohto "
 "monitora je nastavené na 1920×1080 pixelov. Klient môže toto nastavenie "
 "zmeniť následnými aktualizáciami nastavení monitora."
+
+#~ msgid "GNOME Remote Desktop Handover Daemon"
+#~ msgstr "Démon predania vzdialenej plochy prostredia GNOME"
 
 #, c-format
 #~ msgid "This connection is insecure"
