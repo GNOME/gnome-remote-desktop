@@ -1590,7 +1590,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, TRUE);
   freerdp_settings_set_bool (rdp_settings, FreeRDP_RemoteConsoleAudio, TRUE);
 
-  peer->Logon =  rdp_peer_logon;
+  peer->Logon = rdp_peer_logon;
   peer->Capabilities = rdp_peer_capabilities;
   peer->PostConnect = rdp_peer_post_connect;
   peer->Activate = rdp_peer_activate;
