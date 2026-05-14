@@ -43,10 +43,10 @@
 #include "grd-types.h"
 #include "grd-vnc-server.h"
 
-#ifdef HAVE_LIBSYSTEMD
+#if defined(HAVE_LIBSYSTEMD) && defined(HAVE_RDP)
 #include "grd-daemon-handover.h"
 #include "grd-daemon-system.h"
-#endif /* HAVE_LIBSYSTEMD */
+#endif /* HAVE_RDP && HAVE_LIBSYSTEMD */
 
 #define RDP_SERVER_RESTART_DELAY_MS 3000
 
@@ -1210,7 +1210,7 @@ main (int argc, char **argv)
     case GRD_RUNTIME_MODE_HEADLESS:
       daemon = GRD_DAEMON (grd_daemon_user_new (runtime_mode, &error));
       break;
-#ifdef HAVE_LIBSYSTEMD
+#if defined(HAVE_LIBSYSTEMD) && defined(HAVE_RDP)
     case GRD_RUNTIME_MODE_SYSTEM:
       daemon = GRD_DAEMON (grd_daemon_system_new (&error));
       break;
@@ -1222,7 +1222,7 @@ main (int argc, char **argv)
     case GRD_RUNTIME_MODE_HANDOVER:
       g_assert_not_reached ();
       break;
-#endif /* HAVE_LIBSYSTEMD */
+#endif /* defined(HAVE_LIBSYSTEMD) && defined(HAVE_RDP) */
     }
 
   if (!daemon)
