@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: gnome-remote-desktop master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
-"POT-Creation-Date: 2026-02-09 21:01+0000\n"
-"PO-Revision-Date: 2026-02-19 11:36+0100\n"
+"POT-Creation-Date: 2026-02-26 11:26+0000\n"
+"PO-Revision-Date: 2026-05-22 00:00+0200\n"
 "Last-Translator: Antonio Marin <gnmer.6qxyg@slmail.me>\n"
 "Language-Team: Romanian <gnomero-list@lists.sourceforge.net>\n"
 "Language: ro\n"
@@ -217,7 +217,7 @@ msgstr ""
 
 #: src/grd-daemon.c:1165
 msgid "GNOME Remote Desktop"
-msgstr "Computer la distanță GNOME"
+msgstr "Calculator la distanță GNOME"
 
 #: src/grd-daemon-handover.c:331 src/grd-daemon-handover.c:396
 #, c-format
@@ -233,8 +233,8 @@ msgid ""
 "enable RDSTLS Security in your client by saving the connection settings in "
 "your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
-"Această conexiune la un computer aflat la distanță nu este sigură. Pentru a "
-"o face sigură, trebuie activată securitatea RDSTLS în propria aplicație "
+"Această conexiune la un calculator aflat la distanță nu este sigură. Pentru "
+"a o face sigură, trebuie activată securitatea RDSTLS în propria aplicație "
 "salvând parametrii de conectare în propria aplicație, într-un fișier RDP, și "
 "stabilind în acesta „use redirection server name:i:1”."
 
@@ -251,7 +251,7 @@ msgstr "Continuă"
 #: src/grd-daemon-user.c:99
 #, c-format
 msgid "Desktop Sharing port changed"
-msgstr "Portul pentru împărtășirea computerului a fost schimbat"
+msgstr "Portul pentru accesul la ecran a fost schimbat"
 
 #: src/grd-daemon-user.c:101
 #, c-format
@@ -260,31 +260,31 @@ msgid ""
 "This is because the Remote Sessions service has been activated and it has a "
 "higher priority to use port <b>%i</b>."
 msgstr ""
-"Portul pentru împărtășirea computerului a fost schimbat de la <b>%i</b> la "
-"<b>%i</b>.\n"
-"Acest lucru se datorează faptului că serviciul sesiuni de la distanță a fost "
+"Portul pentru accesul la ecran a fost schimbat de la <b>%i</b> la <b>%i</"
+"b>.\n"
+"Acest lucru se datorează faptului că serviciul sesiuni la distanță a fost "
 "activat și are o prioritate mai mare să utilizeze portul <b>%i</b>."
 
-#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:311
+#: src/grd-daemon-user.c:107 src/grd-session-vnc.c:323
 #, c-format
 msgid "Accept"
 msgstr "Acceptă"
 
-#: src/grd-session-vnc.c:306
+#: src/grd-session-vnc.c:318
 #, c-format
 msgid "Do you want to share your desktop?"
-msgstr "Se împărtășește propriul computerul?"
+msgstr "Se permite ca altcineva să acceseze acest ecran?"
 
-#: src/grd-session-vnc.c:308
+#: src/grd-session-vnc.c:320
 #, c-format
 msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
 "desktop."
 msgstr ""
-"Un utilizator de la computerul „%s” încearcă să vadă sau să controleze de la "
-"distanță computerul tău."
+"Un utilizator de la calculatorul „%s” încearcă să vadă sau să controleze de "
+"la distanță ecranul tău."
 
-#: src/grd-session-vnc.c:310
+#: src/grd-session-vnc.c:322
 #, c-format
 msgid "Refuse"
 msgstr "Refuză"
@@ -329,7 +329,7 @@ msgstr ""
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
-msgstr "Modul „distribuire ecran” al conexiunilor RDP"
+msgstr "Modul „acces la ecran” al conexiunilor RDP"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:31
 msgid ""
@@ -346,20 +346,19 @@ msgid ""
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
-"Modul „distribuire ecran”, specifică dacă serverul RDP transmite ecranul "
+"Modul „acces la ecran”, specifică dacă serverul RDP transmite ecranul "
 "principal, sau dacă se creează un monitor virtual. Pentru rezoluția inițială "
 "a monitorului virtual, serverul RDP utilizează ori datele de bază ale "
-"clientului ([MS-RDPBCGR] 2.2.1.3.2) ori datele de monitor ale clientului "
-"([MS-RDPBCGR] 2.2.1.3.6), în funcție de ce este disponibil. Când se "
-"utilizează o sesiune computer la distanță cu un monitor virtual, aplicațiile "
-"client pot redimensiona rezoluția monitorului virtual în timpul unei sesiuni "
-"cu Extensia „Display Update Virtual Channel” ([MS-RDPEDISP]). Modurile "
-"permise pentru împărtășirea ecranului includ: * mirror-primary - "
-"Înregistrează monitorul principal al sesiunii de lucru a utilizatorului "
-"actual. * extend - Creează un monitor virtual nou și îl utilizează pentru "
-"sesiunea de lucru de la distanță. Rezoluția acestui monitor virtual este "
-"stabilită din aplicația client aflată la distanță cu ajutorul căreia se "
-"realizează conectarea la serverul RDP."
+"clientului ([MS-RDPBCGR] 2.2.1.3.2) ori datele monitorului clientului ([MS-"
+"RDPBCGR] 2.2.1.3.6), în funcție de ce este disponibil. Când se utilizează o "
+"sesiune calculator la distanță cu un monitor virtual, aplicațiile client pot "
+"redimensiona rezoluția monitorului virtual în timpul unei sesiuni cu "
+"Extensia „Display Update Virtual Channel” ([MS-RDPEDISP]). Modurile permise "
+"pentru împărtășirea ecranului includ: * mirror-primary - Înregistrează "
+"monitorul principal al sesiunii de lucru a utilizatorului actual. * extend - "
+"Creează un monitor virtual nou și îl utilizează pentru sesiunea de lucru de "
+"la distanță. Rezoluția acestui monitor virtual este stabilită din aplicația "
+"client aflată la distanță folosită pentru conectare."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
@@ -489,7 +488,7 @@ msgstr ""
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid "Screenshare mode of VNC connections"
-msgstr "Modul „distribuire ecran” al conexiunilor VNC"
+msgstr "Modul „acces la ecran” al conexiunilor VNC"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:189
 msgid ""
@@ -505,7 +504,7 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr ""
-"Modul „distribuire ecran” specifică, dacă serverul VNC transmite ecranul "
+"Modul „acces la ecran” specifică, dacă serverul VNC transmite ecranul "
 "principal, sau dacă este creat un monitor virtual. Pentru rezoluția inițială "
 "a monitorului virtual, serverul VNC utilizează o mărime prestabilită de "
 "1920x1080 pixeli. Când se folosește o sesiune de lucru de la distanță cu un "
