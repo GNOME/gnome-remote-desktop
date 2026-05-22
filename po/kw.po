@@ -10,7 +10,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
 "issues/\n"
 "POT-Creation-Date: 2026-02-26 11:26+0000\n"
-"PO-Revision-Date: 2026-03-22 17:47+0000\n"
+"PO-Revision-Date: 2026-05-22 22:02+0100\n"
 "Last-Translator: Flynn Peck <cirilla@tuta.io>\n"
 "Language-Team: kw\n"
 "Language: kw\n"
@@ -28,27 +28,25 @@ msgstr ""
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:11
 msgid "Allow to configure gnome-remote-desktop's system daemon settings"
-msgstr "Gasa selya an settyansow daemon system gnome-remote-desktop "
+msgstr "Gasa selya an settyansow oberer system gnome-remote-desktop "
 
 #: data/org.gnome.remotedesktop.configure-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
 "settings"
 msgstr ""
-"Omgelmyans a res rag selya an settyansow daemon system gnome-remote-desktop"
+"Omgelmyans a res rag selya an settyansow oberer system gnome-remote-desktop"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
-msgstr ""
-"Gasa rag gallosegi hag ungallosegi an daemon system gnome-remote-desktop"
+msgstr "Gasa rag bywhe ha marowhe an oberer system gnome-remote-desktop"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
 "system daemon"
 msgstr ""
-"Omgelmyans a res rag gallosegi po ungallosegi an daemon system gnome-remote-"
-"desktop"
+"Omgelmyans a res rag bywhe po marowhe an oberer system gnome-remote-desktop"
 
 #: src/grd-ctl.c:72
 #, c-format
@@ -57,7 +55,7 @@ msgstr "Usadow: %s [DEWISYOW...] ARGHADOW [ISARGHADOW]...\n"
 
 #: src/grd-ctl.c:382
 msgid "Username: "
-msgstr "Hanow usyer:"
+msgstr "Hanow devnydhyer:"
 
 #: src/grd-ctl.c:394 src/grd-ctl.c:552
 msgid "Password: "
@@ -65,7 +63,7 @@ msgstr "Ger-tremena:"
 
 #: src/grd-ctl.c:682
 msgid "Commands:\n"
-msgstr "Arghadow:\n"
+msgstr "Arghadowyow:\n"
 
 #: src/grd-ctl.c:687
 msgid ""
@@ -105,33 +103,33 @@ msgid ""
 "\n"
 msgstr ""
 "  rdp                                            - isarghadow RDP:\n"
-"    set-port                                     - Gorra porth an servell "
-"junya dhe\n"
+"    set-port                                     - Gorra porth an servell a "
+"jun dhe\n"
 "    enable                                       - Bywhe RDP\n"
 "    disable                                      - Marowhe RDP\n"
-"    set-auth-methods <list-of-methods>           - Gorra rol diberthys gans "
+"    set-auth-methods <list-of-methods>           - Gorra rol dhiberthys gans "
 "kommas a\n"
 "                                                   vethodys omgelmans gesys\n"
 "                                                   (manylyon, kerberos)\n"
 "    set-tls-cert <path-to-cert>                  - Gorra tyller testskrif "
 "TLS\n"
 "    set-tls-key <path-to-key>                    - Gorra tyller alhwedh TLS\n"
-"    set-credentials [<username> [<password>]]    - Gorra hanow usyer ha ger-"
-"tremena\n"
-"    clear-credentials                            - Dilea hanow usyer ha ger-"
-"tremena\n"
-"    enable-view-only                             - Ungallosegi routyans pell "
+"    set-credentials [<username> [<password>]]    - Gorra hanow devnydhyer ha "
+"ger-tremena\n"
+"    clear-credentials                            - Dilea hanow devnydhyer ha "
+"ger-tremena\n"
+"    enable-view-only                             - Marowhe routyans pell "
 "devisyow\n"
 "                                                   ynworrans\n"
-"    disable-view-only                            - Ungallosegi routyans pell "
+"    disable-view-only                            - Marowhe routyans pell "
 "devisyow\n"
 "                                                   ynworrans\n"
-"    enable-port-negotiation                      - Mar ankavadow, goslowes "
+"    enable-port-negotiation                      - Mars ankavadow, goslowes "
 "orth\n"
-"                                                   unn porth aral\n"
-"    disable-port-negotiation                     - Mar ankavadow, na "
-"goslowes\n"
-"                                                   orth unn porth aral\n"
+"                                                   porth aral\n"
+"    disable-port-negotiation                     - Mars ankavadow, na "
+"woslowes\n"
+"                                                   orth porth aral\n"
 "\n"
 
 #: src/grd-ctl.c:715
@@ -156,23 +154,23 @@ msgid ""
 "\n"
 msgstr ""
 "  vnc                                        - isarghadow VNC:\n"
-"    set-port                                 - Gorra porth an servell junya "
+"    set-port                                 - Gorra porth an servell a jun "
 "dhe\n"
-"    enable                                   - Gallosegi VNC\n"
-"    disable                                  - Ungallosegi VNC\n"
+"    enable                                   - Bywhe VNC\n"
+"    disable                                  - Marowhe VNC\n"
 "    set-password [<password>]                - Gorra an ger-tremena VNC\n"
 "    clear-password                           - Dilea an ger-tremena VNC\n"
 "    set-auth-method password|prompt          - Gorra an method reythheans\n"
-"    enable-view-only                         - Ungallosegi routyans pell "
+"    enable-view-only                         - Marowhe routyans pell "
 "devisyow\n"
 "                                               ynworrans\n"
-"    disable-view-only                        - Gallosegi routyans pell "
-"devisyow\n"
+"    disable-view-only                        - Bywhe routyans pell devisyow\n"
 "                                               ynworrans\n"
-"    enable-port-negotiation                  - Mar ankavadow, goslowes orth\n"
-"                                               unn porth aral\n"
-"    disable-port-negotiation                 - Mar ankavadow, na goslowes\n"
-"                                               orth unn porth aral\n"
+"    enable-port-negotiation                  - Mars ankavadow, goslowes "
+"orth\n"
+"                                               porth aral\n"
+"    disable-port-negotiation                 - Mars ankavadow, na woslowes\n"
+"                                               orth porth aral\n"
 "\n"
 
 #: src/grd-ctl.c:735
@@ -189,10 +187,10 @@ msgstr ""
 "  status [--show-credentials]                - Diskwedhes studh a-lemmyn\n"
 "\n"
 "Dewisyow:\n"
-"  --headless                                 - Selya daemon dipenn\n"
-"                                               owth eksekutya war unn "
-"esedhek usyer\n"
-"  --system                                   - Selya daemon system\n"
+"  --headless                                 - Selya oberer heb penn\n"
+"                                               owth eksekutya war esedhek "
+"devnydhyer\n"
+"  --system                                   - Selya oberer system\n"
 "                                               rag omgelmyans pell\n"
 "  --help                                     - Pryntya an tekst gweres ma\n"
 
@@ -214,9 +212,9 @@ msgid ""
 "enable RDSTLS Security in your client by saving the connection settings in "
 "your client as an RDP file and set “use redirection server name:i:1” in it."
 msgstr ""
-"An junyans Pelldesktop ma yw ansaw. Rag diogeli an junyans ma, gallosegi "
-"Diogeledh RDSTLS yn dha kliens gans ow sawya an settyansow junyans yn dha "
-"kliens avel unn restren RDP ha gorra “devnydhya servell daskevarwodhyans "
+"An junyans Pelldesktop ma yw ansaw. Rag diogeli an junyans ma, bywhe "
+"Diogeledh RDSTLS y'gas kliens gans ow sawya an settyansow junyans y'gas "
+"kliens avel restren RDP ha gorra “devnydhya servell dhaskevarwodhyans "
 "hanow:i:1” ynno."
 
 #: src/grd-daemon-handover.c:339 src/grd-daemon-handover.c:405
@@ -241,9 +239,9 @@ msgid ""
 "This is because the Remote Sessions service has been activated and it has a "
 "higher priority to use port <b>%i</b>."
 msgstr ""
-"An porth Ow Kevrenna Desktop yw chanjya dhyworth <b>%i</b> dhe <b>%i</b>.\n"
-"Ma yw drefen an gonis Esedhogow Pell yw bywhys hag yth kavos unn ragwir "
-"ughella rag devnydhya porth <b>%i</b>."
+"An porth Ow Kevrenna Desktop re janjys dhyworth <b>%i</b> dhe <b>%i</b>.\n"
+"Hemm yw drefen an gonis Esedhogow Pell yw bywhes hag yma ragwir ughella dhe "
+"dhevnydhya porth <b>%i</b>."
 
 #: src/grd-daemon-user.c:107 src/grd-session-vnc.c:323
 #, c-format
@@ -253,7 +251,7 @@ msgstr "Receva"
 #: src/grd-session-vnc.c:318
 #, c-format
 msgid "Do you want to share your desktop?"
-msgstr "A vynn'ta kevrenna dha desktop?"
+msgstr "A vynnowgh kevrenna agas desktop?"
 
 #: src/grd-session-vnc.c:320
 #, c-format
@@ -261,8 +259,8 @@ msgid ""
 "A user on the computer '%s' is trying to remotely view or control your "
 "desktop."
 msgstr ""
-"Unn usyer war an amontyell '%s' yw owth assaya gweles po routya pell dha "
-"desktop."
+"Yma devnydhyer war'n amontyell '%s' owth assaya dhe weles po routya yn pell "
+"agas desktop."
 
 #: src/grd-session-vnc.c:322
 #, c-format
@@ -283,7 +281,7 @@ msgstr ""
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
 msgid "Search a different RDP port if the configured one is used"
-msgstr "Hwilas unn porth RDP aral mar an unn selys yw devnydhys"
+msgstr "Hwilas porth RDP aral mar devnydhys yw an porth selys"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
@@ -291,8 +289,9 @@ msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
-"Pan negotiate-port yw gorrys dhe 'true' an servell RDP a wra assaya goslowes "
-"orth an kynsa kavadow a'n porthow 10 nessa, ow dalleth dhyworth an unn selys."
+"Pan negotiate-port yw gorrys dhe 'true' an servell RDP a wra assaya dhe "
+"woslowes orth an kynsa kavadow a'n borthow 10 nessa, ow talleth dhyworth an "
+"unn selys."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:117
@@ -302,7 +301,7 @@ msgstr "Po RDP yw byw po na"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:118
 msgid "If set to 'true' the RDP backend will be initialized."
-msgstr "Mar gorra dhe 'true' RDP a wra bywhys."
+msgstr "Mar gorra dhe 'true' RDP a vydh bywhys."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:30
 msgid "Screenshare mode of RDP connections"
@@ -323,21 +322,21 @@ msgid ""
 "resolution of this virtual monitor is derived from the monitor "
 "configuration, submitted by the remote desktop client."
 msgstr ""
-"An fordh skrin-kevrenna ragnotya, po RDP diskwedhes an skrin chif, po unn "
-"skrin gowir yw gwrys. Rag an braster kynsa a'n skrin gowir, RDP devnydhya po "
-"an data kolonnen kliens ([MS-RDPBCGR] 2.2.1.3.2) po an data skrin kliens "
-"([MS-RDPBCGR] 2.2.1.3.6), ow kregi war pyth yw kavadow. Pan ow devnydhya unn "
-"esedhek pelldesktop gans unn skrin gowir, kliensow gallos chanjya an braster "
-"a'n skrin gowir dres unn esedhek gans an Display Update Virtual Channel "
-"Extension ([MS-RDPEDISP]). Fordhow skrin-kevrenna gasys komprehendya: * "
-"mirror-primary - Rekordya an skrin chif a'n esedhek usyer a-lemmyn. * extend "
-"- Gul unn skrin gowir nowydh ha devnydhya yth rag an esedhek pelldesktop. An "
-"braster a'n skrin gowir yw dhyworth an selyans skrin, danvonys gans an "
-"kliens pelldesktop."
+"An fordh skrin-kevrenna a ragnot, po RDP a dhiskwedh an skrin chif, po skrin "
+"gowir yw gwrys. Rag an braster kynsa a'n skrin wowir, RDP a dhevnydh po an "
+"data kolonnen kliens ([MS-RDPBCGR] 2.2.1.3.2) po an data skrin gliens ([MS-"
+"RDPBCGR] 2.2.1.3.6), ow kregi war pyth yw kavadow. Pan ow tevnydhya esedhek "
+"pelldesktop gans skrin wowir, kliensow a yll chanjya an braster a'n skrin "
+"wowir dres esedhek gans an Display Update Virtual Channel Extension ([MS-"
+"RDPEDISP]). Fordhow skrin-kevrenna gesys a syns: * mirror-primary - Rekordya "
+"an skrin chif a'n esedhek devnydhyer a-lemmyn. * extend - Gwruthyl skrin "
+"wowir nowydh hag a'n devnydhya rag an esedhek pelldesktop. An braster a'n "
+"skrin wowir yw dhyworth an selyans skrin, danvenys gans an kliens "
+"pelldesktop."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:57
 msgid "Path to the certificate file"
-msgstr "Tyller dhe'n restren testskrif"
+msgstr "Tyller dhe'n restren destskrif"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:58
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:66
@@ -345,8 +344,8 @@ msgid ""
 "In order to be able to use RDP with TLS Security, both the private key file "
 "and the certificate file need to be provided to the RDP server."
 msgstr ""
-"Rag devnydhya RDP gans Diogeledh TLS, an dhiw an restren alhwedh privedh hag "
-"an restren testskrif res bos provys dhe an servell RDP."
+"Rag devnydhya RDP gans Diogeledh TLS, res yw dhe'n dhiw an restren alhwedh "
+"privedh hag an restren destskrif bos provys dhe'n servell RDP."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
@@ -355,15 +354,15 @@ msgstr "Tyller dhe'n restren alhwedh privedh"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:167
 msgid "Only allow remote connections to view the screen content"
-msgstr "Gasa junyans pell hepken gweles an dalgh skrin"
+msgstr "Gasa junyans pell hepken dhe weles an synsas skrin"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:74
 msgid ""
 "When view-only is true, remote RDP connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"Pan view-only yw gwir, junyansow RDP pell na gallos handla devisyow "
-"ynworrans (r.e logosen ha bysowek)."
+"Pan view-only yw gwir, junyansow RDP pell ny allas handla devisyow ynworrans "
+"(r.e logosen ha bysowek)."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:81
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
@@ -378,7 +377,7 @@ msgid ""
 "selected."
 msgstr ""
 "Methods omgelmans gesys. Liesek a yll bos dewisys rag gasa jynnweythow "
-"omgelmans dyffrans. Dhe'n lyha, unn method res bos dewisys."
+"omgelmans dyffrans. Dhe'n lyha, res yw dhe unn method bos dewisys."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:90
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:133
@@ -392,7 +391,7 @@ msgid ""
 "service principal in this keytab file will be used for authentication."
 msgstr ""
 "Pan 'kerberos' yw byw avel method omgelmans, an gonis chif Kerberos TERMSRV "
-"y'n restren alhwedhentabb ma a wra bos devnydhys rag omgelmans."
+"y'n restren alhwedhentabb ma a vydh devnydhys rag omgelmans."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:144
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:216
@@ -408,7 +407,7 @@ msgstr ""
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:151
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:223
 msgid "Search a different VNC port if the configured one is used"
-msgstr "Hwilas unn porth VNC aral mar an unn selys yw devnydhys"
+msgstr "Hwilas porth VNC aral mar devnydhys yw unn selys"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:152
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:224
@@ -416,8 +415,9 @@ msgid ""
 "When negotiate-port is set to 'true' the VNC server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
 msgstr ""
-"Pan negotiate-port yw gorrys dhe 'true' an servell VNC a wra assaya goslowes "
-"orth an kynsa kavadow a'n porthow 10 nessa, ow dalleth dhyworth an unn selys."
+"Pan negotiate-port yw gorrys dhe 'true' an servell VNC a wra assaya dhe "
+"woslowes orth an kynsa kavadow a'n porthow 10 nessa, ow talleth dhyworth an "
+"unn selys."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:160
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:232
@@ -427,15 +427,15 @@ msgstr "Po VNC yw bywhys po na"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:161
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:233
 msgid "If set to 'true' the VNC backend will be initialized."
-msgstr "Mar gorra dhe 'true' VNC a wra bos dallethys."
+msgstr "Mars yw gorrys dhe 'true' VNC a vydh dallethys."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:168
 msgid ""
 "When view-only is true, remote VNC connections cannot manipulate input "
 "devices (e.g. mouse and keyboard)."
 msgstr ""
-"Pan view-only yw gwir, junyansow VNC pell na gallos handla devisyow "
-"ynworrans (r.e. logosen ha bysowek)."
+"Pan view-only yw gwir, junyansow VNC pell ny allas handla devisyow ynworrans "
+"(r.e. logosen ha bysowek)."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:175
 msgid "Method used to authenticate VNC connections"
@@ -449,11 +449,11 @@ msgid ""
 "access to the workstation to explicitly approve the new connection. * "
 "password - by requiring the remote client to provide a known password"
 msgstr ""
-"An method gwirheans VNC ow deskrifa fatel unn junyans pell yw gwirhys. Yth "
-"gallos bos gwrys a-lemmyn yn diw agwedhow dihaval: * prompt - gans ow "
-"lostleverel an usyer rag pub junyans nowydh, ow rekwirya unn den gans hedhas "
-"fisegel dhe'n amontyell dhe komendya diblans an junyans nowydh. * password - "
-"gans ow rekwirya an kliens pell dhe provia unn ger-tremena aswonys"
+"An method gwirheans VNC ow teskrifa fatel junyans pell yw gwirhys. Yth a yll "
+"bos gwrys a-lemmyn yn diw agwedhow dihaval: * prompt - gans ow lostleverel "
+"an devnydhyer rag pub junyans nowydh, ow rekwirya unn den gans hedhas "
+"fisegel dhe'n amontyell dhe gomendya diblans an junyans nowydh. * password - "
+"gans ow rekwirya an kliens pell dhe brovia ger-tremena aswonys"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:188
 msgid "Screenshare mode of VNC connections"
@@ -473,16 +473,16 @@ msgid ""
 "Clients can override the initial resolution with subsequent monitor "
 "configuration updates."
 msgstr ""
-"An fordh skrin-kevrenna ragnotya, po VNC diskwedhes an skrin chif, po unn "
-"skrin gowir yw gwrys. Rag an braster kynsa a'n skrin gowir, VNC devnydhya an "
-"braster defowt a 1920x1080 pyskelys. Pan ow devnydhya unn esedhek "
-"pelldesktop gans unn skrin gowir, kliens gallos chanjya an braster a'n skrin "
-"gowir dres unn esedhek gans un PDU setDesktopSize. Fordhow skrin-kevrenna "
-"gasys komprehendya: *mirror-primary - Rekordya an skrin chif a'n esedhek "
-"usyer a-lemmyn. * extend - Gul unn skrin gowir nowydh ha devnydhya yth rag "
-"an esedhek pelldesktop. An braster kynsa a'n skrin gowir ma yw gorra dhe "
-"1920x1080 pykselys. Kliensow gallos aslea an braster kynsa gans nowedhyansow "
-"selyans skrin iskevresek."
+"An fordh skrin-kevrenna a ragnot, po VNC a dhiskwedh an skrin jif, po skrin "
+"wowir yw gwrys. Rag an braster kynsa a'n skrin wowir, VNC a dhevnydh an "
+"braster defowt a 1920x1080 pyskelys. Pan ow tevnydhya esedhek pelldesktop "
+"gans skrin wowir, kliens a yll chanjya an braster a'n skrin wowir dres "
+"esedhek gans PDU setDesktopSize. Fordhow skrin-kevrenna gesys a syns: "
+"*mirror-primary - Rekordya an skrin jif a'n esedhek devnydhyer a-lemmyn. * "
+"extend - Gwruthyl skrin wowir nowydh hag a'n devnydhya rag an esedhek "
+"pelldesktop. An braster kynsa a'n skrin wowir ma yw gorrys dhe 1920x1080 "
+"pykselys. Kliensow a yll aslea an braster kynsa gans nowedhyansow selyans "
+"skrin iskevresek."
 
 #~ msgid "GNOME Remote Desktop Handover Daemon"
 #~ msgstr "Daemon Leuvherdh Pelldesktop GNOME"
