@@ -44,7 +44,6 @@
 #include "grd-rdp-view-creator-gen-gl.h"
 #include "grd-rdp-view-creator-gen-sw.h"
 #include "grd-utils.h"
-#include "grd-vk-device.h"
 
 #define STATE_TILE_WIDTH 64
 #define STATE_TILE_HEIGHT 64
@@ -419,18 +418,6 @@ grd_rdp_render_context_fetch_progressive_render_state (GrdRdpRenderContext  *ren
   update_frame_upgrade_state (render_context);
 }
 
-static gboolean
-is_gpu_driver_amd (GrdRdpRenderContext *render_context)
-{
-  GrdVkDevice *vk_device =
-    grd_rdp_renderer_get_vk_device (render_context->renderer);
-  VkDriverId driver_id = grd_vk_device_get_driver_id (vk_device);
-
-  return driver_id == VK_DRIVER_ID_AMD_PROPRIETARY ||
-         driver_id == VK_DRIVER_ID_AMD_OPEN_SOURCE ||
-         driver_id == VK_DRIVER_ID_MESA_RADV;
-}
-
 static void
 try_create_vaapi_session (GrdRdpRenderContext *render_context,
                           GrdRdpSurface       *rdp_surface,
@@ -578,8 +565,7 @@ create_hw_accelerated_encode_session (GrdRdpRenderContext  *render_context,
 
   grd_rdp_dvc_graphics_pipeline_get_capabilities (graphics_pipeline,
                                                   &have_avc444, &have_avc420);
-  if ((have_avc444 || have_avc420) && hwaccel_vaapi &&
-      !is_gpu_driver_amd (render_context))
+  if ((have_avc444 || have_avc420) && hwaccel_vaapi)
     try_create_vaapi_session (render_context, rdp_surface, have_avc444);
 
   if (render_context->encode_session)
