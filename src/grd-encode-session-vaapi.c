@@ -99,6 +99,8 @@ typedef struct
   VASurfaceID src_surface;
   VABufferID bitstream_buffer;
 
+  uint8_t *dedicated_bitstream_buffer;
+
   GrdAVCFrameInfo *avc_frame_info;
 
   int64_t timestamps[3];
@@ -217,6 +219,42 @@ vaapi_picture_free (VAAPIPicture *picture)
   g_free (picture);
 }
 
+static uint8_t *
+acquire_dedicated_bitstream_buffer (GrdEncodeSessionVaapi *encode_session_vaapi)
+{
+  g_autoptr (GMutexLocker) locker = NULL;
+  uint32_t i;
+
+  locker = g_mutex_locker_new (&encode_session_vaapi->dedicated_buffers_mutex);
+  for (i = 0; i < N_BITSTREAM_BUFFERS; ++i)
+    {
+      uint8_t *dedicated_buffer = encode_session_vaapi->dedicated_buffers[i];
+
+      if (g_hash_table_contains (encode_session_vaapi->acquired_dedicated_buffers,
+                                 dedicated_buffer))
+        continue;
+
+      g_hash_table_add (encode_session_vaapi->acquired_dedicated_buffers,
+                        dedicated_buffer);
+      return dedicated_buffer;
+    }
+
+  g_assert_not_reached ();
+  return NULL;
+}
+
+static void
+release_dedicated_bitstream_buffer (GrdEncodeSessionVaapi *encode_session_vaapi,
+                                    uint8_t               *dedicated_buffer)
+{
+  g_autoptr (GMutexLocker) locker = NULL;
+
+  locker = g_mutex_locker_new (&encode_session_vaapi->dedicated_buffers_mutex);
+  if (!g_hash_table_remove (encode_session_vaapi->acquired_dedicated_buffers,
+                            dedicated_buffer))
+    g_assert_not_reached ();
+}
+
 static H264Frame *
 h264_frame_new (GrdEncodeSessionVaapi  *encode_session_vaapi,
                 GError                **error)
@@ -236,6 +274,9 @@ h264_frame_new (GrdEncodeSessionVaapi  *encode_session_vaapi,
   h264_frame->picture_buffer = VA_INVALID_ID;
   h264_frame->slice_buffer = VA_INVALID_ID;
   h264_frame->bitstream_buffer = VA_INVALID_ID;
+
+  h264_frame->dedicated_bitstream_buffer =
+    acquire_dedicated_bitstream_buffer (encode_session_vaapi);
 
   h264_frame->reconstructed_picture =
     vaapi_picture_new (encode_session_vaapi,
@@ -276,6 +317,9 @@ h264_frame_free (H264Frame *h264_frame)
 
   g_clear_pointer (&h264_frame->avc_frame_info, g_free);
   g_clear_pointer (&h264_frame->reconstructed_picture, vaapi_picture_free);
+
+  release_dedicated_bitstream_buffer (encode_session_vaapi,
+                                      h264_frame->dedicated_bitstream_buffer);
 
   g_free (h264_frame);
 }
@@ -1274,9 +1318,31 @@ grd_encode_session_vaapi_encode_frame (GrdEncodeSession  *encode_session,
   return TRUE;
 }
 
+static GrdBitstream *
+combine_bitstream_segments (H264Frame            *h264_frame,
+                            VACodedBufferSegment *va_segment)
+{
+  GrdEncodeSessionVaapi *encode_session_vaapi =
+    h264_frame->encode_session_vaapi;
+  size_t bitstream_size = 0;
+
+  for (; va_segment; va_segment = va_segment->next)
+    {
+      g_assert (bitstream_size + va_segment->size <=
+                encode_session_vaapi->dedicated_buffer_size);
+
+      memcpy (h264_frame->dedicated_bitstream_buffer + bitstream_size,
+              va_segment->buf, va_segment->size);
+      bitstream_size += va_segment->size;
+    }
+
+  return grd_bitstream_new (h264_frame->dedicated_bitstream_buffer,
+                            bitstream_size);
+}
+
 static gboolean
 get_bitstream (GrdEncodeSessionVaapi  *encode_session_vaapi,
-               VABufferID              output_buf,
+               H264Frame              *h264_frame,
                GrdBitstream          **bitstream,
                GError                **error)
 {
@@ -1284,7 +1350,7 @@ get_bitstream (GrdEncodeSessionVaapi  *encode_session_vaapi,
   VAStatus va_status;
 
   va_status = vaMapBuffer (encode_session_vaapi->va_display,
-                           output_buf,
+                           h264_frame->bitstream_buffer,
                            (void **) &va_segment);
   if (va_status != VA_STATUS_SUCCESS)
     {
@@ -1294,7 +1360,10 @@ get_bitstream (GrdEncodeSessionVaapi  *encode_session_vaapi,
     }
   g_assert (va_segment);
 
-  *bitstream = grd_bitstream_new (va_segment->buf, va_segment->size);
+  if (!va_segment->next)
+    *bitstream = grd_bitstream_new (va_segment->buf, va_segment->size);
+  else
+    *bitstream = combine_bitstream_segments (h264_frame, va_segment);
 
   return TRUE;
 }
@@ -1320,8 +1389,7 @@ finish_frame_encoding (GrdEncodeSessionVaapi  *encode_session_vaapi,
   if (encode_session_vaapi->debug_va_times)
     timestamps[2] = g_get_monotonic_time ();
 
-  if (!get_bitstream (encode_session_vaapi, h264_frame->bitstream_buffer,
-                      bitstream, error))
+  if (!get_bitstream (encode_session_vaapi, h264_frame, bitstream, error))
     return FALSE;
 
   grd_bitstream_set_avc_frame_info (*bitstream,
