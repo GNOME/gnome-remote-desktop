@@ -183,6 +183,7 @@ grd_vk_memory_new (GrdVkDevice                  *device,
   g_autoptr (GrdVkMemory) memory = NULL;
   VkMemoryAllocateInfo memory_allocate_info = {};
   VkImportMemoryFdInfoKHR import_memory_fd_info = {};
+  VkMemoryDedicatedAllocateInfo dedicated_allocate_info = {};
   uint32_t memory_type_bits;
   VkResult vk_result;
 
@@ -210,6 +211,15 @@ grd_vk_memory_new (GrdVkDevice                  *device,
     {
       g_clear_fd (&import_memory_fd_info.fd, NULL);
       return NULL;
+    }
+
+  if (memory_descriptor->perform_dedicated_allocation)
+    {
+      dedicated_allocate_info.sType =
+        VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
+      dedicated_allocate_info.image = memory_descriptor->target_image;
+
+      grd_vk_append_to_chain (&memory_allocate_info, &dedicated_allocate_info);
     }
 
   vk_result = vkAllocateMemory (vk_device, &memory_allocate_info, NULL,

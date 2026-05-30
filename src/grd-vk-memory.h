@@ -36,6 +36,10 @@ typedef struct
   /* Only for import operations */
   VkExternalMemoryHandleTypeFlagBits import_handle_type;
   int fd;
+
+  /* Only for dedicated allocations */
+  gboolean perform_dedicated_allocation;
+  VkImage target_image;
 } GrdVkMemoryDescriptor;
 
 GrdVkMemory *grd_vk_memory_new (GrdVkDevice                  *device,

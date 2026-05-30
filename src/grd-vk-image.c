@@ -168,6 +168,7 @@ bind_image_memory (GrdVkImage                  *image,
   VkDevice vk_device = grd_vk_device_get_device (image->device);
   VkImageMemoryRequirementsInfo2 memory_requirements_info_2 = {};
   VkMemoryRequirements2 memory_requirements_2 = {};
+  VkMemoryDedicatedRequirements memory_dedicated_requirements = {};
   GrdVkMemoryDescriptor memory_descriptor = {};
   VkBindImageMemoryInfo bind_image_memory_info = {};
   VkResult vk_result;
@@ -176,6 +177,11 @@ bind_image_memory (GrdVkImage                  *image,
     VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2;
   memory_requirements_info_2.image = image->vk_image;
   memory_requirements_2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+  memory_dedicated_requirements.sType =
+    VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS;
+
+  grd_vk_append_to_chain (&memory_requirements_2,
+                          &memory_dedicated_requirements);
 
   vkGetImageMemoryRequirements2 (vk_device, &memory_requirements_info_2,
                                  &memory_requirements_2);
@@ -184,6 +190,11 @@ bind_image_memory (GrdVkImage                  *image,
   memory_descriptor.memory_flags = image_descriptor->memory_flags;
   memory_descriptor.import_handle_type = image_descriptor->import_handle_type;
   memory_descriptor.fd = image_descriptor->fd;
+  memory_descriptor.target_image = image->vk_image;
+
+  memory_descriptor.perform_dedicated_allocation =
+    memory_dedicated_requirements.prefersDedicatedAllocation != VK_FALSE ||
+    memory_dedicated_requirements.requiresDedicatedAllocation != VK_FALSE;
 
   image->memory = grd_vk_memory_new (image->device, &memory_descriptor, error);
   if (!image->memory)
