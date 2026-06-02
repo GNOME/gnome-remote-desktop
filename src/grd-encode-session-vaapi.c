@@ -44,6 +44,7 @@
 /* See also E.2.1 VUI parameters semantics (Rec. ITU-T H.264 (08/2021)) */
 #define H264_Extended_SAR 255
 
+#define MAX_HEADER_SIZE 16384
 #define LOG2_MAX_FRAME_NUM 8
 
 /*
@@ -57,6 +58,15 @@
  */
 #define N_SRC_SURFACES_PER_VIEW 4
 #define N_SRC_SURFACES (N_SRC_SURFACES_PER_VIEW * 2)
+
+/*
+ * One bitstream buffer is needed, when submitting a frame,
+ * one is needed, when encoding a frame
+ *
+ * In total, this makes two needed encode streams per view
+ */
+#define N_BITSTREAM_BUFFERS_PER_VIEW 2
+#define N_BITSTREAM_BUFFERS (N_BITSTREAM_BUFFERS_PER_VIEW * 2)
 
 typedef struct
 {
@@ -126,6 +136,11 @@ struct _GrdEncodeSessionVaapi
 
   GrdNalWriter *nal_writer;
   GHashTable *surfaces;
+
+  GMutex dedicated_buffers_mutex;
+  uint8_t *dedicated_buffers[N_BITSTREAM_BUFFERS];
+  GHashTable *acquired_dedicated_buffers;
+  uint32_t dedicated_buffer_size;
 
   VAAPIPicture *reference_picture;
   uint16_t frame_num;
@@ -1563,6 +1578,25 @@ get_surface_constraints (GrdEncodeSessionVaapi  *encode_session_vaapi,
   return TRUE;
 }
 
+static uint32_t
+get_max_bitstream_size (GrdEncodeSessionVaapi *encode_session_vaapi)
+{
+  uint32_t surface_width = encode_session_vaapi->surface_width;
+  uint32_t surface_height = encode_session_vaapi->surface_height;
+  uint32_t width_in_mbs;
+  uint32_t height_in_mbs;
+
+  g_assert (surface_width % 16 == 0);
+  g_assert (surface_height % 16 == 0);
+  g_assert (surface_width >= 16);
+  g_assert (surface_height >= 16);
+
+  width_in_mbs = surface_width / 16;
+  height_in_mbs = surface_height / 16;
+
+  return width_in_mbs * height_in_mbs * 400 + MAX_HEADER_SIZE;
+}
+
 static gboolean
 create_avc420_encode_session (GrdEncodeSessionVaapi  *encode_session_vaapi,
                               VAEntrypoint            va_entrypoint,
@@ -1672,6 +1706,15 @@ create_avc420_encode_session (GrdEncodeSessionVaapi  *encode_session_vaapi,
                            surface->image_view, surface);
     }
 
+  for (i = 0; i < N_BITSTREAM_BUFFERS; ++i)
+    {
+      encode_session_vaapi->dedicated_buffer_size =
+        get_max_bitstream_size (encode_session_vaapi);
+
+      encode_session_vaapi->dedicated_buffers[i] =
+        g_malloc0 (encode_session_vaapi->dedicated_buffer_size);
+    }
+
   encode_session_vaapi->nal_writer = grd_nal_writer_new ();
 
   return TRUE;
@@ -1716,9 +1759,14 @@ grd_encode_session_vaapi_dispose (GObject *object)
   GrdEncodeSessionVaapi *encode_session_vaapi =
     GRD_ENCODE_SESSION_VAAPI (object);
   VADisplay va_display = encode_session_vaapi->va_display;
+  uint32_t i;
 
   g_assert (g_hash_table_size (encode_session_vaapi->bitstreams) == 0);
+  g_assert (g_hash_table_size (encode_session_vaapi->acquired_dedicated_buffers) == 0);
   g_assert (g_hash_table_size (encode_session_vaapi->pending_frames) == 0);
+
+  for (i = 0; i < N_BITSTREAM_BUFFERS; ++i)
+    g_clear_pointer (&encode_session_vaapi->dedicated_buffers[i], g_free);
 
   g_clear_pointer (&encode_session_vaapi->reference_picture, vaapi_picture_free);
   g_clear_pointer (&encode_session_vaapi->surfaces, g_hash_table_unref);
@@ -1740,9 +1788,12 @@ grd_encode_session_vaapi_finalize (GObject *object)
     GRD_ENCODE_SESSION_VAAPI (object);
 
   g_mutex_clear (&encode_session_vaapi->bitstreams_mutex);
+  g_mutex_clear (&encode_session_vaapi->dedicated_buffers_mutex);
   g_mutex_clear (&encode_session_vaapi->pending_frames_mutex);
 
   g_clear_pointer (&encode_session_vaapi->bitstreams, g_hash_table_unref);
+  g_clear_pointer (&encode_session_vaapi->acquired_dedicated_buffers,
+                   g_hash_table_unref);
   g_clear_pointer (&encode_session_vaapi->pending_frames, g_hash_table_unref);
 
   G_OBJECT_CLASS (grd_encode_session_vaapi_parent_class)->finalize (object);
@@ -1762,9 +1813,12 @@ grd_encode_session_vaapi_init (GrdEncodeSessionVaapi *encode_session_vaapi)
     g_hash_table_new_full (NULL, NULL,
                            NULL, (GDestroyNotify) nv12_vkva_surface_free);
   encode_session_vaapi->pending_frames = g_hash_table_new (NULL, NULL);
+  encode_session_vaapi->acquired_dedicated_buffers =
+    g_hash_table_new (NULL, NULL);
   encode_session_vaapi->bitstreams = g_hash_table_new (NULL, NULL);
 
   g_mutex_init (&encode_session_vaapi->pending_frames_mutex);
+  g_mutex_init (&encode_session_vaapi->dedicated_buffers_mutex);
   g_mutex_init (&encode_session_vaapi->bitstreams_mutex);
 }
 
