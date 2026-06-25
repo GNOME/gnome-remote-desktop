@@ -153,7 +153,7 @@ grd_throttler_deny_connection (GrdThrottler      *throttler,
                                const char        *peer_name,
                                GSocketConnection *connection)
 {
-  g_debug ("Denying connection from %s", peer_name);
+  g_debug ("[Throttler] Denying connection from %s", peer_name);
   g_io_stream_close (G_IO_STREAM (connection), NULL, NULL);
 }
 
@@ -177,7 +177,7 @@ grd_throttler_allow_connection (GrdThrottler      *throttler,
                                 GSocketConnection *connection,
                                 GrdPeer           *peer)
 {
-  g_debug ("Accepting connection from %s", peer->name);
+  g_debug ("[Throttler] Accepting connection from %s", peer->name);
 
   throttler->allow_callback (throttler, connection, throttler->user_data);
 
@@ -365,7 +365,7 @@ maybe_delay_connection (GrdThrottler      *throttler,
       return;
     }
 
-  g_debug ("Delaying connection from %s", peer->name);
+  g_debug ("[Throttler] Delaying connection from %s", peer->name);
 
   g_queue_push_tail (delayed_connections, g_object_ref (connection));
   maybe_queue_timeout (throttler);
@@ -415,7 +415,7 @@ grd_throttler_handle_connection (GrdThrottler      *throttler,
     g_inet_socket_address_get_address (G_INET_SOCKET_ADDRESS (remote_address));
   peer_name = g_inet_address_to_string (inet_address);
 
-  g_debug ("New incoming connection from %s", peer_name);
+  g_debug ("[Throttler] New incoming connection from %s", peer_name);
 
   peer = ensure_peer (throttler, peer_name);
 
