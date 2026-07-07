@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Pascal Nowack
+ * Copyright (C) 2026 Red Hat Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -15,39 +15,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
+ *
+ * Written by:
+ *     Joan Torres Lopez <joantolo@redhat.com>
  */
 
 #pragma once
 
-#include <freerdp/freerdp.h>
+#include <freerdp/server/rdpdr.h>
+#include <glib-object.h>
 
 #include "grd-types.h"
 
-typedef struct _RdpPeerContext
-{
-  rdpContext rdp_context;
+#define GRD_TYPE_RDP_SMARTCARD (grd_rdp_smartcard_get_type ())
+G_DECLARE_FINAL_TYPE (GrdRdpSmartcard, grd_rdp_smartcard,
+                      GRD, RDP_SMARTCARD, GObject)
 
-  GrdSessionRdp *session_rdp;
+GrdRdpSmartcard *grd_rdp_smartcard_new (GrdSessionRdp      *session_rdp,
+                                        RdpdrServerContext *rdpdr_context);
 
-  RFX_CONTEXT *rfx_context;
-  wStream *encode_stream;
-
-  GrdRdpNetworkAutodetection *network_autodetection;
-
-  /* Virtual Channel Manager */
-  HANDLE vcm;
-
-  GrdRdpDvcHandler *dvc_handler;
-
-  GMutex channel_mutex;
-
-  GrdClipboardRdp *clipboard_rdp;
-  GrdRdpDvcAudioInput *audio_input;
-  GrdRdpDvcAudioPlayback *audio_playback;
-  GrdRdpDvcCameraEnumerator *camera_enumerator;
-  GrdRdpDvcDisplayControl *display_control;
-  GrdRdpDvcGraphicsPipeline *graphics_pipeline;
-  GrdRdpDvcInput *input;
-  GrdRdpDvcTelemetry *telemetry;
-  GrdRdpDeviceRedirection *device_redirection;
-} RdpPeerContext;
+void grd_rdp_smartcard_invoke_shutdown (GrdRdpSmartcard *smartcard);

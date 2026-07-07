@@ -22,6 +22,7 @@
 #include "grd-session-rdp.h"
 
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/channels/rdpdr.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/peer.h>
@@ -35,6 +36,7 @@
 #include "grd-clipboard-rdp.h"
 #include "grd-context.h"
 #include "grd-rdp-cursor-renderer.h"
+#include "grd-rdp-device-redirection.h"
 #include "grd-rdp-dvc-audio-input.h"
 #include "grd-rdp-dvc-audio-playback.h"
 #include "grd-rdp-dvc-camera-enumerator.h"
@@ -1879,6 +1881,7 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_object (&rdp_peer_context->camera_enumerator);
   g_clear_object (&rdp_peer_context->audio_input);
   g_clear_object (&rdp_peer_context->clipboard_rdp);
+  g_clear_object (&rdp_peer_context->device_redirection);
   g_clear_object (&rdp_peer_context->audio_playback);
   g_clear_object (&rdp_peer_context->display_control);
   g_clear_object (&rdp_peer_context->input);
@@ -1980,6 +1983,11 @@ initialize_remaining_virtual_channels (GrdSessionRdp *session_rdp)
                                          dvc_handler,
                                          rdp_peer_context->vcm,
                                          get_max_monitor_count (session_rdp));
+    }
+  if (WTSVirtualChannelManagerIsChannelJoined (vcm, RDPDR_SVC_CHANNEL_NAME))
+    {
+      rdp_peer_context->device_redirection =
+        grd_rdp_device_redirection_new (session_rdp, vcm);
     }
   if (WTSVirtualChannelManagerIsChannelJoined (vcm, CLIPRDR_SVC_CHANNEL_NAME))
     {
