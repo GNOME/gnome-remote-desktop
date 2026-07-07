@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.gnome.RemoteDesktop.Pcscd
+Exec=@libexecdir@/grd-pcscd
+User=@GRD_USERNAME@
+SystemdService=gnome-remote-desktop-pcscd.service

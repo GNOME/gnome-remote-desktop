@@ -1,0 +1,23 @@
+<!DOCTYPE busconfig PUBLIC
+ "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+
+  <!-- Only @GRD_USERNAME@ can own the service -->
+  <policy user="@GRD_USERNAME@">
+    <allow own="org.gnome.RemoteDesktop.Pcscd"/>
+  </policy>
+
+  <!-- Allow anyone to introspect and call methods -->
+  <policy context="default">
+    <allow send_destination="org.gnome.RemoteDesktop.Pcscd"
+           send_interface="org.freedesktop.DBus.Introspectable"/>
+    <allow send_destination="org.gnome.RemoteDesktop.Pcscd"
+           send_interface="org.freedesktop.DBus.Properties"/>
+    <allow send_destination="org.gnome.RemoteDesktop.Pcscd"
+           send_interface="org.gnome.RemoteDesktop.Pcscd"/>
+    <allow send_destination="org.gnome.RemoteDesktop.Pcscd"
+           send_interface="org.gnome.RemoteDesktop.Pcscd.Session"/>
+  </policy>
+
+</busconfig>

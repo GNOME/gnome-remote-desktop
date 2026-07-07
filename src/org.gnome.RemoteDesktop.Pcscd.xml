@@ -14,6 +14,46 @@
   -->
   <interface name="org.gnome.RemoteDesktop.Pcscd">
 
+    <!--
+        Connect:
+
+        Register a new smartcard redirection session. The fd is one end of a
+        Unix socketpair. grd-pcscd uses this fd to create a private peer-to-peer
+        D-Bus connection with the calling gnome-remote-desktop-daemon, over
+        which the org.gnome.RemoteDesktop.Pcscd.Session interface is exposed
+        for forwarding PC/SC calls to the remote smartcard.
+    -->
+    <method name="Connect">
+      <annotation name="org.gtk.GDBus.C.UnixFD" value="true"/>
+      <arg name="fd" direction="in" type="h"/>
+    </method>
+
+  </interface>
+
+  <!--
+      org.gnome.RemoteDesktop.Pcscd.Session:
+      @short_description: PC/SC session interface for smartcard operations
+
+      This interface facilitates remote smartcard operations and is utilized in
+      two distinct contexts:
+
+        1. Exposed on the system bus by `grd-pcscd` (at the object path
+           `/org/gnome/RemoteDesktop/Pcscd/{session_id}`). This allows local
+           clients to communicate with the smartcard.
+
+        2. Exposed by the `gnome-remote-desktop-daemon` over a private D-Bus
+           connection with `grd-pcscd`.
+
+      The `grd-pcscd` daemon acts as a proxy. It handles method calls on the
+      system bus for a specific `session_id`, and forwards that data over the
+      private D-Bus connection to the `gnome-remote-desktop-daemon` running
+      within that session.
+
+      The methods provided by this interface mirror the standard `winscard.h` API.
+      No compatibility between versions is promised.
+  -->
+  <interface name="org.gnome.RemoteDesktop.Pcscd.Session">
+
   </interface>
 
 </node>

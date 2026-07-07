@@ -440,6 +440,21 @@ if have_rdp
              include_directories: [configinc],
              install: true,
              install_dir: libexecdir)
+
+  executable('grd-pcscd',
+             'grd-pcscd.c',
+             'grd-pcscd-session.c',
+             'grd-pcscd-session.h',
+             'grd-daemon-utils.c',
+             'grd-daemon-utils.h',
+             dbus_gen_pcscd,
+             dependencies: [glib_dep,
+                            gio_dep,
+                            gio_unix_dep,
+                            libsystemd_dep],
+             include_directories: [configinc],
+             install: true,
+             install_dir: libexecdir)
 endif
 
 custom_target('gsettings-enums',

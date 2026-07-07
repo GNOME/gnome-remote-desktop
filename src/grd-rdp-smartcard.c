@@ -24,11 +24,21 @@
 
 #include "grd-rdp-smartcard.h"
 
+#include <gio/gunixinputstream.h>
+#include <gio/gunixoutputstream.h>
+#include <glib/gstdio.h>
+
 #include "grd-context.h"
 #include "grd-dbus-pcscd.h"
 #include "grd-private.h"
 #include "grd-rdp-device-redirection.h"
 #include "grd-session-rdp.h"
+
+typedef struct
+{
+  GrdRdpSmartcard *smartcard;
+  int fd;
+} PcscdConnectData;
 
 struct _GrdRdpSmartcard
 {
@@ -42,10 +52,180 @@ struct _GrdRdpSmartcard
 
   /* System bus proxy to grd-pcscd */
   GCancellable *pcscd_proxy_cancellable;
+  unsigned long name_owner_changed_id;
   GrdDBusPcscd *pcscd_proxy;
+
+  /* Private peer-to-peer proxy for system-level clients (via grd-pcscd) */
+  GCancellable *private_proxy_cancellable;
+  GrdDBusPcscdSession *private_proxy;
 };
 
 G_DEFINE_TYPE (GrdRdpSmartcard, grd_rdp_smartcard, G_TYPE_OBJECT)
+
+static void
+on_private_connection_ready (GObject      *source_object,
+                             GAsyncResult *result,
+                             gpointer      user_data)
+{
+  g_autoptr (GDBusConnection) private_connection = NULL;
+  g_autoptr (GrdDBusPcscdSession) private_proxy = NULL;
+  g_autoptr (GError) error = NULL;
+  GrdRdpSmartcard *smartcard = user_data;
+
+  private_connection = g_dbus_connection_new_finish (result, &error);
+  if (!private_connection)
+    {
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        {
+          g_warning ("[RDP.SMARTCARD] Failed to create private connection: %s",
+                     error->message);
+        }
+      return;
+    }
+
+  private_proxy = grd_dbus_pcscd_session_skeleton_new ();
+  if (!g_dbus_interface_skeleton_export (
+         G_DBUS_INTERFACE_SKELETON (private_proxy),
+         private_connection,
+         "/",
+         &error))
+    {
+      g_warning ("[RDP.SMARTCARD] Failed to export session skeleton: %s",
+                 error->message);
+      return;
+    }
+
+  smartcard->private_proxy = g_steal_pointer (&private_proxy);
+
+  g_debug ("[RDP.SMARTCARD] Private D-Bus connection established");
+}
+
+static void
+create_private_proxy (GrdRdpSmartcard *smartcard,
+                      int              fd)
+{
+  g_autoptr (GOutputStream) output_stream = NULL;
+  g_autoptr (GInputStream) input_stream = NULL;
+  g_autoptr (GIOStream) io_stream = NULL;
+
+  /* fd ownership: fd -> output_stream -> io_stream -> private_connection -> proxy */
+  output_stream = g_unix_output_stream_new (fd, TRUE);
+  input_stream = g_unix_input_stream_new (fd, FALSE);
+  io_stream = g_simple_io_stream_new (input_stream, output_stream);
+
+  g_dbus_connection_new (io_stream,
+                         NULL,
+                         G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT,
+                         NULL,
+                         smartcard->private_proxy_cancellable,
+                         on_private_connection_ready,
+                         smartcard);
+}
+
+static void
+on_connect_to_grd_pcscd_finished (GObject      *source_object,
+                                  GAsyncResult *result,
+                                  gpointer      user_data)
+{
+  GrdDBusPcscd *pcscd_proxy = GRD_DBUS_PCSCD (source_object);
+  PcscdConnectData *data = user_data;
+  GrdRdpSmartcard *smartcard = data->smartcard;
+  g_autofd int fd = g_steal_fd (&data->fd);
+  g_autoptr (GError) error = NULL;
+
+  g_free (data);
+
+  if (!grd_dbus_pcscd_call_connect_finish (pcscd_proxy,
+                                           NULL,
+                                           result,
+                                           &error))
+    {
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        {
+          g_warning ("[RDP.SMARTCARD] Failed to connect to pcscd: %s",
+                     error->message);
+        }
+      return;
+    }
+
+  g_debug ("[RDP.SMARTCARD] Connected to pcscd, setting up private D-Bus");
+
+  create_private_proxy (smartcard, g_steal_fd (&fd));
+}
+
+static void
+connect_to_grd_pcscd (GrdRdpSmartcard *smartcard)
+{
+  g_autoptr (GUnixFDList) fd_list = NULL;
+  g_autoptr (GError) error = NULL;
+  PcscdConnectData *data;
+  g_autofd int local_fd = -1;
+  int fds[2];
+  int fd_idx;
+
+  g_assert (!smartcard->private_proxy_cancellable);
+
+  smartcard->private_proxy_cancellable = g_cancellable_new ();
+
+  if (socketpair (AF_UNIX, SOCK_STREAM, 0, fds) < 0)
+    {
+      g_warning ("[RDP.SMARTCARD] Failed to create socketpair: %s",
+                 g_strerror (errno));
+      return;
+    }
+
+  local_fd = fds[0];
+
+  fd_list = g_unix_fd_list_new ();
+  fd_idx = g_unix_fd_list_append (fd_list, fds[1], &error);
+  close (fds[1]);
+
+  if (fd_idx < 0)
+    {
+      g_warning ("[RDP.SMARTCARD] Failed to append fd to list: %s",
+                 error->message);
+      return;
+    }
+
+  data = g_new0 (PcscdConnectData, 1);
+  data->smartcard = smartcard;
+  data->fd = g_steal_fd (&local_fd);
+
+  grd_dbus_pcscd_call_connect (smartcard->pcscd_proxy,
+                               g_variant_new_handle (fd_idx),
+                               fd_list,
+                               smartcard->private_proxy_cancellable,
+                               on_connect_to_grd_pcscd_finished,
+                               data);
+}
+
+static void
+disconnect_from_grd_pcscd (GrdRdpSmartcard *smartcard)
+{
+  g_cancellable_cancel (smartcard->private_proxy_cancellable);
+  g_clear_object (&smartcard->private_proxy_cancellable);
+
+  if (smartcard->private_proxy)
+    {
+      g_dbus_interface_skeleton_unexport (
+        G_DBUS_INTERFACE_SKELETON (smartcard->private_proxy));
+      g_clear_object (&smartcard->private_proxy);
+    }
+}
+
+static void
+on_grd_pcscd_name_owner_changed (GrdRdpSmartcard *smartcard)
+{
+  GrdDBusPcscd *pcscd_proxy = smartcard->pcscd_proxy;
+  g_autofree char *name_owner = NULL;
+
+  name_owner = g_dbus_proxy_get_name_owner (G_DBUS_PROXY (pcscd_proxy));
+
+  disconnect_from_grd_pcscd (smartcard);
+
+  if (name_owner)
+    connect_to_grd_pcscd (smartcard);
+}
 
 static void
 on_pcscd_proxy_acquired (GObject      *source_object,
@@ -69,6 +249,15 @@ on_pcscd_proxy_acquired (GObject      *source_object,
     }
 
   smartcard->pcscd_proxy = pcscd_proxy;
+
+  smartcard->name_owner_changed_id =
+    g_signal_connect_swapped (pcscd_proxy, "notify::g-name-owner",
+                              G_CALLBACK (on_grd_pcscd_name_owner_changed),
+                              smartcard);
+
+  name_owner = g_dbus_proxy_get_name_owner (G_DBUS_PROXY (pcscd_proxy));
+  if (name_owner)
+    connect_to_grd_pcscd (smartcard);
 }
 
 static void
@@ -92,6 +281,11 @@ teardown_private_proxy (GrdRdpSmartcard *smartcard)
 {
   g_cancellable_cancel (smartcard->pcscd_proxy_cancellable);
   g_clear_object (&smartcard->pcscd_proxy_cancellable);
+
+  g_clear_signal_handler (&smartcard->name_owner_changed_id, 
+                          smartcard->pcscd_proxy);
+
+  disconnect_from_grd_pcscd (smartcard);
 
   g_clear_object (&smartcard->pcscd_proxy);
 }

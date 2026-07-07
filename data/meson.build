@@ -71,6 +71,21 @@ if get_option('systemd')
                    },
                    install_dir: userunitdir)
 
+    configure_file(input: 'gnome-remote-desktop-pcscd.service.in',
+                   output: 'gnome-remote-desktop-pcscd.service',
+                   configuration: {
+                     'libexecdir': libexecdir,
+                     'GRD_USERNAME': grd_username,
+                   },
+                   install_dir: systemunitdir)
+
+    configure_file(input: 'org.gnome.RemoteDesktop.Pcscd.conf.in',
+                   output: 'org.gnome.RemoteDesktop.Pcscd.conf',
+                   configuration: {
+                     'GRD_USERNAME': grd_username,
+                   },
+                   install_dir: dbus_sys_dir)
+
     configure_file(input: 'gnome-remote-desktop-configuration.service.in',
                    output: 'gnome-remote-desktop-configuration.service',
                    configuration: {
@@ -102,6 +117,14 @@ if get_option('systemd')
                      'GRD_USERNAME': grd_username,
                    },
                    install_dir: join_paths(datadir, 'polkit-1', 'actions'))
+
+    configure_file(input: 'org.gnome.RemoteDesktop.Pcscd.service.in',
+                   output: 'org.gnome.RemoteDesktop.Pcscd.service',
+                   configuration: {
+                     'libexecdir': libexecdir,
+                     'GRD_USERNAME': grd_username,
+                   },
+                   install_dir: dbus_system_services_dir)
 
     configure_file(input: 'org.gnome.RemoteDesktop.Configuration.service.in',
                    output: 'org.gnome.RemoteDesktop.Configuration.service',

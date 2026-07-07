@@ -1,0 +1,42 @@
+[Unit]
+Description=GNOME Remote Desktop PC/SC Daemon
+
+[Service]
+Type=dbus
+BusName=org.gnome.RemoteDesktop.Pcscd
+User=@GRD_USERNAME@
+ExecStart=@libexecdir@/grd-pcscd
+RuntimeDirectory=grd-pcscd
+
+# Filesystem
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+
+# Kernel
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+
+# Privileges
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+# Network
+RestrictAddressFamilies=AF_UNIX
+IPAddressDeny=any
+
+# Misc
+RestrictRealtime=yes
+RestrictNamespaces=yes
+MemoryDenyWriteExecute=yes
+RemoveIPC=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
