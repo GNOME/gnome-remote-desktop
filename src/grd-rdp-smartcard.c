@@ -25,6 +25,8 @@
 #include "grd-rdp-smartcard.h"
 
 #include "grd-context.h"
+#include "grd-dbus-pcscd.h"
+#include "grd-private.h"
 #include "grd-rdp-device-redirection.h"
 #include "grd-session-rdp.h"
 
@@ -37,9 +39,74 @@ struct _GrdRdpSmartcard
 
   RdpdrServerContext *rdpdr_context;
   GHashTable *smartcard_device_ids;
+
+  /* System bus proxy to grd-pcscd */
+  GCancellable *pcscd_proxy_cancellable;
+  GrdDBusPcscd *pcscd_proxy;
 };
 
 G_DEFINE_TYPE (GrdRdpSmartcard, grd_rdp_smartcard, G_TYPE_OBJECT)
+
+static void
+on_pcscd_proxy_acquired (GObject      *source_object,
+                         GAsyncResult *result,
+                         gpointer      user_data)
+{
+  GrdRdpSmartcard *smartcard = user_data;
+  g_autoptr (GError) error = NULL;
+  GrdDBusPcscd *pcscd_proxy;
+  g_autofree char *name_owner = NULL;
+
+  pcscd_proxy = grd_dbus_pcscd_proxy_new_for_bus_finish (result, &error);
+  if (!pcscd_proxy)
+    {
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        {
+          g_warning ("[RDP.SMARTCARD] Failed to create pcscd proxy: %s",
+                     error->message);
+        }
+      return;
+    }
+
+  smartcard->pcscd_proxy = pcscd_proxy;
+}
+
+static void
+setup_private_proxy (GrdRdpSmartcard *smartcard)
+{
+  g_assert (!smartcard->pcscd_proxy_cancellable);
+
+  smartcard->pcscd_proxy_cancellable = g_cancellable_new ();
+
+  grd_dbus_pcscd_proxy_new_for_bus (G_BUS_TYPE_SYSTEM,
+                                    G_DBUS_PROXY_FLAGS_NONE,
+                                    REMOTE_DESKTOP_PCSCD_BUS_NAME,
+                                    REMOTE_DESKTOP_PCSCD_OBJECT_PATH,
+                                    smartcard->pcscd_proxy_cancellable,
+                                    on_pcscd_proxy_acquired,
+                                    smartcard);
+}
+
+static void
+teardown_private_proxy (GrdRdpSmartcard *smartcard)
+{
+  g_cancellable_cancel (smartcard->pcscd_proxy_cancellable);
+  g_clear_object (&smartcard->pcscd_proxy_cancellable);
+
+  g_clear_object (&smartcard->pcscd_proxy);
+}
+
+static void
+setup_pcscd_proxies (GrdRdpSmartcard *smartcard)
+{
+  setup_private_proxy (smartcard);
+}
+
+static void
+teardown_pcscd_proxies (GrdRdpSmartcard *smartcard)
+{
+  teardown_private_proxy (smartcard);
+}
 
 static UINT
 on_smartcard_create (RdpdrServerContext *rdpdr_context,
@@ -69,6 +136,9 @@ on_smartcard_create (RdpdrServerContext *rdpdr_context,
     }
 
   g_debug ("[RDP.SMARTCARD] Smartcard device created: id=%u", device->DeviceId);
+
+  if (g_hash_table_size (smartcard->smartcard_device_ids) == 0)
+    setup_pcscd_proxies (smartcard);
 
   g_hash_table_add (smartcard->smartcard_device_ids,
                     GUINT_TO_POINTER (device->DeviceId));
@@ -100,6 +170,9 @@ on_smartcard_delete (RdpdrServerContext *rdpdr_context,
     return CHANNEL_RC_OK;
 
   g_debug ("[RDP.SMARTCARD] Smartcard device deleted: id=%u", device_id);
+
+  if (g_hash_table_size (smartcard->smartcard_device_ids) == 0)
+    teardown_pcscd_proxies (smartcard);
 
   return CHANNEL_RC_OK;
 }
@@ -137,6 +210,8 @@ static void
 grd_rdp_smartcard_dispose (GObject *object)
 {
   GrdRdpSmartcard *smartcard = GRD_RDP_SMARTCARD (object);
+
+  teardown_pcscd_proxies (smartcard);
 
   g_clear_pointer (&smartcard->smartcard_device_ids, g_hash_table_unref);
 

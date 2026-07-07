@@ -39,6 +39,8 @@
 #define MUTTER_REMOTE_DESKTOP_OBJECT_PATH "/org/gnome/Mutter/RemoteDesktop"
 #define MUTTER_SCREEN_CAST_BUS_NAME "org.gnome.Mutter.ScreenCast"
 #define MUTTER_SCREEN_CAST_OBJECT_PATH "/org/gnome/Mutter/ScreenCast"
+#define REMOTE_DESKTOP_PCSCD_BUS_NAME "org.gnome.RemoteDesktop.Pcscd"
+#define REMOTE_DESKTOP_PCSCD_OBJECT_PATH "/org/gnome/RemoteDesktop/Pcscd"
 #define GDM_BUS_NAME "org.gnome.DisplayManager"
 #define GDM_REMOTE_DISPLAY_FACTORY_OBJECT_PATH "/org/gnome/DisplayManager/RemoteDisplayFactory"
 #define GDM_OBJECT_MANAGER_OBJECT_PATH "/org/gnome/DisplayManager/Displays"

@@ -1,0 +1,19 @@
+<!DOCTYPE node PUBLIC
+  "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+  "http://www.freedesktop.org/dtds/introspection-1.0.dtd">
+<node>
+
+  <!--
+      org.gnome.RemoteDesktop.Pcscd:
+      @short_description: PC/SC daemon interface for smartcard redirection
+
+      This API is exposed by grd-pcscd on the system bus.
+      gnome-remote-desktop-daemons use it to establish a private D-Bus
+      connection with grd-pcscd for smartcard operations.
+      No compatibility between versions is promised.
+  -->
+  <interface name="org.gnome.RemoteDesktop.Pcscd">
+
+  </interface>
+
+</node>
