@@ -460,6 +460,7 @@ if have_rdp
                  'grd-pcsc-lib.c',
                  'grd-pcsc-lib-backend.c',
                  'grd-pcsc-lib-backend-grd-pcscd-proxy.c',
+                 'grd-pcsc-lib-backend-libpcsclite.c',
                  dbus_gen_pcscd,
                  dependencies: [glib_dep,
                                 gio_dep,

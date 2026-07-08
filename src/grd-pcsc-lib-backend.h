@@ -135,3 +135,7 @@ void grd_pcsc_lib_backend_set_default (GrdPcscLibBackend *backend);
 gboolean grd_pcsc_lib_backend_init_grd_pcscd_proxy (GrdPcscLibBackend *backend);
 
 void grd_pcsc_lib_backend_cleanup_grd_pcscd_proxy (void);
+
+gboolean grd_pcsc_lib_backend_init_libpcsclite (GrdPcscLibBackend *backend);
+
+void grd_pcsc_lib_backend_cleanup_libpcsclite (void);

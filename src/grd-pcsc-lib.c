@@ -33,6 +33,7 @@ PCSC_DESTRUCTOR static void
 on_unload (void)
 {
   grd_pcsc_lib_backend_cleanup_grd_pcscd_proxy ();
+  grd_pcsc_lib_backend_cleanup_libpcsclite ();
 }
 
 static void
@@ -41,6 +42,9 @@ init_grd_pcsc_backend (void)
   grd_pcsc_lib_backend_set_default (&backend);
 
   if (grd_pcsc_lib_backend_init_grd_pcscd_proxy (&backend))
+    return;
+
+  if (grd_pcsc_lib_backend_init_libpcsclite (&backend))
     return;
 
   g_warning ("[PCSC] No backend available");
