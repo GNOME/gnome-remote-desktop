@@ -28,8 +28,9 @@
 G_DECLARE_FINAL_TYPE (GrdPcscdSession, grd_pcscd_session,
                       GRD, PCSCD_SESSION, GObject)
 
-GrdPcscdSession *grd_pcscd_session_new (const char      *session_id,
-                                        int              fd,
-                                        GDBusConnection *system_connection);
+GrdPcscdSession *grd_pcscd_session_new (const char       *session_id,
+                                        int               fd,
+                                        GDBusConnection  *system_connection,
+                                        GError          **error);
 
 const char *grd_pcscd_session_get_session_id (GrdPcscdSession *session);

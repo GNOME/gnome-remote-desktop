@@ -148,7 +148,18 @@ on_handle_connect (GrdDBusPcscd          *skeleton,
 
   session = grd_pcscd_session_new (session_id,
                                    g_steal_fd (&fd),
-                                   pcscd->connection);
+                                   pcscd->connection,
+                                   &error);
+  if (!session)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_FAILED,
+                                             "Failed to create session %s: %s",
+                                             session_id,
+                                             error->message);
+      return G_DBUS_METHOD_INVOCATION_HANDLED;
+    }
 
   g_signal_connect (session, "closed",
                     G_CALLBACK (on_session_closed),

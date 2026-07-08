@@ -455,6 +455,23 @@ if have_rdp
              include_directories: [configinc],
              install: true,
              install_dir: libexecdir)
+
+  shared_library('grdpcsc',
+                 'grd-pcsc-lib.c',
+                 'grd-pcsc-lib-backend.c',
+                 'grd-pcsc-lib-backend-grd-pcscd-proxy.c',
+                 dbus_gen_pcscd,
+                 dependencies: [glib_dep,
+                                gio_dep,
+                                dl_dep,
+                                libsystemd_dep],
+                 include_directories: [configinc],
+                 # GLib's GType system cannot survive dlclose/dlopen cycles
+                 link_args: ['-Wl,-z,nodelete'],
+                 version: '0.0.0',
+                 soversion: 0,
+                 gnu_symbol_visibility: 'hidden',
+                 install: true)
 endif
 
 custom_target('gsettings-enums',

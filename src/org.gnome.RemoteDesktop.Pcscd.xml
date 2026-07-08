@@ -54,6 +54,210 @@
   -->
   <interface name="org.gnome.RemoteDesktop.Pcscd.Session">
 
+    <!--
+        EstablishContext:
+
+        Establish a PC/SC resource manager context.
+        call: (scope)
+        ret: (return_value, context)
+    -->
+    <method name="EstablishContext">
+      <arg name="call" direction="in" type="(t)"/>
+      <arg name="ret" direction="out" type="(xx)"/>
+    </method>
+
+    <!--
+        ReleaseContext:
+
+        Release a previously established PC/SC context.
+        call: (context)
+        ret: (return_value)
+    -->
+    <method name="ReleaseContext">
+      <arg name="call" direction="in" type="(x)"/>
+      <arg name="ret" direction="out" type="(x)"/>
+    </method>
+
+    <!--
+        IsValidContext:
+
+        Validate a PC/SC context.
+        call: (context)
+        ret: (return_value)
+    -->
+    <method name="IsValidContext">
+      <arg name="call" direction="in" type="(x)"/>
+      <arg name="ret" direction="out" type="(x)"/>
+    </method>
+
+    <!--
+        ConnectCard:
+
+        Connect to a smartcard in a reader.
+        call: (context, reader, share_mode, preferred_protocols)
+        ret: (return_value, out_context, out_card, active_protocol)
+    -->
+    <method name="ConnectCard">
+      <arg name="call" direction="in" type="(xstt)"/>
+      <arg name="ret" direction="out" type="(xxxt)"/>
+    </method>
+
+    <!--
+        Reconnect:
+
+        Reconnect to a smartcard.
+        call: (card, share_mode, preferred_protocols, initialization)
+        ret: (return_value, active_protocol)
+    -->
+    <method name="Reconnect">
+      <arg name="call" direction="in" type="(xttt)"/>
+      <arg name="ret" direction="out" type="(xt)"/>
+    </method>
+
+    <!--
+        DisconnectCard:
+
+        Disconnect from a smartcard.
+        call: (card, disposition)
+        ret: (return_value)
+    -->
+    <method name="DisconnectCard">
+      <arg name="call" direction="in" type="(xt)"/>
+      <arg name="ret" direction="out" type="(x)"/>
+    </method>
+
+    <!--
+        BeginTransaction:
+
+        Begin a transaction on a smartcard.
+        call: (card)
+        ret: (return_value)
+    -->
+    <method name="BeginTransaction">
+      <arg name="call" direction="in" type="(x)"/>
+      <arg name="ret" direction="out" type="(x)"/>
+    </method>
+
+    <!--
+        EndTransaction:
+
+        End a transaction on a smartcard.
+        call: (card, disposition)
+        ret: (return_value)
+    -->
+    <method name="EndTransaction">
+      <arg name="call" direction="in" type="(xt)"/>
+      <arg name="ret" direction="out" type="(x)"/>
+    </method>
+
+    <!--
+        StatusCard:
+
+        Get the status of a smartcard.
+        call: (card, reader_len, atr_len)
+        ret: (return_value, reader_name, state, protocol, atr)
+    -->
+    <method name="StatusCard">
+      <arg name="call" direction="in" type="(xtt)"/>
+      <arg name="ret" direction="out" type="(xsttay)"/>
+    </method>
+
+    <!--
+        GetStatusChange:
+
+        Wait for status changes on readers.
+        call: (context, timeout, reader_states[(name, current_state)])
+        ret: (return_value, reader_states_out[(event_state, atr_length, atr)])
+    -->
+    <method name="GetStatusChange">
+      <arg name="call" direction="in" type="(xta(st))"/>
+      <arg name="ret" direction="out" type="(xa(ttay))"/>
+    </method>
+
+    <!--
+        ControlCard:
+
+        Send a control command to a smartcard.
+        call: (card, control_code, send_buffer, send_buffer_size, recv_buffer_size)
+        ret: (return_value, recv_buffer)
+    -->
+    <method name="ControlCard">
+      <arg name="call" direction="in" type="(xtaytt)"/>
+      <arg name="ret" direction="out" type="(xay)"/>
+    </method>
+
+    <!--
+        Transmit:
+
+        Transmit an APDU to a smartcard.
+        call: (card, send_pci_protocol, send_buffer, recv_pci_protocol, recv_buffer_size)
+        ret: (return_value, recv_pci_protocol, recv_buffer)
+    -->
+    <method name="Transmit">
+      <arg name="call" direction="in" type="(xtaytt)"/>
+      <arg name="ret" direction="out" type="(xtay)"/>
+    </method>
+
+    <!--
+        ListReaderGroups:
+
+        List available smartcard reader groups.
+        call: (context)
+        ret: (return_value, groups)
+    -->
+    <method name="ListReaderGroups">
+      <arg name="call" direction="in" type="(x)"/>
+      <arg name="ret" direction="out" type="(xas)"/>
+    </method>
+
+    <!--
+        ListReaders:
+
+        List available smartcard readers.
+        call: (context)
+        ret: (return_value, readers)
+    -->
+    <method name="ListReaders">
+      <arg name="call" direction="in" type="(x)"/>
+      <arg name="ret" direction="out" type="(xas)"/>
+    </method>
+
+    <!--
+        Cancel:
+
+        Cancel a pending smartcard operation.
+        call: (context)
+        ret: (return_value)
+    -->
+    <method name="Cancel">
+      <arg name="call" direction="in" type="(x)"/>
+      <arg name="ret" direction="out" type="(x)"/>
+    </method>
+
+    <!--
+        GetAttrib:
+
+        Get an attribute from a smartcard.
+        call: (card, attr_id, attr_len)
+        ret: (return_value, attr)
+    -->
+    <method name="GetAttrib">
+      <arg name="call" direction="in" type="(xtt)"/>
+      <arg name="ret" direction="out" type="(xay)"/>
+    </method>
+
+    <!--
+        SetAttrib:
+
+        Set an attribute on a smartcard.
+        call: (card, attr_id, attr)
+        ret: (return_value)
+    -->
+    <method name="SetAttrib">
+      <arg name="call" direction="in" type="(xtay)"/>
+      <arg name="ret" direction="out" type="(x)"/>
+    </method>
+
   </interface>
 
 </node>
