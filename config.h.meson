@@ -35,3 +35,4 @@
 
 /* Workaround for https://github.com/FreeRDP/FreeRDP/issues/11412 */
 #mesondefine WITHOUT_FREERDP_3x_DEPRECATED
+#mesondefine WITHOUT_WINPR_3x_DEPRECATED

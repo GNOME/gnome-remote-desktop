@@ -83,6 +83,7 @@ variables:
           -DWITH_SERVER_CHANNELS=ON \
           -DWITH_SHADOW=OFF \
           -DWITHOUT_FREERDP_3x_DEPRECATED=ON \
+          -DWITHOUT_WINPR_3x_DEPRECATED=ON \
           https://github.com/FreeRDP/FreeRDP \
           3.28.0 . &&
 
