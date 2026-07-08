@@ -118,6 +118,13 @@ if get_option('systemd')
                    },
                    install_dir: join_paths(datadir, 'polkit-1', 'actions'))
 
+    configure_file(input: 'org.gnome.remotedesktop.use-grd-pcscd.policy.in',
+                   output: 'org.gnome.remotedesktop.use-grd-pcscd.policy',
+                   configuration: {
+                     'GRD_USERNAME': grd_username,
+                   },
+                   install_dir: join_paths(datadir, 'polkit-1', 'actions'))
+
     configure_file(input: 'org.gnome.RemoteDesktop.Pcscd.service.in',
                    output: 'org.gnome.RemoteDesktop.Pcscd.service',
                    configuration: {

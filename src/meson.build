@@ -451,7 +451,8 @@ if have_rdp
              dependencies: [glib_dep,
                             gio_dep,
                             gio_unix_dep,
-                            libsystemd_dep],
+                            libsystemd_dep,
+                            polkit_dep],
              include_directories: [configinc],
              install: true,
              install_dir: libexecdir)

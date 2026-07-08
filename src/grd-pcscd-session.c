@@ -27,16 +27,21 @@
 #include <gio/gunixinputstream.h>
 #include <gio/gunixoutputstream.h>
 #include <glib/gstdio.h>
+#include <polkit/polkit.h>
 
 #include "grd-dbus-pcscd.h"
 
 #define PCSCD_OBJECT_PATH_PREFIX "/org/gnome/RemoteDesktop/Pcscd"
+#define GRD_USE_GRD_PCSCD_POLKIT_ACTION "org.gnome.remotedesktop.use-grd-pcscd"
 
 struct _GrdPcscdSession
 {
   GObject parent;
 
   char *session_id;
+
+  PolkitAuthority *authority;
+  GHashTable *authorized_senders;
 
   GCancellable *cancellable;
 
@@ -54,6 +59,105 @@ enum
 static guint signals[N_SIGNALS];
 
 G_DEFINE_TYPE (GrdPcscdSession, grd_pcscd_session, G_TYPE_OBJECT)
+
+static void
+on_polkit_authority_changed (PolkitAuthority *authority,
+                             gpointer         user_data)
+{
+  GrdPcscdSession *session = user_data;
+
+  g_debug ("[PCSCD.SESSION %s] Polkit rules changed, clearing authorization cache",
+           session->session_id);
+  g_hash_table_remove_all (session->authorized_senders);
+}
+
+static gboolean
+ensure_polkit_authority (GrdPcscdSession *session)
+{
+  g_autoptr (GError) error = NULL;
+
+  if (session->authority)
+    return TRUE;
+
+  session->authority = polkit_authority_get_sync (session->cancellable, &error);
+  if (!session->authority)
+    {
+      g_warning ("[PCSCD.SESSION %s] Failed to get polkit authority: %s",
+                 session->session_id, error->message);
+      return FALSE;
+    }
+
+  g_signal_connect_object (session->authority, "changed",
+                           G_CALLBACK (on_polkit_authority_changed),
+                           session, G_CONNECT_DEFAULT);
+
+  return TRUE;
+}
+
+static gboolean
+check_polkit_action (GrdPcscdSession *session,
+                     const char      *sender,
+                     const char      *action)
+{
+  g_autoptr (PolkitAuthorizationResult) result = NULL;
+  g_autoptr (PolkitSubject) subject = NULL;
+  g_autoptr (GError) error = NULL;
+
+  subject = polkit_system_bus_name_new (sender);
+  result = polkit_authority_check_authorization_sync (session->authority,
+                                                      subject,
+                                                      action,
+                                                      NULL,
+                                                      POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE,
+                                                      session->cancellable,
+                                                      &error);
+  if (!result)
+    {
+      g_warning ("[PCSCD.SESSION %s] Failed to check authorization for %s: %s",
+                 session->session_id, action, error->message);
+      return FALSE;
+    }
+
+  return polkit_authorization_result_get_is_authorized (result);
+}
+
+static gboolean
+check_polkit (GrdPcscdSession *session,
+              const char      *sender)
+{
+  if (!ensure_polkit_authority (session))
+    return FALSE;
+
+  return check_polkit_action (session, sender,
+                              GRD_USE_GRD_PCSCD_POLKIT_ACTION);
+}
+
+static gboolean
+on_authorize_method (GDBusInterfaceSkeleton *interface,
+                     GDBusMethodInvocation  *invocation,
+                     gpointer                user_data)
+{
+  GrdPcscdSession *session = user_data;
+  const char *sender;
+
+  sender = g_dbus_method_invocation_get_sender (invocation);
+
+  if (g_hash_table_contains (session->authorized_senders, sender))
+    return TRUE;
+
+  if (!check_polkit (session, sender))
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_ACCESS_DENIED,
+                                             "Not authorized");
+      return FALSE;
+    }
+
+  g_hash_table_add (session->authorized_senders, g_strdup (sender));
+
+  return TRUE;
+}
 
 static void
 on_establish_context_finished (GObject      *source_object,
@@ -965,6 +1069,9 @@ create_system_proxy (GrdPcscdSession  *session,
                                          error))
     return FALSE;
 
+  g_signal_connect_object (system_proxy, "g-authorize-method",
+                           G_CALLBACK (on_authorize_method),
+                           session, G_CONNECT_DEFAULT);
   g_signal_connect_object (system_proxy, "handle-establish-context",
                            G_CALLBACK (on_handle_establish_context),
                            session, G_CONNECT_DEFAULT);
@@ -1066,6 +1173,8 @@ grd_pcscd_session_new (const char       *session_id,
 
   session = g_object_new (GRD_TYPE_PCSCD_SESSION, NULL);
   session->session_id = g_strdup (session_id);
+  session->authorized_senders = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                                        g_free, NULL);
   session->cancellable = g_cancellable_new ();
 
   if (!create_system_proxy (session, system_connection, error))
@@ -1086,6 +1195,9 @@ grd_pcscd_session_dispose (GObject *object)
 
   g_cancellable_cancel (session->cancellable);
   g_clear_object (&session->cancellable);
+
+  g_clear_object (&session->authority);
+  g_clear_pointer (&session->authorized_senders, g_hash_table_destroy);
 
   if (session->private_proxy)
     {
