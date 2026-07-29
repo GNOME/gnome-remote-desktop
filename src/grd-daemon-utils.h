@@ -37,6 +37,11 @@ char *grd_get_session_id_from_pid (pid_t pid);
 
 char *grd_get_session_id_from_uid (uid_t uid);
 
+char *grd_get_session_id_of_sender (GDBusConnection  *connection,
+                                    const char       *name,
+                                    GCancellable     *cancellable,
+                                    GError          **error);
+
 gboolean grd_is_remote_login (void);
 
 void grd_session_manager_call_logout_sync (void);

@@ -232,50 +232,6 @@ get_routing_token_from_id (const char *id)
 }
 
 static char *
-get_session_id_of_sender (GDBusConnection  *connection,
-                          const char       *name,
-                          GCancellable     *cancellable,
-                          GError          **error)
-{
-  char *session_id = NULL;
-  gboolean success;
-  pid_t pid = 0;
-  uid_t uid = 0;
-
-  success = grd_get_pid_of_sender_sync (connection,
-                                        name,
-                                        &pid,
-                                        cancellable,
-                                        error);
-  if (!success)
-    return NULL;
-
-  session_id = grd_get_session_id_from_pid (pid);
-  if (session_id)
-    return session_id;
-
-  success = grd_get_uid_of_sender_sync (connection,
-                                        name,
-                                        &uid,
-                                        cancellable,
-                                        error);
-  if (!success)
-    return NULL;
-
-  session_id = grd_get_session_id_from_uid (uid);
-  if (!session_id)
-    {
-      g_set_error (error,
-                   G_IO_ERROR,
-                   G_IO_ERROR_NOT_FOUND,
-                   "Could not find a session for user %d",
-                   (int) uid);
-    }
-
-  return session_id;
-}
-
-static char *
 get_handover_object_path_for_call (GrdDaemonSystem        *daemon_system,
                                    GDBusMethodInvocation  *invocation,
                                    GError                **error)
@@ -291,10 +247,10 @@ get_handover_object_path_for_call (GrdDaemonSystem        *daemon_system,
   sender = g_dbus_method_invocation_get_sender (invocation);
   cancellable = grd_daemon_get_cancellable (GRD_DAEMON (daemon_system));
 
-  session_id = get_session_id_of_sender (connection,
-                                         sender,
-                                         cancellable,
-                                         error);
+  session_id = grd_get_session_id_of_sender (connection,
+                                             sender,
+                                             cancellable,
+                                             error);
   if (!session_id)
     return NULL;
 

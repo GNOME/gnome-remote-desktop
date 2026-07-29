@@ -169,6 +169,50 @@ grd_get_session_id_from_uid (uid_t uid)
   return g_strdup (session_id);
 }
 
+char *
+grd_get_session_id_of_sender (GDBusConnection  *connection,
+                              const char       *name,
+                              GCancellable     *cancellable,
+                              GError          **error)
+{
+  char *session_id = NULL;
+  gboolean success;
+  pid_t pid = 0;
+  uid_t uid = 0;
+
+  success = grd_get_pid_of_sender_sync (connection,
+                                        name,
+                                        &pid,
+                                        cancellable,
+                                        error);
+  if (!success)
+    return NULL;
+
+  session_id = grd_get_session_id_from_pid (pid);
+  if (session_id)
+    return session_id;
+
+  success = grd_get_uid_of_sender_sync (connection,
+                                        name,
+                                        &uid,
+                                        cancellable,
+                                        error);
+  if (!success)
+    return NULL;
+
+  session_id = grd_get_session_id_from_uid (uid);
+  if (!session_id)
+    {
+      g_set_error (error,
+                   G_IO_ERROR,
+                   G_IO_ERROR_NOT_FOUND,
+                   "Could not find a session for user %d",
+                   (int) uid);
+    }
+
+  return session_id;
+}
+
 gboolean
 grd_is_remote_login (void)
 {
