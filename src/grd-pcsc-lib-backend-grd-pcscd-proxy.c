@@ -823,6 +823,40 @@ grd_pcscd_proxy_set_attrib (SCARDHANDLE hCard,
 }
 
 static char *
+get_session_id_from_uid (uid_t uid)
+{
+  const char * const graphical_types[] = { "wayland", "x11", NULL };
+  const char * const active_states[] = { "active", "online", NULL };
+  g_auto (GStrv) sessions = NULL;
+  int n_sessions;
+  int i;
+
+  n_sessions = sd_uid_get_sessions (uid, 0, &sessions);
+
+  for (i = n_sessions - 1; i >= 0; i--)
+    {
+      g_autofree char *type = NULL;
+      g_autofree char *state = NULL;
+
+      if (sd_session_get_type (sessions[i], &type) < 0)
+        continue;
+
+      if (!g_strv_contains (graphical_types, type))
+        continue;
+
+      if (sd_session_get_state (sessions[i], &state) < 0)
+        continue;
+
+      if (!g_strv_contains (active_states, state))
+        continue;
+
+      return g_strdup (sessions[i]);
+    }
+
+  return NULL;
+}
+
+static char *
 get_session_id (void)
 {
   const char *session_id;
@@ -832,10 +866,14 @@ get_session_id (void)
   if (session_id && g_strcmp0 (session_id, "") != 0)
     return g_strdup (session_id);
 
-  if (sd_pid_get_session (0, &logind_session_id) < 0)
-    return NULL;
+  session_id = g_getenv ("XDG_SESSION_ID");
+  if (session_id && session_id[0] != '\0')
+    return g_strdup (session_id);
 
-  return logind_session_id;
+  if (sd_pid_get_session (0, &logind_session_id) >= 0)
+    return logind_session_id;
+
+  return get_session_id_from_uid (getuid ());
 }
 
 static gboolean
@@ -858,39 +896,9 @@ dbus_interface_exists (GDBusProxy *proxy)
   return result != NULL;
 }
 
-gboolean
-grd_pcsc_lib_backend_init_grd_pcscd_proxy (GrdPcscLibBackend *backend)
+static void
+set_backend_functions (GrdPcscLibBackend *backend)
 {
-  g_autofree char *session_id = NULL;
-  g_autofree char *object_path = NULL;
-  g_autofree char *name_owner = NULL;
-  g_autoptr (GError) error = NULL;
-
-  session_id = get_session_id ();
-  if (!session_id)
-    return FALSE;
-
-  object_path = g_strdup_printf ("/org/gnome/RemoteDesktop/Pcscd/%s", session_id);
-  session_proxy = grd_dbus_pcscd_session_proxy_new_for_bus_sync (
-                    G_BUS_TYPE_SYSTEM,
-                    G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
-                    PCSCD_BUS_NAME,
-                    object_path,
-                    NULL,
-                    &error);
-  if (!session_proxy)
-    return FALSE;
-
-   name_owner = g_dbus_proxy_get_name_owner (G_DBUS_PROXY (session_proxy));
-   if (!name_owner)
-     return FALSE;
-
-  if (!dbus_interface_exists (G_DBUS_PROXY (session_proxy)))
-    {
-      g_clear_object (&session_proxy);
-      return FALSE;
-    }
-
   backend->SCardEstablishContext = grd_pcscd_proxy_establish_context;
   backend->SCardReleaseContext = grd_pcscd_proxy_release_context;
   backend->SCardIsValidContext = grd_pcscd_proxy_is_valid_context;
@@ -909,8 +917,60 @@ grd_pcsc_lib_backend_init_grd_pcscd_proxy (GrdPcscLibBackend *backend)
   backend->SCardCancel = grd_pcscd_proxy_cancel;
   backend->SCardGetAttrib = grd_pcscd_proxy_get_attrib;
   backend->SCardSetAttrib = grd_pcscd_proxy_set_attrib;
+}
+
+static gboolean
+try_bus_type (GBusType    bus_type,
+              const char *object_path)
+{
+  g_autofree char *name_owner = NULL;
+
+  session_proxy = grd_dbus_pcscd_session_proxy_new_for_bus_sync (
+                    bus_type,
+                    G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START,
+                    PCSCD_BUS_NAME,
+                    object_path,
+                    NULL,
+                    NULL);
+  if (!session_proxy)
+    return FALSE;
+
+  name_owner = g_dbus_proxy_get_name_owner (G_DBUS_PROXY (session_proxy));
+  if (!name_owner)
+    {
+      g_clear_object (&session_proxy);
+      return FALSE;
+    }
+
+  if (!dbus_interface_exists (G_DBUS_PROXY (session_proxy)))
+    {
+      g_clear_object (&session_proxy);
+      return FALSE;
+    }
 
   return TRUE;
+}
+
+gboolean
+grd_pcsc_lib_backend_init_grd_pcscd_proxy (GrdPcscLibBackend *backend)
+{
+  g_autofree char *session_id = NULL;
+  g_autofree char *object_path = NULL;
+
+  session_id = get_session_id ();
+  if (!session_id)
+    return FALSE;
+
+  object_path = g_strdup_printf ("/org/gnome/RemoteDesktop/Pcscd/%s", session_id);
+
+  if (try_bus_type (G_BUS_TYPE_SESSION, object_path) ||
+      try_bus_type (G_BUS_TYPE_SYSTEM, object_path))
+    {
+      set_backend_functions (backend);
+      return TRUE;
+    }
+
+  return FALSE;
 }
 
 void

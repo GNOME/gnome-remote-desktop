@@ -30,6 +30,7 @@
 #include <glib/gstdio.h>
 
 #include "grd-context.h"
+#include "grd-daemon-utils.h"
 #include "grd-dbus-pcscd.h"
 #include "grd-private.h"
 #include "grd-rdp-device-redirection.h"
@@ -91,6 +92,10 @@ struct _GrdRdpSmartcard
   /* Private peer-to-peer proxy for system-level clients (via grd-pcscd) */
   GCancellable *private_proxy_cancellable;
   GrdDBusPcscdSession *private_proxy;
+
+  /* Session proxy for session-level clients (direct access) */
+  GrdDBusPcscdSession *session_proxy;
+  unsigned int session_bus_name_id;
 };
 
 G_DEFINE_TYPE (GrdRdpSmartcard, grd_rdp_smartcard, G_TYPE_OBJECT)
@@ -1807,16 +1812,115 @@ teardown_private_proxy (GrdRdpSmartcard *smartcard)
   g_clear_object (&smartcard->pcscd_proxy);
 }
 
+static char *
+get_session_id (void)
+{
+  const char *session_id;
+  char *logind_session_id = NULL;
+
+  session_id = g_getenv ("XDG_SESSION_ID");
+  if (session_id && session_id[0] != '\0')
+    return g_strdup (session_id);
+
+  logind_session_id = grd_get_session_id_from_pid (getpid ());
+  if (logind_session_id)
+    return logind_session_id;
+
+  logind_session_id = grd_get_session_id_from_uid (getuid ());
+  if (!logind_session_id)
+    g_warning ("[RDP.SMARTCARD] Failed to get session ID");
+
+  return logind_session_id;
+}
+
+static void
+on_session_bus_acquired (GDBusConnection *connection,
+                         const char      *name,
+                         gpointer         user_data)
+{
+  g_autoptr (GrdDBusPcscdSession) session_proxy = NULL;
+  g_autoptr (GError) error = NULL;
+  g_autofree char *session_id = NULL;
+  g_autofree char *object_path = NULL;
+  GrdRdpSmartcard *smartcard = user_data;
+
+  session_id = get_session_id ();
+  if (!session_id)
+    return;
+
+  object_path =
+    g_strdup_printf (REMOTE_DESKTOP_PCSCD_OBJECT_PATH "/%s", session_id);
+
+  session_proxy = grd_dbus_pcscd_session_skeleton_new ();
+  if (!g_dbus_interface_skeleton_export (
+         G_DBUS_INTERFACE_SKELETON (session_proxy),
+         connection,
+         object_path,
+         &error))
+    {
+      g_warning ("[RDP.SMARTCARD] Failed to export session proxy: %s",
+                 error->message);
+      return;
+    }
+
+  connect_pcscd_session_handlers (session_proxy, smartcard);
+
+  smartcard->session_proxy = g_steal_pointer (&session_proxy);
+
+  g_debug ("[RDP.SMARTCARD] Session bus proxy established at %s", object_path);
+}
+
+static void
+on_session_bus_name_acquired (GDBusConnection *connection,
+                              const char      *name,
+                              gpointer         user_data)
+{
+  g_debug ("[RDP.SMARTCARD] Acquired session bus name %s", name);
+}
+
+static void
+on_session_bus_name_lost (GDBusConnection *connection,
+                          const char      *name,
+                          gpointer         user_data)
+{
+  g_debug ("[RDP.SMARTCARD] Lost session bus name %s", name);
+}
+
+static void
+setup_session_proxy (GrdRdpSmartcard *smartcard)
+{
+  g_assert (!smartcard->session_bus_name_id);
+
+  smartcard->session_bus_name_id = g_bus_own_name (G_BUS_TYPE_SESSION,
+                                                   REMOTE_DESKTOP_PCSCD_BUS_NAME,
+                                                   G_BUS_NAME_OWNER_FLAGS_NONE,
+                                                   on_session_bus_acquired,
+                                                   on_session_bus_name_acquired,
+                                                   on_session_bus_name_lost,
+                                                   smartcard,
+                                                   NULL);
+}
+
+static void
+teardown_session_proxy (GrdRdpSmartcard *smartcard)
+{
+  g_clear_handle_id (&smartcard->session_bus_name_id, g_bus_unown_name);
+
+  unexport_and_fail_pending_invocations (smartcard, &smartcard->session_proxy);
+}
+
 static void
 setup_pcscd_proxies (GrdRdpSmartcard *smartcard)
 {
   setup_private_proxy (smartcard);
+  setup_session_proxy (smartcard);
 }
 
 static void
 teardown_pcscd_proxies (GrdRdpSmartcard *smartcard)
 {
   teardown_private_proxy (smartcard);
+  teardown_session_proxy (smartcard);
 }
 
 static UINT
