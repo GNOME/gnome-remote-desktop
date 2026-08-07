@@ -292,14 +292,6 @@ rdp_set_auth_methods (GrdSettings  *settings,
       return FALSE;
     }
 
-  if ((auth_methods & GRD_RDP_AUTH_METHOD_KERBEROS) &&
-      GRD_IS_SETTINGS_SYSTEM (settings))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                   "Kerberos not supported in the system daemon");
-      return FALSE;
-    }
-
   g_object_set (G_OBJECT (settings), "rdp-auth-methods", auth_methods, NULL);
   return TRUE;
 }
@@ -349,13 +341,6 @@ rdp_set_kerberos_keytab (GrdSettings  *settings,
                          GError      **error)
 {
   char *path = argv[0];
-
-  if (GRD_IS_SETTINGS_SYSTEM (settings))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                   "Kerberos not supported in the system daemon");
-      return FALSE;
-    }
 
   if (!g_path_is_absolute (path))
     {
