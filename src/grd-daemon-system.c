@@ -593,14 +593,12 @@ remote_client_new (GrdDaemonSystem *daemon_system,
 {
   GrdRemoteClient *remote_client;
 
+  g_assert (session);
+
   remote_client = g_new0 (GrdRemoteClient, 1);
   remote_client->id = get_next_available_id (daemon_system);
   remote_client->daemon_system = daemon_system;
-  remote_client->needs_handover = session != NULL;
-
-  if (!session)
-    return remote_client;
-
+  remote_client->needs_handover = TRUE;
   remote_client->hostname = try_get_hostname (GRD_SESSION_RDP (session));
   remote_client->is_client_mstsc = grd_session_rdp_is_client_mstsc (GRD_SESSION_RDP (session));
   remote_client->session = session;
