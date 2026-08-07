@@ -24,6 +24,9 @@
 
 #include <gio/gio.h>
 #include <glib/gstdio.h>
+#include <stdint.h>
+
+#include "grd-enum-types.h"
 
 #define GRD_SETTINGS_SYSTEM_GROUP_RDP "RDP"
 
@@ -468,6 +471,94 @@ write_boolean (GrdSettingsSystem *settings_system,
                           value);
 }
 
+static void
+read_flags (GrdSettingsSystem *settings_system,
+            GKeyFile          *key_file,
+            const char        *group,
+            const char        *key,
+            const char        *settings_name)
+{
+  g_autoptr (GError) error = NULL;
+  g_auto (GStrv) values = NULL;
+  char **value;
+  uint32_t flags = 0;
+  GType flags_type;
+  GFlagsClass *flags_class;
+
+  values = g_key_file_get_string_list (key_file, group, key, NULL, &error);
+  if (error && error->code != G_KEY_FILE_ERROR_KEY_NOT_FOUND)
+    return;
+
+  if (!values)
+    return;
+
+  if (strcmp (key, "auth-methods") == 0)
+    flags_type = GRD_TYPE_RDP_AUTH_METHODS;
+  else
+    g_assert_not_reached ();
+
+  flags_class = g_type_class_get (flags_type);
+
+  for (value = &values[0]; *value; value++)
+    {
+      GFlagsValue *flags_value;
+
+      flags_value = g_flags_get_value_by_nick (flags_class, *value);
+      if (!flags_value)
+        {
+          g_warning ("Invalid flags value '%s'", *value);
+          continue;
+        }
+      flags |= flags_value->value;
+    }
+
+  g_object_set (G_OBJECT (settings_system), settings_name, flags, NULL);
+}
+
+static void
+write_flags (GrdSettingsSystem *settings_system,
+             GKeyFile          *key_file,
+             const char        *group,
+             const char        *key,
+             const char        *settings_name)
+{
+  uint32_t value = 0;
+  GType flags_type;
+  GFlagsClass *flags_class;
+  g_autoptr (GStrvBuilder) strv_builder = NULL;
+  g_auto (GStrv) flag_strings = NULL;
+  int i;
+
+  if (strcmp (key, "auth-methods") == 0)
+    flags_type = GRD_TYPE_RDP_AUTH_METHODS;
+  else
+    g_assert_not_reached ();
+
+  g_object_get (G_OBJECT (settings_system), settings_name, &value, NULL);
+
+  flags_class = g_type_class_get (flags_type);
+
+  strv_builder = g_strv_builder_new ();
+  for (i = 0; i < flags_class->n_values; i++)
+    {
+      GFlagsValue *flags_value = &flags_class->values[i];
+
+      if (flags_value->value & value)
+        {
+          value &= ~flags_value->value;
+          g_strv_builder_add (strv_builder, flags_value->value_nick);
+        }
+    }
+  g_warn_if_fail (!value);
+
+  flag_strings = g_strv_builder_end (strv_builder);
+
+  g_key_file_set_string_list (key_file,
+                              group,
+                              key,
+                              (const char * const *) flag_strings,
+                              g_strv_length (flag_strings));
+}
 
 static const FileSetting rdp_file_settings[] =
 {
@@ -475,6 +566,8 @@ static const FileSetting rdp_file_settings[] =
   { "tls-cert", "rdp-server-cert-path", read_filename, write_string },
   { "tls-key", "rdp-server-key-path", read_filename, write_string },
   { "port", "rdp-port", read_int, write_int },
+  { "auth-methods", "rdp-auth-methods", read_flags, write_flags },
+  { "kerberos-keytab", "rdp-kerberos-keytab", read_filename, write_string },
 };
 
 static void
