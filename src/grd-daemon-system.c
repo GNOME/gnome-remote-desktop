@@ -53,6 +53,7 @@ typedef struct
 
   char *id;
   char *hostname;
+  char *preauthenticated_user;
 
   GrdSession *session;
   GSocketConnection *socket_connection;
@@ -540,6 +541,7 @@ grd_remote_client_free (GrdRemoteClient *remote_client)
 
   g_clear_pointer (&remote_client->id, g_free);
   g_clear_pointer (&remote_client->hostname, g_free);
+  g_clear_pointer (&remote_client->preauthenticated_user, g_free);
   g_clear_object (&remote_client->socket_connection);
   unregister_handover_iface (remote_client, remote_client->handover_src);
   unregister_handover_iface (remote_client, remote_client->handover_dst);
@@ -602,6 +604,7 @@ remote_client_new (GrdDaemonSystem *daemon_system,
                    GrdSession      *session)
 {
   GrdRemoteClient *remote_client;
+  const char *preauthenticated_user;
 
   g_assert (session);
 
@@ -612,6 +615,12 @@ remote_client_new (GrdDaemonSystem *daemon_system,
   remote_client->hostname = try_get_hostname (GRD_SESSION_RDP (session));
   remote_client->is_client_mstsc = grd_session_rdp_is_client_mstsc (GRD_SESSION_RDP (session));
   remote_client->session = session;
+
+  preauthenticated_user =
+    grd_session_rdp_get_preauthenticated_username (GRD_SESSION_RDP (session));
+  if (preauthenticated_user)
+    remote_client->preauthenticated_user = g_strdup (preauthenticated_user);
+
   g_object_weak_ref (G_OBJECT (session),
                      (GWeakNotify) session_disposed,
                      remote_client);
@@ -708,6 +717,14 @@ serialize_remote_display_properties (GrdRemoteClient *remote_client)
     {
       g_variant_builder_add (&builder, "{sv}", "hostname",
                              g_variant_new_string (remote_client->hostname));
+    }
+
+  if (remote_client->preauthenticated_user)
+    {
+      GVariant *variant;
+
+      variant = g_variant_new_string (remote_client->preauthenticated_user);
+      g_variant_builder_add (&builder, "{sv}", "preauthenticated-user", variant);
     }
 
   return g_variant_builder_end (&builder);

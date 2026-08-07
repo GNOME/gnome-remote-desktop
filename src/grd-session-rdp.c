@@ -104,6 +104,13 @@ struct _GrdSessionRdp
   GThread *socket_thread;
   HANDLE stop_event;
 
+  struct
+  {
+    uid_t uid;
+    char *username;
+    gboolean has_authenticated_user;
+  } kerberos_login;
+
   GrdRdpRenderer *renderer;
   GrdRdpCursorRenderer *cursor_renderer;
 
@@ -428,6 +435,12 @@ grd_session_rdp_send_server_redirection (GrdSessionRdp *session_rdp,
     }
 
   return TRUE;
+}
+
+const char *
+grd_session_rdp_get_preauthenticated_username (GrdSessionRdp *session_rdp)
+{
+  return session_rdp->kerberos_login.username;
 }
 
 static void
@@ -1101,6 +1114,42 @@ is_auth_identity_current_user (const SecPkgContext_AuthIdentity *auth_identity)
     }
 }
 
+static gboolean
+populate_pre_authenticated_user (GrdSessionRdp                     *session_rdp,
+                                 const SecPkgContext_AuthIdentity  *auth_identity,
+                                 GError                           **error)
+{
+  g_autofree struct passwd *pwd = NULL;
+  g_autofree char *principal_string = NULL;
+
+  pwd = get_pwd_entry_from_auth_identity (auth_identity,
+                                          &principal_string,
+                                          error);
+  if (!pwd)
+    {
+      g_prefix_error (error, "Failed to get passwd entry: ");
+      return FALSE;
+    }
+
+  if (pwd->pw_uid == 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                   "Denying attempt to login as root");
+      return FALSE;
+    }
+
+  g_debug ("[RDP] Kerberos principal %s matches local user %s (%u).",
+           principal_string,
+           pwd->pw_name,
+           pwd->pw_uid);
+
+  session_rdp->kerberos_login.uid = pwd->pw_uid;
+  session_rdp->kerberos_login.username = g_strdup (pwd->pw_name);
+  session_rdp->kerberos_login.has_authenticated_user = TRUE;
+
+  return TRUE;
+}
+
 static BOOL
 rdp_peer_logon (freerdp_peer                  *peer,
                 const SEC_WINNT_AUTH_IDENTITY *identity,
@@ -1114,7 +1163,7 @@ rdp_peer_logon (freerdp_peer                  *peer,
   SECURITY_STATUS status;
   SecPkgContext_AuthIdentity auth_identity = {};
 
-  if (is_using_remote_login (session_rdp))
+  if (grd_context_get_runtime_mode (context) == GRD_RUNTIME_MODE_HANDOVER)
     return TRUE;
 
   auth_method = get_effective_auth_method (rdp_context);
@@ -1143,26 +1192,42 @@ rdp_peer_logon (freerdp_peer                  *peer,
       return FALSE;
     }
 
-  switch (grd_context_get_runtime_mode (context))
+  if (is_using_remote_login (session_rdp))
     {
-    case GRD_RUNTIME_MODE_HEADLESS:
-    case GRD_RUNTIME_MODE_SCREEN_SHARE:
-      if (is_auth_identity_current_user (&auth_identity))
+      g_autoptr (GError) error = NULL;
+
+      if (!populate_pre_authenticated_user (session_rdp, &auth_identity,
+                                            &error))
         {
-          return TRUE;
-        }
-      else
-        {
-          g_debug ("[RDP] Kerberos principal doesn't match current user, "
-                   "disconnecting");
+          g_warning ("[RDP] Failed to populate pre-authenticated user: %s",
+                     error->message);
           return FALSE;
         }
-    case GRD_RUNTIME_MODE_SYSTEM:
-    case GRD_RUNTIME_MODE_HANDOVER:
+
+      return TRUE;
+    }
+  else
+    {
+      switch (grd_context_get_runtime_mode (context))
+        {
+        case GRD_RUNTIME_MODE_HEADLESS:
+        case GRD_RUNTIME_MODE_SCREEN_SHARE:
+          if (is_auth_identity_current_user (&auth_identity))
+            {
+              return TRUE;
+            }
+          else
+            {
+              g_debug ("[RDP] Kerberos principal doesn't match current user, "
+                       "disconnecting");
+              return FALSE;
+            }
+        case GRD_RUNTIME_MODE_SYSTEM:
+        case GRD_RUNTIME_MODE_HANDOVER:
+          g_assert_not_reached ();
+        }
       g_assert_not_reached ();
     }
-
-  g_assert_not_reached ();
 }
 
 static uint32_t
@@ -1544,8 +1609,7 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
                                    session_rdp->sam_file->filename);
     }
 
-  if (auth_methods & GRD_RDP_AUTH_METHOD_KERBEROS &&
-      !is_using_remote_login (session_rdp))
+  if (auth_methods & GRD_RDP_AUTH_METHOD_KERBEROS)
     {
       g_autofree char *kerberos_keytab = NULL;
 
@@ -2128,6 +2192,8 @@ grd_session_rdp_dispose (GObject *object)
 
   g_assert (!session_rdp->notify_post_connected_source_id);
   g_assert (!session_rdp->cursor_renderer);
+
+  g_clear_pointer (&session_rdp->kerberos_login.username, g_free);
 
   g_clear_object (&session_rdp->layout_manager);
   clear_rdp_peer (session_rdp);
