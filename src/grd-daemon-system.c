@@ -106,6 +106,9 @@ on_gdm_remote_display_session_id_changed (GrdDBusGdmRemoteDisplay *remote_displa
                                           GrdRemoteClient         *remote_client);
 
 static void
+session_disposed (GrdRemoteClient *remote_client);
+
+static void
 disconnect_from_remote_display (GrdRemoteClient *remote_client)
 {
   if (!remote_client->remote_display)
@@ -526,6 +529,13 @@ unregister_handover_iface (GrdRemoteClient   *remote_client,
 static void
 grd_remote_client_free (GrdRemoteClient *remote_client)
 {
+  if (remote_client->session)
+    {
+      g_object_weak_unref (G_OBJECT (remote_client->session),
+                           (GWeakNotify) session_disposed,
+                           remote_client);
+    }
+
   disconnect_from_remote_display (remote_client);
 
   g_clear_pointer (&remote_client->id, g_free);
