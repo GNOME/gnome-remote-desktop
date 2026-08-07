@@ -990,8 +990,10 @@ get_effective_auth_method (rdpContext *rdp_context)
   return auth_method;
 }
 
-static gboolean
-is_auth_identity_current_user (const SecPkgContext_AuthIdentity *auth_identity)
+static struct passwd *
+get_pwd_entry_from_auth_identity (const SecPkgContext_AuthIdentity  *auth_identity,
+                                  char                             **out_principal_string,
+                                  GError                           **error)
 {
   krb5_error_code kret;
   g_autofree char *principal_string = NULL;
@@ -999,14 +1001,14 @@ is_auth_identity_current_user (const SecPkgContext_AuthIdentity *auth_identity)
   krb5_principal principal = NULL;
   char local_name[256 + 1];
   g_autofree struct passwd *pwd = NULL;
-  g_autoptr (GError) error = NULL;
-  uid_t current_uid;
+  g_autoptr (GError) local_error = NULL;
 
   kret = krb5_init_context (&krb5_context);
   if (kret)
     {
-      g_critical ("Failed to initialize krb5 context");
-      return FALSE;
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to initialize krb5 context");
+      goto err;
     }
 
   principal_string = g_strdup_printf ("%s@%s",
@@ -1016,7 +1018,8 @@ is_auth_identity_current_user (const SecPkgContext_AuthIdentity *auth_identity)
   kret = krb5_parse_name (krb5_context, principal_string, &principal);
   if (kret)
     {
-      g_critical ("Failed to parse principal string %s", principal_string);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to parse principal string %s", principal_string);
       goto err;
     }
 
@@ -1024,27 +1027,63 @@ is_auth_identity_current_user (const SecPkgContext_AuthIdentity *auth_identity)
                                   sizeof (local_name), local_name);
   if (kret)
     {
-      g_critical ("Failed to map principal '%s' name to local name",
-                  principal_string);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to map principal '%s' name to local name",
+                   principal_string);
       goto err;
     }
 
-  pwd = g_unix_get_passwd_entry (local_name, &error);
-  if (error)
+  pwd = g_unix_get_passwd_entry (local_name, &local_error);
+  if (local_error)
     {
-      g_critical ("Failed to get passwd field for %s: %s",
-                  local_name, error->message);
+      g_propagate_error (error, local_error);
+      g_prefix_error (error, "Failed to get passwd field for %s:", local_name);
       goto err;
     }
 
   if (!pwd)
     {
-      g_warning ("Tried to authenticate with invalid user %s", local_name);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                   "Tried to authenticate with invalid user %s", local_name);
       goto err;
     }
 
   krb5_free_principal (krb5_context, principal);
   krb5_free_context (krb5_context);
+
+  if (out_principal_string)
+    *out_principal_string = g_steal_pointer (&principal_string);
+
+  return g_steal_pointer (&pwd);
+
+err:
+  if (principal)
+    krb5_free_principal (krb5_context, principal);
+  if (krb5_context)
+    krb5_free_context (krb5_context);
+  return NULL;
+}
+
+static gboolean
+is_auth_identity_current_user (const SecPkgContext_AuthIdentity *auth_identity)
+{
+  g_autoptr (GError) error = NULL;
+  g_autofree struct passwd *pwd = NULL;
+  g_autofree char *principal_string = NULL;
+  uid_t current_uid;
+
+  pwd = get_pwd_entry_from_auth_identity (auth_identity,
+                                          &principal_string,
+                                          &error);
+  if (!pwd)
+    {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_FAILED))
+        g_critical ("Failed to get passwd entry: %s", error->message);
+      else
+        g_warning ("Failed to get passwd entry: %s", error->message);
+
+      return FALSE;
+    }
 
   current_uid = getuid ();
   if (pwd->pw_uid == current_uid)
@@ -1052,7 +1091,7 @@ is_auth_identity_current_user (const SecPkgContext_AuthIdentity *auth_identity)
       g_debug ("[RDP] Kerberos principal %s match current user %s (%u), "
                "accepting.",
                principal_string,
-               local_name,
+               pwd->pw_name,
                current_uid);
       return TRUE;
     }
@@ -1060,13 +1099,6 @@ is_auth_identity_current_user (const SecPkgContext_AuthIdentity *auth_identity)
     {
       return FALSE;
     }
-
-err:
-  if (principal)
-    krb5_free_principal (krb5_context, principal);
-  if (krb5_context)
-    krb5_free_context (krb5_context);
-  return FALSE;
 }
 
 static BOOL
