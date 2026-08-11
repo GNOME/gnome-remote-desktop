@@ -739,6 +739,7 @@ grd_egl_thread_new (GError **error)
   egl_thread->modifiers =
     g_hash_table_new_full (NULL, NULL,
                            NULL, (GDestroyNotify) g_array_unref);
+  egl_thread->drm_render_node_fd = -1;
 
   g_mutex_init (&egl_thread->mutex);
   g_cond_init (&egl_thread->cond);
