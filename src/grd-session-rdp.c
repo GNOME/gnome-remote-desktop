@@ -1459,14 +1459,15 @@ rdp_peer_context_new (freerdp_peer   *peer,
 
 static gboolean
 init_rdp_session (GrdSessionRdp  *session_rdp,
-                  const char     *username,
-                  const char     *password,
                   GError        **error)
 {
   GrdContext *context = grd_session_get_context (GRD_SESSION (session_rdp));
   GrdSettings *settings = grd_context_get_settings (context);
   GSocket *socket = g_socket_connection_get_socket (session_rdp->connection);
+  g_autoptr (GError) local_error = NULL;
   GrdRdpAuthMethods auth_methods = 0;
+  g_autofree char *username = NULL;
+  g_autofree char *password = NULL;
   g_autofree char *server_cert = NULL;
   g_autofree char *server_key = NULL;
   gboolean use_client_configs;
@@ -1477,6 +1478,16 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
   rdpSettings *rdp_settings;
   rdpCertificate *rdp_certificate = NULL;
   rdpPrivateKey *rdp_private_key = NULL;
+
+  grd_settings_get_rdp_credentials (settings,
+                                    &username, &password,
+                                    &local_error);
+  if (local_error)
+    {
+      g_propagate_prefixed_error (error, g_steal_pointer (&local_error),
+                                  "Couldn't retrieve RDP credentials: ");
+      return FALSE;
+    }
 
   use_client_configs = session_rdp->screen_share_mode ==
                        GRD_RDP_SCREEN_SHARE_MODE_EXTEND;
@@ -1515,6 +1526,13 @@ init_rdp_session (GrdSessionRdp  *session_rdp,
 
   if (auth_methods & GRD_RDP_AUTH_METHOD_CREDENTIALS)
     {
+      if (!username || !password)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Credentials are not set");
+          return FALSE;
+        }
+
       session_rdp->sam_file = grd_rdp_sam_create_sam_file (username, password);
       if (!session_rdp->sam_file)
         {
@@ -1799,23 +1817,10 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   g_autoptr (GrdSessionRdp) session_rdp = NULL;
   GrdContext *context;
   GrdSettings *settings;
-  char *username;
-  char *password;
   g_autoptr (GError) error = NULL;
 
   context = grd_rdp_server_get_context (rdp_server);
   settings = grd_context_get_settings (context);
-  if (!grd_settings_get_rdp_credentials (settings,
-                                         &username, &password,
-                                         &error))
-    {
-      if (error)
-        g_warning ("[RDP] Couldn't retrieve RDP credentials: %s", error->message);
-      else
-        g_message ("[RDP] Credentials are not set, denying client");
-
-      return NULL;
-    }
 
   session_rdp = g_object_new (GRD_TYPE_SESSION_RDP,
                               "context", context,
@@ -1836,20 +1841,15 @@ grd_session_rdp_new (GrdRdpServer      *rdp_server,
   session_rdp->renderer = grd_rdp_renderer_new (session_rdp);
   session_rdp->layout_manager = grd_rdp_layout_manager_new (session_rdp);
 
-  if (!init_rdp_session (session_rdp, username, password, &error))
+  if (!init_rdp_session (session_rdp, &error))
     {
       g_warning ("[RDP] Couldn't initialize session: %s", error->message);
-      g_free (password);
-      g_free (username);
       return NULL;
     }
 
   session_rdp->socket_thread = g_thread_new ("RDP socket thread",
                                              socket_thread_func,
                                              session_rdp);
-
-  g_free (password);
-  g_free (username);
 
   return g_steal_pointer (&session_rdp);
 }
