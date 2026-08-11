@@ -67,12 +67,12 @@ grd_rdp_sam_create_sam_file (const char *username,
 {
   const char *grd_path = "/gnome-remote-desktop";
   const char *template = "/rdp-sam-XXXXXX";
-  int duped_fd;
   GrdRdpSAMFile *rdp_sam_file;
   g_autofree char *file_dir = NULL;
   g_autofree char *filename = NULL;
   g_autofree char *sam_string = NULL;
   g_autofd int fd = -1;
+  g_autofd int duped_fd = -1;
   FILE *sam_file;
 
   file_dir = g_strdup_printf ("%s%s", g_get_user_runtime_dir (), grd_path);
@@ -94,6 +94,13 @@ grd_rdp_sam_create_sam_file (const char *username,
       return NULL;
     }
 
+  duped_fd = dup (fd);
+  if (duped_fd < 0)
+    {
+      g_warning ("[RDP] Failed to dup fd: %s", g_strerror (errno));
+      return NULL;
+    }
+
   sam_file = fdopen (fd, "w+");
   if (!sam_file)
     {
@@ -101,19 +108,11 @@ grd_rdp_sam_create_sam_file (const char *username,
       return NULL;
     }
 
-  duped_fd = dup (fd);
-  if (duped_fd < 0)
-    {
-      fclose (sam_file);
-      g_warning ("[RDP] Failed to dup fd: %s", g_strerror (errno));
-      return NULL;
-    }
+  g_steal_fd (&fd);
 
   rdp_sam_file = g_new0 (GrdRdpSAMFile, 1);
-  rdp_sam_file->fd = duped_fd;
+  rdp_sam_file->fd = g_steal_fd (&duped_fd);
   rdp_sam_file->filename = g_steal_pointer (&filename);
-
-  g_steal_fd (&fd);
 
   sam_string = create_sam_string (username, password);
 
