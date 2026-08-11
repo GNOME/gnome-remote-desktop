@@ -1275,7 +1275,7 @@ prepare_next_frame (GrdEncodeSessionVaapi *encode_session_vaapi,
   max_frame_num = 1 << LOG2_MAX_FRAME_NUM;
 
   ++encode_session_vaapi->frame_num;
-  encode_session_vaapi->frame_num %= max_frame_num + 1;
+  encode_session_vaapi->frame_num %= max_frame_num;
 
   encode_session_vaapi->pending_idr_frame = FALSE;
 }
