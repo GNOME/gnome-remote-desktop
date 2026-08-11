@@ -379,6 +379,7 @@ grd_settings_finalize (GObject *object)
   g_clear_pointer (&priv->rdp.server_key, g_free);
   g_clear_pointer (&priv->rdp.server_cert_path, g_free);
   g_clear_pointer (&priv->rdp.server_key_path, g_free);
+  g_clear_pointer (&priv->rdp.kerberos_keytab, g_free);
   g_clear_object (&priv->credentials);
 
   G_OBJECT_CLASS (grd_settings_parent_class)->finalize (object);
