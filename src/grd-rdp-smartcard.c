@@ -48,6 +48,14 @@
          (uint32_t) (val)) \
       : (uint32_t) (val)))
 
+#define INT64_TO_POINTER(val) \
+  (G_STATIC_ASSERT_EXPR (sizeof (val) == sizeof (gpointer)), \
+    (gpointer) (val))
+
+#define POINTER_TO_INT64(ptr) \
+  (G_STATIC_ASSERT_EXPR (sizeof (ptr) == sizeof (int64_t)), \
+    (int64_t) (ptr))
+
 /*
  * pcsc-lite dwState bitmask values. These differ from the WinSCard
  * sequential values (0-6) defined by FreeRDP/WinPR in winpr/smartcard.h.
@@ -96,6 +104,8 @@ struct _GrdRdpSmartcard
   /* Session proxy for session-level clients (direct access) */
   GrdDBusPcscdSession *session_proxy;
   unsigned int session_bus_name_id;
+
+  GHashTable *card_to_context;
 };
 
 G_DEFINE_TYPE (GrdRdpSmartcard, grd_rdp_smartcard, G_TYPE_OBJECT)
@@ -280,6 +290,14 @@ on_smartcard_release_context_complete (RdpdrServerContext *rdpdr_context,
 }
 
 static gboolean
+remove_cards_for_context (gpointer key,
+                          gpointer card_context,
+                          gpointer context)
+{
+  return POINTER_TO_INT64 (card_context) == POINTER_TO_INT64 (context);
+}
+
+static gboolean
 on_handle_release_context (GrdDBusPcscdSession   *skeleton,
                            GDBusMethodInvocation *invocation,
                            GVariant              *call_variant,
@@ -300,6 +318,11 @@ on_handle_release_context (GrdDBusPcscdSession   *skeleton,
   g_hash_table_add (smartcard->pending_invocations, invocation);
 
   g_variant_get (call_variant, "(x)", &context);
+
+  g_hash_table_foreach_remove (smartcard->card_to_context,
+                               remove_cards_for_context,
+                               INT64_TO_POINTER (context));
+
   smartcard_scard_context_native_to_redir (&redir_context, context);
 
   status = rdpdr_context->SmartcardReleaseContext (rdpdr_context,
@@ -381,6 +404,30 @@ on_handle_is_valid_context (GrdDBusPcscdSession   *skeleton,
 }
 
 static void
+track_card_context (RdpdrServerContext *rdpdr_context,
+                    int64_t             card,
+                    int64_t             context)
+{
+  GrdRdpDeviceRedirection *device_redirection = rdpdr_context->data;
+  GrdRdpSmartcard *smartcard;
+
+  smartcard = grd_rdp_device_redirection_get_smartcard (device_redirection);
+  if (smartcard)
+    {
+      g_hash_table_insert (smartcard->card_to_context,
+                           INT64_TO_POINTER (card),
+                           INT64_TO_POINTER (context));
+    }
+}
+
+static void
+untrack_card_context (GrdRdpSmartcard *smartcard,
+                      int64_t          card)
+{
+  g_hash_table_remove (smartcard->card_to_context, INT64_TO_POINTER (card));
+}
+
+static void
 on_smartcard_connect_complete (RdpdrServerContext  *rdpdr_context,
                                void                *callback_data,
                                uint32_t             io_status,
@@ -405,6 +452,9 @@ on_smartcard_connect_complete (RdpdrServerContext  *rdpdr_context,
         (int64_t) smartcard_scard_handle_native_from_redir (&ret->hCard);
       active_protocol =
         EXTEND_32_TO_64 (convert_protocol_to_pcsc (ret->dwActiveProtocol));
+
+      if (card != 0)
+        track_card_context (rdpdr_context, card, out_context);
     }
 
   ret_variant = g_variant_new ("((xxxt))",
@@ -495,6 +545,30 @@ on_smartcard_reconnect_complete (RdpdrServerContext      *rdpdr_context,
 }
 
 static gboolean
+resolve_context_for_card (GrdRdpSmartcard       *smartcard,
+                          GDBusMethodInvocation *invocation,
+                          int64_t                card,
+                          int64_t               *out_context)
+{
+  gpointer value;
+
+  if (!g_hash_table_lookup_extended (smartcard->card_to_context,
+                                     INT64_TO_POINTER (card),
+                                     NULL,
+                                     &value))
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_FAILED,
+                                             "No context found for card handle");
+      return FALSE;
+    }
+
+  *out_context = POINTER_TO_INT64 (value);
+  return TRUE;
+}
+
+static gboolean
 on_handle_reconnect (GrdDBusPcscdSession   *skeleton,
                      GDBusMethodInvocation *invocation,
                      GVariant              *call_variant,
@@ -504,6 +578,7 @@ on_handle_reconnect (GrdDBusPcscdSession   *skeleton,
   RdpdrServerContext *rdpdr_context = smartcard->rdpdr_context;
   Reconnect_Call call = {};
   int64_t card;
+  int64_t context;
   uint64_t share_mode;
   uint64_t preferred_protocols;
   uint64_t initialization;
@@ -515,14 +590,18 @@ on_handle_reconnect (GrdDBusPcscdSession   *skeleton,
   if (is_device_unavailable (smartcard, invocation))
     return G_DBUS_METHOD_INVOCATION_HANDLED;
 
-  g_hash_table_add (smartcard->pending_invocations, invocation);
-
   g_variant_get (call_variant, "(xttt)",
                  &card,
                  &share_mode,
                  &preferred_protocols,
                  &initialization);
 
+  if (!resolve_context_for_card (smartcard, invocation, card, &context))
+    return G_DBUS_METHOD_INVOCATION_HANDLED;
+
+  g_hash_table_add (smartcard->pending_invocations, invocation);
+
+  smartcard_scard_context_native_to_redir (&call.handles.hContext, context);
   smartcard_scard_handle_native_to_redir (&call.handles.hCard, card);
   call.dwShareMode = NARROW_64_TO_32 (share_mode);
   call.dwPreferredProtocols =
@@ -575,6 +654,7 @@ on_handle_disconnect_card (GrdDBusPcscdSession   *skeleton,
   RdpdrServerContext *rdpdr_context = smartcard->rdpdr_context;
   HCardAndDisposition_Call call = {};
   int64_t card;
+  int64_t context;
   uint64_t disposition;
   uint32_t completion_id;
   uint32_t status;
@@ -584,10 +664,16 @@ on_handle_disconnect_card (GrdDBusPcscdSession   *skeleton,
   if (is_device_unavailable (smartcard, invocation))
     return G_DBUS_METHOD_INVOCATION_HANDLED;
 
-  g_hash_table_add (smartcard->pending_invocations, invocation);
-
   g_variant_get (call_variant, "(xt)", &card, &disposition);
 
+  if (!resolve_context_for_card (smartcard, invocation, card, &context))
+    return G_DBUS_METHOD_INVOCATION_HANDLED;
+
+  g_hash_table_add (smartcard->pending_invocations, invocation);
+
+  untrack_card_context (smartcard, card);
+
+  smartcard_scard_context_native_to_redir (&call.handles.hContext, context);
   smartcard_scard_handle_native_to_redir (&call.handles.hCard, card);
   call.dwDisposition = NARROW_64_TO_32 (disposition);
 
@@ -638,6 +724,7 @@ on_handle_begin_transaction (GrdDBusPcscdSession   *skeleton,
   RdpdrServerContext *rdpdr_context = smartcard->rdpdr_context;
   HCardAndDisposition_Call call = {};
   int64_t card;
+  int64_t context;
   uint32_t completion_id;
   uint32_t status;
 
@@ -646,10 +733,14 @@ on_handle_begin_transaction (GrdDBusPcscdSession   *skeleton,
   if (is_device_unavailable (smartcard, invocation))
     return G_DBUS_METHOD_INVOCATION_HANDLED;
 
-  g_hash_table_add (smartcard->pending_invocations, invocation);
-
   g_variant_get (call_variant, "(x)", &card);
 
+  if (!resolve_context_for_card (smartcard, invocation, card, &context))
+    return G_DBUS_METHOD_INVOCATION_HANDLED;
+
+  g_hash_table_add (smartcard->pending_invocations, invocation);
+
+  smartcard_scard_context_native_to_redir (&call.handles.hContext, context);
   smartcard_scard_handle_native_to_redir (&call.handles.hCard, card);
 
   status = rdpdr_context->SmartcardBeginTransaction (rdpdr_context,
@@ -699,6 +790,7 @@ on_handle_end_transaction (GrdDBusPcscdSession   *skeleton,
   RdpdrServerContext *rdpdr_context = smartcard->rdpdr_context;
   HCardAndDisposition_Call call = {};
   int64_t card;
+  int64_t context;
   uint64_t disposition;
   uint32_t completion_id;
   uint32_t status;
@@ -708,10 +800,14 @@ on_handle_end_transaction (GrdDBusPcscdSession   *skeleton,
   if (is_device_unavailable (smartcard, invocation))
     return G_DBUS_METHOD_INVOCATION_HANDLED;
 
-  g_hash_table_add (smartcard->pending_invocations, invocation);
-
   g_variant_get (call_variant, "(xt)", &card, &disposition);
 
+  if (!resolve_context_for_card (smartcard, invocation, card, &context))
+    return G_DBUS_METHOD_INVOCATION_HANDLED;
+
+  g_hash_table_add (smartcard->pending_invocations, invocation);
+
+  smartcard_scard_context_native_to_redir (&call.handles.hContext, context);
   smartcard_scard_handle_native_to_redir (&call.handles.hCard, card);
   call.dwDisposition = NARROW_64_TO_32 (disposition);
 
@@ -781,6 +877,7 @@ on_handle_status_card (GrdDBusPcscdSession   *skeleton,
   RdpdrServerContext *rdpdr_context = smartcard->rdpdr_context;
   Status_Call call = {};
   int64_t card;
+  int64_t context;
   uint64_t reader_len;
   uint64_t atr_len;
   uint32_t completion_id;
@@ -791,10 +888,14 @@ on_handle_status_card (GrdDBusPcscdSession   *skeleton,
   if (is_device_unavailable (smartcard, invocation))
     return G_DBUS_METHOD_INVOCATION_HANDLED;
 
-  g_hash_table_add (smartcard->pending_invocations, invocation);
-
   g_variant_get (call_variant, "(xtt)", &card, &reader_len, &atr_len);
 
+  if (!resolve_context_for_card (smartcard, invocation, card, &context))
+    return G_DBUS_METHOD_INVOCATION_HANDLED;
+
+  g_hash_table_add (smartcard->pending_invocations, invocation);
+
+  smartcard_scard_context_native_to_redir (&call.handles.hContext, context);
   smartcard_scard_handle_native_to_redir (&call.handles.hCard, card);
   call.cchReaderLen = NARROW_64_TO_32 (reader_len);
   call.cbAtrLen = NARROW_64_TO_32 (atr_len);
@@ -968,6 +1069,7 @@ on_handle_control_card (GrdDBusPcscdSession   *skeleton,
   g_autoptr (GVariant) send_buffer = NULL;
   Control_Call call = {};
   int64_t card;
+  int64_t context;
   uint64_t control_code;
   uint64_t send_buffer_size;
   uint64_t recv_buffer_size;
@@ -981,8 +1083,6 @@ on_handle_control_card (GrdDBusPcscdSession   *skeleton,
   if (is_device_unavailable (smartcard, invocation))
     return G_DBUS_METHOD_INVOCATION_HANDLED;
 
-  g_hash_table_add (smartcard->pending_invocations, invocation);
-
   g_variant_get (call_variant, "(xt@aytt)",
                  &card,
                  &control_code,
@@ -990,9 +1090,15 @@ on_handle_control_card (GrdDBusPcscdSession   *skeleton,
                  &send_buffer_size,
                  &recv_buffer_size);
 
+  if (!resolve_context_for_card (smartcard, invocation, card, &context))
+    return G_DBUS_METHOD_INVOCATION_HANDLED;
+
+  g_hash_table_add (smartcard->pending_invocations, invocation);
+
   send_data = g_variant_get_fixed_array (send_buffer, &send_size,
                                          sizeof (uint8_t));
 
+  smartcard_scard_context_native_to_redir (&call.handles.hContext, context);
   smartcard_scard_handle_native_to_redir (&call.handles.hCard, card);
   call.dwControlCode = NARROW_64_TO_32 (control_code);
   call.cbInBufferSize = NARROW_64_TO_32 (send_buffer_size);
@@ -1068,6 +1174,7 @@ on_handle_transmit (GrdDBusPcscdSession   *skeleton,
   SCARD_IO_REQUEST recv_pci = {};
   Transmit_Call call = {};
   int64_t card;
+  int64_t context;
   uint64_t send_pci_protocol;
   uint64_t recv_pci_protocol_in;
   uint64_t recv_buffer_size;
@@ -1081,14 +1188,17 @@ on_handle_transmit (GrdDBusPcscdSession   *skeleton,
   if (is_device_unavailable (smartcard, invocation))
     return G_DBUS_METHOD_INVOCATION_HANDLED;
 
-  g_hash_table_add (smartcard->pending_invocations, invocation);
-
   g_variant_get (call_variant, "(xt@aytt)",
                  &card,
                  &send_pci_protocol,
                  &send_buffer,
                  &recv_pci_protocol_in,
                  &recv_buffer_size);
+
+  if (!resolve_context_for_card (smartcard, invocation, card, &context))
+    return G_DBUS_METHOD_INVOCATION_HANDLED;
+
+  g_hash_table_add (smartcard->pending_invocations, invocation);
 
   send_data = g_variant_get_fixed_array (send_buffer, &send_size,
                                          sizeof (uint8_t));
@@ -1101,6 +1211,7 @@ on_handle_transmit (GrdDBusPcscdSession   *skeleton,
     convert_protocol_to_winscard (NARROW_64_TO_32 (recv_pci_protocol_in));
   recv_pci.cbPciLength = sizeof (SCARD_IO_REQUEST);
 
+  smartcard_scard_context_native_to_redir (&call.handles.hContext, context);
   smartcard_scard_handle_native_to_redir (&call.handles.hCard, card);
   call.pioSendPci = &send_pci;
   call.cbSendLength = NARROW_64_TO_32 (send_size);
@@ -1382,6 +1493,7 @@ on_handle_get_attrib (GrdDBusPcscdSession   *skeleton,
   RdpdrServerContext *rdpdr_context = smartcard->rdpdr_context;
   GetAttrib_Call call = {};
   int64_t card;
+  int64_t context;
   uint64_t attr_id;
   uint64_t attr_len;
   uint32_t completion_id;
@@ -1392,10 +1504,14 @@ on_handle_get_attrib (GrdDBusPcscdSession   *skeleton,
   if (is_device_unavailable (smartcard, invocation))
     return G_DBUS_METHOD_INVOCATION_HANDLED;
 
-  g_hash_table_add (smartcard->pending_invocations, invocation);
-
   g_variant_get (call_variant, "(xtt)", &card, &attr_id, &attr_len);
 
+  if (!resolve_context_for_card (smartcard, invocation, card, &context))
+    return G_DBUS_METHOD_INVOCATION_HANDLED;
+
+  g_hash_table_add (smartcard->pending_invocations, invocation);
+
+  smartcard_scard_context_native_to_redir (&call.handles.hContext, context);
   smartcard_scard_handle_native_to_redir (&call.handles.hCard, card);
   call.dwAttrId = NARROW_64_TO_32 (attr_id);
   call.cbAttrLen = NARROW_64_TO_32 (attr_len);
@@ -1447,6 +1563,7 @@ on_handle_set_attrib (GrdDBusPcscdSession   *skeleton,
   g_autoptr (GVariant) attr_buffer = NULL;
   SetAttrib_Call call = {};
   int64_t card;
+  int64_t context;
   uint64_t attr_id;
   const uint8_t *attr_data;
   size_t attr_size;
@@ -1458,16 +1575,20 @@ on_handle_set_attrib (GrdDBusPcscdSession   *skeleton,
   if (is_device_unavailable (smartcard, invocation))
     return G_DBUS_METHOD_INVOCATION_HANDLED;
 
-  g_hash_table_add (smartcard->pending_invocations, invocation);
-
   g_variant_get (call_variant, "(xt@ay)",
                  &card,
                  &attr_id,
                  &attr_buffer);
 
+  if (!resolve_context_for_card (smartcard, invocation, card, &context))
+    return G_DBUS_METHOD_INVOCATION_HANDLED;
+
+  g_hash_table_add (smartcard->pending_invocations, invocation);
+
   attr_data = g_variant_get_fixed_array (attr_buffer, &attr_size,
                                          sizeof (uint8_t));
 
+  smartcard_scard_context_native_to_redir (&call.handles.hContext, context);
   smartcard_scard_handle_native_to_redir (&call.handles.hCard, card);
   call.dwAttrId = NARROW_64_TO_32 (attr_id);
   call.cbAttrLen = attr_size;
@@ -1921,6 +2042,7 @@ teardown_pcscd_proxies (GrdRdpSmartcard *smartcard)
 {
   teardown_private_proxy (smartcard);
   teardown_session_proxy (smartcard);
+  g_hash_table_remove_all (smartcard->card_to_context);
 }
 
 static UINT
@@ -2064,6 +2186,7 @@ grd_rdp_smartcard_dispose (GObject *object)
 
   g_clear_pointer (&smartcard->smartcard_device_ids, g_hash_table_unref);
   g_clear_pointer (&smartcard->pending_invocations, g_hash_table_unref);
+  g_clear_pointer (&smartcard->card_to_context, g_hash_table_unref);
 
   G_OBJECT_CLASS (grd_rdp_smartcard_parent_class)->dispose (object);
 }
@@ -2085,6 +2208,7 @@ grd_rdp_smartcard_init (GrdRdpSmartcard *smartcard)
 
   smartcard->smartcard_device_ids = g_hash_table_new (NULL, NULL);
   smartcard->pending_invocations = g_hash_table_new (NULL, NULL);
+  smartcard->card_to_context = g_hash_table_new (NULL, NULL);
 }
 
 static void
