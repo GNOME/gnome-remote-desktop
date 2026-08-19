@@ -21,6 +21,7 @@ It's licensed under the GNU General Public License v2 or later.
 ## Documentation
 
 - [Configuration](docs/configuration.md)
+- [Kerberos authentication](docs/kerberos.md)
 
 ## Firewall configuration
 
