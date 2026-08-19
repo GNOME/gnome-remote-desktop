@@ -1,3 +1,15 @@
+51.beta
+=======
+* Fix video corruption when using VA-API [Pavel; !412]
+* Add support for smartcard redirection [Joan; !406]
+* Misc bug fixes & cleanups [Jonas; !413]
+
+Contributors:
+  Jonas Ådahl, Joan Torres Lopez, Pavel Shilin
+
+Translators:
+  Kjartan Maraas [nb], Aefgh Threenine [th]
+
 51.alpha
 ========
 * Simplify GDM remote display handling [Joan; !400]
