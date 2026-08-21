@@ -311,7 +311,6 @@ on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
   g_autofree char *key = NULL;
   g_autofree char *certificate = NULL;
   g_autofree char *routing_token = NULL;
-  g_autoptr (GVariant) redirect_variant = NULL;
   GDBusConnection *connection;
   const char *sender;
 
@@ -349,16 +348,15 @@ on_handle_start_handover (GrdDBusRemoteDesktopRdpHandover *interface,
       connection = g_dbus_interface_skeleton_get_connection (
                      G_DBUS_INTERFACE_SKELETON (
                      remote_client->handover_src->interface));
-      redirect_variant = g_variant_new ("(sss)",
-                                        routing_token,
-                                        username,
-                                        password);
       g_dbus_connection_emit_signal (connection,
                                      remote_client->handover_src->sender_name,
                                      remote_client->handover_src->object_path,
                                      "org.gnome.RemoteDesktop.Rdp.Handover",
                                      "RedirectClient",
-                                     redirect_variant,
+                                     g_variant_new ("(sss)",
+                                                    routing_token,
+                                                    username,
+                                                    password),
                                      NULL);
     }
 
