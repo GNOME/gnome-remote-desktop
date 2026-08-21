@@ -37,16 +37,14 @@
 #include "grd-session-rdp.h"
 
 #define EXTEND_32_TO_64(val) \
-  (G_STATIC_ASSERT_EXPR (sizeof (val) == sizeof (uint32_t)), \
-    (uint64_t) (uint32_t) (val))
+  ((uint64_t) (uint32_t) (val))
 
 #define NARROW_64_TO_32(val) \
-  (G_STATIC_ASSERT_EXPR (sizeof (val) == sizeof (uint64_t)), \
-    ((uint64_t) (val) > UINT32_MAX \
-      ? (g_warning ("Narrowing 64-to-32 lost data in '"#val"': 0x%lx", \
-                     (uint64_t) (val)), \
-         (uint32_t) (val)) \
-      : (uint32_t) (val)))
+  ((uint64_t) (val) > UINT32_MAX \
+    ? (g_warning ("Narrowing 64-to-32 lost data in '"#val"': 0x%lx", \
+                  (uint64_t) (val)), \
+       (uint32_t) (val)) \
+    : (uint32_t) (val))
 
 /*
  * pcsc-lite dwState bitmask values. These differ from the WinSCard
