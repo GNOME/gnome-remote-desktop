@@ -48,14 +48,6 @@
          (uint32_t) (val)) \
       : (uint32_t) (val)))
 
-#define INT64_TO_POINTER(val) \
-  (G_STATIC_ASSERT_EXPR (sizeof (val) == sizeof (gpointer)), \
-    (gpointer) (val))
-
-#define POINTER_TO_INT64(ptr) \
-  (G_STATIC_ASSERT_EXPR (sizeof (ptr) == sizeof (int64_t)), \
-    (int64_t) (ptr))
-
 /*
  * pcsc-lite dwState bitmask values. These differ from the WinSCard
  * sequential values (0-6) defined by FreeRDP/WinPR in winpr/smartcard.h.
@@ -291,10 +283,13 @@ on_smartcard_release_context_complete (RdpdrServerContext *rdpdr_context,
 
 static gboolean
 remove_cards_for_context (gpointer key,
-                          gpointer card_context,
-                          gpointer context)
+                          gpointer value,
+                          gpointer user_data)
 {
-  return POINTER_TO_INT64 (card_context) == POINTER_TO_INT64 (context);
+  int64_t card_context = *(int64_t *) value;
+  int64_t context = *(int64_t *) user_data;
+
+  return card_context == context;
 }
 
 static gboolean
@@ -321,7 +316,7 @@ on_handle_release_context (GrdDBusPcscdSession   *skeleton,
 
   g_hash_table_foreach_remove (smartcard->card_to_context,
                                remove_cards_for_context,
-                               INT64_TO_POINTER (context));
+                               &context);
 
   smartcard_scard_context_native_to_redir (&redir_context, context);
 
@@ -415,8 +410,8 @@ track_card_context (RdpdrServerContext *rdpdr_context,
   if (smartcard)
     {
       g_hash_table_insert (smartcard->card_to_context,
-                           INT64_TO_POINTER (card),
-                           INT64_TO_POINTER (context));
+                           g_memdup2 (&card, sizeof card),
+                           g_memdup2 (&context, sizeof context));
     }
 }
 
@@ -424,7 +419,7 @@ static void
 untrack_card_context (GrdRdpSmartcard *smartcard,
                       int64_t          card)
 {
-  g_hash_table_remove (smartcard->card_to_context, INT64_TO_POINTER (card));
+  g_hash_table_remove (smartcard->card_to_context, &card);
 }
 
 static void
@@ -553,7 +548,7 @@ resolve_context_for_card (GrdRdpSmartcard       *smartcard,
   gpointer value;
 
   if (!g_hash_table_lookup_extended (smartcard->card_to_context,
-                                     INT64_TO_POINTER (card),
+                                     &card,
                                      NULL,
                                      &value))
     {
@@ -564,7 +559,7 @@ resolve_context_for_card (GrdRdpSmartcard       *smartcard,
       return FALSE;
     }
 
-  *out_context = POINTER_TO_INT64 (value);
+  *out_context = *(int64_t *) value;
   return TRUE;
 }
 
@@ -2208,7 +2203,8 @@ grd_rdp_smartcard_init (GrdRdpSmartcard *smartcard)
 
   smartcard->smartcard_device_ids = g_hash_table_new (NULL, NULL);
   smartcard->pending_invocations = g_hash_table_new (NULL, NULL);
-  smartcard->card_to_context = g_hash_table_new (NULL, NULL);
+  smartcard->card_to_context = g_hash_table_new_full (g_int64_hash, g_int64_equal,
+                                                      g_free, g_free);
 }
 
 static void
