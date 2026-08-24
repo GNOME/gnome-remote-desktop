@@ -1425,8 +1425,11 @@ cliprdr_client_lock_clipboard_data (CliprdrServerContext              *cliprdr_c
     }
   g_mutex_unlock (&clipboard_rdp->completion_mutex);
 
-  if (clipboard_rdp->protocol_stopped)
-    return CHANNEL_RC_OK;
+  if (!clipboard_rdp->completed_clip_data_entry)
+    {
+      clipboard_rdp->clipboard_retrieval_context.entry = NULL;
+      return CHANNEL_RC_OK;
+    }
 
   g_assert (clipboard_rdp->completed_clip_data_entry);
 
@@ -1451,6 +1454,7 @@ cliprdr_client_lock_clipboard_data (CliprdrServerContext              *cliprdr_c
   g_hash_table_insert (clipboard_rdp->clip_data_table,
                        GUINT_TO_POINTER (clip_data_id),
                        g_steal_pointer (&entry));
+  clipboard_rdp->clipboard_retrieval_context.entry = NULL;
 
   return CHANNEL_RC_OK;
 }
@@ -2521,8 +2525,7 @@ grd_clipboard_rdp_dispose (GObject *object)
       g_clear_pointer (&clipboard_rdp->format_data_response, g_free);
     }
 
-  if (clipboard_rdp->clipboard_retrieval_id)
-    g_clear_pointer (&clipboard_rdp->clipboard_retrieval_context.entry, g_free);
+  g_assert (!clipboard_rdp->clipboard_retrieval_context.entry);
 
   g_clear_pointer (&clipboard_rdp->format_data_request_context, g_free);
   g_clear_pointer (&clipboard_rdp->queued_server_formats, g_list_free);
