@@ -1049,7 +1049,7 @@ get_pwd_entry_from_auth_identity (const SecPkgContext_AuthIdentity  *auth_identi
   pwd = g_unix_get_passwd_entry (local_name, &local_error);
   if (local_error)
     {
-      g_propagate_error (error, local_error);
+      g_propagate_error (error, g_steal_pointer (&local_error));
       g_prefix_error (error, "Failed to get passwd field for %s:", local_name);
       goto err;
     }
