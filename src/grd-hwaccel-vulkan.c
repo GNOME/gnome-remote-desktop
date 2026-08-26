@@ -398,6 +398,8 @@ supports_sync_files (VkPhysicalDevice   vk_physical_device,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO;
   external_semaphore_info.handleType =
     VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT;
+  external_semaphore_properties.sType =
+    VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES;
 
   vkGetPhysicalDeviceExternalSemaphoreProperties (vk_physical_device,
                                                   &external_semaphore_info,
