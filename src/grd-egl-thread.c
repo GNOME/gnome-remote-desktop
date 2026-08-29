@@ -409,6 +409,40 @@ lookup_drm_render_node (GrdEglThread  *egl_thread,
   return TRUE;
 }
 
+static EGLDisplay
+get_platform_display (EGLenum egl_platform)
+{
+  EGLDeviceEXT devices[16];
+  EGLint n_devices = 0;
+  EGLint i;
+
+  if (egl_platform != EGL_PLATFORM_DEVICE_EXT)
+    return eglGetPlatformDisplayEXT (egl_platform, NULL, NULL);
+
+  /* NULL is not a valid native display for EGL_EXT_platform_device:
+   * pick the first device with a DRM render node. */
+  if (!epoxy_has_egl_extension (NULL, "EGL_EXT_device_enumeration") ||
+      !eglQueryDevicesEXT (G_N_ELEMENTS (devices), devices, &n_devices))
+    return EGL_NO_DISPLAY;
+
+  for (i = 0; i < n_devices; i++)
+    {
+      const char *device_extensions =
+        eglQueryDeviceStringEXT (devices[i], EGL_EXTENSIONS);
+
+      if (!device_extensions ||
+          !strstr (device_extensions, "EGL_EXT_device_drm_render_node"))
+        continue;
+      if (!eglQueryDeviceStringEXT (devices[i], EGL_DRM_RENDER_NODE_FILE_EXT))
+        continue;
+
+      return eglGetPlatformDisplayEXT (EGL_PLATFORM_DEVICE_EXT,
+                                       devices[i], NULL);
+    }
+
+  return EGL_NO_DISPLAY;
+}
+
 static gboolean
 initialize_egl_context (GrdEglThread  *egl_thread,
                         EGLenum        egl_platform,
@@ -421,7 +455,7 @@ initialize_egl_context (GrdEglThread  *egl_thread,
 
   g_clear_error (error);
 
-  egl_display = eglGetPlatformDisplayEXT (egl_platform, NULL, NULL);
+  egl_display = get_platform_display (egl_platform);
   if (egl_display == EGL_NO_DISPLAY)
     {
       int code = egl_platform == EGL_PLATFORM_DEVICE_EXT ? G_IO_ERROR_NOT_SUPPORTED
