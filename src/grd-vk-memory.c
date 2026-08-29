@@ -110,7 +110,7 @@ prepare_fd_import (GrdVkMemory                  *memory,
                    g_strerror (errno));
       return FALSE;
     }
-  *memory_type_bits = fd_properties.memoryTypeBits;
+  *memory_type_bits &= fd_properties.memoryTypeBits;
 
   import_memory_fd_info->sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR;
   import_memory_fd_info->handleType = handle_type;
