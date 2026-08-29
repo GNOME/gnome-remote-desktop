@@ -193,6 +193,7 @@ bind_image_memory (GrdVkImage                  *image,
   memory_descriptor.target_image = image->vk_image;
 
   memory_descriptor.perform_dedicated_allocation =
+    image_descriptor->import_handle_type != 0 ||
     memory_dedicated_requirements.prefersDedicatedAllocation != VK_FALSE ||
     memory_dedicated_requirements.requiresDedicatedAllocation != VK_FALSE;
 
