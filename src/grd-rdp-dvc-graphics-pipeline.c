@@ -1686,7 +1686,7 @@ cap_sets_would_disable_avc (RDPGFX_CAPSET *cap_sets,
         {
           if (cap_sets[j].version == cap_list[i])
             {
-              uint32_t flags = cap_sets[i].flags;
+              uint32_t flags = cap_sets[j].flags;
 
               switch (cap_sets[j].version)
                 {
