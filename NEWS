@@ -1,3 +1,13 @@
+51.rc
+=====
+* Add support for Kerberos multi user remote login [Jonas; !411, !414, !418]
+* Fix Vulkan image allocation [Pavel; !419]
+* Fix building on 32 bit architectures [Jonas; !416]
+* Misc bug fixes & cleanups [Pavel, Pascal; !420, !423]
+
+Contributors:
+  Jonas Ådahl, Pascal Nowack, Pavel Shilin
+
 51.beta
 =======
 * Fix video corruption when using VA-API [Pavel; !412]
