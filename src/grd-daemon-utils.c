@@ -116,6 +116,22 @@ grd_get_session_id_from_pid (pid_t pid)
   return session_id;
 }
 
+char *
+grd_get_session_id_from_pidfd (int pidfd)
+{
+  char *session_id = NULL;
+  int res;
+
+  res = sd_pidfd_get_session (pidfd, &session_id);
+  if (res < 0 && res != -ENODATA)
+    {
+      g_warning ("Failed to retrieve session information for "
+                 "pidfd %d: %s", pidfd, strerror (-res));
+    }
+
+  return session_id;
+}
+
 static gboolean
 grd_sd_session_is_graphical (const char *session_id)
 {

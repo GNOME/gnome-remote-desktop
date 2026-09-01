@@ -35,6 +35,8 @@ gboolean grd_get_uid_of_sender_sync (GDBusConnection  *connection,
 
 char *grd_get_session_id_from_pid (pid_t pid);
 
+char * grd_get_session_id_from_pidfd (int pidfd);
+
 char *grd_get_session_id_from_uid (uid_t uid);
 
 char *grd_get_session_id_of_sender (GDBusConnection  *connection,
