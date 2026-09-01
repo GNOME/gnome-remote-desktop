@@ -21,6 +21,7 @@
 
 #include "grd-daemon-utils.h"
 
+#include <glib/gstdio.h>
 #include <systemd/sd-login.h>
 
 enum
@@ -31,36 +32,66 @@ enum
 };
 
 gboolean
-grd_get_pid_of_sender_sync (GDBusConnection  *connection,
-                            const char       *name,
-                            pid_t            *out_pid,
-                            GCancellable     *cancellable,
-                            GError          **error)
+grd_get_pidfd_of_sender_sync (GDBusConnection  *connection,
+                              const char       *name,
+                              int              *out_pidfd,
+                              GCancellable     *cancellable,
+                              GError          **error)
 {
+  g_autoptr (GUnixFDList) fd_list = NULL;
   g_autoptr (GVariant) result = NULL;
-  uint32_t pid;
+  g_autoptr (GVariant) credentials = NULL;
+  int pidfd_idx;
+  g_autofd int pidfd = -1;
 
   g_return_val_if_fail (G_IS_DBUS_CONNECTION (connection), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
 
-  g_assert (out_pid);
+  g_assert (out_pidfd);
 
-  result = g_dbus_connection_call_sync (connection,
-                                        "org.freedesktop.DBus",
-                                        "/org/freedesktop/DBus",
-                                        "org.freedesktop.DBus",
-                                        "GetConnectionUnixProcessID",
-                                        g_variant_new ("(s)", name),
-                                        G_VARIANT_TYPE ("(u)"),
-                                        G_DBUS_CALL_FLAGS_NONE,
-                                        -1,
-                                        cancellable, error);
+  result =
+    g_dbus_connection_call_with_unix_fd_list_sync (connection,
+                                                   "org.freedesktop.DBus",
+                                                   "/org/freedesktop/DBus",
+                                                   "org.freedesktop.DBus",
+                                                   "GetConnectionCredentials",
+                                                   g_variant_new ("(s)", name),
+                                                   G_VARIANT_TYPE ("(a{sv})"),
+                                                   G_DBUS_CALL_FLAGS_NONE,
+                                                   -1,
+                                                   NULL,
+                                                   &fd_list,
+                                                   cancellable, error);
   if (!result)
     return FALSE;
 
-  g_variant_get (result, "(u)", &pid);
+  g_variant_get (result, "(@a{sv})", &credentials);
+  if (!g_variant_lookup (credentials, "ProcessFD", "h", &pidfd_idx))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "D-Bus broker doesn't support pidfd");
+      return FALSE;
+    }
 
-  *out_pid = (pid_t) pid;
+  if (!fd_list)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "No file descriptors passed");
+      return FALSE;
+    }
+
+  if (pidfd_idx < 0 || pidfd_idx >= g_unix_fd_list_get_length (fd_list))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Invalid file descriptor idx");
+      return FALSE;
+    }
+
+  pidfd = g_unix_fd_list_get (fd_list, pidfd_idx, error);
+  if (pidfd == -1)
+    return FALSE;
+
+  *out_pidfd = g_steal_fd (&pidfd);
 
   return TRUE;
 }
@@ -193,18 +224,18 @@ grd_get_session_id_of_sender (GDBusConnection  *connection,
 {
   char *session_id = NULL;
   gboolean success;
-  pid_t pid = 0;
+  g_autofd int pidfd = -1;
   uid_t uid = 0;
 
-  success = grd_get_pid_of_sender_sync (connection,
-                                        name,
-                                        &pid,
-                                        cancellable,
-                                        error);
+  success = grd_get_pidfd_of_sender_sync (connection,
+                                          name,
+                                          &pidfd,
+                                          cancellable,
+                                          error);
   if (!success)
     return NULL;
 
-  session_id = grd_get_session_id_from_pid (pid);
+  session_id = grd_get_session_id_from_pidfd (pidfd);
   if (session_id)
     return session_id;
 

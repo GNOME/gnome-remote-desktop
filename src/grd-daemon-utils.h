@@ -21,11 +21,11 @@
 
 #include <gio/gio.h>
 
-gboolean grd_get_pid_of_sender_sync (GDBusConnection  *connection,
-                                     const char       *name,
-                                     pid_t            *out_pid,
-                                     GCancellable     *cancellable,
-                                     GError          **error);
+gboolean grd_get_pidfd_of_sender_sync (GDBusConnection  *connection,
+                                       const char       *name,
+                                       int              *out_pid,
+                                       GCancellable     *cancellable,
+                                       GError          **error);
 
 gboolean grd_get_uid_of_sender_sync (GDBusConnection  *connection,
                                      const char       *name,
