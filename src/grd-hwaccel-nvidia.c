@@ -381,6 +381,7 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
   NV_ENC_INITIALIZE_PARAMS init_params = {0};
   NV_ENC_CONFIG encode_config = {0};
   NV_ENC_CREATE_BITSTREAM_BUFFER create_bitstream_buffer = {0};
+  NV_ENC_CONFIG_H264_VUI_PARAMETERS *vui_parameters;
 
   *aligned_width = grd_get_aligned_size (surface_width, 16);
   *aligned_height = grd_get_aligned_size (surface_height, 64);
@@ -415,6 +416,15 @@ grd_hwaccel_nvidia_create_nvenc_session (GrdHwAccelNvidia *hwaccel_nvidia,
   encode_config.rcParams.targetQuality = 22;
   encode_config.encodeCodecConfig.h264Config.idrPeriod = NVENC_INFINITE_GOPLENGTH;
   encode_config.encodeCodecConfig.h264Config.chromaFormatIDC = 1;
+
+  vui_parameters = &encode_config.encodeCodecConfig.h264Config.h264VUIParameters;
+  vui_parameters->videoSignalTypePresentFlag = 1;
+  vui_parameters->videoFormat = 5;
+  vui_parameters->videoFullRangeFlag = 1;
+  vui_parameters->colourDescriptionPresentFlag = 1;
+  vui_parameters->colourPrimaries = 1;
+  vui_parameters->transferCharacteristics = 1;
+  vui_parameters->colourMatrix = 1;
 
   init_params.version = NV_ENC_INITIALIZE_PARAMS_VER;
   init_params.encodeGUID = NV_ENC_CODEC_H264_GUID;
