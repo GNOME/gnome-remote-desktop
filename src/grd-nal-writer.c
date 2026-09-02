@@ -299,7 +299,7 @@ write_vui_parameters (GrdNalWriter                           *nal_writer,
     sequence_param->vui_fields.bits.bitstream_restriction_flag;
 
   overscan_info_present_flag = 0;
-  video_signal_type_present_flag = 0;
+  video_signal_type_present_flag = 1;
   chroma_loc_info_present_flag = 0;
   nal_hrd_parameters_present_flag = 0;
   vcl_hrd_parameters_present_flag = 0;
@@ -332,7 +332,35 @@ write_vui_parameters (GrdNalWriter                           *nal_writer,
 
   /* video_signal_type_present_flag */
   write_u (nal_writer, video_signal_type_present_flag, 1);
-  g_assert (!video_signal_type_present_flag);
+  if (video_signal_type_present_flag)
+    {
+      uint32_t video_format;
+      uint32_t video_full_range_flag;
+      uint32_t colour_description_present_flag;
+      uint32_t colour_primaries;
+      uint32_t transfer_characteristics;
+      uint32_t matrix_coefficients;
+
+      video_format = 5; /* Unspecified video format */
+      video_full_range_flag = 1;
+      colour_description_present_flag = 1;
+      colour_primaries = 1; /* BT.709 */
+      transfer_characteristics = 1; /* BT.709 */
+      matrix_coefficients = 1; /* BT.709 */
+
+      /* video_format */
+      write_u (nal_writer, video_format, 3);
+      /* video_full_range_flag */
+      write_u (nal_writer, video_full_range_flag, 1);
+      /* colour_description_present_flag */
+      write_u (nal_writer, colour_description_present_flag, 1);
+      /* colour_primaries */
+      write_u (nal_writer, colour_primaries, 8);
+      /* transfer_characteristics */
+      write_u (nal_writer, transfer_characteristics, 8);
+      /* matrix_coefficients */
+      write_u (nal_writer, matrix_coefficients, 8);
+    }
 
   /* chroma_loc_info_present_flag */
   write_u (nal_writer, chroma_loc_info_present_flag, 1);
