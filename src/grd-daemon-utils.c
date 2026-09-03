@@ -113,7 +113,7 @@ grd_get_session_id_from_pid (pid_t pid)
                  "pid %d: %s", (int) pid, strerror (-res));
     }
 
-  return g_steal_pointer (&session_id);
+  return session_id;
 }
 
 static gboolean
