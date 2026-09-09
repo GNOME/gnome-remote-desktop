@@ -6,9 +6,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gnome-remote-desktop 4.2\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/issues/\n"
-"POT-Creation-Date: 2026-06-30 22:03+0000\n"
-"PO-Revision-Date: 2026-07-09 14:06+0200\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/gnome-remote-desktop/"
+"issues/\n"
+"POT-Creation-Date: 2026-08-19 18:35+0000\n"
+"PO-Revision-Date: 2026-09-09 10:12+0200\n"
 "Last-Translator: Kjartan Maraas <kmaraas@gnome.org>\n"
 "Language-Team: Norwegian bokmål <i18n-nb@lister.ping.uio.no>\n"
 "Language: nb\n"
@@ -25,36 +26,41 @@ msgstr "Tillat konfigurasjon av systeminnstillinger for gnome-remote-desktop"
 msgid ""
 "Authentication is required to configure gnome-remote-desktop's system daemon "
 "settings"
-msgstr "Autentisering kreves for å konfigurere systeminnstillinger for gnome-remote-desktop"
+msgstr ""
+"Autentisering kreves for å konfigurere systeminnstillinger for gnome-remote-"
+"desktop"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:11
 msgid "Allow to enable and disable gnome-remote-desktop's system daemon"
-msgstr "Tillat å aktivere og deaktivere systemtjenesten for gnome-remote-desktop"
+msgstr ""
+"Tillat å aktivere og deaktivere systemtjenesten for gnome-remote-desktop"
 
 #: data/org.gnome.remotedesktop.enable-system-daemon.policy.in:12
 msgid ""
 "Authentication is required to enable or disable gnome-remote-desktop's "
 "system daemon"
-msgstr "Autentisering kreves for å aktivere/deaktivere systemtjenesten for gnome-remote-desktop"
+msgstr ""
+"Autentisering kreves for å aktivere/deaktivere systemtjenesten for gnome-"
+"remote-desktop"
 
 #: src/grd-ctl.c:72
 #, c-format
 msgid "Usage: %s [OPTIONS...] COMMAND [SUBCOMMAND]...\n"
 msgstr "Bruk: %s [ALTERNATIVER …] KOMMANDO [UNDERKOMMANDO …]\n"
 
-#: src/grd-ctl.c:382
+#: src/grd-ctl.c:367
 msgid "Username: "
 msgstr "Brukernavn: "
 
-#: src/grd-ctl.c:394 src/grd-ctl.c:552
+#: src/grd-ctl.c:379 src/grd-ctl.c:537
 msgid "Password: "
 msgstr "Passord: "
 
-#: src/grd-ctl.c:682
+#: src/grd-ctl.c:667
 msgid "Commands:\n"
 msgstr "Kommandoer:\n"
 
-#: src/grd-ctl.c:687
+#: src/grd-ctl.c:672
 msgid ""
 "  rdp                                            - RDP subcommands:\n"
 "    set-port                                     - Set port the server binds "
@@ -92,7 +98,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/grd-ctl.c:715
+#: src/grd-ctl.c:700
 msgid ""
 "  vnc                                        - VNC subcommands:\n"
 "    set-port                                 - Set port the server binds to\n"
@@ -114,7 +120,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/grd-ctl.c:735
+#: src/grd-ctl.c:720
 msgid ""
 "  status [--show-credentials]                - Show current status\n"
 "\n"
@@ -143,7 +149,11 @@ msgid ""
 "This Remote Desktop connection is insecure. To secure this connection, "
 "enable RDSTLS Security in your client by saving the connection settings in "
 "your client as an RDP file and set “use redirection server name:i:1” in it."
-msgstr "Denne tilkoblingen til eksternt skriverbord er usikker. For å sikre tilkoblingen må du aktivere RDSTLS-sikkerhet i din klient ved å lagre innstillingene for tilkobling i klienten som en RDP-fil og sette «use redirection server name:i:1» i den."
+msgstr ""
+"Denne tilkoblingen til eksternt skriverbord er usikker. For å sikre "
+"tilkoblingen må du aktivere RDSTLS-sikkerhet i din klient ved å lagre "
+"innstillingene for tilkobling i klienten som en RDP-fil og sette «use "
+"redirection server name:i:1» i den."
 
 #: src/grd-daemon-handover.c:339 src/grd-daemon-handover.c:405
 #, c-format
@@ -168,7 +178,8 @@ msgid ""
 "higher priority to use port <b>%i</b>."
 msgstr ""
 "Port for deling av skrivebord er endret fra <b>%i</b> til <b>%i</b>.\n"
-"Dette er fordi tjenesten Remote Sessions er aktivert og den har høyere prioritet for å bruke port <b>%i</b>."
+"Dette er fordi tjenesten Remote Sessions er aktivert og den har høyere "
+"prioritet for å bruke port <b>%i</b>."
 
 #: src/grd-daemon-user.c:107 src/grd-session-vnc.c:323
 #, c-format
@@ -202,24 +213,24 @@ msgstr "Porten som brukes av RDP-tjeneren"
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:8
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:102
 msgid "The RDP client will connect to this port to use this RDP server."
-msgstr ""
+msgstr "RDP-klienten vil koble til denne porten for å bruke RDP-tjener."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:14
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:108
 msgid "Search a different RDP port if the configured one is used"
-msgstr ""
+msgstr "Søk etter en annen RPD-port hvis den konfigurerte er i bruk"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:15
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:109
 msgid ""
 "When negotiate-port is set to 'true' the RDP server will attempt to listen "
 "to the first available of the next 10 ports starting from the configured one."
-msgstr ""
+msgstr "Når negotiate-port settes til «true» vil RDP-tjeneren prøve å lytte til den første tilgjengelige av de neste ti portene fra den konfigurerte."
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:23
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:117
 msgid "Whether the RDP backend is enabled or not"
-msgstr ""
+msgstr "Hvorvidt RDP-motoren er aktivert eller ikke"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:24
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:118
@@ -259,7 +270,7 @@ msgstr ""
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:65
 msgid "Path to the private key file"
-msgstr ""
+msgstr "Sti til den private nøkkelfilen"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:73
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:167
@@ -275,7 +286,7 @@ msgstr ""
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:81
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:124
 msgid "Allowed authentication methods"
-msgstr ""
+msgstr "Tillatte autentiseringsmetoder"
 
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:82
 #: src/org.gnome.desktop.remote-desktop.gschema.xml.in:125
