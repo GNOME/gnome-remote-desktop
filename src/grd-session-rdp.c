@@ -989,7 +989,7 @@ get_effective_auth_method (rdpContext *rdp_context)
     {
       g_warning ("Failed to query NLA context package info: %s",
                  GetSecurityStatusString (status));
-      return FALSE;
+      return -1;
     }
 
   if (g_strcmp0 (package_info.PackageInfo->Name, KERBEROS_SSP_NAME) == 0)
