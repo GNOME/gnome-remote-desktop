@@ -1,3 +1,16 @@
+51.0
+====
+* Fix pid reuse vulnerability in the smartcard redirection [Jonas; !426]
+* Add smartcard redirection documentation [Joan; !427]
+* Signal full range BT.709 in the AVC bitstreams [Pavel; !421]
+* Misc bug fixes & cleanups [Pavel, Jonas; !422, !428, !429]
+
+Contributors:
+  Jonas Ådahl, Joan Torres Lopez, Roy-Magne Mo, Pavel Shilin
+
+Translators:
+  Kjartan Maraas [nb], Roy-Magne Mo [nn]
+
 51.rc
 =====
 * Add support for Kerberos multi user remote login [Jonas; !411, !414, !418]
