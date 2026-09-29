@@ -50,6 +50,7 @@ enum
 enum
 {
   READY,
+  STARTING,
   STARTED,
   STOPPED,
   TOUCH_DEVICE_ADDED,
@@ -1796,6 +1797,8 @@ grd_session_start (GrdSession *session)
   GrdSessionPrivate *priv = grd_session_get_instance_private (session);
   GrdDBusMutterRemoteDesktop *remote_desktop_proxy;
 
+  g_signal_emit (session, signals[STARTING], 0);
+
   priv->cancellable = g_cancellable_new ();
 
   remote_desktop_proxy = grd_context_get_mutter_remote_desktop_proxy (priv->context);
@@ -1962,6 +1965,12 @@ grd_session_class_init (GrdSessionClass *klass)
                                  0,
                                  NULL, NULL, NULL,
                                  G_TYPE_NONE, 0);
+  signals[STARTING] = g_signal_new ("starting",
+                                    G_TYPE_FROM_CLASS (klass),
+                                    G_SIGNAL_RUN_LAST,
+                                    0,
+                                    NULL, NULL, NULL,
+                                    G_TYPE_NONE, 0);
   signals[STARTED] = g_signal_new ("started",
                                    G_TYPE_FROM_CLASS (klass),
                                    G_SIGNAL_RUN_LAST,
