@@ -67,7 +67,7 @@ struct _GrdThrottler
 
 G_DEFINE_TYPE (GrdThrottler, grd_throttler, G_TYPE_OBJECT)
 
-static GQuark quark_remote_address;
+static GQuark quark_connection_data;
 
 static void
 maybe_queue_timeout (GrdThrottler *throttler);
@@ -204,7 +204,7 @@ grd_throttler_allow_connection (GrdThrottler      *throttler,
 
   peer->last_accept_us = g_get_monotonic_time ();
 
-  g_object_set_qdata_full (G_OBJECT (connection), quark_remote_address,
+  g_object_set_qdata_full (G_OBJECT (connection), quark_connection_data,
                            connection_data,
                            (GDestroyNotify) connection_data_free);
   grd_throttler_register_connection (throttler, peer, connection);
@@ -532,6 +532,6 @@ grd_throttler_class_init (GrdThrottlerClass *klass)
 
   object_class->finalize = grd_throttler_finalize;
 
-  quark_remote_address =
-    g_quark_from_static_string ("grd-remote-address-string");
+  quark_connection_data =
+    g_quark_from_static_string ("grd-throttler-connection-data");
 }
