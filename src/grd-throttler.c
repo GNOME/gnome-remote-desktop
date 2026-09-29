@@ -55,8 +55,6 @@ struct _GrdThrottler
 
   GrdThrottlerLimits *limits;
 
-  int active_connections;
-
   GrdThrottlerAllowCallback allow_callback;
   gpointer user_data;
 
@@ -123,7 +121,6 @@ grd_throttler_register_connection (GrdThrottler      *throttler,
   int64_t now_us;
 
   g_ptr_array_add (peer->active_connections, connection);
-  throttler->active_connections++;
 
   if (!peer->connect_timestamps)
     peer->connect_timestamps = g_array_new (FALSE, FALSE, sizeof (int64_t));
@@ -140,10 +137,8 @@ grd_throttler_unregister_connection (GrdThrottler      *throttler,
                                      GrdPeer           *peer)
 {
   g_assert (g_ptr_array_find (peer->active_connections, connection, NULL));
-  g_assert (throttler->active_connections > 0);
 
   g_ptr_array_remove (peer->active_connections, connection);
-  throttler->active_connections--;
 
   maybe_dispose_peer (throttler, peer, NULL);
   maybe_queue_timeout (throttler);
@@ -246,6 +241,24 @@ prune_closed_connections (GQueue *queue)
     }
 }
 
+static int
+count_active_connections (GrdThrottler *throttler)
+{
+  GHashTableIter iter;
+  gpointer key, value;
+  int count = 0;
+
+  g_hash_table_iter_init (&iter, throttler->peers);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      GrdPeer *peer = value;
+
+      count += peer->active_connections->len;
+    }
+
+  return count;
+}
+
 static gboolean
 is_connection_limit_reached (GrdThrottler *throttler,
                              GrdPeer      *peer)
@@ -255,7 +268,7 @@ is_connection_limit_reached (GrdThrottler *throttler,
   if (peer->active_connections->len >= limits->max_connections_per_peer)
     return TRUE;
 
-  if (throttler->active_connections >= limits->max_global_connections)
+  if (count_active_connections (throttler) >= limits->max_global_connections)
     return TRUE;
 
   return FALSE;
