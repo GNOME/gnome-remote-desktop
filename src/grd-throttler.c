@@ -43,7 +43,7 @@ typedef struct _GrdPeer
 {
   GrdThrottler *throttler;
   char *name;
-  int active_connections;
+  GPtrArray *active_connections;
   GArray *connect_timestamps;
   GQueue *delayed_connections;
   int64_t last_accept_us;
@@ -100,7 +100,7 @@ maybe_dispose_peer (GrdThrottler   *throttler,
                     GrdPeer        *peer,
                     GHashTableIter *iter)
 {
-  if (peer->active_connections > 0)
+  if (peer->active_connections->len > 0)
     return;
 
   if (peer->connect_timestamps && peer->connect_timestamps->len > 0)
@@ -116,12 +116,13 @@ maybe_dispose_peer (GrdThrottler   *throttler,
 }
 
 static void
-grd_throttler_register_connection (GrdThrottler *throttler,
-                                   GrdPeer      *peer)
+grd_throttler_register_connection (GrdThrottler      *throttler,
+                                   GrdPeer           *peer,
+                                   GSocketConnection *connection)
 {
   int64_t now_us;
 
-  peer->active_connections++;
+  g_ptr_array_add (peer->active_connections, connection);
   throttler->active_connections++;
 
   if (!peer->connect_timestamps)
@@ -138,10 +139,10 @@ grd_throttler_unregister_connection (GrdThrottler      *throttler,
                                      GSocketConnection *connection,
                                      GrdPeer           *peer)
 {
-  g_assert (peer->active_connections > 0);
+  g_assert (g_ptr_array_find (peer->active_connections, connection, NULL));
   g_assert (throttler->active_connections > 0);
 
-  peer->active_connections--;
+  g_ptr_array_remove (peer->active_connections, connection);
   throttler->active_connections--;
 
   maybe_dispose_peer (throttler, peer, NULL);
@@ -206,7 +207,7 @@ grd_throttler_allow_connection (GrdThrottler      *throttler,
   g_object_set_qdata_full (G_OBJECT (connection), quark_remote_address,
                            connection_data,
                            (GDestroyNotify) connection_data_free);
-  grd_throttler_register_connection (throttler, peer);
+  grd_throttler_register_connection (throttler, peer, connection);
 }
 
 static gboolean
@@ -251,7 +252,7 @@ is_connection_limit_reached (GrdThrottler *throttler,
 {
   GrdThrottlerLimits *limits = throttler->limits;
 
-  if (peer->active_connections >= limits->max_connections_per_peer)
+  if (peer->active_connections->len >= limits->max_connections_per_peer)
     return TRUE;
 
   if (throttler->active_connections >= limits->max_global_connections)
@@ -404,6 +405,7 @@ ensure_peer (GrdThrottler *throttler,
   peer->throttler = throttler;
   peer->name = g_strdup (peer_name);
   peer->delayed_connections = g_queue_new ();
+  peer->active_connections = g_ptr_array_new ();
 
   g_hash_table_insert (throttler->peers,
                        g_strdup (peer_name), peer);
@@ -497,6 +499,7 @@ grd_peer_free (GrdPeer *peer)
 {
   if (peer->delayed_connections)
     g_queue_free_full (peer->delayed_connections, g_object_unref);
+  g_clear_pointer (&peer->active_connections, g_ptr_array_unref);
   g_clear_pointer (&peer->connect_timestamps, g_array_unref);
   g_clear_pointer (&peer->name, g_free);
   g_free (peer);
