@@ -836,6 +836,7 @@ grd_session_vnc_dispose (GObject *object)
   g_assert (!session_vnc->rfb_screen);
 
   g_clear_pointer (&session_vnc->pressed_keys, g_hash_table_unref);
+  g_clear_object (&session_vnc->connection);
 
   G_OBJECT_CLASS (grd_session_vnc_parent_class)->dispose (object);
 }
@@ -866,7 +867,8 @@ grd_session_vnc_stop (GrdSession *session)
 
   grd_session_vnc_detach_source (session_vnc);
 
-  g_clear_object (&session_vnc->connection);
+  g_io_stream_close (G_IO_STREAM (session_vnc->connection), NULL, NULL);
+
   g_clear_object (&session_vnc->clipboard_vnc);
   g_clear_pointer (&session_vnc->rfb_screen->frameBuffer, g_free);
   g_clear_pointer (&session_vnc->rfb_screen, rfbScreenCleanup);

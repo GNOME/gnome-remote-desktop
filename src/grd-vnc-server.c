@@ -46,7 +46,7 @@ struct _GrdVncServer
 
   GrdThrottler *throttler;
 
-  GList *sessions;
+  GHashTable *sessions;
 
   GList *stopped_sessions;
   guint cleanup_sessions_idle_id;
@@ -98,11 +98,18 @@ cleanup_stopped_sessions_idle (GrdVncServer *vnc_server)
 static void
 on_session_stopped (GrdSession *session, GrdVncServer *vnc_server)
 {
+  GSocketConnection *connection;
+  gboolean stole;
+
   g_debug ("VNC session stopped");
 
   vnc_server->stopped_sessions = g_list_append (vnc_server->stopped_sessions,
                                                 session);
-  vnc_server->sessions = g_list_remove (vnc_server->sessions, session);
+
+  connection = grd_session_vnc_get_socket_connection (GRD_SESSION_VNC (session));
+  stole = g_hash_table_steal (vnc_server->sessions, connection);
+  g_assert (stole);
+
   if (!vnc_server->cleanup_sessions_idle_id)
     {
       vnc_server->cleanup_sessions_idle_id =
@@ -122,7 +129,7 @@ allow_connection_cb (GrdThrottler      *throttler,
   g_debug ("Creating new VNC session");
 
   session_vnc = grd_session_vnc_new (vnc_server, connection);
-  vnc_server->sessions = g_list_append (vnc_server->sessions, session_vnc);
+  g_hash_table_insert (vnc_server->sessions, connection, session_vnc);
 
   g_signal_connect (session_vnc, "stopped",
                     G_CALLBACK (on_session_stopped),
@@ -187,12 +194,7 @@ grd_vnc_server_stop (GrdVncServer *vnc_server)
   grd_dbus_remote_desktop_vnc_server_set_enabled (vnc_server_iface, FALSE);
   grd_dbus_remote_desktop_vnc_server_set_port (vnc_server_iface, -1);
 
-  while (vnc_server->sessions)
-    {
-      GrdSession *session = vnc_server->sessions->data;
-
-      grd_session_stop (session);
-    }
+  g_hash_table_remove_all (vnc_server->sessions);
 
   grd_vnc_server_cleanup_stopped_sessions (vnc_server);
   g_clear_handle_id (&vnc_server->cleanup_sessions_idle_id,
@@ -244,12 +246,33 @@ grd_vnc_server_dispose (GObject *object)
 {
   GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
 
-  g_assert (!vnc_server->sessions);
+  g_assert (g_hash_table_size (vnc_server->sessions) == 0);
   g_assert (!vnc_server->stopped_sessions);
   g_assert (!vnc_server->cleanup_sessions_idle_id);
   g_assert (!vnc_server->throttler);
 
   G_OBJECT_CLASS (grd_vnc_server_parent_class)->dispose (object);
+}
+
+static void
+grd_vnc_server_finalize (GObject *object)
+{
+  GrdVncServer *vnc_server = GRD_VNC_SERVER (object);
+
+  g_clear_pointer (&vnc_server->sessions, g_hash_table_unref);
+
+  G_OBJECT_CLASS (grd_vnc_server_parent_class)->finalize (object);
+}
+
+static void
+stop_session (gpointer user_data)
+{
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (user_data);
+  GrdVncServer *vnc_server = grd_session_vnc_get_server (session_vnc);
+
+  g_signal_handlers_disconnect_by_data (session_vnc, vnc_server);
+  grd_session_stop (GRD_SESSION (session_vnc));
+  g_object_unref (session_vnc);
 }
 
 static void
@@ -262,6 +285,9 @@ grd_vnc_server_constructed (GObject *object)
     rfbLogEnable (1);
   else
     rfbLogEnable (0);
+
+  vnc_server->sessions = g_hash_table_new_full (NULL, NULL,
+                                                NULL, stop_session);
 
   limits = grd_throttler_limits_new (vnc_server->context);
   /* TODO: Add the rfbScreen instance to GrdVncServer to support multiple
@@ -287,6 +313,7 @@ grd_vnc_server_class_init (GrdVncServerClass *klass)
   object_class->set_property = grd_vnc_server_set_property;
   object_class->get_property = grd_vnc_server_get_property;
   object_class->dispose = grd_vnc_server_dispose;
+  object_class->finalize = grd_vnc_server_finalize;
   object_class->constructed = grd_vnc_server_constructed;
 
   g_object_class_install_property (object_class,
