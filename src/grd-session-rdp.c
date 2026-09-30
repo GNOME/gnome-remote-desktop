@@ -1985,7 +1985,10 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_object (&rdp_peer_context->telemetry);
   g_mutex_unlock (&rdp_peer_context->channel_mutex);
 
+  g_socket_shutdown (g_socket_connection_get_socket (session_rdp->connection),
+                     TRUE, FALSE, NULL);
   g_clear_pointer (&session_rdp->socket_thread, g_thread_join);
+
   g_clear_handle_id (&session_rdp->notify_post_connected_source_id,
                      g_source_remove);
 
