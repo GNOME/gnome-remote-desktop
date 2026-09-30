@@ -29,6 +29,17 @@
 #define DEFAULT_MAX_PENDING_CONNECTIONS 5
 #define DEFAULT_MAX_ATTEMPTS_PER_SECOND 1000
 
+#define AUTHENTICATE_TIMEOUT_US s2us (30)
+
+enum
+{
+  CONNECTION_TIMED_OUT,
+
+  N_SIGNALS
+};
+
+static guint signals[N_SIGNALS];
+
 struct _GrdThrottlerLimits
 {
   int max_global_connections;
@@ -61,6 +72,7 @@ struct _GrdThrottler
   GHashTable *peers;
 
   GSource *delayed_connections_source;
+  GSource *auth_timeout_source;
 };
 
 G_DEFINE_TYPE (GrdThrottler, grd_throttler, G_TYPE_OBJECT)
@@ -69,6 +81,14 @@ static GQuark quark_connection_data;
 
 static void
 maybe_queue_timeout (GrdThrottler *throttler);
+
+static void
+maybe_queue_auth_timeout (GrdThrottler *throttler);
+
+static void
+grd_throttler_unregister_connection (GrdThrottler      *throttler,
+                                     GSocketConnection *connection,
+                                     GrdPeer           *peer);
 
 static void
 prune_old_timestamps (GArray  *timestamps,
@@ -129,6 +149,8 @@ grd_throttler_register_connection (GrdThrottler      *throttler,
 
   prune_old_timestamps (peer->connect_timestamps, now_us);
   g_array_append_val (peer->connect_timestamps, now_us);
+
+  maybe_queue_auth_timeout (throttler);
 }
 
 static void
@@ -157,7 +179,9 @@ typedef struct _ConnectionData
 {
   GrdThrottler *throttler;
   char *peer_name;
+  int64_t connect_time_us;
   GSocketConnection *connection;
+  gboolean is_authenticated;
 } ConnectionData;
 
 static void
@@ -194,6 +218,7 @@ grd_throttler_allow_connection (GrdThrottler      *throttler,
   g_set_weak_pointer (&connection_data->throttler, throttler);
   connection_data->connection = connection;
   connection_data->peer_name = g_strdup (peer->name);
+  connection_data->connect_time_us = g_get_monotonic_time ();
 
   throttler->allow_callback (throttler, connection, throttler->user_data);
 
@@ -467,6 +492,118 @@ grd_throttler_handle_connection (GrdThrottler      *throttler,
   maybe_delay_connection (throttler, connection, peer, now_us);
 }
 
+static gboolean
+dispatch_auth_timeout (gpointer user_data)
+{
+  GrdThrottler *throttler = GRD_THROTTLER (user_data);
+  GHashTableIter iter;
+  gpointer key, value;
+  int64_t now_us;
+
+  now_us = g_get_monotonic_time ();
+
+  g_hash_table_iter_init (&iter, throttler->peers);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      GrdPeer *peer = value;
+      int i;
+
+      for (i = 0; i < peer->active_connections->len; i++)
+        {
+          GSocketConnection *connection =
+            g_ptr_array_index (peer->active_connections, i);
+          ConnectionData *connection_data;
+
+          connection_data = g_object_get_qdata (G_OBJECT (connection),
+                                                quark_connection_data);
+          if (connection_data->is_authenticated)
+            continue;
+
+          if (connection_data->connect_time_us + AUTHENTICATE_TIMEOUT_US <
+              now_us)
+            {
+              g_debug ("[Throttler] Connection from %s timeout out",
+                       peer->name);
+              g_signal_emit (throttler, signals[CONNECTION_TIMED_OUT], 0,
+                             connection);
+            }
+        }
+    }
+
+  maybe_queue_auth_timeout (throttler);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static void
+ensure_auth_timeout_source (GrdThrottler *throttler)
+{
+  if (throttler->auth_timeout_source)
+    return;
+
+  throttler->auth_timeout_source = g_source_new (&source_funcs,
+                                                 sizeof (GSource));
+  g_source_set_callback (throttler->auth_timeout_source,
+                         dispatch_auth_timeout, throttler, NULL);
+  g_source_attach (throttler->auth_timeout_source, NULL);
+  g_source_unref (throttler->auth_timeout_source);
+}
+
+static void
+maybe_queue_auth_timeout (GrdThrottler *throttler)
+{
+  GHashTableIter iter;
+  gpointer key, value;
+  int64_t next_timeout_us = INT64_MAX;
+
+  g_hash_table_iter_init (&iter, throttler->peers);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      GrdPeer *peer = value;
+      int i;
+
+      for (i = 0; i < peer->active_connections->len; i++)
+        {
+          GSocketConnection *connection =
+            g_ptr_array_index (peer->active_connections, i);
+          ConnectionData *connection_data;
+
+          connection_data = g_object_get_qdata (G_OBJECT (connection),
+                                                quark_connection_data);
+          if (connection_data->is_authenticated)
+            continue;
+
+          next_timeout_us = MIN (next_timeout_us,
+                                 connection_data->connect_time_us +
+                                 AUTHENTICATE_TIMEOUT_US);
+        }
+    }
+
+  if (next_timeout_us == INT64_MAX)
+    next_timeout_us = -1;
+
+  if (next_timeout_us >= 0)
+    {
+      ensure_auth_timeout_source (throttler);
+      g_source_set_ready_time (throttler->auth_timeout_source,
+                               next_timeout_us);
+    }
+}
+
+void
+grd_throttler_notify_authenticated (GrdThrottler      *throttler,
+                                    GSocketConnection *connection)
+{
+  ConnectionData *connection_data;
+
+  connection_data = g_object_get_qdata (G_OBJECT (connection),
+                                        quark_connection_data);
+  g_assert (connection_data);
+  connection_data->is_authenticated = TRUE;
+
+  maybe_queue_auth_timeout (throttler);
+}
+
 void
 grd_throttler_limits_set_max_global_connections (GrdThrottlerLimits *limits,
                                                  int                 limit)
@@ -524,6 +661,7 @@ grd_throttler_finalize (GObject *object)
   GrdThrottler *throttler = GRD_THROTTLER(object);
 
   g_clear_pointer (&throttler->delayed_connections_source, g_source_destroy);
+  g_clear_pointer (&throttler->auth_timeout_source, g_source_destroy);
   g_clear_pointer (&throttler->peers, g_hash_table_unref);
   g_clear_pointer (&throttler->limits, g_free);
 
@@ -544,6 +682,14 @@ grd_throttler_class_init (GrdThrottlerClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = grd_throttler_finalize;
+
+  signals[CONNECTION_TIMED_OUT] = g_signal_new ("connection-timed-out",
+                                                G_TYPE_FROM_CLASS (klass),
+                                                G_SIGNAL_RUN_LAST,
+                                                0,
+                                                NULL, NULL, NULL,
+                                                G_TYPE_NONE, 1,
+                                                G_TYPE_SOCKET_CONNECTION);
 
   quark_connection_data =
     g_quark_from_static_string ("grd-throttler-connection-data");

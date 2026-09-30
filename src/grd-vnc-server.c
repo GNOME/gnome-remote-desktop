@@ -96,6 +96,17 @@ cleanup_stopped_sessions_idle (GrdVncServer *vnc_server)
 }
 
 static void
+on_session_starting (GrdSession   *session,
+                     GrdVncServer *vnc_server)
+{
+  GrdSessionVnc *session_vnc = GRD_SESSION_VNC (session);
+  GSocketConnection *connection;
+
+  connection = grd_session_vnc_get_socket_connection (session_vnc);
+  grd_throttler_notify_authenticated (vnc_server->throttler, connection);
+}
+
+static void
 on_session_stopped (GrdSession *session, GrdVncServer *vnc_server)
 {
   GSocketConnection *connection;
@@ -131,6 +142,9 @@ allow_connection_cb (GrdThrottler      *throttler,
   session_vnc = grd_session_vnc_new (vnc_server, connection);
   g_hash_table_insert (vnc_server->sessions, connection, session_vnc);
 
+  g_signal_connect (session_vnc, "starting",
+                    G_CALLBACK (on_session_starting),
+                    vnc_server);
   g_signal_connect (session_vnc, "stopped",
                     G_CALLBACK (on_session_stopped),
                     vnc_server);
@@ -265,6 +279,17 @@ grd_vnc_server_finalize (GObject *object)
 }
 
 static void
+on_connection_timed_out (GrdThrottler      *throttler,
+                         GSocketConnection *connection,
+                         GrdVncServer      *vnc_server)
+{
+  gboolean removed;
+
+  removed = g_hash_table_remove (vnc_server->sessions, connection);
+  g_assert (removed);
+}
+
+static void
 stop_session (gpointer user_data)
 {
   GrdSessionVnc *session_vnc = GRD_SESSION_VNC (user_data);
@@ -296,6 +321,9 @@ grd_vnc_server_constructed (GObject *object)
   vnc_server->throttler = grd_throttler_new (limits,
                                              allow_connection_cb,
                                              vnc_server);
+  g_signal_connect (vnc_server->throttler, "connection-timed-out",
+                    G_CALLBACK (on_connection_timed_out),
+                    vnc_server);
 
   G_OBJECT_CLASS (grd_vnc_server_parent_class)->constructed (object);
 }

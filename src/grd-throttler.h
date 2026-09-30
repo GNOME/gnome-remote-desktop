@@ -39,6 +39,10 @@ grd_throttler_handle_connection (GrdThrottler      *throttler,
                                  GSocketConnection *connection);
 
 void
+grd_throttler_notify_authenticated (GrdThrottler      *throttler,
+                                    GSocketConnection *connection);
+
+void
 grd_throttler_limits_set_max_global_connections (GrdThrottlerLimits *limits,
                                                  int                 limit);
 

@@ -192,6 +192,14 @@ on_session_post_connect (GrdSessionRdp *session_rdp,
   GrdRuntimeMode runtime_mode =
     grd_context_get_runtime_mode (rdp_server->context);
 
+  if (rdp_server->throttler)
+    {
+      GSocketConnection *connection;
+
+      connection = grd_session_rdp_get_socket_connection (session_rdp);
+      grd_throttler_notify_authenticated (rdp_server->throttler, connection);
+    }
+
   g_signal_emit (rdp_server, signals[INCOMING_NEW_CONNECTION], 0, session_rdp);
 
   grd_dbus_remote_desktop_rdp_server_emit_new_connection (rdp_server_iface);
@@ -574,6 +582,17 @@ grd_rdp_server_finalize (GObject *object)
 }
 
 static void
+on_connection_timed_out (GrdThrottler      *throttler,
+                         GSocketConnection *connection,
+                         GrdRdpServer      *rdp_server)
+{
+  gboolean removed;
+
+  removed = g_hash_table_remove (rdp_server->sessions, connection);
+  g_assert (removed);
+}
+
+static void
 stop_session (gpointer user_data)
 {
   GrdSessionRdp *session_rdp = GRD_SESSION_RDP (user_data);
@@ -614,6 +633,9 @@ grd_rdp_server_constructed (GObject *object)
         grd_throttler_new (grd_throttler_limits_new (rdp_server->context),
                            allow_callback,
                            rdp_server);
+      g_signal_connect (rdp_server->throttler, "connection-timed-out",
+                        G_CALLBACK (on_connection_timed_out),
+                        rdp_server);
     }
 
   rdp_server->pending_binding_attempts = RDP_SERVER_N_BINDING_ATTEMPTS;
