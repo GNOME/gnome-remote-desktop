@@ -67,3 +67,5 @@ gboolean grd_session_vnc_is_client_gone (GrdSessionVnc *session_vnc);
 void grd_session_vnc_notify_error (GrdSessionVnc *session_vnc);
 
 GrdVncServer * grd_session_vnc_get_server (GrdSessionVnc *session_vnc);
+
+GSocketConnection * grd_session_vnc_get_socket_connection (GrdSessionVnc *session_vnc);
