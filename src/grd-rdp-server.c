@@ -63,7 +63,7 @@ struct _GrdRdpServer
 
   GrdThrottler *throttler;
 
-  GList *sessions;
+  GHashTable *sessions;
 
   GList *stopped_sessions;
   guint cleanup_sessions_idle_id;
@@ -149,11 +149,18 @@ static void
 on_session_stopped (GrdSession   *session,
                     GrdRdpServer *rdp_server)
 {
+  GSocketConnection *connection;
+  gboolean stole;
+
   g_debug ("RDP session stopped");
 
   rdp_server->stopped_sessions = g_list_append (rdp_server->stopped_sessions,
                                                 session);
-  rdp_server->sessions = g_list_remove (rdp_server->sessions, session);
+
+  connection = grd_session_rdp_get_socket_connection (GRD_SESSION_RDP (session));
+  stole = g_hash_table_steal (rdp_server->sessions, connection);
+  g_assert (stole);
+
   if (!rdp_server->cleanup_sessions_idle_id)
     {
       rdp_server->cleanup_sessions_idle_id =
@@ -163,9 +170,13 @@ on_session_stopped (GrdSession   *session,
 }
 
 static void
-maybe_stop_session (GrdSession *session,
-                    GrdSession *session_to_ignore)
+maybe_stop_session (gpointer key,
+                    gpointer value,
+                    gpointer user_data)
 {
+  GrdSession *session = GRD_SESSION (value);
+  GrdSession *session_to_ignore = GRD_SESSION (user_data);
+
   if (session == session_to_ignore)
     return;
 
@@ -188,9 +199,9 @@ on_session_post_connect (GrdSessionRdp *session_rdp,
   if (runtime_mode == GRD_RUNTIME_MODE_HANDOVER ||
       runtime_mode == GRD_RUNTIME_MODE_HEADLESS)
     {
-      g_list_foreach (rdp_server->sessions,
-                      (GFunc) maybe_stop_session,
-                      GRD_SESSION (session_rdp));
+      g_hash_table_foreach (rdp_server->sessions,
+                            maybe_stop_session,
+                            session_rdp);
     }
 }
 
@@ -232,7 +243,7 @@ on_routing_token_peeked (GObject      *source_object,
       if (!(session_rdp = grd_session_rdp_new (rdp_server, connection)))
         return;
 
-      rdp_server->sessions = g_list_append (rdp_server->sessions, session_rdp);
+      g_hash_table_insert (rdp_server->sessions, connection, session_rdp);
 
       g_signal_connect (session_rdp, "stopped",
                         G_CALLBACK (on_session_stopped),
@@ -279,7 +290,7 @@ accept_connection (GrdRdpServer      *rdp_server,
   if (!(session_rdp = grd_session_rdp_new (rdp_server, connection)))
     return;
 
-  rdp_server->sessions = g_list_append (rdp_server->sessions, session_rdp);
+  g_hash_table_insert (rdp_server->sessions, connection, session_rdp);
 
   g_signal_connect (session_rdp, "stopped",
                     G_CALLBACK (on_session_stopped),
@@ -322,12 +333,7 @@ grd_rdp_server_notify_incoming (GSocketService    *service,
 void
 grd_rdp_server_stop_sessions (GrdRdpServer *rdp_server)
 {
-  while (rdp_server->sessions)
-    {
-      GrdSession *session = rdp_server->sessions->data;
-
-      grd_session_stop (session);
-    }
+  g_hash_table_remove_all (rdp_server->sessions);
 }
 
 static gboolean
@@ -483,12 +489,7 @@ grd_rdp_server_stop (GrdRdpServer *rdp_server)
   grd_dbus_remote_desktop_rdp_server_set_enabled (rdp_server_iface, FALSE);
   grd_dbus_remote_desktop_rdp_server_set_port (rdp_server_iface, -1);
 
-  while (rdp_server->sessions)
-    {
-      GrdSession *session = rdp_server->sessions->data;
-
-      grd_session_stop (session);
-    }
+  g_hash_table_remove_all (rdp_server->sessions);
 
   g_clear_handle_id (&rdp_server->cleanup_sessions_idle_id, g_source_remove);
   grd_rdp_server_cleanup_stopped_sessions (rdp_server);
@@ -550,7 +551,7 @@ grd_rdp_server_dispose (GObject *object)
 {
   GrdRdpServer *rdp_server = GRD_RDP_SERVER (object);
 
-  g_assert (!rdp_server->sessions);
+  g_assert (g_hash_table_size (rdp_server->sessions) == 0);
   g_assert (!rdp_server->binding_timeout_source_id);
   g_assert (!rdp_server->cleanup_sessions_idle_id);
   g_assert (!rdp_server->stopped_sessions);
@@ -563,12 +564,36 @@ grd_rdp_server_dispose (GObject *object)
 }
 
 static void
+grd_rdp_server_finalize (GObject *object)
+{
+  GrdRdpServer *rdp_server = GRD_RDP_SERVER (object);
+
+  g_clear_pointer (&rdp_server->sessions, g_hash_table_unref);
+
+  G_OBJECT_CLASS (grd_rdp_server_parent_class)->finalize (object);
+}
+
+static void
+stop_session (gpointer user_data)
+{
+  GrdSessionRdp *session_rdp = GRD_SESSION_RDP (user_data);
+  GrdRdpServer *rdp_server = grd_session_rdp_get_server (session_rdp);
+
+  g_signal_handlers_disconnect_by_data (session_rdp, rdp_server);
+  grd_session_stop (GRD_SESSION (session_rdp));
+  g_object_unref (session_rdp);
+}
+
+static void
 grd_rdp_server_constructed (GObject *object)
 {
   GrdRdpServer *rdp_server = GRD_RDP_SERVER (object);
   GrdRuntimeMode runtime_mode =
     grd_context_get_runtime_mode (rdp_server->context);
   GrdThrottlerAllowCallback allow_callback = NULL;
+
+  rdp_server->sessions = g_hash_table_new_full (NULL, NULL,
+                                                NULL, stop_session);
 
   switch (runtime_mode)
     {
@@ -617,6 +642,7 @@ grd_rdp_server_class_init (GrdRdpServerClass *klass)
   object_class->set_property = grd_rdp_server_set_property;
   object_class->get_property = grd_rdp_server_get_property;
   object_class->dispose = grd_rdp_server_dispose;
+  object_class->finalize = grd_rdp_server_finalize;
   object_class->constructed = grd_rdp_server_constructed;
 
   g_object_class_install_property (object_class,

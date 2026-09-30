@@ -1907,7 +1907,7 @@ grd_session_rdp_stop (GrdSession *session)
   g_clear_object (&session_rdp->renderer);
 
   peer->Close (peer);
-  g_clear_object (&session_rdp->connection);
+  g_io_stream_close (G_IO_STREAM (session_rdp->connection), NULL, NULL);
 
   g_clear_object (&rdp_peer_context->network_autodetection);
 
