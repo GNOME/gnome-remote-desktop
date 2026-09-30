@@ -47,6 +47,8 @@ struct _GrdSessionVnc
 {
   GrdSession parent;
 
+  GrdVncServer *server;
+
   GSocketConnection *connection;
   GSource *source;
   rfbScreenInfoPtr rfb_screen;
@@ -626,6 +628,13 @@ grd_session_vnc_get_stride_for_width (GrdSessionVnc *session_vnc,
                                       int            width)
 {
   return width * BGRX_BYTES_PER_PIXEL;
+
+}
+
+GrdVncServer *
+grd_session_vnc_get_server (GrdSessionVnc *session_vnc)
+{
+  return session_vnc->server;
 }
 
 static void
@@ -793,6 +802,7 @@ grd_session_vnc_new (GrdVncServer      *vnc_server,
                               "context", context,
                               NULL);
 
+  session_vnc->server = vnc_server;
   session_vnc->connection = g_object_ref (connection);
 
   settings = grd_context_get_settings (context);

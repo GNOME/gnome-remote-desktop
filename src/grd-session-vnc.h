@@ -65,3 +65,5 @@ int grd_session_vnc_get_stride_for_width (GrdSessionVnc *session_vnc,
 gboolean grd_session_vnc_is_client_gone (GrdSessionVnc *session_vnc);
 
 void grd_session_vnc_notify_error (GrdSessionVnc *session_vnc);
+
+GrdVncServer * grd_session_vnc_get_server (GrdSessionVnc *session_vnc);
