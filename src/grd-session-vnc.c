@@ -637,6 +637,12 @@ grd_session_vnc_get_server (GrdSessionVnc *session_vnc)
   return session_vnc->server;
 }
 
+GSocketConnection *
+grd_session_vnc_get_socket_connection (GrdSessionVnc *session_vnc)
+{
+  return session_vnc->connection;
+}
+
 static void
 init_vnc_session (GrdSessionVnc *session_vnc)
 {
