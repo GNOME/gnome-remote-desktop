@@ -22,6 +22,7 @@ It's licensed under the GNU General Public License v2 or later.
 
 - [Configuration](docs/configuration.md)
 - [Kerberos authentication](docs/kerberos.md)
+- [Smartcard redirection](docs/smartcard-redirection.md)
 
 ## Firewall configuration
 
