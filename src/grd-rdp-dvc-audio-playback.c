@@ -341,15 +341,15 @@ is_locked_stream_idling_too_long (GrdRdpDvcAudioPlayback *audio_playback)
 static uint32_t
 get_pending_audio_data_size (GrdRdpDvcAudioPlayback *audio_playback)
 {
-  AudioData *audio_data;
   uint32_t pending_size = 0;
-  GQueue *tmp;
+  GList *l;
 
-  tmp = g_queue_copy (audio_playback->pending_frames);
-  while ((audio_data = g_queue_pop_head (tmp)))
-    pending_size += audio_data->size;
+  for (l = audio_playback->pending_frames->head; l; l = l->next)
+    {
+      AudioData *audio_data = l->data;
 
-  g_queue_free (tmp);
+      pending_size += audio_data->size;
+    }
 
   return pending_size;
 }
