@@ -1,6 +1,9 @@
 [Unit]
 Description=GNOME Remote Desktop (headless)
 Conflicts=gnome-remote-desktop.service
+PartOf=gnome-session.target
+Requisite=gnome-session.target
+After=gnome-session.target
 
 [Service]
 Type=dbus

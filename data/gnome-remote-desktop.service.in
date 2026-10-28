@@ -1,5 +1,8 @@
 [Unit]
 Description=GNOME Remote Desktop
+PartOf=gnome-session.target
+Requisite=gnome-session.target
+After=gnome-session.target
 
 [Service]
 Type=dbus
