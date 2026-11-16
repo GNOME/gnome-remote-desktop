@@ -12,5 +12,10 @@ polkit.addRule(function(action, subject) {
       subject.user === "@GRD_USERNAME@")
     return polkit.Result.YES;
 
+  if (action.id === "org.gnome.displaymanager.displayfactory.manage-user-displays" &&
+      subject.user === "@GRD_USERNAME@" &&
+      subject.system_unit === "gnome-remote-desktop-system.service")
+    return polkit.Result.YES;
+
   return polkit.Result.NOT_HANDLED;
 });
