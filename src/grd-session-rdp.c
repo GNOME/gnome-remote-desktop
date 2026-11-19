@@ -1379,8 +1379,6 @@ rdp_peer_post_connect (freerdp_peer *peer)
     freerdp_settings_get_uint32 (rdp_settings, FreeRDP_RdpVersion);
   uint32_t keyboard_type =
     freerdp_settings_get_uint32 (rdp_settings, FreeRDP_KeyboardType);
-  uint32_t os_major_type =
-    freerdp_settings_get_uint32 (rdp_settings, FreeRDP_OsMajorType);
 
   if (freerdp_settings_get_uint32 (rdp_settings, FreeRDP_PointerCacheSize) <= 0)
     {
@@ -1419,15 +1417,6 @@ rdp_peer_post_connect (freerdp_peer *peer)
                  "characteristics. Disabling audio output redirection");
       freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, FALSE);
     }
-  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_AudioPlayback) &&
-      (os_major_type == OSMAJORTYPE_IOS ||
-       os_major_type == OSMAJORTYPE_ANDROID))
-    {
-      g_warning ("[RDP] Client cannot handle graphics and audio "
-                 "simultaneously. Disabling audio output redirection");
-      freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, FALSE);
-    }
-
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_SupportGraphicsPipeline))
     grd_rdp_renderer_notify_graphics_pipeline_reset (session_rdp->renderer);
 
