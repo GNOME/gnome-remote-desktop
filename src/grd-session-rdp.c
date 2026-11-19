@@ -1413,13 +1413,6 @@ rdp_peer_post_connect (freerdp_peer *peer)
                  "High latency connections will suffer!");
     }
   if (freerdp_settings_get_bool (rdp_settings, FreeRDP_AudioPlayback) &&
-      !freerdp_settings_get_bool (rdp_settings, FreeRDP_NetworkAutoDetect))
-    {
-      g_warning ("[RDP] Client does not support autodetecting network "
-                 "characteristics. Disabling audio output redirection");
-      freerdp_settings_set_bool (rdp_settings, FreeRDP_AudioPlayback, FALSE);
-    }
-  if (freerdp_settings_get_bool (rdp_settings, FreeRDP_AudioPlayback) &&
       (os_major_type == OSMAJORTYPE_IOS ||
        os_major_type == OSMAJORTYPE_ANDROID))
     {
