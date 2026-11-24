@@ -1,3 +1,17 @@
+51.1
+====
+* Fix connection throttling denial of service (CVE-2026-96541) [Jonas; !436]
+* Fix double unref during remote login handover [Cong; !435]
+* Create remote displays with updated GDM permissions (CVE-2026-132858) [Joan !461]
+* Misc bug fixes & cleanups [Jonas; !445, !449]
+* Link to smartcard redirection documentation [Joan; !438]
+
+Contributors:
+  Cong Zhang, Jonas Ådahl, Joan Torres Lopez
+
+Translators:
+  Nicat Xalid [az], Aidan Tuhoro-Bell [mi], Kjartan Maraas [nb]
+
 51.0
 ====
 * Fix pid reuse vulnerability in the smartcard redirection [Jonas; !426]
